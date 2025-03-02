@@ -1,0 +1,12 @@
+/* styles/Body.css */
+.body {
+    background-color: #f3f4f6; /* Gray-100 */
+    min-height: 100vh;
+    padding-bottom: 5rem; /* Adjust based on footer height */
+  }
+  
+  .body .container {
+    max-width: 1500px;
+    margin: 0 auto;
+    padding: 1rem;
+  }

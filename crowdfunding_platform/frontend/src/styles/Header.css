@@ -1,0 +1,30 @@
+/* styles/Header.css */
+header {
+  position: sticky;
+  top: 0;
+  z-index: 100; /* Ensure the header is above all other content */
+  background-color: white; /* Add a background color to avoid transparency */
+}
+
+header .flex {
+  align-items: center;
+}
+
+header .logo {
+  height: 2rem;
+}
+
+header .title {
+  margin-left: 0.5rem;
+  font-weight: 600;
+  color: #065f46; /* Green-700 */
+}
+
+header input {
+  transition: border-color 0.3s ease;
+}
+
+header input:focus {
+  border-color: #065f46; /* Green-600 */
+  outline: none;
+}
