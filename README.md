@@ -1,4 +1,4 @@
-# sdi-web-django-react-cf-ypmnpeduli
+# Super App for Barakah Economy Society
 A step-by-step guide to build a crowdfunding website using Django and React, based on the layout shown in the reference images.
 Building a Crowdfunding Platform with Django and React
 
