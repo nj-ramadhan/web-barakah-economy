@@ -165,7 +165,7 @@ const EcommercePage = () => {
         )}
       </div>
   
-      {/* Campaign Grid */}
+      {/* Product Grid */}
       <div className="px-4 py-4">
         {loading ? (
           <div className="flex justify-center items-center py-8">

@@ -51,37 +51,6 @@ const Home = () => {
   const sliderInterval = useRef(null);
      
   useEffect(() => {
-    const fetchFeaturedCampaigns = async () => {
-      try {
-        const response = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/campaigns`);
-        console.log(response.data); // Log the API response
-        const featuredCampaigns = response.data.filter(campaign => campaign.is_featured === true);
-        setFeaturedCampaigns(featuredCampaigns.slice(0, 4));
-      } catch (error) {
-        console.error('Error fetching campaigns:', error);
-      }
-    };  
-    fetchFeaturedCampaigns();
-  // }, []);
-
-  // useEffect(() => {
-    const fetchFeaturedCourses = async () => {
-      console.log("Fetching featured courses..."); // Log fetching action
-
-      try {
-        const response = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/courses`);
-        console.log(response.data); // Log the API response
-        const featuredCourses = response.data.filter(course => course.is_featured === true);
-        setFeaturedCourses(featuredCourses.slice(0, 4));
-      } catch (err) {
-        console.error('Error fetching featured courses:', err);
-        setError('Failed to load featured courses');
-      }
-    };
-    fetchFeaturedCourses();// eslint-disable-line react-hooks/exhaustive-deps
-  // }, []);
-
-  // useEffect(() => {
     const fetchFeaturedProducts = async () => {
       console.log("Fetching featured products..."); // Log fetching action
 
@@ -96,7 +65,51 @@ const Home = () => {
       }
     };
     fetchFeaturedProducts();
+
+    const fetchFeaturedCampaigns = async () => {
+      try {
+        const response = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/campaigns`);
+        console.log(response.data); // Log the API response
+        const featuredCampaigns = response.data.filter(campaign => campaign.is_featured === true);
+        setFeaturedCampaigns(featuredCampaigns.slice(0, 4));
+      } catch (error) {
+        console.error('Error fetching campaigns:', error);
+      }
+    };  
+    fetchFeaturedCampaigns();
+    
+    const fetchFeaturedCourses = async () => {
+      console.log("Fetching featured courses..."); // Log fetching action
+
+      try {
+        const response = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/courses`);
+        console.log(response.data); // Log the API response
+        const featuredCourses = response.data.filter(course => course.is_featured === true);
+        setFeaturedCourses(featuredCourses.slice(0, 4));
+      } catch (err) {
+        console.error('Error fetching featured courses:', err);
+        setError('Failed to load featured courses');
+      }
+    };
+    fetchFeaturedCourses();
   }, []);
+
+   // Fetch regular products (based on search query)
+   const fetchProducts = async (search = '') => {
+    try {
+      setLoading(true);
+      const response = await axios.get(
+        `${process.env.REACT_APP_API_BASE_URL}/api/products/`, 
+        { params: { search } }
+      );
+      setProducts(response.data); // Set regular products (search results)
+    } catch (err) {
+      console.error('Error fetching products:', err);
+      setError('Failed to load products');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Fetch regular campaigns (based on search query)
   const fetchCampaigns = async (search = '') => {
@@ -127,23 +140,6 @@ const Home = () => {
     } catch (err) {
       console.error('Error fetching courses:', err);
       setError('Failed to load courses');
-    } finally {
-      setLoading(false);
-    }
-  };
-  
-  // Fetch regular products (based on search query)
-  const fetchProducts = async (search = '') => {
-    try {
-      setLoading(true);
-      const response = await axios.get(
-        `${process.env.REACT_APP_API_BASE_URL}/api/products/`, 
-        { params: { search } }
-      );
-      setProducts(response.data); // Set regular products (search results)
-    } catch (err) {
-      console.error('Error fetching products:', err);
-      setError('Failed to load products');
     } finally {
       setLoading(false);
     }
@@ -220,9 +216,199 @@ const Home = () => {
   return (
     <div className="body">
       <HeaderHome onSearch={handleSearch} />
-  
-      {/* Featured Campaign Slider */}
+
+      {/* Product Slider */}
       <div className="px-4 pt-4" style={{ position: 'relative', zIndex: 10 }}>
+        <h2 className="text-2xl font-bold mb-2">Penuhi kebutuhan harianmu</h2>
+        <h3 className="text-xl font-semibold mb-4">Beli produk Halal, Toyyib dan Barakah disini</h3>        
+        {featuredProducts.length > 0 && (
+          <div className="relative rounded-lg overflow-hidden h-56">
+            {/* Slides */}
+            <div className="h-full">
+              {featuredProducts.map((product, index) => {
+                return (
+                  <div 
+                    key={product.id}
+                    className={`absolute top-0 left-0 w-full h-full transition-opacity duration-500 ${
+                      index === activeSlide ? 'opacity-100 z-10' : 'opacity-0 z-0'
+                    }`}
+                  >
+                    <img 
+                      src={product.thumbnail || '/images/peduli-dhuafa-banner.jpg'} 
+                      alt={product.title}
+                      className="w-full h-56 object-cover"
+                      onError={(e) => {
+                        e.target.src = '/images/peduli-dhuafa-banner.jpg';
+                      }}
+                    />
+                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4">
+                      <h2 className="text-white font-bold text-lg">{product.title}</h2>
+                        <Link
+                          to={`/beli/${product.slug || product.id}`}
+                          className="block text-center bg-green-800 text-white py-2 rounded-md text-sm hover:bg-green-900"
+                        >
+                          BELI SEKARANG
+                        </Link>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            
+            {/* Indicators */}
+            {featuredProducts.length > 0 && (
+              <div className="absolute bottom-2 right-2 flex space-x-2 z-20">
+                {featuredProducts.map((_, index) => (
+                  <button
+                    key={index}
+                    onClick={() => goToSlide(index)}
+                    className={`w-2 h-2 rounded-full ${
+                      index === activeSlide ? 'bg-white' : 'bg-white/50'
+                    }`}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+  
+      {/* Product Swiper */}
+      <div className="px-4 py-4">
+        {loading ? (
+          <div className="flex justify-center items-center py-8">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500"></div>
+          </div>
+        ) : (
+          <div className="swiper-container">
+          <Swiper
+            spaceBetween={16}
+            slidesPerView={2}
+            navigation
+            pagination={{ clickable: true }}
+            scrollbar={{ draggable: true }}
+            modules={[Navigation, Pagination, Scrollbar]}
+          >
+            {sortedProducts.map((product) => {    
+              return (
+                <SwiperSlide key={product.id}>
+                  <div className="bg-white rounded-lg overflow-hidden shadow">
+                    <Link to={`/produk/${product.slug || product.id}`}>
+                      <img
+                        src={product.thumbnail || '/placeholder-image.jpg'}
+                        alt={product.title}
+                        className="w-full h-28 object-cover"
+                        onError={(e) => {
+                          e.target.src = '/placeholder-image.jpg';
+                        }}
+                      />
+                    </Link>
+                    <div className="p-2 mb-6">
+                      <h3 className="text-sm font-medium mb-2 line-clamp-2">{product.title}</h3>
+                      <div className="flex justify-between items-center">
+                          <span className="text-xs text-gray-500 mt-1">
+                            {product.price
+                              ? formatIDR(product.price)
+                              : 'Rp 0'} / {product.unit}
+                          </span>
+                          <span className="text-xs text-gray-500 mt-1">
+                            stok{' '} {product.stock > 0 ? product.stock : 'habis'}
+                          </span>
+                        </div>
+                    </div>
+                  </div>
+                </SwiperSlide>
+              );
+            })}
+          </Swiper>
+        </div>
+        )}
+  
+        {error && (
+          <div className="text-center py-4 text-red-500">
+            {error}
+            <button 
+              onClick={() => fetchProducts(searchQuery)} 
+              className="ml-4 px-4 py-2 bg-green-500 text-white rounded-lg"
+            >
+              Coba Lagi
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Product Grid */}
+      <div className="px-4 py-4">
+        {loading ? (
+          <div className="flex justify-center items-center py-8">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500"></div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 gap-4">
+            {products.slice(4,10).map(product => {
+              return (
+                <div key={product.id} className="bg-white rounded-lg overflow-hidden shadow">
+                  <Link to={`/produk/${product.slug || product.id}`}>
+                    <img 
+                      src={product.thumbnail || '/placeholder-image.jpg'} 
+                      alt={product.title}
+                      className="w-full h-28 object-cover"
+                      onError={(e) => {
+                        e.target.src = '/placeholder-image.jpg';
+                      }}
+                    />
+                  </Link>
+                  <div className="p-2">
+                    <h3 className="text-sm font-medium mb-2 line-clamp-2">{product.title}</h3>   
+                    <div className="flex justify-between items-center mb-4">
+                      <span className="text-xs text-gray-500 mt-1">
+                        {product.price
+                          ? formatIDR(product.price)
+                          : 'Rp 0'} / {product.unit}
+                      </span>
+                      <span className="text-xs text-gray-500 mt-1">
+                        stok{' '} {product.stock > 0 ? product.stock : 'habis'}
+                      </span>
+                    </div>
+                    {product.stock <= 0 ? (
+                        <button
+                          className="w-full bg-gray-400 text-white py-2 rounded-md text-sm cursor-not-allowed"
+                          disabled
+                        >
+                          BELI SEKARANG
+                        </button>
+                      ) : (
+                        <Link
+                          to={`/beli/${product.slug || product.id}`}
+                          className="block text-center bg-green-800 text-white py-2 rounded-md text-sm hover:bg-green-900"
+                        >
+                          BELI SEKARANG
+                        </Link>
+                      )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+  
+        {error && (
+          <div className="text-center py-4 text-red-500">
+            {error}
+            <button 
+              onClick={() => fetchProducts(searchQuery)} 
+              className="ml-4 px-4 py-2 bg-green-500 text-white rounded-lg"
+            >
+              Coba Lagi
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Featured Campaign Slider */}     
+      <div className="px-4 pt-4" style={{ position: 'relative', zIndex: 10 }}>
+        <h2 className="text-2xl font-bold mb-2">Bantu saudaramu, Allah bantu kamu</h2>
+        <h3 className="text-xl font-semibold mb-4">Sisihkan sebagian harta untuk program sosial dan untuk saudara kita yang membutuhkan</h3>           
         {featuredCampaigns.length > 0 && (
           <div className="relative rounded-lg overflow-hidden h-56">
             {/* Slides */}
@@ -303,14 +489,6 @@ const Home = () => {
             pagination={{ clickable: true }}
             scrollbar={{ draggable: true }}
             modules={[Navigation, Pagination, Scrollbar]}
-            breakpoints={{
-              640: {
-                slidesPerView: 2,
-              },
-              1024: {
-                slidesPerView: 2,
-              },
-            }}
           >
             {sortedCampaigns.map((campaign) => {
               const isExpired = isCampaignExpired(campaign.deadline);
@@ -419,133 +597,11 @@ const Home = () => {
           </div>
         )}
       </div>
-      
-      {/* Product SLider */}
-      <div className="px-4 pt-4" style={{ position: 'relative', zIndex: 10 }}>
-        {featuredProducts.length > 0 && (
-          <div className="relative rounded-lg overflow-hidden h-56">
-            {/* Slides */}
-            <div className="h-full">
-              {featuredProducts.map((product, index) => {
-                return (
-                  <div 
-                    key={product.id}
-                    className={`absolute top-0 left-0 w-full h-full transition-opacity duration-500 ${
-                      index === activeSlide ? 'opacity-100 z-10' : 'opacity-0 z-0'
-                    }`}
-                  >
-                    <img 
-                      src={product.thumbnail || '/images/peduli-dhuafa-banner.jpg'} 
-                      alt={product.title}
-                      className="w-full h-56 object-cover"
-                      onError={(e) => {
-                        e.target.src = '/images/peduli-dhuafa-banner.jpg';
-                      }}
-                    />
-                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4">
-                      <h2 className="text-white font-bold text-lg">{product.title}</h2>
-                        <Link
-                          to={`/ikutkelas/${product.slug || product.id}`}
-                          className="block text-center bg-green-800 text-white py-2 rounded-md text-sm hover:bg-green-900"
-                        >
-                          BELI SEKARANG
-                        </Link>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-            
-            {/* Indicators */}
-            {featuredProducts.length > 1 && (
-              <div className="absolute bottom-2 right-2 flex space-x-2 z-20">
-                {featuredProducts.map((_, index) => (
-                  <button
-                    key={index}
-                    onClick={() => goToSlide(index)}
-                    className={`w-2 h-2 rounded-full ${
-                      index === activeSlide ? 'bg-white' : 'bg-white/50'
-                    }`}
-                  />
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-  
-      {/* Product Swiper */}
-      <div className="px-4 py-4">
-        {loading ? (
-          <div className="flex justify-center items-center py-8">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500"></div>
-          </div>
-        ) : (
-          <div className="swiper-container">
-          <Swiper
-            spaceBetween={16}
-            slidesPerView={2}
-            navigation
-            pagination={{ clickable: true }}
-            scrollbar={{ draggable: true }}
-            modules={[Navigation, Pagination, Scrollbar]}
-            breakpoints={{
-              640: {
-                slidesPerView: 2,
-              },
-              1024: {
-                slidesPerView: 2,
-              },
-            }}
-          >
-            {sortedProducts.map((product) => {    
-              return (
-                <SwiperSlide key={product.id}>
-                  <div className="bg-white rounded-lg overflow-hidden shadow">
-                    <Link to={`/produk/${product.slug || product.id}`}>
-                      <img
-                        src={product.thumbnail || '/placeholder-image.jpg'}
-                        alt={product.title}
-                        className="w-full h-28 object-cover"
-                        onError={(e) => {
-                          e.target.src = '/placeholder-image.jpg';
-                        }}
-                      />
-                    </Link>
-                    <div className="p-2">
-                      <h3 className="text-sm font-medium mb-2 line-clamp-2">
-                        {product.title}
-                      </h3>
-                        <Link
-                          to={`/beli/${product.slug || product.id}`}
-                          className="block text-center bg-green-800 text-white py-2 rounded-md text-sm hover:bg-green-900"
-                        >
-                          BELI SEKARANG
-                        </Link>
-                    </div>
-                  </div>
-                </SwiperSlide>
-              );
-            })}
-          </Swiper>
-        </div>
-        )}
-  
-        {error && (
-          <div className="text-center py-4 text-red-500">
-            {error}
-            <button 
-              onClick={() => fetchProducts(searchQuery)} 
-              className="ml-4 px-4 py-2 bg-green-500 text-white rounded-lg"
-            >
-              Coba Lagi
-            </button>
-          </div>
-        )}
-      </div>
 
       {/* Course Slider */}
       <div className="px-4 pt-4" style={{ position: 'relative', zIndex: 10 }}>
+        <h2 className="text-2xl font-bold mb-2">Ilmu adalah cahaya</h2>
+        <h3 className="text-xl font-semibold mb-4">Menuntut ilmu itu wajib bagi setiap muslim, tambah ilmu perluas wawasan disini</h3>        
         {featuredCourses.length > 0 && (
           <div className="relative rounded-lg overflow-hidden h-56">
             {/* Slides */}
@@ -613,14 +669,6 @@ const Home = () => {
             pagination={{ clickable: true }}
             scrollbar={{ draggable: true }}
             modules={[Navigation, Pagination, Scrollbar]}
-            breakpoints={{
-              640: {
-                slidesPerView: 2,
-              },
-              1024: {
-                slidesPerView: 2,
-              },
-            }}
           >
             {sortedCourses.map((course) => {    
               return (

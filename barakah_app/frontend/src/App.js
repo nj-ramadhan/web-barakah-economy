@@ -1,6 +1,9 @@
 // App.js
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+// import LoginPage from './pages/LoginPage';
+// import RegisterPage from './pages/RegisterPage';
+
 // import Navigation from './components/layout/Navigation';
 // import Footer from './components/layout/Footer';
 import Home from './pages/Home';
@@ -39,7 +42,10 @@ const App = () => {
             <Route path="/kelas/:slug" element={<CourseDetail />} />
             <Route path="/ikutkelas/:slug" element={<JoinCoursePage />} />
 
+            {/* <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} /> */}
             <Route path="/konfirmasi-pembayaran" element={<PaymentConfirmation />} />
+
             <Route path="/tentang-kami" element={<AboutUs />} />
             <Route path="/hubungi-kami" element={<ContactUs />} />
           </Routes>

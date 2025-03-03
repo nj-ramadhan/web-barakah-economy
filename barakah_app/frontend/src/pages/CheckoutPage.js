@@ -40,7 +40,7 @@ const CheckoutPage = () => {
     const fetchCampaign = async () => {
       try {
         setLoading(true);
-        const response = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/campaigns/${slug}/`);
+        const response = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/products/${slug}/`);
         setCampaign(response.data);
       } catch (err) {
         console.error('Error fetching campaign:', err);
