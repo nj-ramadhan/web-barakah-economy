@@ -139,7 +139,7 @@ const PaymentConfirmation = () => {
 
       if (response.status === 201) { 
         // Open WhatsApp with prepared message
-        window.open(`https://wa.me/6281312845576?text=${message}`, '_blank');
+        window.open(`https://wa.me/6282118475456?text=${message}`, '_blank');
   
         // Navigate to success page
         navigate('/', {
