@@ -4,16 +4,21 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 // import Navigation from './components/layout/Navigation';
 // import Footer from './components/layout/Footer';
 import Home from './pages/Home';
-import EcommercePage from './pages/EcommercePage';
 import CampaignPage from './pages/CampaignPage';
-import EcoursePage from './pages/EcoursePage';
-import DonationPage from './pages/DonationPage';
 import CampaignDetail from './pages/CampaignDetail';
+import DonationPage from './pages/DonationPage';
+
+import EcommercePage from './pages/EcommercePage';
+import ProductDetail from './pages/ProductDetail';
+import CheckoutPage from './pages/CheckoutPage';
+
+import EcoursePage from './pages/EcoursePage';
+import CourseDetail from './pages/CourseDetail';
+import JoinCoursePage from './pages/JoinCoursePage';
+
 import PaymentConfirmation from './pages/PaymentConfirmation';
 import AboutUs from './pages/AboutUs';
 import ContactUs from './pages/ContactUs';
-// import CampaignSlider from './components/campaigns/CampaignSlider';
-// import CampaignGrid from './components/campaigns/CampaignGrid';
 
 const App = () => {
   return (
@@ -22,11 +27,18 @@ const App = () => {
         <div className="w-full max-w-md bg-white min-h-screen relative">
           <Routes>
             <Route path="/" element={<Home />} />
-            <Route path="/jual-beli" element={<EcommercePage />} />
             <Route path="/donasi" element={<CampaignPage />} />
-            <Route path="/edukasi" element={<EcoursePage />} />
-            <Route path="/donasi/:slug" element={<DonationPage />} />
             <Route path="/kampanye/:slug" element={<CampaignDetail />} />
+            <Route path="/berdonasi/:slug" element={<DonationPage />} />
+
+            <Route path="/jual-beli" element={<EcommercePage />} />
+            <Route path="/produk/:slug" element={<ProductDetail />} />
+            <Route path="/beli/:slug" element={<CheckoutPage />} />
+
+            <Route path="/edukasi" element={<EcoursePage />} />
+            <Route path="/kelas/:slug" element={<CourseDetail />} />
+            <Route path="/ikutkelas/:slug" element={<JoinCoursePage />} />
+
             <Route path="/konfirmasi-pembayaran" element={<PaymentConfirmation />} />
             <Route path="/tentang-kami" element={<AboutUs />} />
             <Route path="/hubungi-kami" element={<ContactUs />} />

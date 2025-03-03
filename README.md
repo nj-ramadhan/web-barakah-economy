@@ -985,3 +985,253 @@ Configure HTTPS with Let's Encrypt
 
 Make sure your domain's DNS is properly configured to point to your VPS IP address. After following these steps, your website should be accessible at https://ypmn-peduli.org.
 If you encounter any specific errors, let me know the error message and I can help you troubleshoot!
+
+
+To deploy both of your websites (ypmn-peduli.org and barakah-economy.com) on a single VPS using Gunicorn and Nginx, follow these detailed instructions. I'll guide you step-by-step, including cloning the repositories, setting up the backend and frontend, configuring Gunicorn and Nginx, and ensuring everything runs smoothly.
+
+1. Prerequisites
+Before starting, ensure your VPS has the following:
+
+Ubuntu/Debian (or any Linux distribution).
+
+Python 3.x installed.
+
+Node.js (for building the React frontend).
+
+Git installed.
+
+Nginx installed.
+
+PostgreSQL/MySQL (or any database you're using).
+
+If not, install them:
+
+bash
+Copy
+sudo apt update
+sudo apt install python3 python3-pip python3-venv nodejs npm git nginx
+2. Clone the Repositories
+Create a directory for your websites and clone the repositories.
+
+bash
+Copy
+sudo mkdir -p /var/www
+cd /var/www
+
+# Clone the first website (ypmn-peduli.org)
+sudo git clone https://github.com/nj-ramadhan/sdi-web-django-react-cf-ypmnpeduli.git ypmn-peduli
+
+# Clone the second website (barakah-economy.com)
+sudo git clone https://github.com/nj-ramadhan/sdi-web-django-react-sa-bae.git barakah-economy
+3. Set Up the Backend (Django)
+For each website, set up the Django backend.
+
+For ypmn-peduli.org:
+bash
+Copy
+cd /var/www/ypmn-peduli/crowdfunding_platform/backend
+
+# Create a virtual environment
+python3 -m venv venv
+source venv/bin/activate
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Set up the database (replace with your database settings)
+python manage.py migrate
+
+# Create a superuser (optional)
+python manage.py createsuperuser
+
+# Test the Django development server
+python manage.py runserver
+For barakah-economy.com:
+bash
+Copy
+cd /var/www/barakah-economy/barakah_app/backend
+
+# Create a virtual environment
+python3 -m venv venv
+source venv/bin/activate
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Set up the database (replace with your database settings)
+python manage.py migrate
+
+# Create a superuser (optional)
+python manage.py createsuperuser
+
+# Test the Django development server
+python manage.py runserver
+4. Set Up the Frontend (React)
+For each website, build the React frontend.
+
+For ypmn-peduli.org:
+bash
+Copy
+cd /var/www/ypmn-peduli/crowdfunding_platform/frontend
+
+# Install dependencies
+npm install
+
+# Build the React app
+npm run build
+For barakah-economy.com:
+bash
+Copy
+cd /var/www/barakah-economy/barakah_app/frontend
+
+# Install dependencies
+npm install
+
+# Build the React app
+npm run build
+5. Configure Gunicorn
+Install Gunicorn and create systemd service files to run the Django apps.
+
+For ypmn-peduli.org:
+Install Gunicorn:
+
+bash
+Copy
+cd /var/www/ypmn-peduli/crowdfunding_platform/backend
+pip install gunicorn
+Create a systemd service file (/etc/systemd/system/ypmn-peduli.service):
+
+ini
+Copy
+[Unit]
+Description=Gunicorn service for ypmn-peduli.org
+After=network.target
+
+[Service]
+User=your_user
+Group=www-data
+WorkingDirectory=/var/www/ypmn-peduli/crowdfunding_platform/backend
+ExecStart=/var/www/ypmn-peduli/crowdfunding_platform/backend/venv/bin/gunicorn --workers 3 --bind unix:/tmp/ypmn-peduli.sock crowdfunding_platform.wsgi:application
+
+[Install]
+WantedBy=multi-user.target
+Enable and start the service:
+
+bash
+Copy
+sudo systemctl enable ypmn-peduli
+sudo systemctl start ypmn-peduli
+For barakah-economy.com:
+Install Gunicorn:
+
+bash
+Copy
+cd /var/www/barakah-economy/barakah_app/backend
+pip install gunicorn
+Create a systemd service file (/etc/systemd/system/barakah-economy.service):
+
+ini
+Copy
+[Unit]
+Description=Gunicorn service for barakah-economy.com
+After=network.target
+
+[Service]
+User=your_user
+Group=www-data
+WorkingDirectory=/var/www/barakah-economy/barakah_app/backend
+ExecStart=/var/www/barakah-economy/barakah_app/backend/venv/bin/gunicorn --workers 3 --bind unix:/tmp/barakah-economy.sock barakah_app.wsgi:application
+
+[Install]
+WantedBy=multi-user.target
+Enable and start the service:
+
+bash
+Copy
+sudo systemctl enable barakah-economy
+sudo systemctl start barakah-economy
+6. Configure Nginx
+Set up Nginx to serve both websites.
+
+For ypmn-peduli.org:
+Create an Nginx configuration file (/etc/nginx/sites-available/ypmn-peduli):
+
+nginx
+Copy
+server {
+    listen 80;
+    server_name ypmn-peduli.org www.ypmn-peduli.org;
+
+    location / {
+        proxy_pass http://unix:/tmp/ypmn-peduli.sock;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    location /static/ {
+        alias /var/www/ypmn-peduli/crowdfunding_platform/backend/static/;
+    }
+
+    location /media/ {
+        alias /var/www/ypmn-peduli/crowdfunding_platform/backend/media/;
+    }
+}
+Enable the site:
+
+bash
+Copy
+sudo ln -s /etc/nginx/sites-available/ypmn-peduli /etc/nginx/sites-enabled/
+For barakah-economy.com:
+Create an Nginx configuration file (/etc/nginx/sites-available/barakah-economy):
+
+nginx
+Copy
+server {
+    listen 80;
+    server_name barakah-economy.com www.barakah-economy.com;
+
+    location / {
+        proxy_pass http://unix:/tmp/barakah-economy.sock;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    location /static/ {
+        alias /var/www/barakah-economy/barakah_app/backend/static/;
+    }
+
+    location /media/ {
+        alias /var/www/barakah-economy/barakah_app/backend/media/;
+    }
+}
+Enable the site:
+
+bash
+Copy
+sudo ln -s /etc/nginx/sites-available/barakah-economy /etc/nginx/sites-enabled/
+Test and reload Nginx:
+
+bash
+Copy
+sudo nginx -t
+sudo systemctl reload nginx
+7. Secure with SSL (Optional but Recommended)
+Use Let's Encrypt to secure your sites:
+
+bash
+Copy
+sudo apt install certbot python3-certbot-nginx
+sudo certbot --nginx -d ypmn-peduli.org -d www.ypmn-peduli.org
+sudo certbot --nginx -d barakah-economy.com -d www.barakah-economy.com
+8. Verify Deployment
+Visit your domains in a browser:
+
+http://ypmn-peduli.org
+
+http://barakah-economy.com
+
+Ensure both websites are working correctly.

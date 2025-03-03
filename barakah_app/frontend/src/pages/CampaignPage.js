@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 import HeaderHome from '../components/layout/HeaderHome'; // Import the Header component
-import Navigation from '../components/layout/Navigation'; // Import the Navigation component
+import NavigationButton from '../components/layout/Navigation'; // Import the Navigation component
 
 const formatIDR = (amount) => {
   return new Intl.NumberFormat('id-ID', {
@@ -294,7 +294,7 @@ const CampaignPage = () => {
       </div>
   
       {/* Bottom Navigation */}
-      <Navigation />
+      <NavigationButton />
     </div>
   );
 };

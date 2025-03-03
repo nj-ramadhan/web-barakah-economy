@@ -6,11 +6,15 @@ from rest_framework.routers import DefaultRouter
 from campaigns.views import CampaignViewSet
 from donations.views import DonationViewSet
 from campaigns.views import UpdateDonationView
+from products.views import ProductViewSet
+from courses.views import CourseViewSet
 # from donations.views import UpdateDonationView
 
 router = DefaultRouter()
 router.register(r'campaigns', CampaignViewSet, basename='campaign')
 router.register(r'donations', DonationViewSet, basename='donation')
+router.register(r'products', ProductViewSet, basename='product')
+router.register(r'courses', CourseViewSet, basename='course')
 
 urlpatterns = [
     path('admin/', admin.site.urls),

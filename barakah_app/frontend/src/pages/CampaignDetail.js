@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import axios from 'axios';
 import Header from '../components/layout/Header';
-import Navigation from '../components/layout/Navigation';
+import NavigationButton from '../components/layout/Navigation';
 import '../styles/Body.css';
 
 const getTimeElapsed = (createdAt) => {
@@ -36,7 +36,7 @@ const formatIDR = (amount) => {
 };
 
 const formatIDRTarget = (amount) => {
-  if (amount <= 0) return '∞';
+  if (amount <= 0) return '\u221E';
   return new Intl.NumberFormat('id-ID', {
     minimumFractionDigits: 0,
   }).format(amount);
@@ -52,7 +52,11 @@ const isCampaignExpired = (deadline) => {
 const formatDeadline = (deadline) => {
   if (!deadline) return 'tidak ada'; // Campaigns with no deadline
   const date = new Date(deadline);
-  return `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
+  return date.toLocaleDateString('id-ID', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  });
 };
 
 const CampaignDetail = () => {
@@ -161,7 +165,7 @@ const CampaignDetail = () => {
               </button>
             ) : (
               <Link
-                to={`/donasi/${campaign.slug || campaign.id}`}
+                to={`/berdonasi/${campaign.slug || campaign.id}`}
                 className="block text-center bg-green-800 text-white py-2 rounded-md text-sm hover:bg-green-900"
               >
                 DONASI SEKARANG
@@ -213,7 +217,7 @@ const CampaignDetail = () => {
                           <strong>{donation.donor_name}</strong>
                         </p>
                         <p className="text-sm text-gray-500">
-                          {new Date(donation.created_at).toLocaleDateString()} - {getTimeElapsed(donation.created_at)}
+                          {new Date(donation.created_at).toLocaleDateString('id-ID', {day: '2-digit',month: '2-digit',year: 'numeric',})} - {getTimeElapsed(donation.created_at)}
                         </p>
                       </div>
                       <p className="text-sm text-gray-500">
@@ -222,7 +226,7 @@ const CampaignDetail = () => {
                     </li>
                   ))
                 ) : (
-                  <li className="py-2 px-4 text-gray-500">Belum ada donasi yang terverifikasi.</li>
+                  <li className="py-2 px-4 text-gray-500">Belum ada berdonasi yang terverifikasi.</li>
                 )}
               </ul>
             </div>
@@ -239,7 +243,7 @@ const CampaignDetail = () => {
                           <strong>{update.title}</strong>
                         </p>
                         <p className="text-sm text-gray-500">
-                          {new Date(update.created_at).toLocaleDateString()} - {getTimeElapsed(update.created_at)}
+                          {new Date(update.created_at).toLocaleDateString('id-ID', {day: '2-digit',month: '2-digit',year: 'numeric',})} - {getTimeElapsed(update.created_at)}
                         </p>
                       </div>
                       <p className="text-sm text-gray-500">{update.description}</p>
@@ -254,7 +258,7 @@ const CampaignDetail = () => {
         </div>
       </div>
 
-      <Navigation />     
+      <NavigationButton />     
     </div>
   );
 };

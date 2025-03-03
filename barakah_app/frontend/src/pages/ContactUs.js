@@ -1,7 +1,7 @@
 // pages/AboutUs.js
 import React from 'react';
 import Header from '../components/layout/Header';
-import Navigation from '../components/layout/Navigation';
+import NavigationButton from '../components/layout/Navigation';
 import '../styles/Body.css';
 
 const ContactUs = () => {
@@ -37,7 +37,7 @@ const ContactUs = () => {
           </div>
         </div>
       </div>
-      <Navigation />
+      <NavigationButton />
     </div>
     
   );

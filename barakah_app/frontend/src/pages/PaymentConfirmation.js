@@ -3,7 +3,7 @@ import React, { useState, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import Header from '../components/layout/Header';
-import Navigation from '../components/layout/Navigation';
+import NavigationButton from '../components/layout/Navigation';
 import '../styles/Body.css';
 
 const getCsrfToken = () => {
@@ -344,7 +344,7 @@ const PaymentConfirmation = () => {
           </div>
         </div>
       </div>
-      <Navigation />
+      <NavigationButton />
     </div>
   );
 };

@@ -3,7 +3,7 @@ import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import '../../styles/Navigation.css'; // Import the CSS file
 
-const Navigation = () => {
+const NavigationButton = () => {
   const location = useLocation(); // Get the current route
 
   return (
@@ -68,4 +68,4 @@ const Navigation = () => {
   );
 };
 
-export default Navigation;
+export default NavigationButton;
