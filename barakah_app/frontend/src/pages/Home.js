@@ -219,8 +219,8 @@ const Home = () => {
 
       {/* Product Slider */}
       <div className="px-4 pt-4" style={{ position: 'relative', zIndex: 10 }}>
-        <h2 className="text-2xl font-bold mb-2">Penuhi kebutuhan harianmu</h2>
-        <h3 className="text-xl font-semibold mb-4">Beli produk Halal, Toyyib dan Barakah disini</h3>        
+        <h3 className="text-2xl font-bold mb-2">Penuhi kebutuhan harianmu</h3>
+        <h4 className="text-xl font-semibold mb-4">Beli produk Halal, Toyyib dan Barakah disini</h4>        
         {featuredProducts.length > 0 && (
           <div className="relative rounded-lg overflow-hidden h-56">
             {/* Slides */}
@@ -407,8 +407,8 @@ const Home = () => {
 
       {/* Featured Campaign Slider */}     
       <div className="px-4 pt-4" style={{ position: 'relative', zIndex: 10 }}>
-        <h2 className="text-2xl font-bold mb-2">Bantu saudaramu, Allah bantu kamu</h2>
-        <h3 className="text-xl font-semibold mb-4">Sisihkan sebagian harta untuk program sosial dan untuk saudara kita yang membutuhkan</h3>           
+        <h3 className="text-2xl font-bold mb-2">Bantu saudaramu, Allah bantu kamu</h3>
+        <h4 className="text-xl font-semibold mb-4">Sisihkan sebagian harta untuk program sosial dan untuk saudara kita yang membutuhkan</h4>           
         {featuredCampaigns.length > 0 && (
           <div className="relative rounded-lg overflow-hidden h-56">
             {/* Slides */}
@@ -600,8 +600,8 @@ const Home = () => {
 
       {/* Course Slider */}
       <div className="px-4 pt-4" style={{ position: 'relative', zIndex: 10 }}>
-        <h2 className="text-2xl font-bold mb-2">Ilmu adalah cahaya</h2>
-        <h3 className="text-xl font-semibold mb-4">Menuntut ilmu itu wajib bagi setiap muslim, tambah ilmu perluas wawasan disini</h3>        
+        <h3 className="text-2xl font-bold mb-2">Ilmu adalah cahaya</h3>
+        <h4 className="text-xl font-semibold mb-4">Menuntut ilmu itu wajib bagi setiap muslim, tambah ilmu perluas wawasan disini</h4>        
         {featuredCourses.length > 0 && (
           <div className="relative rounded-lg overflow-hidden h-56">
             {/* Slides */}

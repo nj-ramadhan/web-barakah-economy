@@ -149,8 +149,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",  # React development server
-    "https://barakah-economy.org",  # Production domain   
-    "https://www.barakah-economy.org", 
+    "https://barakah-economy.com",  # Production domain   
+    "https://www.barakah-economy.com", 
 ]
 
 REST_FRAMEWORK = {
@@ -173,8 +173,8 @@ if DEBUG:
     STATIC_ROOT = BASE_DIR / 'static'
     MEDIA_ROOT = BASE_DIR / 'media'
 else:
-    STATIC_ROOT = '/var/www/sdi-web-django-react-sa-bae/barakah_app/backend/static/'
-    MEDIA_ROOT = '/var/www/sdi-web-django-react-sa-bae/barakah_app/backend/media/'
+    STATIC_ROOT = '/var/www/barakah-economy/barakah_app/backend/static/'
+    MEDIA_ROOT = '/var/www/barakah-economy/barakah_app/backend/media/'
 
 # File upload settings
 FILE_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024  # 10MB limit

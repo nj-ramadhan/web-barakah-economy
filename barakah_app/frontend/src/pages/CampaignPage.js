@@ -166,7 +166,7 @@ const CampaignPage = () => {
                         </button>
                       ) : (
                         <Link
-                          to={`/donasi/${campaign.slug || campaign.id}`}
+                          to={`/berdonasi/${campaign.slug || campaign.id}`}
                           className="block text-center bg-green-800 text-white py-2 rounded-md text-sm hover:bg-green-900"
                         >
                           DONASI SEKARANG
@@ -267,7 +267,7 @@ const CampaignPage = () => {
                       </button>
                     ) : (
                       <Link
-                        to={`/donasi/${campaign.slug || campaign.id}`}
+                        to={`/berdonasi/${campaign.slug || campaign.id}`}
                         className="block text-center bg-green-800 text-white py-2 rounded-md text-sm hover:bg-green-900"
                       >
                         DONASI SEKARANG
