@@ -50,7 +50,7 @@ const PaymentConfirmation = () => {
   const bankAccounts = {
     bsi: {
       name: 'bsi',
-      number: '7139 7434 87',
+      number: '1040 4974 08',
       fullName: 'Bank Syariah Indonesia'
     },
     bjb: {
@@ -194,7 +194,7 @@ const PaymentConfirmation = () => {
                   Salin No Rek.
                 </button>
               </div>
-              <p className="text-gray-600">a.n. Yayasan Peduli Masjid Nusantara</p>
+              <p className="text-gray-600">a.n. Deny Setiawan</p>
             </div>
           </div>
         </div>

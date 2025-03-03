@@ -78,11 +78,11 @@ const CheckoutPage = () => {
       name: 'Bank BSI',
       logo: '/images/bsi-logo.png'
     },
-    {
-      id: 'bjb',
-      name: 'Bank BJB Syariah',
-      logo: '/images/bjb-logo.png'
-    }
+    // {
+    //   id: 'bjb',
+    //   name: 'Bank BJB Syariah',
+    //   logo: '/images/bjb-logo.png'
+    // }
   ];
 
   const handleInputChange = (e) => {
