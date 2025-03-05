@@ -198,5 +198,6 @@ CKEDITOR_CONFIGS = {
         'extraPlugins': 'uploadimage',  # Enable the image upload plugin
         'removePlugins': 'exportpdf',
         'uploadUrl': '/ckeditor/upload/',  # URL for handling image uploads
+        'clipboard_handleImages': False,
     },
 }
