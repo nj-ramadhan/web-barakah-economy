@@ -229,14 +229,12 @@ const DonationPage = () => {
       return;
     }
 
-    // Prepare donation data
-    const amount = selectedAmount === 'custom' ? parseInt(customAmount) : selectedAmount;
-
     // Generate additional amount based on category
     const category = campaign?.category || 'default';
     const { value } = categoryAdditionalAmounts[category];
     const uniqueDigits = value;
-    const finalAmount = Math.floor(amount / 1000) * 1000 + uniqueDigits;
+    const amount = selectedAmount === 'custom' ? parseInt(customAmount) : selectedAmount;
+    const finalAmount = amount + uniqueDigits;
 
     // Set the display name based on hideIdentity checkbox
     const donorName = formData.hideIdentity ? 'Hamba Allah' : formData.fullName;

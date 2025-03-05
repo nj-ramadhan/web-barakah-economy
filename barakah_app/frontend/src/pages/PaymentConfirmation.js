@@ -14,6 +14,16 @@ const getCsrfToken = () => {
   return cookieValue;
 };
 
+const formatDate = (deadline) => {
+  if (!deadline) return 'tidak ada';
+  const date = new Date(deadline);
+  return date.toLocaleDateString('id-ID', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  });
+};
+
 const PaymentConfirmation = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -112,18 +122,18 @@ const PaymentConfirmation = () => {
     donationData.append('transfer_date', formData.transferDate);
     donationData.append('proof_file', selectedFile);
 
-    const message = `*Konfirmasi Donasi BAE Community*%0A
-        ---------------------%0A
-        Bismillah
-
-        Pada hari ini, tanggal ${formData.transferDate}%0A
-        Saya ${formData.accountName} berniat menitipkan donasi pada program ${campaignTitle}%0A
-        dengan nominal Rp ${formattedAmount} melalui Bank ${selectedBankInfo.fullName}%0A
-        
-        Saya mengirim donasi dari Bank ${formData.sourceBank}, No. Rekening ${formData.sourceAccount}%0A
-        ---------------------%0A
-        Bukti transfer telah saya upload, mohon konfirmasi.
-        Semoga dapat menjadi amal ibadah bagi saya dan bermanfaat untuk program serta penerimanya`;
+    const message = `*Donasi BAE Community*%0A
+------------------------------------%0A
+Bismillah..%0A
+Pada hari ini,%0A 
+Tanggal ${formatDate(formData.transferDate)}%0A
+Saya ${formData.accountName} berniat menitipkan donasi pada program ${campaignTitle}%0A
+dengan nominal Rp ${formattedAmount} melalui Bank ${selectedBankInfo.fullName}%0A
+%0A
+Saya mengirim donasi dari Bank ${formData.sourceBank}, dengan No. Rekening ${formData.sourceAccount}%0A
+------------------------------------%0A%0A
+Bukti transfer telah saya upload, mohon konfirmasi.%0A
+Semoga dapat menjadi amal ibadah bagi saya dan bermanfaat untuk program serta penerimanya`;
               
     try {
       // Send a request to create a new donation
