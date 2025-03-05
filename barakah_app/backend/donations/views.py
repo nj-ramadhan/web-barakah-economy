@@ -96,10 +96,9 @@ class UpdateDonationView(APIView):
 
 
 class CreateDonationView(APIView):
-    permission_classes = [IsAuthenticated]
-
     def post(self, request, campaign_slug):
         try:
+            permission_classes = [IsAuthenticated]
             logger.info(f"Incoming request data: {request.data}")  # Log request data
             logger.info(f"Incoming files: {request.FILES}")  # Log uploaded files
 

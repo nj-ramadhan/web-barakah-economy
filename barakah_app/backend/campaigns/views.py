@@ -27,14 +27,4 @@ class CampaignDetailView(APIView):
         campaign = get_object_or_404(Campaign, slug=slug)
         serializer = CampaignSerializer(campaign)
         return Response(serializer.data, status=status.HTTP_200_OK)
-    
-class UpdateDonationView(APIView):
-    def post(self, request, slug):
-        try:
-            donation = Campaign.objects.get(id=slug)
-            amount = request.data.get('amount', 0)
-            donation.current_amount += amount
-            donation.save()
-            return Response({'message': 'Donation updated successfully'}, status=status.HTTP_200_OK)
-        except Campaign.DoesNotExist:
-            return Response({'error': 'Campaign not found'}, status=status.HTTP_404_NOT_FOUND)      
+       

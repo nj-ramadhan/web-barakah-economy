@@ -180,7 +180,7 @@ const PaymentConfirmation = () => {
             <img 
               src={`/images/${bank}-logo.png`}
               alt={selectedBankInfo.name}
-              className="w-20 mr-4"
+              className="w-12 mr-2"
             />
             <div className="flex-1">
               <div className="flex justify-between items-center">

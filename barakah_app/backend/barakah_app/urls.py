@@ -5,7 +5,6 @@ from django.conf.urls.static import static
 from rest_framework.routers import DefaultRouter
 from campaigns.views import CampaignViewSet
 from donations.views import DonationViewSet
-from campaigns.views import UpdateDonationView
 from products.views import ProductViewSet
 from courses.views import CourseViewSet
 
@@ -19,7 +18,6 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include(router.urls)),
     path('api/donations/', include('donations.urls')),
-    path('api/donations/<slug:slug>/update-donation/', UpdateDonationView.as_view(), name='update-donation'),
     path('api/payments/', include('payments.urls')),
 
     path('ckeditor/', include('ckeditor_uploader.urls')),
