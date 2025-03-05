@@ -16,6 +16,7 @@ class Donation(models.Model):
     PAYMENT_METHOD_CHOICES = [
         ('bsi', 'Bank Syariah Indonesia'),
         ('bjb', 'Bank Jabar Banten Syariah'),
+        ('midtrans', 'Midtrans'),
     ]
     
     PAYMENT_STATUS_CHOICES = [

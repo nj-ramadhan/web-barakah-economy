@@ -4,9 +4,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 // import LoginPage from './pages/LoginPage';
 // import RegisterPage from './pages/RegisterPage';
 
-// import Navigation from './components/layout/Navigation';
-// import Footer from './components/layout/Footer';
-import Home from './pages/Home';
+// import Home from './pages/Home';
 import CampaignPage from './pages/CampaignPage';
 import CampaignDetail from './pages/CampaignDetail';
 import DonationPage from './pages/DonationPage';
@@ -20,8 +18,13 @@ import CourseDetail from './pages/CourseDetail';
 import JoinCoursePage from './pages/JoinCoursePage';
 
 import PaymentConfirmation from './pages/PaymentConfirmation';
+import PaymentSuccessPage from './pages/PaymentSuccessPage';
+import PaymentFailedPage from './pages/PaymentFailedPage';
+
 import AboutUs from './pages/AboutUs';
 import ContactUs from './pages/ContactUs';
+
+
 
 const App = () => {
   return (
@@ -29,7 +32,8 @@ const App = () => {
       <div className="min-h-screen bg-gray-200 flex justify-center">
         <div className="w-full max-w-md bg-white min-h-screen relative">
           <Routes>
-            <Route path="/" element={<Home />} />
+            {/* <Route path="/" element={<Home />} /> */}
+            <Route path="/" element={<CampaignPage />} />
             <Route path="/donasi" element={<CampaignPage />} />
             <Route path="/kampanye/:slug" element={<CampaignDetail />} />
             <Route path="/berdonasi/:slug" element={<DonationPage />} />
@@ -45,6 +49,8 @@ const App = () => {
             {/* <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} /> */}
             <Route path="/konfirmasi-pembayaran" element={<PaymentConfirmation />} />
+            <Route path="/pembayaran-berhasil" element={<PaymentSuccessPage />} />
+            <Route path="/pembayaran-gagal" element={<PaymentFailedPage />} />
 
             <Route path="/tentang-kami" element={<AboutUs />} />
             <Route path="/hubungi-kami" element={<ContactUs />} />

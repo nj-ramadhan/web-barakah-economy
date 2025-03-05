@@ -8,7 +8,6 @@ from donations.views import DonationViewSet
 from campaigns.views import UpdateDonationView
 from products.views import ProductViewSet
 from courses.views import CourseViewSet
-# from donations.views import UpdateDonationView
 
 router = DefaultRouter()
 router.register(r'campaigns', CampaignViewSet, basename='campaign')
@@ -21,6 +20,9 @@ urlpatterns = [
     path('api/', include(router.urls)),
     path('api/donations/', include('donations.urls')),
     path('api/donations/<slug:slug>/update-donation/', UpdateDonationView.as_view(), name='update-donation'),
+    path('api/payments/', include('payments.urls')),
+
+    path('ckeditor/', include('ckeditor_uploader.urls')),
     # path('api/auth/', include('accounts.urls')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 

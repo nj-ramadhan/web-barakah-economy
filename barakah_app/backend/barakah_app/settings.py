@@ -44,7 +44,10 @@ INSTALLED_APPS = [
     
     # Third-party apps
     'rest_framework',
+    'rest_framework.authtoken',
     'corsheaders',
+    'ckeditor',
+    'ckeditor_uploader',
     
     # Local apps
     'accounts',
@@ -54,6 +57,13 @@ INSTALLED_APPS = [
     'products',
     'courses',    
 ]
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication',
+    ],
+}
+
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
@@ -166,6 +176,9 @@ REST_FRAMEWORK = {
 
 AUTH_USER_MODEL = 'accounts.User'
 
+CKEDITOR_UPLOAD_PATH = "uploads/"  # Directory where uploaded images will be stored
+CKEDITOR_IMAGE_BACKEND = "pillow"  # Use Pillow for image processing
+
 STATIC_URL = '/static/'
 MEDIA_URL = '/media/'
 
@@ -178,3 +191,11 @@ else:
 
 # File upload settings
 FILE_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024  # 10MB limit
+
+CKEDITOR_CONFIGS = {
+    'default': {
+        'toolbar': 'full',
+        'extraPlugins': 'uploadimage',  # Enable the image upload plugin
+        'uploadUrl': '/ckeditor/upload/',  # URL for handling image uploads
+    },
+}

@@ -89,7 +89,7 @@ const PaymentConfirmation = () => {
         console.error('Failed to copy: ', err);
       });
   };
-
+  
   const handleSubmit = async (e) => {
     e.preventDefault();
     
@@ -112,17 +112,18 @@ const PaymentConfirmation = () => {
     donationData.append('transfer_date', formData.transferDate);
     donationData.append('proof_file', selectedFile);
 
-    const message = `*Konfirmasi Donasi YPMN*%0A
+    const message = `*Konfirmasi Donasi BAE Community*%0A
         ---------------------%0A
-        *Program:* ${campaignTitle}%0A
-        *Jumlah:* Rp ${formattedAmount}%0A
-        *Bank Tujuan:* ${selectedBankInfo.fullName}%0A
-        *Tanggal Transfer:* ${formData.transferDate}%0A
-        *Pengirim:* ${formData.accountName}%0A
-        *Bank Pengirim:* ${formData.sourceBank || '-'}%0A
-        *No. Rekening:* ${formData.sourceAccount || '-'}%0A
+        Bismillah
+
+        Pada hari ini, tanggal ${formData.transferDate}%0A
+        Saya ${formData.accountName} berniat menitipkan donasi pada program ${campaignTitle}%0A
+        dengan nominal Rp ${formattedAmount} melalui Bank ${selectedBankInfo.fullName}%0A
+        
+        Saya mengirim donasi dari Bank ${formData.sourceBank}, No. Rekening ${formData.sourceAccount}%0A
         ---------------------%0A
-        Bukti transfer telah saya upload. Mohon konfirmasi.`;
+        Bukti transfer telah saya upload, mohon konfirmasi.
+        Semoga dapat menjadi amal ibadah bagi saya dan bermanfaat untuk program serta penerimanya`;
               
     try {
       // Send a request to create a new donation
@@ -179,7 +180,7 @@ const PaymentConfirmation = () => {
             <img 
               src={`/images/${bank}-logo.png`}
               alt={selectedBankInfo.name}
-              className="h-10 mr-4"
+              className="w-20 mr-4"
             />
             <div className="flex-1">
               <div className="flex justify-between items-center">
@@ -271,21 +272,6 @@ const PaymentConfirmation = () => {
                   name="transferDate"
                   className="w-full p-3 rounded-lg border border-gray-300 focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none"
                   value={formData.transferDate}
-                  onChange={handleInputChange}
-                  required
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Jumlah Transfer <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="number"
-                  name="amount"
-                  placeholder="Nominal"
-                  className="w-full p-3 rounded-lg border border-gray-300 focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none"
-                  value={formData.amount}
                   onChange={handleInputChange}
                   required
                 />

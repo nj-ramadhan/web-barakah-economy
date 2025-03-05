@@ -2,6 +2,7 @@
 from django.db import models
 from django.db.models import Sum
 from django.utils import timezone
+from ckeditor.fields import RichTextField
 
 class Campaign(models.Model):
     CATEGORY_CHOICES = [
@@ -16,7 +17,7 @@ class Campaign(models.Model):
     ]
     
     title = models.CharField(max_length=100)
-    description = models.TextField()
+    description = RichTextField() 
     category = models.CharField(max_length=20, choices=CATEGORY_CHOICES)
     thumbnail = models.ImageField(upload_to='campaign_images/')
     target_amount = models.DecimalField(max_digits=12, decimal_places=2)
@@ -57,7 +58,7 @@ class Campaign(models.Model):
 class Update(models.Model):
     campaign = models.ForeignKey(Campaign, on_delete=models.CASCADE, related_name='updates')
     title = models.CharField(max_length=100)
-    description = models.TextField()
+    description = RichTextField()
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

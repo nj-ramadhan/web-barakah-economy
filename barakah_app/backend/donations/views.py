@@ -4,6 +4,8 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework import viewsets
+from django.http import JsonResponse
+from midtransclient import Snap
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from campaigns.models import Campaign
@@ -94,9 +96,10 @@ class UpdateDonationView(APIView):
 
 
 class CreateDonationView(APIView):
+    permission_classes = [IsAuthenticated]
+
     def post(self, request, campaign_slug):
         try:
-            permission_classes = [IsAuthenticated]
             logger.info(f"Incoming request data: {request.data}")  # Log request data
             logger.info(f"Incoming files: {request.FILES}")  # Log uploaded files
 
