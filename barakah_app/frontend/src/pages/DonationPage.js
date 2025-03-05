@@ -106,11 +106,11 @@ const DonationPage = () => {
       name: 'Bank BSI',
       logo: '/images/bsi-logo.png',
     },
-    {
-      id: 'midtrans',
-      name: 'Midtrans (Gopay, OVO, etc)',
-      logo: '/images/gopay-logo.png',
-    },
+    // {
+    //   id: 'midtrans',
+    //   name: 'Midtrans (Gopay, OVO, etc)',
+    //   logo: '/images/gopay-logo.png',
+    // },
   ];
 
   const handlePayment = async (token) => {
