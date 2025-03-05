@@ -195,7 +195,7 @@ FILE_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024  # 10MB limit
 CKEDITOR_CONFIGS = {
     'default': {
         'toolbar': 'full',
-        'extraPlugins': 'uploadimage.clipboard',  # Enable the image upload plugin
+        'extraPlugins': 'uploadimage',  # Enable the image upload plugin
         'removePlugins': 'exportpdf',
         'uploadUrl': '/ckeditor/upload/',  # URL for handling image uploads
     },
