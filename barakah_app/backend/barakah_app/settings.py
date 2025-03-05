@@ -27,7 +27,7 @@ DEBUG = True
 if DEBUG:
     ALLOWED_HOSTS = []
 else:
-    ALLOWED_HOSTS = ['barakah-economy.org', 'www.barakah-economy.org']
+    ALLOWED_HOSTS = ['barakah-economy.com', 'www.barakah-economy.com']
 
 # Application definition
 
@@ -195,7 +195,8 @@ FILE_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024  # 10MB limit
 CKEDITOR_CONFIGS = {
     'default': {
         'toolbar': 'full',
-        'extraPlugins': 'uploadimage',  # Enable the image upload plugin
+        'extraPlugins': 'uploadimage.clipboard',  # Enable the image upload plugin
+        'removePlugins': 'exportpdf',
         'uploadUrl': '/ckeditor/upload/',  # URL for handling image uploads
     },
 }
