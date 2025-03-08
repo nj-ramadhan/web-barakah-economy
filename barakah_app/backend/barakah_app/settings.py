@@ -28,6 +28,7 @@ if DEBUG:
     ALLOWED_HOSTS = []
 else:
     ALLOWED_HOSTS = ['barakah-economy.com', 'www.barakah-economy.com']
+    CSRF_TRUSTED_ORIGINS = ['https://barakah-economy.com', 'http://82.29.162.244']
 
 # Application definition
 
