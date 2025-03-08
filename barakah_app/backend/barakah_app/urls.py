@@ -1,5 +1,6 @@
 from django.contrib import admin
 from django.urls import path, include
+from ckeditor_uploader import views as ckeditor_views
 from django.conf import settings
 from django.conf.urls.static import static
 from rest_framework.routers import DefaultRouter
@@ -21,6 +22,7 @@ urlpatterns = [
     path('api/payments/', include('payments.urls')),
 
     path('ckeditor/', include('ckeditor_uploader.urls')),
+    path('ckeditor/upload/', ckeditor_views.upload, name='ckeditor_upload'),
     # path('api/auth/', include('accounts.urls')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
