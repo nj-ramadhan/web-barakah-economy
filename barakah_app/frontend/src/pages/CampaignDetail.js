@@ -1,3 +1,4 @@
+// pages/CampaignDetail.js
 import React, { useState, useEffect } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import axios from 'axios';
@@ -54,6 +55,7 @@ const formatDeadline = (deadline) => {
   });
 };
 
+
 const CampaignDetail = () => {
   const { slug } = useParams();
   const [campaign, setCampaign] = useState(null);
@@ -63,6 +65,8 @@ const CampaignDetail = () => {
   const [activeTab, setActiveTab] = useState('description');
   const [showFullDescription, setShowFullDescription] = useState(false);
   const [showFullUpdates, setShowFullUpdates] = useState({});
+
+  const baseUrl = process.env.REACT_APP_API_BASE_URL;
 
   useEffect(() => {
     const fetchCampaignDetails = async () => {
@@ -107,6 +111,17 @@ const CampaignDetail = () => {
       ...prev,
       [updateId]: !prev[updateId],
     }));
+  };
+
+  const convertRelativeUrlsToAbsolute = (htmlContent, baseUrl) => {
+  // Ensure baseUrl does not have a trailing slash
+    if (baseUrl.endsWith('/')) {
+      baseUrl = baseUrl.slice(0, -1);
+    }
+    // Convert relative image URLs to absolute URLs
+    return htmlContent.replace(/<img[^>]+src="(\/[^"]+)"[^>]*>/g, (match, src) => {
+      return match.replace(src, `${baseUrl}${src}`);
+    });
   };
 
   return (
@@ -216,11 +231,11 @@ const CampaignDetail = () => {
                   <div
                     dangerouslySetInnerHTML={{
                       __html: showFullDescription
-                        ? campaign.description
-                        : campaign.description.substring(0, 300) + '...',
+                        ? convertRelativeUrlsToAbsolute(campaign.description, baseUrl)
+                        : convertRelativeUrlsToAbsolute(campaign.description, baseUrl).substring(0, 200) + '...',
                     }}
                   />
-                  {campaign.description.length > 300 && (
+                  {campaign.description.length > 200 && (
                     <button
                       onClick={toggleDescription}
                       className="text-green-600 mt-2 text-sm"
@@ -288,11 +303,11 @@ const CampaignDetail = () => {
                           <div
                             dangerouslySetInnerHTML={{
                               __html: showFullUpdates[update.id]
-                                ? update.description
-                                : update.description.substring(0, 300) + '...',
+                                ? convertRelativeUrlsToAbsolute(update.description, baseUrl)
+                                : convertRelativeUrlsToAbsolute(update.description, baseUrl).substring(0, 0) + '',
                             }}
                           />
-                          {update.description.length > 300 && (
+                          {update.description.length > 0 && (
                             <button
                               onClick={() => toggleUpdate(update.id)}
                               className="text-green-600 mt-2 text-sm"
