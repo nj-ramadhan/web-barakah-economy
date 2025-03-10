@@ -150,7 +150,7 @@ Semoga dapat menjadi amal ibadah bagi saya dan bermanfaat untuk program serta pe
 
       if (response.status === 201) { 
         // Open WhatsApp with prepared message
-        window.open(`https://wa.me/6282118475456?text=${message}`, '_blank');
+        window.open(`https://wa.me/6285643848251?text=${message}`, '_blank');
   
         // Navigate to success page
         navigate('/', {
