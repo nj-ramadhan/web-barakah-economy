@@ -1,10 +1,11 @@
 // App.js
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-// import LoginPage from './pages/LoginPage';
-// import RegisterPage from './pages/RegisterPage';
+import PrivateRoute from './utils/PrivateRoute';
+import LoginPage from './pages/LoginPage';
+import RegisterPage from './pages/RegisterPage';
 
-// import Home from './pages/Home';
+import Home from './pages/Home';
 import CampaignPage from './pages/CampaignPage';
 import CampaignDetail from './pages/CampaignDetail';
 import DonationPage from './pages/DonationPage';
@@ -32,22 +33,67 @@ const App = () => {
       <div className="min-h-screen bg-gray-200 flex justify-center">
         <div className="w-full max-w-md bg-white min-h-screen relative">
           <Routes>
-            {/* <Route path="/" element={<Home />} /> */}
-            <Route path="/" element={<CampaignPage />} />
+            <Route path="/" element={<Home />} />
             <Route path="/donasi" element={<CampaignPage />} />
             <Route path="/kampanye/:slug" element={<CampaignDetail />} />
             <Route path="/berdonasi/:slug" element={<DonationPage />} />
 
-            <Route path="/jual-beli" element={<EcommercePage />} />
-            <Route path="/produk/:slug" element={<ProductDetail />} />
-            <Route path="/beli/:slug" element={<CheckoutPage />} />
-
-            <Route path="/edukasi" element={<EcoursePage />} />
-            <Route path="/kelas/:slug" element={<CourseDetail />} />
-            <Route path="/ikutkelas/:slug" element={<JoinCoursePage />} />
-
-            {/* <Route path="/login" element={<LoginPage />} />
-            <Route path="/register" element={<RegisterPage />} /> */}
+            {/* <Route path="/jual-beli" element={<EcommercePage />} /> */}
+            <Route
+              path="/jual-beli"
+              element={
+                  <PrivateRoute>
+                      <EcommercePage />
+                  </PrivateRoute>
+              }
+            />
+            {/* <Route path="/produk/:slug" element={<ProductDetail />} /> */}
+            <Route
+              path="/produk/:slug"
+              element={
+                  <PrivateRoute>
+                      <ProductDetail />
+                  </PrivateRoute>
+              }
+            />
+            {/* <Route path="/beli/:slug" element={<CheckoutPage />} /> */}
+            <Route
+              path="/beli/:slug"
+              element={
+                  <PrivateRoute>
+                      <CheckoutPage />
+                  </PrivateRoute>
+              }
+            />
+            {/* <Route path="/edukasi" element={<EcoursePage />} /> */}
+            <Route
+              path="/edukasi"
+              element={
+                  <PrivateRoute>
+                      <EcoursePage />
+                  </PrivateRoute>
+              }
+            />
+            {/* <Route path="/kelas/:slug" element={<CourseDetail />} /> */}
+            <Route
+              path="/kelas/:slug"
+              element={
+                  <PrivateRoute>
+                      <CourseDetail />
+                  </PrivateRoute>
+              }
+            />            
+            {/* <Route path="/ikutkelas/:slug" element={<JoinCoursePage />} /> */}
+            <Route
+              path="/ikutkelas/:slug"
+              element={
+                  <PrivateRoute>
+                      <JoinCoursePage />
+                  </PrivateRoute>
+              }
+            />       
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />
             <Route path="/konfirmasi-pembayaran" element={<PaymentConfirmation />} />
             <Route path="/pembayaran-berhasil" element={<PaymentSuccessPage />} />
             <Route path="/pembayaran-gagal" element={<PaymentFailedPage />} />

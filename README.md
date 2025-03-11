@@ -1235,3 +1235,182 @@ http://ypmn-peduli.org
 http://barakah-economy.com
 
 Ensure both websites are working correctly.
+```
+sdi-web-django-react-sa-bae
+├─ barakah_app
+│  ├─ backend
+│  │  ├─ accounts
+│  │  │  ├─ admin.py
+│  │  │  ├─ apps.py
+│  │  │  ├─ migrations
+│  │  │  │  ├─ 0001_initial.py
+│  │  │  │  └─ __init__.py
+│  │  │  ├─ models.py
+│  │  │  ├─ tests.py
+│  │  │  ├─ views.py
+│  │  │  └─ __init__.py
+│  │  ├─ barakah_app
+│  │  │  ├─ asgi.py
+│  │  │  ├─ settings.py
+│  │  │  ├─ urls.py
+│  │  │  ├─ wsgi.py
+│  │  │  └─ __init__.py
+│  │  ├─ campaigns
+│  │  │  ├─ admin.py
+│  │  │  ├─ apps.py
+│  │  │  ├─ migrations
+│  │  │  │  ├─ 0001_initial.py
+│  │  │  │  ├─ 0002_alter_campaign_description_alter_update_description.py
+│  │  │  │  └─ __init__.py
+│  │  │  ├─ models.py
+│  │  │  ├─ serializers.py
+│  │  │  ├─ tests.py
+│  │  │  ├─ views.py
+│  │  │  └─ __init__.py
+│  │  ├─ courses
+│  │  │  ├─ admin.py
+│  │  │  ├─ apps.py
+│  │  │  ├─ migrations
+│  │  │  │  ├─ 0001_initial.py
+│  │  │  │  ├─ 0002_course_duration_alter_course_category.py
+│  │  │  │  └─ __init__.py
+│  │  │  ├─ models.py
+│  │  │  ├─ serializers.py
+│  │  │  ├─ tests.py
+│  │  │  ├─ views.py
+│  │  │  └─ __init__.py
+│  │  ├─ donations
+│  │  │  ├─ admin.py
+│  │  │  ├─ apps.py
+│  │  │  ├─ migrations
+│  │  │  │  ├─ 0001_initial.py
+│  │  │  │  ├─ 0002_alter_donation_payment_method.py
+│  │  │  │  └─ __init__.py
+│  │  │  ├─ models.py
+│  │  │  ├─ serializers.py
+│  │  │  ├─ signals.py
+│  │  │  ├─ tests.py
+│  │  │  ├─ urls.py
+│  │  │  ├─ views.py
+│  │  │  └─ __init__.py
+│  │  ├─ manage.py
+│  │  ├─ payments
+│  │  │  ├─ admin.py
+│  │  │  ├─ apps.py
+│  │  │  ├─ migrations
+│  │  │  │  └─ __init__.py
+│  │  │  ├─ models.py
+│  │  │  ├─ tests.py
+│  │  │  ├─ urls.py
+│  │  │  ├─ views.py
+│  │  │  └─ __init__.py
+│  │  ├─ products
+│  │  │  ├─ admin.py
+│  │  │  ├─ apps.py
+│  │  │  ├─ migrations
+│  │  │  │  ├─ 0001_initial.py
+│  │  │  │  ├─ 0002_product_stock_product_unit_alter_product_category.py
+│  │  │  │  └─ __init__.py
+│  │  │  ├─ models.py
+│  │  │  ├─ serializers.py
+│  │  │  ├─ tests.py
+│  │  │  ├─ views.py
+│  │  │  └─ __init__.py
+│  │  ├─ requirements.txt
+│  │  └─ transactions
+│  │     ├─ admin.py
+│  │     ├─ apps.py
+│  │     ├─ migrations
+│  │     │  └─ __init__.py
+│  │     ├─ models.py
+│  │     ├─ tests.py
+│  │     ├─ views.py
+│  │     └─ __init__.py
+│  └─ frontend
+│     ├─ package-lock.json
+│     ├─ package.json
+│     ├─ postcss.config.js
+│     ├─ public
+│     │  ├─ favicon.ico
+│     │  ├─ images
+│     │  │  ├─ bjb-logo.png
+│     │  │  ├─ bsi-logo.png
+│     │  │  ├─ drawing.svg
+│     │  │  ├─ favicon.ico
+│     │  │  ├─ gopay-logo.png
+│     │  │  ├─ logo.png
+│     │  │  ├─ logo192.png
+│     │  │  ├─ logo512.png
+│     │  │  ├─ poster-open-volunteer.jpg
+│     │  │  └─ poster.jpg
+│     │  ├─ index.html
+│     │  ├─ logo.png
+│     │  ├─ logo192.png
+│     │  ├─ logo512.png
+│     │  ├─ manifest.json
+│     │  └─ robots.txt
+│     ├─ README.md
+│     ├─ src
+│     │  ├─ App.css
+│     │  ├─ App.js
+│     │  ├─ App.test.js
+│     │  ├─ components
+│     │  │  ├─ campaigns
+│     │  │  │  ├─ CampaignCard.js
+│     │  │  │  ├─ CampaignDetails.js
+│     │  │  │  ├─ CampaignGrid.js
+│     │  │  │  └─ CampaignSlider.js
+│     │  │  ├─ donations
+│     │  │  │  ├─ DonationForm.js
+│     │  │  │  ├─ DonationPresets.js
+│     │  │  │  └─ PaymentMethod.js
+│     │  │  └─ layout
+│     │  │     ├─ Footer.js
+│     │  │     ├─ Header.js
+│     │  │     ├─ HeaderHome.js
+│     │  │     └─ Navigation.js
+│     │  ├─ index.css
+│     │  ├─ index.js
+│     │  ├─ logo.svg
+│     │  ├─ pages
+│     │  │  ├─ AboutUs.js
+│     │  │  ├─ admin
+│     │  │  │  ├─ CampaignList.js
+│     │  │  │  └─ NewCampaign.js
+│     │  │  ├─ CampaignDetail.js
+│     │  │  ├─ CampaignPage.js
+│     │  │  ├─ CheckoutPage.js
+│     │  │  ├─ ContactUs.js
+│     │  │  ├─ CourseDetail.js
+│     │  │  ├─ DonationPage.js
+│     │  │  ├─ EcommercePage.js
+│     │  │  ├─ EcoursePage.js
+│     │  │  ├─ Home.js
+│     │  │  ├─ JoinCoursePage.js
+│     │  │  ├─ LoginPage.js
+│     │  │  ├─ PaymentConfirmation.js
+│     │  │  ├─ PaymentFailedPage.js
+│     │  │  ├─ PaymentSuccessPage.js
+│     │  │  ├─ ProductDetail.js
+│     │  │  └─ RegisterPage.js
+│     │  ├─ reportWebVitals.js
+│     │  ├─ services
+│     │  │  ├─ api.js
+│     │  │  ├─ auth.js
+│     │  │  ├─ campaigns.js
+│     │  │  └─ donations.js
+│     │  ├─ setupTests.js
+│     │  ├─ styles
+│     │  │  ├─ Body.css
+│     │  │  ├─ Footer.css
+│     │  │  ├─ Header.css
+│     │  │  └─ Navigation.css
+│     │  └─ utils
+│     │     ├─ formatters.js
+│     │     └─ validators.js
+│     └─ tailwind.config.js
+├─ LICENSE
+├─ README.md
+└─ sdi-web-django-react-sa-bae.code-workspace
+
+```

@@ -18,15 +18,6 @@ const NavigationButton = () => {
           <span className="material-icons">home</span>
           <span className="text-xs">Beranda</span>
         </Link>
-        {/* <Link
-          to="../jual-beli"
-          className={`flex flex-col items-center ${
-            location.pathname === '/jual-beli' ? 'text-green-600' : 'text-gray-600'
-          }`}
-        >
-          <span className="material-icons">shopping_cart</span>
-          <span className="text-xs">Jual Beli</span>
-        </Link> */}
         <Link
           to="../donasi"
           className={`flex flex-col items-center ${
@@ -36,7 +27,16 @@ const NavigationButton = () => {
           <span className="material-icons">volunteer_activism</span>
           <span className="text-xs">Donasi</span>
         </Link>
-        {/* <Link
+        <Link
+          to="../jual-beli"
+          className={`flex flex-col items-center ${
+            location.pathname === '/jual-beli' ? 'text-green-600' : 'text-gray-600'
+          }`}
+        >
+          <span className="material-icons">shopping_cart</span>
+          <span className="text-xs">Jual Beli</span>
+        </Link>
+        <Link
           to="../edukasi"
           className={`flex flex-col items-center ${
             location.pathname === '/edukasi' ? 'text-green-600' : 'text-gray-600'
@@ -44,24 +44,24 @@ const NavigationButton = () => {
         >
           <span className="material-icons">school</span>
           <span className="text-xs">Edukasi</span>
-        </Link>         */}
+        </Link>        
         <Link
           to="../tentang-kami"
           className={`flex flex-col items-center ${
             location.pathname === '/tentang-kami' ? 'text-green-600' : 'text-gray-600'
           }`}
         >
-          <span className="material-icons">group</span>
+          <span className="material-icons">info</span>
           <span className="text-xs">Tentang</span>
         </Link>
         <Link
-          to="../hubungi-kami"
+          to="../login"
           className={`flex flex-col items-center ${
-            location.pathname === '/hubungi-kami' ? 'text-green-600' : 'text-gray-600'
+            location.pathname === '/login' ? 'text-green-600' : 'text-gray-600'
           }`}
         >
-          <span className="material-icons">phone</span>
-          <span className="text-xs">Kontak</span>
+          <span className="material-icons">person</span>
+          <span className="text-xs">Masuk</span>
         </Link>
       </div>
     </nav>

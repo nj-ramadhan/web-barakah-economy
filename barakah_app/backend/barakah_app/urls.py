@@ -18,6 +18,7 @@ router.register(r'courses', CourseViewSet, basename='course')
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include(router.urls)),
+    path('api/auth/', include('accounts.urls')),
     path('api/donations/', include('donations.urls')),
     path('api/payments/', include('payments.urls')),
 

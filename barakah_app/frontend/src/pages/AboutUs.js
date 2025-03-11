@@ -2,9 +2,12 @@
 import React from 'react';
 import Header from '../components/layout/Header';
 import NavigationButton from '../components/layout/Navigation';
+import { Link, useLocation } from 'react-router-dom';
 import '../styles/Body.css';
 
 const AboutUs = () => {
+  const location = useLocation();
+
   return (
     <div className="body">
       <Header />
@@ -23,7 +26,7 @@ const AboutUs = () => {
           </p>
         </div>
 
-        <div className="bg-white rounded-lg shadow p-4">
+        <div className="bg-white rounded-lg shadow p-4 mb-4">
           <h2 className="text-lg font-semibold mb-2">Visi & Misi</h2>
           <div className="mb-4">
             <h3 className="font-medium mb-1">Visi</h3>
@@ -42,6 +45,19 @@ const AboutUs = () => {
               <li>Kepedulian Sosial dan Amal</li>
             </ul>
           </div>
+        </div>
+        
+        <div className="bg-white rounded-lg shadow p-4">
+          <h2 className="text-lg font-semibold mb-2">Hubungi Kami</h2>
+          <Link
+            to="../hubungi-kami"
+            className={`flex flex-col items-center ${
+              location.pathname === '/hubungi-kami' ? 'text-green-600' : 'text-gray-600'
+            }`}
+          >
+            <span className="material-icons">phone</span>
+            <span className="text-xs">Kontak</span>
+          </Link>
         </div>
       </div>
       <NavigationButton />

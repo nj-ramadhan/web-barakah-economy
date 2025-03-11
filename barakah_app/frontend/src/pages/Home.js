@@ -52,11 +52,8 @@ const Home = () => {
      
   useEffect(() => {
     const fetchFeaturedProducts = async () => {
-      console.log("Fetching featured products..."); // Log fetching action
-
       try {
         const response = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/products`);
-        console.log(response.data); // Log the API response
         const featuredProducts = response.data.filter(product => product.is_featured === true);
         setfeaturedProducts(featuredProducts.slice(0, 4));
       } catch (err) {
@@ -69,7 +66,6 @@ const Home = () => {
     const fetchFeaturedCampaigns = async () => {
       try {
         const response = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/campaigns`);
-        console.log(response.data); // Log the API response
         const featuredCampaigns = response.data.filter(campaign => campaign.is_featured === true);
         setFeaturedCampaigns(featuredCampaigns.slice(0, 4));
       } catch (error) {
@@ -79,11 +75,8 @@ const Home = () => {
     fetchFeaturedCampaigns();
     
     const fetchFeaturedCourses = async () => {
-      console.log("Fetching featured courses..."); // Log fetching action
-
       try {
         const response = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/courses`);
-        console.log(response.data); // Log the API response
         const featuredCourses = response.data.filter(course => course.is_featured === true);
         setFeaturedCourses(featuredCourses.slice(0, 4));
       } catch (err) {
@@ -217,198 +210,10 @@ const Home = () => {
     <div className="body">
       <HeaderHome onSearch={handleSearch} />
 
-      {/* Product Slider */}
+      {/* Campaign Slider */}     
       <div className="px-4 pt-4" style={{ position: 'relative', zIndex: 10 }}>
-        <h3 className="text-2xl font-bold mb-2">Penuhi kebutuhan harianmu</h3>
-        <h4 className="text-xl font-semibold mb-4">Beli produk Halal, Toyyib dan Barakah disini</h4>        
-        {featuredProducts.length > 0 && (
-          <div className="relative rounded-lg overflow-hidden h-56">
-            {/* Slides */}
-            <div className="h-full">
-              {featuredProducts.map((product, index) => {
-                return (
-                  <div 
-                    key={product.id}
-                    className={`absolute top-0 left-0 w-full h-full transition-opacity duration-500 ${
-                      index === activeSlide ? 'opacity-100 z-10' : 'opacity-0 z-0'
-                    }`}
-                  >
-                    <img 
-                      src={product.thumbnail || '/images/peduli-dhuafa-banner.jpg'} 
-                      alt={product.title}
-                      className="w-full h-56 object-cover"
-                      onError={(e) => {
-                        e.target.src = '/images/peduli-dhuafa-banner.jpg';
-                      }}
-                    />
-                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4">
-                      <h2 className="text-white font-bold text-lg">{product.title}</h2>
-                        <Link
-                          to={`/beli/${product.slug || product.id}`}
-                          className="block text-center bg-green-800 text-white py-2 rounded-md text-sm hover:bg-green-900"
-                        >
-                          BELI SEKARANG
-                        </Link>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-            
-            {/* Indicators */}
-            {featuredProducts.length > 0 && (
-              <div className="absolute bottom-2 right-2 flex space-x-2 z-20">
-                {featuredProducts.map((_, index) => (
-                  <button
-                    key={index}
-                    onClick={() => goToSlide(index)}
-                    className={`w-2 h-2 rounded-full ${
-                      index === activeSlide ? 'bg-white' : 'bg-white/50'
-                    }`}
-                  />
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-  
-      {/* Product Swiper */}
-      <div className="px-4 py-4">
-        {loading ? (
-          <div className="flex justify-center items-center py-8">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500"></div>
-          </div>
-        ) : (
-          <div className="swiper-container">
-          <Swiper
-            spaceBetween={16}
-            slidesPerView={2}
-            navigation
-            pagination={{ clickable: true }}
-            scrollbar={{ draggable: true }}
-            modules={[Navigation, Pagination, Scrollbar]}
-          >
-            {sortedProducts.map((product) => {    
-              return (
-                <SwiperSlide key={product.id}>
-                  <div className="bg-white rounded-lg overflow-hidden shadow">
-                    <Link to={`/produk/${product.slug || product.id}`}>
-                      <img
-                        src={product.thumbnail || '/placeholder-image.jpg'}
-                        alt={product.title}
-                        className="w-full h-28 object-cover"
-                        onError={(e) => {
-                          e.target.src = '/placeholder-image.jpg';
-                        }}
-                      />
-                    </Link>
-                    <div className="p-2 mb-6">
-                      <h3 className="text-sm font-medium mb-2 line-clamp-2">{product.title}</h3>
-                      <div className="flex justify-between items-center">
-                          <span className="text-xs text-gray-500 mt-1">
-                            {product.price
-                              ? formatIDR(product.price)
-                              : 'Rp 0'} / {product.unit}
-                          </span>
-                          <span className="text-xs text-gray-500 mt-1">
-                            stok{' '} {product.stock > 0 ? product.stock : 'habis'}
-                          </span>
-                        </div>
-                    </div>
-                  </div>
-                </SwiperSlide>
-              );
-            })}
-          </Swiper>
-        </div>
-        )}
-  
-        {error && (
-          <div className="text-center py-4 text-red-500">
-            {error}
-            <button 
-              onClick={() => fetchProducts(searchQuery)} 
-              className="ml-4 px-4 py-2 bg-green-500 text-white rounded-lg"
-            >
-              Coba Lagi
-            </button>
-          </div>
-        )}
-      </div>
-
-      {/* Product Grid */}
-      <div className="px-4 py-4">
-        {loading ? (
-          <div className="flex justify-center items-center py-8">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500"></div>
-          </div>
-        ) : (
-          <div className="grid grid-cols-2 gap-4">
-            {products.slice(4,10).map(product => {
-              return (
-                <div key={product.id} className="bg-white rounded-lg overflow-hidden shadow">
-                  <Link to={`/produk/${product.slug || product.id}`}>
-                    <img 
-                      src={product.thumbnail || '/placeholder-image.jpg'} 
-                      alt={product.title}
-                      className="w-full h-28 object-cover"
-                      onError={(e) => {
-                        e.target.src = '/placeholder-image.jpg';
-                      }}
-                    />
-                  </Link>
-                  <div className="p-2">
-                    <h3 className="text-sm font-medium mb-2 line-clamp-2">{product.title}</h3>   
-                    <div className="flex justify-between items-center mb-4">
-                      <span className="text-xs text-gray-500 mt-1">
-                        {product.price
-                          ? formatIDR(product.price)
-                          : 'Rp 0'} / {product.unit}
-                      </span>
-                      <span className="text-xs text-gray-500 mt-1">
-                        stok{' '} {product.stock > 0 ? product.stock : 'habis'}
-                      </span>
-                    </div>
-                    {product.stock <= 0 ? (
-                        <button
-                          className="w-full bg-gray-400 text-white py-2 rounded-md text-sm cursor-not-allowed"
-                          disabled
-                        >
-                          BELI SEKARANG
-                        </button>
-                      ) : (
-                        <Link
-                          to={`/beli/${product.slug || product.id}`}
-                          className="block text-center bg-green-800 text-white py-2 rounded-md text-sm hover:bg-green-900"
-                        >
-                          BELI SEKARANG
-                        </Link>
-                      )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-  
-        {error && (
-          <div className="text-center py-4 text-red-500">
-            {error}
-            <button 
-              onClick={() => fetchProducts(searchQuery)} 
-              className="ml-4 px-4 py-2 bg-green-500 text-white rounded-lg"
-            >
-              Coba Lagi
-            </button>
-          </div>
-        )}
-      </div>
-
-      {/* Featured Campaign Slider */}     
-      <div className="px-4 pt-4" style={{ position: 'relative', zIndex: 10 }}>
-        <h3 className="text-2xl font-bold mb-2">Bantu saudaramu, Allah bantu kamu</h3>
-        <h4 className="text-xl font-semibold mb-4">Sisihkan sebagian harta untuk program sosial dan untuk saudara kita yang membutuhkan</h4>           
+        <h1 className="text-lg font-medium mb-2 line-clamp-2">Bantu saudaramu, Allah bantu kamu</h1>
+        <h2 className="text-sm font-medium mb-2 line-clamp-2">Sisihkan sebagian harta untuk program sosial dan untuk saudara kita yang membutuhkan</h2>           
         {featuredCampaigns.length > 0 && (
           <div className="relative rounded-lg overflow-hidden h-56">
             {/* Slides */}
@@ -598,10 +403,208 @@ const Home = () => {
         )}
       </div>
 
+      {/* Product Slider */}
+      <div className="px-4 pt-4" style={{ position: 'relative', zIndex: 10 }}>
+        <h1 className="text-lg font-medium mb-2 line-clamp-2">Penuhi kebutuhan harianmu</h1>
+        <h2 className="text-sm font-medium mb-2 line-clamp-2">Beli produk Halal, Toyyib dan Barakah disini</h2>
+        <div className="mb-3 mt-4 bg-yellow-50 p-3 rounded-lg text-sm border border-yellow-200">
+          <p className="text-yellow-800">
+              <strong>Catatan:</strong> Fitur ini hanya untuk kalangan terbatas, anggota Barakah Economy
+          </p>        
+        </div>        
+        {featuredProducts.length > 0 && (
+          <div className="relative rounded-lg overflow-hidden h-56">
+            {/* Slides */}
+            <div className="h-full">
+              {featuredProducts.map((product, index) => {
+                return (
+                  <div 
+                    key={product.id}
+                    className={`absolute top-0 left-0 w-full h-full transition-opacity duration-500 ${
+                      index === activeSlide ? 'opacity-100 z-10' : 'opacity-0 z-0'
+                    }`}
+                  >
+                    <img 
+                      src={product.thumbnail || '/images/peduli-dhuafa-banner.jpg'} 
+                      alt={product.title}
+                      className="w-full h-56 object-cover"
+                      onError={(e) => {
+                        e.target.src = '/images/peduli-dhuafa-banner.jpg';
+                      }}
+                    />
+                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4">
+                      <h2 className="text-white font-bold text-lg">{product.title}</h2>
+                        <Link
+                          to={`/beli/${product.slug || product.id}`}
+                          className="block text-center bg-green-800 text-white py-2 rounded-md text-sm hover:bg-green-900"
+                        >
+                          BELI SEKARANG
+                        </Link>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            
+            {/* Indicators */}
+            {featuredProducts.length > 0 && (
+              <div className="absolute bottom-2 right-2 flex space-x-2 z-20">
+                {featuredProducts.map((_, index) => (
+                  <button
+                    key={index}
+                    onClick={() => goToSlide(index)}
+                    className={`w-2 h-2 rounded-full ${
+                      index === activeSlide ? 'bg-white' : 'bg-white/50'
+                    }`}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+  
+      {/* Product Swiper */}
+      <div className="px-4 py-4">
+        {loading ? (
+          <div className="flex justify-center items-center py-8">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500"></div>
+          </div>
+        ) : (
+          <div className="swiper-container">
+          <Swiper
+            spaceBetween={16}
+            slidesPerView={2}
+            navigation
+            pagination={{ clickable: true }}
+            scrollbar={{ draggable: true }}
+            modules={[Navigation, Pagination, Scrollbar]}
+          >
+            {sortedProducts.map((product) => {    
+              return (
+                <SwiperSlide key={product.id}>
+                  <div className="bg-white rounded-lg overflow-hidden shadow">
+                    <Link to={`/produk/${product.slug || product.id}`}>
+                      <img
+                        src={product.thumbnail || '/placeholder-image.jpg'}
+                        alt={product.title}
+                        className="w-full h-28 object-cover"
+                        onError={(e) => {
+                          e.target.src = '/placeholder-image.jpg';
+                        }}
+                      />
+                    </Link>
+                    <div className="p-2 mb-6">
+                      <h3 className="text-sm font-medium mb-2 line-clamp-2">{product.title}</h3>
+                      <div className="flex justify-between items-center">
+                          <span className="text-xs text-gray-500 mt-1">
+                            {product.price
+                              ? formatIDR(product.price)
+                              : 'Rp 0'} / {product.unit}
+                          </span>
+                          <span className="text-xs text-gray-500 mt-1">
+                            stok{' '} {product.stock > 0 ? product.stock : 'habis'}
+                          </span>
+                        </div>
+                    </div>
+                  </div>
+                </SwiperSlide>
+              );
+            })}
+          </Swiper>
+        </div>
+        )}
+  
+        {error && (
+          <div className="text-center py-4 text-red-500">
+            {error}
+            <button 
+              onClick={() => fetchProducts(searchQuery)} 
+              className="ml-4 px-4 py-2 bg-green-500 text-white rounded-lg"
+            >
+              Coba Lagi
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Product Grid */}
+      <div className="px-4 py-4">
+        {loading ? (
+          <div className="flex justify-center items-center py-8">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500"></div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 gap-4">
+            {products.slice(4,10).map(product => {
+              return (
+                <div key={product.id} className="bg-white rounded-lg overflow-hidden shadow">
+                  <Link to={`/produk/${product.slug || product.id}`}>
+                    <img 
+                      src={product.thumbnail || '/placeholder-image.jpg'} 
+                      alt={product.title}
+                      className="w-full h-28 object-cover"
+                      onError={(e) => {
+                        e.target.src = '/placeholder-image.jpg';
+                      }}
+                    />
+                  </Link>
+                  <div className="p-2">
+                    <h3 className="text-sm font-medium mb-2 line-clamp-2">{product.title}</h3>   
+                    <div className="flex justify-between items-center mb-4">
+                      <span className="text-xs text-gray-500 mt-1">
+                        {product.price
+                          ? formatIDR(product.price)
+                          : 'Rp 0'} / {product.unit}
+                      </span>
+                      <span className="text-xs text-gray-500 mt-1">
+                        stok{' '} {product.stock > 0 ? product.stock : 'habis'}
+                      </span>
+                    </div>
+                    {product.stock <= 0 ? (
+                        <button
+                          className="w-full bg-gray-400 text-white py-2 rounded-md text-sm cursor-not-allowed"
+                          disabled
+                        >
+                          BELI SEKARANG
+                        </button>
+                      ) : (
+                        <Link
+                          to={`/beli/${product.slug || product.id}`}
+                          className="block text-center bg-green-800 text-white py-2 rounded-md text-sm hover:bg-green-900"
+                        >
+                          BELI SEKARANG
+                        </Link>
+                      )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+  
+        {error && (
+          <div className="text-center py-4 text-red-500">
+            {error}
+            <button 
+              onClick={() => fetchProducts(searchQuery)} 
+              className="ml-4 px-4 py-2 bg-green-500 text-white rounded-lg"
+            >
+              Coba Lagi
+            </button>
+          </div>
+        )}
+      </div>
+
       {/* Course Slider */}
       <div className="px-4 pt-4" style={{ position: 'relative', zIndex: 10 }}>
-        <h3 className="text-2xl font-bold mb-2">Ilmu adalah cahaya</h3>
-        <h4 className="text-xl font-semibold mb-4">Menuntut ilmu itu wajib bagi setiap muslim, tambah ilmu perluas wawasan disini</h4>        
+        <h1 className="text-lg font-medium mb-2 line-clamp-2">Menuntut ilmu wajib bagi setiap muslim</h1>
+        <h2 className="text-sm font-medium mb-2 line-clamp-2">Tingkatkan wawasan, tambah ilmu dan keterampilan disini</h2>
+        <div className="mb-3 mt-4 bg-yellow-50 p-3 rounded-lg text-sm border border-yellow-200">
+          <p className="text-yellow-800">
+              <strong>Catatan:</strong> Fitur ini hanya untuk kalangan terbatas, anggota Barakah Economy
+          </p>        
+        </div>
         {featuredCourses.length > 0 && (
           <div className="relative rounded-lg overflow-hidden h-56">
             {/* Slides */}

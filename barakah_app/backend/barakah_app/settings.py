@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 
 import os
 from pathlib import Path
+from datetime import timedelta
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -47,6 +48,8 @@ INSTALLED_APPS = [
     # Third-party apps
     'rest_framework',
     'rest_framework.authtoken',
+    'rest_framework_simplejwt',
+    'rest_framework_simplejwt.token_blacklist',    
     'corsheaders',
     'ckeditor',
     'ckeditor_uploader',
@@ -74,6 +77,8 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = 'barakah_app.urls'
+
+GOOGLE_CLIENT_ID = '786832881211-423qd0vq8sl72e844l697rkop4j32nho.apps.googleusercontent.com'
 
 TEMPLATES = [
     {
@@ -167,6 +172,13 @@ REST_FRAMEWORK = {
     ],    
 }
 
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+    'ROTATE_REFRESH_TOKENS': True,
+    'BLACKLIST_AFTER_ROTATION': True,    
+}
+
 AUTH_USER_MODEL = 'accounts.User'
 
 STATIC_URL = '/static/'
@@ -220,5 +232,10 @@ LOGGING = {
             'level': 'DEBUG',
             'propagate': True,
         },
+        'accounts': {  # Add a logger for your 'accounts' app
+            'handlers': ['console', 'file'],
+            'level': 'DEBUG',  # Set to DEBUG to capture all logs
+            'propagate': True,
+        },        
     },
 }
