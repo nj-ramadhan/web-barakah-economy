@@ -27,20 +27,15 @@ SECRET_KEY = 'django-insecure-4ch6(*qpo)!6)c4^^-+cth=)9*kfr9n)@wxez$*%a)*^^@$h+_
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 if DEBUG:
-    ALLOWED_HOSTS = []
+    ALLOWED_HOSTS = ['*']
 else:
     ALLOWED_HOSTS = [
-        'http://localhost:3000',
-        'http://82.29.162.244',
-        'https://82.29.162.244',
-        'http://barakah-economy.com', 
-        'https://barakah-economy.com', 
-        'http://www.barakah-economy.com',
-        'https://www.barakah-economy.com'
+        '82.29.162.244',
+        'barakah-economy.com',
+        'www.barakah-economy.com'
         ]
     
     CSRF_TRUSTED_ORIGINS = [
-        'http://localhost:3000',
         'http://82.29.162.244',
         'https://82.29.162.244',
         'http://barakah-economy.com', 
