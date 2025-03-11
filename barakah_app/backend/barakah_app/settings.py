@@ -29,8 +29,25 @@ DEBUG = True
 if DEBUG:
     ALLOWED_HOSTS = []
 else:
-    ALLOWED_HOSTS = ['barakah-economy.com', 'www.barakah-economy.com']
-    CSRF_TRUSTED_ORIGINS = ['https://barakah-economy.com', 'http://82.29.162.244']
+    ALLOWED_HOSTS = [
+        'http://localhost:3000',
+        'http://82.29.162.244',
+        'https://82.29.162.244',
+        'http://barakah-economy.com', 
+        'https://barakah-economy.com', 
+        'http://www.barakah-economy.com',
+        'https://www.barakah-economy.com'
+        ]
+    
+    CSRF_TRUSTED_ORIGINS = [
+        'http://localhost:3000',
+        'http://82.29.162.244',
+        'https://82.29.162.244',
+        'http://barakah-economy.com', 
+        'https://barakah-economy.com', 
+        'http://www.barakah-economy.com',
+        'https://www.barakah-economy.com'
+        ]
 
 # Application definition
 
@@ -156,9 +173,13 @@ USE_TZ = True
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",  # React development server
-    "https://barakah-economy.com",  # Production domain   
-    "https://www.barakah-economy.com", 
+        'http://localhost:3000',
+        'http://82.29.162.244',
+        'https://82.29.162.244',
+        'http://barakah-economy.com', 
+        'https://barakah-economy.com', 
+        'http://www.barakah-economy.com',
+        'https://www.barakah-economy.com'
 ]
 
 REST_FRAMEWORK = {
