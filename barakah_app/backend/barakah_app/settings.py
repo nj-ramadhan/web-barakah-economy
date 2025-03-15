@@ -68,11 +68,22 @@ INSTALLED_APPS = [
     
     # Local apps
     'accounts',
+    'profiles',
     'campaigns',
     'donations',
     'payments',
+
     'products',
-    'courses',    
+    'wishlists',
+    'carts',
+    'orders',
+    'coupons',
+    'shippings',
+    'reviews',
+    
+
+    'courses',  
+        
 ]
 
 MIDDLEWARE = [
@@ -184,7 +195,8 @@ REST_FRAMEWORK = {
         'rest_framework.authentication.TokenAuthentication',
     ],
     'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.AllowAny',  # Adjust as needed
+        'rest_framework.permissions.AllowAny',
+        # 'rest_framework.permissions.IsAuthenticated',
     ],    
 }
 
@@ -252,6 +264,11 @@ LOGGING = {
             'handlers': ['console', 'file'],
             'level': 'DEBUG',  # Set to DEBUG to capture all logs
             'propagate': True,
-        },        
+        },   
+        'donations': {  # Add a logger for your 'accounts' app
+            'handlers': ['console', 'file'],
+            'level': 'DEBUG',  # Set to DEBUG to capture all logs
+            'propagate': True,
+        },                
     },
 }

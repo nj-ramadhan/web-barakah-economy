@@ -10,18 +10,33 @@ from django.conf import settings
 from google.oauth2 import id_token
 from google.auth.transport import requests
 import logging
-
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('accounts')
 
 User = get_user_model()
+
+class CustomTokenObtainPairView(TokenObtainPairView):
+    def post(self, request, *args, **kwargs):
+        # Call the parent class's post method to get the token response
+        response = super().post(request, *args, **kwargs)
+        
+        # Get the user from the validated data in the serializer
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.user
+        
+        # Add user details to the response
+        response.data['id'] = user.id
+        response.data['username'] = user.username
+        response.data['email'] = user.email        
+        return response
+    
+class LoginView(CustomTokenObtainPairView):
+    serializer_class = CustomTokenObtainPairSerializer
 
 class RegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
     serializer_class = UserRegistrationSerializer
     permission_classes = [permissions.AllowAny]
-
-class LoginView(TokenObtainPairView):
-    serializer_class = CustomTokenObtainPairSerializer
 
 class LogoutView(APIView):
     def post(self, request):
@@ -46,13 +61,20 @@ class GoogleLoginView(APIView):
             logger.info(f"Decoded token: {id_info}")
 
             email = id_info.get('email')
+            name = id_info.get('name')
+            first_name = id_info.get('given_name')
+            last_name = id_info.get('family_name')
+            logger.info(f"name: {name}")
+            username = str(name).replace(" ", "_").lower()
+            logger.info(f"email: {email}, name: {username}")
             if not email:
                 return Response({'error': 'Email not found in token'}, status=status.HTTP_400_BAD_REQUEST)
 
             user, created = User.objects.get_or_create(
+                username=username,
                 email=email,
                 defaults={
-                    'username': email,
+                    'username': username,
                     'email': email,
                 }
             )

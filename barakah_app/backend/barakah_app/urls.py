@@ -19,12 +19,20 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include(router.urls)),
     path('api/auth/', include('accounts.urls')),
+    path('api/profiles/', include('profiles.urls')),
     path('api/donations/', include('donations.urls')),
     path('api/payments/', include('payments.urls')),
 
+    path('api/wishlists/', include('wishlists.urls')),
+    path('api/carts/', include('carts.urls')),
+    path('api/orders/', include('orders.urls')),
+    path('api/coupons/', include('coupons.urls')),
+    path('api/shippings/', include('shippings.urls')),
+    path('api/reviews/', include('reviews.urls')),
+
     path('ckeditor/', include('ckeditor_uploader.urls')),
     path('ckeditor/upload/', ckeditor_views.upload, name='ckeditor_upload'),
-    # path('api/auth/', include('accounts.urls')),
+    
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 if settings.DEBUG:

@@ -8,11 +8,11 @@ User = get_user_model()
 class UserRegistrationSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, validators=[validate_password])
     phone = serializers.CharField(max_length=15, required=False, allow_blank=True)
-    is_anonymous_donor = serializers.BooleanField(default=False)
+    is_verified_member = serializers.BooleanField(default=False)
 
     class Meta:
         model = User
-        fields = ('username', 'email', 'password', 'phone', 'is_anonymous_donor')
+        fields = ('username', 'email', 'password', 'phone')
 
     def create(self, validated_data):
         user = User.objects.create_user(
@@ -20,7 +20,6 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
             email=validated_data['email'],
             password=validated_data['password'],
             phone=validated_data.get('phone', ''),
-            is_anonymous_donor=validated_data.get('is_anonymous_donor', False)
         )
         return user
 
@@ -33,7 +32,7 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     @classmethod
     def get_token(cls, user):
         token = super().get_token(user)
+        token['user_id'] = user.id
         token['username'] = user.username
         token['email'] = user.email
-        token['is_anonymous_donor'] = user.is_anonymous_donor
         return token

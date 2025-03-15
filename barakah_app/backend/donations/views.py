@@ -12,7 +12,7 @@ from campaigns.models import Campaign
 from .models import Donation
 from .serializers import DonationSerializer
 import logging
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('donations')
 
 class DonationViewSet(viewsets.ModelViewSet):
     queryset = Donation.objects.filter(payment_status='pending')

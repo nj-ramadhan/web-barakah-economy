@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import Header from '../components/layout/Header';
 import NavigationButton from '../components/layout/Navigation';
@@ -7,10 +7,12 @@ import '../styles/Body.css';
 
 const ProductDetail = () => {
   const { slug } = useParams(); // Get the slug from the URL
+  const navigate = useNavigate();
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('description'); // State to manage active tab
+  const [quantity, setQuantity] = useState(1); // State to manage product quantity
 
   useEffect(() => {
     const fetchProductDetail = async () => {
@@ -30,6 +32,39 @@ const ProductDetail = () => {
     fetchProductDetail();
   }, [slug]);
 
+  const addToCart = async () => {
+    try {
+      const user = JSON.parse(localStorage.getItem('user'));
+      if (!user || !user.access) {
+        console.error('User not logged in');
+        navigate('/login'); // Redirect to login page if not logged in
+        return;
+      }
+
+      await axios.post(`${process.env.REACT_APP_API_BASE_URL}/api/carts/cart/`, {
+        product_id: product.id,
+        quantity: quantity
+      }, {
+        headers: {
+          Authorization: `Bearer ${user.access}`
+        }
+      });
+
+      alert('Product added to cart successfully!');
+    } catch (error) {
+      console.error('Error adding product to cart:', error);
+      alert('Failed to add product to cart');
+    }
+  };
+
+  const handleIncrement = () => {
+    setQuantity(prevQuantity => Math.min(prevQuantity + 1, product.stock));
+  };
+
+  const handleDecrement = () => {
+    setQuantity(prevQuantity => Math.max(prevQuantity - 1, 1));
+  };
+
   if (loading) {
     return <div className="text-center py-8">Loading...</div>;
   }
@@ -42,7 +77,7 @@ const ProductDetail = () => {
     <div className="body">
       <Header />
 
-      {/* Campaign Details */}
+      {/* Product Details */}
       <div className="px-4 py-4">
         <div className="bg-white rounded-lg overflow-hidden shadow">
           <img
@@ -55,12 +90,30 @@ const ProductDetail = () => {
           />
           <div className="p-4">
             <h1 className="text-xl font-bold mb-2">{product.title}</h1>
-            <Link
-              to={`/beli/${product.slug || product.id}`}
+            <p className="text-gray-600 mb-2">Stock: {product.stock}</p>
+            <div className="flex items-center mb-4">
+              <button
+                onClick={handleDecrement}
+                className="bg-gray-300 text-gray-700 px-2 py-1 rounded-lg hover:bg-gray-400"
+                disabled={quantity === 1}
+              >
+                -
+              </button>
+              <span className="mx-2">{quantity}</span>
+              <button
+                onClick={handleIncrement}
+                className="bg-gray-300 text-gray-700 px-2 py-1 rounded-lg hover:bg-gray-400"
+                disabled={quantity >= product.stock}
+              >
+                +
+              </button>
+            </div>
+            <button
+              onClick={addToCart}
               className="block text-center bg-green-800 text-white py-2 rounded-md text-sm hover:bg-green-900"
             >
-              BELI SEKARANG
-            </Link>
+              Tambahkan ke Keranjang
+            </button>
           </div>    
         </div>
       </div>

@@ -5,14 +5,20 @@ import PrivateRoute from './utils/PrivateRoute';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 
+import ProfilePage from './pages/ProfilePage';
+import ProfileEditPage from './pages/ProfileEditPage';
+
 import Home from './pages/Home';
 import CampaignPage from './pages/CampaignPage';
 import CampaignDetail from './pages/CampaignDetail';
 import DonationPage from './pages/DonationPage';
 
 import EcommercePage from './pages/EcommercePage';
-import ProductDetail from './pages/ProductDetail';
-import CheckoutPage from './pages/CheckoutPage';
+import WishlistPage from './pages/EcommerceWishlistPage';
+import CartPage from './pages/EcommerceCartPage';
+import OrderHistoryPage from './pages/EcommerceOrderHistoryPage';
+import ProductDetail from './pages/EcommerceProductDetail';
+import CheckoutPage from './pages/EcommerceCheckoutPage';
 
 import EcoursePage from './pages/EcoursePage';
 import CourseDetail from './pages/CourseDetail';
@@ -25,81 +31,37 @@ import PaymentFailedPage from './pages/PaymentFailedPage';
 import AboutUs from './pages/AboutUs';
 import ContactUs from './pages/ContactUs';
 
-
-
 const App = () => {
   return (
     <Router>
       <div className="min-h-screen bg-gray-200 flex justify-center">
         <div className="w-full max-w-md bg-white min-h-screen relative">
           <Routes>
+            {/* Public Routes */}
             <Route path="/" element={<Home />} />
             <Route path="/donasi" element={<CampaignPage />} />
             <Route path="/kampanye/:slug" element={<CampaignDetail />} />
             <Route path="/berdonasi/:slug" element={<DonationPage />} />
-
-            {/* <Route path="/jual-beli" element={<EcommercePage />} /> */}
-            <Route
-              path="/jual-beli"
-              element={
-                  <PrivateRoute>
-                      <EcommercePage />
-                  </PrivateRoute>
-              }
-            />
-            {/* <Route path="/produk/:slug" element={<ProductDetail />} /> */}
-            <Route
-              path="/produk/:slug"
-              element={
-                  <PrivateRoute>
-                      <ProductDetail />
-                  </PrivateRoute>
-              }
-            />
-            {/* <Route path="/beli/:slug" element={<CheckoutPage />} /> */}
-            <Route
-              path="/beli/:slug"
-              element={
-                  <PrivateRoute>
-                      <CheckoutPage />
-                  </PrivateRoute>
-              }
-            />
-            {/* <Route path="/edukasi" element={<EcoursePage />} /> */}
-            <Route
-              path="/edukasi"
-              element={
-                  <PrivateRoute>
-                      <EcoursePage />
-                  </PrivateRoute>
-              }
-            />
-            {/* <Route path="/kelas/:slug" element={<CourseDetail />} /> */}
-            <Route
-              path="/kelas/:slug"
-              element={
-                  <PrivateRoute>
-                      <CourseDetail />
-                  </PrivateRoute>
-              }
-            />            
-            {/* <Route path="/ikutkelas/:slug" element={<JoinCoursePage />} /> */}
-            <Route
-              path="/ikutkelas/:slug"
-              element={
-                  <PrivateRoute>
-                      <JoinCoursePage />
-                  </PrivateRoute>
-              }
-            />       
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/konfirmasi-pembayaran" element={<PaymentConfirmation />} />
             <Route path="/pembayaran-berhasil" element={<PaymentSuccessPage />} />
             <Route path="/pembayaran-gagal" element={<PaymentFailedPage />} />
-
             <Route path="/tentang-kami" element={<AboutUs />} />
             <Route path="/hubungi-kami" element={<ContactUs />} />
+
+            {/* Private Routes */}
+            <Route path="/profile" element={<PrivateRoute><ProfilePage /></PrivateRoute>} />
+            <Route path="/profile/edit" element={<PrivateRoute><ProfileEditPage /></PrivateRoute>} />
+            <Route path="/jual-beli" element={<PrivateRoute><EcommercePage /></PrivateRoute>} />
+            <Route path="/produk/:slug" element={<PrivateRoute><ProductDetail /></PrivateRoute>} />
+            <Route path="/keinginan" element={<PrivateRoute><WishlistPage /></PrivateRoute>} />
+            <Route path="/keranjang" element={<PrivateRoute><CartPage /></PrivateRoute>} />
+            <Route path="/bayar-belanja" element={<PrivateRoute><CheckoutPage /></PrivateRoute>} />
+            <Route path="/riwayat-belanja" element={<PrivateRoute><OrderHistoryPage /></PrivateRoute>} />
+            <Route path="/edukasi" element={<PrivateRoute><EcoursePage /></PrivateRoute>} />
+            <Route path="/kelas/:slug" element={<PrivateRoute><CourseDetail /></PrivateRoute>} />
+            <Route path="/ikutkelas/:slug" element={<PrivateRoute><JoinCoursePage /></PrivateRoute>} />
           </Routes>
         </div>
       </div>

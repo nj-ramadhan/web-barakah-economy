@@ -24,7 +24,14 @@ const LoginPage = () => {
         e.preventDefault();
         try {
             const response = await authService.login(username, password);
-            localStorage.setItem('user', JSON.stringify(response));
+            localStorage.setItem('user', JSON.stringify({
+                access: response.access,
+                refresh: response.refresh,
+                id: response.id, // Ensure this is included in the backend response
+                username: response.username,
+                email: response.email,
+            }));
+            console.log(response);
             setIsLoggedIn(true);
             alert('Berhasil Login!');
             navigate('/');
@@ -37,7 +44,13 @@ const LoginPage = () => {
     const handleGoogleLogin = async (credentialResponse) => {
         try {
             const response = await authService.googleLogin(credentialResponse.credential);
-            localStorage.setItem('user', JSON.stringify(response));
+            localStorage.setItem('user', JSON.stringify({
+                access: response.access,
+                refresh: response.refresh,
+                id: response.id, // Ensure this is included in the backend response
+                username: response.username,
+                email: response.email,
+            }));
             setIsLoggedIn(true);
             alert('Berhasil Login dengan akun google!');
             navigate('/');
@@ -62,12 +75,36 @@ const LoginPage = () => {
                     <div className="bg-white rounded-lg shadow overflow-hidden mt-6">
                         <div className="p-4">
                             <h3 className="text-xl font-bold mb-4">Kamu sudah Login</h3>
-                            <button
-                                onClick={handleLogout}
-                                className="w-full bg-red-600 hover:bg-red-700 text-white py-3 rounded-lg font-medium flex items-center justify-center"
-                            >
-                                Logout
-                            </button>
+                            <div className="flex flex-col space-y-4">
+                                <Link
+                                    to="/profile"
+                                    className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-medium flex items-center justify-left"
+                                >
+                                    <span className="material-icons ml-4 mr-2">person</span>
+                                    Profile
+                                </Link>
+                                <Link
+                                    to="/keinginan" // Wishlist page
+                                    className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-medium flex items-center justify-left"
+                                >
+                                    <span className="material-icons ml-4 mr-2">favorite</span>
+                                    Produk Incaran 
+                                </Link>
+                                <Link
+                                    to="/keranjang" // Cart page
+                                    className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-medium flex items-center justify-left"
+                                >
+                                    <span className="material-icons ml-4 mr-2">shopping_cart</span>
+                                    Keranjang Belanja
+                                </Link>
+                                <button
+                                    onClick={handleLogout}
+                                    className="w-full bg-red-600 hover:bg-red-700 text-white py-3 rounded-lg font-medium flex items-center justify-left"
+                                >
+                                    <span className="material-icons ml-4 mr-2">logout</span>
+                                    Logout
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
