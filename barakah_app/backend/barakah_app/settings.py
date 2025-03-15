@@ -101,7 +101,9 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'barakah_app.urls'
 
-GOOGLE_CLIENT_ID = '786832881211-423qd0vq8sl72e844l697rkop4j32nho.apps.googleusercontent.com'
+SECURE_SSL_REDIRECT = True
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
 
 TEMPLATES = [
     {
