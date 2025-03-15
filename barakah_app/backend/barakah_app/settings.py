@@ -13,6 +13,15 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 import os
 from pathlib import Path
 from datetime import timedelta
+import environ
+
+# Initialize environment variables
+env = environ.Env()
+environ.Env.read_env()  # Reads the .env file
+
+# Load the GOOGLE_CLIENT_ID from the environment variables
+GOOGLE_CLIENT_ID = env('GOOGLE_CLIENT_ID')
+GOOGLE_CLIENT_SECRET= env('GOOGLE_CLIENT_SECRET')
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -36,8 +45,8 @@ else:
         ]
     
     CSRF_TRUSTED_ORIGINS = [
-        'http://82.29.162.244',
-        'https://82.29.162.244',
+        'http://localhost:3000',
+        'https://localhost:3000',
         'http://barakah-economy.com', 
         'https://barakah-economy.com', 
         'http://www.barakah-economy.com',
@@ -56,6 +65,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django_extensions',
     
     # Third-party apps
     'rest_framework',
@@ -81,7 +91,6 @@ INSTALLED_APPS = [
     'shippings',
     'reviews',
     
-
     'courses',  
         
 ]
@@ -101,6 +110,7 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'barakah_app.urls'
 
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 SECURE_SSL_REDIRECT = True
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
@@ -180,14 +190,40 @@ USE_TZ = True
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-CORS_ALLOWED_ORIGINS = [
+SECURE_CROSS_ORIGIN_OPENER_POLICY = 'unsafe-none'
+CORS_ALLOW_CREDENTIALS = True
+
+if DEBUG:
+    CORS_ALLOW_ALL_ORIGINS = True
+else:
+    CORS_ALLOWED_ORIGINS = [
         'http://localhost:3000',
-        'http://82.29.162.244',
-        'https://82.29.162.244',
+        'https://localhost:3000',
         'http://barakah-economy.com', 
         'https://barakah-economy.com', 
         'http://www.barakah-economy.com',
         'https://www.barakah-economy.com'
+    ]
+
+CORS_ALLOW_METHODS = [
+    'GET',
+    'POST',
+    'PUT',
+    'PATCH',
+    'DELETE',
+    'OPTIONS',
+]
+
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
 ]
 
 REST_FRAMEWORK = {

@@ -52,7 +52,6 @@ const LoginPage = () => {
                         navigate('/login');
                     }
                 } catch (error) {
-                    console.error('Failed to fetch profile:', error);
                     alert('Failed to fetch profile data');
                 }
             };
@@ -74,8 +73,6 @@ const LoginPage = () => {
             };
             localStorage.setItem('user', JSON.stringify(userProfile));
             setIsLoggedIn(true);
-            // const profileData = await authService.getProfile(userProfile.id); // Fetch profile data
-            // setProfile(profileData);
             alert('Berhasil Login!');
             navigate('/');
         } catch (error) {
@@ -96,8 +93,6 @@ const LoginPage = () => {
             };
             localStorage.setItem('user', JSON.stringify(userProfile));
             setIsLoggedIn(true);
-            // const profileData = await authService.getProfile(userProfile.id); // Fetch profile data
-            // setProfile(profileData);
             alert('Berhasil Login dengan akun google!');
             navigate('/');
         } catch (error) {

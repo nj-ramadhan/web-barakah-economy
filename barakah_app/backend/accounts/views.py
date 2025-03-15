@@ -71,7 +71,6 @@ class GoogleLoginView(APIView):
                 return Response({'error': 'Email not found in token'}, status=status.HTTP_400_BAD_REQUEST)
 
             user, created = User.objects.get_or_create(
-                username=username,
                 email=email,
                 defaults={
                     'username': username,
@@ -86,7 +85,13 @@ class GoogleLoginView(APIView):
             return Response({
                 'access': access,
                 'refresh': str(refresh),
+                'id': user.id,
+                'username': user.username,
+                'email': user.email,
             }, status=status.HTTP_200_OK)
         except ValueError as e:
             logger.error(f"Token verification failed: {e}")
             return Response({'error': 'Invalid token'}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            logger.error(f"Error during Google login: {e}")
+            return Response({'error': 'An error occurred during Google login'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

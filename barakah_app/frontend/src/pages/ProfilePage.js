@@ -6,6 +6,149 @@ import NavigationButton from '../components/layout/Navigation';
 import authService from '../services/auth';
 import '../styles/Body.css';
 
+const formatDate = (dateData) => {
+    if (!dateData) return 'tidak ada';
+    const date = new Date(dateData);
+    return date.toLocaleDateString('id-ID', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    });
+  };
+
+const formatIDR = (amount) => {
+    return new Intl.NumberFormat('id-ID', {
+      minimumFractionDigits: 0,
+    }).format(amount);
+};
+
+const GENDER_CHOICES = {
+    'l': 'Laki-laki',
+    'p': 'Perempuan',
+};
+
+const MARITAL_CHOICES = {
+    'bn': 'Belum Nikah',
+    'n': 'Nikah',
+    'd': 'Duda',
+    'j': 'Janda',
+};
+
+const SEGMENT_CHOICES = {
+    'mahasiswa': 'Mahasiswa',
+    'pelajar': 'Pelajar',
+    'santri': 'Santri',
+    'karyawan': 'Karyawan',
+    'umum': 'Umum',
+};
+
+const STUDY_LEVEL_CHOICES = {
+    'sd': 'Sekolah Dasar atau Setara',
+    'smp': 'Sekolah Menengah Pertama atau Setara',
+    'sma': 'Sekolah Menengah Atas / Kejuruan atau Setara',
+    's1': 'Sarjana',
+    's2': 'Magister',
+    's3': 'Doktor',
+};
+
+const JOB_CHOICES = {
+    'mahasiswa': 'Mahasiswa',
+    'asn': 'Aparatur Sipil Negara',
+    'karyawan_swasta': 'Karyawan Swasta',
+    'guru': 'Guru',
+    'dosen': 'Dosen',
+    'dokter': 'Dokter',
+    'perawat': 'Perawat',
+    'apoteker': 'Apoteker',
+    'programmer': 'Programmer',
+    'data_scientist': 'Data Scientist',
+    'desainer_grafis': 'Desainer Grafis',
+    'marketing': 'Marketing',
+    'hrd': 'HRD (Human Resources Department)',
+    'akuntan': 'Akuntan',
+    'konsultan': 'Konsultan',
+    'arsitek': 'Arsitek',
+    'insinyur': 'Insinyur',
+    'peneliti': 'Peneliti',
+    'jurnalis': 'Jurnalis',
+    'penulis': 'Penulis',
+    'penerjemah': 'Penerjemah',
+    'pilot': 'Pilot',
+    'pramugari': 'Pramugari',
+    'chef': 'Chef',
+    'pengusaha': 'Pengusaha',
+    'petani': 'Petani',
+    'nelayan': 'Nelayan',
+    'pengrajin': 'Pengrajin',
+    'teknisi': 'Teknisi',
+    'seniman': 'Seniman',
+    'musisi': 'Musisi',
+    'atlet': 'Atlet',
+    'polisi': 'Polisi',
+    'tentara': 'Tentara',
+    'pengacara': 'Pengacara',
+    'notaris': 'Notaris',
+    'psikolog': 'Psikolog',
+    'sopir': 'Sopir',
+    'kurir': 'Kurir',
+    'barista': 'Barista',
+    'freelancer': 'Freelancer',
+};
+
+const WORK_FIELD_CHOICES = {
+    'pendidikan': 'Pendidikan',
+    'kesehatan': 'Kesehatan',
+    'ekobis': 'Ekonomi Bisnis',
+    'agrotek': 'Agrotek',
+    'herbal': 'Herbal-Farmasi',
+    'it': 'IT',
+    'manufaktur': 'Manufaktur',
+    'energi': 'Energi-Mineral',
+    'sains': 'Sains',
+    'teknologi': 'Teknologi',
+    'polhuk': 'Politik-Hukum',
+    'humaniora': 'Humaniora',
+    'media': 'Media-Literasi',
+    'sejarah': 'Sejarah',
+};
+
+const PROVINCE_CHOICES = {
+    'aceh': 'Aceh',
+    'sumatera_utara': 'Sumatera Utara',
+    'sumatera_barat': 'Sumatera Barat',
+    'riau': 'Riau',
+    'jambi': 'Jambi',
+    'sumatera_selatan': 'Sumatera Selatan',
+    'bengkulu': 'Bengkulu',
+    'lampung': 'Lampung',
+    'kepulauan_bangka_belitung': 'Kepulauan Bangka Belitung',
+    'kepulauan_riau': 'Kepulauan Riau',
+    'dki_jakarta': 'DKI Jakarta',
+    'jawa_barat': 'Jawa Barat',
+    'jawa_tengah': 'Jawa Tengah',
+    'di_yogyakarta': 'DI Yogyakarta',
+    'jawa_timur': 'Jawa Timur',
+    'banten': 'Banten',
+    'bali': 'Bali',
+    'nusa_tenggara_barat': 'Nusa Tenggara Barat',
+    'nusa_tenggara_timur': 'Nusa Tenggara Timur',
+    'kalimantan_barat': 'Kalimantan Barat',
+    'kalimantan_tengah': 'Kalimantan Tengah',
+    'kalimantan_selatan': 'Kalimantan Selatan',
+    'kalimantan_timur': 'Kalimantan Timur',
+    'kalimantan_utara': 'Kalimantan Utara',
+    'sulawesi_utara': 'Sulawesi Utara',
+    'sulawesi_tengah': 'Sulawesi Tengah',
+    'sulawesi_selatan': 'Sulawesi Selatan',
+    'sulawesi_tenggara': 'Sulawesi Tenggara',
+    'gorontalo': 'Gorontalo',
+    'sulawesi_barat': 'Sulawesi Barat',
+    'maluku': 'Maluku',
+    'maluku_utara': 'Maluku Utara',
+    'papua': 'Papua',
+    'papua_barat': 'Papua Barat',
+};
+
 const ProfilePage = () => {
     const navigate = useNavigate();
     const [profile, setProfile] = useState({
@@ -65,21 +208,21 @@ const ProfilePage = () => {
                         {/* Full Name */}
                         <div className="w-full">
                             <label className="block text-gray-700 font-medium mb-1">Nama Lengkap</label>
-                            <p className="w-full p-2 border rounded-lg bg-gray-100">{profile.name_full}</p>
+                            <p className="w-full p-2 border rounded-lg bg-gray-100">{profile.name_full || '-'}</p>
                         </div>
 
                         {/* Gender */}
                         <div className="w-full">
                             <label className="block text-gray-700 font-medium mb-1">Jenis Kelamin</label>
                             <p className="w-full p-2 border rounded-lg bg-gray-100">
-                                {profile.gender === 'l' ? 'Laki-laki' : profile.gender === 'p' ? 'Perempuan' : '-'}
+                                {GENDER_CHOICES[profile.gender] || '-'}
                             </p>
                         </div>
 
                         {/* Birth Date */}
                         <div className="w-full">
                             <label className="block text-gray-700 font-medium mb-1">Tanggal Lahir</label>
-                            <p className="w-full p-2 border rounded-lg bg-gray-100">{profile.birth_date || '-'}</p>
+                            <p className="w-full p-2 border rounded-lg bg-gray-100">{formatDate(profile.birth_date) || '-'}</p>
                         </div>
 
                         {/* Birth Place */}
@@ -92,14 +235,14 @@ const ProfilePage = () => {
                         <div className="w-full">
                             <label className="block text-gray-700 font-medium mb-1">Status Pernikahan</label>
                             <p className="w-full p-2 border rounded-lg bg-gray-100">
-                                {profile.marital_status === 'n' ? 'Nikah' : profile.marital_status === 'bn' ? 'Belum Nikah' : profile.marital_status === 'd' ? 'Duda' : profile.marital_status === 'j' ? 'Janda' : '-'}
+                                {MARITAL_CHOICES[profile.marital_status] || '-'}
                             </p>
                         </div>
 
                         {/* Segment */}
                         <div className="w-full">
                             <label className="block text-gray-700 font-medium mb-1">Segment</label>
-                            <p className="w-full p-2 border rounded-lg bg-gray-100">{profile.segment || '-'}</p>
+                            <p className="w-full p-2 border rounded-lg bg-gray-100">{SEGMENT_CHOICES[profile.segment] || '-'}</p>
                         </div>
                     </div>
                 );
@@ -128,7 +271,7 @@ const ProfilePage = () => {
                         {/* Address Province */}
                         <div className="w-full">
                             <label className="block text-gray-700 font-medium mb-1">Provinsi</label>
-                            <p className="w-full p-2 border rounded-lg bg-gray-100">{profile.address_province || '-'}</p>
+                            <p className="w-full p-2 border rounded-lg bg-gray-100">{PROVINCE_CHOICES[profile.address_province] || '-'}</p>
                         </div>
                     </div>
                 );                
@@ -139,7 +282,7 @@ const ProfilePage = () => {
                         {/* Study Level */}
                         <div className="w-full">
                             <label className="block text-gray-700 font-medium mb-1">Tingkat Pendidikan</label>
-                            <p className="w-full p-2 border rounded-lg bg-gray-100">{profile.study_level || '-'}</p>
+                            <p className="w-full p-2 border rounded-lg bg-gray-100">{STUDY_LEVEL_CHOICES[profile.study_level] || '-'}</p>
                         </div>
 
                         {/* Study Campus */}
@@ -192,13 +335,13 @@ const ProfilePage = () => {
                         {/* Job */}
                         <div className="w-full">
                             <label className="block text-gray-700 font-medium mb-1">Pekerjaan</label>
-                            <p className="w-full p-2 border rounded-lg bg-gray-100">{profile.job || '-'}</p>
+                            <p className="w-full p-2 border rounded-lg bg-gray-100">{JOB_CHOICES[profile.job] || '-'}</p>
                         </div>
 
                         {/* Work Field */}
                         <div className="w-full">
                             <label className="block text-gray-700 font-medium mb-1">Bidang Pekerjaan</label>
-                            <p className="w-full p-2 border rounded-lg bg-gray-100">{profile.work_field || '-'}</p>
+                            <p className="w-full p-2 border rounded-lg bg-gray-100">{WORK_FIELD_CHOICES[profile.work_field] || '-'}</p>
                         </div>
 
                         {/* Work Institution */}
@@ -216,7 +359,7 @@ const ProfilePage = () => {
                         {/* Work Salary */}
                         <div className="w-full">
                             <label className="block text-gray-700 font-medium mb-1">Gaji</label>
-                            <p className="w-full p-2 border rounded-lg bg-gray-100">{profile.work_salary || '-'}</p>
+                            <p className="w-full p-2 border rounded-lg bg-gray-100">Rp. {formatIDR(profile.work_salary) || '-'}</p>
                         </div>
                     </div>
                 );
