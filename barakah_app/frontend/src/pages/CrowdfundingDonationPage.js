@@ -271,7 +271,7 @@ const DonationPage = () => {
       }
     } else {
       // Navigate to payment confirmation for Bank BSI
-      navigate('/konfirmasi-pembayaran', {
+      navigate('/konfirmasi-pembayaran-donasi', {
         state: {
           amount: finalAmount,
           bank: selectedBank,

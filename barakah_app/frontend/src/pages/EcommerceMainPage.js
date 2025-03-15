@@ -1,6 +1,6 @@
 // pages/EcommercePage.js
 import React, { useState, useEffect, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import HeaderHome from '../components/layout/HeaderHome'; // Import the Header component
 import NavigationButton from '../components/layout/Navigation'; // Import the Navigation component
@@ -20,6 +20,7 @@ const EcommercePage = () => {
   const [searchTimeout, setSearchTimeout] = useState(null);
   const [activeSlide, setActiveSlide] = useState(0);
   const sliderInterval = useRef(null);
+  const navigate = useNavigate();
     
   // Fetch featured products (only once when the component mounts)
   useEffect(() => {
@@ -107,6 +108,55 @@ const EcommercePage = () => {
     }, 5000);
   };
 
+  const addToCart = async (productId) => {
+    try {
+      const user = JSON.parse(localStorage.getItem('user'));
+      if (!user || !user.access) {
+        console.error('User not logged in');
+        navigate('/login'); // Redirect to login page if not logged in
+        return;
+      }
+
+      await axios.post(`${process.env.REACT_APP_API_BASE_URL}/api/carts/cart/`, {
+        product_id: productId,
+        quantity: 1
+      }, {
+        headers: {
+          Authorization: `Bearer ${user.access}`
+        }
+      });
+
+      alert('Berhasil menambahkan ke Keranjang Belanja!');
+    } catch (error) {
+      console.error('Error adding product to cart:', error);
+      alert('Gagal menambahkan ke Keranjang Belanja');
+    }
+  };
+
+  const addToWishlist = async (productId) => {
+    try {
+      const user = JSON.parse(localStorage.getItem('user'));
+      if (!user || !user.access) {
+        console.error('User not logged in');
+        navigate('/login'); // Redirect to login page if not logged in
+        return;
+      }
+
+      await axios.post(`${process.env.REACT_APP_API_BASE_URL}/api/wishlists/wishlist/`, {
+        product_id: productId
+      }, {
+        headers: {
+          Authorization: `Bearer ${user.access}`
+        }
+      });
+
+      alert('Berhasil menambahkan ke Incaran!');
+    } catch (error) {
+      console.error('Error adding product to wishlist:', error);
+      alert('Gagal menambahkan ke Incaran');
+    }
+  };
+
   return (
     <div className="body">
       <HeaderHome onSearch={handleSearch} />
@@ -132,15 +182,23 @@ const EcommercePage = () => {
                       onError={(e) => {
                         e.target.src = '/images/peduli-dhuafa-banner.jpg';
                       }}
-                    />
+                    />            
                     <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4">
                       <h2 className="text-white font-bold text-lg">{product.title}</h2>
-                        <Link
-                          to={`/ikutkelas/${product.slug || product.id}`}
-                          className="block text-center bg-green-800 text-white py-2 rounded-md text-sm hover:bg-green-900"
+                      <div className="w-full flex justify-between space-x-2 mt-2">
+                        <button
+                          onClick={() => addToWishlist(product.id)}
+                          className=" w-full block text-center bg-red-600 text-white py-2 rounded-md text-sm hover:bg-red-700 flex items-center justify-center"
                         >
-                          BELI SEKARANG
-                        </Link>
+                          <span className="material-icons text-sm mr-2">favorite</span>+ INCARAN
+                        </button>                      
+                        <button
+                          onClick={() => addToCart(product.id)}
+                          className="w-full block text-center bg-green-800 text-white py-2 rounded-md text-sm hover:bg-green-900 flex items-center justify-center"
+                        >
+                          <span className="material-icons text-sm mr-2">add_shopping_cart</span>+ KERANJANG
+                        </button>
+                        </div>
                     </div>
                   </div>
                 );
@@ -187,14 +245,25 @@ const EcommercePage = () => {
                     />
                   </Link>
                   <div className="p-2">
-                    <h3 className="text-sm font-medium mb-2 line-clamp-2">{product.title}</h3>
-                    <p className="text-sm text-gray-600 line-clamp-2">{formatIDR(product.price)}</p>                    
-                      <Link
-                        to={`/beli/${product.slug || product.id}`}
-                        className="block text-center bg-green-800 text-white py-2 rounded-md text-sm hover:bg-green-900"
+                    <h3 className="text-sm font-medium mb-2 line-clamp-2">{product.title}</h3>  
+                    <div className="flex justify-between">
+                      <p className="text-gray-600 text-xs mb-2">Rp. {formatIDR(product.price)} / {product.unit}</p>
+                      <p className="text-gray-600 text-xs mb-2">stok{' '} {product.stock > 0 ? product.stock : 'habis'}</p>
+                    </div>                
+                    <div className="flex space-x-2">
+                    <button
+                        onClick={() => addToWishlist(product.id)}
+                        className="w-full block text-center bg-red-600 text-white py-2 rounded-md text-sm hover:bg-red-600 flex items-center justify-center"
                       >
-                        BELI SEKARANG
-                      </Link>
+                        <span className="material-icons text-sm">favorite</span>
+                      </button>
+                      <button
+                        onClick={() => addToCart(product.id)}
+                        className="w-full block text-center bg-green-800 text-white py-2 rounded-md text-sm hover:bg-green-900 flex items-center justify-center"
+                      >
+                        <span className="material-icons text-sm">add_shopping_cart</span>
+                      </button>
+                    </div>
                   </div>
                 </div>
               );

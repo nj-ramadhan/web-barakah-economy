@@ -1,10 +1,16 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import Header from '../components/layout/Header'; // Import the Header component
 import NavigationButton from '../components/layout/Navigation'; // Import the Navigation component
 import '../styles/Body.css';
 
+const formatIDR = (amount) => {
+    return new Intl.NumberFormat('id-ID', {
+      minimumFractionDigits: 0,
+    }).format(amount);
+  };
+  
 const CartPage = () => {
     const navigate = useNavigate();
     const [cartItems, setCartItems] = useState([]);
@@ -116,6 +122,12 @@ const CartPage = () => {
             <Header />
             <div className="p-4">
                 <h1 className="text-2xl font-bold mb-4">Keranjang Belanja</h1>
+                <button
+                    onClick={() => navigate('/incaran')}
+                    className="w-full block text-center bg-green-800 text-white py-2 rounded-md text-sm hover:bg-green-900 flex items-center justify-center"
+                >
+                    <span className="material-icons text-sm mr-4">favorite</span>LIHAT INCARAN
+                </button>                
                 {cartItems.length === 0 ? (
                     <p className="text-gray-600">Keranjang Belanja kamu kosong</p>
                 ) : (
@@ -128,38 +140,39 @@ const CartPage = () => {
                                             <img 
                                                 src={item.product.thumbnail || '/images/produk.jpg'} 
                                                 alt={item.product.title}
-                                                className="w-16 h-16 object-cover mr-4"
+                                                className="w-12 h-12 object-cover mr-4"
                                                 onError={(e) => {
                                                     e.target.src = '/images/produk.jpg';
                                                 }}
                                             />
                                             <div className="justify-left">
-                                                <h3 className="text-lg font-semibold">{item.product.title}</h3>
-                                                <p className="text-gray-600">Stock: {item.product.stock}</p>
-                                                <p className="text-gray-600">Rp. {item.product.price * quantities[item.product.id]}</p>
+                                                <h3 className="text-sm font-semibold">{item.product.title}</h3>
+                                                <p className="text-gray-600 text-xs">stok{' '} {item.product.stock > 0 ? item.product.stock : 'habis'}</p>
+                                                <p className="text-gray-600 text-xs">Rp. {formatIDR(item.product.price)} / {item.product.unit}</p>
+                                                <p className="text-xs text-gray-600">Total Rp. {formatIDR(item.product.price * quantities[item.product.id])}</p>
                                             </div>    
                                         </span>
                                         <div className="flex flex-col items-center">
                                             <div className="flex items-center mb-2">
                                                 <button
                                                     onClick={() => handleDecrement(item.product.id)}
-                                                    className="bg-gray-300 text-gray-700 px-2 py-1 rounded-lg hover:bg-gray-400"
+                                                    className="bg-gray-300 material-icons text-sm text-gray-700 px-2 py-1 rounded-lg hover:bg-gray-400"
                                                     disabled={quantities[item.product.id] === 0}
                                                 >
-                                                    -
+                                                    remove
                                                 </button>
                                                 <span className="mx-2">{quantities[item.product.id]}</span>
                                                 <button
                                                     onClick={() => handleIncrement(item.product.id, item.product.stock)}
-                                                    className="bg-gray-300 text-gray-700 px-2 py-1 rounded-lg hover:bg-gray-400"
+                                                    className="bg-gray-300 material-icons text-sm text-gray-700 px-2 py-1 rounded-lg hover:bg-gray-400"
                                                     disabled={quantities[item.product.id] >= item.product.stock}
                                                 >
-                                                    +
+                                                    add
                                                 </button>
                                             </div>
                                             <button
                                                 onClick={() => removeFromCart(item.product.id)}
-                                                className="bg-red-500 material-icons text-white px-4 py-2 rounded-lg hover:bg-red-600"
+                                                className="bg-red-600 material-icons text-sm text-white px-4 py-2 rounded-lg hover:bg-red-700"
                                             >
                                                 delete
                                             </button>

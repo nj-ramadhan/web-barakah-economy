@@ -1,9 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import Header from '../components/layout/Header';
 import NavigationButton from '../components/layout/Navigation';
 import '../styles/Body.css';
+
+const formatIDR = (amount) => {
+  return new Intl.NumberFormat('id-ID', {
+    minimumFractionDigits: 0,
+  }).format(amount);
+};
 
 const ProductDetail = () => {
   const { slug } = useParams(); // Get the slug from the URL
@@ -57,6 +63,30 @@ const ProductDetail = () => {
     }
   };
 
+  const addToWishlist = async (productId) => {
+    try {
+      const user = JSON.parse(localStorage.getItem('user'));
+      if (!user || !user.access) {
+        console.error('User not logged in');
+        navigate('/login'); // Redirect to login page if not logged in
+        return;
+      }
+
+      await axios.post(`${process.env.REACT_APP_API_BASE_URL}/api/wishlists/wishlist/`, {
+        product_id: productId
+      }, {
+        headers: {
+          Authorization: `Bearer ${user.access}`
+        }
+      });
+
+      alert('Berhasil menambahkan ke Incaran!');
+    } catch (error) {
+      console.error('Error adding product to wishlist:', error);
+      alert('Gagal menambahkan ke Incaran');
+    }
+  };
+
   const handleIncrement = () => {
     setQuantity(prevQuantity => Math.min(prevQuantity + 1, product.stock));
   };
@@ -90,30 +120,41 @@ const ProductDetail = () => {
           />
           <div className="p-4">
             <h1 className="text-xl font-bold mb-2">{product.title}</h1>
-            <p className="text-gray-600 mb-2">Stock: {product.stock}</p>
+            <div className="flex justify-between">
+              <p className="text-gray-600 text-sm mb-2">Rp. {formatIDR(product.price)}</p>
+              <p className="text-gray-600 text-sm mb-2">Stock: {product.stock} {product.unit}</p>
+            </div>
             <div className="flex items-center mb-4">
               <button
                 onClick={handleDecrement}
-                className="bg-gray-300 text-gray-700 px-2 py-1 rounded-lg hover:bg-gray-400"
+                className="bg-gray-300 material-icons text-sm text-gray-700 px-2 py-1 rounded-lg hover:bg-gray-400"
                 disabled={quantity === 1}
               >
-                -
+                remove
               </button>
               <span className="mx-2">{quantity}</span>
               <button
                 onClick={handleIncrement}
-                className="bg-gray-300 text-gray-700 px-2 py-1 rounded-lg hover:bg-gray-400"
+                className="bg-gray-300 material-icons text-sm text-gray-700 px-2 py-1 rounded-lg hover:bg-gray-400"
                 disabled={quantity >= product.stock}
               >
-                +
+                add
               </button>
             </div>
-            <button
-              onClick={addToCart}
-              className="block text-center bg-green-800 text-white py-2 rounded-md text-sm hover:bg-green-900"
-            >
-              Tambahkan ke Keranjang
-            </button>
+            <div className="w-full flex justify-between space-x-2 mt-2">
+              <button
+                onClick={() => addToWishlist(product.id)}
+                className=" w-full block text-center bg-red-600 text-white py-2 rounded-md text-sm hover:bg-red-700 flex items-center justify-center"
+              >
+                <span className="material-icons text-sm mr-2">favorite</span>+ INCARAN
+              </button>                      
+              <button
+                onClick={() => addToCart(product.id)}
+                className="w-full block text-center bg-green-800 text-white py-2 rounded-md text-sm hover:bg-green-900 flex items-center justify-center"
+              >
+                <span className="material-icons text-sm mr-2">add_shopping_cart</span>+ KERANJANG
+              </button>
+            </div>
           </div>    
         </div>
       </div>
@@ -142,32 +183,6 @@ const ProductDetail = () => {
               <p className="text-gray-700">{product.description}</p>
             </div>
           )}
-
-          {/* {activeTab === 'donations' && (
-            <div className="bg-white p-4 rounded-lg shadow">
-              <ul>
-                {donations.length > 0 ? (
-                  donations.map((donation, index) => (
-                    <li key={index} className="border-b py-2 px-4">
-                      <div className="flex justify-between items-center">
-                        <p className="text-gray-700">
-                          <strong>{donation.donor_name}</strong>
-                        </p>
-                        <p className="text-sm text-gray-500">
-                          {new Date(donation.created_at).toLocaleDateString('id-ID', {day: '2-digit',month: '2-digit',year: 'numeric',})} - {getTimeElapsed(donation.created_at)}
-                        </p>
-                      </div>
-                      <p className="text-sm text-gray-500">
-                        Rp. {formatIDR(donation.amount)}
-                      </p>                      
-                    </li>
-                  ))
-                ) : (
-                  <li className="py-2 px-4 text-gray-500">Belum ada donasi yang terverifikasi.</li>
-                )}
-              </ul>
-            </div>
-          )} */}
         </div>
       </div>
 

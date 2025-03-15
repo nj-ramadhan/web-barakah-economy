@@ -61,7 +61,7 @@ const NavigationButton = () => {
           }`}
         >
           <span className="material-icons">person</span>
-          <span className="text-xs">Masuk</span>
+          <span className="text-xs">Profil</span>
         </Link>
       </div>
     </nav>

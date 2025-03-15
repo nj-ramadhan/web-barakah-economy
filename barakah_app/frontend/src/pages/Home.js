@@ -496,16 +496,10 @@ const Home = () => {
                     </Link>
                     <div className="p-2 mb-6">
                       <h3 className="text-sm font-medium mb-2 line-clamp-2">{product.title}</h3>
-                      <div className="flex justify-between items-center">
-                          <span className="text-xs text-gray-500 mt-1">
-                            {product.price
-                              ? formatIDR(product.price)
-                              : 'Rp 0'} / {product.unit}
-                          </span>
-                          <span className="text-xs text-gray-500 mt-1">
-                            stok{' '} {product.stock > 0 ? product.stock : 'habis'}
-                          </span>
-                        </div>
+                      <div className="flex justify-between">
+                        <p className="text-gray-600 text-xs mb-2">Rp. {formatIDR(product.price)} / {product.unit}</p>
+                        <p className="text-gray-600 text-xs mb-2">stok{' '} {product.stock > 0 ? product.stock : 'habis'}</p>
+                      </div>
                     </div>
                   </div>
                 </SwiperSlide>
@@ -551,15 +545,9 @@ const Home = () => {
                   </Link>
                   <div className="p-2">
                     <h3 className="text-sm font-medium mb-2 line-clamp-2">{product.title}</h3>   
-                    <div className="flex justify-between items-center mb-4">
-                      <span className="text-xs text-gray-500 mt-1">
-                        {product.price
-                          ? formatIDR(product.price)
-                          : 'Rp 0'} / {product.unit}
-                      </span>
-                      <span className="text-xs text-gray-500 mt-1">
-                        stok{' '} {product.stock > 0 ? product.stock : 'habis'}
-                      </span>
+                    <div className="flex justify-between">
+                      <p className="text-gray-600 text-xs mb-2">Rp. {formatIDR(product.price)} / {product.unit}</p>
+                      <p className="text-gray-600 text-xs mb-2">stok{' '} {product.stock > 0 ? product.stock : 'habis'}</p>
                     </div>
                     {product.stock <= 0 ? (
                         <button

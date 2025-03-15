@@ -1,22 +1,14 @@
 // pages/CheckoutPage.js
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import axios from 'axios';
 import Header from '../components/layout/Header';
 import NavigationButton from '../components/layout/Navigation';
 import '../styles/Body.css';
 
-// Define category-based additional amounts
-const categoryAdditionalAmounts = {
-  dhuafa: {value: 100},
-  yatim: {value: 150},
-  quran: {value: 200},
-  qurban: {value: 250},
-  palestine: {value: 300},
-  education: {value: 350},  
-  iftar: {value: 400},
-  jumat: {value: 450},
-  default: {value: 500},
+const formatIDR = (amount) => {
+  return new Intl.NumberFormat('id-ID', {
+    minimumFractionDigits: 0,
+  }).format(amount);
 };
 
 const CheckoutPage = () => {
@@ -26,7 +18,6 @@ const CheckoutPage = () => {
   const [selectedBank, setSelectedBank] = useState('');
   const [formData, setFormData] = useState({
     fullName: '',
-    hideIdentity: false,
     phone: '',
     email: '',
     message: ''
@@ -59,22 +50,23 @@ const CheckoutPage = () => {
 
     const totalAmount = cartItems.reduce((total, item) => total + (item.product.price * item.quantity), 0);
 
-    // Set the display name based on hideIdentity checkbox
-    const customerName = formData.hideIdentity ? "Hamba Allah" : formData.fullName;
+    // Generate a random checkout number with 'CHK' prefix and user ID
+    const user = JSON.parse(localStorage.getItem('user'));
+    const checkoutNumber = `CHK${user.id}-${Math.floor(Math.random() * 100)}`;
     const customerPhone = formData.phone;
 
     // Navigate to payment confirmation with data
-    navigate('/konfirmasi-pembayaran', {
+    navigate('/konfirmasi-pembayaran-belanja', {
       state: {
         amount: totalAmount,
         bank: selectedBank,
-        customerName: customerName,
+        customerName: formData.fullName,
         fullName: formData.fullName,
-        hideIdentity: formData.hideIdentity,
         customerPhone: customerPhone,
         email: formData.email,
         message: formData.message,
-        cartItems: cartItems
+        cartItems: cartItems,
+        checkoutNumber: checkoutNumber // Add the checkout number
       }
     });
   };
@@ -105,8 +97,8 @@ const CheckoutPage = () => {
                     <div className="justify-left">
                       <h3 className="text-lg font-semibold">{item.product.title}</h3>
                       <p className="text-gray-600">Jumlah Barang: {item.quantity}</p>
-                      <p className="text-gray-600">Harga satuan: Rp. {item.product.price}</p>
-                      <p className="text-gray-600">Total: Rp. {item.product.price * item.quantity}</p>
+                      <p className="text-gray-600">Harga satuan: Rp. {formatIDR(item.product.price)}</p>
+                      <p className="text-gray-600">Total: Rp. {formatIDR(item.product.price * item.quantity)}</p>
                     </div>
                   </span>
                 </div>
@@ -118,7 +110,7 @@ const CheckoutPage = () => {
         {/* Total Price */}
         <h3 className="font-semibold">Total Biaya yang harus dibayar</h3>
         <div className="bg-white border border-transparent hover:bg-green-50/50 p-4 rounded-lg shadow-sm mb-6">
-          <p className="text-lg font-semibold">Rp. {cartItems.reduce((total, item) => total + (item.product.price * item.quantity), 0)}</p>
+          <p className="text-lg font-semibold">Rp. {formatIDR(cartItems.reduce((total, item) => total + (item.product.price * item.quantity), 0))}</p>
         </div>
 
         {/* Payment Method */}
@@ -155,10 +147,9 @@ const CheckoutPage = () => {
               type="text"
               name="fullName"
               placeholder="Nama Lengkap Anda (wajib diisi)"
-              className={`w-full p-3 rounded-lg border ${formData.hideIdentity ? 'bg-gray-100 border-gray-300' : 'border-gray-200 focus:border-green-500 focus:ring-1 focus:ring-green-500'} outline-none`}
+              className="w-full p-3 rounded-lg border border-gray-200 focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none"
               value={formData.fullName}
               onChange={handleInputChange}
-              disabled={formData.hideIdentity}
               required
             />
           </div>
