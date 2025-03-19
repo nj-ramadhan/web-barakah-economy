@@ -56,7 +56,7 @@ class GenerateMidtransTokenView(APIView):
 
             # Prepare transaction details for Midtrans
             transaction_details = {
-                'order_id': f'DNT-{donation.id}-CPG-{campaign.slug}',  # Unique order ID
+                'order_id': f'D{donation.id}-C{campaign.id}',  # Unique order ID
                 'gross_amount': amount,
             }
 
