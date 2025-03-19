@@ -21,3 +21,13 @@ export const getCampaignById = async (id) => {
     throw error;
   }
 };
+
+export const getCampaignBySlug = async (slug) => {
+  try {
+    const response = await api.get(`/campaigns/${slug}/`);
+    return response.data;
+  } catch (error) {
+    console.error(`Error fetching campaign with slug ${slug}:`, error);
+    throw error;
+  }
+};

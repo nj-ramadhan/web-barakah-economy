@@ -11,8 +11,6 @@ from courses.views import CourseViewSet
 from profiles.views import ProfileViewSet
 
 router = DefaultRouter()
-router.register(r'campaigns', CampaignViewSet, basename='campaign')
-router.register(r'donations', DonationViewSet, basename='donation')
 router.register(r'products', ProductViewSet, basename='product')
 router.register(r'courses', CourseViewSet, basename='course')
 router.register(r'profiles', ProfileViewSet, basename='profile')
@@ -22,6 +20,7 @@ urlpatterns = [
     path('api/', include(router.urls)),
     path('api/auth/', include('accounts.urls')),
     path('api/profiles/', include('profiles.urls')),
+    path('api/campaigns/', include('campaigns.urls')),
     path('api/donations/', include('donations.urls')),
     path('api/payments/', include('payments.urls')),
 

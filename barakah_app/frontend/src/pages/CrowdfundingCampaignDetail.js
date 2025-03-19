@@ -189,7 +189,7 @@ const CampaignDetail = () => {
               </button>
             ) : (
               <Link
-                to={`/berdonasi/${campaign.slug || campaign.id}`}
+                to={`/berdonasi/${campaign.slug}`}
                 className="block text-center bg-green-800 text-white py-2 rounded-md text-sm hover:bg-green-900"
               >
                 DONASI SEKARANG

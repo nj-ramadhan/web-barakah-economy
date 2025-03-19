@@ -214,7 +214,7 @@ const CampaignPage = () => {
 
               return (
                 <div key={campaign.id} className="bg-white rounded-lg overflow-hidden shadow">
-                  <Link to={`/kampanye/${campaign.slug || campaign.id}`}>
+                  <Link to={`/kampanye/${campaign.slug}`}>
                     <img 
                       src={campaign.thumbnail || '/placeholder-image.jpg'} 
                       alt={campaign.title}

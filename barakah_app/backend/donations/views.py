@@ -29,12 +29,12 @@ class DonationViewSet(viewsets.ModelViewSet):
         return queryset
 
 class CampaignDonationsView(APIView):
-    def get(self, request, campaign_slug):
+    def get(self, request, slug):
         try:
-            logger.info(f"Fetching donations for campaign: {campaign_slug}")  # Log campaign_slug
+            logger.info(f"Fetching donations for campaign: {slug}")  # Log campaign_slug
 
             # Get the campaign
-            campaign = get_object_or_404(Campaign, id=campaign_slug)
+            campaign = get_object_or_404(Campaign, slug=slug)
             logger.info(f"Campaign found: {campaign.title}")  # Log campaign title
 
             # Filter only verified donations
@@ -114,7 +114,7 @@ class CreateDonationView(APIView):
             proof_file = request.FILES.get('proof_file')
 
             # Find the campaign
-            campaign = get_object_or_404(Campaign, id=campaign_slug)
+            campaign = get_object_or_404(Campaign, slug=campaign_slug)
 
             # Create a new donation
             donation = Donation.objects.create(

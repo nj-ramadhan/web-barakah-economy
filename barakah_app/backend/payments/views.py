@@ -38,7 +38,7 @@ class GenerateMidtransTokenView(APIView):
                 return JsonResponse({'error': 'Missing required fields'}, status=400)
             
             try:
-                campaign = Campaign.objects.get(id=campaign_slug)
+                campaign = Campaign.objects.get(slug=campaign_slug)
             except Campaign.DoesNotExist:
                 return JsonResponse({'error': 'Campaign not found'}, status=404)
 
@@ -56,7 +56,7 @@ class GenerateMidtransTokenView(APIView):
 
             # Prepare transaction details for Midtrans
             transaction_details = {
-                'order_id': f'DNT-{donation.id}-CPG-{campaign.id}',  # Unique order ID
+                'order_id': f'DNT-{donation.id}-CPG-{campaign.slug}',  # Unique order ID
                 'gross_amount': amount,
             }
 

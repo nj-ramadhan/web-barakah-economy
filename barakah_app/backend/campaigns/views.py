@@ -9,7 +9,7 @@ from .models import Campaign
 from .serializers import CampaignSerializer
     
 class CampaignViewSet(viewsets.ModelViewSet):
-    queryset = Campaign.objects.filter(is_active=True)  # Add this line
+    queryset = Campaign.objects.filter(is_active=True)
     serializer_class = CampaignSerializer
     
     def get_queryset(self):
@@ -27,4 +27,3 @@ class CampaignDetailView(APIView):
         campaign = get_object_or_404(Campaign, slug=slug)
         serializer = CampaignSerializer(campaign)
         return Response(serializer.data, status=status.HTTP_200_OK)
-       

@@ -52,7 +52,7 @@ const LoginPage = () => {
                         navigate('/login');
                     }
                 } catch (error) {
-                    alert('Failed to fetch profile data');
+                    console.log('Failed to fetch profile data');
                 }
             };
     

@@ -3,6 +3,16 @@ from django.db import models
 from django.db.models import Sum
 from django.utils import timezone
 from ckeditor.fields import RichTextField
+from django.utils.text import slugify
+
+def generate_unique_slug(model, name):
+    slug = slugify(name)
+    unique_slug = slug
+    num = 1
+    while model.objects.filter(slug=unique_slug).exists():
+        unique_slug = f'{slug}-{num}'
+        num += 1
+    return unique_slug
 
 class Campaign(models.Model):
     CATEGORY_CHOICES = [
@@ -17,6 +27,7 @@ class Campaign(models.Model):
     ]
     
     title = models.CharField(max_length=100)
+    slug = models.SlugField(max_length=100, unique=True, blank=True)
     description = RichTextField() 
     category = models.CharField(max_length=20, choices=CATEGORY_CHOICES)
     thumbnail = models.ImageField(upload_to='campaign_images/')
@@ -27,6 +38,11 @@ class Campaign(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     deadline = models.DateTimeField(null=True, blank=True)  # Make deadline nullable
 
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.title)
+        super().save(*args, **kwargs)
+        
     def update_collected_amount(self):
         """Update the collected amount based on confirmed donations"""
         confirmed_amount = self.donations.filter(
