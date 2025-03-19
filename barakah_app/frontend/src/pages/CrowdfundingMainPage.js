@@ -26,7 +26,11 @@ const isCampaignExpired = (deadline) => {
 const formatDeadline = (deadline) => {
   if (!deadline) return 'tidak ada'; // Campaigns with no deadline
   const date = new Date(deadline);
-  return `${date.toLocaleDateString()}`;
+  return date.toLocaleDateString('id-ID', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  });
 };
 
 const CampaignPage = () => {

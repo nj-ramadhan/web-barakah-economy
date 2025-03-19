@@ -29,6 +29,7 @@ import JoinCoursePage from './pages/JoinCoursePage';
 
 import PaymentSuccessPage from './pages/PaymentSuccessPage';
 import PaymentFailedPage from './pages/PaymentFailedPage';
+import PaymentPendingPage from './pages/PaymentPendingPage';
 
 import AboutUs from './pages/AboutUs';
 import ContactUs from './pages/ContactUs';
@@ -49,6 +50,7 @@ const App = () => {
             <Route path="/konfirmasi-pembayaran-donasi" element={<CrowdfundingPaymentConfirmation />} />
             <Route path="/pembayaran-berhasil" element={<PaymentSuccessPage />} />
             <Route path="/pembayaran-gagal" element={<PaymentFailedPage />} />
+            <Route path="/pembayaran-tertunda" element={<PaymentPendingPage />} />
             <Route path="/tentang-kami" element={<AboutUs />} />
             <Route path="/hubungi-kami" element={<ContactUs />} />
 

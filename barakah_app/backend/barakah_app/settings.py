@@ -23,6 +23,10 @@ environ.Env.read_env()  # Reads the .env file
 GOOGLE_CLIENT_ID = env('GOOGLE_CLIENT_ID')
 GOOGLE_CLIENT_SECRET= env('GOOGLE_CLIENT_SECRET')
 
+MIDTRANS_MERCHANT_ID = env('MIDTRANS_MERCHANT_ID')
+MIDTRANS_CLIENT_KEY = env('MIDTRANS_CLIENT_KEY')
+MIDTRANS_SERVER_KEY = env('MIDTRANS_SERVER_KEY')
+MIDTRANS_SANDBOX = env('MIDTRANS_SANDBOX', cast=bool)
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
