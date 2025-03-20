@@ -6,6 +6,17 @@ import Header from '../components/layout/Header'; // Import the Header component
 import NavigationButton from '../components/layout/Navigation'; // Import the Navigation component
 import '../styles/Body.css';
 
+function getCsrfToken() {
+    const cookies = document.cookie.split(';');
+    for (let cookie of cookies) {
+      const [name, value] = cookie.trim().split('=');
+      if (name === 'csrftoken') {
+        return value;
+      }
+    }
+    return null;
+  }
+  
 const formatIDR = (amount) => {
     return new Intl.NumberFormat('id-ID', {
       minimumFractionDigits: 0,
