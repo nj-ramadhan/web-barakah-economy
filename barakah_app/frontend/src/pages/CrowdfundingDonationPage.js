@@ -1,4 +1,4 @@
-// pages/DonationPage.js
+// pages/CrowdfundingDonationPage.js
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -26,7 +26,7 @@ const categoryAdditionalAmounts = {
   default: { value: 500 },
 };
 
-const DonationPage = () => {
+const CrowdfundingDonationPage = () => {
   const { slug } = useParams();
   const navigate = useNavigate();
   const [selectedAmount, setSelectedAmount] = useState('');
@@ -252,7 +252,7 @@ const DonationPage = () => {
       try {
         // Fetch payment token from backend
         const response = await axios.post(
-          `${process.env.REACT_APP_API_BASE_URL}/api/payments/generate-midtrans-token/`,
+          `${process.env.REACT_APP_API_BASE_URL}/api/payments/generate-donation-midtrans-token/`,
           paymentData,{
             headers: {
               'Content-Type': 'application/json',
@@ -461,4 +461,4 @@ const DonationPage = () => {
   );
 };
 
-export default DonationPage;
+export default CrowdfundingDonationPage;

@@ -123,36 +123,61 @@ const LoginPage = () => {
                                     className="w-16 h-16 rounded-full object-cover mr-4"
                                 />
                                 <div>
-                                    <h3 className="text-xl font-bold">{profile.name_full}</h3>
-                                    <p className="text-gray-600">{profile.email}</p>
+                                    <h3 className="text-sm font-medium mb-2 line-clamp-2">Selamat datang, {profile.name_full}</h3>
+                                    <p className="text-xs font-medium mb-2 line-clamp-2">{profile.email}</p>
                                 </div>
                             </div>
-                            <h3 className="text-xl font-bold mb-4">Kamu sudah Login</h3>
+                            <h3 className="text-sm font-medium mb-2 line-clamp-2 mt-6">Perbaharui Profil Kamu</h3>
                             <div className="flex flex-col space-y-4">
                                 <Link
                                     to="/profile"
-                                    className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-medium flex items-center justify-left"
+                                    className="w-full bg-gray-200 hover:bg-green-600 text-green py-3 rounded-lg text-sm flex items-center justify-left"
                                 >
                                     <span className="material-icons text-sm ml-4 mr-2">person</span>
                                     Profile
                                 </Link>
+                            </div>
+
+                            <h3 className="text-sm font-medium mb-2 line-clamp-2 mt-6">Lihat Riwayat Donasi</h3>
+                            <div className="flex flex-col space-y-4">
+                                <Link
+                                    to="/riwayat-donasi" // Cart page
+                                    className="w-full bg-gray-200 hover:bg-green-600 text-green py-3 rounded-lg text-sm flex items-center justify-left"
+                                >
+                                    <span className="material-icons text-sm ml-4 mr-2">volunteer_activism</span>
+                                    Riwayat Donasi
+                                </Link>
+                            </div>
+
+                            <h3 className="text-sm font-medium mb-2 line-clamp-2 mt-6">Lihat Riwayat Belanja</h3>
+                            <div className="flex flex-col space-y-4">                                                          
                                 <Link
                                     to="/incaran" // Wishlist page
-                                    className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-medium flex items-center justify-left"
+                                    className="w-full bg-gray-200 hover:bg-green-600 text-green py-3 rounded-lg text-sm flex items-center justify-left"
                                 >
                                     <span className="material-icons text-sm ml-4 mr-2">favorite</span>
                                     Produk Incaran 
                                 </Link>
                                 <Link
                                     to="/keranjang" // Cart page
-                                    className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-medium flex items-center justify-left"
+                                    className="w-full bg-gray-200 hover:bg-green-600 text-green py-3 rounded-lg text-sm flex items-center justify-left"
                                 >
                                     <span className="material-icons text-sm ml-4 mr-2">shopping_cart</span>
                                     Keranjang Belanja
                                 </Link>
+                                <Link
+                                    to="/riwayat-belanja" // Cart page
+                                    className="w-full bg-gray-200 hover:bg-green-600 text-green py-3 rounded-lg text-sm flex items-center justify-left"
+                                >
+                                    <span className="material-icons text-sm ml-4 mr-2">timer</span>
+                                    Riwayat Belanja
+                                </Link>
+                            </div>
+                            <h3 className="text-sm font-medium mb-2 line-clamp-2 mt-6">Log Keluar</h3>
+                            <div className="flex flex-col space-y-4">                                  
                                 <button
                                     onClick={handleLogout}
-                                    className="w-full bg-red-600 hover:bg-red-700 text-white py-3 rounded-lg font-medium flex items-center justify-left"
+                                    className="w-full bg-red-600 hover:bg-red-700 text-white py-3 rounded-lg text-sm flex items-center justify-left"
                                 >
                                     <span className="material-icons text-sm ml-4 mr-2">logout</span>
                                     Logout
@@ -172,7 +197,7 @@ const LoginPage = () => {
             <div className="container">
                 <div className="bg-white rounded-lg shadow overflow-hidden mt-6">
                     <div className="p-4">
-                        <h3 className="text-xl font-bold mb-4">Silakan Login</h3>
+                        <h3 className="text-lg font-bold mb-4">Silakan Login</h3>
                         <form onSubmit={handleLogin}>
                             <input
                                 type="text"

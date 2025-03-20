@@ -28,9 +28,9 @@ const NavigationButton = () => {
           <span className="text-xs">Donasi</span>
         </Link>
         <Link
-          to="../jual-beli"
+          to="../belanja"
           className={`flex flex-col items-center ${
-            location.pathname === '/jual-beli' ? 'text-green-600' : 'text-gray-600'
+            location.pathname === '/belanja' ? 'text-green-600' : 'text-gray-600'
           }`}
         >
           <span className="material-icons">shopping_cart</span>

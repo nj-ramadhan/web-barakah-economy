@@ -9,23 +9,23 @@ import ProfilePage from './pages/ProfilePage';
 import ProfileEditPage from './pages/ProfileEditPage';
 
 import Home from './pages/Home';
-import CampaignPage from './pages/CrowdfundingMainPage';
-import CampaignDetail from './pages/CrowdfundingCampaignDetail';
-import DonationPage from './pages/CrowdfundingDonationPage';
+import CrowdfundingMainPage from './pages/CrowdfundingMainPage';
+import CrowdfundingCampaignDetail from './pages/CrowdfundingCampaignDetail';
+import CrowdfundingDonationPage from './pages/CrowdfundingDonationPage';
+import CrowdfundingDonationHistoryPage from './pages/CrowdfundingDonationHistoryPage';
 import CrowdfundingPaymentConfirmation from './pages/CrowdfundingPaymentConfirmation';
 
-import EcommercePage from './pages/EcommerceMainPage';
-import WishlistPage from './pages/EcommerceWishlistPage';
-import CartPage from './pages/EcommerceCartPage';
-import OrderHistoryPage from './pages/EcommerceOrderHistoryPage';
-import ProductDetail from './pages/EcommerceProductDetail';
-import CheckoutPage from './pages/EcommerceCheckoutPage';
+import EcommerceMainPage from './pages/EcommerceMainPage';
+import EcommerceWishlistPage from './pages/EcommerceWishlistPage';
+import EcommerceCartPage from './pages/EcommerceCartPage';
+import EcommerceOrderHistoryPage from './pages/EcommerceOrderHistoryPage';
+import EcommerceProductDetail from './pages/EcommerceProductDetail';
+import EcommerceCheckoutPage from './pages/EcommerceCheckoutPage';
 import EcommercePaymentConfirmation from './pages/EcommercePaymentConfirmation';
 
-import EcoursePage from './pages/EcoursePage';
-import CourseDetail from './pages/CourseDetail';
-import JoinCoursePage from './pages/JoinCoursePage';
-
+import EcourseMainPage from './pages/EcourseMainPage';
+import EcourseCourseDetail from './pages/EcourseCourseDetail';
+import EcourseJoinCoursePage from './pages/EcourseJoinCoursePage';
 
 import PaymentSuccessPage from './pages/PaymentSuccessPage';
 import PaymentFailedPage from './pages/PaymentFailedPage';
@@ -40,33 +40,44 @@ const App = () => {
       <div className="min-h-screen bg-gray-200 flex justify-center">
         <div className="w-full max-w-md bg-white min-h-screen relative">
           <Routes>
-            {/* Public Routes */}
+            {/* Account Routes */}
             <Route path="/" element={<Home />} />
-            <Route path="/donasi" element={<CampaignPage />} />
-            <Route path="/kampanye/:slug" element={<CampaignDetail />} />
-            <Route path="/berdonasi/:slug" element={<DonationPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
+            {/* Logged Account Routes */}
+            <Route path="/profile" element={<PrivateRoute><ProfilePage /></PrivateRoute>} />
+            <Route path="/profile/edit" element={<PrivateRoute><ProfileEditPage /></PrivateRoute>} />
+
+            {/* Crowdfunding Routes */}
+            <Route path="/donasi" element={<CrowdfundingMainPage />} />
+            <Route path="/kampanye/:slug" element={<CrowdfundingCampaignDetail />} />
+            <Route path="/bayar-donasi/:slug" element={<CrowdfundingDonationPage />} />
+            <Route path="/riwayat-donasi" element={<CrowdfundingDonationHistoryPage />} />
             <Route path="/konfirmasi-pembayaran-donasi" element={<CrowdfundingPaymentConfirmation />} />
+
+            {/* Ecommerce Routes */}
+            <Route path="/belanja" element={<PrivateRoute><EcommerceMainPage /></PrivateRoute>} />
+            <Route path="/produk/:slug" element={<PrivateRoute><EcommerceProductDetail /></PrivateRoute>} />
+            <Route path="/incaran" element={<PrivateRoute><EcommerceWishlistPage /></PrivateRoute>} />
+            <Route path="/keranjang" element={<PrivateRoute><EcommerceCartPage /></PrivateRoute>} />
+            <Route path="/riwayat-belanja" element={<PrivateRoute><EcommerceOrderHistoryPage /></PrivateRoute>} />
+            <Route path="/bayar-belanja" element={<PrivateRoute><EcommerceCheckoutPage /></PrivateRoute>} />
+            <Route path="/konfirmasi-pembayaran-belanja" element={<PrivateRoute><EcommercePaymentConfirmation /></PrivateRoute>} />
+
+            {/* Ecourse Routes */}
+            <Route path="/edukasi" element={<PrivateRoute><EcourseMainPage /></PrivateRoute>} />
+            <Route path="/kelas/:slug" element={<PrivateRoute><EcourseCourseDetail /></PrivateRoute>} />
+            <Route path="/ikutkelas/:slug" element={<PrivateRoute><EcourseJoinCoursePage /></PrivateRoute>} />
+
+            {/* Payment Routes */}
             <Route path="/pembayaran-berhasil" element={<PaymentSuccessPage />} />
             <Route path="/pembayaran-gagal" element={<PaymentFailedPage />} />
             <Route path="/pembayaran-tertunda" element={<PaymentPendingPage />} />
+
+            {/* Information Routes */}
             <Route path="/tentang-kami" element={<AboutUs />} />
             <Route path="/hubungi-kami" element={<ContactUs />} />
 
-            {/* Private Routes */}
-            <Route path="/profile" element={<PrivateRoute><ProfilePage /></PrivateRoute>} />
-            <Route path="/profile/edit" element={<PrivateRoute><ProfileEditPage /></PrivateRoute>} />
-            <Route path="/jual-beli" element={<PrivateRoute><EcommercePage /></PrivateRoute>} />
-            <Route path="/produk/:slug" element={<PrivateRoute><ProductDetail /></PrivateRoute>} />
-            <Route path="/incaran" element={<PrivateRoute><WishlistPage /></PrivateRoute>} />
-            <Route path="/keranjang" element={<PrivateRoute><CartPage /></PrivateRoute>} />
-            <Route path="/bayar-belanja" element={<PrivateRoute><CheckoutPage /></PrivateRoute>} />
-            <Route path="/konfirmasi-pembayaran-belanja" element={<EcommercePaymentConfirmation />} />
-            <Route path="/riwayat-belanja" element={<PrivateRoute><OrderHistoryPage /></PrivateRoute>} />
-            <Route path="/edukasi" element={<PrivateRoute><EcoursePage /></PrivateRoute>} />
-            <Route path="/kelas/:slug" element={<PrivateRoute><CourseDetail /></PrivateRoute>} />
-            <Route path="/ikutkelas/:slug" element={<PrivateRoute><JoinCoursePage /></PrivateRoute>} />
           </Routes>
         </div>
       </div>

@@ -1,3 +1,4 @@
+// pages/EcommerceProductDetail.js
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -11,7 +12,7 @@ const formatIDR = (amount) => {
   }).format(amount);
 };
 
-const ProductDetail = () => {
+const EcommerceProductDetail = () => {
   const { slug } = useParams(); // Get the slug from the URL
   const navigate = useNavigate();
   const [product, setProduct] = useState(null);
@@ -191,4 +192,4 @@ const ProductDetail = () => {
   );
 };
 
-export default ProductDetail;
+export default EcommerceProductDetail;

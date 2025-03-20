@@ -249,7 +249,7 @@ const Home = () => {
                         </button>
                       ) : (
                         <Link
-                          to={`/berdonasi/${campaign.slug || campaign.id}`}
+                          to={`/bayar-donasi/${campaign.slug || campaign.id}`}
                           className="block text-center bg-green-800 text-white py-2 rounded-md text-sm hover:bg-green-900"
                         >
                           DONASI SEKARANG
@@ -375,7 +375,7 @@ const Home = () => {
                         </button>
                       ) : (
                         <Link
-                          to={`/berdonasi/${campaign.slug || campaign.id}`}
+                          to={`/bayar-donasi/${campaign.slug || campaign.id}`}
                           className="block text-center bg-green-800 text-white py-2 rounded-md text-sm hover:bg-green-900"
                         >
                           DONASI SEKARANG

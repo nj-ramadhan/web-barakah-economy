@@ -192,7 +192,6 @@ const ProfilePage = () => {
                 }
             } catch (error) {
                 console.error('Failed to fetch profile:', error);
-                alert('Failed to fetch profile data');
             }
         };
 

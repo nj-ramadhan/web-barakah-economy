@@ -5,7 +5,7 @@ import Header from '../components/layout/Header';
 import NavigationButton from '../components/layout/Navigation';
 import '../styles/Body.css';
 
-const CourseDetail = () => {
+const EcourseCourseDetail = () => {
   const { slug } = useParams(); // Get the slug from the URL
   const [course, setCourse] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -123,4 +123,4 @@ const CourseDetail = () => {
   );
 };
 
-export default CourseDetail;
+export default EcourseCourseDetail;

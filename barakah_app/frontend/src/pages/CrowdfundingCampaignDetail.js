@@ -1,4 +1,4 @@
-// pages/CampaignDetail.js
+// pages/CrowdfundingCampaignDetail.js
 import React, { useState, useEffect } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import axios from 'axios';
@@ -56,7 +56,7 @@ const formatDeadline = (deadline) => {
 };
 
 
-const CampaignDetail = () => {
+const CrowdfundingCampaignDetail = () => {
   const { slug } = useParams();
   const [campaign, setCampaign] = useState(null);
   const [donations, setDonations] = useState([]);
@@ -189,7 +189,7 @@ const CampaignDetail = () => {
               </button>
             ) : (
               <Link
-                to={`/berdonasi/${campaign.slug}`}
+                to={`/bayar-donasi/${campaign.slug}`}
                 className="block text-center bg-green-800 text-white py-2 rounded-md text-sm hover:bg-green-900"
               >
                 DONASI SEKARANG
@@ -335,4 +335,4 @@ const CampaignDetail = () => {
   );
 };
 
-export default CampaignDetail;
+export default CrowdfundingCampaignDetail;

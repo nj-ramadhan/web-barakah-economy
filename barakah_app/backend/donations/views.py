@@ -1,11 +1,10 @@
 # donations/views.py
-from rest_framework.permissions import IsAuthenticated
+from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework import viewsets
-from django.http import JsonResponse
-from midtransclient import Snap
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from campaigns.models import Campaign
@@ -28,6 +27,33 @@ class DonationViewSet(viewsets.ModelViewSet):
             )
         return queryset
 
+class DonationView(APIView):
+    permission_classes = [IsAuthenticated]  # Ensure this is added
+
+    def get(self, request):
+        user = request.user
+        donation_items = Donation.objects.filter(donor=user)
+        serializer = DonationSerializer(donation_items, many=True)
+        return Response(serializer.data)
+    
+    def post(self, request):
+        user = request.user
+        campaign_id = request.data.get('campaign_id')
+        campaign = get_object_or_404(Campaign, id=campaign_id)
+
+        wishlist_item, created = Donation.objects.get_or_create(user=user, campaign=campaign)
+        if created:
+            serializer = DonationSerializer(wishlist_item)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response({'message': 'Campaign already in wishlist'}, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request):
+        user = request.user
+        campaign_id = request.data.get('campaign_id')
+        wishlist_item = get_object_or_404(Donation, user=user, campaign_id=campaign_id)
+        wishlist_item.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+    
 class CampaignDonationsView(APIView):
     def get(self, request, slug):
         try:
@@ -76,7 +102,7 @@ class UpdateDonationView(APIView):
             donation.source_bank = source_bank
             donation.source_account = source_account
             donation.transfer_date = transfer_date
-            donation.payment_status = 'confirmed'
+            donation.payment_status = 'verified'
 
             if proof_file:
                 donation.proof_file = proof_file
@@ -96,11 +122,34 @@ class UpdateDonationView(APIView):
 
 
 class CreateDonationView(APIView):
+    permission_classes = [AllowAny]  # Allow both authenticated and unauthenticated users
+
     def post(self, request, campaign_slug):
         try:
-            permission_classes = [IsAuthenticated]
             logger.info(f"Incoming request data: {request.data}")  # Log request data
             logger.info(f"Incoming files: {request.FILES}")  # Log uploaded files
+            # Log the Authorization header
+            auth_header = request.headers.get('Authorization')
+            logger.info(f"Authorization header: {auth_header}")
+
+            # Authenticate the user using JWT
+            jwt_authenticator = JWTAuthentication()
+            authenticated_user = None
+
+            if auth_header and auth_header.startswith('Bearer '):
+                try:
+                    # Decode the JWT token
+                    validated_token = jwt_authenticator.get_validated_token(auth_header.split(' ')[1])
+                    authenticated_user = jwt_authenticator.get_user(validated_token)
+                    logger.info(f"Authenticated user from JWT: {authenticated_user}")
+                except Exception as e:
+                    logger.error(f"JWT authentication failed: {str(e)}")
+            # Fetch the campaign using the slug
+            campaign = get_object_or_404(Campaign, slug=campaign_slug)
+
+            # Log the authenticated user (for debugging)
+            logger.info(f"Authenticated user: {authenticated_user}")
+            logger.info(f"User is authenticated: {authenticated_user is not None}")
 
             # Extract data from the request
             amount = request.data.get('amount')
@@ -113,8 +162,8 @@ class CreateDonationView(APIView):
             transfer_date = request.data.get('transfer_date')
             proof_file = request.FILES.get('proof_file')
 
-            # Find the campaign
-            campaign = get_object_or_404(Campaign, slug=campaign_slug)
+            # Check if the user is authenticated
+            donor = authenticated_user if authenticated_user else None
 
             # Create a new donation
             donation = Donation.objects.create(
@@ -127,12 +176,16 @@ class CreateDonationView(APIView):
                 source_bank=source_bank,
                 source_account=source_account,
                 transfer_date=transfer_date,
-                payment_status='pending'  # Set initial status as pending
+                payment_status='pending',  # Set initial status as pending
+                donor=donor  # Associate the donation with the logged-in user (if any)
             )
 
             if proof_file:
                 donation.proof_file = proof_file
                 donation.save()
+                logger.debug(f"Proof of payment uploaded: {donation.proof_file.url}")
+
+            logger.debug(f"Donation created: {donation.id}")  # Log the donation
 
             return Response({
                 'status': 'success',

@@ -1,4 +1,4 @@
-// pages/PaymentConfirmation.js
+// pages/CrowdfundingPaymentConfirmation.js
 import React, { useState, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -24,7 +24,7 @@ const formatDate = (deadline) => {
   });
 };
 
-const PaymentConfirmation = () => {
+const CrowdfundingPaymentConfirmation = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
@@ -122,6 +122,24 @@ const PaymentConfirmation = () => {
     donationData.append('transfer_date', formData.transferDate);
     donationData.append('proof_file', selectedFile);
 
+    const userData = localStorage.getItem('user');
+
+    // Parse the JSON object to extract the token
+    let authToken = null;
+    if (userData) {
+      const user = JSON.parse(userData);
+      authToken = user.access; // Extract the JWT access token
+    }
+
+    const headers = {
+      'Content-Type': 'multipart/form-data',
+      'X-CSRFToken': csrfToken,
+    };
+
+    if (authToken) {
+      headers['Authorization'] = `Bearer ${authToken}`; // Include the JWT token for authenticated users
+    }
+    
     const message = `*Donasi BAE Community*%0A
 ------------------------------------%0A
 Bismillah..%0A
@@ -141,12 +159,12 @@ Semoga dapat menjadi amal ibadah bagi saya dan bermanfaat untuk program serta pe
         `${process.env.REACT_APP_API_BASE_URL}/api/donations/${campaignSlug}/create-donation/`,  // Use campaign_slug
         donationData,
         {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-            'X-CSRFToken': csrfToken,
-          },
+          headers: headers,
+
         }
       );
+
+      console.log('Campaign Slug:', campaignSlug);
 
       if (response.status === 201) { 
         // Open WhatsApp with prepared message
@@ -296,7 +314,7 @@ Semoga dapat menjadi amal ibadah bagi saya dan bermanfaat untuk program serta pe
                   accept="image/*"
                   ref={fileInputRef}
                   onChange={handleFileChange}
-                  className="hidden"
+                  style={{ opacity: 0, position: 'absolute', zIndex: -1 }}
                   required
                 />
                 <div 
@@ -345,4 +363,4 @@ Semoga dapat menjadi amal ibadah bagi saya dan bermanfaat untuk program serta pe
   );
 };
 
-export default PaymentConfirmation;
+export default CrowdfundingPaymentConfirmation;

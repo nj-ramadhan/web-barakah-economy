@@ -17,7 +17,6 @@ class WishlistView(APIView):
         serializer = WishlistSerializer(wishlist_items, many=True)
         return Response(serializer.data)
     
-
     def post(self, request):
         user = request.user
         product_id = request.data.get('product_id')
@@ -31,7 +30,7 @@ class WishlistView(APIView):
 
     def delete(self, request):
         user = request.user
-        product_id = request.data.get('product_id')
-        wishlist_item = get_object_or_404(Wishlist, user=user, product_id=product_id)
+        id = request.data.get('id')
+        wishlist_item = get_object_or_404(Wishlist, user=user, id=id)
         wishlist_item.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)

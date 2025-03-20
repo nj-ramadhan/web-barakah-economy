@@ -1,9 +1,18 @@
-// pages/CheckoutPage.js
-import React, { useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+// pages/EcommerceCheckoutPage.js
+import React, { useState, useEffect } from 'react';
+import { useParams, useLocation, useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import Header from '../components/layout/Header';
 import NavigationButton from '../components/layout/Navigation';
 import '../styles/Body.css';
+
+const getCsrfToken = () => {
+  const cookieValue = document.cookie
+    .split('; ')
+    .find(row => row.startsWith('csrftoken='))
+    ?.split('=')[1];
+  return cookieValue;
+};
 
 const formatIDR = (amount) => {
   return new Intl.NumberFormat('id-ID', {
@@ -11,11 +20,14 @@ const formatIDR = (amount) => {
   }).format(amount);
 };
 
-const CheckoutPage = () => {
+const EcommerceCheckoutPage = () => {
+  const { slug } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
   const { cartItems } = location.state || { cartItems: [] };
   const [selectedBank, setSelectedBank] = useState('');
+  const [product, setProduct] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState({
     fullName: '',
     phone: '',
@@ -23,14 +35,152 @@ const CheckoutPage = () => {
     message: ''
   });
 
+  useEffect(() => {
+    // Check if Snap.js is already loaded
+    if (typeof window.snap === 'undefined') {
+      const script = document.createElement('script');
+      script.src = 'https://app.sandbox.midtrans.com/snap/snap.js';
+      script.dataset.clientKey = 'SB-Mid-client-wm4shJTARC2PTcY6';
+      script.onload = () => {
+        console.log('Snap.js loaded successfully.');
+      };
+      script.onerror = () => {
+        console.error('Failed to load Snap.js.');
+      };
+      document.body.appendChild(script);
+
+      // Cleanup on unmount
+      return () => {
+        document.body.removeChild(script);
+      };
+    }
+  }, []);
+
+  useEffect(() => {
+    // Fetch campaign details
+    const fetchProduct = async () => {
+      try {
+        setLoading(true);
+        const response = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/products/${slug}/`);
+        setProduct(response.data);
+      } catch (err) {
+        console.error('Error fetching campaign:', err);
+        // Use placeholder data if API fails
+        setProduct({
+          title: 'Program Donasi',
+          banner: `/images/${slug}.jpg`,
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProduct();
+  }, [slug]);
+
   const banks = [
     {
       id: 'bsi',
       name: 'Bank BSI',
       logo: '/images/bsi-logo.png'
     },
-    // Add more banks if needed
+    {
+      id: 'midtrans',
+      name: 'Midtrans (Gopay, OVO, etc)',
+      logo: '/images/gopay-logo.png',
+    },
   ];
+
+  const handlePayment = async (token) => {
+    if (typeof window.snap !== 'undefined') {
+      window.snap.pay(token, {
+        onSuccess: async (result) => {
+          console.log('Payment success:', result);
+  
+          // Notify the backend about the successful payment
+          try {
+            const response = await axios.post(
+              `${process.env.REACT_APP_API_BASE_URL}/api/payments/update-payment-status/`,
+              {
+                transactionId: result.transaction_id, // Midtrans transaction ID
+                // status: 'success', // Payment status
+                status: 'verified', // Payment status
+                amount: result.gross_amount, // Payment amount
+                paymentMethod: result.payment_type, // Payment method (e.g., gopay, bank transfer)
+              },
+              {
+                headers: {
+                  'Content-Type': 'application/json',
+                  'X-CSRFToken': getCsrfToken(), // Include CSRF token if needed
+                },
+              }
+            );
+  
+            if (response.status === 200) {
+              console.log('Payment status updated successfully.');
+              navigate('/success', {
+                state: {
+                  transactionId: result.transaction_id,
+                  amount: result.gross_amount,
+                  paymentMethod: result.payment_type,
+                },
+              });
+            } else {
+              console.error('Failed to update payment status:', response.data);
+              alert('Payment successful, but failed to update status. Please contact support.');
+            }
+          } catch (error) {
+            console.error('Error updating payment status:', error);
+            alert('Payment successful, but failed to update status. Please contact support.');
+          }
+        },
+        onPending: async (result) => {
+          console.log('Payment pending:', result);
+  
+          // Notify the backend about the pending payment
+          try {
+            const response = await axios.post(
+              `${process.env.REACT_APP_API_BASE_URL}/api/payments/update-payment-status/`,
+              {
+                transactionId: result.transaction_id, // Midtrans transaction ID
+                status: 'pending', // Payment status
+                amount: result.gross_amount, // Payment amount
+                paymentMethod: result.payment_type, // Payment method (e.g., gopay, bank transfer)
+              },
+              {
+                headers: {
+                  'Content-Type': 'application/json',
+                  'X-CSRFToken': getCsrfToken(), // Include CSRF token if needed
+                },
+              }
+            );
+  
+            if (response.status === 200) {
+              console.log('Payment status updated successfully.');
+              alert('Payment is pending. Please complete the payment.');
+            } else {
+              console.error('Failed to update payment status:', response.data);
+              alert('Payment pending, but failed to update status. Please contact support.');
+            }
+          } catch (error) {
+            console.error('Error updating payment status:', error);
+            alert('Payment pending, but failed to update status. Please contact support.');
+          }
+        },
+        onError: (error) => {
+          console.error('Payment error:', error);
+          alert('Payment failed. Please try again.');
+        },
+        onClose: () => {
+          console.log('Payment popup closed');
+          alert('Payment canceled. Please complete the payment to proceed.');
+        },
+      });
+    } else {
+      console.error('Snap.js is not loaded.');
+      alert('Payment gateway is not available. Please try again later.');
+    }
+  };
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -40,8 +190,11 @@ const CheckoutPage = () => {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+
+    const csrfToken = getCsrfToken();
+    // const authToken = localStorage.getItem('authToken');
 
     if (!selectedBank) {
       alert('Silakan pilih metode pembayaran');
@@ -53,24 +206,56 @@ const CheckoutPage = () => {
     // Generate a random checkout number with 'CHK' prefix and user ID
     const user = JSON.parse(localStorage.getItem('user'));
     const checkoutNumber = `CHK${user.id}-${Math.floor(Math.random() * 100)}`;
+    const customerName = formData.fullName;    
     const customerPhone = formData.phone;
 
-    // Navigate to payment confirmation with data
-    navigate('/konfirmasi-pembayaran-belanja', {
-      state: {
-        amount: totalAmount,
-        bank: selectedBank,
-        customerName: formData.fullName,
-        fullName: formData.fullName,
-        customerPhone: customerPhone,
-        email: formData.email,
-        message: formData.message,
-        cartItems: cartItems,
-        checkoutNumber: checkoutNumber // Add the checkout number
-      }
-    });
-  };
+    const paymentData = {
+      amount: totalAmount,
+      customerName: formData.fullName,
+      customerPhone: formData.phone,
+      checkoutNumber: checkoutNumber,
+    };
+    
+    // If Midtrans is selected, handle payment via Midtrans
+    if (selectedBank === 'midtrans') {
+      try {
+        // Fetch payment token from backend
+        const response = await axios.post(
+          `${process.env.REACT_APP_API_BASE_URL}/api/payments/generate-order-midtrans-token/`,
+          paymentData,{
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRFToken': csrfToken,
+            },
+          }
+        );
 
+        const { token } = response.data;
+
+      // Trigger the payment popup
+      handlePayment(token);
+      } catch (error) {
+        console.error('Error generating Midtrans token:', error);
+        alert('Terjadi kesalahan saat memproses pembayaran.');
+      }
+    } else {
+      // Navigate to payment confirmation with data
+      navigate('/konfirmasi-pembayaran-belanja', {
+        state: {
+          amount: totalAmount,
+          bank: selectedBank,
+          customerName: formData.fullName,
+          fullName: formData.fullName,
+          customerPhone: customerPhone,
+          email: formData.email,
+          message: formData.message,
+          cartItems: cartItems,
+          checkoutNumber: checkoutNumber // Add the checkout number
+        }
+      });
+    }
+  };
+  
   return (
     <div className="body">
       <Header />
@@ -201,4 +386,4 @@ const CheckoutPage = () => {
   );
 };
 
-export default CheckoutPage;
+export default EcommerceCheckoutPage;

@@ -1,4 +1,4 @@
-// pages/EcommercePage.js
+// pages/EcommerceMainPage.js
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -11,7 +11,7 @@ const formatIDR = (amount) => {
   }).format(amount);
 };
 
-const EcommercePage = () => {
+const EcommerceMainPage = () => {
   const [products, setProducts] = useState([]);
   const [featuredProducts, setfeaturedProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -290,4 +290,4 @@ const EcommercePage = () => {
   );
 };
 
-export default EcommercePage;
+export default EcommerceMainPage;

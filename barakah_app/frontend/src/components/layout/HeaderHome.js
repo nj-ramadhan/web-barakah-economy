@@ -16,7 +16,7 @@ const HeaderHome = ({ onSearch }) => {
       <div className="px-4 py-3">
         <div className="flex justify-between items-center">
           <div className="flex items-center">
-            <img src="/images/logo.png" alt="YPMN" className="h-8" />
+            <img src="/images/logo.png" alt="BAE Community" className="h-8" />
             <span className="ml-2 font-semibold text-green-700">BARAKAH APP</span>
           </div>
           <div className="flex-1 max-w-[200px] ml-4">

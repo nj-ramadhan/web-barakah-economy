@@ -1,4 +1,4 @@
-// pages/PaymentConfirmation.js
+// pages/EcommercePaymentConfirmation.js
 import React, { useState, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -24,7 +24,7 @@ const formatDate = (date) => {
   });
 };
 
-const PaymentConfirmation = () => {
+const EcommercePaymentConfirmation = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
@@ -342,4 +342,4 @@ Semoga dapat menjadi amal ibadah bagi saya dan bermanfaat untuk program serta pe
   );
 };
 
-export default PaymentConfirmation;
+export default EcommercePaymentConfirmation;

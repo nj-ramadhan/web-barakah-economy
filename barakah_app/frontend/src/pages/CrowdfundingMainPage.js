@@ -1,4 +1,4 @@
-// pages/CampaignPage.js
+// pages/CrowdfundingMainPage.js
 import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
@@ -33,7 +33,7 @@ const formatDeadline = (deadline) => {
   });
 };
 
-const CampaignPage = () => {
+const CrowdfundingMainPage = () => {
   const [campaigns, setCampaigns] = useState([]);
   const [featuredCampaigns, setFeaturedCampaigns] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -170,7 +170,7 @@ const CampaignPage = () => {
                         </button>
                       ) : (
                         <Link
-                          to={`/berdonasi/${campaign.slug || campaign.id}`}
+                          to={`/bayar-donasi/${campaign.slug || campaign.id}`}
                           className="block text-center bg-green-800 text-white py-2 rounded-md text-sm hover:bg-green-900"
                         >
                           DONASI SEKARANG
@@ -271,7 +271,7 @@ const CampaignPage = () => {
                       </button>
                     ) : (
                       <Link
-                        to={`/berdonasi/${campaign.slug || campaign.id}`}
+                        to={`/bayar-donasi/${campaign.slug || campaign.id}`}
                         className="block text-center bg-green-800 text-white py-2 rounded-md text-sm hover:bg-green-900"
                       >
                         DONASI SEKARANG
@@ -303,4 +303,4 @@ const CampaignPage = () => {
   );
 };
 
-export default CampaignPage;
+export default CrowdfundingMainPage;

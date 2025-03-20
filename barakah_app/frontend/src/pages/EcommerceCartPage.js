@@ -1,3 +1,4 @@
+// pages/EcommerceCartPage.js
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -11,7 +12,7 @@ const formatIDR = (amount) => {
     }).format(amount);
   };
   
-const CartPage = () => {
+const EcommerceCartPage = () => {
     const navigate = useNavigate();
     const [cartItems, setCartItems] = useState([]);
     const [quantities, setQuantities] = useState({});
@@ -129,10 +130,10 @@ const CartPage = () => {
                     <span className="material-icons text-sm mr-4">favorite</span>LIHAT INCARAN
                 </button>                
                 {cartItems.length === 0 ? (
-                    <p className="text-gray-600">Keranjang Belanja kamu kosong</p>
+                    <p className="text-gray-600 mt-4">Keranjang Belanja kamu kosong</p>
                 ) : (
                     <>
-                        <ul className="space-y-4">
+                        <ul className="space-y-4 mt-4">
                             {cartItems.map((item) => (
                                 <li key={item.id} className="p-4 border rounded-lg shadow-sm">
                                     <div className="flex justify-between items-center">
@@ -195,4 +196,4 @@ const CartPage = () => {
     );
 };
 
-export default CartPage;
+export default EcommerceCartPage;

@@ -1,8 +1,10 @@
 # donations/serializers.py
 from rest_framework import serializers
 from .models import Donation
+from campaigns.serializers import CampaignSerializer
 
 class DonationSerializer(serializers.ModelSerializer):
+    campaign = CampaignSerializer(read_only=True)
     campaign_title = serializers.CharField(source='campaign.title', read_only=True)
     campaign_slug = serializers.CharField(source='campaign.slug', read_only=True)
     proof_file_url = serializers.SerializerMethodField()

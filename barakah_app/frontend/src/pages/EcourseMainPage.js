@@ -1,4 +1,4 @@
-// pages/EcoursePage.js
+// pages/EcourseMainPage.js
 import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
@@ -12,7 +12,7 @@ const formatIDR = (amount) => {
 };
 
 
-const EcoursePage = () => {
+const EcourseMainPage = () => {
   const [courses, setCourses] = useState([]);
   const [featuredCourses, setFeaturedCourses] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -222,4 +222,4 @@ const EcoursePage = () => {
   );
 };
 
-export default EcoursePage;
+export default EcourseMainPage;

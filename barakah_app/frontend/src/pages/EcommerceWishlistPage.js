@@ -12,7 +12,7 @@ const formatIDR = (amount) => {
     }).format(amount);
   };
 
-const WishlistPage = () => {
+const EcommerceWishlistPage = () => {
     const navigate = useNavigate();
     const [wishlistItems, setWishlistItems] = useState([]);
 
@@ -123,9 +123,9 @@ const WishlistPage = () => {
                     <span className="material-icons text-sm mr-4">shopping_cart</span>LIHAT KERANJANG
                 </button>
                 {wishlistItems.length === 0 ? (
-                    <p className="text-gray-600">Produk Incaran kamu kosong.</p>
+                    <p className="text-gray-600 mt-4">Produk Incaran kamu kosong.</p>
                 ) : (
-                    <ul className="space-y-4">
+                    <ul className="space-y-4 mt-4">
                         {wishlistItems.map((item) => (
                             <li key={item.id} className="p-4 border rounded-lg shadow-sm">
                                 <div className="flex justify-between items-center">
@@ -169,4 +169,4 @@ const WishlistPage = () => {
     );
 };
 
-export default WishlistPage;
+export default EcommerceWishlistPage;

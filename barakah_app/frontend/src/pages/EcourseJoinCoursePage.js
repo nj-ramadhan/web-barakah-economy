@@ -1,4 +1,4 @@
-// pages/JoinCoursePage.js
+// pages/EcourseJoinCoursePage.js
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -19,7 +19,7 @@ const categoryAdditionalAmounts = {
   default: {value: 500},
 };
 
-const JoinCoursePage = () => {
+const EcourseJoinCoursePage = () => {
   const { slug } = useParams();
   const navigate = useNavigate();
   const [selectedAmount, setSelectedAmount] = useState('');
@@ -309,4 +309,4 @@ const JoinCoursePage = () => {
   );
 };
 
-export default JoinCoursePage;
+export default EcourseJoinCoursePage;
