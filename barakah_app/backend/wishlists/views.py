@@ -30,7 +30,7 @@ class WishlistView(APIView):
 
     def delete(self, request):
         user = request.user
-        id = request.data.get('id')
-        wishlist_item = get_object_or_404(Wishlist, user=user, id=id)
+        product_id = request.data.get('product_id')
+        wishlist_item = get_object_or_404(Wishlist, user=user, product_id=product_id)
         wishlist_item.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)

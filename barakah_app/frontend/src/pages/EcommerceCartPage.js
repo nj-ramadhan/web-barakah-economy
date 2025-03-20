@@ -75,6 +75,7 @@ const EcommerceCartPage = () => {
     };
 
     const removeFromCart = async (productId) => {
+        const csrfToken = getCsrfToken();
         try {
             const user = JSON.parse(localStorage.getItem('user'));
             if (!user || !user.access) {
@@ -86,6 +87,7 @@ const EcommerceCartPage = () => {
                 data: { product_id: productId },
                 headers: {
                     Authorization: `Bearer ${user.access}`,
+                    'X-CSRFToken': csrfToken,
                 },
             });
             fetchCartItems(); // Refresh cart items
