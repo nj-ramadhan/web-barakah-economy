@@ -21,9 +21,12 @@ class DonationSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'campaign_title', 'campaign_slug', 'proof_file_url', 'created_at', 'updated_at']
     
     def get_proof_file_url(self, obj):
-        if obj.proof_file:
-            return self.context.get('request').build_absolute_uri(obj.proof_file.url)
-        return None
+        request = self.context.get('request')
+        try:
+            if obj.proof_file:
+                return request.build_absolute_uri(obj.proof_file.url)
+        except:
+            return None
     
     def to_representation(self, instance):
         representation = super().to_representation(instance)

@@ -26,7 +26,7 @@ class WishlistView(APIView):
         if created:
             serializer = WishlistSerializer(wishlist_item)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response({'message': 'Product already in wishlist'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'message': 'Produk sudah ada di incaran'}, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request):
         user = request.user

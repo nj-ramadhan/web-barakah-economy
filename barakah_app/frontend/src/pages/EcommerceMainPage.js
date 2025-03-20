@@ -5,6 +5,17 @@ import axios from 'axios';
 import HeaderHome from '../components/layout/HeaderHome'; // Import the Header component
 import NavigationButton from '../components/layout/Navigation'; // Import the Navigation component
 
+function getCsrfToken() {
+  const cookies = document.cookie.split(';');
+  for (let cookie of cookies) {
+    const [name, value] = cookie.trim().split('=');
+    if (name === 'csrftoken') {
+      return value;
+    }
+  }
+  return null;
+}
+
 const formatIDR = (amount) => {
   return new Intl.NumberFormat('id-ID', {
     minimumFractionDigits: 0,
@@ -109,6 +120,7 @@ const EcommerceMainPage = () => {
   };
 
   const addToCart = async (productId) => {
+    const csrfToken = getCsrfToken();
     try {
       const user = JSON.parse(localStorage.getItem('user'));
       if (!user || !user.access) {
@@ -122,7 +134,8 @@ const EcommerceMainPage = () => {
         quantity: 1
       }, {
         headers: {
-          Authorization: `Bearer ${user.access}`
+          Authorization: `Bearer ${user.access}`,
+          'X-CSRFToken': csrfToken,
         }
       });
 
@@ -134,6 +147,7 @@ const EcommerceMainPage = () => {
   };
 
   const addToWishlist = async (productId) => {
+    const csrfToken = getCsrfToken();
     try {
       const user = JSON.parse(localStorage.getItem('user'));
       if (!user || !user.access) {
@@ -146,14 +160,15 @@ const EcommerceMainPage = () => {
         product_id: productId
       }, {
         headers: {
-          Authorization: `Bearer ${user.access}`
+          Authorization: `Bearer ${user.access}`,
+          'X-CSRFToken': csrfToken,
         }
       });
 
       alert('Berhasil menambahkan ke Incaran!');
     } catch (error) {
       console.error('Error adding product to wishlist:', error);
-      alert('Gagal menambahkan ke Incaran');
+      alert('Gagal menambahkan ke Incaran, ' + error['response']['data']['message']);
     }
   };
 

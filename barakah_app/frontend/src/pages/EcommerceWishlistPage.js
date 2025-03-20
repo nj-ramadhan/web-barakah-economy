@@ -6,6 +6,17 @@ import Header from '../components/layout/Header';
 import NavigationButton from '../components/layout/Navigation';
 import '../styles/Body.css';
 
+function getCsrfToken() {
+    const cookies = document.cookie.split(';');
+    for (let cookie of cookies) {
+      const [name, value] = cookie.trim().split('=');
+      if (name === 'csrftoken') {
+        return value;
+      }
+    }
+    return null;
+  }
+
 const formatIDR = (amount) => {
     return new Intl.NumberFormat('id-ID', {
       minimumFractionDigits: 0,
@@ -21,6 +32,7 @@ const EcommerceWishlistPage = () => {
     }, []);
 
     const fetchWishlistItems = async () => {
+        const csrfToken = getCsrfToken();
         try {
             // Retrieve the user object from Local Storage
             const user = JSON.parse(localStorage.getItem('user'));
@@ -39,6 +51,7 @@ const EcommerceWishlistPage = () => {
             const response = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/wishlists/wishlist/`, {
                 headers: {
                     Authorization: `Bearer ${user.access}`,  // Use "Bearer" for JWT tokens
+                    'X-CSRFToken': csrfToken,
                 },
             });
     
@@ -65,6 +78,7 @@ const EcommerceWishlistPage = () => {
     };
 
     const removeFromWishlist = async (productId) => {
+        const csrfToken = getCsrfToken();
         try {
             const user = JSON.parse(localStorage.getItem('user'));
             if (!user || !user.access) {
@@ -76,6 +90,7 @@ const EcommerceWishlistPage = () => {
                 data: { product_id: productId },
                 headers: {
                     Authorization: `Bearer ${user.access}`,
+                    'X-CSRFToken': csrfToken,
                 },
             });
             fetchWishlistItems(); // Refresh wishlist items
@@ -85,6 +100,7 @@ const EcommerceWishlistPage = () => {
     };
 
     const addToCart = async (productId) => {
+        const csrfToken = getCsrfToken();
         try {
             const user = JSON.parse(localStorage.getItem('user'));
             if (!user || !user.access) {
@@ -98,14 +114,15 @@ const EcommerceWishlistPage = () => {
                 quantity: 1
             }, {
                 headers: {
-                    Authorization: `Bearer ${user.access}`
+                    Authorization: `Bearer ${user.access}`,
+                    'X-CSRFToken': csrfToken,
                 }
             });
 
-            alert('Product added to cart successfully!');
+            alert('Berhasil menambahkan produk ke keranjang!');
         } catch (error) {
             console.error('Error adding product to cart:', error);
-            alert('Failed to add product to cart');
+            alert('Gagal menambahkan produk ke keranjang');
         }
     };
 

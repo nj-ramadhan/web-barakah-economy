@@ -6,6 +6,17 @@ import Header from '../components/layout/Header';
 import NavigationButton from '../components/layout/Navigation';
 import '../styles/Body.css';
 
+function getCsrfToken() {
+  const cookies = document.cookie.split(';');
+  for (let cookie of cookies) {
+    const [name, value] = cookie.trim().split('=');
+    if (name === 'csrftoken') {
+      return value;
+    }
+  }
+  return null;
+}
+
 const formatIDR = (amount) => {
   return new Intl.NumberFormat('id-ID', {
     minimumFractionDigits: 0,
@@ -40,6 +51,7 @@ const EcommerceProductDetail = () => {
   }, [slug]);
 
   const addToCart = async () => {
+    const csrfToken = getCsrfToken();
     try {
       const user = JSON.parse(localStorage.getItem('user'));
       if (!user || !user.access) {
@@ -53,18 +65,20 @@ const EcommerceProductDetail = () => {
         quantity: quantity
       }, {
         headers: {
-          Authorization: `Bearer ${user.access}`
+          Authorization: `Bearer ${user.access}`,
+          'X-CSRFToken': csrfToken,
         }
       });
 
-      alert('Product added to cart successfully!');
+      alert('Berhasil menambahkan produk ke keranjang!');
     } catch (error) {
       console.error('Error adding product to cart:', error);
-      alert('Failed to add product to cart');
+      alert('Gagal menambahkan produk ke keranjang');
     }
   };
 
   const addToWishlist = async (productId) => {
+    const csrfToken = getCsrfToken();
     try {
       const user = JSON.parse(localStorage.getItem('user'));
       if (!user || !user.access) {
@@ -77,14 +91,15 @@ const EcommerceProductDetail = () => {
         product_id: productId
       }, {
         headers: {
-          Authorization: `Bearer ${user.access}`
+          Authorization: `Bearer ${user.access}`,
+          'X-CSRFToken': csrfToken,
         }
       });
 
       alert('Berhasil menambahkan ke Incaran!');
     } catch (error) {
       console.error('Error adding product to wishlist:', error);
-      alert('Gagal menambahkan ke Incaran');
+      alert('Gagal menambahkan ke Incaran, ' + error['response']['data']['message']);
     }
   };
 
