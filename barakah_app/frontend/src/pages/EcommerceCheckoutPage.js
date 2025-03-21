@@ -56,28 +56,6 @@ const EcommerceCheckoutPage = () => {
     }
   }, []);
 
-  useEffect(() => {
-    // Fetch campaign details
-    const fetchProduct = async () => {
-      try {
-        setLoading(true);
-        const response = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/products/${slug}/`);
-        setProduct(response.data);
-      } catch (err) {
-        console.error('Error fetching campaign:', err);
-        // Use placeholder data if API fails
-        setProduct({
-          title: 'Program Donasi',
-          banner: `/images/${slug}.jpg`,
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchProduct();
-  }, [slug]);
-
   const banks = [
     {
       id: 'bsi',
@@ -118,6 +96,7 @@ const EcommerceCheckoutPage = () => {
   
             if (response.status === 200) {
               console.log('Payment status updated successfully.');
+              await clearCart(); // Clear the cart after successful payment
               navigate('/success', {
                 state: {
                   transactionId: result.transaction_id,
@@ -205,24 +184,26 @@ const EcommerceCheckoutPage = () => {
 
     // Generate a random checkout number with 'CHK' prefix and user ID
     const user = JSON.parse(localStorage.getItem('user'));
-    const checkoutNumber = `CHK${user.id}-${Math.floor(Math.random() * 100)}`;
     const customerName = formData.fullName;    
     const customerPhone = formData.phone;
 
     const paymentData = {
       amount: totalAmount,
-      customerName: formData.fullName,
-      customerPhone: formData.phone,
-      checkoutNumber: checkoutNumber,
+      customerName: customerName,
+      customerPhone: customerPhone,
+      cartItems: cartItems.map((item) => ({
+        product_id: item.product.id,
+        quantity: item.quantity,
+      })), // Include cart items if required by the backend
     };
     
     // If Midtrans is selected, handle payment via Midtrans
     if (selectedBank === 'midtrans') {
       try {
-        // Fetch payment token from backend
         const response = await axios.post(
           `${process.env.REACT_APP_API_BASE_URL}/api/payments/generate-order-midtrans-token/`,
-          paymentData,{
+          paymentData,
+          {
             headers: {
               'Content-Type': 'application/json',
               'X-CSRFToken': csrfToken,
@@ -232,8 +213,11 @@ const EcommerceCheckoutPage = () => {
 
         const { token } = response.data;
 
-      // Trigger the payment popup
-      handlePayment(token);
+        if (token) {
+          handlePayment(token); // Trigger the payment popup
+        } else {
+          throw new Error('Failed to retrieve payment token.');
+        }
       } catch (error) {
         console.error('Error generating Midtrans token:', error);
         alert('Terjadi kesalahan saat memproses pembayaran.');
@@ -244,15 +228,33 @@ const EcommerceCheckoutPage = () => {
         state: {
           amount: totalAmount,
           bank: selectedBank,
-          customerName: formData.fullName,
-          fullName: formData.fullName,
+          customerName: customerName,
           customerPhone: customerPhone,
           email: formData.email,
           message: formData.message,
           cartItems: cartItems,
-          checkoutNumber: checkoutNumber // Add the checkout number
         }
       });
+    }
+  };
+
+  const clearCart = async () => {
+    try {
+      const user = JSON.parse(localStorage.getItem('user')); // Retrieve the user object from localStorage
+      if (!user || !user.access) {
+        console.error('User is not logged in or access token is missing.');
+        return;
+      }
+  
+      await axios.delete(`${process.env.REACT_APP_API_BASE_URL}/api/cart/clear/`, {
+        headers: {
+          Authorization: `Bearer ${user.access}`, // Use the access token from the user object
+          'X-CSRFToken': getCsrfToken(), // Include CSRF token if needed
+        },
+      });
+      console.log('Cart cleared successfully.');
+    } catch (error) {
+      console.error('Error clearing cart:', error);
     }
   };
   
@@ -261,11 +263,11 @@ const EcommerceCheckoutPage = () => {
       <Header />
 
       <div className="container mx-auto px-4 py-6 max-w-md">
-        <h2 className="text-xl font-semibold mb-6 text-center">Pembayaran</h2>
+        <h2 className="text-lg font-semibold mb-6 text-center">Pembayaran</h2>
 
         {/* List of Products */}
         <div className="mb-6">
-          <h3 className="font-semibold mb-3">Produk dalam Keranjang</h3>
+          <h3 className="text-lg font-semibold mb-3">Produk dalam Keranjang</h3>
           <ul className="space-y-4">
             {cartItems.map((item) => (
               <li key={item.id} className="bg-white border border-transparent hover:bg-green-50/50 p-4 rounded-lg shadow-sm">
@@ -280,10 +282,10 @@ const EcommerceCheckoutPage = () => {
                       }}
                     />
                     <div className="justify-left">
-                      <h3 className="text-lg font-semibold">{item.product.title}</h3>
-                      <p className="text-gray-600">Jumlah Barang: {item.quantity}</p>
-                      <p className="text-gray-600">Harga satuan: Rp. {formatIDR(item.product.price)}</p>
-                      <p className="text-gray-600">Total: Rp. {formatIDR(item.product.price * item.quantity)}</p>
+                      <h3 className="text-sm font-semibold">{item.product.title}</h3>
+                      <p className="text-xs text-gray-600">Jumlah Barang: {item.quantity}</p>
+                      <p className="text-xs text-gray-600">Harga satuan: Rp. {formatIDR(item.product.price)}</p>
+                      <p className="text-xs text-gray-600">Total: Rp. {formatIDR(item.product.price * item.quantity)}</p>
                     </div>
                   </span>
                 </div>

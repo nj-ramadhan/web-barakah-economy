@@ -14,10 +14,10 @@ const getCsrfToken = () => {
   return cookieValue;
 };
 
-const formatDate = (date) => {
-  if (!date) return 'tidak ada';
-  const formattedDate = new Date(date);
-  return formattedDate.toLocaleDateString('id-ID', {
+const formatDate = (deadline) => {
+  if (!deadline) return 'tidak ada';
+  const date = new Date(deadline);
+  return date.toLocaleDateString('id-ID', {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',
@@ -46,11 +46,9 @@ const EcommercePaymentConfirmation = () => {
 
   const { 
     amount, 
-    bank, 
-    checkoutNumber,
+    bank,
     customerName, // Extract the customer's name
     customerPhone,
-    orderId // Extract order ID
   } = location.state;
 
   // Format amount with dot thousand separator
@@ -80,8 +78,16 @@ const EcommercePaymentConfirmation = () => {
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
+      if (file.size > 2 * 1024 * 1024) { // Limit file size to 5MB
+        alert('Ukuran file terlalu besar. Maksimal 2MB.');
+        return;
+      }
+      if (!['image/jpeg', 'image/png', 'image/jpg'].includes(file.type)) {
+        alert('Format file tidak didukung. Hanya JPG, PNG, dan JPEG yang diperbolehkan.');
+        return;
+      }
+
       setSelectedFile(file);
-      // Create preview URL
       const fileReader = new FileReader();
       fileReader.onload = () => {
         setPreviewUrl(fileReader.result);
@@ -109,6 +115,11 @@ const EcommercePaymentConfirmation = () => {
       alert('Mohon upload bukti transfer');
       return;
     }
+
+    if (!formData.sourceBank || !formData.sourceAccount || !formData.transferDate) {
+      alert('Mohon lengkapi semua data yang diperlukan.');
+      return;
+    }
   
     // Prepare payment confirmation data
     const paymentData = new FormData();
@@ -122,40 +133,56 @@ const EcommercePaymentConfirmation = () => {
     paymentData.append('transfer_date', formData.transferDate);
     paymentData.append('proof_file', selectedFile);
 
-    const message = `*Konfirmasi Pembayaran Belanja*%0A
+    const userData = localStorage.getItem('user');
+
+    // Parse the JSON object to extract the token
+    let authToken = null;
+    if (userData) {
+      const user = JSON.parse(userData);
+      authToken = user.access; // Extract the JWT access token
+    }
+
+    const headers = {
+      'Content-Type': 'multipart/form-data',
+      'X-CSRFToken': csrfToken,
+    };
+
+    if (authToken) {
+      headers['Authorization'] = `Bearer ${authToken}`; // Include the JWT token for authenticated users
+    }
+             
+    try {
+      const response = await axios.post(
+        `${process.env.REACT_APP_API_BASE_URL}/api/orders/create-order/`,
+        paymentData,
+        {
+          headers: headers,
+        }
+      );
+  
+      const { order_number } = response.data; // Get the order number from the backend
+      console.log('Order Number:', order_number);
+
+      const message = encodeURIComponent(`*Konfirmasi Pembayaran Belanja*%0A
 ------------------------------------%0A
 Bismillah..%0A
 Pada hari ini,%0A 
 Tanggal ${formatDate(formData.transferDate)}%0A
-Saya ${formData.accountName} telah melakukan pembayaran untuk pesanan ${checkoutNumber}%0A
+Saya ${formData.accountName || ''} telah melakukan pembayaran untuk pesanan ${order_number}%0A
 dengan nominal Rp ${formattedAmount} melalui Bank ${selectedBankInfo.fullName}%0A
 %0A
 Saya mengirim pembayaran dari Bank ${formData.sourceBank}, dengan No. Rekening ${formData.sourceAccount}%0A
 ------------------------------------%0A%0A
 Bukti transfer telah saya upload, mohon konfirmasi.%0A
-Semoga dapat menjadi amal ibadah bagi saya dan bermanfaat untuk program serta penerimanya`;
-              
-    try {
-      // Send a request to confirm the payment
-      const response = await axios.post(
-        `${process.env.REACT_APP_API_BASE_URL}/api/orders/${orderId}`,  // Use order ID
-        paymentData,
-        {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-            'X-CSRFToken': csrfToken,
-          },
-        }
-      );
+Semoga dapat menjadi amal ibadah bagi saya dan bermanfaat untuk program serta penerimanya.`);
 
-      if (response.status === 201) { 
+      if (response.status === 201) {
         // Open WhatsApp with prepared message
         window.open(`https://wa.me/6285643848251?text=${message}`, '_blank');
-  
+    
         // Navigate to success page
         navigate('/', {
           state: {
-            checkout_number: checkoutNumber,
             amount: amount,
             date: new Date().toISOString(),
           },
@@ -164,8 +191,8 @@ Semoga dapat menjadi amal ibadah bagi saya dan bermanfaat untuk program serta pe
         alert('Gagal mengkonfirmasi pembayaran. Silakan coba lagi.');
       }
     } catch (error) {
-      console.error('Error confirming payment:', error);
-      alert('Terjadi kesalahan saat mengkonfirmasi pembayaran.');
+      console.error('Error confirming payment:', error.response?.data || error.message);
+      alert('Terjadi kesalahan saat mengkonfirmasi pembayaran. Silakan coba lagi.');
     }
   };
 
@@ -179,9 +206,8 @@ Semoga dapat menjadi amal ibadah bagi saya dan bermanfaat untuk program serta pe
             Terimakasih, <span className="text-green-600">{customerName}</span>
           </h1>
           <p className="text-gray-600">
-            atas pembayaran yang akan anda lakukan untuk pesanan nomor :
+            atas pembayaran yang akan anda lakukan :
           </p>
-          <h2 className="text-2xl font-bold mt-2 mb-6">{checkoutNumber}</h2>
         </div>
 
         {/* Bank information card */}

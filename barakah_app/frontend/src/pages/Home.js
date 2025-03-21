@@ -1,12 +1,23 @@
 // pages/Home.js
 import React, { useState, useEffect, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import HeaderHome from '../components/layout/HeaderHome'; // Import the Header component
 import NavigationButton from '../components/layout/Navigation'; // Import the Navigation component
 import 'swiper/swiper-bundle.css';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Pagination, Scrollbar } from 'swiper/modules';
+
+function getCsrfToken() {
+  const cookies = document.cookie.split(';');
+  for (let cookie of cookies) {
+    const [name, value] = cookie.trim().split('=');
+    if (name === 'csrftoken') {
+      return value;
+    }
+  }
+  return null;
+}
 
 const formatIDR = (amount) => {
   return new Intl.NumberFormat('id-ID', {
@@ -49,6 +60,7 @@ const Home = () => {
   const [searchTimeout, setSearchTimeout] = useState(null);
   const [activeSlide, setActiveSlide] = useState(0);
   const sliderInterval = useRef(null);
+  const navigate = useNavigate();
      
   useEffect(() => {
     const fetchFeaturedProducts = async () => {
@@ -191,6 +203,59 @@ const Home = () => {
     sliderInterval.current = setInterval(() => {
       setActiveSlide(prev => (prev + 1) % featuredCampaigns.length);
     }, 5000);
+  };
+
+  const addToCart = async (productId) => {
+    const csrfToken = getCsrfToken();
+    try {
+      const user = JSON.parse(localStorage.getItem('user'));
+      if (!user || !user.access) {
+        console.error('User not logged in');
+        navigate('/login'); // Redirect to login page if not logged in
+        return;
+      }
+
+      await axios.post(`${process.env.REACT_APP_API_BASE_URL}/api/carts/cart/`, {
+        product_id: productId,
+        quantity: 1
+      }, {
+        headers: {
+          Authorization: `Bearer ${user.access}`,
+          'X-CSRFToken': csrfToken,
+        }
+      });
+
+      alert('Berhasil menambahkan ke Keranjang Belanja!');
+    } catch (error) {
+      console.error('Error adding product to cart:', error);
+      alert('Gagal menambahkan ke Keranjang Belanja');
+    }
+  };
+
+  const addToWishlist = async (productId) => {
+    const csrfToken = getCsrfToken();
+    try {
+      const user = JSON.parse(localStorage.getItem('user'));
+      if (!user || !user.access) {
+        console.error('User not logged in');
+        navigate('/login'); // Redirect to login page if not logged in
+        return;
+      }
+
+      await axios.post(`${process.env.REACT_APP_API_BASE_URL}/api/wishlists/wishlist/`, {
+        product_id: productId
+      }, {
+        headers: {
+          Authorization: `Bearer ${user.access}`,
+          'X-CSRFToken': csrfToken,
+        }
+      });
+
+      alert('Berhasil menambahkan ke Incaran!');
+    } catch (error) {
+      console.error('Error adding product to wishlist:', error);
+      alert('Gagal menambahkan ke Incaran, ' + error['response']['data']['message']);
+    }
   };
 
   // Sort campaigns based on the most donated
@@ -434,12 +499,40 @@ const Home = () => {
                     />
                     <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4">
                       <h2 className="text-white font-bold text-lg">{product.title}</h2>
-                        <Link
-                          to={`/beli/${product.slug || product.id}`}
-                          className="block text-center bg-green-800 text-white py-2 rounded-md text-sm hover:bg-green-900"
+                      <h2 className="text-white text-sm">stok{' '} {product.stock > 0 ? product.stock : 'habis'}</h2>
+                      {product.stock <= 0 ? (
+                      <div className="flex space-x-2">
+                        <button
+                          onClick={() => addToWishlist(product.id)}
+                          className="w-full block text-center bg-red-600 text-white py-2 rounded-md text-sm hover:bg-red-600 flex items-center justify-center"
                         >
-                          BELI SEKARANG
-                        </Link>
+                          <span className="material-icons text-sm">favorite</span>+ INCARAN
+                        </button>
+                        <button
+                          onClick={() => addToCart(product.id)}
+                          className="w-full block text-center bg-gray-400 text-white py-2 rounded-md text-sm hover:bg-gray-500 flex items-center justify-center"
+                          disabled
+                        >
+                          <span className="material-icons text-sm">add_shopping_cart</span>+ KERANJANG
+                        </button>
+                      </div>
+                      
+                      ) : (
+                        <div className="w-full flex justify-between space-x-2 mt-2">
+                          <button
+                            onClick={() => addToWishlist(product.id)}
+                            className=" w-full block text-center bg-red-600 text-white py-2 rounded-md text-sm hover:bg-red-700 flex items-center justify-center"
+                          >
+                            <span className="material-icons text-sm mr-2">favorite</span>+ INCARAN
+                          </button>                      
+                          <button
+                            onClick={() => addToCart(product.id)}
+                            className="w-full block text-center bg-green-800 text-white py-2 rounded-md text-sm hover:bg-green-900 flex items-center justify-center"
+                          >
+                            <span className="material-icons text-sm mr-2">add_shopping_cart</span>+ KERANJANG
+                          </button>
+                        </div>
+                      )}
                     </div>
                   </div>
                 );
@@ -500,6 +593,38 @@ const Home = () => {
                         <p className="text-gray-600 text-xs mb-2">Rp. {formatIDR(product.price)} / {product.unit}</p>
                         <p className="text-gray-600 text-xs mb-2">stok{' '} {product.stock > 0 ? product.stock : 'habis'}</p>
                       </div>
+                      {product.stock <= 0 ? (
+                      <div className="flex space-x-2">
+                        <button
+                          onClick={() => addToWishlist(product.id)}
+                          className="w-full block text-center bg-red-600 text-white py-2 rounded-md text-sm hover:bg-red-600 flex items-center justify-center"
+                        >
+                          <span className="material-icons text-sm">favorite</span>
+                        </button>
+                        <button
+                          onClick={() => addToCart(product.id)}
+                          className="w-full block text-center bg-gray-400 text-white py-2 rounded-md text-sm hover:bg-gray-500 flex items-center justify-center"
+                          disabled
+                        >
+                          <span className="material-icons text-sm">add_shopping_cart</span>
+                        </button>
+                      </div>
+                      ) : (
+                        <div className="flex space-x-2">
+                          <button
+                            onClick={() => addToWishlist(product.id)}
+                            className="w-full block text-center bg-red-600 text-white py-2 rounded-md text-sm hover:bg-red-600 flex items-center justify-center"
+                          >
+                            <span className="material-icons text-sm">favorite</span>
+                          </button>
+                          <button
+                            onClick={() => addToCart(product.id)}
+                            className="w-full block text-center bg-green-800 text-white py-2 rounded-md text-sm hover:bg-green-900 flex items-center justify-center"
+                          >
+                            <span className="material-icons text-sm">add_shopping_cart</span>
+                          </button>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </SwiperSlide>
@@ -550,19 +675,36 @@ const Home = () => {
                       <p className="text-gray-600 text-xs mb-2">stok{' '} {product.stock > 0 ? product.stock : 'habis'}</p>
                     </div>
                     {product.stock <= 0 ? (
+                      <div className="flex space-x-2">
                         <button
-                          className="w-full bg-gray-400 text-white py-2 rounded-md text-sm cursor-not-allowed"
+                          onClick={() => addToWishlist(product.id)}
+                          className="w-full block text-center bg-red-600 text-white py-2 rounded-md text-sm hover:bg-red-600 flex items-center justify-center"
+                        >
+                          <span className="material-icons text-sm">favorite</span>
+                        </button>
+                        <button
+                          onClick={() => addToCart(product.id)}
+                          className="w-full block text-center bg-gray-400 text-white py-2 rounded-md text-sm hover:bg-gray-500 flex items-center justify-center"
                           disabled
                         >
-                          BELI SEKARANG
+                          <span className="material-icons text-sm">add_shopping_cart</span>
                         </button>
+                      </div>
                       ) : (
-                        <Link
-                          to={`/beli/${product.slug || product.id}`}
-                          className="block text-center bg-green-800 text-white py-2 rounded-md text-sm hover:bg-green-900"
-                        >
-                          BELI SEKARANG
-                        </Link>
+                        <div className="flex space-x-2">
+                          <button
+                            onClick={() => addToWishlist(product.id)}
+                            className="w-full block text-center bg-red-600 text-white py-2 rounded-md text-sm hover:bg-red-600 flex items-center justify-center"
+                          >
+                            <span className="material-icons text-sm">favorite</span>
+                          </button>
+                          <button
+                            onClick={() => addToCart(product.id)}
+                            className="w-full block text-center bg-green-800 text-white py-2 rounded-md text-sm hover:bg-green-900 flex items-center justify-center"
+                          >
+                            <span className="material-icons text-sm">add_shopping_cart</span>
+                          </button>
+                        </div>
                       )}
                   </div>
                 </div>

@@ -34,34 +34,21 @@ const EcommerceCartPage = () => {
 
     const fetchCartItems = async () => {
         try {
-            // Retrieve the user object from Local Storage
             const user = JSON.parse(localStorage.getItem('user'));
-            
-            // Check if the user object and access token exist
             if (!user || !user.access) {
                 console.error('User not logged in or token missing');
-                navigate('/login');  // Redirect to login page
+                navigate('/login');
                 return;
             }
     
-            // Log the token for debugging
-            console.log('User token:', user.access);
-    
-            // Make the API request with the token in the headers
             const response = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/carts/cart/`, {
                 headers: {
-                    Authorization: `Bearer ${user.access}`,  // Use "Bearer" for JWT tokens
-                },
-                params: {
-                    user_id: user.id,  // Pass the user ID as a query parameter
+                    Authorization: `Bearer ${user.access}`,
                 },
             });
     
-            // Log the response for debugging
-            console.log('Cart items fetched:', response.data);
-    
-            // Update the state with the fetched cart items
             setCartItems(response.data);
+    
             // Initialize quantities state
             const initialQuantities = {};
             response.data.forEach(item => {
@@ -70,17 +57,9 @@ const EcommerceCartPage = () => {
             setQuantities(initialQuantities);
         } catch (error) {
             console.error('Error fetching cart items:', error);
-    
-            // Handle specific error cases
-            if (error.response) {
-                console.error('Error response:', error.response);
-    
-                // Handle 403 Forbidden (token invalid or expired)
-                if (error.response.status === 403) {
-                    console.error('Token expired or invalid. Redirecting to login...');
-                    localStorage.removeItem('user');  // Clear the invalid token
-                    navigate('/login');  // Redirect to login page
-                }
+            if (error.response && error.response.status === 403) {
+                localStorage.removeItem('user');
+                navigate('/login');
             }
         }
     };
@@ -101,34 +80,63 @@ const EcommerceCartPage = () => {
                     'X-CSRFToken': csrfToken,
                 },
             });
+
             fetchCartItems(); // Refresh cart items
         } catch (error) {
             console.error('Error removing item from cart:', error);
+            alert('Gagal menghapus item dari keranjang. Silakan coba lagi.');
         }
     };
 
     const handleIncrement = (productId, stock) => {
-        setQuantities(prevQuantities => {
+        setQuantities((prevQuantities) => {
             const newQuantity = Math.min(prevQuantities[productId] + 1, stock);
-            return { ...prevQuantities, [productId]: newQuantity };
+            const updatedQuantities = { ...prevQuantities, [productId]: newQuantity };
+
+            // Update cartItems with the new quantity
+            const updatedCartItems = cartItems.map((item) =>
+                item.product.id === productId
+                    ? { ...item, quantity: updatedQuantities[productId] }
+                    : item
+            );
+            setCartItems(updatedCartItems);
+
+            return updatedQuantities;
         });
     };
 
     const handleDecrement = (productId) => {
-        setQuantities(prevQuantities => {
+        setQuantities((prevQuantities) => {
             const newQuantity = Math.max(prevQuantities[productId] - 1, 0);
+            const updatedQuantities = { ...prevQuantities, [productId]: newQuantity };
+
+            // Update cartItems with the new quantity
+            const updatedCartItems = cartItems.map((item) =>
+                item.product.id === productId
+                    ? { ...item, quantity: updatedQuantities[productId] }
+                    : item
+            );
+            setCartItems(updatedCartItems);
+
+            // If quantity is zero, confirm removal
             if (newQuantity === 0) {
                 const confirmDelete = window.confirm('Quantity is zero. Do you want to remove this item from the cart?');
                 if (confirmDelete) {
                     removeFromCart(productId);
                 }
             }
-            return { ...prevQuantities, [productId]: newQuantity };
+
+            return updatedQuantities;
         });
     };
 
     const handleCheckout = () => {
-        navigate('/bayar-belanja', { state: { cartItems } });
+        if (cartItems.length === 0) {
+            alert('Keranjang belanja kosong. Tambahkan produk sebelum melanjutkan ke pembayaran.');
+            return;
+        }
+    
+        navigate('/bayar-belanja', { state: { cartItems } }); // Pass the updated cartItems
     };
 
     return (

@@ -1,4 +1,14 @@
 from django.db import models
+from django.utils.text import slugify
+
+def generate_unique_slug(model, name):
+    slug = slugify(name)
+    unique_slug = slug
+    num = 1
+    while model.objects.filter(slug=unique_slug).exists():
+        unique_slug = f'{slug}-{num}'
+        num += 1
+    return unique_slug
 
 class Product(models.Model):
     CATEGORY_CHOICES = [
@@ -21,6 +31,7 @@ class Product(models.Model):
     ]
 
     title = models.CharField(max_length=100)
+    slug = models.SlugField(max_length=100, unique=True, blank=True)
     description = models.TextField()
     category = models.CharField(max_length=20, choices=CATEGORY_CHOICES)
     thumbnail = models.ImageField(upload_to='product_images/')

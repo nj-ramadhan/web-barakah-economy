@@ -80,6 +80,15 @@ const CrowdfundingPaymentConfirmation = () => {
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
+      if (file.size > 2 * 1024 * 1024) { // Limit file size to 5MB
+        alert('Ukuran file terlalu besar. Maksimal 2MB.');
+        return;
+      }
+      if (!['image/jpeg', 'image/png', 'image/jpg'].includes(file.type)) {
+        alert('Format file tidak didukung. Hanya JPG, PNG, dan JPEG yang diperbolehkan.');
+        return;
+      }
+
       setSelectedFile(file);
       // Create preview URL
       const fileReader = new FileReader();
@@ -110,6 +119,11 @@ const CrowdfundingPaymentConfirmation = () => {
       return;
     }
   
+    if (!formData.sourceBank || !formData.sourceAccount || !formData.transferDate) {
+      alert('Mohon lengkapi semua data yang diperlukan.');
+      return;
+    }
+
     // Prepare donation data
     const donationData = new FormData();
     donationData.append('amount', amount);
@@ -145,7 +159,7 @@ const CrowdfundingPaymentConfirmation = () => {
 Bismillah..%0A
 Pada hari ini,%0A 
 Tanggal ${formatDate(formData.transferDate)}%0A
-Saya ${formData.accountName} berniat menitipkan donasi pada program ${campaignTitle}%0A
+Saya ${formData.accountName || ''} berniat menitipkan donasi pada program ${campaignTitle}%0A
 dengan nominal Rp ${formattedAmount} melalui Bank ${selectedBankInfo.fullName}%0A
 %0A
 Saya mengirim donasi dari Bank ${formData.sourceBank}, dengan No. Rekening ${formData.sourceAccount}%0A
@@ -160,7 +174,6 @@ Semoga dapat menjadi amal ibadah bagi saya dan bermanfaat untuk program serta pe
         donationData,
         {
           headers: headers,
-
         }
       );
 

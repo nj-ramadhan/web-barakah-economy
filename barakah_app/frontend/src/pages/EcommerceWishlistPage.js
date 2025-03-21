@@ -161,20 +161,38 @@ const EcommerceWishlistPage = () => {
                                             <p className="text-gray-600 text-xs">Rp. {formatIDR(item.product.price)} / {item.product.unit}</p>
                                         </div>    
                                     </span>
-                                    <div className="flex flex-col items-center">
-                                        <button
-                                            onClick={() => addToCart(item.product.id)}
-                                            className="bg-green-800 material-icons text-sm text-white px-4 py-2 rounded-lg hover:bg-green-900 mb-2"
-                                        >
-                                            add_shopping_cart
-                                        </button>
-                                        <button
-                                            onClick={() => removeFromWishlist(item.product.id)}
-                                            className="bg-red-600 material-icons text-sm text-white px-4 py-2 rounded-lg hover:bg-red-700"
-                                        >
-                                            delete
-                                        </button>
-                                    </div>
+                                        {item.product.stock <= 0 ? (
+                                        <div className="flex flex-col items-center">
+                                            <button
+                                                onClick={() => addToCart(item.product.id)}
+                                                className="bg-gray-400 material-icons text-sm text-white px-4 py-2 rounded-lg hover:bg-gray-500 mb-2"
+                                                disabled
+                                            >
+                                                add_shopping_cart
+                                            </button>
+                                            <button
+                                                onClick={() => removeFromWishlist(item.product.id)}
+                                                className="bg-red-600 material-icons text-sm text-white px-4 py-2 rounded-lg hover:bg-red-700"
+                                            >
+                                                delete
+                                            </button>
+                                        </div>
+                                        ) : (
+                                        <div className="flex flex-col items-center">
+                                            <button
+                                                onClick={() => addToCart(item.product.id)}
+                                                className="bg-green-800 material-icons text-sm text-white px-4 py-2 rounded-lg hover:bg-green-900 mb-2"
+                                            >
+                                                add_shopping_cart
+                                            </button>
+                                            <button
+                                                onClick={() => removeFromWishlist(item.product.id)}
+                                                className="bg-red-600 material-icons text-sm text-white px-4 py-2 rounded-lg hover:bg-red-700"
+                                            >
+                                                delete
+                                            </button>
+                                        </div>
+                                        )}
                                 </div>
                             </li>
                         ))}

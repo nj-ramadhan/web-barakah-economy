@@ -200,20 +200,40 @@ const EcommerceMainPage = () => {
                     />            
                     <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4">
                       <h2 className="text-white font-bold text-lg">{product.title}</h2>
-                      <div className="w-full flex justify-between space-x-2 mt-2">
+                      <h2 className="text-white text-sm">stok{' '} {product.stock > 0 ? product.stock : 'habis'}</h2>
+                      {product.stock <= 0 ? (
+                      <div className="flex space-x-2">
                         <button
                           onClick={() => addToWishlist(product.id)}
-                          className=" w-full block text-center bg-red-600 text-white py-2 rounded-md text-sm hover:bg-red-700 flex items-center justify-center"
+                          className="w-full block text-center bg-red-600 text-white py-2 rounded-md text-sm hover:bg-red-600 flex items-center justify-center"
                         >
-                          <span className="material-icons text-sm mr-2">favorite</span>+ INCARAN
-                        </button>                      
+                          <span className="material-icons text-sm">favorite</span>+ INCARAN
+                        </button>
                         <button
                           onClick={() => addToCart(product.id)}
-                          className="w-full block text-center bg-green-800 text-white py-2 rounded-md text-sm hover:bg-green-900 flex items-center justify-center"
+                          className="w-full block text-center bg-gray-400 text-white py-2 rounded-md text-sm hover:bg-gray-500 flex items-center justify-center"
+                          disabled
                         >
-                          <span className="material-icons text-sm mr-2">add_shopping_cart</span>+ KERANJANG
+                          <span className="material-icons text-sm">add_shopping_cart</span>+ KERANJANG
                         </button>
+                      </div>
+                      
+                      ) : (
+                        <div className="w-full flex justify-between space-x-2 mt-2">
+                          <button
+                            onClick={() => addToWishlist(product.id)}
+                            className=" w-full block text-center bg-red-600 text-white py-2 rounded-md text-sm hover:bg-red-700 flex items-center justify-center"
+                          >
+                            <span className="material-icons text-sm mr-2">favorite</span>+ INCARAN
+                          </button>                      
+                          <button
+                            onClick={() => addToCart(product.id)}
+                            className="w-full block text-center bg-green-800 text-white py-2 rounded-md text-sm hover:bg-green-900 flex items-center justify-center"
+                          >
+                            <span className="material-icons text-sm mr-2">add_shopping_cart</span>+ KERANJANG
+                          </button>
                         </div>
+                      )}
                     </div>
                   </div>
                 );
@@ -260,25 +280,43 @@ const EcommerceMainPage = () => {
                     />
                   </Link>
                   <div className="p-2">
-                    <h3 className="text-sm font-medium mb-2 line-clamp-2">{product.title}</h3>  
+                    <h3 className="text-sm font-medium mb-2 line-clamp-2">{product.title}</h3>   
                     <div className="flex justify-between">
                       <p className="text-gray-600 text-xs mb-2">Rp. {formatIDR(product.price)} / {product.unit}</p>
                       <p className="text-gray-600 text-xs mb-2">stok{' '} {product.stock > 0 ? product.stock : 'habis'}</p>
-                    </div>                
-                    <div className="flex space-x-2">
-                    <button
-                        onClick={() => addToWishlist(product.id)}
-                        className="w-full block text-center bg-red-600 text-white py-2 rounded-md text-sm hover:bg-red-600 flex items-center justify-center"
-                      >
-                        <span className="material-icons text-sm">favorite</span>
-                      </button>
-                      <button
-                        onClick={() => addToCart(product.id)}
-                        className="w-full block text-center bg-green-800 text-white py-2 rounded-md text-sm hover:bg-green-900 flex items-center justify-center"
-                      >
-                        <span className="material-icons text-sm">add_shopping_cart</span>
-                      </button>
                     </div>
+                    {product.stock <= 0 ? (
+                      <div className="flex space-x-2">
+                        <button
+                          onClick={() => addToWishlist(product.id)}
+                          className="w-full block text-center bg-red-600 text-white py-2 rounded-md text-sm hover:bg-red-600 flex items-center justify-center"
+                        >
+                          <span className="material-icons text-sm">favorite</span>
+                        </button>
+                        <button
+                          onClick={() => addToCart(product.id)}
+                          className="w-full block text-center bg-gray-400 text-white py-2 rounded-md text-sm hover:bg-gray-500 flex items-center justify-center"
+                          disabled
+                        >
+                          <span className="material-icons text-sm">add_shopping_cart</span>
+                        </button>
+                      </div>
+                      ) : (
+                        <div className="flex space-x-2">
+                          <button
+                            onClick={() => addToWishlist(product.id)}
+                            className="w-full block text-center bg-red-600 text-white py-2 rounded-md text-sm hover:bg-red-600 flex items-center justify-center"
+                          >
+                            <span className="material-icons text-sm">favorite</span>
+                          </button>
+                          <button
+                            onClick={() => addToCart(product.id)}
+                            className="w-full block text-center bg-green-800 text-white py-2 rounded-md text-sm hover:bg-green-900 flex items-center justify-center"
+                          >
+                            <span className="material-icons text-sm">add_shopping_cart</span>
+                          </button>
+                        </div>
+                      )}
                   </div>
                 </div>
               );

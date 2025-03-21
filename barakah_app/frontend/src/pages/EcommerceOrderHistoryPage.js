@@ -94,20 +94,37 @@ const EcommerceOrderHistoryPage = () => {
                 <ul className="space-y-4 mt-4">
                 {orders.map((order) => (
                     <li key={order.id} className="p-4 border rounded-lg shadow-sm">
-                        <div className="flex justify-between items-center">
-                            <span className="flex justify-left items-center">
-                                <div className="justify-left">
-                                    <h3 className="text-sm font-semibold">Order #{order.id}</h3>
-                                    <p className="text-gray-600 text-xs">Tanggal : {formatDate(order.created_at)}</p>
-                                    <p className="text-gray-600 text-xs">Status: {order.status}</p>
-                                    <p className="text-gray-600 text-xs">Total: Rp. {formatIDR(order.total_price)}</p>
+                        <div className="w-full flex justify-left items-center">
+                            <span className="w-full flex justify-left items-center">
+                                <div className="w-full justify-left">
+                                    <span className="w-full flex justify-between items-center text-gray-600 text-xs">
+                                        <h3 className="text-sm font-semibold">Order No</h3>
+                                        <h3 className="text-sm font-semibold mr-32">{order.order_number}</h3>
+                                    </span>
+                                    
+                                    <span className="w-full flex justify-between items-center text-gray-600 text-xs">
+                                        <p>Tanggal</p>
+                                        <p className="font-bold mr-32">{formatDate(order.created_at)}</p>
+                                    </span>
+                                    <span className="w-full flex justify-between items-center text-gray-600 text-xs">
+                                        <p>Status</p>
+                                        <p className="font-bold mr-32">{order.status}</p>
+                                    </span>                                    
+                                    <p className="text-gray-600 text-xs">Item Produk</p>
                                     <ul>
                                         {order.items.map((item) => (
-                                            <li key={item.id} className="text-gray-600 text-xs">
-                                                {item.product.name} - {item.quantity} x Rp. {formatIDR(item.price)}
+                                            <li key={item.id} className="ml-6 text-gray-600 text-xs">
+                                                <span className="w-full flex justify-between items-center">
+                                                    <div>{item.product_name} x {item.quantity}</div>
+                                                    <div>Rp. {formatIDR(item.price)}</div>
+                                                </span>
                                             </li>
                                         ))}
                                     </ul>
+                                    <span className="w-full flex justify-between items-center text-gray-600 text-xs">
+                                        <p>Total</p>
+                                        <p className="font-bold">Rp. {formatIDR(order.total_price)}</p>
+                                    </span>
                                     </div>    
                                 </span>
                             </div>
