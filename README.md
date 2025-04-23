@@ -17,8 +17,8 @@ Building a Crowdfunding Platform with Django and React
     pip install django djangorestframework django-cors-headers Pillow
 
 ### Start project
-    django-admin startproject crowdfunding_platform
-    cd crowdfunding_platform
+    django-admin startproject barakah_app
+    cd barakah_app
 
 ### Create apps
     python manage.py startapp accounts
@@ -986,119 +986,103 @@ Configure HTTPS with Let's Encrypt
 Make sure your domain's DNS is properly configured to point to your VPS IP address. After following these steps, your website should be accessible at https://ypmn-peduli.org.
 If you encounter any specific errors, let me know the error message and I can help you troubleshoot!
 
+# Deploy Multiple Web App
+To deploy multiple web app both of your websites (ypmn-peduli.org and barakah-economy.com) on a single VPS using Gunicorn and Nginx, follow these detailed instructions. I'll guide you step-by-step, including cloning the repositories, setting up the backend and frontend, configuring Gunicorn and Nginx, and ensuring everything runs smoothly.
 
-To deploy both of your websites (ypmn-peduli.org and barakah-economy.com) on a single VPS using Gunicorn and Nginx, follow these detailed instructions. I'll guide you step-by-step, including cloning the repositories, setting up the backend and frontend, configuring Gunicorn and Nginx, and ensuring everything runs smoothly.
-
-1. Prerequisites
+## 1. Prerequisites
 Before starting, ensure your VPS has the following:
-
-Ubuntu/Debian (or any Linux distribution).
-
-Python 3.x installed.
-
-Node.js (for building the React frontend).
-
-Git installed.
-
-Nginx installed.
-
-PostgreSQL/MySQL (or any database you're using).
+  Ubuntu/Debian (or any Linux distribution).
+  Python 3.x installed.
+  Node.js (for building the React frontend).
+  Git installed.
+  Nginx installed.
+  PostgreSQL/MySQL (or any database you're using).
 
 If not, install them:
+  sudo apt update
+  sudo apt install python3 python3-pip python3-venv nodejs npm git nginx
 
-bash
-Copy
-sudo apt update
-sudo apt install python3 python3-pip python3-venv nodejs npm git nginx
-2. Clone the Repositories
+## 2. Clone the Repositories
 Create a directory for your websites and clone the repositories.
+    cd /var/www
 
-bash
-Copy
-sudo mkdir -p /var/www
-cd /var/www
+### Clone the first website (ypmn-peduli.org)
+    sudo git clone https://github.com/nj-ramadhan/sdi-web-django-react-cf-ypmnpeduli.git ypmn-peduli
 
-# Clone the first website (ypmn-peduli.org)
-sudo git clone https://github.com/nj-ramadhan/sdi-web-django-react-cf-ypmnpeduli.git ypmn-peduli
+### Clone the second website (barakah-economy.com)
+    sudo git clone https://github.com/nj-ramadhan/sdi-web-django-react-sa-bae.git barakah-economy
 
-# Clone the second website (barakah-economy.com)
-sudo git clone https://github.com/nj-ramadhan/sdi-web-django-react-sa-bae.git barakah-economy
-3. Set Up the Backend (Django)
+## 3. Set Up the Backend (Django)
 For each website, set up the Django backend.
 
-For ypmn-peduli.org:
-bash
-Copy
-cd /var/www/ypmn-peduli/crowdfunding_platform/backend
+### For ypmn-peduli.org:
+    cd /var/www/ypmn-peduli/crowdfunding_platform/backend
 
-# Create a virtual environment
-python3 -m venv venv
-source venv/bin/activate
+#### Create a virtual environment
+    python3 -m venv venv
+    source venv/bin/activate
 
-# Install dependencies
-pip install -r requirements.txt
+#### Install dependencies
+    pip install -r requirements.txt
 
-# Set up the database (replace with your database settings)
-python manage.py migrate
+#### Set up the database (replace with your database settings)
+    python manage.py migrate
 
-# Create a superuser (optional)
-python manage.py createsuperuser
+#### Create a superuser (optional)
+    python manage.py createsuperuser
 
-# Test the Django development server
-python manage.py runserver
-For barakah-economy.com:
-bash
-Copy
-cd /var/www/barakah-economy/barakah_app/backend
+#### Test the Django development server
+    python manage.py runserver
 
-# Create a virtual environment
-python3 -m venv venv
-source venv/bin/activate
+### For barakah-economy.com:
+    cd /var/www/barakah-economy/barakah_app/backend
 
-# Install dependencies
-pip install -r requirements.txt
+#### Create a virtual environment
+    python3 -m venv venv
+    source venv/bin/activate
 
-# Set up the database (replace with your database settings)
-python manage.py migrate
+#### Install dependencies
+    pip install -r requirements.txt
 
-# Create a superuser (optional)
-python manage.py createsuperuser
+#### Set up the database (replace with your database settings)
+    python manage.py migrate
 
-# Test the Django development server
-python manage.py runserver
-4. Set Up the Frontend (React)
+#### Create a superuser (optional)
+    python manage.py createsuperuser
+
+#### Test the Django development server
+    python manage.py runserver
+
+
+## 4. Set Up the Frontend (React)
 For each website, build the React frontend.
 
-For ypmn-peduli.org:
-bash
-Copy
-cd /var/www/ypmn-peduli/crowdfunding_platform/frontend
+### For ypmn-peduli.org:
+    cd /var/www/ypmn-peduli/crowdfunding_platform/frontend
 
-# Install dependencies
-npm install
+#### Install dependencies
+    npm install
 
-# Build the React app
-npm run build
-For barakah-economy.com:
-bash
-Copy
-cd /var/www/barakah-economy/barakah_app/frontend
+#### Build the React app
+    npm run build
 
-# Install dependencies
-npm install
+### For barakah-economy.com:
+    cd /var/www/barakah-economy/barakah_app/frontend
 
-# Build the React app
-npm run build
-5. Configure Gunicorn
+#### Install dependencies
+    npm install
+
+#### Build the React app
+    npm run build
+
+## 5. Configure Gunicorn
 Install Gunicorn and create systemd service files to run the Django apps.
 
-For ypmn-peduli.org:
+### For ypmn-peduli.org:
 Install Gunicorn:
+    cd /var/www/ypmn-peduli/crowdfunding_platform/backend
+    pip install gunicorn
 
-bash
-Copy
-cd /var/www/ypmn-peduli/crowdfunding_platform/backend
-pip install gunicorn
 Create a systemd service file (/etc/systemd/system/ypmn-peduli.service):
 
 ini
