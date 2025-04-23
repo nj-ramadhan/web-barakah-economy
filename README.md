@@ -991,16 +991,16 @@ To deploy multiple web app both of your websites (ypmn-peduli.org and barakah-ec
 
 ## 1. Prerequisites
 Before starting, ensure your VPS has the following:
-  Ubuntu/Debian (or any Linux distribution).
-  Python 3.x installed.
-  Node.js (for building the React frontend).
-  Git installed.
-  Nginx installed.
-  PostgreSQL/MySQL (or any database you're using).
+    Ubuntu/Debian (or any Linux distribution).
+    Python 3.x installed.
+    Node.js (for building the React frontend).
+    Git installed.
+    Nginx installed.
+    PostgreSQL/MySQL (or any database you're using).
 
 If not, install them:
-  sudo apt update
-  sudo apt install python3 python3-pip python3-venv nodejs npm git nginx
+    sudo apt update
+    sudo apt install python3 python3-pip python3-venv nodejs npm git nginx
 
 ## 2. Clone the Repositories
 Create a directory for your websites and clone the repositories.
