@@ -16,14 +16,17 @@ def generate_unique_slug(model, name):
 
 class Campaign(models.Model):
     CATEGORY_CHOICES = [
-        ('dhuafa', 'Peduli Dhuafa'),
-        ('yatim', 'Peduli Anak Yatim'),
-        ('quran', 'Wakaf Mushaf Al Quran'),
-        ('qurban', 'Qurban Peduli'),
-        ('palestine', 'Bantuan Palestina'),
-        ('education', 'Bantuan Pendidikan'),
-        ('iftar', 'Berbagi Iftar'),
-        ('jumat', 'Jumat Berkah'),
+        ('infak', 'Infak Barakah'),
+        ('sedekah', 'Sedekah Barakah'),
+        ('zakat', 'Zakat Barakah'),
+        ('donasi', 'Donasi Barakah'),
+        ('bencana', 'Bantuan Bencana Alam'),
+        ('kemanusiaan', 'Bantuan Kemanusiaan'),
+        ('kesehatan', 'Bantuan Kesehatan'),
+        ('lingkungan', 'Bantuan Lingkungan'),
+        ('pembangunan', 'Bantuan Pembangunan'),
+        ('sosial', 'Bantuan Sosial'),
+        ('lainnya', 'Lainnya'),       
     ]
     
     title = models.CharField(max_length=100)
