@@ -15,15 +15,18 @@ const getCsrfToken = () => {
 };
 // Define category-based additional amounts
 const categoryAdditionalAmounts = {
-  dhuafa: { value: 100 },
-  yatim: { value: 150 },
-  quran: { value: 200 },
-  qurban: { value: 250 },
-  palestine: { value: 300 },
-  education: { value: 350 },
-  iftar: { value: 400 },
-  jumat: { value: 450 },
-  default: { value: 500 },
+  infak: { value: 25 },
+  sedekah: { value: 50 },
+  zakat: { value: 75 },
+  donasi: { value: 100 },
+  bencana: { value: 125 },
+  kemanusiaan: { value: 150 },
+  kesehatan: { value: 175 },
+  lingkungan: { value: 200 },
+  pembangunan: { value: 225 },
+  sosial: { value: 250 },
+  sosial: { value: 275 },
+  default: { value: 300 },
 };
 
 const CrowdfundingDonationPage = () => {
