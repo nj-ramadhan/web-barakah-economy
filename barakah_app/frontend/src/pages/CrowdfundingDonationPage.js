@@ -25,7 +25,7 @@ const categoryAdditionalAmounts = {
   lingkungan: { value: 200 },
   pembangunan: { value: 225 },
   sosial: { value: 250 },
-  sosial: { value: 275 },
+  lainnya: { value: 275 },
   default: { value: 300 },
 };
 
