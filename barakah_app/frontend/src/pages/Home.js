@@ -1,6 +1,7 @@
 // pages/Home.js
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { Helmet } from 'react-helmet';
 import axios from 'axios';
 import HeaderHome from '../components/layout/HeaderHome'; // Import the Header component
 import NavigationButton from '../components/layout/Navigation'; // Import the Navigation component
@@ -273,6 +274,16 @@ const Home = () => {
 
   return (
     <div className="body">
+      <Helmet>
+        <title>{campaign.title} | Barakah Economy</title>
+        <meta name="description" content="Penguatan Sistem Ekonomi Islam yang BARAKAH" />
+        <meta property="og:title" content="BARAKAH APP" />
+        <meta property="og:description" content="Penguatan Sistem Ekonomi Islam yang BARAKAH" />
+        <meta property="og:image" content="%PUBLIC_URL%/images/web-thumbnail.jpg" />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content={window.location.href} />
+      </Helmet>
+
       <HeaderHome onSearch={handleSearch} />
 
       {/* Campaign Slider */}     
