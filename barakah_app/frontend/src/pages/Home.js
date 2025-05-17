@@ -275,7 +275,6 @@ const Home = () => {
   return (
     <div className="body">
       <Helmet>
-        <title>{campaign.title} | Barakah Economy</title>
         <meta name="description" content="Penguatan Sistem Ekonomi Islam yang BARAKAH" />
         <meta property="og:title" content="BARAKAH APP" />
         <meta property="og:description" content="Penguatan Sistem Ekonomi Islam yang BARAKAH" />
