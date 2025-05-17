@@ -794,6 +794,8 @@ Create the following component structure:
 # Step 12: Running the Development Servers
 ## Run Django server
     python manage.py runserver
+## or Run Django server with https    
+    python manage.py runserver_plus --cert-file localhost.pem --key-file localhost-key.pem
 
 ## In a separate terminal, run React dev server
     cd frontend

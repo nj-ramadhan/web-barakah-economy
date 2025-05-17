@@ -4,6 +4,7 @@ import authService from '../services/auth';
 import Header from '../components/layout/Header';
 import NavigationButton from '../components/layout/Navigation';
 import { useNavigate, Link } from 'react-router-dom';
+import axios from 'axios';
 import '../styles/Body.css';
 
 const LoginPage = () => {
@@ -127,6 +128,7 @@ const LoginPage = () => {
                                     <p className="text-xs font-medium mb-2 line-clamp-2">{profile.email}</p>
                                 </div>
                             </div>
+
                             <h3 className="text-sm font-medium mb-2 line-clamp-2 mt-6">Perbaharui Profil Kamu</h3>
                             <div className="flex flex-col space-y-4">
                                 <Link
@@ -173,6 +175,18 @@ const LoginPage = () => {
                                     Riwayat Belanja
                                 </Link>
                             </div>
+
+                            <h3 className="text-sm font-medium mb-2 line-clamp-2 mt-6">Reset Password</h3>
+                            <div className="flex flex-col space-y-4 mt-6">
+                                <Link
+                                    to="/reset-password"
+                                    className="w-full bg-yellow-100 hover:bg-yellow-200 text-yellow-800 py-3 rounded-lg text-sm flex items-center justify-left"
+                                >
+                                    <span className="material-icons text-sm ml-4 mr-2">lock_reset</span>
+                                    Reset Password
+                                </Link>
+                            </div>
+
                             <h3 className="text-sm font-medium mb-2 line-clamp-2 mt-6">Log Keluar</h3>
                             <div className="flex flex-col space-y-4">                                  
                                 <button
@@ -222,6 +236,11 @@ const LoginPage = () => {
                                     {showPassword ? 'Sembunyikan' : 'Tampilkan'}
                                 </button>
                             </div>
+                            <div className="mb-4 text-right">
+                                <Link to="/lupa-password" className="text-green-600 hover:underline">
+                                    Lupa kata sandi?
+                                </Link>
+                            </div>                            
                             <button
                                 type="submit"
                                 className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-medium flex items-center justify-center"

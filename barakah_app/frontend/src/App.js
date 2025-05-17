@@ -7,6 +7,8 @@ import RegisterPage from './pages/RegisterPage';
 
 import ProfilePage from './pages/ProfilePage';
 import ProfileEditPage from './pages/ProfileEditPage';
+import ForgotPasswordPage from './pages/LoginForgotPasswordPage';
+import ResetPasswordPage from './pages/LoginResetPasswordPage';
 
 import Home from './pages/Home';
 import CrowdfundingMainPage from './pages/CrowdfundingMainPage';
@@ -44,6 +46,9 @@ const App = () => {
             <Route path="/" element={<Home />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
+            <Route path="/lupa-password" element={<ForgotPasswordPage />} />
+            <Route path="/reset-password" element={<ResetPasswordPage />} />
+
             {/* Logged Account Routes */}
             <Route path="/profile" element={<PrivateRoute><ProfilePage /></PrivateRoute>} />
             <Route path="/profile/edit" element={<PrivateRoute><ProfileEditPage /></PrivateRoute>} />
@@ -56,7 +61,7 @@ const App = () => {
             <Route path="/konfirmasi-pembayaran-donasi" element={<CrowdfundingPaymentConfirmation />} />
 
             {/* Ecommerce Routes */}
-            <Route path="/belanja" element={<PrivateRoute><EcommerceMainPage /></PrivateRoute>} />
+            <Route path="/belanja" element={<EcommerceMainPage />} />
             <Route path="/produk/:slug" element={<PrivateRoute><EcommerceProductDetail /></PrivateRoute>} />
             <Route path="/incaran" element={<PrivateRoute><EcommerceWishlistPage /></PrivateRoute>} />
             <Route path="/keranjang" element={<PrivateRoute><EcommerceCartPage /></PrivateRoute>} />
@@ -65,7 +70,7 @@ const App = () => {
             <Route path="/konfirmasi-pembayaran-belanja" element={<PrivateRoute><EcommercePaymentConfirmation /></PrivateRoute>} />
 
             {/* Ecourse Routes */}
-            <Route path="/edukasi" element={<PrivateRoute><EcourseMainPage /></PrivateRoute>} />
+            <Route path="/edukasi" element={<EcourseMainPage />} />
             <Route path="/kelas/:slug" element={<PrivateRoute><EcourseCourseDetail /></PrivateRoute>} />
             <Route path="/ikutkelas/:slug" element={<PrivateRoute><EcourseJoinCoursePage /></PrivateRoute>} />
 

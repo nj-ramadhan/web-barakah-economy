@@ -1,4 +1,6 @@
+from django.core.mail import send_mail
 from django.contrib.auth import get_user_model
+from django.contrib.auth.tokens import default_token_generator
 from rest_framework import generics, permissions
 from rest_framework_simplejwt.views import TokenObtainPairView
 from .serializers import UserRegistrationSerializer, CustomTokenObtainPairSerializer
@@ -95,3 +97,30 @@ class GoogleLoginView(APIView):
         except Exception as e:
             logger.error(f"Error during Google login: {e}")
             return Response({'error': 'An error occurred during Google login'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class PasswordResetRequestView(APIView):
+    def post(self, request):
+        email = request.data.get('email')
+        user = User.objects.filter(email=email).first()
+        if user:
+            token = default_token_generator.make_token(user)
+            reset_url = f"{request.data.get('frontend_url')}/reset-password?uid={user.pk}&token={token}"
+            send_mail(
+                'Reset Password',
+                f'Click the link to reset your password: {reset_url}',
+                'no-reply@yourdomain.com',
+                [email],
+            )
+        return Response({'message': 'If the email exists, a reset link has been sent.'}, status=status.HTTP_200_OK)
+
+class PasswordResetConfirmView(APIView):
+    def post(self, request):
+        uid = request.data.get('uid')
+        token = request.data.get('token')
+        new_password = request.data.get('new_password')
+        user = User.objects.filter(pk=uid).first()
+        if user and default_token_generator.check_token(user, token):
+            user.set_password(new_password)
+            user.save()
+            return Response({'message': 'Password reset successful.'}, status=status.HTTP_200_OK)
+        return Response({'error': 'Invalid token or user.'}, status=status.HTTP_400_BAD_REQUEST)        

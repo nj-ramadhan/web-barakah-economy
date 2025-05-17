@@ -1,6 +1,7 @@
 // pages/CrowdfundingCampaignDetail.js
 import React, { useState, useEffect } from 'react';
 import { Link, useParams } from 'react-router-dom';
+import { Helmet } from 'react-helmet';
 import axios from 'axios';
 import Header from '../components/layout/Header';
 import NavigationButton from '../components/layout/Navigation';
@@ -126,8 +127,17 @@ const CrowdfundingCampaignDetail = () => {
 
   return (
     <div className="body">
-      <Header />
+      <Helmet>
+        <title>{campaign.title} | Barakah Economy</title>
+        <meta name="description" content={campaign.description?.replace(/<[^>]+>/g, '').slice(0, 100)} />
+        <meta property="og:title" content={campaign.title} />
+        <meta property="og:description" content={campaign.description?.replace(/<[^>]+>/g, '').slice(0, 100)} />
+        <meta property="og:image" content={campaign.thumbnail} />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content={window.location.href} />
+      </Helmet>
 
+      <Header />
       {/* Campaign Details */}
       <div className="px-4 py-4">
         <div className="bg-white rounded-lg overflow-hidden shadow">
