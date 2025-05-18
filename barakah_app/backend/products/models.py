@@ -13,11 +13,27 @@ def generate_unique_slug(model, name):
 class Product(models.Model):
     CATEGORY_CHOICES = [
         ('sembako', 'Bahan Makanan'),
+        ('bumbu', 'Bumbu'),
+        ('sayuran', 'Sayuran'),
+        ('buah', 'Buah buahan'),
+        ('protein', 'Bahan Protein'),
+        ('mentahan', 'Bahan Makanan'),
         ('makan-minum', 'Makanan & Minuman'),
         ('obat', 'Produk Obat obatan'),
+        ('herbal', 'Produk Herbal'),
         ('elektronik', 'Barang Elektronik'),
         ('peralatan', 'Peralatan Pertukangan'),
+        ('pakaian', 'Pakaian'),
+        ('asesoris', 'Asesoris'),
+        ('perabotan', 'Perabotan Rumah'),
+        ('kesehatan', 'Kesehatan'),
+        ('kecantikan', 'Kecantikan'),
+        ('kebersihan', 'Kebersihan'),
+        ('perawatan', 'Perawatan'),
+        ('kendaraan', 'Kendaraan'),
+        ('rumah', 'Rumah'),
         ('gadget', 'Gadget'),
+        ('lainnya', 'Lainnya'),
     ]
 
     UNIT_CHOICES = [

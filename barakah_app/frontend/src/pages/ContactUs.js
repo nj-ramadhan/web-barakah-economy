@@ -1,5 +1,6 @@
 // pages/AboutUs.js
 import React from 'react';
+import { Helmet } from 'react-helmet';
 import Header from '../components/layout/Header';
 import NavigationButton from '../components/layout/Navigation';
 import '../styles/Body.css';
@@ -7,6 +8,15 @@ import '../styles/Body.css';
 const ContactUs = () => {
   return (
     <div className="body">
+      <Helmet>
+        <meta name="description" content="Kontak BAE Community" />
+        <meta property="og:title" content="Kontak BAE Community" />
+        <meta property="og:description" content="Kontak BAE Community" />
+        <meta property="og:image" content="%PUBLIC_URL%/images/web-thumbnail.jpg" />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content={window.location.href} />
+      </Helmet>
+
       <Header />
 
       <div className="container mx-auto px-4 py-6">

@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { Helmet } from 'react-helmet';
 import Header from '../components/layout/Header';
 import NavigationButton from '../components/layout/Navigation';
 import '../styles/Body.css';
@@ -121,6 +122,16 @@ const EcommerceProductDetail = () => {
 
   return (
     <div className="body">
+      <Helmet>
+        <title>{product.title} | BARAKAH ECONOMY</title>
+        <meta name="description" content={product.description?.replace(/<[^>]+>/g, '').slice(0, 100)} />
+        <meta property="og:title" content={product.title} />
+        <meta property="og:description" content={product.description?.replace(/<[^>]+>/g, '').slice(0, 100)} />
+        <meta property="og:image" content={product.thumbnail} />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content={window.location.href} />
+      </Helmet>
+
       <Header />
 
       {/* Product Details */}

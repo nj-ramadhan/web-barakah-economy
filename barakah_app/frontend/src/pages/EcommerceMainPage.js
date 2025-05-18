@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { Helmet } from 'react-helmet';
 import HeaderHome from '../components/layout/HeaderHome'; // Import the Header component
 import NavigationButton from '../components/layout/Navigation'; // Import the Navigation component
 
@@ -174,6 +175,15 @@ const EcommerceMainPage = () => {
 
   return (
     <div className="body">
+      <Helmet>
+        <meta name="description" content="Beli Produk yang Halal Toyyib Barakah dari UMKM Terpercaya" />
+        <meta property="og:title" content="BARAKAH SINERGY" />
+        <meta property="og:description" content="Beli Produk yang Halal Toyyib Barakah dari UMKM Terpercaya" />
+        <meta property="og:image" content="%PUBLIC_URL%/images/web-thumbnail.jpg" />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content={window.location.href} />
+      </Helmet>
+
       <HeaderHome onSearch={handleSearch} />
   
       {/* Featured Campaign Slider */}

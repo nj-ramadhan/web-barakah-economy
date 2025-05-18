@@ -1,6 +1,7 @@
 // pages/ProfilePage.js
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { Helmet } from 'react-helmet';
 import Header from '../components/layout/Header';
 import NavigationButton from '../components/layout/Navigation';
 import authService from '../services/auth';
@@ -370,6 +371,15 @@ const ProfilePage = () => {
 
     return (
         <div className="body">
+            <Helmet>
+                <meta name="description" content="Lengkapi data anggota, bantu kembangkan aplikasi menjadi lebih Barakah" />
+                <meta property="og:title" content="BARAKAH APP" />
+                <meta property="og:description" content="Lengkapi data anggota, bantu kembangkan aplikasi menjadi lebih Barakah" />
+                <meta property="og:image" content="%PUBLIC_URL%/images/web-thumbnail.jpg" />
+                <meta property="og:type" content="website" />
+                <meta property="og:url" content={window.location.href} />
+            </Helmet>
+
             <Header />
             <div className="container">
                 <div className="bg-white rounded-lg shadow overflow-hidden mt-6">

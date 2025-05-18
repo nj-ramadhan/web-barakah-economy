@@ -128,7 +128,7 @@ const CrowdfundingCampaignDetail = () => {
   return (
     <div className="body">
       <Helmet>
-        <title>{campaign.title} | Barakah Economy</title>
+        <title>{campaign.title} | BARAKAH ECONOMY</title>
         <meta name="description" content={campaign.description?.replace(/<[^>]+>/g, '').slice(0, 100)} />
         <meta property="og:title" content={campaign.title} />
         <meta property="og:description" content={campaign.description?.replace(/<[^>]+>/g, '').slice(0, 100)} />

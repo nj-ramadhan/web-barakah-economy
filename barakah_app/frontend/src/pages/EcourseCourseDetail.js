@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import axios from 'axios';
+import { Helmet } from 'react-helmet';
 import Header from '../components/layout/Header';
 import NavigationButton from '../components/layout/Navigation';
 import '../styles/Body.css';
@@ -40,6 +41,16 @@ const EcourseCourseDetail = () => {
 
   return (
     <div className="body">
+      <Helmet>
+        <title>{course.title} | BARAKAH ECONOMY</title>
+        <meta name="description" content={course.description?.replace(/<[^>]+>/g, '').slice(0, 100)} />
+        <meta property="og:title" content={course.title} />
+        <meta property="og:description" content={course.description?.replace(/<[^>]+>/g, '').slice(0, 100)} />
+        <meta property="og:image" content={course.thumbnail} />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content={window.location.href} />
+      </Helmet>
+
       <Header />
 
       {/* Campaign Details */}

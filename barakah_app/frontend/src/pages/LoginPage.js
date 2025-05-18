@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { GoogleLogin } from '@react-oauth/google';
 import authService from '../services/auth';
+import { Helmet } from 'react-helmet';
 import Header from '../components/layout/Header';
 import NavigationButton from '../components/layout/Navigation';
 import { useNavigate, Link } from 'react-router-dom';
@@ -207,6 +208,15 @@ const LoginPage = () => {
 
     return (
         <div className="body">
+            <Helmet>
+                <meta name="description" content="Masuk sebagai anggota, Akses fitur menarik, bermanfaat dan Barakah" />
+                <meta property="og:title" content="BARAKAH APP" />
+                <meta property="og:description" content="Masuk sebagai anggota, Akses fitur menarik, bermanfaat dan Barakah" />
+                <meta property="og:image" content="%PUBLIC_URL%/images/web-thumbnail.jpg" />
+                <meta property="og:type" content="website" />
+                <meta property="og:url" content={window.location.href} />
+            </Helmet>
+                        
             <Header />
             <div className="container">
                 <div className="bg-white rounded-lg shadow overflow-hidden mt-6">

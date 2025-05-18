@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
+import { Helmet } from 'react-helmet';
 import HeaderHome from '../components/layout/HeaderHome'; // Import the Header component
 import NavigationButton from '../components/layout/Navigation'; // Import the Navigation component
 
@@ -110,6 +111,15 @@ const EcourseMainPage = () => {
 
   return (
     <div className="body">
+      <Helmet>
+        <meta name="description" content="Belajar tentang Islam, Ekonomi & Teknologi. Hidup Barakah dan Lejitkan Potensi" />
+        <meta property="og:title" content="BARAKAH ACADEMY" />
+        <meta property="og:description" content="Belajar tentang Islam, Ekonomi & Teknologi. Hidup Barakah dan Lejitkan Potensi" />
+        <meta property="og:image" content="%PUBLIC_URL%/images/web-thumbnail.jpg" />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content={window.location.href} />
+      </Helmet>
+
       <HeaderHome onSearch={handleSearch} />
   
       {/* Featured Campaign Slider */}
