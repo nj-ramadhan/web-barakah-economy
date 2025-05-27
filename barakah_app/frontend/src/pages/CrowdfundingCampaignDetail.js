@@ -56,7 +56,6 @@ const formatDeadline = (deadline) => {
   });
 };
 
-
 const CrowdfundingCampaignDetail = () => {
   const { slug } = useParams();
   const [campaign, setCampaign] = useState(null);

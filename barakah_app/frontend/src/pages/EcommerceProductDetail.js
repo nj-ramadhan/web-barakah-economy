@@ -18,6 +18,27 @@ function getCsrfToken() {
   return null;
 }
 
+const getTimeElapsed = (createdAt) => {
+  const createdDate = new Date(createdAt);
+  const now = new Date();
+  const timeDifference = now - createdDate;
+
+  const seconds = Math.floor(timeDifference / 1000);
+  const minutes = Math.floor(seconds / 60);
+  const hours = Math.floor(minutes / 60);
+  const days = Math.floor(hours / 24);
+
+  if (days > 0) {
+    return `${days} hari lalu`;
+  } else if (hours > 0) {
+    return `${hours} jam lalu`;
+  } else if (minutes > 0) {
+    return `${minutes} menit lalu`;
+  } else {
+    return `${seconds} detik lalu`;
+  }
+};
+
 const formatIDR = (amount) => {
   return new Intl.NumberFormat('id-ID', {
     minimumFractionDigits: 0,
@@ -32,13 +53,17 @@ const EcommerceProductDetail = () => {
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('description'); // State to manage active tab
   const [quantity, setQuantity] = useState(1); // State to manage product quantity
+  const [showFullDescription, setShowFullDescription] = useState(false);
+  const [showFullTestimonies, setShowFullTestimonies] = useState({});
+  
+  const baseUrl = process.env.REACT_APP_API_BASE_URL;
 
   useEffect(() => {
     const fetchProductDetail = async () => {
       try {
         // Fetch product details
-        const campaignResponse = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/products/${slug}/`);
-        setProduct(campaignResponse.data);
+        const productResponse = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/products/${slug}/`);
+        setProduct(productResponse.data);
         
       } catch (err) {
         console.error('Error fetching product details:', err);
@@ -120,6 +145,47 @@ const EcommerceProductDetail = () => {
     return <div className="text-center py-8 text-red-500">{error}</div>;
   }
 
+  if (!product) {
+    return <div className="text-center py-8">Product not found.</div>;
+  }
+
+  const toggleDescription = () => {
+    setShowFullDescription(!showFullDescription);
+  };
+
+  const toggleTestimoni = (testimoniId) => {
+    setShowFullTestimonies((prev) => ({
+      ...prev,
+      [testimoniId]: !prev[testimoniId],
+    }));
+  };
+
+  const convertRelativeUrlsToAbsolute = (htmlContent, baseUrl) => {
+  // Ensure baseUrl does not have a trailing slash
+    if (baseUrl.endsWith('/')) {
+      baseUrl = baseUrl.slice(0, -1);
+    }
+    // Convert relative image URLs to absolute URLs
+    return htmlContent.replace(/<img[^>]+src="(\/[^"]+)"[^>]*>/g, (match, src) => {
+      return match.replace(src, `${baseUrl}${src}`);
+    });
+  };
+
+  const renderStars = (count) => {
+  const maxStars = 5;
+  return (
+    <span>
+      {[...Array(maxStars)].map((_, i) =>
+        i < count ? (
+          <span key={i} className="text-xl font-bold text-yellow-400">★</span>
+        ) : (
+          <span key={i} className="text-xl font-bold text-gray-300">☆</span>
+        )
+      )}
+    </span>
+  );
+};
+
   return (
     <div className="body">
       <Helmet>
@@ -196,10 +262,10 @@ const EcommerceProductDetail = () => {
             Keterangan
           </button>
           <button
-            className={`py-2 px-4 text-sm font-medium ${activeTab === 'updates' ? 'text-green-600 border-b-2 border-green-600' : 'text-gray-500'}`}
-            onClick={() => setActiveTab('updates')}
+            className={`py-2 px-4 text-sm font-medium ${activeTab === 'testimonies' ? 'text-green-600 border-b-2 border-green-600' : 'text-gray-500'}`}
+            onClick={() => setActiveTab('testimonies')}
           >
-            Testimoni ({product.student ? product.student.length : 0})
+            Testimoni ({product.testimonies ? product.testimonies.length : 0})
           </button>
         </div>
 
@@ -207,7 +273,79 @@ const EcommerceProductDetail = () => {
         <div className="mt-4">
           {activeTab === 'description' && (
             <div className="bg-white p-4 rounded-lg shadow">
-              <p className="text-gray-700">{product.description}</p>
+              {product.description ? (
+                <>
+                  <div
+                    dangerouslySetInnerHTML={{
+                      __html: showFullDescription
+                        ? convertRelativeUrlsToAbsolute(product.description, baseUrl)
+                        : convertRelativeUrlsToAbsolute(product.description, baseUrl).substring(0, 200) + '...',
+                    }}
+                  />
+                  {product.description.length > 200 && (
+                    <button
+                      onClick={toggleDescription}
+                      className="text-green-600 mt-2 text-sm"
+                    >
+                      {showFullDescription ? 'Tampilkan Lebih Sedikit' : 'Tampilkan Selengkapnya'}
+                    </button>
+                  )}
+                </>
+              ) : (
+                <p className="text-gray-500">Tidak ada deskripsi.</p>
+              )}
+            </div>
+          )}
+
+
+          {activeTab === 'testimonies' && (
+            <div className="bg-white p-4 rounded-lg shadow">
+              <ul>
+                {product.testimonies && product.testimonies.length > 0 ? (
+                  product.testimonies.map((testimoni) => (
+                    <li key={testimoni.id} className="border-b py-2 px-4">
+                      <div className="flex justify-between items-center">
+                        <p className="text-gray-700">
+                          <strong>{testimoni.customer}</strong>
+                        </p>                      
+                        <p className="text-sm text-gray-500">
+                          {new Date(testimoni.created_at).toLocaleDateString('id-ID', {
+                            day: '2-digit',
+                            month: '2-digit',
+                            year: 'numeric',
+                          })} - {getTimeElapsed(testimoni.created_at)}
+                        </p>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        {renderStars(testimoni.stars)}
+                      </div>  
+                      {testimoni.description ? (
+                        <>
+                          <div
+                            dangerouslySetInnerHTML={{
+                              __html: showFullTestimonies[testimoni.id]
+                                ? convertRelativeUrlsToAbsolute(testimoni.description, baseUrl)
+                                : convertRelativeUrlsToAbsolute(testimoni.description, baseUrl).substring(0, 0) + '',
+                            }}
+                          />
+                          {testimoni.description.length > 0 && (
+                            <button
+                              onClick={() => toggleTestimoni(testimoni.id)}
+                              className="text-green-600 mt-2 text-sm"
+                            >
+                              {showFullTestimonies[testimoni.id] ? 'Tampilkan Lebih Sedikit' : 'Tampilkan Selengkapnya'}
+                            </button>
+                          )}
+                        </>
+                      ) : (
+                        <p className="text-gray-500">Tidak ada konten.</p>
+                      )}
+                    </li>
+                  ))
+                ) : (
+                  <p className="text-gray-500">Belum ada testimoni terbaru.</p>
+                )}
+              </ul>
             </div>
           )}
         </div>
