@@ -11,7 +11,6 @@ from courses.views import CourseViewSet
 from profiles.views import ProfileViewSet
 
 router = DefaultRouter()
-router.register(r'courses', CourseViewSet, basename='course')
 router.register(r'profiles', ProfileViewSet, basename='profile')
 
 urlpatterns = [
@@ -31,6 +30,8 @@ urlpatterns = [
     path('api/coupons/', include('coupons.urls')),
     path('api/shippings/', include('shippings.urls')),
     path('api/reviews/', include('reviews.urls')),
+
+    path('api/courses/', include('courses.urls')),
 
     path('ckeditor/', include('ckeditor_uploader.urls')),
     path('ckeditor/upload/', ckeditor_views.upload, name='ckeditor_upload'),

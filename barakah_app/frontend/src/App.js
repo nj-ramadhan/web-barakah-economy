@@ -28,6 +28,7 @@ import EcommercePaymentConfirmation from './pages/EcommercePaymentConfirmation';
 import EcourseMainPage from './pages/EcourseMainPage';
 import EcourseCourseDetail from './pages/EcourseCourseDetail';
 import EcourseJoinCoursePage from './pages/EcourseJoinCoursePage';
+import EcoursePaymentPage from './pages/EcoursePaymentPage';
 
 import PaymentSuccessPage from './pages/PaymentSuccessPage';
 import PaymentFailedPage from './pages/PaymentFailedPage';
@@ -62,7 +63,7 @@ const App = () => {
 
             {/* Ecommerce Routes */}
             <Route path="/belanja" element={<EcommerceMainPage />} />
-            <Route path="/produk/:slug" element={<PrivateRoute><EcommerceProductDetail /></PrivateRoute>} />
+            <Route path="/produk/:slug" element={<EcommerceProductDetail />} />
             <Route path="/incaran" element={<PrivateRoute><EcommerceWishlistPage /></PrivateRoute>} />
             <Route path="/keranjang" element={<PrivateRoute><EcommerceCartPage /></PrivateRoute>} />
             <Route path="/riwayat-belanja" element={<PrivateRoute><EcommerceOrderHistoryPage /></PrivateRoute>} />
@@ -72,7 +73,8 @@ const App = () => {
             {/* Ecourse Routes */}
             <Route path="/edukasi" element={<EcourseMainPage />} />
             <Route path="/kelas/:slug" element={<PrivateRoute><EcourseCourseDetail /></PrivateRoute>} />
-            <Route path="/ikutkelas/:slug" element={<PrivateRoute><EcourseJoinCoursePage /></PrivateRoute>} />
+            <Route path="/ikut-kelas/:slug" element={<PrivateRoute><EcourseJoinCoursePage /></PrivateRoute>} />
+            <Route path="/bayar-kelas/:slug" element={<PrivateRoute><EcoursePaymentPage /></PrivateRoute>} />
 
             {/* Payment Routes */}
             <Route path="/pembayaran-berhasil" element={<PaymentSuccessPage />} />

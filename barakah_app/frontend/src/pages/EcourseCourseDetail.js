@@ -39,6 +39,10 @@ const EcourseCourseDetail = () => {
     return <div className="text-center py-8 text-red-500">{error}</div>;
   }
 
+  if (!course) {
+    return <div className="text-center py-8 text-red-500">Kelas tidak ditemukan.</div>;
+  }
+
   return (
     <div className="body">
       <Helmet>
@@ -67,7 +71,7 @@ const EcourseCourseDetail = () => {
           <div className="p-4">
             <h1 className="text-xl font-bold mb-2">{course.title}</h1>
             <Link
-              to={`/joincourse/${course.slug || course.id}`}
+              to={`/ikut-kelas/${course.slug || course.id}`}
               className="block text-center bg-green-800 text-white py-2 rounded-md text-sm hover:bg-green-900"
             >
               IKUTI KELAS

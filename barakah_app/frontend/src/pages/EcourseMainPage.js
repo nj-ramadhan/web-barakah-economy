@@ -147,7 +147,7 @@ const EcourseMainPage = () => {
                     <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4">
                       <h2 className="text-white font-bold text-lg">{course.title}</h2>
                         <Link
-                          to={`/ikutkelas/${course.slug || course.id}`}
+                          to={`/ikut-kelas/${course.slug || course.id}`}
                           className="block text-center bg-green-800 text-white py-2 rounded-md text-sm hover:bg-green-900"
                         >
                           IKUTI KELAS
@@ -187,7 +187,7 @@ const EcourseMainPage = () => {
             {courses.map(course => {
               return (
                 <div key={course.id} className="bg-white rounded-lg overflow-hidden shadow">
-                  <Link to={`/kelas/${course.slug || course.id}`}>
+                  <Link to={`/kelas/${course.slug}`}>
                     <img 
                       src={course.thumbnail || '/placeholder-image.jpg'} 
                       alt={course.title}
@@ -201,7 +201,7 @@ const EcourseMainPage = () => {
                     <h3 className="text-sm font-medium mb-2 line-clamp-2">{course.title}</h3>
                     <p className="text-sm text-gray-600 line-clamp-2">{formatIDR(course.price)}</p>  
                       <Link
-                        to={`/ikutkelas/${course.slug || course.id}`}
+                        to={`/ikut-kelas/${course.slug}`}
                         className="block text-center bg-green-800 text-white py-2 rounded-md text-sm hover:bg-green-900"
                       >
                         IKUTI KELAS

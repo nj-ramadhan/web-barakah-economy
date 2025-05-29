@@ -1,4 +1,16 @@
 from django.db import models
+from accounts.models import User
+from ckeditor.fields import RichTextField
+from django.utils.text import slugify
+
+def generate_unique_slug(model, name):
+    slug = slugify(name)
+    unique_slug = slug
+    num = 1
+    while model.objects.filter(slug=unique_slug).exists():
+        unique_slug = f'{slug}-{num}'
+        num += 1
+    return unique_slug
 
 class Course(models.Model):
     CATEGORY_CHOICES = [
@@ -13,6 +25,7 @@ class Course(models.Model):
     ]
 
     title = models.CharField(max_length=100)
+    slug = models.SlugField(max_length=100, unique=True, blank=True)
     description = models.TextField()
     instructor = models.CharField(max_length=255)
     category = models.CharField(max_length=20, choices=CATEGORY_CHOICES)
@@ -25,4 +38,28 @@ class Course(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.title}" 
+        return f"{self.title}"
+
+class Enrollment(models.Model):
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='user')
+    course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='enrollments')
+    enrolled_at = models.DateTimeField(auto_now_add=True)
+    payment_status = models.CharField(max_length=20, default='pending')  # 'pending', 'paid'
+
+    class Meta:
+        unique_together = ('user', 'course')
+
+class CourseMaterial(models.Model):
+    MATERIAL_TYPE_CHOICES = [
+        ('article', 'Article'),
+        ('video', 'Video'),
+        ('quiz', 'Quiz'),
+    ]
+    course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='materials')
+    title = models.CharField(max_length=255)
+    content = RichTextField()  # For articles or video embed code
+    material_type = models.CharField(max_length=20, choices=MATERIAL_TYPE_CHOICES)
+    order = models.PositiveIntegerField(default=0)
+
+    def __str__(self):
+        return f"{self.title} ({self.material_type})"
