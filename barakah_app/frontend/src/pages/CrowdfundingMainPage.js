@@ -7,14 +7,14 @@ import HeaderHome from '../components/layout/HeaderHome'; // Import the Header c
 import NavigationButton from '../components/layout/Navigation'; // Import the Navigation component
 
 const formatIDR = (amount) => {
-  return new Intl.NumberFormat('id-ID', {
+  return 'Rp. ' + new Intl.NumberFormat('id-ID', {
     minimumFractionDigits: 0,
   }).format(amount);
 };
 
 const formatIDRTarget = (amount) => {
-  if (amount <= 0) return '∞';
-  return new Intl.NumberFormat('id-ID', {
+  if (amount <= 0) return '\u221E';
+  return 'Rp. ' + new Intl.NumberFormat('id-ID', {
     minimumFractionDigits: 0,
   }).format(amount);
 };
@@ -258,10 +258,10 @@ const CrowdfundingMainPage = () => {
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="text-xs text-gray-500 mt-1">
-                          {campaign.current_amount ? formatIDR(campaign.current_amount) : 'Rp 0'}
+                          {campaign.current_amount ? formatIDR(campaign.current_amount) : 'Rp. 0'}
                         </span>
                         <span className="text-xs text-gray-500 mt-1">
-                          dari {campaign.target_amount ? formatIDRTarget(campaign.target_amount) : 'Rp 0'}
+                          dari {campaign.target_amount ? formatIDRTarget(campaign.target_amount) : 'Rp. 0'}
                         </span>
                       </div>
                       <div className="text-right text-xs text-gray-500 mt-1">

@@ -1,10 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { Helmet } from 'react-helmet';
 import Header from '../components/layout/Header';
 import NavigationButton from '../components/layout/Navigation';
 import '../styles/Body.css';
+
+const formatIDR = (amount) => {
+  if (amount <= 0) return 'GRATIS';
+  return 'Rp. ' + new Intl.NumberFormat('id-ID', {
+    minimumFractionDigits: 0,
+  }).format(amount);
+};
 
 const EcourseCourseDetail = () => {
   const { slug } = useParams();
@@ -56,6 +63,32 @@ const EcourseCourseDetail = () => {
     };
     if (course) checkEnrollment();
   }, [course, navigate]); // <-- add navigate here
+
+  const handleEnroll = async () => {
+    const user = JSON.parse(localStorage.getItem('user'));
+    if (!user || !user.access) {
+      navigate('/login');
+      return;
+    }
+    try {
+      // Create enrollment
+      await axios.post(
+        `${process.env.REACT_APP_API_BASE_URL}/api/courses/enrollments/`,
+        { course: course.id },
+        { headers: { Authorization: `Bearer ${user.access}` } }
+      );
+      setIsEnrolled(true);
+      if (Number(course.price) > 0) {
+        navigate(`/konfirmasi-pembayaran-kelas/${course.slug || course.id}`);
+      } else {
+        // Free course: show success or redirect to course page
+        alert('Anda berhasil mendaftar kelas gratis!');
+        navigate(`/kelas/${course.slug || course.id}`);
+      }
+    } catch (err) {
+      alert('Gagal mendaftar kelas. Silakan coba lagi.');
+    }
+  };
 
   const toggleDescription = () => {
     setShowFullDescription(!showFullDescription);
@@ -109,13 +142,18 @@ const EcourseCourseDetail = () => {
           />
           <div className="p-4">
             <h1 className="text-xl font-bold mb-2">{course.title}</h1>
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-gray-600 mb-2">
+                {course.price ? formatIDR(course.price) : 'Rp. 0'}
+              </span>
+            </div>
             {!isEnrolled && (
-              <Link
-                to={`/konfirmasi-pembayaran-kelas/${course.slug || course.id}`}
-                className="block text-center bg-green-800 text-white py-2 rounded-md text-sm hover:bg-green-900"
+              <button
+                onClick={handleEnroll}
+                className="block w-full text-center bg-green-800 text-white py-2 rounded-md text-sm hover:bg-green-900"
               >
                 IKUTI KELAS
-              </Link>
+              </button>
             )}
             {isEnrolled && (
               <div

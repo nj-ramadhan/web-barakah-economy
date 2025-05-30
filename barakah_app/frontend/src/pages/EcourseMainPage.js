@@ -7,11 +7,11 @@ import HeaderHome from '../components/layout/HeaderHome'; // Import the Header c
 import NavigationButton from '../components/layout/Navigation'; // Import the Navigation component
 
 const formatIDR = (amount) => {
-  return new Intl.NumberFormat('id-ID', {
+  if (amount <= 0) return 'GRATIS';
+  return 'Rp. ' + new Intl.NumberFormat('id-ID', {
     minimumFractionDigits: 0,
   }).format(amount);
 };
-
 
 const EcourseMainPage = () => {
   const [courses, setCourses] = useState([]);
@@ -199,7 +199,7 @@ const EcourseMainPage = () => {
                   </Link>
                   <div className="p-2">
                     <h3 className="text-sm font-medium mb-2 line-clamp-2">{course.title}</h3>
-                    <p className="text-sm text-gray-600 line-clamp-2">{formatIDR(course.price)}</p>  
+                    <p className="text-xs text-gray-600 line-clamp-2 mb-2">{formatIDR(course.price)}</p>  
                     <Link
                       to={`/kelas/${course.slug || course.id}`}
                       className="block text-center bg-green-800 text-white py-2 rounded-md text-sm hover:bg-green-900"

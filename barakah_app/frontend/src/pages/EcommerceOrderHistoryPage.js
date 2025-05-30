@@ -1,5 +1,5 @@
 // pages/EcommerceOrderHistoryPage.js
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import Header from '../components/layout/Header'; // Import the Header component
@@ -7,7 +7,7 @@ import NavigationButton from '../components/layout/Navigation'; // Import the Na
 import '../styles/Body.css';
 
 const formatIDR = (amount) => {
-    return new Intl.NumberFormat('id-ID', {
+    return 'Rp. ' + new Intl.NumberFormat('id-ID', {
       minimumFractionDigits: 0,
     }).format(amount);
   };
@@ -26,11 +26,7 @@ const EcommerceOrderHistoryPage = () => {
     const navigate = useNavigate();
     const [orders, setOrders] = useState([]);
 
-    useEffect(() => {
-        fetchOrders();
-    }, []);
-
-    const fetchOrders = async () => {
+    const fetchOrders = useCallback(async () => {
         try {
             // Retrieve the user object from Local Storage
             const user = JSON.parse(localStorage.getItem('user'));
@@ -72,7 +68,11 @@ const EcommerceOrderHistoryPage = () => {
                 }
             }
         }
-    };
+    }, [navigate]);
+
+    useEffect(() => {
+        fetchOrders();
+    }, [fetchOrders]);
 
     return (
         <div className="body">
@@ -116,14 +116,14 @@ const EcommerceOrderHistoryPage = () => {
                                             <li key={item.id} className="ml-6 text-gray-600 text-xs">
                                                 <span className="w-full flex justify-between items-center">
                                                     <div>{item.product_name} x {item.quantity}</div>
-                                                    <div>Rp. {formatIDR(item.price)}</div>
+                                                    <div>{formatIDR(item.price)}</div>
                                                 </span>
                                             </li>
                                         ))}
                                     </ul>
                                     <span className="w-full flex justify-between items-center text-gray-600 text-xs">
                                         <p>Total</p>
-                                        <p className="font-bold">Rp. {formatIDR(order.total_price)}</p>
+                                        <p className="font-bold">{formatIDR(order.total_price)}</p>
                                     </span>
                                     </div>    
                                 </span>

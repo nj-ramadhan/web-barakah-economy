@@ -1,5 +1,5 @@
 // pages/EcommerceCartPage.js
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import Header from '../components/layout/Header'; // Import the Header component
@@ -18,7 +18,7 @@ function getCsrfToken() {
   }
   
 const formatIDR = (amount) => {
-    return new Intl.NumberFormat('id-ID', {
+    return 'Rp. ' + new Intl.NumberFormat('id-ID', {
       minimumFractionDigits: 0,
     }).format(amount);
   };
@@ -28,11 +28,7 @@ const EcommerceCartPage = () => {
     const [cartItems, setCartItems] = useState([]);
     const [quantities, setQuantities] = useState({});
 
-    useEffect(() => {
-        fetchCartItems();
-    }, []);
-
-    const fetchCartItems = async () => {
+    const fetchCartItems = useCallback(async () => {
         try {
             const user = JSON.parse(localStorage.getItem('user'));
             if (!user || !user.access) {
@@ -40,16 +36,12 @@ const EcommerceCartPage = () => {
                 navigate('/login');
                 return;
             }
-    
             const response = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/carts/cart/`, {
                 headers: {
                     Authorization: `Bearer ${user.access}`,
                 },
             });
-    
             setCartItems(response.data);
-    
-            // Initialize quantities state
             const initialQuantities = {};
             response.data.forEach(item => {
                 initialQuantities[item.product.id] = item.quantity;
@@ -62,7 +54,11 @@ const EcommerceCartPage = () => {
                 navigate('/login');
             }
         }
-    };
+    }, [navigate]);
+
+    useEffect(() => {
+        fetchCartItems();
+    }, [fetchCartItems]);
 
     const removeFromCart = async (productId) => {
         const csrfToken = getCsrfToken();
@@ -170,8 +166,8 @@ const EcommerceCartPage = () => {
                                             <div className="justify-left">
                                                 <h3 className="text-sm font-semibold">{item.product.title}</h3>
                                                 <p className="text-gray-600 text-xs">stok{' '} {item.product.stock > 0 ? item.product.stock : 'habis'}</p>
-                                                <p className="text-gray-600 text-xs">Rp. {formatIDR(item.product.price)} / {item.product.unit}</p>
-                                                <p className="text-xs text-gray-600">Total Rp. {formatIDR(item.product.price * quantities[item.product.id])}</p>
+                                                <p className="text-gray-600 text-xs">{formatIDR(item.product.price)} / {item.product.unit}</p>
+                                                <p className="text-xs text-gray-600">Total {formatIDR(item.product.price * quantities[item.product.id])}</p>
                                             </div>    
                                         </span>
                                         <div className="flex flex-col items-center">

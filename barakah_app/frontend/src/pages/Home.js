@@ -21,14 +21,21 @@ function getCsrfToken() {
 }
 
 const formatIDR = (amount) => {
-  return new Intl.NumberFormat('id-ID', {
+  return 'Rp. ' + new Intl.NumberFormat('id-ID', {
     minimumFractionDigits: 0,
   }).format(amount);
 };
 
 const formatIDRTarget = (amount) => {
   if (amount <= 0) return '\u221E';
-  return new Intl.NumberFormat('id-ID', {
+  return 'Rp. ' + new Intl.NumberFormat('id-ID', {
+    minimumFractionDigits: 0,
+  }).format(amount);
+};
+
+const formatIDRCourse = (amount) => {
+  if (amount <= 0) return 'GRATIS';
+  return 'Rp. ' + new Intl.NumberFormat('id-ID', {
     minimumFractionDigits: 0,
   }).format(amount);
 };
@@ -600,7 +607,7 @@ const Home = () => {
                     <div className="p-2 mb-6">
                       <h3 className="text-sm font-medium mb-2 line-clamp-2">{product.title}</h3>
                       <div className="flex justify-between">
-                        <p className="text-gray-600 text-xs mb-2">Rp. {formatIDR(product.price)} / {product.unit}</p>
+                        <p className="text-gray-600 text-xs mb-2">{formatIDR(product.price)} / {product.unit}</p>
                         <p className="text-gray-600 text-xs mb-2">stok{' '} {product.stock > 0 ? product.stock : 'habis'}</p>
                       </div>
                       {product.stock <= 0 ? (
@@ -681,7 +688,7 @@ const Home = () => {
                   <div className="p-2">
                     <h3 className="text-sm font-medium mb-2 line-clamp-2">{product.title}</h3>   
                     <div className="flex justify-between">
-                      <p className="text-gray-600 text-xs mb-2">Rp. {formatIDR(product.price)} / {product.unit}</p>
+                      <p className="text-gray-600 text-xs mb-2">{formatIDR(product.price)} / {product.unit}</p>
                       <p className="text-gray-600 text-xs mb-2">stok{' '} {product.stock > 0 ? product.stock : 'habis'}</p>
                     </div>
                     {product.stock <= 0 ? (
@@ -831,6 +838,7 @@ const Home = () => {
                       <h3 className="text-sm font-medium mb-2 line-clamp-2">
                         {course.title}
                       </h3>
+                      <p className="text-gray-600 text-xs mb-2">{formatIDRCourse(course.price)}</p>
                       <Link
                         to={`/kelas/${course.slug || course.id}`}
                         className="block text-center bg-green-800 text-white py-2 rounded-md text-sm hover:bg-green-900"

@@ -29,14 +29,14 @@ const getTimeElapsed = (createdAt) => {
 };
 
 const formatIDR = (amount) => {
-  return new Intl.NumberFormat('id-ID', {
+  return 'Rp. ' + new Intl.NumberFormat('id-ID', {
     minimumFractionDigits: 0,
   }).format(amount);
 };
 
 const formatIDRTarget = (amount) => {
   if (amount <= 0) return '\u221E';
-  return new Intl.NumberFormat('id-ID', {
+  return 'Rp. ' + new Intl.NumberFormat('id-ID', {
     minimumFractionDigits: 0,
   }).format(amount);
 };
@@ -152,10 +152,10 @@ const CrowdfundingCampaignDetail = () => {
             <h1 className="text-xl font-bold mb-2">{campaign.title}</h1>
             <div className="flex justify-between items-center">
               <span className="text-sm text-gray-600">
-                Terkumpul: {campaign.current_amount ? formatIDR(campaign.current_amount) : 'Rp 0'}
+                Terkumpul: {campaign.current_amount ? formatIDR(campaign.current_amount) : 'Rp. 0'}
               </span>
               <span className="text-sm text-gray-600">
-                Target: {campaign.target_amount ? formatIDRTarget(campaign.target_amount) : 'Rp 0'}
+                Target: {campaign.target_amount ? formatIDRTarget(campaign.target_amount) : 'Rp. 0'}
               </span>
             </div>
 
@@ -279,7 +279,7 @@ const CrowdfundingCampaignDetail = () => {
                         </p>
                       </div>
                       <p className="text-sm text-gray-500">
-                        Rp. {formatIDR(donation.amount)}
+                        {formatIDR(donation.amount)}
                       </p>
                     </li>
                   ))

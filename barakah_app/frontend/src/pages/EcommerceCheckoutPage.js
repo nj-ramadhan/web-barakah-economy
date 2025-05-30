@@ -1,6 +1,6 @@
 // pages/EcommerceCheckoutPage.js
 import React, { useState, useEffect } from 'react';
-import { useParams, useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import Header from '../components/layout/Header';
 import NavigationButton from '../components/layout/Navigation';
@@ -15,19 +15,16 @@ const getCsrfToken = () => {
 };
 
 const formatIDR = (amount) => {
-  return new Intl.NumberFormat('id-ID', {
+  return 'Rp. ' + new Intl.NumberFormat('id-ID', {
     minimumFractionDigits: 0,
   }).format(amount);
 };
 
 const EcommerceCheckoutPage = () => {
-  const { slug } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
   const { cartItems } = location.state || { cartItems: [] };
   const [selectedBank, setSelectedBank] = useState('');
-  const [product, setProduct] = useState(null);
-  const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState({
     fullName: '',
     phone: '',
@@ -181,9 +178,6 @@ const EcommerceCheckoutPage = () => {
     }
 
     const totalAmount = cartItems.reduce((total, item) => total + (item.product.price * item.quantity), 0);
-
-    // Generate a random checkout number with 'CHK' prefix and user ID
-    const user = JSON.parse(localStorage.getItem('user'));
     const customerName = formData.fullName;    
     const customerPhone = formData.phone;
 
@@ -284,8 +278,8 @@ const EcommerceCheckoutPage = () => {
                     <div className="justify-left">
                       <h3 className="text-sm font-semibold">{item.product.title}</h3>
                       <p className="text-xs text-gray-600">Jumlah Barang: {item.quantity}</p>
-                      <p className="text-xs text-gray-600">Harga satuan: Rp. {formatIDR(item.product.price)}</p>
-                      <p className="text-xs text-gray-600">Total: Rp. {formatIDR(item.product.price * item.quantity)}</p>
+                      <p className="text-xs text-gray-600">Harga satuan: {formatIDR(item.product.price)}</p>
+                      <p className="text-xs text-gray-600">Total: {formatIDR(item.product.price * item.quantity)}</p>
                     </div>
                   </span>
                 </div>
@@ -297,7 +291,7 @@ const EcommerceCheckoutPage = () => {
         {/* Total Price */}
         <h3 className="font-semibold">Total Biaya yang harus dibayar</h3>
         <div className="bg-white border border-transparent hover:bg-green-50/50 p-4 rounded-lg shadow-sm mb-6">
-          <p className="text-lg font-semibold">Rp. {formatIDR(cartItems.reduce((total, item) => total + (item.product.price * item.quantity), 0))}</p>
+          <p className="text-lg font-semibold">{formatIDR(cartItems.reduce((total, item) => total + (item.product.price * item.quantity), 0))}</p>
         </div>
 
         {/* Payment Method */}

@@ -25,7 +25,7 @@ const formatDate = (dateStr) => {
 };
 
 const formatIDR = (amount) => {
-  return new Intl.NumberFormat('id-ID', {
+  return 'Rp. ' + new Intl.NumberFormat('id-ID', {
     minimumFractionDigits: 0,
   }).format(amount);
 };
@@ -258,7 +258,7 @@ const EcoursePaymentConfirmation = () => {
             <div className="flex items-center mb-2">
               <div className="flex-1 flex justify-between items-center">
                 <h3 className="text-2xl font-bold">
-                  Rp. <span className="text-green-500">{formatIDR(course.price)}</span>
+                  <span className="text-green-500">{formatIDR(course.price)}</span>
                 </h3>
                 <button
                   onClick={() => copyToClipboard(course.price, 'Nominal')}

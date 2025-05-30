@@ -18,7 +18,7 @@ function getCsrfToken() {
   }
 
 const formatIDR = (amount) => {
-    return new Intl.NumberFormat('id-ID', {
+    return 'Rp. ' + new Intl.NumberFormat('id-ID', {
       minimumFractionDigits: 0,
     }).format(amount);
   };
@@ -27,38 +27,22 @@ const EcommerceWishlistPage = () => {
     const navigate = useNavigate();
     const [wishlistItems, setWishlistItems] = useState([]);
 
-    useEffect(() => {
-        fetchWishlistItems();
-    }, []);
-
-    const fetchWishlistItems = async () => {
+    // Define fetchWishlistItems with useCallback so its reference is stable
+    const fetchWishlistItems = React.useCallback(async () => {
         const csrfToken = getCsrfToken();
         try {
-            // Retrieve the user object from Local Storage
             const user = JSON.parse(localStorage.getItem('user'));
-            
-            // Check if the user object and access token exist
             if (!user || !user.access) {
                 console.error('User not logged in or token missing');
-                navigate('/login');  // Redirect to login page
+                navigate('/login');
                 return;
             }
-    
-            // Log the token for debugging
-            console.log('User token:', user.access);
-    
-            // Make the API request with the token in the headers
             const response = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/wishlists/wishlist/`, {
                 headers: {
-                    Authorization: `Bearer ${user.access}`,  // Use "Bearer" for JWT tokens
+                    Authorization: `Bearer ${user.access}`,
                     'X-CSRFToken': csrfToken,
                 },
             });
-    
-            // Log the response for debugging
-            console.log('Wishlist items fetched:', response.data);
-    
-            // Update the state with the fetched wishlist items
             setWishlistItems(response.data);
         } catch (error) {
             console.error('Error fetching wishlist items:', error);
@@ -75,7 +59,11 @@ const EcommerceWishlistPage = () => {
                 }
             }
         }
-    };
+    }, [navigate]);
+
+    useEffect(() => {
+        fetchWishlistItems();
+    }, [fetchWishlistItems]);
 
     const removeFromWishlist = async (productId) => {
         const csrfToken = getCsrfToken();
@@ -158,7 +146,7 @@ const EcommerceWishlistPage = () => {
                                         <div className="justify-left">
                                             <h3 className="text-sm font-semibold">{item.product.title}</h3>
                                             <p className="text-gray-600 text-xs">stok{' '} {item.product.stock > 0 ? item.product.stock : 'habis'}</p>
-                                            <p className="text-gray-600 text-xs">Rp. {formatIDR(item.product.price)} / {item.product.unit}</p>
+                                            <p className="text-gray-600 text-xs">{formatIDR(item.product.price)} / {item.product.unit}</p>
                                         </div>    
                                     </span>
                                         {item.product.stock <= 0 ? (

@@ -18,7 +18,7 @@ function getCsrfToken() {
 }
 
 const formatIDR = (amount) => {
-  return new Intl.NumberFormat('id-ID', {
+  return 'Rp. ' + new Intl.NumberFormat('id-ID', {
     minimumFractionDigits: 0,
   }).format(amount);
 };
@@ -292,7 +292,7 @@ const EcommerceMainPage = () => {
                   <div className="p-2">
                     <h3 className="text-sm font-medium mb-2 line-clamp-2">{product.title}</h3>   
                     <div className="flex justify-between">
-                      <p className="text-gray-600 text-xs mb-2">Rp. {formatIDR(product.price)} / {product.unit}</p>
+                      <p className="text-gray-600 text-xs mb-2">{formatIDR(product.price)} / {product.unit}</p>
                       <p className="text-gray-600 text-xs mb-2">stok{' '} {product.stock > 0 ? product.stock : 'habis'}</p>
                     </div>
                     {product.stock <= 0 ? (

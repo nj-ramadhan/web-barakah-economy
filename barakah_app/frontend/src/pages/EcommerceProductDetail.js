@@ -40,7 +40,7 @@ const getTimeElapsed = (createdAt) => {
 };
 
 const formatIDR = (amount) => {
-  return new Intl.NumberFormat('id-ID', {
+  return 'Rp. ' + new Intl.NumberFormat('id-ID', {
     minimumFractionDigits: 0,
   }).format(amount);
 };
@@ -214,7 +214,7 @@ const EcommerceProductDetail = () => {
           <div className="p-4">
             <h1 className="text-xl font-bold mb-2">{product.title}</h1>
             <div className="flex justify-between">
-              <p className="text-gray-600 text-sm mb-2">Rp. {formatIDR(product.price)}</p>
+              <p className="text-gray-600 text-sm mb-2">{formatIDR(product.price)}</p>
               <p className="text-gray-600 text-sm mb-2">Stock: {product.stock} {product.unit}</p>
             </div>
             <div className="flex items-center mb-4">

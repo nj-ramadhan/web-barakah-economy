@@ -1,5 +1,5 @@
 // pages/CrowdfundingDonationHistoryPage.js
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import Header from '../components/layout/Header'; // Import the Header component
@@ -7,7 +7,7 @@ import NavigationButton from '../components/layout/Navigation'; // Import the Na
 import '../styles/Body.css';
 
 const formatIDR = (amount) => {
-    return new Intl.NumberFormat('id-ID', {
+    return 'Rp. ' + new Intl.NumberFormat('id-ID', {
       minimumFractionDigits: 0,
     }).format(amount);
   };
@@ -26,11 +26,7 @@ const CrowdfundingDonationHistoryPage = () => {
     const navigate = useNavigate();
     const [donations, setDonations] = useState([]);
 
-    useEffect(() => {
-        fetchDonations();
-    }, []);
-
-    const fetchDonations = async () => {
+    const fetchDonations = useCallback(async () => {
         try {
             // Retrieve the user object from Local Storage
             const user = JSON.parse(localStorage.getItem('user'));
@@ -72,7 +68,11 @@ const CrowdfundingDonationHistoryPage = () => {
                 }
             }
         }
-    };
+    }, [navigate]);
+
+    useEffect(() => {
+        fetchDonations();
+    }, [fetchDonations]);
 
     return (
         <div className="body">
@@ -106,7 +106,7 @@ const CrowdfundingDonationHistoryPage = () => {
                                             />
                                         <div className="justify-left">
                                             <h3 className="text-sm font-semibold">{item.campaign_title}</h3>
-                                            <p className="text-gray-600 text-xs">Nominal : Rp. {formatIDR(item.amount)}</p>
+                                            <p className="text-gray-600 text-xs">Nominal : {formatIDR(item.amount)}</p>
                                             <p className="text-gray-600 text-xs">Tanggal : {formatDate(item.created_at)}</p>
                                         </div>    
                                     </span>
