@@ -2,6 +2,8 @@ from django.db import models
 from accounts.models import User
 from ckeditor.fields import RichTextField
 from django.utils.text import slugify
+import uuid
+import os
 
 def generate_unique_slug(model, name):
     slug = slugify(name)
