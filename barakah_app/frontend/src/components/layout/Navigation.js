@@ -16,43 +16,43 @@ const NavigationButton = () => {
           }`}
         >
           <span className="material-icons">home</span>
-          <span className="text-xs">Beranda</span>
+          <span className="text-xs">Home</span>
         </Link>
         <Link
-          to="../donasi"
+          to="../charity"
           className={`flex flex-col items-center ${
-            location.pathname === '/donasi' ? 'text-green-600' : 'text-gray-600'
+            location.pathname === '/charity' ? 'text-green-600' : 'text-gray-600'
           }`}
         >
           <span className="material-icons">volunteer_activism</span>
-          <span className="text-xs">Donasi</span>
+          <span className="text-xs">Charity</span>
         </Link>
         <Link
-          to="../belanja"
+          to="../sinergy"
           className={`flex flex-col items-center ${
-            location.pathname === '/belanja' ? 'text-green-600' : 'text-gray-600'
+            location.pathname === '/sinergy' ? 'text-green-600' : 'text-gray-600'
           }`}
         >
           <span className="material-icons">shopping_cart</span>
-          <span className="text-xs">Jual Beli</span>
+          <span className="text-xs">Sinergy</span>
         </Link>
         <Link
-          to="../edukasi"
+          to="../academy"
           className={`flex flex-col items-center ${
-            location.pathname === '/edukasi' ? 'text-green-600' : 'text-gray-600'
+            location.pathname === '/academy' ? 'text-green-600' : 'text-gray-600'
           }`}
         >
           <span className="material-icons">school</span>
-          <span className="text-xs">Edukasi</span>
+          <span className="text-xs">Academy</span>
         </Link>        
         <Link
-          to="../tentang-kami"
+          to="../about"
           className={`flex flex-col items-center ${
-            location.pathname === '/tentang-kami' ? 'text-green-600' : 'text-gray-600'
+            location.pathname === '/about' ? 'text-green-600' : 'text-gray-600'
           }`}
         >
           <span className="material-icons">info</span>
-          <span className="text-xs">Tentang</span>
+          <span className="text-xs">About</span>
         </Link>
         <Link
           to="../login"
@@ -61,7 +61,7 @@ const NavigationButton = () => {
           }`}
         >
           <span className="material-icons">person</span>
-          <span className="text-xs">Profil</span>
+          <span className="text-xs">Profile</span>
         </Link>
       </div>
     </nav>

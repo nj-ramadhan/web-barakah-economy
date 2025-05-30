@@ -31,4 +31,4 @@ class UpdateAdmin(admin.ModelAdmin):
     form = CampaignAdminForm    
 
 admin.site.register(Campaign, CampaignAdmin)
-admin.site.register(Update, UpdateAdmin)    
+admin.site.register(Update, UpdateAdmin)     

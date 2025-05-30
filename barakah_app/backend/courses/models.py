@@ -12,6 +12,12 @@ def generate_unique_slug(model, name):
         num += 1
     return unique_slug
 
+def proof_file_path(instance, filename):
+    """Generate a unique path for uploaded proof files"""
+    ext = filename.split('.')[-1]
+    filename = f"{uuid.uuid4()}.{ext}"
+    return os.path.join('course_payment_proofs', filename)
+
 class Course(models.Model):
     CATEGORY_CHOICES = [
         ('islam', 'Agama Islam'),
@@ -40,11 +46,18 @@ class Course(models.Model):
     def __str__(self):
         return f"{self.title}"
 
-class Enrollment(models.Model):
+class CourseEnrollment(models.Model):
+    PAYMENT_STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('verified', 'Verified'),
+        ('rejected', 'Rejected'),
+    ]
+
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='user')
     course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='enrollments')
+    proof_file = models.FileField(upload_to=proof_file_path, null=True, blank=True)
     enrolled_at = models.DateTimeField(auto_now_add=True)
-    payment_status = models.CharField(max_length=20, default='pending')  # 'pending', 'paid'
+    payment_status = models.CharField(max_length=20, choices=PAYMENT_STATUS_CHOICES, default='pending')  # 'pending', 'paid'
 
     class Meta:
         unique_together = ('user', 'course')

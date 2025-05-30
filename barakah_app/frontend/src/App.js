@@ -28,7 +28,7 @@ import EcommercePaymentConfirmation from './pages/EcommercePaymentConfirmation';
 import EcourseMainPage from './pages/EcourseMainPage';
 import EcourseCourseDetail from './pages/EcourseCourseDetail';
 import EcourseJoinCoursePage from './pages/EcourseJoinCoursePage';
-import EcoursePaymentPage from './pages/EcoursePaymentPage';
+import EcoursePaymentConfirmation from './pages/EcoursePaymentConfirmation';
 
 import PaymentSuccessPage from './pages/PaymentSuccessPage';
 import PaymentFailedPage from './pages/PaymentFailedPage';
@@ -55,14 +55,14 @@ const App = () => {
             <Route path="/profile/edit" element={<PrivateRoute><ProfileEditPage /></PrivateRoute>} />
 
             {/* Crowdfunding Routes */}
-            <Route path="/donasi" element={<CrowdfundingMainPage />} />
+            <Route path="/charity" element={<CrowdfundingMainPage />} />
             <Route path="/kampanye/:slug" element={<CrowdfundingCampaignDetail />} />
             <Route path="/bayar-donasi/:slug" element={<CrowdfundingDonationPage />} />
             <Route path="/riwayat-donasi" element={<CrowdfundingDonationHistoryPage />} />
             <Route path="/konfirmasi-pembayaran-donasi" element={<CrowdfundingPaymentConfirmation />} />
 
             {/* Ecommerce Routes */}
-            <Route path="/belanja" element={<EcommerceMainPage />} />
+            <Route path="/sinergy" element={<EcommerceMainPage />} />
             <Route path="/produk/:slug" element={<EcommerceProductDetail />} />
             <Route path="/incaran" element={<PrivateRoute><EcommerceWishlistPage /></PrivateRoute>} />
             <Route path="/keranjang" element={<PrivateRoute><EcommerceCartPage /></PrivateRoute>} />
@@ -71,10 +71,10 @@ const App = () => {
             <Route path="/konfirmasi-pembayaran-belanja" element={<PrivateRoute><EcommercePaymentConfirmation /></PrivateRoute>} />
 
             {/* Ecourse Routes */}
-            <Route path="/edukasi" element={<EcourseMainPage />} />
+            <Route path="/academy" element={<EcourseMainPage />} />
             <Route path="/kelas/:slug" element={<PrivateRoute><EcourseCourseDetail /></PrivateRoute>} />
             <Route path="/ikut-kelas/:slug" element={<PrivateRoute><EcourseJoinCoursePage /></PrivateRoute>} />
-            <Route path="/bayar-kelas/:slug" element={<PrivateRoute><EcoursePaymentPage /></PrivateRoute>} />
+            <Route path="/konfirmasi-pembayaran-kelas/:slug" element={<PrivateRoute><EcoursePaymentConfirmation /></PrivateRoute>} />
 
             {/* Payment Routes */}
             <Route path="/pembayaran-berhasil" element={<PaymentSuccessPage />} />
@@ -82,7 +82,7 @@ const App = () => {
             <Route path="/pembayaran-tertunda" element={<PaymentPendingPage />} />
 
             {/* Information Routes */}
-            <Route path="/tentang-kami" element={<AboutUs />} />
+            <Route path="/about" element={<AboutUs />} />
             <Route path="/hubungi-kami" element={<ContactUs />} />
 
           </Routes>

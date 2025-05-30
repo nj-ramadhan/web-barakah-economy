@@ -768,10 +768,10 @@ const Home = () => {
                     <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4">
                       <h2 className="text-white font-bold text-lg">{course.title}</h2>
                         <Link
-                          to={`/ikutkelas/${course.slug || course.id}`}
+                          to={`/kelas/${course.slug || course.id}`}
                           className="block text-center bg-green-800 text-white py-2 rounded-md text-sm hover:bg-green-900"
                         >
-                          IKUTI KELAS
+                          LIHAT KELAS
                         </Link>
                     </div>
                   </div>
@@ -817,7 +817,7 @@ const Home = () => {
               return (
                 <SwiperSlide key={course.id}>
                   <div className="bg-white rounded-lg overflow-hidden shadow">
-                    <Link to={`/ikutkelas/${course.slug || course.id}`}>
+                    <Link to={`/kelas/${course.slug || course.id}`}>
                       <img
                         src={course.thumbnail || '/placeholder-image.jpg'}
                         alt={course.title}
@@ -831,12 +831,12 @@ const Home = () => {
                       <h3 className="text-sm font-medium mb-2 line-clamp-2">
                         {course.title}
                       </h3>
-                        <Link
-                          to={`/ikutkelas/${course.slug || course.id}`}
-                          className="block text-center bg-green-800 text-white py-2 rounded-md text-sm hover:bg-green-900"
-                        >
-                          IKUTI KELAS
-                        </Link>
+                      <Link
+                        to={`/kelas/${course.slug || course.id}`}
+                        className="block text-center bg-green-800 text-white py-2 rounded-md text-sm hover:bg-green-900"
+                      >
+                        LIHAT KELAS
+                      </Link>
                     </div>
                   </div>
                 </SwiperSlide>

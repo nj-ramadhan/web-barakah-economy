@@ -237,7 +237,8 @@ const CrowdfundingCampaignDetail = () => {
             <div className="bg-white p-4 rounded-lg shadow">
               {campaign.description ? (
                 <>
-                  <div
+                  <div 
+                    onClick={toggleDescription}
                     dangerouslySetInnerHTML={{
                       __html: showFullDescription
                         ? convertRelativeUrlsToAbsolute(campaign.description, baseUrl)
@@ -295,7 +296,9 @@ const CrowdfundingCampaignDetail = () => {
                 {campaign.updates && campaign.updates.length > 0 ? (
                   campaign.updates.map((update) => (
                     <li key={update.id} className="border-b py-2 px-4">
-                      <div className="flex justify-between items-center">
+                      <div 
+                        onClick={() => toggleUpdate(update.id)}
+                        className="flex justify-between items-center mb-2">
                         <p className="text-gray-700">
                           <strong>{update.title}</strong>
                         </p>
@@ -310,6 +313,7 @@ const CrowdfundingCampaignDetail = () => {
                       {update.description ? (
                         <>
                           <div
+                            onClick={() => toggleUpdate(update.id)}
                             dangerouslySetInnerHTML={{
                               __html: showFullUpdates[update.id]
                                 ? convertRelativeUrlsToAbsolute(update.description, baseUrl)

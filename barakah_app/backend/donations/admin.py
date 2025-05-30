@@ -2,7 +2,6 @@
 from django.contrib import admin
 from .models import Donation
 
-@admin.register(Donation)
 class DonationAdmin(admin.ModelAdmin):
     list_display = ('campaign', 'donor', 'donor_name', 'donor_phone','amount', 'payment_status', 'transfer_date')
     list_filter = ('campaign', 'payment_method', 'payment_status')
@@ -18,3 +17,5 @@ class DonationAdmin(admin.ModelAdmin):
         self.message_user(request, f"{queryset.count()} donations have been verified.")
 
     verify_selected_donations.short_description = "Verify selected donations"
+
+admin.site.register(Donation, DonationAdmin)   
