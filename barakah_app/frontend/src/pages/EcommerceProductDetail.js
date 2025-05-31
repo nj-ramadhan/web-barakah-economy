@@ -305,7 +305,7 @@ const EcommerceProductDetail = () => {
                   product.testimonies.map((testimoni) => (
                     <li key={testimoni.id} className="border-b py-2 px-4">
                       <div className="flex justify-between items-center">
-                        <p className="text-gray-700">
+                        <p className="text-green-700 font-semibold">
                           <strong>{testimoni.customer}</strong>
                         </p>                      
                         <p className="text-sm text-gray-500">

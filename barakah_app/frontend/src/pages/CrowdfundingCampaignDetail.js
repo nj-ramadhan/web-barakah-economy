@@ -267,15 +267,15 @@ const CrowdfundingCampaignDetail = () => {
                   donations.map((donation, index) => (
                     <li key={index} className="border-b py-2 px-4">
                       <div className="flex justify-between items-center">
-                        <p className="text-gray-700">
+                        <p className="text-green-700 font-semibold">
                           <strong>{donation.donor_name}</strong>
                         </p>
                         <p className="text-sm text-gray-500">
-                          {new Date(donation.created_at).toLocaleDateString('id-ID', {
+                          {new Date(donation.transfer_date).toLocaleDateString('id-ID', {
                             day: '2-digit',
                             month: '2-digit',
                             year: 'numeric',
-                          })} - {getTimeElapsed(donation.created_at)}
+                          })} - {getTimeElapsed(donation.transfer_date)}
                         </p>
                       </div>
                       <p className="text-sm text-gray-500">
