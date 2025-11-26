@@ -167,16 +167,16 @@ else:
             'PORT': '5432',
         }
     }
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': 'bae',
-            'USER': 'postgres',
-            'PASSWORD': '12345678',
-            'HOST': 'localhost',
-            'PORT': '5432',
-        }
-    }
+    # DATABASES = {
+    #     'default': {
+    #         'ENGINE': 'django.db.backends.postgresql',
+    #         'NAME': 'bae',
+    #         'USER': 'postgres',
+    #         'PASSWORD': '12345678',
+    #         'HOST': 'localhost',
+    #         'PORT': '5432',
+    #     }
+    # }
 
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
