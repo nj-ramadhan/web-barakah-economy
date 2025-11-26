@@ -148,7 +148,7 @@ WSGI_APPLICATION = 'barakah_app.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
-DEBUG = False
+# DEBUG = False
 if DEBUG:
     DATABASES = {
         'default': {
@@ -157,16 +157,16 @@ if DEBUG:
         }
     }
 else:
-    # DATABASES = {
-    #     'default': {
-    #         'ENGINE': 'django.db.backends.postgresql',
-    #         'NAME': 'bae_db',
-    #         'USER': 'bae_user',
-    #         'PASSWORD': 'BarakahEconomy2025!',
-    #         'HOST': 'ssh root@82.29.162.244',
-    #         'PORT': '5432',
-    #     }
-    # }
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': 'bae_db',
+            'USER': 'bae_user',
+            'PASSWORD': 'BarakahEconomy2025!',
+            'HOST': 'ssh root@82.29.162.244',
+            'PORT': '5432',
+        }
+    }
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
