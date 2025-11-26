@@ -3,6 +3,8 @@ import { useParams } from "react-router-dom";
 import axios from "axios";
 import HeaderHome from "../components/layout/HeaderHome";
 import NavigationButton from "../components/layout/Navigation";
+// 1. Import FloatingBubble
+import FloatingBubble from '../components/common/FloatingBubble';
 
 const ArticleDetailPage = () => {
   const { id } = useParams();
@@ -33,28 +35,28 @@ const ArticleDetailPage = () => {
     <div className="body">
       <HeaderHome />
 
-      <div className="px-4 py-4 max-w-3xl mx-auto"> {/* Tambah max-w-3xl agar tulisan tidak terlalu lebar */}
+      <div className="px-4 py-4 max-w-3xl mx-auto mb-20"> {/* Tambah mb-20 agar konten terbawah tidak tertutup nav */}
         <h1 className="text-2xl font-bold mb-2 text-center">{article.title}</h1>
         <p className="text-gray-500 text-sm mb-6 text-center">{article.date}</p>
 
-        {/* GAMBAR UTAMA (Thumbnail/Cover) diambil dari ArticleImage */}
+        {/* GAMBAR UTAMA */}
         {article.images && article.images.length > 0 && (
           <div className="flex justify-center mb-8">
             <img
-              src={article.images[0].full_path} 
+              src={article.images[0].full_path}
               alt={article.title}
               className="w-full h-auto rounded-lg shadow-md object-cover max-h-[400px]"
             />
           </div>
         )}
 
-        {/* KONTEN FLEKSIBEL (Teks + Gambar Selipan) dari CKEditor */}
-        <div 
-            className="prose prose-lg max-w-none text-justify custom-content" 
-            dangerouslySetInnerHTML={{ __html: article.content }} 
+        {/* KONTEN ARTIKEL */}
+        <div
+          className="prose prose-lg max-w-none text-justify custom-content"
+          dangerouslySetInnerHTML={{ __html: article.content }}
         />
-        
-        {/* Style tambahan khusus untuk gambar di dalam konten CKEditor */}
+
+        {/* CSS Khusus Konten */}
         <style>{`
             .custom-content img {
                 margin: 20px auto;
@@ -69,6 +71,9 @@ const ArticleDetailPage = () => {
             }
         `}</style>
       </div>
+
+      {/* 2. Pasang FloatingBubble disini (Show = true agar selalu tampil) */}
+      <FloatingBubble show={true} />
 
       <NavigationButton />
     </div>
