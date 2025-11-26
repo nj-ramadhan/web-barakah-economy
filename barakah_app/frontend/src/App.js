@@ -25,6 +25,11 @@ import EcommerceProductDetail from './pages/EcommerceProductDetail';
 import EcommerceCheckoutPage from './pages/EcommerceCheckoutPage';
 import EcommercePaymentConfirmation from './pages/EcommercePaymentConfirmation';
 
+import ArticleListPage from "./pages/ArticleListPage";
+import ArticleDetailPage from "./pages/ArticleDetailPage";
+import ArticleCreatePage from './pages/ArticleCreatePage';
+import ArticleUploadImagesPage from './pages/ArticleUploadImagesPage';
+
 import EcourseMainPage from './pages/EcourseMainPage';
 import EcourseCourseDetail from './pages/EcourseCourseDetail';
 import EcourseJoinCoursePage from './pages/EcourseJoinCoursePage';
@@ -36,6 +41,7 @@ import PaymentPendingPage from './pages/PaymentPendingPage';
 
 import AboutUs from './pages/AboutUs';
 import ContactUs from './pages/ContactUs';
+import AcademyMain from './pages/AcademyMain';
 
 const App = () => {
   return (
@@ -69,9 +75,18 @@ const App = () => {
             <Route path="/riwayat-belanja" element={<PrivateRoute><EcommerceOrderHistoryPage /></PrivateRoute>} />
             <Route path="/bayar-belanja" element={<PrivateRoute><EcommerceCheckoutPage /></PrivateRoute>} />
             <Route path="/konfirmasi-pembayaran-belanja" element={<PrivateRoute><EcommercePaymentConfirmation /></PrivateRoute>} />
+            
+            {/* Article Routes */}
+            <Route path="/articles" element={<ArticleListPage />} />
+            <Route path="/articles/create" element={<ArticleCreatePage />} />
+            <Route path="/articles/:id" element={<ArticleDetailPage />} />
+            <Route path="/articles/:id/upload-images" element={<ArticleUploadImagesPage />} />
+            <Route path="/academy/articles" element={<ArticleListPage />} />
+            <Route path="/academy/articles/:id" element={<ArticleDetailPage />} />  
 
             {/* Ecourse Routes */}
-            <Route path="/academy" element={<EcourseMainPage />} />
+            <Route path="/academy" element={<AcademyMain />} />
+            <Route path="/academy/ecourse" element={<EcourseMainPage />} />
             <Route path="/kelas/:slug" element={<PrivateRoute><EcourseCourseDetail /></PrivateRoute>} />
             <Route path="/ikut-kelas/:slug" element={<PrivateRoute><EcourseJoinCoursePage /></PrivateRoute>} />
             <Route path="/konfirmasi-pembayaran-kelas/:slug" element={<PrivateRoute><EcoursePaymentConfirmation /></PrivateRoute>} />
