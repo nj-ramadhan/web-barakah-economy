@@ -1,0 +1,13 @@
+{
+  "dependencies": {
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
+    "@mui/material": "^7.3.5",
+    "axios": "^1.13.2",
+    "formik": "^2.4.9",
+    "react-router-dom": "^7.9.6",
+    "styled-components": "^6.1.19",
+    "tailwindcss": "^4.1.17",
+    "yup": "^1.7.1"
+  }
+}

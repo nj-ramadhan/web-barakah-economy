@@ -15,9 +15,9 @@ from pathlib import Path
 from datetime import timedelta
 import environ
 
-# Initialize environment variables
+# # Initialize environment variables
 env = environ.Env()
-environ.Env.read_env()  # Reads the .env file
+environ.Env.read_env()  # Reads the ..env file
 
 # Load the GOOGLE_CLIENT_ID from the environment variables
 GOOGLE_CLIENT_ID = env('GOOGLE_CLIENT_ID')
@@ -27,6 +27,8 @@ MIDTRANS_MERCHANT_ID = env('MIDTRANS_MERCHANT_ID')
 MIDTRANS_CLIENT_KEY = env('MIDTRANS_CLIENT_KEY')
 MIDTRANS_SERVER_KEY = env('MIDTRANS_SERVER_KEY')
 MIDTRANS_SANDBOX = env('MIDTRANS_SANDBOX', cast=bool)
+
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -96,7 +98,8 @@ INSTALLED_APPS = [
     'reviews',
     
     'courses',  
-        
+
+    'article',
 ]
 
 MIDDLEWARE = [
@@ -114,10 +117,16 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'barakah_app.urls'
 
-SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-SECURE_SSL_REDIRECT = True
-SESSION_COOKIE_SECURE = True
-CSRF_COOKIE_SECURE = True
+if DEBUG:
+    SECURE_SSL_REDIRECT = False
+    SESSION_COOKIE_SECURE = False
+    CSRF_COOKIE_SECURE = False
+    SECURE_PROXY_SSL_HEADER = None
+else:
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 TEMPLATES = [
     {
@@ -139,7 +148,7 @@ WSGI_APPLICATION = 'barakah_app.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
-
+DEBUG = False
 if DEBUG:
     DATABASES = {
         'default': {
@@ -148,16 +157,26 @@ if DEBUG:
         }
     }
 else:
+    # DATABASES = {
+    #     'default': {
+    #         'ENGINE': 'django.db.backends.postgresql',
+    #         'NAME': 'bae_db',
+    #         'USER': 'bae_user',
+    #         'PASSWORD': 'BarakahEconomy2025!',
+    #         'HOST': 'ssh root@82.29.162.244',
+    #         'PORT': '5432',
+    #     }
+    # }
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
-            'NAME': 'bae_db',
-            'USER': 'bae_user',
-            'PASSWORD': 'BarakahEconomy2025!',
+            'NAME': 'bae',
+            'USER': 'postgres',
+            'PASSWORD': '12345678',
             'HOST': 'localhost',
             'PORT': '5432',
         }
-    }    
+    }
 
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
@@ -251,8 +270,10 @@ SIMPLE_JWT = {
 
 AUTH_USER_MODEL = 'accounts.User'
 
+
 STATIC_URL = '/static/'
 MEDIA_URL = '/media/'
+
 
 if DEBUG:
     STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')] 
