@@ -157,26 +157,26 @@ if DEBUG:
         }
     }
 else:
-    # DATABASES = {
-    #     'default': {
-    #         'ENGINE': 'django.db.backends.postgresql',
-    #         'NAME': 'bae_db',
-    #         'USER': 'bae_user',
-    #         'PASSWORD': 'BarakahEconomy2025!',
-    #         'HOST': 'ssh root@82.29.162.244',
-    #         'PORT': '5432',
-    #     }
-    # }
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
-            'NAME': 'bae',
-            'USER': 'postgres',
-            'PASSWORD': '12345678',
-            'HOST': 'localhost',
+            'NAME': 'bae_db',
+            'USER': 'bae_user',
+            'PASSWORD': 'BarakahEconomy2025!',
+            'HOST': 'ssh root@82.29.162.244',
             'PORT': '5432',
         }
     }
+    # DATABASES = {
+    #     'default': {
+    #         'ENGINE': 'django.db.backends.postgresql',
+    #         'NAME': 'bae',
+    #         'USER': 'postgres',
+    #         'PASSWORD': '12345678',
+    #         'HOST': 'localhost',
+    #         'PORT': '5432',
+    #     }
+    # }
 
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
