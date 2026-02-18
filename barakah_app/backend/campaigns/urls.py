@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import CampaignViewSet, CampaignDetailView
+from .views import CampaignViewSet, CampaignDetailView, CampaignShareView
 
 # Endpoint untuk list dan create campaign
 campaign_list = CampaignViewSet.as_view({
@@ -19,4 +19,5 @@ urlpatterns = [
     path('', campaign_list, name='campaign-list'),  # List dan create
     path('<int:pk>/', campaign_detail, name='campaign-detail-id'),  # Detail berdasarkan ID
     path('<slug:slug>/', CampaignDetailView.as_view(), name='campaign-detail-slug'),  # Detail berdasarkan slug
+    path('share/<slug:slug>/', CampaignShareView.as_view(), name='campaign-share'), # Share link preview
 ]

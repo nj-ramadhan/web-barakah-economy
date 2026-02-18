@@ -27,3 +27,13 @@ class CampaignDetailView(APIView):
         campaign = get_object_or_404(Campaign, slug=slug)
         serializer = CampaignSerializer(campaign)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+class CampaignShareView(APIView):
+    """
+    View for rendering server-side HTML with Open Graph tags for social media sharing.
+    """
+    def get(self, request, slug):
+        campaign = get_object_or_404(Campaign, slug=slug)
+        # We render a standard Django template here, not a DRF Response
+        from django.shortcuts import render
+        return render(request, 'campaigns/campaign_share.html', {'campaign': campaign})
