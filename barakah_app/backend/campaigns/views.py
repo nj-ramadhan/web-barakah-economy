@@ -36,4 +36,15 @@ class CampaignShareView(APIView):
         campaign = get_object_or_404(Campaign, slug=slug)
         # We render a standard Django template here, not a DRF Response
         from django.shortcuts import render
-        return render(request, 'campaigns/campaign_share.html', {'campaign': campaign})
+        from django.conf import settings
+        
+        # Determine frontend URL based on environment
+        if settings.DEBUG:
+            frontend_url = 'http://localhost:3000'
+        else:
+            frontend_url = 'https://barakah-economy.com'
+            
+        return render(request, 'campaigns/campaign_share.html', {
+            'campaign': campaign,
+            'frontend_url': frontend_url
+        })

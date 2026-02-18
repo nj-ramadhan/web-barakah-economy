@@ -25,81 +25,59 @@
     {% endif %}
 
     <style>
+        /* Minimal styles for the loading state */
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f4f7f6;
+            font-family: sans-serif;
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
             margin: 0;
-            color: #333;
-        }
-
-        .card {
-            background: white;
-            padding: 2rem;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            max-width: 500px;
-            width: 90%;
-            text-align: center;
-        }
-
-        .card img {
-            max-width: 100%;
-            border-radius: 8px;
-            margin-bottom: 1.5rem;
-            max-height: 300px;
-            object-fit: cover;
-        }
-
-        h1 {
-            font-size: 1.5rem;
-            margin-bottom: 1rem;
-            color: #10b981;
-            /* Barakah Green */
-        }
-
-        p {
-            line-height: 1.6;
+            background-color: #f4f7f6;
             color: #666;
-            margin-bottom: 2rem;
+            flex-direction: column;
         }
 
-        .btn {
-            display: inline-block;
-            background-color: #10b981;
-            color: white;
-            padding: 12px 24px;
-            text-decoration: none;
-            border-radius: 6px;
-            font-weight: 600;
-            transition: background-color 0.2s;
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #10b981;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin-bottom: 1rem;
         }
 
-        .btn:hover {
-            background-color: #059669;
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
         }
     </style>
 </head>
 
 <body>
-    <div class="card">
-        {% if campaign.thumbnail %}
-        <img src="{{ campaign.thumbnail.url }}" alt="{{ campaign.title }}">
-        {% endif %}
-        <h2>{{ campaign.title }}</h2>
-        <p>{{ campaign.description|safe|striptags|truncatewords:30 }}</p>
-
-        <!-- Link to the actual frontend application -->
-        <!-- Adjust the URL structure as needed for your React app -->
-        <a href="/campaigns/{{ campaign.slug }}" class="btn">Lihat Kampanye</a>
-    </div>
+    <div class="loader"></div>
+    <p>Mengalihkan ke kampanye...</p>
 
     <script>
-        // Optional: Redirect users automatically to the React app
-        // window.location.href = "/campaigns/{{ campaign.slug }}";
+        // Automatic redirect to the frontend application
+        // Redirect to /kampanye/:slug as per frontend routing
+        var frontendUrl = "{{ frontend_url }}";
+        var slug = "{{ campaign.slug }}";
+
+        // Remove trailing slash if present
+        if (frontendUrl.endsWith('/')) {
+            frontendUrl = frontendUrl.slice(0, -1);
+        }
+
+        setTimeout(function () {
+            window.location.href = frontendUrl + "/kampanye/" + slug;
+        }, 100); 
     </script>
 </body>
 
