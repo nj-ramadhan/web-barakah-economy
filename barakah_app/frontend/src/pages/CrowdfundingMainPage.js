@@ -5,6 +5,7 @@ import axios from 'axios';
 import { Helmet } from 'react-helmet';
 import HeaderHome from '../components/layout/HeaderHome'; // Import the Header component
 import NavigationButton from '../components/layout/Navigation'; // Import the Navigation component
+import ShareButton from '../components/campaigns/ShareButton';
 
 const formatIDR = (amount) => {
   return 'Rp. ' + new Intl.NumberFormat('id-ID', {
@@ -34,6 +35,14 @@ const formatDeadline = (deadline) => {
   });
 };
 
+const getButtonLabel = (title = '') => {
+  const lowerTitle = title.toLowerCase();
+  if (lowerTitle.includes('infak')) return 'INFAK SEKARANG';
+  if (lowerTitle.includes('sedekah')) return 'SEDEKAH SEKARANG';
+  if (lowerTitle.includes('zakat')) return 'ZAKAT SEKARANG';
+  return 'DONASI SEKARANG';
+};
+
 const CrowdfundingMainPage = () => {
   const [campaigns, setCampaigns] = useState([]);
   const [featuredCampaigns, setFeaturedCampaigns] = useState([]);
@@ -43,13 +52,13 @@ const CrowdfundingMainPage = () => {
   const [searchTimeout, setSearchTimeout] = useState(null);
   const [activeSlide, setActiveSlide] = useState(0);
   const sliderInterval = useRef(null);
-    
+
   // Fetch featured campaigns (only once when the component mounts)
   useEffect(() => {
     const fetchFeaturedCampaigns = async () => {
       try {
         const response = await axios.get(
-          `${process.env.REACT_APP_API_BASE_URL}/api/campaigns/`, 
+          `${process.env.REACT_APP_API_BASE_URL}/api/campaigns/`,
           { params: { is_featured: true } } // Fetch only featured campaigns
         );
         setFeaturedCampaigns(response.data.slice(0, 3)); // Take the first 3 featured campaigns
@@ -58,16 +67,16 @@ const CrowdfundingMainPage = () => {
         setError('Failed to load featured campaigns');
       }
     };
-  
+
     fetchFeaturedCampaigns();
   }, []); // Empty dependency array ensures this runs only once
-  
+
   // Fetch regular campaigns (based on search query)
   const fetchCampaigns = async (search = '') => {
     try {
       setLoading(true);
       const response = await axios.get(
-        `${process.env.REACT_APP_API_BASE_URL}/api/campaigns/`, 
+        `${process.env.REACT_APP_API_BASE_URL}/api/campaigns/`,
         { params: { search } }
       );
       setCampaigns(response.data); // Set regular campaigns (search results)
@@ -95,7 +104,7 @@ const CrowdfundingMainPage = () => {
 
   useEffect(() => {
     fetchCampaigns();
-    
+
     // Clean up function
     return () => {
       if (sliderInterval.current) {
@@ -111,7 +120,7 @@ const CrowdfundingMainPage = () => {
         setActiveSlide(prev => (prev + 1) % featuredCampaigns.length);
       }, 5000);
     }
-    
+
     return () => {
       if (sliderInterval.current) {
         clearInterval(sliderInterval.current);
@@ -142,7 +151,7 @@ const CrowdfundingMainPage = () => {
       </Helmet>
 
       <HeaderHome onSearch={handleSearch} />
-  
+
       {/* Featured Campaign Slider */}
       <div className="px-4 pt-4" style={{ position: 'relative', zIndex: 10 }}>
         {featuredCampaigns.length > 0 && (
@@ -151,16 +160,15 @@ const CrowdfundingMainPage = () => {
             <div className="h-full">
               {featuredCampaigns.map((campaign, index) => {
                 const isExpired = isCampaignExpired(campaign.deadline);
-                
+
                 return (
-                  <div 
+                  <div
                     key={campaign.id}
-                    className={`absolute top-0 left-0 w-full h-full transition-opacity duration-500 ${
-                      index === activeSlide ? 'opacity-100 z-10' : 'opacity-0 z-0'
-                    }`}
+                    className={`absolute top-0 left-0 w-full h-full transition-opacity duration-500 ${index === activeSlide ? 'opacity-100 z-10' : 'opacity-0 z-0'
+                      }`}
                   >
-                    <img 
-                      src={campaign.thumbnail || '/images/peduli-dhuafa-banner.jpg'} 
+                    <img
+                      src={campaign.thumbnail || '/images/peduli-dhuafa-banner.jpg'}
                       alt={campaign.title}
                       className="w-full h-56 object-cover"
                       onError={(e) => {
@@ -171,27 +179,32 @@ const CrowdfundingMainPage = () => {
                       <h2 className="text-white font-bold text-lg">{campaign.title}</h2>
 
                       {/* Donate Button */}
-                      {isExpired ? (
-                        <button
-                          className="w-full bg-gray-400 text-white py-2 rounded-md text-sm cursor-not-allowed"
-                          disabled
-                        >
-                          DONASI SEKARANG
-                        </button>
-                      ) : (
-                        <Link
-                          to={`/bayar-donasi/${campaign.slug || campaign.id}`}
-                          className="block text-center bg-green-800 text-white py-2 rounded-md text-sm hover:bg-green-900"
-                        >
-                          DONASI SEKARANG
-                        </Link>
-                      )}
+                      <div className="flex gap-2 items-center w-full">
+                        <div className="flex-1">
+                          {isExpired ? (
+                            <button
+                              className="w-full bg-gray-400 text-white py-2 rounded-md text-sm cursor-not-allowed"
+                              disabled
+                            >
+                              {getButtonLabel(campaign.title)}
+                            </button>
+                          ) : (
+                            <Link
+                              to={`/bayar-donasi/${campaign.slug || campaign.id}`}
+                              className="block text-center bg-green-800 text-white py-2 rounded-md text-sm hover:bg-green-900"
+                            >
+                              {getButtonLabel(campaign.title)}
+                            </Link>
+                          )}
+                        </div>
+                        <ShareButton slug={campaign.slug || campaign.id} title={campaign.title} />
+                      </div>
                     </div>
                   </div>
                 );
               })}
             </div>
-            
+
             {/* Indicators */}
             {featuredCampaigns.length > 1 && (
               <div className="absolute bottom-2 right-2 flex space-x-2 z-20">
@@ -199,9 +212,8 @@ const CrowdfundingMainPage = () => {
                   <button
                     key={index}
                     onClick={() => goToSlide(index)}
-                    className={`w-2 h-2 rounded-full ${
-                      index === activeSlide ? 'bg-white' : 'bg-white/50'
-                    }`}
+                    className={`w-2 h-2 rounded-full ${index === activeSlide ? 'bg-white' : 'bg-white/50'
+                      }`}
                   />
                 ))}
               </div>
@@ -209,7 +221,7 @@ const CrowdfundingMainPage = () => {
           </div>
         )}
       </div>
-  
+
       {/* Campaign Grid */}
       <div className="px-4 py-4">
         {loading ? (
@@ -225,8 +237,8 @@ const CrowdfundingMainPage = () => {
               return (
                 <div key={campaign.id} className="bg-white rounded-lg overflow-hidden shadow">
                   <Link to={`/kampanye/${campaign.slug}`}>
-                    <img 
-                      src={campaign.thumbnail || '/placeholder-image.jpg'} 
+                    <img
+                      src={campaign.thumbnail || '/placeholder-image.jpg'}
                       alt={campaign.title}
                       className="w-full h-28 object-cover"
                       onError={(e) => {
@@ -247,12 +259,12 @@ const CrowdfundingMainPage = () => {
                     {/* Progress bar */}
                     <div className="mt-1 mb-1">
                       <div className="w-full bg-gray-200 rounded-full h-2.5">
-                        <div 
-                          className="bg-green-600 h-2.5 rounded-full" 
-                          style={{ 
-                            width: `${campaign.current_amount && campaign.target_amount 
-                              ? Math.min((campaign.current_amount / campaign.target_amount) * 100, 100) 
-                              : 0}%` 
+                        <div
+                          className="bg-green-600 h-2.5 rounded-full"
+                          style={{
+                            width: `${campaign.current_amount && campaign.target_amount
+                              ? Math.min((campaign.current_amount / campaign.target_amount) * 100, 100)
+                              : 0}%`
                           }}
                         ></div>
                       </div>
@@ -266,39 +278,44 @@ const CrowdfundingMainPage = () => {
                       </div>
                       <div className="text-right text-xs text-gray-500 mt-1">
                         {campaign.target_amount > 0
-                          ? Math.round((campaign.current_amount / campaign.target_amount) * 100) 
+                          ? Math.round((campaign.current_amount / campaign.target_amount) * 100)
                           : 0} % tercapai
                       </div>
                     </div>
 
                     {/* Donate Button */}
-                    {isExpired ? (
-                      <button
-                        className="w-full bg-gray-400 text-white py-2 rounded-md text-sm cursor-not-allowed"
-                        disabled
-                      >
-                        DONASI SEKARANG
-                      </button>
-                    ) : (
-                      <Link
-                        to={`/bayar-donasi/${campaign.slug || campaign.id}`}
-                        className="block text-center bg-green-800 text-white py-2 rounded-md text-sm hover:bg-green-900"
-                      >
-                        DONASI SEKARANG
-                      </Link>
-                    )}
+                    <div className="flex gap-2 items-center w-full mt-2">
+                      <div className="flex-1">
+                        {isExpired ? (
+                          <button
+                            className="w-full bg-gray-400 text-white py-2 rounded-md text-sm cursor-not-allowed"
+                            disabled
+                          >
+                            {getButtonLabel(campaign.title)}
+                          </button>
+                        ) : (
+                          <Link
+                            to={`/bayar-donasi/${campaign.slug || campaign.id}`}
+                            className="block text-center bg-green-800 text-white py-2 rounded-md text-sm hover:bg-green-900"
+                          >
+                            {getButtonLabel(campaign.title)}
+                          </Link>
+                        )}
+                      </div>
+                      <ShareButton slug={campaign.slug || campaign.id} title={campaign.title} />
+                    </div>
                   </div>
                 </div>
               );
             })}
           </div>
         )}
-  
+
         {error && (
           <div className="text-center py-4 text-red-500">
             {error}
-            <button 
-              onClick={() => fetchCampaigns(searchQuery)} 
+            <button
+              onClick={() => fetchCampaigns(searchQuery)}
               className="ml-4 px-4 py-2 bg-green-500 text-white rounded-lg"
             >
               Coba Lagi
@@ -306,7 +323,7 @@ const CrowdfundingMainPage = () => {
           </div>
         )}
       </div>
-  
+
       {/* Bottom Navigation */}
       <NavigationButton />
     </div>

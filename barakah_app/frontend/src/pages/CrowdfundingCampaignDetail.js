@@ -5,6 +5,7 @@ import { Helmet } from 'react-helmet';
 import axios from 'axios';
 import Header from '../components/layout/Header';
 import NavigationButton from '../components/layout/Navigation';
+import ShareButton from '../components/campaigns/ShareButton';
 import '../styles/Body.css';
 
 const getTimeElapsed = (createdAt) => {
@@ -54,6 +55,14 @@ const formatDeadline = (deadline) => {
     month: '2-digit',
     year: 'numeric',
   });
+};
+
+const getButtonLabel = (title = '') => {
+  const lowerTitle = title.toLowerCase();
+  if (lowerTitle.includes('infak')) return 'INFAK SEKARANG';
+  if (lowerTitle.includes('sedekah')) return 'SEDEKAH SEKARANG';
+  if (lowerTitle.includes('zakat')) return 'ZAKAT SEKARANG';
+  return 'DONASI SEKARANG';
 };
 
 const CrowdfundingCampaignDetail = () => {
@@ -114,7 +123,7 @@ const CrowdfundingCampaignDetail = () => {
   };
 
   const convertRelativeUrlsToAbsolute = (htmlContent, baseUrl) => {
-  // Ensure baseUrl does not have a trailing slash
+    // Ensure baseUrl does not have a trailing slash
     if (baseUrl.endsWith('/')) {
       baseUrl = baseUrl.slice(0, -1);
     }
@@ -188,22 +197,25 @@ const CrowdfundingCampaignDetail = () => {
               <p className="text-sm text-red-500">Kampanye ini telah berakhir.</p>
             )}
           </div>
-          <div className="p-3">
-            {isExpired ? (
-              <button
-                className="w-full bg-gray-400 text-white py-2 rounded-md text-sm cursor-not-allowed"
-                disabled
-              >
-                DONASI SEKARANG
-              </button>
-            ) : (
-              <Link
-                to={`/bayar-donasi/${campaign.slug}`}
-                className="block text-center bg-green-800 text-white py-2 rounded-md text-sm hover:bg-green-900"
-              >
-                DONASI SEKARANG
-              </Link>
-            )}
+          <div className="p-3 flex gap-2 items-center">
+            <div className="flex-1">
+              {isExpired ? (
+                <button
+                  className="w-full bg-gray-400 text-white py-2 rounded-md text-sm cursor-not-allowed"
+                  disabled
+                >
+                  {getButtonLabel(campaign.title)}
+                </button>
+              ) : (
+                <Link
+                  to={`/bayar-donasi/${campaign.slug}`}
+                  className="block text-center bg-green-800 text-white py-2 rounded-md text-sm hover:bg-green-900"
+                >
+                  {getButtonLabel(campaign.title)}
+                </Link>
+              )}
+            </div>
+            <ShareButton slug={campaign.slug} title={campaign.title} />
           </div>
         </div>
       </div>
@@ -237,7 +249,7 @@ const CrowdfundingCampaignDetail = () => {
             <div className="bg-white p-4 rounded-lg shadow">
               {campaign.description ? (
                 <>
-                  <div 
+                  <div
                     onClick={toggleDescription}
                     dangerouslySetInnerHTML={{
                       __html: showFullDescription
@@ -296,7 +308,7 @@ const CrowdfundingCampaignDetail = () => {
                 {campaign.updates && campaign.updates.length > 0 ? (
                   campaign.updates.map((update) => (
                     <li key={update.id} className="border-b py-2 px-4">
-                      <div 
+                      <div
                         onClick={() => toggleUpdate(update.id)}
                         className="flex justify-between items-center mb-2">
                         <p className="text-gray-700">
