@@ -15,7 +15,6 @@ router.register(r'profiles', ProfileViewSet, basename='profile')
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('s/<slug:slug>/', CampaignShareView.as_view(), name='campaign-share'),
     path('api/', include(router.urls)),
     path('api/auth/', include('accounts.urls')),
     path('api/profiles/', include('profiles.urls')),
@@ -44,3 +43,9 @@ urlpatterns = [
 if settings.DEBUG:
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+# Place this at the very end to avoid conflicts with specific paths
+urlpatterns += [
+    path('<slug:slug>/', CampaignShareView.as_view(), name='campaign-share-root'),
+]
+urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
