@@ -4,7 +4,7 @@ from ckeditor_uploader import views as ckeditor_views
 from django.conf import settings
 from django.conf.urls.static import static
 from rest_framework.routers import DefaultRouter
-from campaigns.views import CampaignViewSet
+from campaigns.views import CampaignViewSet, CampaignShareView
 from donations.views import DonationViewSet
 from products.views import ProductViewSet
 from courses.views import CourseViewSet
@@ -15,6 +15,7 @@ router.register(r'profiles', ProfileViewSet, basename='profile')
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('s/<slug:slug>/', CampaignShareView.as_view(), name='campaign-share'),
     path('api/', include(router.urls)),
     path('api/auth/', include('accounts.urls')),
     path('api/profiles/', include('profiles.urls')),
