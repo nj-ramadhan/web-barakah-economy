@@ -28,10 +28,9 @@ class CampaignDetailView(APIView):
         serializer = CampaignSerializer(campaign)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-from rest_framework.permissions import AllowAny
+from django.views import View
 
-class CampaignShareView(APIView):
-    permission_classes = [AllowAny]
+class CampaignShareView(View):
     """
     View for rendering server-side HTML with Open Graph tags for social media sharing.
     """
