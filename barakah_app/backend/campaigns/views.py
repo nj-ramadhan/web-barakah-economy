@@ -28,9 +28,7 @@ class CampaignDetailView(APIView):
         serializer = CampaignSerializer(campaign)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-from django.views import View
-
-class CampaignShareView(View):
+class CampaignShareView(APIView):
     """
     View for rendering server-side HTML with Open Graph tags for social media sharing.
     """

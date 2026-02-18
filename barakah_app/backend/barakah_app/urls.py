@@ -4,7 +4,7 @@ from ckeditor_uploader import views as ckeditor_views
 from django.conf import settings
 from django.conf.urls.static import static
 from rest_framework.routers import DefaultRouter
-from campaigns.views import CampaignViewSet, CampaignShareView
+from campaigns.views import CampaignViewSet
 from donations.views import DonationViewSet
 from products.views import ProductViewSet
 from courses.views import CourseViewSet
@@ -43,9 +43,3 @@ urlpatterns = [
 if settings.DEBUG:
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
-
-# Place this at the very end to avoid conflicts with specific paths
-urlpatterns += [
-    path('<slug:slug>/', CampaignShareView.as_view(), name='campaign-share-root'),
-]
-urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

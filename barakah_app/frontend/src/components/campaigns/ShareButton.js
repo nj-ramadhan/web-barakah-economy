@@ -7,7 +7,7 @@ const ShareButton = ({ slug, title }) => {
     // Construct the share URL using the backend endpoint to ensure preview generation
     // Use http://localhost:8000 or logic to determine base URL if not in env
     const baseUrl = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000';
-    const shareUrl = `${baseUrl}/${slug}/`;
+    const shareUrl = `${baseUrl}/api/campaigns/share/${slug}/`;
 
     // Close dropdown when clicking outside
     useEffect(() => {
