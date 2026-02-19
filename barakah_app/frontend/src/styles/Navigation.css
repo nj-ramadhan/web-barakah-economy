@@ -1,6 +1,7 @@
 /* styles/Navigation.css */
 nav {
   z-index: 100; /* Ensure the navigation is above other content */
+  padding-bottom: env(safe-area-inset-bottom, 0px); /* Agar nav pas di bawah pada HP tanpa tombol fisik */
 }
 
 nav .flex {
