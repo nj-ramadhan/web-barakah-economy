@@ -1,8 +1,10 @@
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework.views import APIView
 from rest_framework.parsers import MultiPartParser, FormParser
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, render
+from django.conf import settings
 from .models import Article, ArticleImage
 from .serializers import ArticleSerializer, ArticleImageSerializer, ArticleImageUploadSerializer
 
@@ -58,3 +60,28 @@ class ArticleImageViewSet(viewsets.ModelViewSet):
     queryset = ArticleImage.objects.all().order_by('-id')
     serializer_class = ArticleImageSerializer
     parser_classes = [MultiPartParser, FormParser]
+
+
+class ArticleShareView(APIView):
+    """
+    View for rendering server-side HTML with Open Graph tags for social media sharing.
+    """
+    def get(self, request, slug):
+        # Hybrid lookup: try ID first if numeric, then slug
+        if slug.isdigit():
+            article = Article.objects.filter(id=slug).first()
+            if not article:
+                article = get_object_or_404(Article, slug=slug)
+        else:
+            article = get_object_or_404(Article, slug=slug)
+
+        # Determine frontend URL based on environment
+        if settings.DEBUG:
+            frontend_url = 'http://localhost:3000'
+        else:
+            frontend_url = 'https://barakah-economy.com'
+
+        return render(request, 'article/article_share.html', {
+            'article': article,
+            'frontend_url': frontend_url
+        })

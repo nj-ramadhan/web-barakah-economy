@@ -4,12 +4,13 @@ import axios from "axios";
 import HeaderHome from "../components/layout/HeaderHome";
 import NavigationButton from "../components/layout/Navigation";
 import FloatingBubble from '../components/common/FloatingBubble';
+import ShareButton from '../components/campaigns/ShareButton';
 
 const ArticleDetailPage = () => {
   const { id } = useParams(); // Bisa berupa ID angka atau Slug
   const [article, setArticle] = useState(null);
   const [loading, setLoading] = useState(true);
-  
+
   // Ref untuk memanipulasi elemen HTML konten setelah di-render
   const contentRef = useRef(null);
 
@@ -36,16 +37,16 @@ const ArticleDetailPage = () => {
   useEffect(() => {
     if (article && contentRef.current) {
       const tables = contentRef.current.querySelectorAll('table');
-      
+
       tables.forEach((table) => {
         // Cek apakah sudah dibungkus agar tidak double wrapper
         if (table.parentElement.className !== 'responsive-table-wrapper') {
           const wrapper = document.createElement('div');
           wrapper.className = 'responsive-table-wrapper';
-          
+
           // Masukkan wrapper sebelum tabel
           table.parentNode.insertBefore(wrapper, table);
-          
+
           // Pindahkan tabel ke dalam wrapper
           wrapper.appendChild(table);
         }
@@ -62,11 +63,14 @@ const ArticleDetailPage = () => {
 
       <div className="px-4 py-6 max-w-3xl mx-auto mb-24 bg-white shadow-sm sm:rounded-lg sm:mt-4 sm:p-8">
         {/* Header Artikel */}
-        <h1 className="text-2xl sm:text-3xl font-bold mb-3 text-gray-900 leading-tight">
+        <div className="flex items-start justify-between gap-3 mb-3">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 leading-tight">
             {article.title}
-        </h1>
+          </h1>
+          <ShareButton slug={article.slug || id} title={article.title} type="article" />
+        </div>
         <p className="text-gray-500 text-sm mb-6 pb-4 border-b border-gray-100">
-            {article.date}
+          {article.date}
         </p>
 
         {/* Gambar Utama (Featured Image) */}
@@ -172,11 +176,11 @@ const ArticleDetailPage = () => {
       `}</style>
 
       {/* Floating Bubble dengan Data Lengkap */}
-      <FloatingBubble 
-          show={true} 
-          link={article.floating_url} 
-          label={article.floating_label} 
-          icon={article.floating_icon_url}
+      <FloatingBubble
+        show={true}
+        link={article.floating_url}
+        label={article.floating_label}
+        icon={article.floating_icon_url}
       />
 
       <NavigationButton />

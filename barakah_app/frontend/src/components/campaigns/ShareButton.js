@@ -1,13 +1,24 @@
 import React, { useState, useEffect, useRef } from 'react';
 
-const ShareButton = ({ slug, title }) => {
+const ShareButton = ({ slug, title, type = 'campaign' }) => {
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef(null);
 
     // Construct the share URL using the backend endpoint to ensure preview generation
-    // Use http://localhost:8000 or logic to determine base URL if not in env
     const baseUrl = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000';
-    const shareUrl = `${baseUrl}/api/campaigns/share/${slug}/`;
+
+    // Determine share URL based on type
+    const shareUrl = type === 'article'
+        ? `${baseUrl}/api/articles/share/${slug}/`
+        : `${baseUrl}/api/campaigns/share/${slug}/`;
+
+    // Determine WhatsApp text based on type
+    const getWhatsAppText = () => {
+        if (type === 'article') {
+            return `Bismillah, izin share artikel ini ya: ${title}\n\nKlik tautan ini untuk baca selengkapnya:\n${shareUrl}`;
+        }
+        return `Bismillah, izin share informasi kebaikan ini ya: ${title}\n\nKlik tautan ini untuk lihat detail & donasi:\n${shareUrl}`;
+    };
 
     // Close dropdown when clicking outside
     useEffect(() => {
@@ -23,8 +34,7 @@ const ShareButton = ({ slug, title }) => {
     }, []);
 
     const handleWhatsAppShare = () => {
-        const text = `Bismillah, izin share informasi kebaikan ini ya: ${title}\n\nKlik tautan ini untuk lihat detail & donasi:\n${shareUrl}`;
-        const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(text)}`;
+        const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(getWhatsAppText())}`;
         window.open(whatsappUrl, '_blank');
         setIsOpen(false);
     };
@@ -41,7 +51,7 @@ const ShareButton = ({ slug, title }) => {
     return (
         <div className="relative inline-block text-left" ref={dropdownRef}>
             <button
-                onClick={() => setIsOpen(!isOpen)}
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); setIsOpen(!isOpen); }}
                 className="bg-white text-green-800 border border-green-800 p-2 rounded-md hover:bg-green-50 focus:outline-none flex items-center justify-center h-full"
                 aria-label="Share"
                 title="Bagikan"
@@ -76,3 +86,4 @@ const ShareButton = ({ slug, title }) => {
 };
 
 export default ShareButton;
+
