@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ product.title }}</title>
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:site_name" content="Barakah Economy">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="{{ request.build_absolute_uri }}">
+    <meta property="og:title" content="{{ product.title }}">
+    <meta property="og:description" content="{{ product.description|striptags|truncatewords:20 }}">
+    {% if product.thumbnail_url %}
+    <meta property="og:image" content="{{ product.thumbnail_url }}">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    {% elif product.thumbnail %}
+    <meta property="og:image" content="{{ request.scheme }}://{{ request.get_host }}{{ product.thumbnail.url }}">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    {% endif %}
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="{{ request.build_absolute_uri }}">
+    <meta property="twitter:title" content="{{ product.title }}">
+    <meta property="twitter:description" content="{{ product.description|striptags|truncatewords:20 }}">
+    {% if product.thumbnail_url %}
+    <meta property="twitter:image" content="{{ product.thumbnail_url }}">
+    {% elif product.thumbnail %}
+    <meta property="twitter:image" content="{{ request.scheme }}://{{ request.get_host }}{{ product.thumbnail.url }}">
+    {% endif %}
+
+
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #ffffff;
+            color: #333;
+            flex-direction: column;
+            text-align: center;
+        }
+
+        .loader {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #10b981;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin-bottom: 15px;
+        }
+
+        .redirect-text {
+            font-size: 14px;
+            color: #666;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="loader"></div>
+    <div class="redirect-text">Membuka produk...</div>
+
+    <script>
+        var targetUrl = "{{ target_url|safe }}";
+
+        setTimeout(function () {
+            window.location.replace(targetUrl);
+        }, 50);
+    </script>
+</body>
+
+</html>

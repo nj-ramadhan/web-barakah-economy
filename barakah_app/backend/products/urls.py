@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import ProductViewSet, ProductDetailView
+from .views import ProductViewSet, ProductDetailView, ProductShareView
 
 # Endpoint untuk list dan create product
 product_list = ProductViewSet.as_view({
@@ -18,5 +18,6 @@ product_detail = ProductViewSet.as_view({
 urlpatterns = [
     path('', product_list, name='product-list'),  # List dan create
     path('<int:pk>/', product_detail, name='product-detail-id'),  # Detail berdasarkan ID
+    path('share/<slug:slug>/', ProductShareView.as_view(), name='product-share-slug'),  # Share preview endpoint
     path('<slug:slug>/', ProductDetailView.as_view(), name='product-detail-slug'),  # Detail berdasarkan slug
 ]
