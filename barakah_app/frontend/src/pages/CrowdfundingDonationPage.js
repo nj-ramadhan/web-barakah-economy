@@ -109,6 +109,11 @@ const CrowdfundingDonationPage = () => {
       name: 'Bank BSI',
       logo: '/images/bsi-logo.png',
     },
+    {
+      id: 'qris',
+      name: 'QRIS',
+      logo: '/images/qris-bae.png',
+    },
     // {
     //   id: 'midtrans',
     //   name: 'Midtrans (Gopay, OVO, etc)',
@@ -121,7 +126,7 @@ const CrowdfundingDonationPage = () => {
       window.snap.pay(token, {
         onSuccess: async (result) => {
           console.log('Payment success:', result);
-  
+
           // Notify the backend about the successful payment
           try {
             const response = await axios.post(
@@ -140,7 +145,7 @@ const CrowdfundingDonationPage = () => {
                 },
               }
             );
-  
+
             if (response.status === 200) {
               console.log('Payment status updated successfully.');
               navigate('/success', {
@@ -161,7 +166,7 @@ const CrowdfundingDonationPage = () => {
         },
         onPending: async (result) => {
           console.log('Payment pending:', result);
-  
+
           // Notify the backend about the pending payment
           try {
             const response = await axios.post(
@@ -179,7 +184,7 @@ const CrowdfundingDonationPage = () => {
                 },
               }
             );
-  
+
             if (response.status === 200) {
               console.log('Payment status updated successfully.');
               alert('Payment is pending. Please complete the payment.');
@@ -256,18 +261,18 @@ const CrowdfundingDonationPage = () => {
         // Fetch payment token from backend
         const response = await axios.post(
           `${process.env.REACT_APP_API_BASE_URL}/api/payments/generate-donation-midtrans-token/`,
-          paymentData,{
-            headers: {
-              'Content-Type': 'application/json',
-              'X-CSRFToken': csrfToken,
-            },
-          }
+          paymentData, {
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken,
+          },
+        }
         );
 
         const { token } = response.data;
 
-      // Trigger the payment popup
-      handlePayment(token);
+        // Trigger the payment popup
+        handlePayment(token);
       } catch (error) {
         console.error('Error generating Midtrans token:', error);
         alert('Terjadi kesalahan saat memproses pembayaran.');
@@ -325,11 +330,10 @@ const CrowdfundingDonationPage = () => {
           {donationAmounts.map((amount) => (
             <button
               key={amount.value}
-              className={`py-2 px-4 rounded-full text-sm font-medium transition-colors ${
-                selectedAmount === amount.value
+              className={`py-2 px-4 rounded-full text-sm font-medium transition-colors ${selectedAmount === amount.value
                   ? 'bg-green-600 text-white'
                   : 'bg-white text-gray-700 hover:bg-green-50'
-              }`}
+                }`}
               onClick={() => setSelectedAmount(amount.value)}
             >
               {amount.label}
@@ -359,11 +363,10 @@ const CrowdfundingDonationPage = () => {
           {banks.map((bank) => (
             <label
               key={bank.id}
-              className={`flex items-center p-3 rounded-lg cursor-pointer transition-colors ${
-                selectedBank === bank.id
+              className={`flex items-center p-3 rounded-lg cursor-pointer transition-colors ${selectedBank === bank.id
                   ? 'bg-green-50 border border-green-500'
                   : 'bg-white border border-transparent hover:bg-green-50/50'
-              }`}
+                }`}
             >
               <input
                 type="radio"
@@ -407,9 +410,8 @@ const CrowdfundingDonationPage = () => {
               type="text"
               name="fullName"
               placeholder="Nama Lengkap Anda (wajib diisi)"
-              className={`w-full p-3 rounded-lg border ${
-                formData.hideIdentity ? 'bg-gray-100 border-gray-300' : 'border-gray-200 focus:border-green-500 focus:ring-1 focus:ring-green-500'
-              } outline-none`}
+              className={`w-full p-3 rounded-lg border ${formData.hideIdentity ? 'bg-gray-100 border-gray-300' : 'border-gray-200 focus:border-green-500 focus:ring-1 focus:ring-green-500'
+                } outline-none`}
               value={formData.fullName}
               onChange={handleInputChange}
               disabled={formData.hideIdentity}

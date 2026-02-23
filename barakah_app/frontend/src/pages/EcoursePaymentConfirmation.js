@@ -45,6 +45,14 @@ const bankAccounts = {
     logo: '/images/bjb-logo.png',
     owner: 'Deny Setiawan',
   },
+  qris: {
+    name: 'qris',
+    number: 'QRIS BAE COMMUNITY',
+    fullName: 'QRIS',
+    logo: '/images/qris-bae.png',
+    owner: 'BAE COMMUNITY, DIGITAL & KREATIF',
+    isQRIS: true,
+  },
 };
 
 const EcoursePaymentConfirmation = () => {
@@ -132,7 +140,7 @@ const EcoursePaymentConfirmation = () => {
       alert('Mohon upload bukti transfer');
       return;
     }
-    if (!formData.sourceBank || !formData.sourceAccount || !formData.transferDate) {
+    if (!formData.sourceBank || (!selectedBankInfo.isQRIS && !formData.sourceAccount) || !formData.transferDate) {
       alert('Mohon lengkapi semua data yang diperlukan.');
       return;
     }
@@ -159,6 +167,10 @@ const EcoursePaymentConfirmation = () => {
       headers['Authorization'] = `Bearer ${authToken}`;
     }
 
+    const sourceAccountInfo = selectedBankInfo.isQRIS
+      ? ''
+      : `, dengan No. Rekening ${formData.sourceAccount}`;
+
     // WhatsApp message
     const message = encodeURIComponent(
       `*Konfirmasi Pembayaran Ecourse*%0A------------------------------------%0A` +
@@ -166,8 +178,8 @@ const EcoursePaymentConfirmation = () => {
       `Pada hari ini,%0A` +
       `Tanggal ${formatDate(formData.transferDate)}%0A` +
       `Saya ${formData.accountName || profile.name_full || user.username || ''} telah melakukan pembayaran untuk kelas ${course.title}%0A` +
-      `dengan nominal Rp ${formatIDR(course.price)} melalui Bank ${bankAccounts[selectedBank].fullName}%0A%0A` +
-      `Saya mengirim pembayaran dari Bank ${formData.sourceBank}, dengan No. Rekening ${formData.sourceAccount}%0A` +
+      `dengan nominal Rp ${formatIDR(course.price)} melalui ${selectedBankInfo.fullName}%0A%0A` +
+      `Saya mengirim pembayaran dari Bank ${formData.sourceBank}${sourceAccountInfo}%0A` +
       `------------------------------------%0A%0A` +
       `Bukti transfer telah saya upload, mohon konfirmasi.%0A` +
       `Semoga bermanfaat dan menjadi amal ibadah.`
@@ -226,29 +238,46 @@ const EcoursePaymentConfirmation = () => {
           >
             <option value="bsi">Bank Syariah Indonesia (BSI)</option>
             <option value="bjb">Bank Jabar Banten Syariah (BJB)</option>
+            <option value="qris">QRIS</option>
           </select>
         </div>
 
         {/* Bank information card */}
         <div className="bg-white rounded-lg shadow overflow-hidden mb-6">
-          <div className="p-4 flex items-center">
-            <img
-              src={selectedBankInfo.logo}
-              alt={selectedBankInfo.name}
-              className="w-12 mr-2"
-            />
-            <div className="flex-1">
-              <div className="flex justify-between items-center">
-                <h3 className="text-xl font-bold">{selectedBankInfo.number}</h3>
-                <button
-                  onClick={() => copyToClipboard(selectedBankInfo.number, 'Nomor rekening')}
-                  className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-2 py-1 rounded flex items-center text-sm"
-                >
-                  Salin No Rek.
-                </button>
+          <div className="p-4 flex flex-col items-center">
+            <div className="flex items-center w-full mb-4">
+              <img
+                src={selectedBankInfo.logo}
+                alt={selectedBankInfo.name}
+                className="w-12 mr-2"
+              />
+              <div className="flex-1">
+                <div className="flex justify-between items-center">
+                  <h3 className="text-xl font-bold">{selectedBankInfo.number}</h3>
+                  {!selectedBankInfo.isQRIS && (
+                    <button
+                      onClick={() => copyToClipboard(selectedBankInfo.number, 'Nomor rekening')}
+                      className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-2 py-1 rounded flex items-center text-sm"
+                    >
+                      Salin No Rek.
+                    </button>
+                  )}
+                </div>
+                <p className="text-gray-600">
+                  {selectedBankInfo.isQRIS ? 'Scan QRIS untuk pembayaran' : `a.n. ${selectedBankInfo.owner}`}
+                </p>
               </div>
-              <p className="text-gray-600">a.n. {selectedBankInfo.owner}</p>
             </div>
+
+            {selectedBankInfo.isQRIS && (
+              <div className="w-full flex justify-center p-4 bg-gray-50 rounded-lg">
+                <img
+                  src="/images/qris-bae.png"
+                  alt="QRIS BAE"
+                  className="max-w-xs w-full shadow-sm rounded-lg"
+                />
+              </div>
+            )}
           </div>
         </div>
 
@@ -292,15 +321,17 @@ const EcoursePaymentConfirmation = () => {
                   onChange={handleInputChange}
                   required
                 />
-                <input
-                  type="text"
-                  name="sourceAccount"
-                  placeholder="Nomor Rekening Pengirim"
-                  className="w-full p-3 rounded-lg border border-gray-300 focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none mb-2"
-                  value={formData.sourceAccount}
-                  onChange={handleInputChange}
-                  required
-                />
+                {!selectedBankInfo.isQRIS && (
+                  <input
+                    type="text"
+                    name="sourceAccount"
+                    placeholder="Nomor Rekening Pengirim"
+                    className="w-full p-3 rounded-lg border border-gray-300 focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none mb-2"
+                    value={formData.sourceAccount}
+                    onChange={handleInputChange}
+                    required
+                  />
+                )}
                 <input
                   type="text"
                   name="accountName"

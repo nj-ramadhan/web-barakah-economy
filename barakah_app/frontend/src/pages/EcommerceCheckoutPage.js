@@ -60,6 +60,11 @@ const EcommerceCheckoutPage = () => {
       logo: '/images/bsi-logo.png'
     },
     {
+      id: 'qris',
+      name: 'QRIS',
+      logo: '/images/qris-bae.png'
+    },
+    {
       id: 'midtrans',
       name: 'Midtrans (Gopay, OVO, etc)',
       logo: '/images/gopay-logo.png',
@@ -71,7 +76,7 @@ const EcommerceCheckoutPage = () => {
       window.snap.pay(token, {
         onSuccess: async (result) => {
           console.log('Payment success:', result);
-  
+
           // Notify the backend about the successful payment
           try {
             const response = await axios.post(
@@ -90,7 +95,7 @@ const EcommerceCheckoutPage = () => {
                 },
               }
             );
-  
+
             if (response.status === 200) {
               console.log('Payment status updated successfully.');
               await clearCart(); // Clear the cart after successful payment
@@ -112,7 +117,7 @@ const EcommerceCheckoutPage = () => {
         },
         onPending: async (result) => {
           console.log('Payment pending:', result);
-  
+
           // Notify the backend about the pending payment
           try {
             const response = await axios.post(
@@ -130,7 +135,7 @@ const EcommerceCheckoutPage = () => {
                 },
               }
             );
-  
+
             if (response.status === 200) {
               console.log('Payment status updated successfully.');
               alert('Payment is pending. Please complete the payment.');
@@ -178,7 +183,7 @@ const EcommerceCheckoutPage = () => {
     }
 
     const totalAmount = cartItems.reduce((total, item) => total + (item.product.price * item.quantity), 0);
-    const customerName = formData.fullName;    
+    const customerName = formData.fullName;
     const customerPhone = formData.phone;
 
     const paymentData = {
@@ -190,7 +195,7 @@ const EcommerceCheckoutPage = () => {
         quantity: item.quantity,
       })), // Include cart items if required by the backend
     };
-    
+
     // If Midtrans is selected, handle payment via Midtrans
     if (selectedBank === 'midtrans') {
       try {
@@ -239,7 +244,7 @@ const EcommerceCheckoutPage = () => {
         console.error('User is not logged in or access token is missing.');
         return;
       }
-  
+
       await axios.delete(`${process.env.REACT_APP_API_BASE_URL}/api/cart/clear/`, {
         headers: {
           Authorization: `Bearer ${user.access}`, // Use the access token from the user object
@@ -251,7 +256,7 @@ const EcommerceCheckoutPage = () => {
       console.error('Error clearing cart:', error);
     }
   };
-  
+
   return (
     <div className="body">
       <Header />
@@ -300,11 +305,10 @@ const EcommerceCheckoutPage = () => {
           {banks.map((bank) => (
             <label
               key={bank.id}
-              className={`flex items-center p-3 rounded-lg cursor-pointer transition-colors ${
-                selectedBank === bank.id
+              className={`flex items-center p-3 rounded-lg cursor-pointer transition-colors ${selectedBank === bank.id
                   ? 'bg-green-50 border border-green-500'
                   : 'bg-white border border-transparent hover:bg-green-50/50'
-              }`}
+                }`}
             >
               <input
                 type="radio"

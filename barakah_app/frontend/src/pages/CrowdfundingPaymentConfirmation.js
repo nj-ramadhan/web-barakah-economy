@@ -44,9 +44,9 @@ const CrowdfundingPaymentConfirmation = () => {
     return null;
   }
 
-  const { 
-    amount, 
-    bank, 
+  const {
+    amount,
+    bank,
     campaignTitle,
     donorName, // Extract the Donatur's name
     donorPhone,
@@ -55,7 +55,7 @@ const CrowdfundingPaymentConfirmation = () => {
 
   // Format amount with dot thousand separator
   const formattedAmount = new Intl.NumberFormat('id-ID').format(amount);
-  
+
   // Bank account info based on selected bank
   const bankAccounts = {
     bsi: {
@@ -67,6 +67,13 @@ const CrowdfundingPaymentConfirmation = () => {
       name: 'bjb',
       number: '5130 1020 01161',
       fullName: 'Bank Jabar Banten Syariah'
+    },
+    qris: {
+      name: 'qris',
+      number: 'QRIS BAE COMMUNITY',
+      fullName: 'QRIS',
+      owner: 'BAE COMMUNITY, DIGITAL & KREATIF',
+      isQRIS: true
     }
   };
 
@@ -108,18 +115,18 @@ const CrowdfundingPaymentConfirmation = () => {
         console.error('Failed to copy: ', err);
       });
   };
-  
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     const csrfToken = getCsrfToken();
-  
+
     if (!selectedFile) {
       alert('Mohon upload bukti transfer');
       return;
     }
-  
-    if (!formData.sourceBank || !formData.sourceAccount || !formData.transferDate) {
+
+    if (!formData.sourceBank || (!selectedBankInfo.isQRIS && !formData.sourceAccount) || !formData.transferDate) {
       alert('Mohon lengkapi semua data yang diperlukan.');
       return;
     }
@@ -153,20 +160,24 @@ const CrowdfundingPaymentConfirmation = () => {
     if (authToken) {
       headers['Authorization'] = `Bearer ${authToken}`; // Include the JWT token for authenticated users
     }
-    
+
+    const sourceAccountInfo = selectedBankInfo.isQRIS
+      ? ''
+      : `, dengan No. Rekening ${formData.sourceAccount}`;
+
     const message = `*Donasi BAE Community*%0A
 ------------------------------------%0A
 Bismillah..%0A
 Pada hari ini,%0A 
 Tanggal ${formatDate(formData.transferDate)}%0A
 Saya ${formData.accountName || ''} berniat menitipkan donasi pada program ${campaignTitle}%0A
-dengan nominal Rp ${formattedAmount} melalui Bank ${selectedBankInfo.fullName}%0A
+dengan nominal Rp ${formattedAmount} melalui ${selectedBankInfo.fullName}%0A
 %0A
-Saya mengirim donasi dari Bank ${formData.sourceBank}, dengan No. Rekening ${formData.sourceAccount}%0A
+Saya mengirim donasi dari Bank ${formData.sourceBank}${sourceAccountInfo}%0A
 ------------------------------------%0A%0A
 Bukti transfer telah saya upload, mohon konfirmasi.%0A
 Semoga dapat menjadi amal ibadah bagi saya dan bermanfaat untuk program serta penerimanya`;
-              
+
     try {
       // Send a request to create a new donation
       const response = await axios.post(
@@ -179,10 +190,10 @@ Semoga dapat menjadi amal ibadah bagi saya dan bermanfaat untuk program serta pe
 
       console.log('Campaign Slug:', campaignSlug);
 
-      if (response.status === 201) { 
+      if (response.status === 201) {
         // Open WhatsApp with prepared message
         window.open(`https://wa.me/6285643848251?text=${message}`, '_blank');
-  
+
         // Navigate to success page
         navigate('/', {
           state: {
@@ -203,7 +214,7 @@ Semoga dapat menjadi amal ibadah bagi saya dan bermanfaat untuk program serta pe
   return (
     <div className="body">
       <Header />
-      <div className="container">   
+      <div className="container">
         {/* Thank you message */}
         <div className="text-center mb-6">
           <h1 className="text-xl font-medium text-gray-700">
@@ -217,27 +228,43 @@ Semoga dapat menjadi amal ibadah bagi saya dan bermanfaat untuk program serta pe
 
         {/* Bank information card */}
         <div className="bg-white rounded-lg shadow overflow-hidden mb-6">
-          <div className="p-4 flex items-center">
-            <img 
-              src={`/images/${bank}-logo.png`}
-              alt={selectedBankInfo.name}
-              className="w-12 mr-2"
-            />
-            <div className="flex-1">
-              <div className="flex justify-between items-center">
-                <h3 className="text-xl font-bold">{selectedBankInfo.number}</h3>
-                <button 
-                  onClick={() => copyToClipboard(selectedBankInfo.number, 'Nomor rekening')}
-                  className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-2 py-1 rounded flex items-center text-sm"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                  </svg>
-                  Salin No Rek.
-                </button>
+          <div className="p-4 flex flex-col items-center">
+            <div className="flex items-center w-full mb-4">
+              <img
+                src={`/images/${bank}-logo.png`}
+                alt={selectedBankInfo.name}
+                className="w-12 mr-2"
+              />
+              <div className="flex-1">
+                <div className="flex justify-between items-center">
+                  <h3 className="text-xl font-bold">{selectedBankInfo.number}</h3>
+                  {!selectedBankInfo.isQRIS && (
+                    <button
+                      onClick={() => copyToClipboard(selectedBankInfo.number, 'Nomor rekening')}
+                      className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-2 py-1 rounded flex items-center text-sm"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                      </svg>
+                      Salin No Rek.
+                    </button>
+                  )}
+                </div>
+                <p className="text-gray-600">
+                  {selectedBankInfo.isQRIS ? 'Scan QRIS untuk pembayaran' : `a.n. ${selectedBankInfo.owner || 'Deny Setiawan'}`}
+                </p>
               </div>
-              <p className="text-gray-600">a.n. Deny Setiawan</p>
             </div>
+
+            {selectedBankInfo.isQRIS && (
+              <div className="w-full flex justify-center p-4 bg-gray-50 rounded-lg">
+                <img
+                  src="/images/qris-bae.png"
+                  alt="QRIS BAE"
+                  className="max-w-xs w-full shadow-sm rounded-lg"
+                />
+              </div>
+            )}
           </div>
         </div>
 
@@ -249,7 +276,7 @@ Semoga dapat menjadi amal ibadah bagi saya dan bermanfaat untuk program serta pe
                 <h3 className="text-2xl font-bold">
                   Rp. <span className="text-green-500">{formattedAmount}</span>
                 </h3>
-                <button 
+                <button
                   onClick={() => copyToClipboard(amount, 'Nominal')}
                   className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-2 py-1 rounded flex items-center text-sm"
                 >
@@ -270,22 +297,23 @@ Semoga dapat menjadi amal ibadah bagi saya dan bermanfaat untuk program serta pe
         <div className="bg-white rounded-lg shadow overflow-hidden mt-6">
           <div className="p-4">
             <h3 className="text-xl font-bold mb-4">Konfirmasi Pembayaran</h3>
-            
+
             <form onSubmit={handleSubmit} className="space-y-4 mb-10">
               <div>
                 <label className="block text-sm font-medium text-gray-700">
-                    Transfer dari <span className="text-red-500">*</span>
+                  Transfer dari <span className="text-red-500">*</span>
                 </label>
                 <input
-                    type="text"
-                    name="sourceBank"
-                    placeholder="Nama Bank Pengirim"
-                    className="w-full p-3 rounded-lg border border-gray-300 focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none mb-2"
-                    value={formData.sourceBank}
-                    onChange={handleInputChange}
-                    required
+                  type="text"
+                  name="sourceBank"
+                  placeholder="Nama Bank Pengirim"
+                  className="w-full p-3 rounded-lg border border-gray-300 focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none mb-2"
+                  value={formData.sourceBank}
+                  onChange={handleInputChange}
+                  required
                 />
-                <input
+                {!selectedBankInfo.isQRIS && (
+                  <input
                     type="text"
                     name="sourceAccount"
                     placeholder="Nomor Rekening Pengirim"
@@ -293,7 +321,8 @@ Semoga dapat menjadi amal ibadah bagi saya dan bermanfaat untuk program serta pe
                     value={formData.sourceAccount}
                     onChange={handleInputChange}
                     required
-                />
+                  />
+                )}
                 <input
                   type="text"
                   name="accountName"
@@ -303,7 +332,7 @@ Semoga dapat menjadi amal ibadah bagi saya dan bermanfaat untuk program serta pe
                   onChange={handleInputChange}
                 />
 
-            </div>    
+              </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Tanggal Transfer <span className="text-red-500">*</span>
@@ -317,7 +346,7 @@ Semoga dapat menjadi amal ibadah bagi saya dan bermanfaat untuk program serta pe
                   required
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Bukti Transfer <span className="text-red-500">*</span>
@@ -330,15 +359,15 @@ Semoga dapat menjadi amal ibadah bagi saya dan bermanfaat untuk program serta pe
                   style={{ opacity: 0, position: 'absolute', zIndex: -1 }}
                   required
                 />
-                <div 
+                <div
                   className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:bg-gray-50 transition-colors cursor-pointer"
                   onClick={() => fileInputRef.current.click()}
                 >
                   {previewUrl ? (
                     <div className="relative">
-                      <img 
-                        src={previewUrl} 
-                        alt="Bukti Transfer" 
+                      <img
+                        src={previewUrl}
+                        alt="Bukti Transfer"
                         className="max-h-48 mx-auto rounded-lg"
                       />
                       <div className="mt-2 text-sm text-green-600">Klik untuk mengganti</div>
@@ -354,19 +383,19 @@ Semoga dapat menjadi amal ibadah bagi saya dan bermanfaat untuk program serta pe
                   )}
                 </div>
               </div>
-              
+
               <div className="mb-3 mt-4 bg-yellow-50 p-3 rounded-lg text-sm border border-yellow-200">
                 <p className="text-yellow-800">
-                    <strong>Catatan:</strong> Setelah klik KIRIM, Anda akan diarahkan ke WhatsApp untuk mengirim konfirmasi kepada admin. Mohon lampirkan juga bukti transfer di chat WhatsApp.
+                  <strong>Catatan:</strong> Setelah klik KIRIM, Anda akan diarahkan ke WhatsApp untuk mengirim konfirmasi kepada admin. Mohon lampirkan juga bukti transfer di chat WhatsApp.
                 </p>
-                </div>
+              </div>
 
-                <button
+              <button
                 type="submit"
                 className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-medium flex items-center justify-center"
-                >
+              >
                 KIRIM VIA WHATSAPP
-                </button>
+              </button>
             </form>
           </div>
         </div>
