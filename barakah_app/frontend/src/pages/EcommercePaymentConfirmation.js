@@ -254,7 +254,7 @@ Semoga dapat menjadi amal ibadah bagi saya dan bermanfaat untuk program serta pe
             {selectedBankInfo.isQRIS && (
               <div className="w-full flex justify-center p-4 bg-gray-50 rounded-lg">
                 <img
-                  src="/images/qris-bae.png"
+                  src="/images/qris-bae2.png"
                   alt="QRIS BAE"
                   className="max-w-xs w-full shadow-sm rounded-lg"
                 />

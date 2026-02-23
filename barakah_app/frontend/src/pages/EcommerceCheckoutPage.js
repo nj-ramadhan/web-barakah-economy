@@ -62,7 +62,7 @@ const EcommerceCheckoutPage = () => {
     {
       id: 'qris',
       name: 'QRIS',
-      logo: '/images/qris-bae.png'
+      logo: '/images/qris-bae2.png'
     },
     {
       id: 'midtrans',
@@ -306,8 +306,8 @@ const EcommerceCheckoutPage = () => {
             <label
               key={bank.id}
               className={`flex items-center p-3 rounded-lg cursor-pointer transition-colors ${selectedBank === bank.id
-                  ? 'bg-green-50 border border-green-500'
-                  : 'bg-white border border-transparent hover:bg-green-50/50'
+                ? 'bg-green-50 border border-green-500'
+                : 'bg-white border border-transparent hover:bg-green-50/50'
                 }`}
             >
               <input

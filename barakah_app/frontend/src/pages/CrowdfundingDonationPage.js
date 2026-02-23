@@ -112,7 +112,7 @@ const CrowdfundingDonationPage = () => {
     {
       id: 'qris',
       name: 'QRIS',
-      logo: '/images/qris-bae.png',
+      logo: '/images/qris-bae2.png',
     },
     // {
     //   id: 'midtrans',
@@ -331,8 +331,8 @@ const CrowdfundingDonationPage = () => {
             <button
               key={amount.value}
               className={`py-2 px-4 rounded-full text-sm font-medium transition-colors ${selectedAmount === amount.value
-                  ? 'bg-green-600 text-white'
-                  : 'bg-white text-gray-700 hover:bg-green-50'
+                ? 'bg-green-600 text-white'
+                : 'bg-white text-gray-700 hover:bg-green-50'
                 }`}
               onClick={() => setSelectedAmount(amount.value)}
             >
@@ -364,8 +364,8 @@ const CrowdfundingDonationPage = () => {
             <label
               key={bank.id}
               className={`flex items-center p-3 rounded-lg cursor-pointer transition-colors ${selectedBank === bank.id
-                  ? 'bg-green-50 border border-green-500'
-                  : 'bg-white border border-transparent hover:bg-green-50/50'
+                ? 'bg-green-50 border border-green-500'
+                : 'bg-white border border-transparent hover:bg-green-50/50'
                 }`}
             >
               <input

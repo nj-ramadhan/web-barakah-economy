@@ -49,7 +49,7 @@ const bankAccounts = {
     name: 'qris',
     number: 'QRIS BAE COMMUNITY',
     fullName: 'QRIS',
-    logo: '/images/qris-bae.png',
+    logo: '/images/qris-bae2.png',
     owner: 'BAE COMMUNITY, DIGITAL & KREATIF',
     isQRIS: true,
   },
@@ -272,7 +272,7 @@ const EcoursePaymentConfirmation = () => {
             {selectedBankInfo.isQRIS && (
               <div className="w-full flex justify-center p-4 bg-gray-50 rounded-lg">
                 <img
-                  src="/images/qris-bae.png"
+                  src="/images/qris-bae2.png"
                   alt="QRIS BAE"
                   className="max-w-xs w-full shadow-sm rounded-lg"
                 />
