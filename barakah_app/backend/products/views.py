@@ -40,7 +40,7 @@ class ProductShareView(APIView):
         query_string = f"?ref={ref}" if ref else ""
         
         # Specific logic for bae-cookies (Cloaked Link)
-        if slug == 'bae-cookies':
+        if slug == 'barakah-cookies':
             target_url = f"https://barakah-cookies.hwofficial.com/{query_string}"
             # Dummy product data for the preview
             product_data = {
