@@ -46,7 +46,7 @@ class ProductShareView(APIView):
             product_data = {
                 'title': 'Bae Cookies',
                 'description': 'Kue Kering Premium persembahan Barakah Economy. Cek detail dan variasinya sekarang!',
-                'thumbnail_url': 'https://barakah-economy.com/images/Barakah-Cookies.png' # Can be updated to a specific cookie image URL later
+                'thumbnail_url': 'https://barakah-economy.com/images/Barakah-Cookies.jpg' # Can be updated to a specific cookie image URL later
             }
         else:
             # Standard logic if you still want other products to point to your DB, 
@@ -55,7 +55,7 @@ class ProductShareView(APIView):
             product_data = {
                 'title': 'Barakah Economy Product',
                 'description': 'Temukan produk unggulan dan berkualitas dari Barakah Economy.',
-                'thumbnail_url': 'https://barakah-economy.com/images/Barakah-Cookies.png'
+                'thumbnail_url': 'https://barakah-economy.com/images/Barakah-Cookies.jpg'
             }
             
         from django.shortcuts import render
