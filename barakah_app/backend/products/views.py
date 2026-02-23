@@ -41,7 +41,7 @@ class ProductShareView(APIView):
         
         # Specific logic for bae-cookies (Cloaked Link)
         if slug == 'bae-cookies':
-            target_url = f"https://bae-cookies.hwofficial.com/{query_string}"
+            target_url = f"https://barokah-cookies.hwofficial.com/{query_string}"
             # Dummy product data for the preview
             product_data = {
                 'title': 'Bae Cookies',
@@ -51,7 +51,7 @@ class ProductShareView(APIView):
         else:
             # Standard logic if you still want other products to point to your DB, 
             # Or if you want ALL to be dummy links, we just default to hwofficial
-            target_url = f"https://bae-cookies.hwofficial.com/{query_string}"
+            target_url = f"https://barokah-cookies.hwofficial.com/{query_string}"
             product_data = {
                 'title': 'Barakah Economy Product',
                 'description': 'Temukan produk unggulan dan berkualitas dari Barakah Economy.',
