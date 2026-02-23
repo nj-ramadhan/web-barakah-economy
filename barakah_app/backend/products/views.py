@@ -44,7 +44,7 @@ class ProductShareView(APIView):
             target_url = f"https://barakah-cookies.hwofficial.com/{query_string}"
             # Dummy product data for the preview
             product_data = {
-                'title': 'Bae Cookies',
+                'title': 'Barakah Cookies',
                 'description': 'Kue Kering Premium persembahan Barakah Economy. Cek detail dan variasinya sekarang!',
                 'thumbnail_url': 'https://barakah-economy.com/images/Barakah-Cookies.jpg' # Can be updated to a specific cookie image URL later
             }
@@ -53,7 +53,7 @@ class ProductShareView(APIView):
             # Or if you want ALL to be dummy links, we just default to hwofficial
             target_url = f"https://barakah-cookies.hwofficial.com/{query_string}"
             product_data = {
-                'title': 'Barakah Economy Product',
+                'title': 'Barakah Cookies',
                 'description': 'Temukan produk unggulan dan berkualitas dari Barakah Economy.',
                 'thumbnail_url': 'https://barakah-economy.com/images/Barakah-Cookies.jpg'
             }
