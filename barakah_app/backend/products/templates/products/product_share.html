@@ -14,10 +14,12 @@
     <meta property="og:description" content="{{ product.description|striptags|truncatewords:20 }}">
     {% if product.thumbnail_url %}
     <meta property="og:image" content="{{ product.thumbnail_url }}">
+    <meta property="og:image:type" content="{{ product.thumbnail_type|default:'image/jpeg' }}">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
     {% elif product.thumbnail %}
-    <meta property="og:image" content="{{ request.scheme }}://{{ request.get_host }}{{ product.thumbnail.url }}">
+    <meta property="og:image" content="https://{{ request.get_host }}{{ product.thumbnail.url }}">
+    <meta property="og:image:type" content="image/jpeg">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
     {% endif %}
@@ -30,7 +32,7 @@
     {% if product.thumbnail_url %}
     <meta property="twitter:image" content="{{ product.thumbnail_url }}">
     {% elif product.thumbnail %}
-    <meta property="twitter:image" content="{{ request.scheme }}://{{ request.get_host }}{{ product.thumbnail.url }}">
+    <meta property="twitter:image" content="https://{{ request.get_host }}{{ product.thumbnail.url }}">
     {% endif %}
 
 
