@@ -12,8 +12,8 @@
     <meta property="og:url" content="{{ request.build_absolute_uri }}">
     <meta property="og:title" content="Klik untuk donasi - {{ campaign.title }}">
     <meta property="og:description" content="{{ campaign.description|striptags|truncatewords:20 }}">
-    {% if campaign.thumbnail %}
-    <meta property="og:image" content="https://{{ request.get_host }}{{ campaign.thumbnail.url }}">
+    {% if thumbnail_url %}
+    <meta property="og:image" content="{{ thumbnail_url }}">
     <meta property="og:image:type" content="image/jpeg">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
@@ -24,8 +24,8 @@
     <meta property="twitter:url" content="{{ request.build_absolute_uri }}">
     <meta property="twitter:title" content="Klik untuk donasi - {{ campaign.title }}">
     <meta property="twitter:description" content="{{ campaign.description|striptags|truncatewords:20 }}">
-    {% if campaign.thumbnail %}
-    <meta property="twitter:image" content="https://{{ request.get_host }}{{ campaign.thumbnail.url }}">
+    {% if thumbnail_url %}
+    <meta property="twitter:image" content="{{ thumbnail_url }}">
     {% endif %}
 
     <style>

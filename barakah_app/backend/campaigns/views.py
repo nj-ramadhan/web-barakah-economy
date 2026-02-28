@@ -43,8 +43,22 @@ class CampaignShareView(APIView):
             frontend_url = 'http://localhost:3000'
         else:
             frontend_url = 'https://barakah-economy.com'
+        
+        # Build absolute thumbnail URL
+        thumbnail_url = None
+        if campaign.thumbnail:
+            img_url = campaign.thumbnail.url
+            if img_url.startswith('http'):
+                # Already a full URL (e.g. cloud storage)
+                thumbnail_url = img_url
+            else:
+                # Relative path, build full URL using request scheme and host
+                scheme = request.scheme
+                host = request.get_host()
+                thumbnail_url = f"{scheme}://{host}{img_url}"
             
         return render(request, 'campaigns/campaign_share.html', {
             'campaign': campaign,
-            'frontend_url': frontend_url
+            'frontend_url': frontend_url,
+            'thumbnail_url': thumbnail_url,
         })
