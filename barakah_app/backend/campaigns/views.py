@@ -52,10 +52,14 @@ class CampaignShareView(APIView):
                 # Already a full URL (e.g. cloud storage)
                 thumbnail_url = img_url
             else:
-                # Relative path, build full URL using request scheme and host
-                scheme = request.scheme
-                host = request.get_host()
-                thumbnail_url = f"{scheme}://{host}{img_url}"
+                # Force using the frontend domain to avoid localhost/proxy HTTP leaks
+                import urllib.parse
+                # URL encode the path to handle spaces or special characters safely
+                encoded_path = urllib.parse.quote(img_url, safe='/:')
+                if encoded_path.startswith('/'):
+                    thumbnail_url = f"{frontend_url}{encoded_path}"
+                else:
+                    thumbnail_url = f"{frontend_url}/{encoded_path}"
             
         return render(request, 'campaigns/campaign_share.html', {
             'campaign': campaign,
