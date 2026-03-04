@@ -17,7 +17,7 @@ import environ
 
 # # Initialize environment variables
 env = environ.Env()
-environ.Env.read_env()  # Reads the ..env file
+environ.Env.read_env()  # Reads the ...env file
 
 # Load the GOOGLE_CLIENT_ID from the environment variables
 GOOGLE_CLIENT_ID = env('GOOGLE_CLIENT_ID')
@@ -100,6 +100,8 @@ INSTALLED_APPS = [
     'courses',  
 
     'article',
+
+    'digital_products.apps.DigitalProductsConfig',
 ]
 
 MIDDLEWARE = [
@@ -157,16 +159,26 @@ if DEBUG:
         }
     }
 else:
+    # DATABASES = {
+    #     'default': {
+    #         'ENGINE': 'django.db.backends.postgresql',
+    #         'NAME': 'bae',
+    #         'USER': 'bae_user',
+    #         'PASSWORD': '12345678',
+    #         'HOST': 'localhost',
+    #         'PORT': '5432',
+    #     }
+    # }
     DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': 'bae_db',
-            'USER': 'bae_user',
-            'PASSWORD': 'BarakahEconomy2025!',
-            'HOST': 'localhost',
-            'PORT': '5432',
+            'default': {
+                'ENGINE': 'django.db.backends.postgresql',
+                'NAME': 'bae_db',
+                'USER': 'bae_user',
+                'PASSWORD': 'BarakahEconomy2025!',
+                'HOST': 'localhost',
+                'PORT': '5432',
+            }
         }
-    }    
 
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
@@ -325,3 +337,12 @@ LOGGING = {
         },                
     },
 }
+
+# Email Configuration
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = env('EMAIL_HOST', default='smtp.gmail.com')
+EMAIL_PORT = env('EMAIL_PORT', default=587, cast=int)
+EMAIL_USE_TLS = env('EMAIL_USE_TLS', default=True, cast=bool)
+EMAIL_HOST_USER = env('EMAIL_HOST_USER', default='')
+EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD', default='')
+DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL', default='noreply@barakah-economy.com')
