@@ -14,6 +14,17 @@ const formatIDRTarget = (amount) => {
     return 'Rp. ' + new Intl.NumberFormat('id-ID', { minimumFractionDigits: 0 }).format(amount);
 };
 
+const stripHtml = (html) => {
+    if (!html) return '';
+    return html.replace(/<[^>]*>?/gm, '');
+};
+
+const getMediaUrl = (url) => {
+    if (!url) return '';
+    if (url.startsWith('http')) return url;
+    return `${process.env.REACT_APP_API_BASE_URL}${url}`;
+};
+
 const DesktopLandingPage = () => {
     const navigate = useNavigate();
     const [campaigns, setCampaigns] = useState([]);
@@ -221,7 +232,7 @@ const DesktopLandingPage = () => {
                                         <div className="bg-white rounded-2xl overflow-hidden shadow-md border border-gray-100 hover:shadow-xl transition group">
                                             <Link to={`/kampanye/${campaign.slug || campaign.id}`}>
                                                 <img
-                                                    src={campaign.thumbnail || '/images/peduli-dhuafa-banner.jpg'}
+                                                    src={getMediaUrl(campaign.thumbnail) || '/images/peduli-dhuafa-banner.jpg'}
                                                     alt={campaign.title}
                                                     className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
                                                     onError={(e) => { e.target.src = '/images/peduli-dhuafa-banner.jpg'; }}
@@ -285,7 +296,7 @@ const DesktopLandingPage = () => {
                                         <div className="bg-white rounded-2xl overflow-hidden shadow-md border border-gray-100 hover:shadow-xl transition group">
                                             <Link to={`/produk/${product.slug || product.id}`}>
                                                 <img
-                                                    src={product.thumbnail || '/placeholder-image.jpg'}
+                                                    src={getMediaUrl(product.thumbnail) || '/placeholder-image.jpg'}
                                                     alt={product.title}
                                                     className="w-full h-40 object-cover group-hover:scale-105 transition-transform duration-300"
                                                     onError={(e) => { e.target.src = '/placeholder-image.jpg'; }}
@@ -335,7 +346,7 @@ const DesktopLandingPage = () => {
                                         <div className="bg-white rounded-2xl overflow-hidden shadow-md border border-gray-100 hover:shadow-xl transition group">
                                             <Link to={`/kelas/${course.slug || course.id}`}>
                                                 <img
-                                                    src={course.thumbnail || '/images/peduli-dhuafa-banner.jpg'}
+                                                    src={getMediaUrl(course.thumbnail) || '/images/peduli-dhuafa-banner.jpg'}
                                                     alt={course.title}
                                                     className="w-full h-44 object-cover group-hover:scale-105 transition-transform duration-300"
                                                     onError={(e) => { e.target.src = '/images/peduli-dhuafa-banner.jpg'; }}
@@ -390,7 +401,7 @@ const DesktopLandingPage = () => {
                                         <div className="bg-white rounded-2xl overflow-hidden shadow-md border border-gray-100 hover:shadow-xl transition group">
                                             <Link to={`/articles/${article.id}`}>
                                                 <img
-                                                    src={article.thumbnail || article.image || '/placeholder-image.jpg'}
+                                                    src={getMediaUrl(article.images?.[0]?.path) || '/placeholder-image.jpg'}
                                                     alt={article.title}
                                                     className="w-full h-44 object-cover group-hover:scale-105 transition-transform duration-300"
                                                     onError={(e) => { e.target.src = '/placeholder-image.jpg'; }}
@@ -398,7 +409,9 @@ const DesktopLandingPage = () => {
                                             </Link>
                                             <div className="p-5">
                                                 <h3 className="font-bold text-gray-900 mb-2 line-clamp-2">{article.title}</h3>
-                                                <p className="text-gray-500 text-xs line-clamp-3">{article.excerpt || article.content?.substring(0, 120)}</p>
+                                                <p className="text-gray-500 text-xs line-clamp-3">
+                                                    {stripHtml(article.content?.substring(0, 160))}
+                                                </p>
                                                 <Link
                                                     to={`/articles/${article.id}`}
                                                     className="inline-block mt-3 text-orange-600 font-semibold text-sm hover:underline"
@@ -445,7 +458,7 @@ const DesktopLandingPage = () => {
                                         <div className="bg-white rounded-2xl overflow-hidden shadow-md border border-gray-100 hover:shadow-xl transition group">
                                             <Link to={`/digital-products/${dp.slug}`}>
                                                 <img
-                                                    src={dp.thumbnail || '/placeholder-image.jpg'}
+                                                    src={getMediaUrl(dp.thumbnail) || '/placeholder-image.jpg'}
                                                     alt={dp.title}
                                                     className="w-full h-40 object-cover group-hover:scale-105 transition-transform duration-300"
                                                     onError={(e) => { e.target.src = '/placeholder-image.jpg'; }}
