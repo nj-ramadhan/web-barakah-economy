@@ -153,9 +153,9 @@ const CrowdfundingMainPage = () => {
       <HeaderHome onSearch={handleSearch} />
 
       {/* Featured Campaign Slider */}
-      <div className="px-4 pt-4" style={{ position: 'relative', zIndex: 10 }}>
+      <div className="px-4 pt-4 max-w-6xl mx-auto" style={{ position: 'relative', zIndex: 10 }}>
         {featuredCampaigns.length > 0 && (
-          <div className="relative rounded-lg overflow-hidden h-56">
+          <div className="relative rounded-2xl overflow-hidden h-56 lg:h-96 shadow-lg">
             {/* Slides */}
             <div className="h-full">
               {featuredCampaigns.map((campaign, index) => {
@@ -170,13 +170,13 @@ const CrowdfundingMainPage = () => {
                     <img
                       src={campaign.thumbnail || '/images/peduli-dhuafa-banner.jpg'}
                       alt={campaign.title}
-                      className="w-full h-56 object-cover"
+                      className="w-full h-56 lg:h-96 object-cover"
                       onError={(e) => {
                         e.target.src = '/images/peduli-dhuafa-banner.jpg';
                       }}
                     />
-                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4">
-                      <h2 className="text-white font-bold text-lg">{campaign.title}</h2>
+                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-6 lg:p-10">
+                      <h2 className="text-white font-bold text-lg lg:text-3xl mb-2">{campaign.title}</h2>
 
                       {/* Donate Button */}
                       <div className="flex gap-2 items-center w-full">
@@ -223,13 +223,17 @@ const CrowdfundingMainPage = () => {
       </div>
 
       {/* Campaign Grid */}
-      <div className="px-4 py-4">
+      <div className="px-4 py-8 max-w-6xl mx-auto">
+        <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
+          <span className="w-1.5 h-6 bg-green-600 rounded-full"></span>
+          Semua Program Kebaikan
+        </h2>
         {loading ? (
           <div className="flex justify-center items-center py-8">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500"></div>
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-6">
             {campaigns.map(campaign => {
               const isExpired = isCampaignExpired(campaign.deadline);
               const deadlineText = formatDeadline(campaign.deadline);

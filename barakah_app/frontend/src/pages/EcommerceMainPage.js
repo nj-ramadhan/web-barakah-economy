@@ -33,13 +33,13 @@ const EcommerceMainPage = () => {
   const [activeSlide, setActiveSlide] = useState(0);
   const sliderInterval = useRef(null);
   const navigate = useNavigate();
-    
+
   // Fetch featured products (only once when the component mounts)
   useEffect(() => {
     const fetchFeaturedProducts = async () => {
       try {
         const response = await axios.get(
-          `${process.env.REACT_APP_API_BASE_URL}/api/products/`, 
+          `${process.env.REACT_APP_API_BASE_URL}/api/products/`,
           { params: { is_featured: true } } // Fetch only featured products
         );
         setfeaturedProducts(response.data.slice(0, 3)); // Take the first 3 featured products
@@ -48,16 +48,16 @@ const EcommerceMainPage = () => {
         setError('Failed to load featured products');
       }
     };
-  
+
     fetchFeaturedProducts();
   }, []); // Empty dependency array ensures this runs only once
-  
+
   // Fetch regular products (based on search query)
   const fetchProducts = async (search = '') => {
     try {
       setLoading(true);
       const response = await axios.get(
-        `${process.env.REACT_APP_API_BASE_URL}/api/products/`, 
+        `${process.env.REACT_APP_API_BASE_URL}/api/products/`,
         { params: { search } }
       );
       setProducts(response.data); // Set regular products (search results)
@@ -85,7 +85,7 @@ const EcommerceMainPage = () => {
 
   useEffect(() => {
     fetchProducts();
-    
+
     // Clean up function
     return () => {
       if (sliderInterval.current) {
@@ -101,7 +101,7 @@ const EcommerceMainPage = () => {
         setActiveSlide(prev => (prev + 1) % featuredProducts.length);
       }, 5000);
     }
-    
+
     return () => {
       if (sliderInterval.current) {
         clearInterval(sliderInterval.current);
@@ -185,49 +185,48 @@ const EcommerceMainPage = () => {
       </Helmet>
 
       <HeaderHome onSearch={handleSearch} />
-  
+
       {/* Featured Campaign Slider */}
-      <div className="px-4 pt-4" style={{ position: 'relative', zIndex: 10 }}>
+      <div className="px-4 pt-4 max-w-6xl mx-auto" style={{ position: 'relative', zIndex: 10 }}>
         {featuredProducts.length > 0 && (
-          <div className="relative rounded-lg overflow-hidden h-56">
+          <div className="relative rounded-2xl overflow-hidden h-56 lg:h-96 shadow-lg">
             {/* Slides */}
             <div className="h-full">
               {featuredProducts.map((product, index) => {
                 return (
-                  <div 
+                  <div
                     key={product.id}
-                    className={`absolute top-0 left-0 w-full h-full transition-opacity duration-500 ${
-                      index === activeSlide ? 'opacity-100 z-10' : 'opacity-0 z-0'
-                    }`}
+                    className={`absolute top-0 left-0 w-full h-full transition-opacity duration-500 ${index === activeSlide ? 'opacity-100 z-10' : 'opacity-0 z-0'
+                      }`}
                   >
-                    <img 
-                      src={product.thumbnail || '/images/peduli-dhuafa-banner.jpg'} 
+                    <img
+                      src={product.thumbnail || '/images/peduli-dhuafa-banner.jpg'}
                       alt={product.title}
-                      className="w-full h-56 object-cover"
+                      className="w-full h-56 lg:h-96 object-cover"
                       onError={(e) => {
                         e.target.src = '/images/peduli-dhuafa-banner.jpg';
                       }}
-                    />            
-                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4">
-                      <h2 className="text-white font-bold text-lg">{product.title}</h2>
+                    />
+                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-6 lg:p-10">
+                      <h2 className="text-white font-bold text-lg lg:text-3xl mb-1">{product.title}</h2>
                       <h2 className="text-white text-sm">stok{' '} {product.stock > 0 ? product.stock : 'habis'}</h2>
                       {product.stock <= 0 ? (
-                      <div className="flex space-x-2">
-                        <button
-                          onClick={() => addToWishlist(product.id)}
-                          className="w-full block text-center bg-red-600 text-white py-2 rounded-md text-sm hover:bg-red-600 flex items-center justify-center"
-                        >
-                          <span className="material-icons text-sm">favorite</span>+ INCARAN
-                        </button>
-                        <button
-                          onClick={() => addToCart(product.id)}
-                          className="w-full block text-center bg-gray-400 text-white py-2 rounded-md text-sm hover:bg-gray-500 flex items-center justify-center"
-                          disabled
-                        >
-                          <span className="material-icons text-sm">add_shopping_cart</span>+ KERANJANG
-                        </button>
-                      </div>
-                      
+                        <div className="flex space-x-2">
+                          <button
+                            onClick={() => addToWishlist(product.id)}
+                            className="w-full block text-center bg-red-600 text-white py-2 rounded-md text-sm hover:bg-red-600 flex items-center justify-center"
+                          >
+                            <span className="material-icons text-sm">favorite</span>+ INCARAN
+                          </button>
+                          <button
+                            onClick={() => addToCart(product.id)}
+                            className="w-full block text-center bg-gray-400 text-white py-2 rounded-md text-sm hover:bg-gray-500 flex items-center justify-center"
+                            disabled
+                          >
+                            <span className="material-icons text-sm">add_shopping_cart</span>+ KERANJANG
+                          </button>
+                        </div>
+
                       ) : (
                         <div className="w-full flex justify-between space-x-2 mt-2">
                           <button
@@ -235,7 +234,7 @@ const EcommerceMainPage = () => {
                             className=" w-full block text-center bg-red-600 text-white py-2 rounded-md text-sm hover:bg-red-700 flex items-center justify-center"
                           >
                             <span className="material-icons text-sm mr-2">favorite</span>+ INCARAN
-                          </button>                      
+                          </button>
                           <button
                             onClick={() => addToCart(product.id)}
                             className="w-full block text-center bg-green-800 text-white py-2 rounded-md text-sm hover:bg-green-900 flex items-center justify-center"
@@ -249,7 +248,7 @@ const EcommerceMainPage = () => {
                 );
               })}
             </div>
-            
+
             {/* Indicators */}
             {featuredProducts.length > 1 && (
               <div className="absolute bottom-2 right-2 flex space-x-2 z-20">
@@ -257,9 +256,8 @@ const EcommerceMainPage = () => {
                   <button
                     key={index}
                     onClick={() => goToSlide(index)}
-                    className={`w-2 h-2 rounded-full ${
-                      index === activeSlide ? 'bg-white' : 'bg-white/50'
-                    }`}
+                    className={`w-2 h-2 rounded-full ${index === activeSlide ? 'bg-white' : 'bg-white/50'
+                      }`}
                   />
                 ))}
               </div>
@@ -267,21 +265,25 @@ const EcommerceMainPage = () => {
           </div>
         )}
       </div>
-  
+
       {/* Product Grid */}
-      <div className="px-4 py-4">
+      <div className="px-4 py-8 max-w-6xl mx-auto">
+        <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
+          <span className="w-1.5 h-6 bg-green-600 rounded-full"></span>
+          Semua Produk Sinergy
+        </h2>
         {loading ? (
           <div className="flex justify-center items-center py-8">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500"></div>
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-6">
             {products.map(product => {
               return (
                 <div key={product.id} className="bg-white rounded-lg overflow-hidden shadow">
                   <Link to={`/produk/${product.slug || product.id}`}>
-                    <img 
-                      src={product.thumbnail || '/placeholder-image.jpg'} 
+                    <img
+                      src={product.thumbnail || '/placeholder-image.jpg'}
                       alt={product.title}
                       className="w-full h-28 object-cover"
                       onError={(e) => {
@@ -290,7 +292,7 @@ const EcommerceMainPage = () => {
                     />
                   </Link>
                   <div className="p-2">
-                    <h3 className="text-sm font-medium mb-2 line-clamp-2">{product.title}</h3>   
+                    <h3 className="text-sm font-medium mb-2 line-clamp-2">{product.title}</h3>
                     <div className="flex justify-between">
                       <p className="text-gray-600 text-xs mb-2">{formatIDR(product.price)} / {product.unit}</p>
                       <p className="text-gray-600 text-xs mb-2">stok{' '} {product.stock > 0 ? product.stock : 'habis'}</p>
@@ -311,34 +313,34 @@ const EcommerceMainPage = () => {
                           <span className="material-icons text-sm">add_shopping_cart</span>
                         </button>
                       </div>
-                      ) : (
-                        <div className="flex space-x-2">
-                          <button
-                            onClick={() => addToWishlist(product.id)}
-                            className="w-full block text-center bg-red-600 text-white py-2 rounded-md text-sm hover:bg-red-600 flex items-center justify-center"
-                          >
-                            <span className="material-icons text-sm">favorite</span>
-                          </button>
-                          <button
-                            onClick={() => addToCart(product.id)}
-                            className="w-full block text-center bg-green-800 text-white py-2 rounded-md text-sm hover:bg-green-900 flex items-center justify-center"
-                          >
-                            <span className="material-icons text-sm">add_shopping_cart</span>
-                          </button>
-                        </div>
-                      )}
+                    ) : (
+                      <div className="flex space-x-2">
+                        <button
+                          onClick={() => addToWishlist(product.id)}
+                          className="w-full block text-center bg-red-600 text-white py-2 rounded-md text-sm hover:bg-red-600 flex items-center justify-center"
+                        >
+                          <span className="material-icons text-sm">favorite</span>
+                        </button>
+                        <button
+                          onClick={() => addToCart(product.id)}
+                          className="w-full block text-center bg-green-800 text-white py-2 rounded-md text-sm hover:bg-green-900 flex items-center justify-center"
+                        >
+                          <span className="material-icons text-sm">add_shopping_cart</span>
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
               );
             })}
           </div>
         )}
-  
+
         {error && (
           <div className="text-center py-4 text-red-500">
             {error}
-            <button 
-              onClick={() => fetchProducts(searchQuery)} 
+            <button
+              onClick={() => fetchProducts(searchQuery)}
               className="ml-4 px-4 py-2 bg-green-500 text-white rounded-lg"
             >
               Coba Lagi
@@ -346,7 +348,7 @@ const EcommerceMainPage = () => {
           </div>
         )}
       </div>
-  
+
       {/* Bottom Navigation */}
       <NavigationButton />
     </div>

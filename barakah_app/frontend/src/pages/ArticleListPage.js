@@ -34,13 +34,16 @@ const ArticleListPage = () => {
     <div className="body">
       <HeaderHome />
 
-      <div className="px-4 py-4 mb-20">
-        <h1 className="text-xl font-bold mb-4">Articles</h1>
+      <div className="px-4 py-8 mb-20 max-w-6xl mx-auto">
+        <h1 className="text-2xl font-bold mb-6 flex items-center gap-2">
+          <span className="w-1.5 h-6 bg-green-600 rounded-full"></span>
+          Artikel & Edukasi
+        </h1>
 
         {loading ? (
           <div>Loading...</div>
         ) : (
-          <div className="grid grid-cols-1 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6">
             {articles.map((a) => (
               <div key={a.id} className="bg-white shadow rounded p-3 flex items-stretch gap-2">
                 <Link

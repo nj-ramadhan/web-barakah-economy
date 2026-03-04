@@ -4,6 +4,8 @@ import axios from 'axios';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Pagination, Autoplay } from 'swiper/modules';
 import 'swiper/swiper-bundle.css';
+import DesktopHeader from '../components/layout/DesktopHeader';
+import DesktopFooter from '../components/layout/DesktopFooter';
 
 const formatIDR = (amount) => {
     return 'Rp. ' + new Intl.NumberFormat('id-ID', { minimumFractionDigits: 0 }).format(amount);
@@ -65,60 +67,9 @@ const DesktopLandingPage = () => {
 
     return (
         <div className="w-full min-h-screen bg-gray-50 flex flex-col font-sans">
-            {/* ============ HEADER / NAVBAR ============ */}
-            <header className="w-full bg-white/90 backdrop-blur-md shadow-sm py-4 px-8 flex justify-between items-center fixed top-0 z-50">
-                <div className="flex items-center gap-2">
-                    <img src="/logo.png" alt="Barakah Economy" className="h-10" onError={(e) => { e.target.src = '/icon-512x512.png'; e.target.className = 'h-10 w-10 object-contain'; }} />
-                    <span className="text-xl font-bold text-green-800">Barakah Economy</span>
-                </div>
-                <nav className="flex gap-6 items-center">
-                    <a href="#about" className="text-gray-600 hover:text-green-700 font-medium transition">Tentang Kami</a>
-                    <a href="#charity" className="text-gray-600 hover:text-green-700 font-medium transition">Charity</a>
-                    <a href="#sinergy" className="text-gray-600 hover:text-green-700 font-medium transition">Sinergy</a>
-                    <a href="#academy" className="text-gray-600 hover:text-green-700 font-medium transition">Academy</a>
-                    <Link to="/digital-products" className="text-gray-600 hover:text-green-700 font-medium transition">Produk Digital</Link>
-                    {user ? (
-                        <div className="relative">
-                            <button
-                                onClick={() => setShowProfileMenu(!showProfileMenu)}
-                                className="flex items-center gap-2 px-4 py-2 bg-green-700 text-white font-semibold rounded-lg shadow hover:bg-green-800 transition"
-                            >
-                                <span className="material-icons text-lg">person</span>
-                                {user.username || 'Profile'}
-                                <span className="material-icons text-sm">{showProfileMenu ? 'expand_less' : 'expand_more'}</span>
-                            </button>
-                            {showProfileMenu && (
-                                <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-gray-100 py-2 z-50">
-                                    <Link to="/profile" className="flex items-center gap-3 px-4 py-2.5 text-gray-700 hover:bg-gray-50 text-sm">
-                                        <span className="material-icons text-lg text-gray-400">person</span> Profile
-                                    </Link>
-                                    <Link to="/dashboard" className="flex items-center gap-3 px-4 py-2.5 text-gray-700 hover:bg-gray-50 text-sm">
-                                        <span className="material-icons text-lg text-gray-400">dashboard</span> Dashboard
-                                    </Link>
-                                    <hr className="my-1" />
-                                    <button
-                                        onClick={() => {
-                                            localStorage.removeItem('user');
-                                            setUser(null);
-                                            setShowProfileMenu(false);
-                                            navigate('/');
-                                        }}
-                                        className="flex items-center gap-3 px-4 py-2.5 text-red-600 hover:bg-red-50 text-sm w-full"
-                                    >
-                                        <span className="material-icons text-lg">logout</span> Keluar
-                                    </button>
-                                </div>
-                            )}
-                        </div>
-                    ) : (
-                        <Link to="/login" className="px-6 py-2 bg-green-700 text-white font-semibold rounded-lg shadow hover:bg-green-800 transition">
-                            Masuk / Daftar
-                        </Link>
-                    )}
-                </nav>
-            </header>
+            <DesktopHeader />
 
-            <main className="flex-1 mt-16">
+            <main className="flex-1 pt-20">
                 {/* ============ HERO ============ */}
                 <section className="w-full bg-gradient-to-br from-green-50 via-white to-green-100 py-24 px-8 lg:px-24 flex flex-col md:flex-row items-center gap-12">
                     <div className="flex-1 space-y-6">

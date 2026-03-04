@@ -53,14 +53,14 @@ import DigitalProductPaymentPage from './pages/DigitalProductPaymentPage';
 import DashboardPage from './pages/DashboardPage';
 import DashboardDigitalProductsPage from './pages/DashboardDigitalProductsPage';
 
+import { ResponsiveLayout, MobileContainer } from './components/layout/ResponsiveLayout';
+
 const App = () => {
-  const isDesktop = useMediaQuery('(min-width: 768px)');
+  const isDesktop = useMediaQuery('(min-width: 1024px)');
 
   return (
     <Router>
-      <div className="min-h-screen bg-gray-200 flex justify-center">
-        {/* We dynamically apply classes based on route or isDesktop. Let's make the wrapper full width if we are rendering DesktopLandingPage, else max-w-md */}
-        {/* We can achieve this by creating a wrapper inside the Router or handling it at the Route level. Let's make an inner component instead, or just conditional classes. */}
+      <div className="min-h-screen bg-gray-100 flex justify-center">
         <Routes>
           <Route path="/*" element={<LayoutWrapper isDesktop={isDesktop} />} />
         </Routes>
@@ -81,65 +81,60 @@ const LayoutWrapper = ({ isDesktop }) => {
       <Route path="/reset-password" element={<MobileContainer><ResetPasswordPage /></MobileContainer>} />
 
       {/* Logged Account Routes */}
-      <Route path="/profile" element={<PrivateRoute><MobileContainer><ProfilePage /></MobileContainer></PrivateRoute>} />
-      <Route path="/profile/edit" element={<PrivateRoute><MobileContainer><ProfileEditPage /></MobileContainer></PrivateRoute>} />
+      <Route path="/profile" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><ProfilePage /></ResponsiveLayout></PrivateRoute>} />
+      <Route path="/profile/edit" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><ProfileEditPage /></ResponsiveLayout></PrivateRoute>} />
 
       {/* Crowdfunding Routes */}
-      <Route path="/charity" element={<MobileContainer><CrowdfundingMainPage /></MobileContainer>} />
-      <Route path="/kampanye/:slug" element={<MobileContainer><CrowdfundingCampaignDetail /></MobileContainer>} />
-      <Route path="/bayar-donasi/:slug" element={<MobileContainer><CrowdfundingDonationPage /></MobileContainer>} />
-      <Route path="/riwayat-donasi" element={<MobileContainer><CrowdfundingDonationHistoryPage /></MobileContainer>} />
-      <Route path="/konfirmasi-pembayaran-donasi" element={<MobileContainer><CrowdfundingPaymentConfirmation /></MobileContainer>} />
+      <Route path="/charity" element={<ResponsiveLayout isDesktop={isDesktop}><CrowdfundingMainPage /></ResponsiveLayout>} />
+      <Route path="/kampanye/:slug" element={<ResponsiveLayout isDesktop={isDesktop}><CrowdfundingCampaignDetail /></ResponsiveLayout>} />
+      <Route path="/bayar-donasi/:slug" element={<ResponsiveLayout isDesktop={isDesktop}><CrowdfundingDonationPage /></ResponsiveLayout>} />
+      <Route path="/riwayat-donasi" element={<ResponsiveLayout isDesktop={isDesktop}><CrowdfundingDonationHistoryPage /></ResponsiveLayout>} />
+      <Route path="/konfirmasi-pembayaran-donasi" element={<ResponsiveLayout isDesktop={isDesktop}><CrowdfundingPaymentConfirmation /></ResponsiveLayout>} />
 
       {/* Ecommerce Routes */}
-      <Route path="/sinergy" element={<MobileContainer><EcommerceMainPage /></MobileContainer>} />
-      <Route path="/produk/:slug" element={<MobileContainer><EcommerceProductDetail /></MobileContainer>} />
-      <Route path="/incaran" element={<PrivateRoute><MobileContainer><EcommerceWishlistPage /></MobileContainer></PrivateRoute>} />
-      <Route path="/keranjang" element={<PrivateRoute><MobileContainer><EcommerceCartPage /></MobileContainer></PrivateRoute>} />
-      <Route path="/riwayat-belanja" element={<PrivateRoute><MobileContainer><EcommerceOrderHistoryPage /></MobileContainer></PrivateRoute>} />
-      <Route path="/bayar-belanja" element={<PrivateRoute><MobileContainer><EcommerceCheckoutPage /></MobileContainer></PrivateRoute>} />
-      <Route path="/konfirmasi-pembayaran-belanja" element={<PrivateRoute><MobileContainer><EcommercePaymentConfirmation /></MobileContainer></PrivateRoute>} />
+      <Route path="/sinergy" element={<ResponsiveLayout isDesktop={isDesktop}><EcommerceMainPage /></ResponsiveLayout>} />
+      <Route path="/produk/:slug" element={<ResponsiveLayout isDesktop={isDesktop}><EcommerceProductDetail /></ResponsiveLayout>} />
+      <Route path="/incaran" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><EcommerceWishlistPage /></ResponsiveLayout></PrivateRoute>} />
+      <Route path="/keranjang" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><EcommerceCartPage /></ResponsiveLayout></PrivateRoute>} />
+      <Route path="/riwayat-belanja" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><EcommerceOrderHistoryPage /></ResponsiveLayout></PrivateRoute>} />
+      <Route path="/bayar-belanja" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><EcommerceCheckoutPage /></ResponsiveLayout></PrivateRoute>} />
+      <Route path="/konfirmasi-pembayaran-belanja" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><EcommercePaymentConfirmation /></ResponsiveLayout></PrivateRoute>} />
 
       {/* Article Routes */}
-      <Route path="/articles" element={<MobileContainer><ArticleListPage /></MobileContainer>} />
-      <Route path="/articles/create" element={<MobileContainer><ArticleCreatePage /></MobileContainer>} />
-      <Route path="/articles/:id" element={<MobileContainer><ArticleDetailPage /></MobileContainer>} />
-      <Route path="/articles/:id/upload-images" element={<MobileContainer><ArticleUploadImagesPage /></MobileContainer>} />
-      <Route path="/academy/articles" element={<MobileContainer><ArticleListPage /></MobileContainer>} />
-      <Route path="/academy/articles/:id" element={<MobileContainer><ArticleDetailPage /></MobileContainer>} />
+      <Route path="/articles" element={<ResponsiveLayout isDesktop={isDesktop}><ArticleListPage /></ResponsiveLayout>} />
+      <Route path="/articles/create" element={<ResponsiveLayout isDesktop={isDesktop}><ArticleCreatePage /></ResponsiveLayout>} />
+      <Route path="/articles/:id" element={<ResponsiveLayout isDesktop={isDesktop}><ArticleDetailPage /></ResponsiveLayout>} />
+      <Route path="/articles/:id/upload-images" element={<ResponsiveLayout isDesktop={isDesktop}><ArticleUploadImagesPage /></ResponsiveLayout>} />
+      <Route path="/academy/articles" element={<ResponsiveLayout isDesktop={isDesktop}><ArticleListPage /></ResponsiveLayout>} />
+      <Route path="/academy/articles/:id" element={<ResponsiveLayout isDesktop={isDesktop}><ArticleDetailPage /></ResponsiveLayout>} />
 
       {/* Ecourse Routes */}
-      <Route path="/academy" element={<MobileContainer><AcademyMain /></MobileContainer>} />
-      <Route path="/academy/ecourse" element={<MobileContainer><EcourseMainPage /></MobileContainer>} />
-      <Route path="/kelas/:slug" element={<PrivateRoute><MobileContainer><EcourseCourseDetail /></MobileContainer></PrivateRoute>} />
-      <Route path="/ikut-kelas/:slug" element={<PrivateRoute><MobileContainer><EcourseJoinCoursePage /></MobileContainer></PrivateRoute>} />
-      <Route path="/konfirmasi-pembayaran-kelas/:slug" element={<PrivateRoute><MobileContainer><EcoursePaymentConfirmation /></MobileContainer></PrivateRoute>} />
+      <Route path="/academy" element={<ResponsiveLayout isDesktop={isDesktop}><AcademyMain /></ResponsiveLayout>} />
+      <Route path="/academy/ecourse" element={<ResponsiveLayout isDesktop={isDesktop}><EcourseMainPage /></ResponsiveLayout>} />
+      <Route path="/kelas/:slug" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><EcourseCourseDetail /></ResponsiveLayout></PrivateRoute>} />
+      <Route path="/ikut-kelas/:slug" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><EcourseJoinCoursePage /></ResponsiveLayout></PrivateRoute>} />
+      <Route path="/konfirmasi-pembayaran-kelas/:slug" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><EcoursePaymentConfirmation /></ResponsiveLayout></PrivateRoute>} />
 
       {/* Payment Routes */}
-      <Route path="/pembayaran-berhasil" element={<MobileContainer><PaymentSuccessPage /></MobileContainer>} />
-      <Route path="/pembayaran-gagal" element={<MobileContainer><PaymentFailedPage /></MobileContainer>} />
-      <Route path="/pembayaran-tertunda" element={<MobileContainer><PaymentPendingPage /></MobileContainer>} />
+      <Route path="/pembayaran-berhasil" element={<ResponsiveLayout isDesktop={isDesktop}><PaymentSuccessPage /></ResponsiveLayout>} />
+      <Route path="/pembayaran-gagal" element={<ResponsiveLayout isDesktop={isDesktop}><PaymentFailedPage /></ResponsiveLayout>} />
+      <Route path="/pembayaran-tertunda" element={<ResponsiveLayout isDesktop={isDesktop}><PaymentPendingPage /></ResponsiveLayout>} />
 
       {/* Information Routes */}
-      <Route path="/about" element={<MobileContainer><AboutUs /></MobileContainer>} />
-      <Route path="/hubungi-kami" element={<MobileContainer><ContactUs /></MobileContainer>} />
+      <Route path="/about" element={<ResponsiveLayout isDesktop={isDesktop}><AboutUs /></ResponsiveLayout>} />
+      <Route path="/hubungi-kami" element={<ResponsiveLayout isDesktop={isDesktop}><ContactUs /></ResponsiveLayout>} />
 
       {/* Digital Product Routes (Public) */}
-      <Route path="/digital-products" element={<MobileContainer><DigitalProductListPage /></MobileContainer>} />
-      <Route path="/digital-products/:slug" element={<MobileContainer><DigitalProductDetailPage /></MobileContainer>} />
-      <Route path="/digital-products/:slug/checkout" element={<MobileContainer><DigitalProductCheckoutPage /></MobileContainer>} />
-      <Route path="/digital-products/payment/:orderNumber" element={<MobileContainer><DigitalProductPaymentPage /></MobileContainer>} />
+      <Route path="/digital-products" element={<ResponsiveLayout isDesktop={isDesktop}><DigitalProductListPage /></ResponsiveLayout>} />
+      <Route path="/digital-products/:slug" element={<ResponsiveLayout isDesktop={isDesktop}><DigitalProductDetailPage /></ResponsiveLayout>} />
+      <Route path="/digital-products/:slug/checkout" element={<ResponsiveLayout isDesktop={isDesktop}><DigitalProductCheckoutPage /></ResponsiveLayout>} />
+      <Route path="/digital-products/payment/:orderNumber" element={<ResponsiveLayout isDesktop={isDesktop}><DigitalProductPaymentPage /></ResponsiveLayout>} />
 
       {/* Dashboard Routes (Private) */}
-      <Route path="/dashboard" element={<PrivateRoute><MobileContainer><DashboardPage /></MobileContainer></PrivateRoute>} />
-      <Route path="/dashboard/digital-products" element={<PrivateRoute><MobileContainer><DashboardDigitalProductsPage /></MobileContainer></PrivateRoute>} />
+      <Route path="/dashboard" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardPage /></ResponsiveLayout></PrivateRoute>} />
+      <Route path="/dashboard/digital-products" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardDigitalProductsPage /></ResponsiveLayout></PrivateRoute>} />
     </Routes>
   );
 };
 
-const MobileContainer = ({ children }) => (
-  <div className="w-full max-w-md bg-white min-h-screen relative shadow-lg">
-    {children}
-  </div>
-);
 export default App;

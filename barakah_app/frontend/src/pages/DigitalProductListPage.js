@@ -11,6 +11,13 @@ const formatIDR = (amount) => {
     return 'Rp. ' + new Intl.NumberFormat('id-ID', { minimumFractionDigits: 0 }).format(amount);
 };
 
+const getMediaUrl = (url) => {
+    if (!url) return '';
+    if (url.startsWith('http')) return url;
+    const baseUrl = process.env.REACT_APP_API_BASE_URL || '';
+    return `${baseUrl}${url}`;
+};
+
 const DigitalProductListPage = () => {
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -38,8 +45,11 @@ const DigitalProductListPage = () => {
 
             <Header />
 
-            <div className="px-4 py-4 pb-20">
-                <h1 className="text-xl font-bold mb-4">Produk Digital</h1>
+            <div className="px-4 py-8 pb-20 max-w-6xl mx-auto">
+                <h1 className="text-2xl font-bold mb-6 flex items-center gap-2">
+                    <span className="w-1.5 h-6 bg-green-600 rounded-full"></span>
+                    Produk Digital
+                </h1>
 
                 {loading ? (
                     <div className="flex justify-center items-center py-8">
@@ -51,12 +61,12 @@ const DigitalProductListPage = () => {
                         <p>Belum ada produk digital</p>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-6">
                         {products.map((product) => (
                             <Link key={product.id} to={`/digital-products/${product.slug}`} className="block">
                                 <div className="bg-white rounded-xl overflow-hidden shadow hover:shadow-lg transition">
                                     <img
-                                        src={product.thumbnail || '/placeholder-image.jpg'}
+                                        src={getMediaUrl(product.thumbnail) || '/placeholder-image.jpg'}
                                         alt={product.title}
                                         className="w-full h-28 object-cover"
                                         onError={(e) => { e.target.src = '/placeholder-image.jpg'; }}

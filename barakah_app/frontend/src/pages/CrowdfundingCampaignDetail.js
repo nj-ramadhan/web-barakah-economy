@@ -147,82 +147,91 @@ const CrowdfundingCampaignDetail = () => {
 
       <Header />
       {/* Campaign Details */}
-      <div className="px-4 py-4">
-        <div className="bg-white rounded-lg overflow-hidden shadow">
-          <img
-            src={campaign.thumbnail || '/placeholder-image.jpg'}
-            alt={campaign.title}
-            className="w-full h-56 object-cover"
-            onError={(e) => {
-              e.target.src = '/placeholder-image.jpg';
-            }}
-          />
-          <div className="p-4">
-            <h1 className="text-xl font-bold mb-2">{campaign.title}</h1>
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">
-                Terkumpul: {campaign.current_amount ? formatIDR(campaign.current_amount) : 'Rp. 0'}
-              </span>
-              <span className="text-sm text-gray-600">
-                Target: {campaign.target_amount ? formatIDRTarget(campaign.target_amount) : 'Rp. 0'}
-              </span>
-            </div>
-
-            {/* Progress bar */}
-            <div className="mt-2 mb-3">
-              <div className="w-full bg-gray-200 rounded-full h-2.5">
-                <div
-                  className="bg-green-600 h-2.5 rounded-full"
-                  style={{
-                    width: `${campaign.current_amount && campaign.target_amount
-                      ? Math.min((campaign.current_amount / campaign.target_amount) * 100, 100)
-                      : 0}%`,
-                  }}
-                ></div>
-              </div>
-              <div className="text-right text-xs text-gray-500 mt-1">
-                {campaign.target_amount > 0
-                  ? Math.round((campaign.current_amount / campaign.target_amount) * 100)
-                  : 0} % tercapai
-              </div>
-            </div>
-
-            {/* Deadline */}
-            <p className="text-sm text-gray-600">
-              Batas waktu: {deadlineText}
-            </p>
-
-            {/* Expired Message */}
-            {isExpired && (
-              <p className="text-sm text-red-500">Kampanye ini telah berakhir.</p>
-            )}
+      <div className="px-4 py-8 max-w-6xl mx-auto">
+        <div className="bg-white rounded-2xl overflow-hidden shadow-lg border border-gray-100 flex flex-col md:flex-row">
+          <div className="md:w-1/2">
+            <img
+              src={campaign.thumbnail || '/placeholder-image.jpg'}
+              alt={campaign.title}
+              className="w-full h-64 md:h-full object-cover"
+              onError={(e) => {
+                e.target.src = '/placeholder-image.jpg';
+              }}
+            />
           </div>
-          <div className="p-3 flex gap-2 items-center">
-            <div className="flex-1">
-              {isExpired ? (
-                <button
-                  className="w-full bg-gray-400 text-white py-2 rounded-md text-sm cursor-not-allowed"
-                  disabled
-                >
-                  {getButtonLabel(campaign.title)}
-                </button>
-              ) : (
-                <Link
-                  to={`/bayar-donasi/${campaign.slug}`}
-                  className="block text-center bg-green-800 text-white py-2 rounded-md text-sm hover:bg-green-900"
-                >
-                  {getButtonLabel(campaign.title)}
-                </Link>
+          <div className="p-6 md:p-10 md:w-1/2 flex flex-col justify-between">
+            <div>
+              <h1 className="text-2xl md:text-3xl font-bold mb-4 text-gray-900">{campaign.title}</h1>
+              <div className="flex justify-between items-center mb-4">
+                <span className="text-lg font-semibold text-green-700">
+                  Terkumpul: {campaign.current_amount ? formatIDR(campaign.current_amount) : 'Rp. 0'}
+                </span>
+                <span className="text-sm text-gray-500">
+                  Target: {campaign.target_amount ? formatIDRTarget(campaign.target_amount) : 'Rp. 0'}
+                </span>
+              </div>
+
+              {/* Progress bar */}
+              <div className="mb-4">
+                <div className="w-full bg-gray-100 rounded-full h-3">
+                  <div
+                    className="bg-green-600 h-3 rounded-full shadow-sm"
+                    style={{
+                      width: `${campaign.current_amount && campaign.target_amount
+                        ? Math.min((campaign.current_amount / campaign.target_amount) * 100, 100)
+                        : 0}%`,
+                    }}
+                  ></div>
+                </div>
+                <div className="text-right text-sm font-medium text-gray-600 mt-2">
+                  {campaign.target_amount > 0
+                    ? Math.round((campaign.current_amount / campaign.target_amount) * 100)
+                    : 0} % tercapai
+                </div>
+              </div>
+
+              {/* Deadline */}
+              <div className="flex items-center gap-2 text-gray-600 text-sm mb-6">
+                <span className="material-icons text-sm">schedule</span>
+                Batas waktu: {deadlineText}
+              </div>
+
+              {/* Expired Message */}
+              {isExpired && (
+                <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm mb-6 flex items-center gap-2">
+                  <span className="material-icons text-sm">error_outline</span>
+                  Kampanye ini telah berakhir.
+                </div>
               )}
             </div>
-            <ShareButton slug={campaign.slug} title={campaign.title} />
+
+            <div className="flex gap-3 items-center">
+              <div className="flex-1">
+                {isExpired ? (
+                  <button
+                    className="w-full bg-gray-300 text-white py-3 rounded-xl font-bold cursor-not-allowed"
+                    disabled
+                  >
+                    {getButtonLabel(campaign.title)}
+                  </button>
+                ) : (
+                  <Link
+                    to={`/bayar-donasi/${campaign.slug}`}
+                    className="block text-center bg-green-700 text-white py-3 rounded-xl font-bold hover:bg-green-800 transition shadow-md"
+                  >
+                    {getButtonLabel(campaign.title)}
+                  </Link>
+                )}
+              </div>
+              <ShareButton slug={campaign.slug} title={campaign.title} />
+            </div>
           </div>
         </div>
       </div>
 
       {/* Tab Navigation */}
-      <div className="mt-4 px-4">
-        <div className="flex justify-around bg-white border-b">
+      <div className="mt-4 px-4 max-w-6xl mx-auto pb-20">
+        <div className="flex justify-start gap-8 bg-white border-b px-6">
           <button
             className={`py-2 px-4 text-sm font-medium ${activeTab === 'description' ? 'text-green-600 border-b-2 border-green-600' : 'text-gray-500'}`}
             onClick={() => setActiveTab('description')}

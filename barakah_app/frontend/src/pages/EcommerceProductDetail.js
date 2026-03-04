@@ -55,7 +55,7 @@ const EcommerceProductDetail = () => {
   const [quantity, setQuantity] = useState(1); // State to manage product quantity
   const [showFullDescription, setShowFullDescription] = useState(false);
   const [showFullTestimonies, setShowFullTestimonies] = useState({});
-  
+
   const baseUrl = process.env.REACT_APP_API_BASE_URL;
 
   useEffect(() => {
@@ -64,7 +64,7 @@ const EcommerceProductDetail = () => {
         // Fetch product details
         const productResponse = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/products/${slug}/`);
         setProduct(productResponse.data);
-        
+
       } catch (err) {
         console.error('Error fetching product details:', err);
         setError('Failed to load product details');
@@ -161,7 +161,7 @@ const EcommerceProductDetail = () => {
   };
 
   const convertRelativeUrlsToAbsolute = (htmlContent, baseUrl) => {
-  // Ensure baseUrl does not have a trailing slash
+    // Ensure baseUrl does not have a trailing slash
     if (baseUrl.endsWith('/')) {
       baseUrl = baseUrl.slice(0, -1);
     }
@@ -172,19 +172,19 @@ const EcommerceProductDetail = () => {
   };
 
   const renderStars = (count) => {
-  const maxStars = 5;
-  return (
-    <span>
-      {[...Array(maxStars)].map((_, i) =>
-        i < count ? (
-          <span key={i} className="text-xl font-bold text-yellow-400">★</span>
-        ) : (
-          <span key={i} className="text-xl font-bold text-gray-300">☆</span>
-        )
-      )}
-    </span>
-  );
-};
+    const maxStars = 5;
+    return (
+      <span>
+        {[...Array(maxStars)].map((_, i) =>
+          i < count ? (
+            <span key={i} className="text-xl font-bold text-yellow-400">★</span>
+          ) : (
+            <span key={i} className="text-xl font-bold text-gray-300">☆</span>
+          )
+        )}
+      </span>
+    );
+  };
 
   return (
     <div className="body">
@@ -201,60 +201,71 @@ const EcommerceProductDetail = () => {
       <Header />
 
       {/* Product Details */}
-      <div className="px-4 py-4">
-        <div className="bg-white rounded-lg overflow-hidden shadow">
-          <img
-            src={product.thumbnail || '/placeholder-image.jpg'}
-            alt={product.title}
-            className="w-full h-56 object-cover"
-            onError={(e) => {
-              e.target.src = '/placeholder-image.jpg';
-            }}
-          />
-          <div className="p-4">
-            <h1 className="text-xl font-bold mb-2">{product.title}</h1>
-            <div className="flex justify-between">
-              <p className="text-gray-600 text-sm mb-2">{formatIDR(product.price)}</p>
-              <p className="text-gray-600 text-sm mb-2">Stock: {product.stock} {product.unit}</p>
+      <div className="px-4 py-8 max-w-6xl mx-auto">
+        <div className="bg-white rounded-2xl overflow-hidden shadow-lg border border-gray-100 flex flex-col md:flex-row">
+          <div className="md:w-1/2">
+            <img
+              src={product.thumbnail || '/placeholder-image.jpg'}
+              alt={product.title}
+              className="w-full h-64 md:h-full object-cover"
+              onError={(e) => {
+                e.target.src = '/placeholder-image.jpg';
+              }}
+            />
+          </div>
+          <div className="p-6 md:p-10 md:w-1/2 flex flex-col justify-between">
+            <div>
+              <h1 className="text-2xl md:text-3xl font-bold mb-4 text-gray-900">{product.title}</h1>
+              <div className="flex justify-between items-center mb-6">
+                <p className="text-2xl font-bold text-green-700">{formatIDR(product.price)}</p>
+                <p className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">Stok: {product.stock} {product.unit}</p>
+              </div>
+
+              <div className="flex items-center gap-4 mb-8">
+                <span className="text-sm font-medium text-gray-700">Jumlah:</span>
+                <div className="flex items-center border border-gray-200 rounded-xl px-2 py-1">
+                  <button
+                    onClick={handleDecrement}
+                    className="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-green-700 hover:bg-green-50 rounded-lg transition"
+                    disabled={quantity === 1}
+                  >
+                    <span className="material-icons text-lg">remove</span>
+                  </button>
+                  <span className="w-12 text-center font-bold text-gray-800">{quantity}</span>
+                  <button
+                    onClick={handleIncrement}
+                    className="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-green-700 hover:bg-green-50 rounded-lg transition"
+                    disabled={quantity >= product.stock}
+                  >
+                    <span className="material-icons text-lg">add</span>
+                  </button>
+                </div>
+              </div>
             </div>
-            <div className="flex items-center mb-4">
-              <button
-                onClick={handleDecrement}
-                className="bg-gray-300 material-icons text-sm text-gray-700 px-2 py-1 rounded-lg hover:bg-gray-400"
-                disabled={quantity === 1}
-              >
-                remove
-              </button>
-              <span className="mx-2">{quantity}</span>
-              <button
-                onClick={handleIncrement}
-                className="bg-gray-300 material-icons text-sm text-gray-700 px-2 py-1 rounded-lg hover:bg-gray-400"
-                disabled={quantity >= product.stock}
-              >
-                add
-              </button>
-            </div>
-            <div className="w-full flex justify-between space-x-2 mt-2">
+
+            <div className="flex flex-col sm:flex-row gap-4">
               <button
                 onClick={() => addToWishlist(product.id)}
-                className=" w-full block text-center bg-red-600 text-white py-2 rounded-md text-sm hover:bg-red-700 flex items-center justify-center"
+                className="flex-1 flex items-center justify-center gap-2 bg-red-50 text-red-600 py-3 rounded-xl font-bold hover:bg-red-100 transition"
               >
-                <span className="material-icons text-sm mr-2">favorite</span>+ INCARAN
-              </button>                      
+                <span className="material-icons">favorite_border</span>
+                + INCARAN
+              </button>
               <button
                 onClick={() => addToCart(product.id)}
-                className="w-full block text-center bg-green-800 text-white py-2 rounded-md text-sm hover:bg-green-900 flex items-center justify-center"
+                className="flex-1 flex items-center justify-center gap-2 bg-green-700 text-white py-3 rounded-xl font-bold hover:bg-green-800 transition shadow-md"
               >
-                <span className="material-icons text-sm mr-2">add_shopping_cart</span>+ KERANJANG
+                <span className="material-icons">add_shopping_cart</span>
+                + KERANJANG
               </button>
             </div>
-          </div>    
+          </div>
         </div>
       </div>
 
       {/* Tab Navigation */}
-      <div className="mt-4 px-4">
-        <div className="flex justify-around bg-white border-b">
+      <div className="mt-4 px-4 max-w-6xl mx-auto pb-20">
+        <div className="flex justify-start gap-8 bg-white border-b px-6">
           <button
             className={`py-2 px-4 text-sm font-medium ${activeTab === 'description' ? 'text-green-600 border-b-2 border-green-600' : 'text-gray-500'}`}
             onClick={() => setActiveTab('description')}
@@ -307,7 +318,7 @@ const EcommerceProductDetail = () => {
                       <div className="flex justify-between items-center">
                         <p className="text-green-700 font-semibold">
                           <strong>{testimoni.customer}</strong>
-                        </p>                      
+                        </p>
                         <p className="text-sm text-gray-500">
                           {new Date(testimoni.created_at).toLocaleDateString('id-ID', {
                             day: '2-digit',
@@ -318,7 +329,7 @@ const EcommerceProductDetail = () => {
                       </div>
                       <div className="flex justify-between items-center">
                         {renderStars(testimoni.stars)}
-                      </div>  
+                      </div>
                       {testimoni.description ? (
                         <>
                           <div
@@ -351,7 +362,7 @@ const EcommerceProductDetail = () => {
         </div>
       </div>
 
-      <NavigationButton />     
+      <NavigationButton />
     </div>
   );
 };

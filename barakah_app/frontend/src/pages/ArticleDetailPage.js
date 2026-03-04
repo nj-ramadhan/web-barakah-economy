@@ -61,13 +61,14 @@ const ArticleDetailPage = () => {
     <div className="body bg-gray-50 min-h-screen">
       <HeaderHome />
 
-      <div className="px-4 py-6 max-w-3xl mx-auto mb-24 bg-white shadow-sm sm:rounded-lg sm:mt-4 sm:p-8">
-        {/* Header Artikel */}
-        <div className="flex items-start justify-between gap-3 mb-3">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 leading-tight">
+      <div className="px-4 py-8 md:py-12 max-w-4xl mx-auto mb-24 bg-white shadow-sm sm:rounded-2xl sm:mt-8 sm:p-10 border border-gray-100">
+        <div className="flex items-start justify-between gap-4 mb-4">
+          <h1 className="text-2xl sm:text-4xl font-bold text-gray-900 leading-tight">
             {article.title}
           </h1>
-          <ShareButton slug={article.slug || id} title={article.title} type="article" />
+          <div className="flex-shrink-0 mt-1">
+            <ShareButton slug={article.slug || id} title={article.title} type="article" />
+          </div>
         </div>
         <p className="text-gray-500 text-sm mb-6 pb-4 border-b border-gray-100">
           {article.date}
@@ -75,11 +76,11 @@ const ArticleDetailPage = () => {
 
         {/* Gambar Utama (Featured Image) */}
         {article.images && article.images.length > 0 && (
-          <div className="mb-8 rounded-lg overflow-hidden shadow-sm border border-gray-100">
+          <div className="mb-10 rounded-2xl overflow-hidden shadow-md border border-gray-100">
             <img
               src={article.images[0].full_path}
               alt={article.title}
-              className="w-full h-auto object-cover max-h-[400px]"
+              className="w-full h-auto object-cover max-h-[500px]"
             />
           </div>
         )}

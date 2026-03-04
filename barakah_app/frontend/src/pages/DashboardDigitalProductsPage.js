@@ -16,6 +16,13 @@ const formatIDR = (amount) => {
     return 'Rp. ' + new Intl.NumberFormat('id-ID', { minimumFractionDigits: 0 }).format(amount);
 };
 
+const getMediaUrl = (url) => {
+    if (!url) return '';
+    if (url.startsWith('http')) return url;
+    const baseUrl = process.env.REACT_APP_API_BASE_URL || '';
+    return `${baseUrl}${url}`;
+};
+
 const CATEGORY_CHOICES = [
     { value: 'ebook', label: 'E-Book' },
     { value: 'template', label: 'Template' },
@@ -42,6 +49,7 @@ const DashboardDigitalProductsPage = () => {
     const [category, setCategory] = useState('lainnya');
     const [price, setPrice] = useState('');
     const [digitalLink, setDigitalLink] = useState('');
+    const [isActive, setIsActive] = useState(true);
     const [thumbnail, setThumbnail] = useState(null);
     const [thumbnailPreview, setThumbnailPreview] = useState(null);
 
@@ -72,6 +80,7 @@ const DashboardDigitalProductsPage = () => {
         setCategory('lainnya');
         setPrice('');
         setDigitalLink('');
+        setIsActive(true);
         setThumbnail(null);
         setThumbnailPreview(null);
         setEditingProduct(null);
@@ -85,6 +94,7 @@ const DashboardDigitalProductsPage = () => {
         setCategory(product.category);
         setPrice(product.price.toString());
         setDigitalLink(product.digital_link);
+        setIsActive(product.is_active);
         setThumbnailPreview(product.thumbnail);
         setShowForm(true);
     };
@@ -97,6 +107,18 @@ const DashboardDigitalProductsPage = () => {
         } catch (err) {
             console.error(err);
             alert('Gagal menghapus produk');
+        }
+    };
+
+    const handleToggleActive = async (product) => {
+        try {
+            const formData = new FormData();
+            formData.append('is_active', !product.is_active);
+            await updateMyDigitalProduct(product.id, formData);
+            fetchProducts();
+        } catch (err) {
+            console.error(err);
+            alert('Gagal mengubah status produk');
         }
     };
 
@@ -114,6 +136,7 @@ const DashboardDigitalProductsPage = () => {
         formData.append('category', category);
         formData.append('price', price);
         formData.append('digital_link', digitalLink);
+        formData.append('is_active', isActive);
         if (thumbnail) {
             formData.append('thumbnail', thumbnail);
         }
@@ -256,6 +279,17 @@ const DashboardDigitalProductsPage = () => {
                             <p className="text-xs text-gray-400 mt-1">Link ini akan dikirim ke email pembeli setelah pembayaran</p>
                         </div>
 
+                        <div className="flex items-center gap-2">
+                            <input
+                                type="checkbox"
+                                id="active-check"
+                                checked={isActive}
+                                onChange={(e) => setIsActive(e.target.checked)}
+                                className="w-4 h-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+                            />
+                            <label htmlFor="active-check" className="text-sm text-gray-700">Tampilkan Produk ke Publik (Aktif)</label>
+                        </div>
+
                         <button
                             type="submit"
                             disabled={submitting}
@@ -283,26 +317,45 @@ const DashboardDigitalProductsPage = () => {
                             <div key={product.id} className="bg-white rounded-xl shadow-sm overflow-hidden">
                                 <div className="flex items-start gap-3 p-3">
                                     <img
-                                        src={product.thumbnail || '/placeholder-image.jpg'}
+                                        src={getMediaUrl(product.thumbnail) || '/placeholder-image.jpg'}
                                         alt={product.title}
                                         className="w-16 h-16 rounded-lg object-cover flex-shrink-0"
                                         onError={(e) => { e.target.src = '/placeholder-image.jpg'; }}
                                     />
                                     <div className="flex-1 min-w-0">
-                                        <h3 className="font-semibold text-sm text-gray-800 line-clamp-1">{product.title}</h3>
+                                        <div className="flex items-center gap-2">
+                                            <h3 className="font-semibold text-sm text-gray-800 line-clamp-1">{product.title}</h3>
+                                            {!product.is_active && (
+                                                <span className="text-[10px] bg-red-100 text-red-600 px-1.5 py-0.5 rounded italic">Draft</span>
+                                            )}
+                                        </div>
                                         <span className="inline-block text-[10px] bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full mt-0.5">{product.category}</span>
                                         <p className="text-green-700 font-bold text-sm mt-1">{formatIDR(product.price)}</p>
                                     </div>
                                     <div className="flex gap-1 flex-shrink-0">
                                         <button
+                                            onClick={() => handleToggleActive(product)}
+                                            className={`w-8 h-8 flex items-center justify-center rounded-lg transition ${product.is_active
+                                                    ? 'bg-green-50 text-green-600 hover:bg-green-100'
+                                                    : 'bg-gray-50 text-gray-400 hover:bg-gray-200'
+                                                }`}
+                                            title={product.is_active ? 'Nonaktifkan' : 'Aktifkan'}
+                                        >
+                                            <span className="material-icons text-lg">
+                                                {product.is_active ? 'visibility' : 'visibility_off'}
+                                            </span>
+                                        </button>
+                                        <button
                                             onClick={() => handleEdit(product)}
                                             className="w-8 h-8 flex items-center justify-center rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition"
+                                            title="Edit"
                                         >
                                             <span className="material-icons text-lg">edit</span>
                                         </button>
                                         <button
                                             onClick={() => handleDelete(product.id)}
                                             className="w-8 h-8 flex items-center justify-center rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition"
+                                            title="Hapus"
                                         >
                                             <span className="material-icons text-lg">delete</span>
                                         </button>

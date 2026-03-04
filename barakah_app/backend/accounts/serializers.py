@@ -12,7 +12,7 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ('username', 'email', 'password', 'phone', 'is_verified_member')
+        fields = ('username', 'email', 'password', 'phone', 'role', 'is_verified_member')
 
     def create(self, validated_data):
         user = User.objects.create_user(
@@ -35,4 +35,5 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         token['user_id'] = user.id
         token['username'] = user.username
         token['email'] = user.email
+        token['role'] = user.role
         return token
