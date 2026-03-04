@@ -2,7 +2,7 @@
 from rest_framework import viewsets, status, permissions
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from django.utils import timezone
 from django.core.mail import send_mail
 from django.conf import settings
@@ -89,7 +89,7 @@ class DigitalOrderViewSet(viewsets.ModelViewSet):
     authentication_classes = [JWTAuthentication, SessionAuthentication]
     serializer_class = DigitalOrderSerializer
     permission_classes = [permissions.AllowAny]
-    parser_classes = [MultiPartParser, FormParser]
+    parser_classes = [JSONParser, MultiPartParser, FormParser]
 
     def get_queryset(self):
         return DigitalOrder.objects.all()
