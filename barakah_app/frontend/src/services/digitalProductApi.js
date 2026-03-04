@@ -20,7 +20,9 @@ export const getDigitalProductBySlug = (slug) =>
 
 // Orders (no auth needed)
 export const createDigitalOrder = (data) =>
-    axios.post(`${API_BASE}/api/digital-products/orders/`, data);
+    axios.post(`${API_BASE}/api/digital-products/orders/`, data, {
+        headers: getAuthHeaders(),
+    });
 
 export const getDigitalOrderStatus = (orderNumber) =>
     axios.get(`${API_BASE}/api/digital-products/orders/status/${orderNumber}/`);

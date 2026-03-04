@@ -86,7 +86,7 @@ class DigitalOrderViewSet(viewsets.ModelViewSet):
     Create order: no auth required.
     Upload proof: no auth required (by order_number).
     """
-    authentication_classes = [JWTAuthentication, SessionAuthentication]
+    authentication_classes = [JWTAuthentication]
     serializer_class = DigitalOrderSerializer
     permission_classes = [permissions.AllowAny]
     parser_classes = [JSONParser, MultiPartParser, FormParser]
