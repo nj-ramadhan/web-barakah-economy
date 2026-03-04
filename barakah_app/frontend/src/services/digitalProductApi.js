@@ -22,6 +22,9 @@ export const getDigitalProductBySlug = (slug) =>
 export const createDigitalOrder = (data) =>
     axios.post(`${API_BASE}/api/digital-products/orders/`, data);
 
+export const getDigitalOrderStatus = (orderNumber) =>
+    axios.get(`${API_BASE}/api/digital-products/orders/status/${orderNumber}/`);
+
 export const uploadPaymentProof = (orderNumber, formData) =>
     axios.post(`${API_BASE}/api/digital-products/orders/upload-proof/${orderNumber}/`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' },

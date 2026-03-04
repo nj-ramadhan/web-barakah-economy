@@ -9,6 +9,7 @@ import 'swiper/swiper-bundle.css';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Pagination, Scrollbar } from 'swiper/modules';
 import ShareButton from '../components/campaigns/ShareButton';
+import { getDigitalProducts } from '../services/digitalProductApi';
 
 function getCsrfToken() {
   const cookies = document.cookie.split(';');
@@ -71,12 +72,20 @@ const Home = () => {
   const [featuredProducts, setfeaturedProducts] = useState([]);
   const [courses, setCourses] = useState([]);
   const [featuredCourses, setFeaturedCourses] = useState([]);
+  const [digitalProducts, setDigitalProducts] = useState([]);
+  const [featuredDigitalProducts, setFeaturedDigitalProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchTimeout, setSearchTimeout] = useState(null);
-  const [activeSlide, setActiveSlide] = useState(0);
-  const sliderInterval = useRef(null);
+  const [activeSlideCampaign, setActiveSlideCampaign] = useState(0);
+  const [activeSlideProduct, setActiveSlideProduct] = useState(0);
+  const [activeSlideCourse, setActiveSlideCourse] = useState(0);
+  const [activeSlideDigital, setActiveSlideDigital] = useState(0);
+  const sliderIntervalCampaign = useRef(null);
+  const sliderIntervalProduct = useRef(null);
+  const sliderIntervalCourse = useRef(null);
+  const sliderIntervalDigital = useRef(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -114,6 +123,17 @@ const Home = () => {
       }
     };
     fetchFeaturedCourses();
+
+    const fetchFeaturedDigitalProducts = async () => {
+      try {
+        const response = await getDigitalProducts();
+        // Featured digital ones? Logic per requirement or just top 4
+        setFeaturedDigitalProducts(response.data.slice(0, 4));
+      } catch (err) {
+        console.error('Error fetching digital products:', err);
+      }
+    };
+    fetchFeaturedDigitalProducts();
   }, []);
 
   // Fetch regular products (based on search query)
@@ -167,6 +187,19 @@ const Home = () => {
     }
   };
 
+  const fetchDigitalProducts = async (search = '') => {
+    try {
+      setLoading(true);
+      const response = await getDigitalProducts();
+      // Filter if needed
+      setDigitalProducts(response.data);
+    } catch (err) {
+      console.error('Error fetching digital products:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleSearch = (query) => {
     setSearchQuery(query);
 
@@ -178,6 +211,7 @@ const Home = () => {
       fetchCampaigns(query);
       fetchProducts(query);
       fetchCourses(query);
+      fetchDigitalProducts(query);
     }, 500);
 
     setSearchTimeout(newTimeout);
@@ -187,38 +221,83 @@ const Home = () => {
     fetchCampaigns();
     fetchProducts();
     fetchCourses();
+    fetchDigitalProducts();
 
     // Clean up function
     return () => {
-      if (sliderInterval.current) {
-        clearInterval(sliderInterval.current);
-      }
+      if (sliderIntervalCampaign.current) clearInterval(sliderIntervalCampaign.current);
+      if (sliderIntervalProduct.current) clearInterval(sliderIntervalProduct.current);
+      if (sliderIntervalCourse.current) clearInterval(sliderIntervalCourse.current);
+      if (sliderIntervalDigital.current) clearInterval(sliderIntervalDigital.current);
     };
   }, []);
 
-  // Set up automatic slider
+  // Set up automatic sliders
   useEffect(() => {
     if (featuredCampaigns.length > 0) {
-      sliderInterval.current = setInterval(() => {
-        setActiveSlide(prev => (prev + 1) % featuredCampaigns.length);
+      sliderIntervalCampaign.current = setInterval(() => {
+        setActiveSlideCampaign(prev => (prev + 1) % featuredCampaigns.length);
       }, 5000);
     }
-
-    return () => {
-      if (sliderInterval.current) {
-        clearInterval(sliderInterval.current);
-      }
-    };
+    return () => { if (sliderIntervalCampaign.current) clearInterval(sliderIntervalCampaign.current); };
   }, [featuredCampaigns]);
 
-  const goToSlide = (index) => {
-    setActiveSlide(index);
-    // Reset timer
-    if (sliderInterval.current) {
-      clearInterval(sliderInterval.current);
+  useEffect(() => {
+    if (featuredProducts.length > 0) {
+      sliderIntervalProduct.current = setInterval(() => {
+        setActiveSlideProduct(prev => (prev + 1) % featuredProducts.length);
+      }, 5000);
     }
-    sliderInterval.current = setInterval(() => {
-      setActiveSlide(prev => (prev + 1) % featuredCampaigns.length);
+    return () => { if (sliderIntervalProduct.current) clearInterval(sliderIntervalProduct.current); };
+  }, [featuredProducts]);
+
+  useEffect(() => {
+    if (featuredCourses.length > 0) {
+      sliderIntervalCourse.current = setInterval(() => {
+        setActiveSlideCourse(prev => (prev + 1) % featuredCourses.length);
+      }, 5000);
+    }
+    return () => { if (sliderIntervalCourse.current) clearInterval(sliderIntervalCourse.current); };
+  }, [featuredCourses]);
+
+  useEffect(() => {
+    if (featuredDigitalProducts.length > 0) {
+      sliderIntervalDigital.current = setInterval(() => {
+        setActiveSlideDigital(prev => (prev + 1) % featuredDigitalProducts.length);
+      }, 5000);
+    }
+    return () => { if (sliderIntervalDigital.current) clearInterval(sliderIntervalDigital.current); };
+  }, [featuredDigitalProducts]);
+
+  const goToSlideCampaign = (index) => {
+    setActiveSlideCampaign(index);
+    if (sliderIntervalCampaign.current) clearInterval(sliderIntervalCampaign.current);
+    sliderIntervalCampaign.current = setInterval(() => {
+      setActiveSlideCampaign(prev => (prev + 1) % featuredCampaigns.length);
+    }, 5000);
+  };
+
+  const goToSlideProduct = (index) => {
+    setActiveSlideProduct(index);
+    if (sliderIntervalProduct.current) clearInterval(sliderIntervalProduct.current);
+    sliderIntervalProduct.current = setInterval(() => {
+      setActiveSlideProduct(prev => (prev + 1) % featuredProducts.length);
+    }, 5000);
+  };
+
+  const goToSlideCourse = (index) => {
+    setActiveSlideCourse(index);
+    if (sliderIntervalCourse.current) clearInterval(sliderIntervalCourse.current);
+    sliderIntervalCourse.current = setInterval(() => {
+      setActiveSlideCourse(prev => (prev + 1) % featuredCourses.length);
+    }, 5000);
+  };
+
+  const goToSlideDigital = (index) => {
+    setActiveSlideDigital(index);
+    if (sliderIntervalDigital.current) clearInterval(sliderIntervalDigital.current);
+    sliderIntervalDigital.current = setInterval(() => {
+      setActiveSlideDigital(prev => (prev + 1) % featuredDigitalProducts.length);
     }, 5000);
   };
 
@@ -315,7 +394,7 @@ const Home = () => {
                 return (
                   <div
                     key={campaign.id}
-                    className={`absolute top-0 left-0 w-full h-full transition-opacity duration-500 ${index === activeSlide ? 'opacity-100 z-10' : 'opacity-0 z-0'
+                    className={`absolute top-0 left-0 w-full h-full transition-opacity duration-500 ${index === activeSlideCampaign ? 'opacity-100 z-10' : 'opacity-0 z-0'
                       }`}
                   >
                     <img
@@ -362,8 +441,8 @@ const Home = () => {
                 {featuredCampaigns.map((_, index) => (
                   <button
                     key={index}
-                    onClick={() => goToSlide(index)}
-                    className={`w-2 h-2 rounded-full ${index === activeSlide ? 'bg-white' : 'bg-white/50'
+                    onClick={() => goToSlideCampaign(index)}
+                    className={`w-2 h-2 rounded-full ${index === activeSlideCampaign ? 'bg-white' : 'bg-white/50'
                       }`}
                   />
                 ))}
@@ -518,7 +597,7 @@ const Home = () => {
                 return (
                   <div
                     key={product.id}
-                    className={`absolute top-0 left-0 w-full h-full transition-opacity duration-500 ${index === activeSlide ? 'opacity-100 z-10' : 'opacity-0 z-0'
+                    className={`absolute top-0 left-0 w-full h-full transition-opacity duration-500 ${index === activeSlideProduct ? 'opacity-100 z-10' : 'opacity-0 z-0'
                       }`}
                   >
                     <img
@@ -577,8 +656,8 @@ const Home = () => {
                 {featuredProducts.map((_, index) => (
                   <button
                     key={index}
-                    onClick={() => goToSlide(index)}
-                    className={`w-2 h-2 rounded-full ${index === activeSlide ? 'bg-white' : 'bg-white/50'
+                    onClick={() => goToSlideProduct(index)}
+                    className={`w-2 h-2 rounded-full ${index === activeSlideProduct ? 'bg-white' : 'bg-white/50'
                       }`}
                   />
                 ))}
@@ -774,7 +853,7 @@ const Home = () => {
                 return (
                   <div
                     key={course.id}
-                    className={`absolute top-0 left-0 w-full h-full transition-opacity duration-500 ${index === activeSlide ? 'opacity-100 z-10' : 'opacity-0 z-0'
+                    className={`absolute top-0 left-0 w-full h-full transition-opacity duration-500 ${index === activeSlideCourse ? 'opacity-100 z-10' : 'opacity-0 z-0'
                       }`}
                   >
                     <img
@@ -800,13 +879,13 @@ const Home = () => {
             </div>
 
             {/* Indicators */}
-            {featuredCourses.length > 1 && (
+            {featuredCourses.length > 0 && (
               <div className="absolute bottom-2 right-2 flex space-x-2 z-20">
                 {featuredCourses.map((_, index) => (
                   <button
                     key={index}
-                    onClick={() => goToSlide(index)}
-                    className={`w-2 h-2 rounded-full ${index === activeSlide ? 'bg-white' : 'bg-white/50'
+                    onClick={() => goToSlideCourse(index)}
+                    className={`w-2 h-2 rounded-full ${index === activeSlideCourse ? 'bg-white' : 'bg-white/50'
                       }`}
                   />
                 ))}
@@ -875,6 +954,111 @@ const Home = () => {
             >
               Coba Lagi
             </button>
+          </div>
+        )}
+      </div>
+
+      {/* Digital Product Slider */}
+      <div className="px-4 pt-4" style={{ position: 'relative', zIndex: 10 }}>
+        <h1 className="text-lg font-medium mb-2 line-clamp-2">Produk Digital BAE</h1>
+        <h2 className="text-sm font-medium mb-2 line-clamp-2">Akses ilmu dan kemudahan dengan produk digital berkualitas</h2>
+
+        {featuredDigitalProducts.length > 0 && (
+          <div className="relative rounded-lg overflow-hidden h-56">
+            {/* Slides */}
+            <div className="h-full">
+              {featuredDigitalProducts.map((product, index) => {
+                return (
+                  <div
+                    key={product.id}
+                    className={`absolute top-0 left-0 w-full h-full transition-opacity duration-500 ${index === activeSlideDigital ? 'opacity-100 z-10' : 'opacity-0 z-0'
+                      }`}
+                  >
+                    <img
+                      src={product.thumbnail || '/placeholder-image.jpg'}
+                      alt={product.title}
+                      className="w-full h-56 object-cover"
+                      onError={(e) => {
+                        e.target.src = '/placeholder-image.jpg';
+                      }}
+                    />
+                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4">
+                      <h2 className="text-white font-bold text-lg">{product.title}</h2>
+                      <div className="flex justify-between items-center mt-2">
+                        <span className="text-white font-bold">{formatIDR(product.price)}</span>
+                        <Link
+                          to={`/digital-products/${product.slug}`}
+                          className="bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-bold"
+                        >
+                          BELI SEKARANG
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Indicators */}
+            {featuredDigitalProducts.length > 0 && (
+              <div className="absolute bottom-2 right-2 flex space-x-2 z-20">
+                {featuredDigitalProducts.map((_, index) => (
+                  <button
+                    key={index}
+                    onClick={() => goToSlideDigital(index)}
+                    className={`w-2 h-2 rounded-full ${index === activeSlideDigital ? 'bg-white' : 'bg-white/50'
+                      }`}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+      <div className="px-4 py-4">
+        {loading ? (
+          <div className="flex justify-center items-center py-8">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500"></div>
+          </div>
+        ) : (
+          <div className="swiper-container">
+            <Swiper
+              spaceBetween={16}
+              slidesPerView={2}
+              navigation
+              pagination={{ clickable: true }}
+              scrollbar={{ draggable: true }}
+              modules={[Navigation, Pagination, Scrollbar]}
+            >
+              {digitalProducts.map((product) => {
+                return (
+                  <SwiperSlide key={product.id}>
+                    <div className="bg-white rounded-lg overflow-hidden shadow">
+                      <Link to={`/digital-products/${product.slug}`}>
+                        <img
+                          src={product.thumbnail || '/placeholder-image.jpg'}
+                          alt={product.title}
+                          className="w-full h-28 object-cover"
+                          onError={(e) => {
+                            e.target.src = '/placeholder-image.jpg';
+                          }}
+                        />
+                      </Link>
+                      <div className="p-2">
+                        <h3 className="text-sm font-medium mb-1 line-clamp-1">{product.title}</h3>
+                        <p className="text-green-700 font-bold text-xs mb-2">{formatIDR(product.price)}</p>
+                        <Link
+                          to={`/digital-products/${product.slug}`}
+                          className="block text-center bg-green-800 text-white py-2 rounded-md text-xs hover:bg-green-900"
+                        >
+                          DETAIL PRODUK
+                        </Link>
+                      </div>
+                    </div>
+                  </SwiperSlide>
+                );
+              })}
+            </Swiper>
           </div>
         )}
       </div>

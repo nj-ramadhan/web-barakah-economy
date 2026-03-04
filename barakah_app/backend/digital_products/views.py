@@ -105,6 +105,14 @@ class DigitalOrderViewSet(viewsets.ModelViewSet):
             return Response(DigitalOrderSerializer(order).data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    @action(detail=False, methods=['get'], url_path='status/(?P<order_number>[^/.]+)')
+    def status(self, request, order_number=None):
+        try:
+            order = DigitalOrder.objects.get(order_number=order_number)
+            return Response(DigitalOrderSerializer(order).data)
+        except DigitalOrder.DoesNotExist:
+            return Response({'error': 'Order not found'}, status=status.HTTP_404_NOT_FOUND)
+
     @action(detail=False, methods=['post'], url_path='upload-proof/(?P<order_number>[^/.]+)')
     def upload_proof(self, request, order_number=None):
         try:
