@@ -1,0 +1,56 @@
+# digital_products/serializers.py
+from rest_framework import serializers
+from .models import DigitalProduct, DigitalOrder
+
+
+class DigitalProductSerializer(serializers.ModelSerializer):
+    seller_name = serializers.CharField(source='user.username', read_only=True)
+
+    class Meta:
+        model = DigitalProduct
+        fields = [
+            'id', 'user', 'seller_name', 'title', 'slug', 'description',
+            'category', 'thumbnail', 'price', 'digital_link',
+            'is_active', 'created_at', 'updated_at',
+        ]
+        read_only_fields = ['id', 'slug', 'user', 'created_at', 'updated_at']
+
+
+class DigitalProductPublicSerializer(serializers.ModelSerializer):
+    """Public serializer — hides digital_link from non-owners"""
+    seller_name = serializers.CharField(source='user.username', read_only=True)
+
+    class Meta:
+        model = DigitalProduct
+        fields = [
+            'id', 'seller_name', 'title', 'slug', 'description',
+            'category', 'thumbnail', 'price',
+            'is_active', 'created_at',
+        ]
+
+
+class DigitalOrderSerializer(serializers.ModelSerializer):
+    product_title = serializers.CharField(source='digital_product.title', read_only=True)
+
+    class Meta:
+        model = DigitalOrder
+        fields = [
+            'id', 'order_number', 'digital_product', 'product_title',
+            'buyer', 'buyer_name', 'buyer_email', 'buyer_phone',
+            'amount', 'payment_proof', 'payment_status',
+            'ocr_verified', 'email_sent', 'created_at',
+        ]
+        read_only_fields = [
+            'id', 'order_number', 'payment_status',
+            'ocr_verified', 'email_sent', 'created_at',
+        ]
+
+
+class DigitalOrderCreateSerializer(serializers.ModelSerializer):
+    """For creating orders — no auth required"""
+    class Meta:
+        model = DigitalOrder
+        fields = [
+            'digital_product', 'buyer_name', 'buyer_email',
+            'buyer_phone', 'amount',
+        ]

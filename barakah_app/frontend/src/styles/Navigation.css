@@ -1,14 +1,17 @@
 /* styles/Navigation.css */
 nav {
-  z-index: 100; /* Ensure the navigation is above other content */
-  padding-bottom: env(safe-area-inset-bottom, 0px); /* Agar nav pas di bawah pada HP tanpa tombol fisik */
+  z-index: 100;
+  /* Ensure the navigation is above other content */
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  /* Agar nav pas di bawah pada HP tanpa tombol fisik */
 }
 
 nav .flex {
   padding: 0.5rem 0;
 }
 
-nav .flex a {
+nav .flex>a,
+nav .flex>div>button {
   transition: color 0.3s ease;
   display: flex;
   flex-direction: column;
@@ -16,13 +19,16 @@ nav .flex a {
   text-decoration: none;
 }
 
-nav .flex a:hover {
-  color: #065f46; /* Green-600 */
+nav .flex>a:hover,
+nav .flex>div>button:hover {
+  color: #065f46;
+  /* Green-600 */
 }
 
 /* Active indicator */
-nav .flex a.active {
-  color: #065f46; /* Green-600 */
+nav .flex>a.active {
+  color: #065f46;
+  /* Green-600 */
 }
 
 /* Responsive styles */

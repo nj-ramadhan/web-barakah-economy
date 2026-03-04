@@ -11,15 +11,15 @@ const formatDate = (dateData) => {
     if (!dateData) return 'tidak ada';
     const date = new Date(dateData);
     return date.toLocaleDateString('id-ID', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
     });
-  };
+};
 
 const formatIDR = (amount) => {
     return new Intl.NumberFormat('id-ID', {
-      minimumFractionDigits: 0,
+        minimumFractionDigits: 0,
     }).format(amount);
 };
 
@@ -274,7 +274,7 @@ const ProfilePage = () => {
                             <p className="w-full p-2 border rounded-lg bg-gray-100">{PROVINCE_CHOICES[profile.address_province] || '-'}</p>
                         </div>
                     </div>
-                );                
+                );
 
             case 'study':
                 return (
@@ -409,7 +409,7 @@ const ProfilePage = () => {
                                         onClick={() => setActiveTab('address')}
                                     >
                                         location_on
-                                    </button>                                    
+                                    </button>
                                     <button
                                         className={`py-2 px-4 material-icons ${activeTab === 'study' ? 'border-b-2 border-green-600 text-green-600' : 'text-gray-500'}`}
                                         onClick={() => setActiveTab('study')}
@@ -437,6 +437,15 @@ const ProfilePage = () => {
                                 className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-medium flex items-center justify-center"
                             >
                                 Edit Profile
+                            </Link>
+
+                            {/* Dashboard Button */}
+                            <Link
+                                to="/dashboard"
+                                className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-medium flex items-center justify-center gap-2"
+                            >
+                                <span className="material-icons text-lg">dashboard</span>
+                                Dashboard
                             </Link>
                         </div>
                     </div>
