@@ -189,6 +189,7 @@ const DigitalProductPaymentPage = () => {
                     <div className="bg-white rounded-lg p-4 text-center border border-gray-200 mb-4">
                         <p className="text-xs font-bold text-gray-400 mb-2 uppercase tracking-wider">QRIS BAE COMMUNITY</p>
                         <img
+                            id="qris-image"
                             src="/images/qris-bae2.png"
                             alt="QRIS Code"
                             className="w-48 h-48 mx-auto object-contain"
@@ -200,6 +201,21 @@ const DigitalProductPaymentPage = () => {
                         <div className="hidden w-48 h-48 mx-auto bg-gray-100 rounded-lg items-center justify-center text-gray-400 text-sm">
                             QRIS Code
                         </div>
+
+                        <button
+                            onClick={() => {
+                                const link = document.createElement('a');
+                                link.href = '/images/qris-bae2.png';
+                                link.download = `QRIS-BAE-${orderNumber}.png`;
+                                document.body.appendChild(link);
+                                link.click();
+                                document.body.removeChild(link);
+                            }}
+                            className="mt-4 flex items-center justify-center gap-2 mx-auto px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-xs font-bold hover:bg-gray-200 transition border border-gray-200"
+                        >
+                            <span className="material-icons text-sm">download</span>
+                            UNDUH QR
+                        </button>
                     </div>
 
                     <div className="border-t border-gray-200 my-4"></div>
