@@ -19,13 +19,14 @@ logger = logging.getLogger(__name__)
 
 
 from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework.authentication import SessionAuthentication
 
 class DigitalProductViewSet(viewsets.ModelViewSet):
     """
     Public: list & retrieve active products.
     Authenticated: CRUD own products via /my-products/.
     """
-    authentication_classes = [JWTAuthentication]
+    authentication_classes = [JWTAuthentication, SessionAuthentication]
     serializer_class = DigitalProductPublicSerializer
     lookup_field = 'slug'
 
@@ -85,7 +86,7 @@ class DigitalOrderViewSet(viewsets.ModelViewSet):
     Create order: no auth required.
     Upload proof: no auth required (by order_number).
     """
-    authentication_classes = [JWTAuthentication]
+    authentication_classes = [JWTAuthentication, SessionAuthentication]
     serializer_class = DigitalOrderSerializer
     permission_classes = [permissions.AllowAny]
     parser_classes = [MultiPartParser, FormParser]
