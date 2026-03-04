@@ -4,7 +4,7 @@ import '../../styles/Header.css';
 
 const Header = () => {
   return (
-    <header className="bg-white shadow-sm sticky top-0 z-100">
+    <header className="bg-white shadow-sm sticky top-0 z-[1001] lg:hidden">
       <div className="container">
         <div className="flex items-center">
           <img src="/images/logo.png" alt="BAE Community" className="logo" />

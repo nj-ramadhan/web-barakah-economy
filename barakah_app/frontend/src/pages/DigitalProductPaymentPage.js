@@ -170,6 +170,21 @@ const DigitalProductPaymentPage = () => {
                 <div className="bg-gray-50 rounded-xl p-4 mb-4">
                     <h2 className="font-semibold text-sm mb-3">Pilihan Pembayaran</h2>
 
+                    {order && (
+                        <div className="bg-green-50 border border-green-100 rounded-lg p-3 mb-4 flex justify-between items-center">
+                            <div>
+                                <p className="text-[10px] text-green-600 uppercase font-bold tracking-wider">Total Tagihan</p>
+                                <p className="text-lg font-bold text-green-900">
+                                    Rp {Number(order.amount).toLocaleString('id-ID')}
+                                </p>
+                            </div>
+                            <div className="text-right">
+                                <p className="text-[10px] text-gray-400 uppercase font-bold tracking-wider">Status</p>
+                                <p className="text-xs font-bold text-orange-500 uppercase">{order.payment_status}</p>
+                            </div>
+                        </div>
+                    )}
+
                     {/* QRIS */}
                     <div className="bg-white rounded-lg p-4 text-center border border-gray-200 mb-4">
                         <p className="text-xs font-bold text-gray-400 mb-2 uppercase tracking-wider">QRIS BAE COMMUNITY</p>

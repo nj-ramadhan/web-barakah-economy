@@ -21,7 +21,7 @@ const DesktopHeader = () => {
     };
 
     return (
-        <header className="w-full bg-white/90 backdrop-blur-md shadow-sm py-4 px-8 flex justify-between items-center fixed top-0 z-50">
+        <header className="w-full bg-white/90 backdrop-blur-md shadow-sm py-4 px-8 flex justify-between items-center fixed top-0 z-[1000]">
             <Link to="/" className="flex items-center gap-2">
                 <img src="/logo.png" alt="Barakah Economy" className="h-10" onError={(e) => { e.target.src = '/icon-512x512.png'; e.target.className = 'h-10 w-10 object-contain'; }} />
                 <span className="text-xl font-bold text-green-800">Barakah Economy</span>
