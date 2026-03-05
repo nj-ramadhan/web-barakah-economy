@@ -941,12 +941,16 @@ const Home = () => {
                           {course.title}
                         </h3>
                         <p className="text-gray-600 text-xs mb-2">{formatIDRCourse(course.price)}</p>
-                        <Link
-                          to={`/kelas/${course.slug || course.id}`}
-                          className="block text-center bg-green-800 text-white py-2 rounded-md text-sm hover:bg-green-900"
-                        >
-                          LIHAT KELAS
-                        </Link>
+                        <div className="flex gap-2 items-center w-full mt-2">
+                          <div className="flex-1">
+                            <Link
+                              to={`/kelas/${course.slug || course.id}`}
+                              className="block text-center bg-green-800 text-white py-2 rounded-md text-sm hover:bg-green-900"
+                            >
+                              LIHAT KELAS
+                            </Link>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </SwiperSlide>

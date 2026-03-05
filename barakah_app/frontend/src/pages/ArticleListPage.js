@@ -27,7 +27,8 @@ const ArticleListPage = () => {
 
   const stripHtml = (html) => {
     if (!html) return "";
-    return html.replace(/<[^>]+>/g, '');
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    return doc.body.textContent || "";
   };
 
   return (
