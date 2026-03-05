@@ -18,7 +18,8 @@ const formatIDRTarget = (amount) => {
 
 const stripHtml = (html) => {
     if (!html) return '';
-    return html.replace(/<[^>]*>?/gm, '');
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    return doc.body.textContent || "";
 };
 
 const getMediaUrl = (url) => {

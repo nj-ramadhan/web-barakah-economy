@@ -79,7 +79,23 @@ const CrowdfundingMainPage = () => {
         `${process.env.REACT_APP_API_BASE_URL}/api/campaigns/`,
         { params: { search } }
       );
-      setCampaigns(response.data); // Set regular campaigns (search results)
+      const sortedData = response.data.sort((a, b) => {
+        const isAExpired = isCampaignExpired(a.deadline);
+        const isBExpired = isCampaignExpired(b.deadline);
+
+        // Expired campaigns last
+        if (isAExpired && !isBExpired) return 1;
+        if (!isAExpired && isBExpired) return -1;
+
+        // Both active or both expired
+        if (!a.deadline && b.deadline) return 1;
+        if (a.deadline && !b.deadline) return -1;
+        if (!a.deadline && !b.deadline) return 0;
+
+        // Both have deadlines
+        return new Date(a.deadline) - new Date(b.deadline);
+      });
+      setCampaigns(sortedData); // Set regular campaigns (search results)
     } catch (err) {
       console.error('Error fetching campaigns:', err);
       setError('Failed to load campaigns');

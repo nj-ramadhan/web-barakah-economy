@@ -161,7 +161,20 @@ const Home = () => {
         `${process.env.REACT_APP_API_BASE_URL}/api/campaigns/`,
         { params: { search } }
       );
-      setCampaigns(response.data); // Set regular campaigns (search results)
+      const sortedData = response.data.sort((a, b) => {
+        const isAExpired = isCampaignExpired(a.deadline);
+        const isBExpired = isCampaignExpired(b.deadline);
+
+        if (isAExpired && !isBExpired) return 1;
+        if (!isAExpired && isBExpired) return -1;
+
+        if (!a.deadline && b.deadline) return 1;
+        if (a.deadline && !b.deadline) return -1;
+        if (!a.deadline && !b.deadline) return 0;
+
+        return new Date(a.deadline) - new Date(b.deadline);
+      });
+      setCampaigns(sortedData); // Set regular campaigns (search results)
     } catch (err) {
       console.error('Error fetching campaigns:', err);
       setError('Failed to load campaigns');
@@ -355,9 +368,7 @@ const Home = () => {
   };
 
   // Sort campaigns based on the most donated
-  const sortedCampaigns = [...campaigns].sort((a, b) => {
-    return (b.current_amount || 0) - (a.current_amount || 0);
-  });
+  const sortedCampaigns = campaigns;
 
   const sortedProducts = [...products].sort((a, b) => {
     return (b.price || 0) - (a.price || 0);
