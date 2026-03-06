@@ -16,9 +16,11 @@ course_detail = CourseViewSet.as_view({
 })
 
 urlpatterns = [
+    path('my-courses/', CourseViewSet.as_view({'get': 'my_courses'}), name='my-courses'),
     path('enrollments/', CourseEnrollmentViewSet.as_view({'get': 'list', 'post': 'create'}), name='enrollment-list-create'),
     path('enrollments/<int:pk>/', CourseEnrollmentViewSet.as_view({'get': 'retrieve', 'put': 'update', 'patch': 'partial_update', 'delete': 'destroy'}), name='enrollment-detail'),
-    path('materials/', CourseMaterialViewSet.as_view({'get': 'list', 'post': 'create'}), name='material-list-create'), 
+    path('materials/', CourseMaterialViewSet.as_view({'get': 'list', 'post': 'create'}), name='material-list-create'),
+    path('materials/<int:pk>/', CourseMaterialViewSet.as_view({'get': 'retrieve', 'put': 'update', 'patch': 'partial_update', 'delete': 'destroy'}), name='material-detail'),
     path('progress/', UserCourseProgressViewSet.as_view({'get': 'list', 'post': 'create'}), name='progress-list-create'),
     path('<slug:slug>/payment-confirmation/', CoursePaymentConfirmationView.as_view(), name='course-payment-confirmation'),
     path('<int:pk>/', course_detail, name='course-detail-id'),  # Detail by ID

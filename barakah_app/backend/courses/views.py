@@ -10,10 +10,18 @@ from .models import Course, CourseEnrollment, CourseMaterial, UserCourseProgress
 from .serializers import CourseSerializer, CourseEnrollmentSerializer, CourseMaterialSerializer, UserCourseProgressSerializer
 
 class CourseViewSet(viewsets.ModelViewSet):
-    queryset = Course.objects.filter(is_active=True)
     serializer_class = CourseSerializer
-    
+    parser_classes = [MultiPartParser, FormParser]
+
+    def get_permissions(self):
+        if self.action in ['list', 'retrieve']:
+            return [permissions.AllowAny()]
+        return [permissions.IsAuthenticated()]
+
     def get_queryset(self):
+        if self.action == 'my_courses':
+            return Course.objects.filter(instructor=self.request.user)
+        
         queryset = Course.objects.filter(is_active=True)
         search = self.request.query_params.get('search', None)
         if search:
@@ -22,6 +30,15 @@ class CourseViewSet(viewsets.ModelViewSet):
                 Q(description__icontains=search)
             )
         return queryset
+
+    def perform_create(self, serializer):
+        serializer.save(instructor=self.request.user)
+
+    @action(detail=False, methods=['get'])
+    def my_courses(self, request):
+        courses = self.get_queryset()
+        serializer = self.get_serializer(courses, many=True)
+        return Response(serializer.data)
 
 class CourseDetailViewSet(APIView):
     def get(self, request, slug):
@@ -50,10 +67,24 @@ class CourseEnrollmentViewSet(viewsets.ModelViewSet):
         enrollment.save()
         return Response({'detail': 'Payment confirmed.'})
 
-class CourseMaterialViewSet(viewsets.ReadOnlyModelViewSet):
+class CourseMaterialViewSet(viewsets.ModelViewSet):
     queryset = CourseMaterial.objects.all()
     serializer_class = CourseMaterialSerializer
     permission_classes = [permissions.IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser]
+
+    def get_queryset(self):
+        course_id = self.request.query_params.get('course_id')
+        if course_id:
+            return CourseMaterial.objects.filter(course_id=course_id)
+        return CourseMaterial.objects.all()
+
+    def perform_create(self, serializer):
+        # Verify instructor
+        course = serializer.validated_data.get('course')
+        if course.instructor != self.request.user:
+            raise permissions.PermissionDenied("You are not the instructor of this course.")
+        serializer.save()
 
 class CoursePaymentConfirmationView(APIView):
     permission_classes = [permissions.IsAuthenticated]
