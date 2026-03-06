@@ -32,7 +32,7 @@ const EcourseViewerPage = () => {
                 setCourse(courseRes.data);
 
                 // Fetch materials
-                const materialsRes = await axios.get(`${baseUrl}/api/courses/materials/?course=${courseRes.data.id}`, {
+                const materialsRes = await axios.get(`${baseUrl}/api/courses/materials/?course_id=${courseRes.data.id}`, {
                     headers: { Authorization: `Bearer ${user.access}` }
                 });
                 const sortedMaterials = (materialsRes.data || []).sort((a, b) => a.order - b.order);
@@ -42,13 +42,19 @@ const EcourseViewerPage = () => {
                 }
 
                 // Fetch progress
-                const progressRes = await axios.get(`${baseUrl}/api/courses/progress/?course=${courseRes.data.id}`, {
-                    headers: { Authorization: `Bearer ${user.access}` }
-                });
-                setProgress(progressRes.data.map(p => p.material));
+                try {
+                    const progressRes = await axios.get(`${baseUrl}/api/courses/progress/`, {
+                        headers: { Authorization: `Bearer ${user.access}` }
+                    });
+                    const courseProgress = (progressRes.data || [])
+                        .filter(p => p.course === courseRes.data.id || p.course_id === courseRes.data.id)
+                        .map(p => p.material);
+                    setProgress(courseProgress);
+                } catch (pErr) {
+                    console.error('Error fetching progress:', pErr);
+                }
             } catch (err) {
                 console.error('Error fetching ecourse data:', err);
-                // Redirect if not enrolled?
             } finally {
                 setLoading(false);
             }
@@ -60,11 +66,25 @@ const EcourseViewerPage = () => {
         if (!url) return null;
         const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
         const match = url.match(regExp);
-        return (match && match[2].length === 11) ? match[2] : null;
+        if (match && match[2].length === 11) return match[2];
+        const shortsMatch = url.match(/\/shorts\/([a-zA-Z0-9_-]{11})/);
+        if (shortsMatch) return shortsMatch[1];
+        return null;
     };
 
-    const handleMaterialClick = (material) => {
+    const isLocked = (index) => {
+        if (index === 0) return false;
+        const prevMaterial = materials[index - 1];
+        return !progress.includes(prevMaterial.id);
+    };
+
+    const handleMaterialClick = (material, index) => {
+        if (isLocked(index)) {
+            alert('Selesaikan materi sebelumnya untuk membuka materi ini.');
+            return;
+        }
         setCurrentMaterial(material);
+        window.scrollTo(0, 0);
         if (window.innerWidth < 1024) setSidebarOpen(false);
     };
 
@@ -87,137 +107,198 @@ const EcourseViewerPage = () => {
         }
     };
 
-    if (loading) return <div className="text-center py-20">Loading...</div>;
+    const handleNext = () => {
+        if (!currentMaterial) return;
+        const currentIndex = materials.findIndex(m => m.id === currentMaterial.id);
+        if (currentIndex < materials.length - 1) {
+            handleMaterialClick(materials[currentIndex + 1], currentIndex + 1);
+        }
+    };
+
+    if (loading) return (
+        <div className="body min-h-screen flex items-center justify-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
+        </div>
+    );
     if (!course) return <div className="text-center py-20">Data tidak ditemukan</div>;
 
     return (
         <div className="body min-h-screen bg-gray-50 flex flex-col">
             <Helmet>
-                <title>{course.title} - Viewer | Barakah Academy</title>
+                <title>{course.title} - Belajar | Barakah Academy</title>
             </Helmet>
 
             <Header />
 
-            <div className="flex-1 flex overflow-hidden max-w-6xl mx-auto w-full">
+            <div className="flex-1 flex overflow-hidden max-w-7xl mx-auto w-full">
                 {/* Sidebar */}
                 <div className={`${sidebarOpen ? 'w-80' : 'w-0'} lg:w-80 bg-white border-r transition-all duration-300 flex flex-col z-20 absolute lg:relative h-full`}>
-                    <div className="p-4 border-b flex justify-between items-center bg-green-800 text-white">
-                        <h2 className="font-bold text-sm truncate">{course.title}</h2>
-                        <button onClick={() => setSidebarOpen(false)} className="lg:hidden">
-                            <span className="material-icons">close</span>
+                    <div className="p-4 border-b flex justify-between items-center bg-green-900 text-white">
+                        <h2 className="font-bold text-xs uppercase tracking-widest truncate">{course.title}</h2>
+                        <button onClick={() => setSidebarOpen(false)} className="lg:hidden p-1">
+                            <span className="material-icons text-sm">close</span>
                         </button>
                     </div>
                     <div className="flex-1 overflow-y-auto">
-                        {materials.map((m, index) => (
-                            <button
-                                key={m.id}
-                                onClick={() => handleMaterialClick(m)}
-                                className={`w-full text-left p-4 border-b hover:bg-green-50 transition flex items-start gap-3 ${currentMaterial?.id === m.id ? 'bg-green-50 border-l-4 border-l-green-600' : ''}`}
-                            >
-                                <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${progress.includes(m.id) ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-500'}`}>
-                                    {progress.includes(m.id) ? <span className="material-icons text-xs">check</span> : index + 1}
-                                </div>
-                                <div className="flex-1">
-                                    <p className={`text-sm font-medium ${currentMaterial?.id === m.id ? 'text-green-700' : 'text-gray-700'}`}>{m.title}</p>
-                                    <span className="text-[10px] text-gray-400 flex items-center gap-1 mt-1">
-                                        <span className="material-icons text-[10px]">play_circle</span>
-                                        Video
-                                    </span>
-                                </div>
-                            </button>
-                        ))}
+                        {materials.map((m, index) => {
+                            const locked = isLocked(index);
+                            const active = currentMaterial?.id === m.id;
+                            const done = progress.includes(m.id);
+
+                            return (
+                                <button
+                                    key={m.id}
+                                    disabled={locked}
+                                    onClick={() => handleMaterialClick(m, index)}
+                                    className={`w-full text-left p-4 border-b transition-all flex items-start gap-3 
+                                        ${active ? 'bg-green-50 border-l-4 border-l-green-600' : 'hover:bg-gray-50'} 
+                                        ${locked ? 'opacity-50 cursor-not-allowed grayscale' : ''}`}
+                                >
+                                    <div className={`w-6 h-6 rounded-full flex-shrink-0 flex items-center justify-center text-[10px] font-bold 
+                                        ${done ? 'bg-green-600 text-white' : active ? 'bg-green-800 text-white' : 'bg-gray-200 text-gray-500'}`}>
+                                        {done ? <span className="material-icons text-xs">check</span> : locked ? <span className="material-icons text-[10px]">lock</span> : index + 1}
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <p className={`text-xs font-bold leading-snug ${active ? 'text-green-800' : 'text-gray-700'}`}>{m.title}</p>
+                                        <div className="flex items-center gap-2 mt-1">
+                                            <span className="text-[9px] text-gray-400 flex items-center gap-0.5 font-bold uppercase tracking-tight">
+                                                <span className="material-icons text-[10px]">play_circle</span>
+                                                VIDEO
+                                            </span>
+                                            {m.pdf_file && (
+                                                <span className="text-[9px] text-blue-500 flex items-center gap-0.5 font-bold uppercase tracking-tight">
+                                                    <span className="material-icons text-[10px]">description</span>
+                                                    DOC
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
+                                </button>
+                            );
+                        })}
                     </div>
                 </div>
 
                 {/* Main Content */}
                 <div className="flex-1 overflow-y-auto bg-gray-50">
                     {/* Top Bar (Mobile) */}
-                    <div className="lg:hidden p-2 bg-white border-b flex items-center gap-2">
-                        <button onClick={() => setSidebarOpen(true)} className="p-2">
+                    <div className="lg:hidden p-3 bg-white border-b flex items-center gap-3">
+                        <button onClick={() => setSidebarOpen(true)} className="p-1">
                             <span className="material-icons">menu</span>
                         </button>
                         <span className="text-sm font-bold truncate">{course.title}</span>
                     </div>
 
                     {currentMaterial ? (
-                        <div className="p-4 lg:p-8 max-w-5xl mx-auto">
+                        <div className="p-4 lg:p-10 max-w-4xl mx-auto pb-32">
                             {/* Video Player */}
-                            {currentMaterial.youtube_link && (
-                                <div className="w-full aspect-video bg-black rounded-2xl overflow-hidden shadow-lg mb-6">
+                            {currentMaterial.youtube_link ? (
+                                <div className="w-full aspect-video bg-black rounded-2xl overflow-hidden shadow-2xl mb-8 group relative border-4 border-white">
                                     <iframe
                                         width="100%"
                                         height="100%"
-                                        src={`https://www.youtube.com/embed/${getYoutubeId(currentMaterial.youtube_link)}`}
+                                        src={`https://www.youtube.com/embed/${getYoutubeId(currentMaterial.youtube_link)}?rel=0&modestbranding=1`}
                                         title={currentMaterial.title}
                                         frameBorder="0"
                                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                                         allowFullScreen
+                                        className="w-full h-full"
                                     ></iframe>
+                                </div>
+                            ) : (
+                                <div className="w-full aspect-video bg-gray-100 rounded-2xl flex flex-col items-center justify-center border-2 border-dashed border-gray-300 mb-8">
+                                    <span className="material-icons text-gray-300 text-6xl">videocam_off</span>
+                                    <p className="text-gray-400 text-sm mt-2">Video tidak tersedia</p>
                                 </div>
                             )}
 
                             {/* Info */}
-                            <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-                                <div className="flex justify-between items-start mb-4">
-                                    <h1 className="text-xl font-bold text-gray-900">{currentMaterial.title}</h1>
+                            <div className="bg-white rounded-3xl p-6 lg:p-8 shadow-sm border border-gray-100">
+                                <div className="flex flex-col sm:flex-row justify-between items-start gap-4 mb-6">
+                                    <div className="flex-1">
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <span className="bg-green-100 text-green-700 text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-widest">
+                                                Materi {materials.findIndex(m => m.id === currentMaterial.id) + 1}
+                                            </span>
+                                        </div>
+                                        <h1 className="text-2xl font-black text-gray-900 leading-tight">{currentMaterial.title}</h1>
+                                    </div>
                                     <button
                                         onClick={() => markAsCompleted(currentMaterial.id)}
-                                        className={`px-4 py-2 rounded-full text-xs font-bold transition ${progress.includes(currentMaterial.id) ? 'bg-green-100 text-green-700' : 'bg-green-600 text-white shadow-md hover:bg-green-700'}`}
+                                        className={`px-6 py-3 rounded-2xl text-[11px] font-black transition-all transform hover:scale-105 active:scale-95 shadow-lg flex items-center gap-2
+                                            ${progress.includes(currentMaterial.id)
+                                                ? 'bg-green-100 text-green-700 border border-green-200'
+                                                : 'bg-green-600 text-white hover:bg-green-700'}`}
                                     >
-                                        {progress.includes(currentMaterial.id) ? 'Selesai' : 'Tandai Selesai'}
+                                        {progress.includes(currentMaterial.id) ? (
+                                            <>
+                                                <span className="material-icons text-sm">check_circle</span>
+                                                SELESAI PELAJARI
+                                            </>
+                                        ) : (
+                                            <>
+                                                <span className="material-icons text-sm">task_alt</span>
+                                                TANDAI SELESAI
+                                            </>
+                                        )}
                                     </button>
                                 </div>
 
-                                <div className="prose max-w-none text-gray-600 text-sm mb-8">
+                                <div className="prose max-w-none text-gray-600 text-sm leading-relaxed mb-10">
                                     {currentMaterial.description || 'Tidak ada deskripsi untuk materi ini.'}
                                 </div>
 
                                 {currentMaterial.pdf_file && (
-                                    <div className="mt-8 p-4 bg-gray-50 rounded-xl border flex items-center justify-between">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
-                                                <span className="material-icons text-red-600">description</span>
+                                    <div className="mt-8 p-5 bg-blue-50/50 rounded-2xl border border-blue-100 flex items-center justify-between">
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-sm">
+                                                <span className="material-icons text-red-500 text-2xl">picture_as_pdf</span>
                                             </div>
                                             <div>
-                                                <p className="text-sm font-bold text-gray-800">Materi PDF</p>
-                                                <p className="text-[10px] text-gray-400">Download untuk belajar offline</p>
+                                                <p className="text-sm font-black text-gray-800">Modul Pendukung</p>
+                                                <p className="text-[10px] text-gray-400 font-medium">Klik tombol download untuk menyimpan</p>
                                             </div>
                                         </div>
                                         <a
-                                            href={`${baseUrl}${currentMaterial.pdf_file}`}
+                                            href={currentMaterial.pdf_file.startsWith('http') ? currentMaterial.pdf_file : `${baseUrl}${currentMaterial.pdf_file}`}
                                             target="_blank"
                                             rel="noopener noreferrer"
-                                            className="bg-white border select-none border-gray-200 text-gray-700 px-4 py-2 rounded-lg text-xs font-bold hover:bg-gray-100 transition"
+                                            className="bg-white border border-gray-200 text-gray-700 px-5 py-2.5 rounded-xl text-xs font-black shadow-sm hover:bg-gray-50 transition"
                                         >
-                                            Download
+                                            DOWNLOAD PDF
                                         </a>
                                     </div>
                                 )}
                             </div>
 
-                            {/* Completion Status */}
-                            <div className="mt-8 text-center pb-20">
-                                <p className="text-xs text-gray-400">Progres Belajar: {Math.round((progress.length / materials.length) * 100)}%</p>
-                                <div className="w-full bg-gray-200 h-1.5 rounded-full mt-2 truncate max-w-xs mx-auto overflow-hidden">
-                                    <div
-                                        className="bg-green-600 h-full transition-all duration-500"
-                                        style={{ width: `${(progress.length / materials.length) * 100}%` }}
-                                    ></div>
-                                </div>
-                                {progress.length === materials.length && (
-                                    <div className="mt-4 animate-bounce">
-                                        <button className="bg-yellow-500 text-white px-6 py-2 rounded-full font-bold shadow-lg text-sm flex items-center gap-2 mx-auto">
-                                            <span className="material-icons">military_tech</span>
-                                            Klaim Sertifikat
+                            {/* Next Action */}
+                            <div className="mt-12 flex flex-col items-center">
+                                {progress.includes(currentMaterial.id) && materials.findIndex(m => m.id === currentMaterial.id) < materials.length - 1 ? (
+                                    <button
+                                        onClick={handleNext}
+                                        className="group bg-gray-900 text-white px-8 py-4 rounded-2xl font-black text-sm shadow-2xl hover:bg-black transition-all flex items-center gap-3 animate-pulse"
+                                    >
+                                        LANJUT MATERI BERIKUTNYA
+                                        <span className="material-icons group-hover:translate-x-1 transition-transform">arrow_forward</span>
+                                    </button>
+                                ) : progress.length === materials.length ? (
+                                    <div className="text-center">
+                                        <div className="w-20 h-20 bg-yellow-400 rounded-3xl flex items-center justify-center mx-auto mb-4 rotate-3 shadow-xl">
+                                            <span className="material-icons text-white text-4xl">emoji_events</span>
+                                        </div>
+                                        <p className="font-black text-gray-900">Selamat! Anda telah menyelesaikan kelas ini.</p>
+                                        <button className="mt-4 bg-green-700 text-white px-8 py-3 rounded-2xl font-black text-xs shadow-lg hover:bg-green-800 transition">
+                                            KLAIM SERTIFIKAT KELULUSAN
                                         </button>
                                     </div>
-                                )}
+                                ) : null}
                             </div>
                         </div>
                     ) : (
-                        <div className="flex flex-col items-center justify-center py-20 text-gray-400">
-                            <span className="material-icons text-6xl mb-4">play_lesson</span>
-                            <p>Pilih materi untuk mulai belajar</p>
+                        <div className="flex flex-col items-center justify-center py-32 text-gray-400">
+                            <span className="material-icons text-7xl mb-6 opacity-20">auto_stories</span>
+                            <p className="font-bold text-gray-500">Silakan pilih materi di samping</p>
+                            <p className="text-xs mt-1">Belajar bertahap untuk hasil yang maksimal</p>
                         </div>
                     )}
                 </div>

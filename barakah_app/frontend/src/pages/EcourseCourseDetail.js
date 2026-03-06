@@ -245,19 +245,18 @@ const EcourseCourseDetail = () => {
                         onClick={() => toggleMaterial(material.id)}
                         className="flex justify-between items-center">
                         <span className="font-semibold">{material.title}</span>
-                        <span className="text-xs text-gray-500">{material.material_type}</span>
                       </div>
-                      {material.content ? (
+                      {material.description ? (
                         <>
                           <div
                             onClick={() => toggleMaterial(material.id)}
                             dangerouslySetInnerHTML={{
                               __html: showFullMaterials[material.id]
-                                ? convertRelativeUrlsToAbsolute(material.content, baseUrl)
-                                : convertRelativeUrlsToAbsolute(material.content, baseUrl).substring(0, 0) + '',
+                                ? convertRelativeUrlsToAbsolute(material.description, baseUrl)
+                                : convertRelativeUrlsToAbsolute(material.description, baseUrl).substring(0, 100) + '...',
                             }}
                           />
-                          {material.content.length > 0 && (
+                          {material.description.length > 100 && (
                             <button
                               onClick={() => toggleMaterial(material.id)}
                               className="text-green-600 mt-2 text-sm"
@@ -267,7 +266,7 @@ const EcourseCourseDetail = () => {
                           )}
                         </>
                       ) : (
-                        <p className="text-gray-500">Tidak ada konten.</p>
+                        <p className="text-gray-500 text-xs mt-1">Tidak ada rincian materi.</p>
                       )}
                     </li>
                   ))
