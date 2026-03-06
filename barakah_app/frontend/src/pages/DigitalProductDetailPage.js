@@ -67,7 +67,7 @@ const DigitalProductDetailPage = () => {
 
             <Header />
 
-            <div className="pb-24 max-w-6xl mx-auto">
+            <div className="pb-40 max-w-6xl mx-auto">
                 <div className="bg-white rounded-2xl overflow-hidden shadow-lg border border-gray-100 flex flex-col md:flex-row mx-4 mt-4">
                     <div className="md:w-1/2">
                         <img
@@ -115,7 +115,7 @@ const DigitalProductDetailPage = () => {
                 </div>
 
                 {/* Fixed buy button for mobile - hidden on md+ */}
-                <div className="md:hidden fixed bottom-16 left-0 right-0 max-w-md mx-auto px-4 pb-2 z-40">
+                <div className="md:hidden fixed bottom-24 left-0 right-0 max-w-md mx-auto px-4 pb-2 z-40">
                     <Link
                         to={`/digital-products/${product.slug}/checkout`}
                         className="block w-full text-center bg-green-700 text-white py-3 rounded-xl font-bold shadow-lg hover:bg-green-800 transition"

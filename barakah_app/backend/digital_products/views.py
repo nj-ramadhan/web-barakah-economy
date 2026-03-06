@@ -106,13 +106,18 @@ class DigitalProductViewSet(viewsets.ModelViewSet):
         try:
             from accounts.models import User
             from profiles.models import Profile
+            from courses.models import Course
+            from courses.serializers import CourseSerializer
+            
             user = User.objects.get(username=username)
             profile = Profile.objects.get(user=user)
             
             # Show all active products for the specific user (including exclusive)
             products = DigitalProduct.objects.filter(user=user, is_active=True)
             
-            from profiles.serializers import ProfileSerializer  # Assuming it exists
+            # Show all active courses for the specific user
+            courses = Course.objects.filter(instructor=user, is_active=True)
+            
             # Fallback if ProfileSerializer is not handy, we can use a basic dict or specific fields
             profile_data = {
                 'name_full': profile.name_full,
@@ -122,10 +127,12 @@ class DigitalProductViewSet(viewsets.ModelViewSet):
             }
             
             product_serializer = DigitalProductPublicSerializer(products, many=True)
+            course_serializer = CourseSerializer(courses, many=True)
             
             return Response({
                 'profile': profile_data,
-                'products': product_serializer.data
+                'products': product_serializer.data,
+                'courses': course_serializer.data
             })
         except (User.DoesNotExist, Profile.DoesNotExist):
             return Response({'error': 'Profile not found'}, status=status.HTTP_404_NOT_FOUND)

@@ -61,14 +61,15 @@ const SellerProfilePage = () => {
 
     const profile = profileData?.profile || {};
     const products = profileData?.products || [];
+    const courses = profileData?.courses || [];
 
     return (
         <div className="body">
             <Helmet>
-                <title>{username} - Produk Digital - Barakah Economy</title>
-                <meta name="description" content={profile?.shop_description || `Koleksi produk digital dari ${username}`} />
-                <meta property="og:title" content={`${username} - Produk Digital`} />
-                <meta property="og:description" content={profile?.shop_description || `Koleksi produk digital dari ${username}`} />
+                <title>{username} - Produk Digital & E-Course - Barakah Economy</title>
+                <meta name="description" content={profile?.shop_description || `Koleksi produk digital dan e-course dari ${username}`} />
+                <meta property="og:title" content={`${username} - Profil Penjual`} />
+                <meta property="og:description" content={profile?.shop_description || `Koleksi produk digital dan e-course dari ${username}`} />
                 <meta property="og:image" content={getMediaUrl(profile?.shop_thumbnail || profile?.picture)} />
             </Helmet>
 
@@ -97,7 +98,7 @@ const SellerProfilePage = () => {
                 <div className="mt-16 text-center px-4">
                     <div className="flex items-center justify-center gap-2">
                         <h1 className="text-xl font-bold text-gray-900">@{username}</h1>
-                        <ShareButton slug={username} title={`Profil @${username}`} type="seller" />
+                        <ShareButton slug={username} title={`Profil Toko @${username}`} type="seller" />
                     </div>
                     {profile && (
                         <>
@@ -111,7 +112,49 @@ const SellerProfilePage = () => {
                     )}
                 </div>
 
-                {/* Product List */}
+                {/* Course List Section */}
+                {courses.length > 0 && (
+                    <div className="mt-10 px-4">
+                        <h2 className="text-sm font-bold text-gray-800 mb-4 flex items-center gap-2">
+                            <span className="material-icons text-green-600 text-lg">school</span>
+                            Kelas E-Course
+                        </h2>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {courses.map((course) => (
+                                <Link
+                                    key={course.id}
+                                    to={`/ecourse/${course.slug}`}
+                                    className="block bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 hover:shadow-md transition"
+                                >
+                                    <div className="relative aspect-video">
+                                        <img
+                                            src={getMediaUrl(course.thumbnail) || '/placeholder-image.jpg'}
+                                            alt={course.title}
+                                            className="w-full h-full object-cover"
+                                        />
+                                        <div className="absolute top-2 right-2 bg-green-600 text-white text-[10px] font-bold px-2 py-1 rounded-lg">
+                                            E-Course
+                                        </div>
+                                    </div>
+                                    <div className="p-4">
+                                        <h3 className="text-sm font-bold text-gray-800 line-clamp-2 min-h-[40px] mb-2">{course.title}</h3>
+                                        <div className="flex items-center justify-between mt-auto">
+                                            <div className="flex items-center gap-1 text-[10px] text-gray-400">
+                                                <span className="material-icons text-[12px]">groups</span>
+                                                {course.student_count || 0}
+                                            </div>
+                                            <p className="text-green-700 font-extrabold text-sm">
+                                                {course.price > 0 ? formatIDR(course.price) : 'GRATIS'}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </Link>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {/* Product List Section */}
                 <div className="mt-10 px-4">
                     <h2 className="text-sm font-bold text-gray-800 mb-4 flex items-center gap-2">
                         <span className="material-icons text-green-600 text-lg">inventory_2</span>

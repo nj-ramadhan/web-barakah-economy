@@ -39,73 +39,97 @@ const NavigationButton = () => {
     return location.pathname.includes(path) || (path === '/login' && location.pathname === '/login');
   };
 
+  const [isNavVisible, setIsNavVisible] = useState(true);
+
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 max-w-md mx-auto z-50 rounded-t-3xl shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
-      <div className="grid grid-cols-12 items-center px-4 py-2 relative">
-
-        {/* LAYANAN (Kiri - 3 cols) */}
-        <div className="col-span-3 flex flex-col items-center justify-center relative" ref={layananRef}>
-          {isLayananOpen && (
-            <div className="absolute bottom-full mb-4 left-0 w-56 bg-white shadow-2xl rounded-2xl border border-gray-100 z-50 p-3">
-              <div
-                className="grid grid-cols-3 gap-2 max-h-64 overflow-y-auto"
-                style={{ scrollbarWidth: 'thin' }}
-              >
-                {LAYANAN_ITEMS.map((item) => (
-                  <Link
-                    key={item.to}
-                    to={item.to}
-                    className="flex flex-col items-center justify-center py-3 px-1 rounded-xl hover:bg-gray-50 transition-colors"
-                    onClick={() => setIsLayananOpen(false)}
-                  >
-                    <div className={`w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center mb-1`}>
-                      <span className={`material-icons text-xl ${item.color}`}>{item.icon}</span>
-                    </div>
-                    <span className="text-[10px] font-medium text-gray-700 text-center leading-tight">{item.label}</span>
-                  </Link>
-                ))}
-              </div>
-              {/* Arrow */}
-              <div className="absolute -bottom-2 left-8 w-4 h-4 bg-white rotate-45 border-b border-r border-gray-100"></div>
-            </div>
-          )}
-
-          <button
-            onClick={() => setIsLayananOpen(!isLayananOpen)}
-            className={`flex flex-col items-center justify-center focus:outline-none transition-colors ${isLayananOpen ? 'text-green-600' : 'text-gray-500'
-              }`}
-          >
-            <span className="material-icons text-2xl">grid_view</span>
-            <span className="text-[11px] font-medium mt-0.5">Layanan</span>
-          </button>
-        </div>
-
-        {/* DONASI (Tengah - 6 cols) */}
-        <div className="col-span-6 flex justify-center">
-          <Link
-            to="/charity"
-            className="w-full flex items-center justify-center gap-1.5 py-2.5 bg-gradient-to-r from-green-500 to-green-700 rounded-2xl shadow-lg shadow-green-200 text-white hover:scale-105 active:scale-95 transition-all -mt-3"
-          >
-            <span className="material-icons text-xl">volunteer_activism</span>
-            <span className="text-sm font-bold">Donasi</span>
-          </Link>
-        </div>
-
-        {/* PROFILE (Kanan - 3 cols) */}
-        <Link
-          to={isLoggedIn ? "/profile" : "/login"}
-          className={`col-span-3 flex flex-col items-center justify-center transition-colors ${isActive('/profile') || isActive('/login') ? 'text-green-600' : 'text-gray-500'}`}
+    <>
+      {/* Floating Open Button when Nav is Hidden */}
+      {!isNavVisible && (
+        <button
+          onClick={() => setIsNavVisible(true)}
+          className="fixed bottom-6 left-6 w-12 h-12 bg-green-700 text-white rounded-full shadow-xl z-[1001] flex items-center justify-center animate-bounce-subtle"
         >
-          <span className="material-icons text-2xl">
-            {isLoggedIn ? 'account_circle' : 'login'}
-          </span>
-          <span className="text-[11px] font-medium mt-0.5">
-            {isLoggedIn ? 'Profile' : 'Log in'}
-          </span>
-        </Link>
+          <span className="material-icons">menu_open</span>
+        </button>
+      )}
 
-      </div>
-    </nav>
+      {isNavVisible && (
+        <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 max-w-md mx-auto z-50 rounded-t-3xl shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] transition-transform duration-300">
+          <div className="grid grid-cols-12 items-center px-4 py-2 relative">
+
+            {/* Close Toggle Button */}
+            <button
+              onClick={() => setIsNavVisible(false)}
+              className="absolute -top-3 left-1/2 -translate-x-1/2 w-8 h-8 bg-white border border-gray-100 rounded-full flex items-center justify-center shadow-sm z-[51]"
+            >
+              <span className="material-icons text-gray-400 text-sm">keyboard_arrow_down</span>
+            </button>
+
+            {/* LAYANAN (Kiri - 3 cols) */}
+            <div className="col-span-3 flex flex-col items-center justify-center relative" ref={layananRef}>
+              {isLayananOpen && (
+                <div className="absolute bottom-full mb-4 left-0 w-56 bg-white shadow-2xl rounded-2xl border border-gray-100 z-50 p-3">
+                  <div
+                    className="grid grid-cols-3 gap-2 max-h-64 overflow-y-auto"
+                    style={{ scrollbarWidth: 'thin' }}
+                  >
+                    {LAYANAN_ITEMS.map((item) => (
+                      <Link
+                        key={item.to}
+                        to={item.to}
+                        className="flex flex-col items-center justify-center py-3 px-1 rounded-xl hover:bg-gray-50 transition-colors"
+                        onClick={() => setIsLayananOpen(false)}
+                      >
+                        <div className={`w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center mb-1`}>
+                          <span className={`material-icons text-xl ${item.color}`}>{item.icon}</span>
+                        </div>
+                        <span className="text-[10px] font-medium text-gray-700 text-center leading-tight">{item.label}</span>
+                      </Link>
+                    ))}
+                  </div>
+                  {/* Arrow */}
+                  <div className="absolute -bottom-2 left-8 w-4 h-4 bg-white rotate-45 border-b border-r border-gray-100"></div>
+                </div>
+              )}
+
+              <button
+                onClick={() => setIsLayananOpen(!isLayananOpen)}
+                className={`flex flex-col items-center justify-center focus:outline-none transition-colors ${isLayananOpen ? 'text-green-600' : 'text-gray-500'
+                  }`}
+              >
+                <span className="material-icons text-2xl">grid_view</span>
+                <span className="text-[11px] font-medium mt-0.5">Layanan</span>
+              </button>
+            </div>
+
+            {/* DONASI (Tengah - 6 cols) */}
+            <div className="col-span-6 flex justify-center">
+              <Link
+                to="/charity"
+                className="w-full flex items-center justify-center gap-1.5 py-2.5 bg-gradient-to-r from-green-500 to-green-700 rounded-2xl shadow-lg shadow-green-200 text-white hover:scale-105 active:scale-95 transition-all -mt-3"
+              >
+                <span className="material-icons text-xl">volunteer_activism</span>
+                <span className="text-sm font-bold">Donasi</span>
+              </Link>
+            </div>
+
+            {/* PROFILE (Kanan - 3 cols) */}
+            <Link
+              to={isLoggedIn ? "/profile" : "/login"}
+              className={`col-span-3 flex flex-col items-center justify-center transition-colors ${isActive('/profile') || isActive('/login') ? 'text-green-600' : 'text-gray-500'}`}
+            >
+              <span className="material-icons text-2xl">
+                {isLoggedIn ? 'account_circle' : 'login'}
+              </span>
+              <span className="text-[11px] font-medium mt-0.5">
+                {isLoggedIn ? 'Profile' : 'Log in'}
+              </span>
+            </Link>
+
+          </div>
+        </nav>
+      )}
+    </>
   );
 };
 

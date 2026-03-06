@@ -183,6 +183,10 @@ const DashboardEcourseFormPage = () => {
                             onChange={handleThumbnailChange}
                             className="hidden"
                         />
+                        <p className="mt-2 text-[10px] font-semibold text-red-500 flex items-center gap-1 leading-none">
+                            <span className="material-icons text-[12px]">info</span>
+                            Jika gambar terlalu besar ({">"}2MB), upload akan gagal. Harap kecilkan ukuran gambar sebelum upload.
+                        </p>
                     </div>
 
                     <div>

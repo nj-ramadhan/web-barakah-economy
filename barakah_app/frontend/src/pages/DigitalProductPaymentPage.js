@@ -163,7 +163,7 @@ const DigitalProductPaymentPage = () => {
 
             <Header />
 
-            <div className="px-4 py-4 pb-8">
+            <div className="px-4 py-4 pb-32">
                 <h1 className="text-lg font-bold mb-2">Upload Bukti Pembayaran</h1>
                 <p className="text-sm text-gray-500 mb-6">Order: <strong>{orderNumber}</strong></p>
 
