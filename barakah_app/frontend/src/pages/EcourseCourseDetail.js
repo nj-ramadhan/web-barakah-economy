@@ -52,9 +52,9 @@ const EcourseCourseDetail = () => {
           `${process.env.REACT_APP_API_BASE_URL}/api/courses/enrollments/`,
           { headers: { Authorization: `Bearer ${user.access}` } }
         );
-        // Check if user is enrolled in this course and payment_status is 'verified'
+        // Check if user is enrolled in this course and payment_status is 'verified' or 'paid'
         const enrolled = res.data.some(
-          enroll => (enroll.course === course.id || enroll.course === course.slug) && enroll.payment_status === 'verified'
+          enroll => (enroll.course === course.id || enroll.course === course.slug) && ['paid', 'verified'].includes(enroll.payment_status)
         );
         setIsEnrolled(enrolled);
       } catch {
@@ -156,11 +156,12 @@ const EcourseCourseDetail = () => {
               </button>
             )}
             {isEnrolled && (
-              <div
-                className="block text-center bg-gray-400 text-white py-2 rounded-md text-sm hover:bg-gray-600"
+              <button
+                onClick={() => navigate(`/kelas/buka/${course.slug}`)}
+                className="block w-full text-center bg-green-600 text-white py-2 rounded-md text-sm font-bold hover:bg-green-700 shadow-md transition"
               >
-                KAMU SUDAH IKUT KELAS INI
-              </div>
+                MULAI BELAJAR
+              </button>
             )}
           </div>
         </div>

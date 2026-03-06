@@ -1,4 +1,5 @@
 from rest_framework import viewsets, permissions, status
+from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser
@@ -11,6 +12,7 @@ from .serializers import CourseSerializer, CourseEnrollmentSerializer, CourseMat
 
 class CourseViewSet(viewsets.ModelViewSet):
     serializer_class = CourseSerializer
+    authentication_classes = [JWTAuthentication]
     parser_classes = [MultiPartParser, FormParser]
 
     def get_permissions(self):
@@ -48,6 +50,7 @@ class CourseDetailViewSet(APIView):
         
 class CourseEnrollmentViewSet(viewsets.ModelViewSet):
     serializer_class = CourseEnrollmentSerializer
+    authentication_classes = [JWTAuthentication]
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
@@ -55,10 +58,57 @@ class CourseEnrollmentViewSet(viewsets.ModelViewSet):
 
     def create(self, request, *args, **kwargs):
         course_id = request.data.get('course')
-        if CourseEnrollment.objects.filter(user=request.user, course_id=course_id).exists():
-            return Response({'detail': 'Already enrolled'}, status=status.HTTP_400_BAD_REQUEST)
-        enrollment = CourseEnrollment.objects.create(user=request.user, course_id=course_id, payment_status='pending')
+        course = get_object_or_404(Course, id=course_id)
+        
+        # Check if user is already enrolled with 'paid' or 'verified' status
+        # If so, we might not need a new enrollment, but for the 'checkout' flow
+        # we usually create a 'pending' one if they are paying again.
+        # However, for free courses, just return the existing one or create paid.
+        
+        existing_paid = CourseEnrollment.objects.filter(
+            user=request.user, 
+            course=course, 
+            payment_status__in=['paid', 'verified']
+        ).first()
+        
+        if existing_paid:
+            return Response(CourseEnrollmentSerializer(existing_paid).data, status=status.HTTP_200_OK)
+
+        # Create new enrollment (order)
+        enrollment = CourseEnrollment.objects.create(
+            user=request.user,
+            course=course,
+            buyer_name=request.data.get('buyer_name', request.user.username),
+            buyer_email=request.data.get('buyer_email', request.user.email),
+            buyer_phone=request.data.get('buyer_phone', getattr(request.user, 'phone', '')),
+            amount=course.price,
+            payment_status='paid' if course.price == 0 else 'pending'
+        )
+        
         return Response(CourseEnrollmentSerializer(enrollment).data, status=status.HTTP_201_CREATED)
+
+    @action(detail=False, methods=['post'], url_path='upload-proof')
+    def upload_proof(self, request):
+        course_id = request.data.get('course_id')
+        
+        try:
+            enrollment = CourseEnrollment.objects.get(
+                user=request.user,
+                course_id=course_id,
+                payment_status='pending'
+            )
+        except CourseEnrollment.DoesNotExist:
+            return Response({'detail': 'Pendaftaran tidak ditemukan atau sudah diverifikasi.'}, status=status.HTTP_404_NOT_FOUND)
+
+        proof_file = request.FILES.get('proof_file')
+        if not proof_file:
+            return Response({'detail': 'Bukti transfer wajib diunggah.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        enrollment.proof_file = proof_file
+        enrollment.payment_status = 'verified'
+        enrollment.save()
+
+        return Response({'message': 'Bukti pembayaran berhasil diunggah.'}, status=status.HTTP_200_OK)
 
     @action(detail=True, methods=['post'])
     def confirm_payment(self, request, pk=None):
@@ -70,14 +120,30 @@ class CourseEnrollmentViewSet(viewsets.ModelViewSet):
 class CourseMaterialViewSet(viewsets.ModelViewSet):
     queryset = CourseMaterial.objects.all()
     serializer_class = CourseMaterialSerializer
+    authentication_classes = [JWTAuthentication]
     permission_classes = [permissions.IsAuthenticated]
     parser_classes = [MultiPartParser, FormParser]
 
     def get_queryset(self):
         course_id = self.request.query_params.get('course_id')
-        if course_id:
-            return CourseMaterial.objects.filter(course_id=course_id)
-        return CourseMaterial.objects.all()
+        if not course_id:
+            # If no course_id, instructors see their own materials, or return empty
+            return CourseMaterial.objects.filter(course__instructor=self.request.user)
+            
+        course = get_object_or_404(Course, id=course_id)
+        
+        # Check if user is instructor or enrolled with paid/verified status
+        is_instructor = course.instructor == self.request.user
+        is_enrolled = CourseEnrollment.objects.filter(
+            user=self.request.user, 
+            course=course, 
+            payment_status__in=['paid', 'verified']
+        ).exists()
+        
+        if is_instructor or is_enrolled:
+            return CourseMaterial.objects.filter(course=course)
+            
+        return CourseMaterial.objects.none()
 
     def perform_create(self, serializer):
         # Verify instructor

@@ -57,13 +57,27 @@ class CourseEnrollment(models.Model):
 
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='course_enrollments')
     course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='enrollments')
+    order_number = models.CharField(max_length=30, unique=True, blank=True)
+    buyer_name = models.CharField(max_length=100, blank=True, default='')
+    buyer_email = models.EmailField(blank=True, default='')
+    buyer_phone = models.CharField(max_length=20, blank=True, default='')
     amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     proof_file = models.FileField(upload_to=proof_file_path, null=True, blank=True)
     enrolled_at = models.DateTimeField(auto_now_add=True)
     payment_status = models.CharField(max_length=20, choices=PAYMENT_STATUS_CHOICES, default='pending')
 
+    def save(self, *args, **kwargs):
+        if not self.pk:
+            super().save(*args, **kwargs)
+        if not self.order_number:
+            self.order_number = f"CRS-{self.id:06d}"
+            kwargs['force_insert'] = False
+            super().save(*args, **kwargs)
+        else:
+            super().save(*args, **kwargs)
+
     class Meta:
-        unique_together = ('user', 'course')
+        pass
 
 class CourseMaterial(models.Model):
     course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='materials')

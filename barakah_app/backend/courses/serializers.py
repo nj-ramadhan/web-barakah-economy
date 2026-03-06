@@ -18,6 +18,9 @@ class CertificateSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class CourseEnrollmentSerializer(serializers.ModelSerializer):
+    course_title = serializers.ReadOnlyField(source='course.title')
+    course_slug = serializers.ReadOnlyField(source='course.slug')
+    
     class Meta:
         model = CourseEnrollment
         fields = '__all__'

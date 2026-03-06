@@ -22,6 +22,7 @@ const DashboardEcourseFormPage = () => {
 
     const [loading, setLoading] = useState(isEdit);
     const [submitting, setSubmitting] = useState(false);
+    const [error, setError] = useState(null);
 
     // Form state
     const [title, setTitle] = useState('');
@@ -75,6 +76,7 @@ const DashboardEcourseFormPage = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setSubmitting(true);
+        setError(null);
 
         const formData = new FormData();
         formData.append('title', title);
@@ -101,7 +103,9 @@ const DashboardEcourseFormPage = () => {
             navigate('/dashboard/ecourses');
         } catch (err) {
             console.error(err);
-            alert('Gagal menyimpan kursus. Periksa kembali input Anda.');
+            const msg = err.response?.data?.detail || err.response?.data?.message || 'Gagal menyimpan kursus. Periksa kembali input Anda.';
+            setError(msg);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         } finally {
             setSubmitting(false);
         }
@@ -123,13 +127,30 @@ const DashboardEcourseFormPage = () => {
 
             <Header />
 
-            <div className="max-w-2xl mx-auto px-4 py-4 pb-24">
-                <div className="flex items-center gap-2 mb-6 text-gray-400">
-                    <button onClick={() => navigate('/dashboard/ecourses')} className="hover:text-green-700 transition">
-                        <span className="material-icons">arrow_back</span>
-                    </button>
-                    <h1 className="text-lg font-bold text-gray-800">{isEdit ? 'Edit Info Kursus' : 'Buat Kursus Baru'}</h1>
+            {/* Sticky Header */}
+            <div className="sticky top-0 bg-white/80 backdrop-blur-md z-20 border-b border-gray-100 px-4 py-3 mb-4">
+                <div className="max-w-2xl mx-auto flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <button onClick={() => navigate('/dashboard/ecourses')} className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100 transition text-gray-500">
+                            <span className="material-icons">arrow_back</span>
+                        </button>
+                        <div>
+                            <h1 className="text-sm font-bold text-gray-800 uppercase tracking-widest leading-none mb-1">E-Course</h1>
+                            <p className="text-lg font-extrabold text-green-800 leading-none">{isEdit ? 'Edit Info Kursus' : 'Tambah E-Course Baru'}</p>
+                        </div>
+                    </div>
                 </div>
+            </div>
+
+            <div className="max-w-2xl mx-auto px-4 pb-24">
+                {error && (
+                    <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-6 rounded-r-xl animate-shake">
+                        <div className="flex items-center gap-3 text-red-700">
+                            <span className="material-icons">error_outline</span>
+                            <p className="text-sm font-bold">{error}</p>
+                        </div>
+                    </div>
+                )}
 
                 <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 space-y-5">
                     {/* Thumbnail Upload */}
@@ -205,6 +226,7 @@ const DashboardEcourseFormPage = () => {
                                 placeholder="Harga Jual"
                                 required
                             />
+                            <p className="text-[10px] text-gray-400 mt-1 italic">Isi 0 jika kursus ini Gratis</p>
                         </div>
                     </div>
 

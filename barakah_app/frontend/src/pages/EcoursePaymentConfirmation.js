@@ -188,7 +188,7 @@ const EcoursePaymentConfirmation = () => {
     try {
       // Replace with your actual backend endpoint for ecourse payment confirmation
       const response = await axios.post(
-        `${process.env.REACT_APP_API_BASE_URL}/api/courses/${course.slug}/payment-confirmation/`,
+        `${process.env.REACT_APP_API_BASE_URL}/api/course/enrollments/upload-proof/`,
         paymentData,
         { headers }
       );
