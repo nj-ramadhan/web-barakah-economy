@@ -20,7 +20,7 @@ const NavigationButton = () => {
   const layananRef = useRef(null);
 
   useEffect(() => {
-    setIsLoggedIn(!!localStorage.getItem('access_token'));
+    setIsLoggedIn(!!localStorage.getItem('user'));
   }, [location]);
 
   useEffect(() => {
@@ -100,7 +100,7 @@ const NavigationButton = () => {
             {isLoggedIn ? 'account_circle' : 'login'}
           </span>
           <span className="text-[11px] font-medium mt-0.5">
-            {isLoggedIn ? 'Profile' : 'Login'}
+            {isLoggedIn ? 'Profile' : 'Log in'}
           </span>
         </Link>
 

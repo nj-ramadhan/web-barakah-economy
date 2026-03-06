@@ -39,12 +39,22 @@ class SellerShareView(APIView):
         user = get_object_or_404(User, username=username)
         profile = get_object_or_404(Profile, user=user)
         
+        # Build store name
+        store_name = profile.name_full or username
+        if not store_name.lower().startswith("toko"):
+            store_name = f"Toko {store_name}"
+            
         # Build target URL (the actual frontend profile page)
-        # Using digital_produk prefix to match user's request
-        target_url = f"https://{request.get_host()}/digital_produk/{username}"
+        # Force production domain if not in debug, or use current host
+        host = request.get_host()
+        if 'localhost' not in host and '127.0.0.1' not in host:
+            host = 'barakah-economy.com'
+            
+        target_url = f"https://{host}/digital_produk/{username}"
         
         return render(request, 'digital_products/seller_share.html', {
             'profile': profile,
+            'store_name': store_name,
             'username': username,
             'target_url': target_url
         })

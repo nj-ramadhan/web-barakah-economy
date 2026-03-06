@@ -12,10 +12,10 @@ const Header = () => {
         </div>
         <div className="flex items-center gap-2">
           <a
-            href={localStorage.getItem('access_token') ? "/profile" : "/login"}
+            href={localStorage.getItem('user') ? "/profile" : "/login"}
             className="w-10 h-10 flex items-center justify-center text-gray-500 bg-gray-50 rounded-full"
           >
-            <span className="material-icons text-xl">{localStorage.getItem('access_token') ? 'account_circle' : 'login'}</span>
+            <span className="material-icons text-xl">{localStorage.getItem('user') ? 'account_circle' : 'login'}</span>
           </a>
         </div>
       </div>

@@ -4,22 +4,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ profile.name_full|default:username }} - Produk Digital</title>
+    <title>{{ store_name }} - Produk Digital</title>
 
     <!-- Open Graph / Facebook -->
     <meta property="og:site_name" content="Barakah Economy">
     <meta property="og:type" content="website">
-    <meta property="og:url" content="{{ request.build_absolute_uri }}">
-    <meta property="og:title" content="{{ profile.name_full|default:username }} - Produk Digital">
+    <meta property="og:url" content="https://barakah-economy.com/digital_produk/{{ username }}">
+    <meta property="og:title" content="{{ store_name }} - Produk Digital">
     <meta property="og:description"
         content="{{ profile.shop_description|default:'Koleksi produk digital berkualitas di Barakah Economy.'|striptags|truncatewords:20 }}">
 
     {% if profile.shop_thumbnail %}
-    <meta property="og:image" content="https://{{ request.get_host }}{{ profile.shop_thumbnail.url }}">
+    <meta property="og:image" content="https://barakah-economy.com{{ profile.shop_thumbnail.url }}">
     {% elif profile.picture %}
-    <meta property="og:image" content="https://{{ request.get_host }}{{ profile.picture.url }}">
+    <meta property="og:image" content="https://barakah-economy.com{{ profile.picture.url }}">
     {% else %}
-    <meta property="og:image" content="https://{{ request.get_host }}/static/images/web-thumbnail.jpg">
+    <meta property="og:image" content="https://barakah-economy.com/static/images/web-thumbnail.jpg">
     {% endif %}
 
     <meta property="og:image:width" content="1200">
@@ -27,17 +27,17 @@
 
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image">
-    <meta property="twitter:url" content="{{ request.build_absolute_uri }}">
-    <meta property="twitter:title" content="{{ profile.name_full|default:username }} - Produk Digital">
+    <meta property="twitter:url" content="https://barakah-economy.com/digital_produk/{{ username }}">
+    <meta property="twitter:title" content="{{ store_name }} - Produk Digital">
     <meta property="twitter:description"
         content="{{ profile.shop_description|default:'Koleksi produk digital berkualitas di Barakah Economy.'|striptags|truncatewords:20 }}">
 
     {% if profile.shop_thumbnail %}
-    <meta property="twitter:image" content="https://{{ request.get_host }}{{ profile.shop_thumbnail.url }}">
+    <meta property="twitter:image" content="https://barakah-economy.com{{ profile.shop_thumbnail.url }}">
     {% elif profile.picture %}
-    <meta property="twitter:image" content="https://{{ request.get_host }}{{ profile.picture.url }}">
+    <meta property="twitter:image" content="https://barakah-economy.com{{ profile.picture.url }}">
     {% else %}
-    <meta property="twitter:image" content="https://{{ request.get_host }}/static/images/web-thumbnail.jpg">
+    <meta property="twitter:image" content="https://barakah-economy.com/static/images/web-thumbnail.jpg">
     {% endif %}
 
     <style>
