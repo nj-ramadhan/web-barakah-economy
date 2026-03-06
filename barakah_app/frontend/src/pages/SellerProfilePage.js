@@ -5,6 +5,7 @@ import { Helmet } from 'react-helmet';
 import Header from '../components/layout/Header';
 import NavigationButton from '../components/layout/Navigation';
 import { getPublicDigitalProfile } from '../services/digitalProductApi';
+import ShareButton from '../components/campaigns/ShareButton';
 import '../styles/Body.css';
 
 const formatIDR = (amount) => {
@@ -94,7 +95,10 @@ const SellerProfilePage = () => {
                 </div>
 
                 <div className="mt-16 text-center px-4">
-                    <h1 className="text-xl font-bold text-gray-900">@{username}</h1>
+                    <div className="flex items-center justify-center gap-2">
+                        <h1 className="text-xl font-bold text-gray-900">@{username}</h1>
+                        <ShareButton slug={username} title={`Profil @${username}`} type="seller" />
+                    </div>
                     {profile && (
                         <>
                             <p className="text-sm text-gray-500 mt-1">{profile.name_full}</p>

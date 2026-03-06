@@ -24,6 +24,30 @@ logger = logging.getLogger(__name__)
 
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.authentication import SessionAuthentication
+from rest_framework.views import APIView
+from django.shortcuts import render, get_object_or_404
+from accounts.models import User
+from profiles.models import Profile
+
+class SellerShareView(APIView):
+    """
+    View for rendering server-side HTML with Open Graph tags for seller profile sharing.
+    """
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request, username):
+        user = get_object_or_404(User, username=username)
+        profile = get_object_or_404(Profile, user=user)
+        
+        # Build target URL (the actual frontend profile page)
+        # Using digital_produk prefix to match user's request
+        target_url = f"https://{request.get_host()}/digital_produk/{username}"
+        
+        return render(request, 'digital_products/seller_share.html', {
+            'profile': profile,
+            'username': username,
+            'target_url': target_url
+        })
 
 class DigitalProductViewSet(viewsets.ModelViewSet):
     """
@@ -35,8 +59,11 @@ class DigitalProductViewSet(viewsets.ModelViewSet):
     lookup_field = 'slug'
 
     def get_queryset(self):
-        # Public: only global active products
-        return DigitalProduct.objects.filter(is_active=True, visibility='global')
+        # Public list: only global active products
+        if self.action == 'list':
+            return DigitalProduct.objects.filter(is_active=True, visibility='global')
+        # Other actions (like retrieve/detail): all active products
+        return DigitalProduct.objects.filter(is_active=True)
 
     def get_permissions(self):
         if self.action in ['list', 'retrieve']:

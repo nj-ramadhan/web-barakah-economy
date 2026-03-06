@@ -1,7 +1,7 @@
 # digital_products/urls.py
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import DigitalProductViewSet, DigitalOrderViewSet, WithdrawalViewSet
+from .views import DigitalProductViewSet, DigitalOrderViewSet, WithdrawalViewSet, SellerShareView
 
 router = DefaultRouter()
 router.register(r'products', DigitalProductViewSet, basename='digital-product')
@@ -10,4 +10,5 @@ router.register(r'withdrawals', WithdrawalViewSet, basename='withdrawal')
 
 urlpatterns = [
     path('', include(router.urls)),
+    path('share/seller/<str:username>/', SellerShareView.as_view(), name='seller-share'),
 ]

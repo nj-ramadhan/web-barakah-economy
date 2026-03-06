@@ -13,12 +13,6 @@ const formatIDR = (amount) => {
   }).format(amount);
 };
 
-const getYoutubeId = (url) => {
-  if (!url) return null;
-  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=|shorts\/)([^#\&\?]*).*/;
-  const match = url.match(regExp);
-  return (match && match[2].length === 11) ? match[2] : null;
-};
 const EcourseCourseDetail = () => {
   const { slug } = useParams();
   const navigate = useNavigate();
@@ -29,7 +23,6 @@ const EcourseCourseDetail = () => {
   const [showFullDescription, setShowFullDescription] = useState(false);
   const [showFullMaterials, setShowFullMaterials] = useState({});
   const [isEnrolled, setIsEnrolled] = useState(false);
-  const [previewVideo, setPreviewVideo] = useState(null);
 
   const baseUrl = process.env.REACT_APP_API_BASE_URL;
 
@@ -189,13 +182,13 @@ const EcourseCourseDetail = () => {
               className={`py-3 px-4 text-sm font-bold ${activeTab === 'students' ? 'text-green-600 border-b-2 border-green-600' : 'text-gray-500'}`}
               onClick={() => setActiveTab('students')}
             >
-              Peserta ({course.students ? course.students.length : 0})
+              Peserta ({course.student_count || 0})
             </button>
             <button
               className={`py-3 px-4 text-sm font-bold ${activeTab === 'materials' ? 'text-green-600 border-b-2 border-green-600' : 'text-gray-500'}`}
               onClick={() => setActiveTab('materials')}
             >
-              Materi ({course.materials ? course.materials.length : 0})
+              Materi ({course.material_count || 0})
             </button>
           </div>
 
@@ -267,18 +260,6 @@ const EcourseCourseDetail = () => {
                             <span className="font-bold text-gray-800 group-hover:text-green-700">{material.title}</span>
                           </div>
                           <div className="flex items-center gap-2">
-                            {material.youtube_link && (
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setPreviewVideo(material.youtube_link);
-                                }}
-                                className="flex items-center gap-1 bg-green-50 text-green-700 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-tight hover:bg-green-100 transition"
-                              >
-                                <span className="material-icons text-xs">play_circle</span>
-                                Preview
-                              </button>
-                            )}
                             <span className={`material-icons text-gray-400 transition-transform ${showFullMaterials[material.id] ? 'rotate-180' : ''}`}>
                               expand_more
                             </span>
@@ -312,33 +293,6 @@ const EcourseCourseDetail = () => {
         </div>
       </div>
 
-      {/* Video Preview Modal */}
-      {previewVideo && (
-        <div className="fixed inset-0 bg-black/90 z-[2000] flex items-center justify-center p-4 lg:p-10">
-          <div className="relative w-full max-w-5xl aspect-video bg-black rounded-2xl overflow-hidden shadow-2xl border-4 border-white/10">
-            <button
-              onClick={() => setPreviewVideo(null)}
-              className="absolute top-4 right-4 w-10 h-10 bg-black/50 text-white rounded-full flex items-center justify-center hover:bg-white/20 transition z-10"
-            >
-              <span className="material-icons">close</span>
-            </button>
-            <iframe
-              width="100%"
-              height="100%"
-              src={`https://www.youtube.com/embed/${getYoutubeId(previewVideo)}?autoplay=1&rel=0&modestbranding=1`}
-              title="YouTube video player"
-              frameBorder="0"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-              className="w-full h-full"
-            ></iframe>
-          </div>
-          <div
-            className="absolute inset-0 -z-10"
-            onClick={() => setPreviewVideo(null)}
-          ></div>
-        </div>
-      )}
 
       <NavigationButton />
     </div>

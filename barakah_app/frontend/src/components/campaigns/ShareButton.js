@@ -8,14 +8,22 @@ const ShareButton = ({ slug, title, type = 'campaign' }) => {
     const baseUrl = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000';
 
     // Determine share URL based on type
-    const shareUrl = type === 'article'
-        ? `${baseUrl}/api/articles/share/${slug}/`
-        : `${baseUrl}/api/campaigns/share/${slug}/`;
+    let shareUrl = '';
+    if (type === 'article') {
+        shareUrl = `${baseUrl}/api/articles/share/${slug}/`;
+    } else if (type === 'seller') {
+        shareUrl = `${baseUrl}/api/digital-products/share/seller/${slug}/`;
+    } else {
+        shareUrl = `${baseUrl}/api/campaigns/share/${slug}/`;
+    }
 
     // Determine WhatsApp text based on type
     const getWhatsAppText = () => {
         if (type === 'article') {
             return `Bismillah, izin share artikel ini ya: ${title}\n\nKlik tautan ini untuk baca selengkapnya:\n${shareUrl}`;
+        }
+        if (type === 'seller') {
+            return `Bismillah, cek profil penjual digital ini ya: @${slug}\n\nLihat koleksi produk digitalnya di sini:\n${shareUrl}`;
         }
         return `Bismillah, izin share informasi kebaikan ini ya: ${title}\n\nKlik tautan ini untuk lihat detail & donasi:\n${shareUrl}`;
     };

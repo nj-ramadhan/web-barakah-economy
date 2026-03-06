@@ -193,7 +193,17 @@ const CoursesTab = () => {
                             </div>
                             <div className="flex-1">
                                 <h3 className="text-sm font-bold text-gray-800">{enroll.course_title}</h3>
-                                <p className="text-[10px] text-gray-400">Terdaftar: {formatDate(enroll.enrolled_at)}</p>
+                                <div className="flex items-center gap-2 mt-1">
+                                    <span className="text-[9px] text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded flex items-center gap-0.5">
+                                        <span className="material-icons text-[10px]">person</span>
+                                        {enroll.student_count || 0} Siswa
+                                    </span>
+                                    <span className="text-[9px] text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded flex items-center gap-0.5">
+                                        <span className="material-icons text-[10px]">video_library</span>
+                                        {enroll.material_count || 0} Materi
+                                    </span>
+                                </div>
+                                <p className="text-[9px] text-gray-400 mt-1">Terdaftar: {formatDate(enroll.enrolled_at)}</p>
                             </div>
                             <Link
                                 to={`/kelas/buka/${enroll.course_slug}`}
@@ -314,6 +324,13 @@ const ProfilePage = () => {
 
         fetchProfile();
     }, [navigate]);
+
+    const handleLogout = () => {
+        localStorage.removeItem('user');
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('refresh_token');
+        window.location.href = '/login';
+    };
 
     // Render tab content
     const renderTabContent = () => {
@@ -629,6 +646,15 @@ const ProfilePage = () => {
                                 <span className="material-icons text-lg">dashboard</span>
                                 Dashboard
                             </Link>
+
+                            {/* Logout Button */}
+                            <button
+                                onClick={handleLogout}
+                                className="w-full bg-red-50 text-red-600 hover:bg-red-100 py-3 rounded-lg font-bold flex items-center justify-center gap-2 transition"
+                            >
+                                <span className="material-icons text-lg">logout</span>
+                                Keluar Aplikasi
+                            </button>
                         </div>
                     </div>
                 </div>

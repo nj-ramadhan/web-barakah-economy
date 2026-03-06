@@ -16,7 +16,12 @@ const LAYANAN_ITEMS = [
 const NavigationButton = () => {
   const location = useLocation();
   const [isLayananOpen, setIsLayananOpen] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const layananRef = useRef(null);
+
+  useEffect(() => {
+    setIsLoggedIn(!!localStorage.getItem('access_token'));
+  }, [location]);
 
   useEffect(() => {
     function handleClickOutside(event) {
@@ -29,6 +34,10 @@ const NavigationButton = () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [layananRef]);
+
+  const isActive = (path) => {
+    return location.pathname.includes(path) || (path === '/login' && location.pathname === '/login');
+  };
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 max-w-md mx-auto z-50 rounded-t-3xl shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
@@ -84,15 +93,14 @@ const NavigationButton = () => {
 
         {/* PROFILE (Kanan - 3 cols) */}
         <Link
-          to={localStorage.getItem('access_token') ? "/profile" : "/login"}
-          className={`col-span-3 flex flex-col items-center justify-center transition-colors ${location.pathname.includes('/profile') || location.pathname === '/login' ? 'text-green-600' : 'text-gray-500'
-            }`}
+          to={isLoggedIn ? "/profile" : "/login"}
+          className={`col-span-3 flex flex-col items-center justify-center transition-colors ${isActive('/profile') || isActive('/login') ? 'text-green-600' : 'text-gray-500'}`}
         >
           <span className="material-icons text-2xl">
-            {localStorage.getItem('access_token') ? 'account_circle' : 'login'}
+            {isLoggedIn ? 'account_circle' : 'login'}
           </span>
           <span className="text-[11px] font-medium mt-0.5">
-            {localStorage.getItem('access_token') ? 'Profile' : 'Login'}
+            {isLoggedIn ? 'Profile' : 'Login'}
           </span>
         </Link>
 
