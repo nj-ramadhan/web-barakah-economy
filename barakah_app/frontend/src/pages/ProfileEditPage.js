@@ -546,6 +546,59 @@ const ProfileEditPage = () => {
           </div>
         );
 
+      case 'shop':
+        return (
+          <div className="space-y-4">
+            <div className="mb-4">
+              <label className="block text-gray-700 font-medium mb-1 italic text-xs">
+                * Informasi ini akan muncul di link personal/toko digital Anda.
+              </label>
+            </div>
+            {/* Shop Thumbnail */}
+            <div className="mb-4">
+              <label className="block text-gray-700 font-medium mb-1">Thumbnail Toko</label>
+              <div className="flex flex-col space-y-2">
+                {profile.shop_thumbnail && (
+                  <div className="w-full h-32 rounded-lg overflow-hidden border bg-gray-50">
+                    <img
+                      src={profile.shop_thumbnail instanceof File ? URL.createObjectURL(profile.shop_thumbnail) : profile.shop_thumbnail}
+                      alt="Shop Thumbnail"
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                )}
+                <input
+                  type="file"
+                  onChange={(e) => {
+                    const file = e.target.files[0];
+                    if (file) {
+                      if (file.size > 2 * 1024 * 1024) {
+                        alert('Ukuran gambar maksimal 2MB');
+                        return;
+                      }
+                      setProfile(prev => ({ ...prev, shop_thumbnail: file }));
+                    }
+                  }}
+                  className="w-full p-2 border rounded-lg text-sm"
+                />
+              </div>
+            </div>
+
+            {/* Shop Description */}
+            <div className="mb-4">
+              <label className="block text-gray-700 font-medium mb-1">Deskripsi Toko</label>
+              <textarea
+                name="shop_description"
+                placeholder="Jelaskan spesialisasi atau deskripsi toko digital Anda"
+                value={profile.shop_description || ''}
+                onChange={handleChange}
+                rows="4"
+                className="w-full p-2 border rounded-lg"
+              />
+            </div>
+          </div>
+        );
+
       default:
         return null;
     }

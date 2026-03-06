@@ -246,7 +246,10 @@ class WithdrawalViewSet(viewsets.ModelViewSet):
     serializer_class = WithdrawalRequestSerializer
 
     def get_queryset(self):
-        return WithdrawalRequest.objects.filter(user=self.request.user)
+        try:
+            return WithdrawalRequest.objects.filter(user=self.request.user)
+        except Exception:
+            return WithdrawalRequest.objects.none()
 
     def create(self, request, *args, **kwargs):
         # Calculate balance
@@ -294,18 +297,27 @@ class WithdrawalViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get'])
     def balance(self, request):
-        total_sales = DigitalOrder.objects.filter(
-            product_owner=request.user,
-            payment_status='verified'
-        ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
+        try:
+            total_sales = DigitalOrder.objects.filter(
+                product_owner=request.user,
+                payment_status='verified'
+            ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
 
-        total_withdrawn = WithdrawalRequest.objects.filter(
-            user=request.user,
-            status__in=['pending', 'approved']
-        ).aggregate(total=Sum('total_deduction'))['total'] or Decimal('0')
+            total_withdrawn = WithdrawalRequest.objects.filter(
+                user=request.user,
+                status__in=['pending', 'approved']
+            ).aggregate(total=Sum('total_deduction'))['total'] or Decimal('0')
 
-        return Response({
-            'total_sales': total_sales,
-            'total_withdrawn': total_withdrawn,
-            'available_balance': total_sales - total_withdrawn
-        })
+            return Response({
+                'total_sales': total_sales,
+                'total_withdrawn': total_withdrawn,
+                'available_balance': total_sales - total_withdrawn
+            })
+        except Exception as e:
+            logger.exception(f"Error calculating balance for user {request.user.id}: {e}")
+            return Response({
+                'total_sales': 0,
+                'total_withdrawn': 0,
+                'available_balance': 0,
+                'error': 'Gagal mengambil data saldo'
+            }, status=status.HTTP_200_OK) # Return 200 with 0 to prevent frontend crash
