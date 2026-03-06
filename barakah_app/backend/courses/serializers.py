@@ -23,7 +23,7 @@ class CourseEnrollmentSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = CourseEnrollment
-        fields = '__all__'
+        fields = ['id', 'user', 'course', 'course_title', 'course_slug', 'proof_file', 'enrolled_at', 'payment_status']
 
 class CourseSerializer(serializers.ModelSerializer):
     materials = CourseMaterialSerializer(many=True, read_only=True)

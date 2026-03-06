@@ -36,10 +36,9 @@ class CourseEnrollmentAdminForm(forms.ModelForm):
         fields = '__all__'
 
 class CourseEnrollmentAdmin(admin.ModelAdmin):
-    list_display = ('order_number', 'course', 'user', 'buyer_name', 'payment_status', 'enrolled_at')
-    readonly_fields = ('order_number',)
+    list_display = ('id', 'course', 'user', 'payment_status', 'enrolled_at')
     list_filter = ('payment_status', 'course')
-    search_fields = ('user__username', 'course__title', 'order_number', 'buyer_name', 'buyer_email')
+    search_fields = ('user__username', 'course__title')
     date_hierarchy = 'enrolled_at' 
     form = CourseEnrollmentAdminForm 
 
