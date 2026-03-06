@@ -5,6 +5,9 @@ import { Helmet } from 'react-helmet';
 import Header from '../components/layout/Header';
 import NavigationButton from '../components/layout/Navigation';
 import {
+    getMyDigitalProducts,
+    createMyDigitalProduct,
+    updateMyDigitalProduct,
     deleteMyDigitalProduct,
     getDigitalBalance,
     getWithdrawalHistory,
@@ -123,7 +126,7 @@ const DashboardDigitalProductsPage = () => {
         if (!window.confirm('Yakin ingin menghapus produk ini?')) return;
         try {
             await deleteMyDigitalProduct(productId);
-            fetchProducts();
+            fetchDashboardData();
         } catch (err) {
             console.error(err);
             alert('Gagal menghapus produk');
@@ -135,7 +138,7 @@ const DashboardDigitalProductsPage = () => {
             const formData = new FormData();
             formData.append('is_active', !product.is_active);
             await updateMyDigitalProduct(product.id, formData);
-            fetchProducts();
+            fetchDashboardData();
         } catch (err) {
             console.error(err);
             alert('Gagal mengubah status produk');
