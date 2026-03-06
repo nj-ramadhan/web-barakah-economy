@@ -7,8 +7,8 @@ from rest_framework import status
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from rest_framework.decorators import action
-from .models import Course, CourseEnrollment, CourseMaterial, UserCourseProgress
-from .serializers import CourseSerializer, CourseEnrollmentSerializer, CourseMaterialSerializer, UserCourseProgressSerializer
+from .models import Course, CourseEnrollment, CourseMaterial, UserCourseProgress, CertificateRequest
+from .serializers import CourseSerializer, CourseEnrollmentSerializer, CourseMaterialSerializer, UserCourseProgressSerializer, CertificateRequestSerializer
 
 class CourseViewSet(viewsets.ModelViewSet):
     serializer_class = CourseSerializer
@@ -178,6 +178,7 @@ class CoursePaymentConfirmationView(APIView):
 
 class UserCourseProgressViewSet(viewsets.ModelViewSet):
     serializer_class = UserCourseProgressSerializer
+    authentication_classes = [JWTAuthentication]
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
@@ -196,3 +197,29 @@ class UserCourseProgressViewSet(viewsets.ModelViewSet):
             progress.is_completed = True
             progress.save()
         return Response(UserCourseProgressSerializer(progress).data, status=status.HTTP_201_CREATED)
+
+class CertificateRequestViewSet(viewsets.ModelViewSet):
+    serializer_class = CertificateRequestSerializer
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        # Students see their own requests
+        # Instructors see requests for their courses
+        user = self.request.user
+        return CertificateRequest.objects.filter(
+            Q(user=user) | Q(course__instructor=user)
+        ).distinct()
+
+    def perform_create(self, serializer):
+        # Ensure only one request per user per course
+        course = serializer.validated_data.get('course')
+        # We could add more validation here (e.g., check if course is completed)
+        serializer.save(user=self.request.user)
+
+    @action(detail=False, methods=['get'], url_path='by-course/(?P<course_id>[^/.]+)')
+    def by_course(self, request, course_id=None):
+        request_obj = CertificateRequest.objects.filter(user=request.user, course_id=course_id).first()
+        if request_obj:
+            return Response(CertificateRequestSerializer(request_obj).data)
+        return Response({'detail': 'Not found'}, status=status.HTTP_404_NOT_FOUND)

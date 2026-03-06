@@ -192,11 +192,11 @@ const CoursesTab = () => {
                                 <span className="material-icons text-green-600">school</span>
                             </div>
                             <div className="flex-1">
-                                <h3 className="text-sm font-bold text-gray-800">E-Course ID: {enroll.course}</h3>
+                                <h3 className="text-sm font-bold text-gray-800">{enroll.course_title}</h3>
                                 <p className="text-[10px] text-gray-400">Terdaftar: {formatDate(enroll.enrolled_at)}</p>
                             </div>
                             <Link
-                                to={`/kelas/buka/${enroll.course}`}
+                                to={`/kelas/buka/${enroll.course_slug}`}
                                 className="bg-green-600 text-white px-4 py-1.5 rounded-full text-xs font-bold"
                             >
                                 Buka

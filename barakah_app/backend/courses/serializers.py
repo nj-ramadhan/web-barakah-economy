@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Course, CourseEnrollment, CourseMaterial, UserCourseProgress, Certificate
+from .models import Course, CourseEnrollment, CourseMaterial, UserCourseProgress, Certificate, CertificateRequest
 from django.contrib.auth import get_user_model
 
 class CourseMaterialSerializer(serializers.ModelSerializer):
@@ -16,6 +16,12 @@ class CertificateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Certificate
         fields = '__all__'
+
+class CertificateRequestSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CertificateRequest
+        fields = '__all__'
+        read_only_fields = ['user', 'status']
 
 class CourseEnrollmentSerializer(serializers.ModelSerializer):
     course_title = serializers.ReadOnlyField(source='course.title')

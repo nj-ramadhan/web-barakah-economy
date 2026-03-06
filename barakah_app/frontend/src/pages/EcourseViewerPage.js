@@ -15,6 +15,11 @@ const EcourseViewerPage = () => {
     const [loading, setLoading] = useState(true);
     const [progress, setProgress] = useState([]);
     const [sidebarOpen, setSidebarOpen] = useState(true);
+    const [certRequest, setCertRequest] = useState(null);
+    const [certName, setCertName] = useState('');
+    const [certEmail, setCertEmail] = useState('');
+    const [certWhatsapp, setCertWhatsapp] = useState('');
+    const [submittingCert, setSubmittingCert] = useState(false);
 
     const baseUrl = process.env.REACT_APP_API_BASE_URL;
 
@@ -50,6 +55,18 @@ const EcourseViewerPage = () => {
                         .filter(p => p.course === courseRes.data.id || p.course_id === courseRes.data.id)
                         .map(p => p.material);
                     setProgress(courseProgress);
+
+                    // Fetch certificate request if course has one
+                    if (courseRes.data.has_certificate) {
+                        try {
+                            const certRes = await axios.get(`${baseUrl}/api/courses/certificate-requests/by-course/${courseRes.data.id}/`, {
+                                headers: { Authorization: `Bearer ${user.access}` }
+                            });
+                            setCertRequest(certRes.data);
+                        } catch (cErr) {
+                            // 404 is fine, means not yet requested
+                        }
+                    }
                 } catch (pErr) {
                     console.error('Error fetching progress:', pErr);
                 }
@@ -64,12 +81,9 @@ const EcourseViewerPage = () => {
 
     const getYoutubeId = (url) => {
         if (!url) return null;
-        const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+        const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=|shorts\/)([^#\&\?]*).*/;
         const match = url.match(regExp);
-        if (match && match[2].length === 11) return match[2];
-        const shortsMatch = url.match(/\/shorts\/([a-zA-Z0-9_-]{11})/);
-        if (shortsMatch) return shortsMatch[1];
-        return null;
+        return (match && match[2].length === 11) ? match[2] : null;
     };
 
     const isLocked = (index) => {
@@ -112,6 +126,33 @@ const EcourseViewerPage = () => {
         const currentIndex = materials.findIndex(m => m.id === currentMaterial.id);
         if (currentIndex < materials.length - 1) {
             handleMaterialClick(materials[currentIndex + 1], currentIndex + 1);
+        } else {
+            setCurrentMaterial(null); // Show completion screen
+        }
+    };
+
+    const handleCertSubmit = async (e) => {
+        e.preventDefault();
+        const user = JSON.parse(localStorage.getItem('user'));
+        if (!user) return;
+
+        setSubmittingCert(true);
+        try {
+            const res = await axios.post(`${baseUrl}/api/courses/certificate-requests/`, {
+                course: course.id,
+                full_name: certName,
+                email: certEmail,
+                whatsapp: certWhatsapp
+            }, {
+                headers: { Authorization: `Bearer ${user.access}` }
+            });
+            setCertRequest(res.data);
+            alert('Permintaan sertifikat berhasil dikirim!');
+        } catch (err) {
+            console.error('Error submitting cert request:', err);
+            alert('Gagal mengirim permintaan sertifikat. Pastikan semua field terisi.');
+        } finally {
+            setSubmittingCert(false);
         }
     };
 
@@ -130,9 +171,17 @@ const EcourseViewerPage = () => {
 
             <Header />
 
-            <div className="flex-1 flex overflow-hidden max-w-7xl mx-auto w-full">
+            <div className="flex-1 flex overflow-hidden max-w-7xl mx-auto w-full relative">
+                {/* Sidebar Overlay (Mobile) */}
+                {sidebarOpen && (
+                    <div
+                        className="lg:hidden fixed inset-0 bg-black/50 z-10"
+                        onClick={() => setSidebarOpen(false)}
+                    ></div>
+                )}
+
                 {/* Sidebar */}
-                <div className={`${sidebarOpen ? 'w-80' : 'w-0'} lg:w-80 bg-white border-r transition-all duration-300 flex flex-col z-20 absolute lg:relative h-full`}>
+                <div className={`${sidebarOpen ? 'w-80 translate-x-0' : 'w-0 -translate-x-full'} lg:w-80 lg:translate-x-0 bg-white border-r transition-all duration-300 flex flex-col z-20 absolute lg:relative h-full shadow-xl lg:shadow-none`}>
                     <div className="p-4 border-b flex justify-between items-center bg-green-900 text-white">
                         <h2 className="font-bold text-xs uppercase tracking-widest truncate">{course.title}</h2>
                         <button onClick={() => setSidebarOpen(false)} className="lg:hidden p-1">
@@ -244,9 +293,10 @@ const EcourseViewerPage = () => {
                                     </button>
                                 </div>
 
-                                <div className="prose max-w-none text-gray-600 text-sm leading-relaxed mb-10">
-                                    {currentMaterial.description || 'Tidak ada deskripsi untuk materi ini.'}
-                                </div>
+                                <div
+                                    className="prose max-w-none text-gray-600 text-sm leading-relaxed mb-10"
+                                    dangerouslySetInnerHTML={{ __html: currentMaterial.description || 'Tidak ada deskripsi untuk materi ini.' }}
+                                />
 
                                 {currentMaterial.pdf_file && (
                                     <div className="mt-8 p-5 bg-blue-50/50 rounded-2xl border border-blue-100 flex items-center justify-between">
@@ -282,14 +332,85 @@ const EcourseViewerPage = () => {
                                         <span className="material-icons group-hover:translate-x-1 transition-transform">arrow_forward</span>
                                     </button>
                                 ) : progress.length === materials.length ? (
-                                    <div className="text-center">
+                                    <div className="text-center w-full max-w-lg">
                                         <div className="w-20 h-20 bg-yellow-400 rounded-3xl flex items-center justify-center mx-auto mb-4 rotate-3 shadow-xl">
                                             <span className="material-icons text-white text-4xl">emoji_events</span>
                                         </div>
-                                        <p className="font-black text-gray-900">Selamat! Anda telah menyelesaikan kelas ini.</p>
-                                        <button className="mt-4 bg-green-700 text-white px-8 py-3 rounded-2xl font-black text-xs shadow-lg hover:bg-green-800 transition">
-                                            KLAIM SERTIFIKAT KELULUSAN
-                                        </button>
+                                        <p className="font-black text-gray-900 text-xl mb-2">Selamat! Anda telah menyelesaikan kelas ini.</p>
+
+                                        {course.has_certificate ? (
+                                            <div className="mt-8 bg-white border border-gray-100 rounded-3xl p-6 lg:p-8 shadow-xl text-left">
+                                                <h3 className="text-lg font-black text-gray-800 flex items-center gap-2 mb-4">
+                                                    <span className="material-icons text-green-600">verified</span>
+                                                    Klaim Sertifikat Anda
+                                                </h3>
+
+                                                {certRequest ? (
+                                                    <div className="bg-green-50 border border-green-100 rounded-2xl p-6 text-center">
+                                                        <div className="w-12 h-12 bg-green-600 text-white rounded-full flex items-center justify-center mx-auto mb-3">
+                                                            <span className="material-icons">history</span>
+                                                        </div>
+                                                        <p className="font-black text-green-800">Permintaan Sertifikat: {certRequest.status === 'pending' ? 'Menunggu Antrian' : certRequest.status === 'processed' ? 'Sedang Diproses' : 'Sudah Dikirim'}</p>
+                                                        <p className="text-xs text-green-600 mt-2 leading-relaxed">
+                                                            {course.certificate_info || "Sertifikat Anda akan dikirimkan secara manual oleh pengajar melalui email atau WhatsApp segera sedalam 1x24 jam."}
+                                                        </p>
+                                                    </div>
+                                                ) : (
+                                                    <form onSubmit={handleCertSubmit} className="space-y-4">
+                                                        <p className="text-xs text-gray-500 mb-4 leading-relaxed">
+                                                            {course.certificate_info || "Sertifikat akan dikirimkan manual. Silakan isi detail di bawah dengan benar agar tidak ada kesalahan penulisan nama."}
+                                                        </p>
+                                                        <div>
+                                                            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">Nama Lengkap (Sertifikat)</label>
+                                                            <input
+                                                                type="text"
+                                                                required
+                                                                value={certName}
+                                                                onChange={(e) => setCertName(e.target.value)}
+                                                                className="w-full bg-gray-50 border-none rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-green-500"
+                                                                placeholder="Masukkan nama lengkap Anda..."
+                                                            />
+                                                        </div>
+                                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                                            <div>
+                                                                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">Email</label>
+                                                                <input
+                                                                    type="email"
+                                                                    required
+                                                                    value={certEmail}
+                                                                    onChange={(e) => setCertEmail(e.target.value)}
+                                                                    className="w-full bg-gray-50 border-none rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-green-500"
+                                                                    placeholder="email@anda.com"
+                                                                />
+                                                            </div>
+                                                            <div>
+                                                                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">WhatsApp</label>
+                                                                <input
+                                                                    type="text"
+                                                                    required
+                                                                    value={certWhatsapp}
+                                                                    onChange={(e) => setCertWhatsapp(e.target.value)}
+                                                                    className="w-full bg-gray-50 border-none rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-green-500"
+                                                                    placeholder="0812xxxx"
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                        <button
+                                                            type="submit"
+                                                            disabled={submittingCert}
+                                                            className="w-full bg-green-600 text-white font-black py-4 rounded-2xl shadow-lg hover:bg-green-700 transition transform hover:-translate-y-1 active:scale-95 disabled:opacity-50"
+                                                        >
+                                                            {submittingCert ? 'Sedang Mengirim...' : 'KIRIM PERMINTAAN SERTIFIKAT'}
+                                                        </button>
+                                                    </form>
+                                                )}
+                                            </div>
+                                        ) : (
+                                            <div className="mt-8 bg-gray-50 rounded-3xl p-8 border border-dashed border-gray-200">
+                                                <p className="text-gray-400 font-bold text-sm">Kelas Selesai!</p>
+                                                <p className="text-[10px] text-gray-400 mt-1 uppercase tracking-widest">Kursus ini tidak menyediakan sertifikat.</p>
+                                            </div>
+                                        )}
                                     </div>
                                 ) : null}
                             </div>

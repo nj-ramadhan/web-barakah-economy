@@ -13,6 +13,12 @@ const formatIDR = (amount) => {
   }).format(amount);
 };
 
+const getYoutubeId = (url) => {
+  if (!url) return null;
+  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=|shorts\/)([^#\&\?]*).*/;
+  const match = url.match(regExp);
+  return (match && match[2].length === 11) ? match[2] : null;
+};
 const EcourseCourseDetail = () => {
   const { slug } = useParams();
   const navigate = useNavigate();
@@ -167,123 +173,171 @@ const EcourseCourseDetail = () => {
         </div>
       </div>
 
-      {/* Tab Navigation */}
-      <div className="mt-4 px-4">
-        <div className="flex justify-around bg-white border-b">
-          <button
-            className={`py-2 px-4 text-sm font-medium ${activeTab === 'description' ? 'text-green-600 border-b-2 border-green-600' : 'text-gray-500'}`}
-            onClick={() => setActiveTab('description')}
-          >
-            Keterangan
-          </button>
-          <button
-            className={`py-2 px-4 text-sm font-medium ${activeTab === 'students' ? 'text-green-600 border-b-2 border-green-600' : 'text-gray-500'}`}
-            onClick={() => setActiveTab('students')}
-          >
-            Peserta ({course.students ? course.students.length : 0})
-          </button>
-          <button
-            className={`py-2 px-4 text-sm font-medium ${activeTab === 'materials' ? 'text-green-600 border-b-2 border-green-600' : 'text-gray-500'}`}
-            onClick={() => setActiveTab('materials')}
-          >
-            Materi ({course.materials ? course.materials.length : 0})
-          </button>
-        </div>
-
-        {/* Tab Content */}
+      {/* Tab Navigation & Content Container */}
+      <div className="max-w-6xl mx-auto mb-20 px-4">
+        {/* Tab Navigation */}
         <div className="mt-4">
-          {activeTab === 'description' && (
-            <div className="bg-white p-4 rounded-lg shadow">
-              {course.description ? (
-                <>
-                  <div
-                    onClick={toggleDescription}
-                    dangerouslySetInnerHTML={{
-                      __html: showFullDescription
-                        ? convertRelativeUrlsToAbsolute(course.description, baseUrl)
-                        : convertRelativeUrlsToAbsolute(course.description, baseUrl).substring(0, 200) + '...',
-                    }}
-                  />
-                  {course.description.length > 200 && (
-                    <button
-                      onClick={toggleDescription}
-                      className="text-green-600 mt-2 text-sm"
-                    >
-                      {showFullDescription ? 'Tampilkan Lebih Sedikit' : 'Tampilkan Selengkapnya'}
-                    </button>
-                  )}
-                </>
-              ) : (
-                <p className="text-gray-500">Tidak ada deskripsi.</p>
-              )}
-            </div>
-          )}
+          <div className="flex justify-around bg-white border-b rounded-t-lg">
+            <button
+              className={`py-3 px-4 text-sm font-bold ${activeTab === 'description' ? 'text-green-600 border-b-2 border-green-600' : 'text-gray-500'}`}
+              onClick={() => setActiveTab('description')}
+            >
+              Keterangan
+            </button>
+            <button
+              className={`py-3 px-4 text-sm font-bold ${activeTab === 'students' ? 'text-green-600 border-b-2 border-green-600' : 'text-gray-500'}`}
+              onClick={() => setActiveTab('students')}
+            >
+              Peserta ({course.students ? course.students.length : 0})
+            </button>
+            <button
+              className={`py-3 px-4 text-sm font-bold ${activeTab === 'materials' ? 'text-green-600 border-b-2 border-green-600' : 'text-gray-500'}`}
+              onClick={() => setActiveTab('materials')}
+            >
+              Materi ({course.materials ? course.materials.length : 0})
+            </button>
+          </div>
 
-          {activeTab === 'students' && (
-            <div className="bg-white p-4 rounded-lg shadow">
-              <ul>
-                {course.students && course.students.length > 0 ? (
-                  course.students.map((student, idx) => (
-                    <li key={idx} className="border-b py-2 px-4 flex items-center">
-                      <span className="text-green-700 font-semibold">{student.full_name || student.username}</span>
-                    </li>
-                  ))
+          {/* Tab Content */}
+          <div className="mt-4">
+            {activeTab === 'description' && (
+              <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100 min-h-[200px]">
+                {course.description ? (
+                  <>
+                    <div
+                      className="prose max-w-none text-gray-700 text-sm leading-relaxed"
+                      dangerouslySetInnerHTML={{
+                        __html: showFullDescription
+                          ? convertRelativeUrlsToAbsolute(course.description, baseUrl)
+                          : convertRelativeUrlsToAbsolute(course.description, baseUrl).substring(0, 500) + '...',
+                      }}
+                    />
+                    {course.description.length > 500 && (
+                      <button
+                        onClick={toggleDescription}
+                        className="text-green-600 mt-4 text-xs font-bold uppercase tracking-wider bg-green-50 px-4 py-2 rounded-full hover:bg-green-100 transition"
+                      >
+                        {showFullDescription ? 'Tampilkan Lebih Sedikit' : 'Tampilkan Selengkapnya'}
+                      </button>
+                    )}
+                  </>
                 ) : (
-                  <li className="py-2 px-4 text-gray-500">Belum ada peserta terdaftar.</li>
+                  <p className="text-gray-400 italic">Tidak ada deskripsi.</p>
                 )}
-              </ul>
-            </div>
-          )}
+              </div>
+            )}
 
-          {activeTab === 'materials' && isEnrolled && (
-            <div className="bg-white p-4 rounded-lg shadow">
-              <ul>
-                {course.materials && course.materials.length > 0 ? (
-                  course.materials.map((material, idx) => (
-                    <li key={idx} className="border-b py-2 px-4">
-                      <div
-                        onClick={() => toggleMaterial(material.id)}
-                        className="flex justify-between items-center">
-                        <span className="font-semibold">{material.title}</span>
+            {activeTab === 'students' && (
+              <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {course.students && course.students.length > 0 ? (
+                    course.students.map((student, idx) => (
+                      <div key={idx} className="bg-gray-50 p-3 rounded-xl flex items-center gap-3">
+                        <div className="w-8 h-8 bg-green-100 text-green-700 rounded-full flex items-center justify-center font-bold text-xs">
+                          {student.full_name ? student.full_name.charAt(0).toUpperCase() : (student.username ? student.username.charAt(0).toUpperCase() : 'U')}
+                        </div>
+                        <span className="text-gray-700 font-bold text-xs truncate">{student.full_name || student.username}</span>
                       </div>
-                      {material.description ? (
-                        <>
-                          <div
-                            onClick={() => toggleMaterial(material.id)}
-                            dangerouslySetInnerHTML={{
-                              __html: showFullMaterials[material.id]
-                                ? convertRelativeUrlsToAbsolute(material.description, baseUrl)
-                                : convertRelativeUrlsToAbsolute(material.description, baseUrl).substring(0, 100) + '...',
-                            }}
-                          />
-                          {material.description.length > 100 && (
-                            <button
-                              onClick={() => toggleMaterial(material.id)}
-                              className="text-green-600 mt-2 text-sm"
-                            >
-                              {showFullMaterials[material.id] ? 'Tampilkan Lebih Sedikit' : 'Tampilkan Selengkapnya'}
-                            </button>
-                          )}
-                        </>
-                      ) : (
-                        <p className="text-gray-500 text-xs mt-1">Tidak ada rincian materi.</p>
-                      )}
-                    </li>
-                  ))
-                ) : (
-                  <li className="py-2 px-4 text-gray-500">Belum ada materi.</li>
-                )}
-              </ul>
-            </div>
-          )}
+                    ))
+                  ) : (
+                    <div className="col-span-full py-10 text-center">
+                      <span className="material-symbols-outlined text-gray-200 text-4xl block mb-2">person_off</span>
+                      <p className="text-gray-400 text-xs italic">Belum ada peserta terdaftar.</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
 
-          {activeTab === 'materials' && !isEnrolled && (
-            <div className="bg-yellow-50 p-4 rounded-lg text-yellow-800 text-center shadow">
-              Anda harus mendaftar dan membayar untuk mengakses materi kelas ini.
-            </div>
-          )}
+            {activeTab === 'materials' && (
+              <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
+                <div className="divide-y divide-gray-50 text-sm">
+                  {course.materials && course.materials.length > 0 ? (
+                    course.materials.map((material, idx) => (
+                      <div key={idx} className="p-4 hover:bg-gray-50/50 transition">
+                        <div
+                          className="flex justify-between items-center group cursor-pointer"
+                          onClick={() => toggleMaterial(material.id)}
+                        >
+                          <div className="flex items-center gap-3">
+                            <span className="w-6 h-6 flex-shrink-0 bg-green-50 text-green-600 rounded-full flex items-center justify-center font-bold text-[10px]">
+                              {idx + 1}
+                            </span>
+                            <span className="font-bold text-gray-800 group-hover:text-green-700">{material.title}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {material.youtube_link && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setPreviewVideo(material.youtube_link);
+                                }}
+                                className="flex items-center gap-1 bg-green-50 text-green-700 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-tight hover:bg-green-100 transition"
+                              >
+                                <span className="material-icons text-xs">play_circle</span>
+                                Preview
+                              </button>
+                            )}
+                            <span className={`material-icons text-gray-400 transition-transform ${showFullMaterials[material.id] ? 'rotate-180' : ''}`}>
+                              expand_more
+                            </span>
+                          </div>
+                        </div>
+                        {showFullMaterials[material.id] && (
+                          <div className="mt-3 pl-9">
+                            {material.description ? (
+                              <div
+                                className="text-gray-500 text-xs leading-relaxed"
+                                dangerouslySetInnerHTML={{
+                                  __html: convertRelativeUrlsToAbsolute(material.description, baseUrl),
+                                }}
+                              />
+                            ) : (
+                              <p className="text-gray-400 text-[10px] italic">Tidak ada rincian materi.</p>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    ))
+                  ) : (
+                    <div className="p-10 text-center">
+                      <p className="text-gray-400 text-xs italic">Belum ada materi.</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
+
+      {/* Video Preview Modal */}
+      {previewVideo && (
+        <div className="fixed inset-0 bg-black/90 z-[2000] flex items-center justify-center p-4 lg:p-10">
+          <div className="relative w-full max-w-5xl aspect-video bg-black rounded-2xl overflow-hidden shadow-2xl border-4 border-white/10">
+            <button
+              onClick={() => setPreviewVideo(null)}
+              className="absolute top-4 right-4 w-10 h-10 bg-black/50 text-white rounded-full flex items-center justify-center hover:bg-white/20 transition z-10"
+            >
+              <span className="material-icons">close</span>
+            </button>
+            <iframe
+              width="100%"
+              height="100%"
+              src={`https://www.youtube.com/embed/${getYoutubeId(previewVideo)}?autoplay=1&rel=0&modestbranding=1`}
+              title="YouTube video player"
+              frameBorder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+              className="w-full h-full"
+            ></iframe>
+          </div>
+          <div
+            className="absolute inset-0 -z-10"
+            onClick={() => setPreviewVideo(null)}
+          ></div>
+        </div>
+      )}
 
       <NavigationButton />
     </div>

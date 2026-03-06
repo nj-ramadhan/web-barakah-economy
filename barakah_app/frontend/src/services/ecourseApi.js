@@ -80,3 +80,14 @@ export const getUserProgress = () =>
     axios.get(`${API_BASE}/api/courses/progress/`, {
         headers: getAuthHeaders(),
     });
+
+// Certificates
+export const getCertificateRequest = (courseId) =>
+    axios.get(`${API_BASE}/api/courses/certificate-requests/by-course/${courseId}/`, {
+        headers: getAuthHeaders(),
+    });
+
+export const requestCertificate = (data) =>
+    axios.post(`${API_BASE}/api/courses/certificate-requests/`, data, {
+        headers: getAuthHeaders(),
+    });

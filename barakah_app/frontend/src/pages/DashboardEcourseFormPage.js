@@ -32,6 +32,8 @@ const DashboardEcourseFormPage = () => {
     const [discount, setDiscount] = useState('0');
     const [isActive, setIsActive] = useState(true);
     const [isFeatured, setIsFeatured] = useState(false);
+    const [hasCertificate, setHasCertificate] = useState(false);
+    const [certificateInfo, setCertificateInfo] = useState('');
     const [thumbnail, setThumbnail] = useState(null);
     const [thumbnailPreview, setThumbnailPreview] = useState(null);
 
@@ -48,6 +50,8 @@ const DashboardEcourseFormPage = () => {
                     setDiscount(data.discount.toString());
                     setIsActive(data.is_active);
                     setIsFeatured(data.is_featured);
+                    setHasCertificate(data.has_certificate || false);
+                    setCertificateInfo(data.certificate_info || '');
                     setThumbnailPreview(data.thumbnail);
                 } catch (err) {
                     console.error(err);
@@ -86,6 +90,8 @@ const DashboardEcourseFormPage = () => {
         formData.append('discount', discount);
         formData.append('is_active', isActive);
         formData.append('is_featured', isFeatured);
+        formData.append('has_certificate', hasCertificate);
+        formData.append('certificate_info', certificateInfo);
         if (thumbnail) {
             formData.append('thumbnail', thumbnail);
         }
@@ -255,6 +261,35 @@ const DashboardEcourseFormPage = () => {
                                 <p className="text-[10px] text-gray-500">Muncul di halaman utama</p>
                             </div>
                         </div>
+                    </div>
+
+                    <div className="space-y-4">
+                        <div className="flex items-start gap-3 bg-gray-50 border border-transparent p-4 rounded-xl cursor-pointer hover:border-blue-100 transition" onClick={() => setHasCertificate(!hasCertificate)}>
+                            <input
+                                type="checkbox"
+                                checked={hasCertificate}
+                                onChange={() => setHasCertificate(!hasCertificate)}
+                                className="w-5 h-5 mt-0.5 rounded text-blue-700 focus:ring-blue-500"
+                            />
+                            <div className="flex-1">
+                                <p className="text-sm font-bold text-gray-800">Sertifikat Tersedia</p>
+                                <p className="text-[10px] text-gray-500">Beri tahu siswa bahwa mereka akan mendapatkan sertifikat setelah selesai.</p>
+                            </div>
+                        </div>
+
+                        {hasCertificate && (
+                            <div className="animate-slide-up">
+                                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Informasi Pengiriman Sertifikat</label>
+                                <textarea
+                                    value={certificateInfo}
+                                    onChange={(e) => setCertificateInfo(e.target.value)}
+                                    rows="3"
+                                    className="w-full px-4 py-3 bg-gray-50 border-none rounded-xl text-sm font-semibold focus:ring-2 focus:ring-blue-500"
+                                    placeholder="Contoh: Sertifikat akan dikirim via Email dalam 1x24 jam setelah pengisian form detail."
+                                />
+                                <p className="text-[10px] text-gray-400 mt-1 italic">Catatan ini akan muncul saat siswa selesai menonton semua materi.</p>
+                            </div>
+                        )}
                     </div>
 
                     <div className="pt-4">

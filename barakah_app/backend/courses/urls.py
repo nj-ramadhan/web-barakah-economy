@@ -1,5 +1,9 @@
 from django.urls import path
-from .views import CourseViewSet, CourseDetailViewSet, CourseEnrollmentViewSet, CourseMaterialViewSet, CoursePaymentConfirmationView, UserCourseProgressViewSet
+from .views import (
+    CourseViewSet, CourseDetailViewSet, CourseEnrollmentViewSet, 
+    CourseMaterialViewSet, CoursePaymentConfirmationView, 
+    UserCourseProgressViewSet, CertificateRequestViewSet
+)
 
 # Endpoint untuk list dan create course
 course_list = CourseViewSet.as_view({
@@ -22,6 +26,9 @@ urlpatterns = [
     path('materials/', CourseMaterialViewSet.as_view({'get': 'list', 'post': 'create'}), name='material-list-create'),
     path('materials/<int:pk>/', CourseMaterialViewSet.as_view({'get': 'retrieve', 'put': 'update', 'patch': 'partial_update', 'delete': 'destroy'}), name='material-detail'),
     path('progress/', UserCourseProgressViewSet.as_view({'get': 'list', 'post': 'create'}), name='progress-list-create'),
+    path('certificate-requests/', CertificateRequestViewSet.as_view({'get': 'list', 'post': 'create'}), name='cert-request-list-create'),
+    path('certificate-requests/by-course/<int:course_id>/', CertificateRequestViewSet.as_view({'get': 'by_course'}), name='cert-request-by-course'),
+    path('certificate-requests/<int:pk>/', CertificateRequestViewSet.as_view({'get': 'retrieve', 'put': 'update', 'patch': 'partial_update', 'delete': 'destroy'}), name='cert-request-detail'),
     path('<slug:slug>/payment-confirmation/', CoursePaymentConfirmationView.as_view(), name='course-payment-confirmation'),
     path('<int:pk>/', course_detail, name='course-detail-id'),  # Detail by ID
     path('<slug:slug>/', CourseDetailViewSet.as_view(), name='course-detail-slug'),  # Detail by slug   

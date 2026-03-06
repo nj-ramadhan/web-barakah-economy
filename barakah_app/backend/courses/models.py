@@ -43,6 +43,8 @@ class Course(models.Model):
     duration = models.IntegerField(default=0, help_text="Duration in minutes or hours")
     is_featured = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
+    has_certificate = models.BooleanField(default=False)
+    certificate_info = models.TextField(blank=True, null=True, help_text="Instructions for students regarding the certificate (e.g., 'Sent in 1x24 hours')")
     created_at = models.DateTimeField(auto_now_add=True)
 
     def save(self, *args, **kwargs):
@@ -128,3 +130,25 @@ class Certificate(models.Model):
 
     def __str__(self):
         return f"Certificate for {self.user.username} - {self.course.title}"
+
+class CertificateRequest(models.Model):
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('processed', 'Diproses'),
+        ('sent', 'Terkirim'),
+    ]
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='cert_requests')
+    course = models.ForeignKey(Course, on_delete=models.CASCADE)
+    full_name = models.CharField(max_length=255, help_text="Name shown on certificate")
+    email = models.EmailField()
+    whatsapp = models.CharField(max_length=20)
+    notes = models.TextField(blank=True, null=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('user', 'course')
+
+    def __str__(self):
+        return f"Cert Request: {self.full_name} - {self.course.title}"

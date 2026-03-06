@@ -84,12 +84,16 @@ const NavigationButton = () => {
 
         {/* PROFILE (Kanan - 3 cols) */}
         <Link
-          to="/profile"
+          to={localStorage.getItem('access_token') ? "/profile" : "/login"}
           className={`col-span-3 flex flex-col items-center justify-center transition-colors ${location.pathname.includes('/profile') || location.pathname === '/login' ? 'text-green-600' : 'text-gray-500'
             }`}
         >
-          <span className="material-icons text-2xl">account_circle</span>
-          <span className="text-[11px] font-medium mt-0.5">Profile</span>
+          <span className="material-icons text-2xl">
+            {localStorage.getItem('access_token') ? 'account_circle' : 'login'}
+          </span>
+          <span className="text-[11px] font-medium mt-0.5">
+            {localStorage.getItem('access_token') ? 'Profile' : 'Login'}
+          </span>
         </Link>
 
       </div>
