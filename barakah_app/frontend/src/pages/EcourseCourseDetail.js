@@ -27,8 +27,9 @@ const EcourseCourseDetail = () => {
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('description');
   const [showFullDescription, setShowFullDescription] = useState(false);
-  const [showFullMaterials, setShowFullMaterials] = useState(false);
+  const [showFullMaterials, setShowFullMaterials] = useState({});
   const [isEnrolled, setIsEnrolled] = useState(false);
+  const [previewVideo, setPreviewVideo] = useState(null);
 
   const baseUrl = process.env.REACT_APP_API_BASE_URL;
 
