@@ -135,6 +135,10 @@ const LayoutWrapper = ({ isDesktop }) => {
       <Route path="/digital-produk/:username" element={<ResponsiveLayout isDesktop={isDesktop}><SellerProfilePage /></ResponsiveLayout>} />
       <Route path="/digital-produk/:username/:slug" element={<ResponsiveLayout isDesktop={isDesktop}><DigitalProductDetailPage /></ResponsiveLayout>} />
 
+      {/* Alias routes to support legacy underscore format and prevent blank page */}
+      <Route path="/digital_produk/:username" element={<ResponsiveLayout isDesktop={isDesktop}><SellerProfilePage /></ResponsiveLayout>} />
+      <Route path="/digital_produk/:username/:slug" element={<ResponsiveLayout isDesktop={isDesktop}><DigitalProductDetailPage /></ResponsiveLayout>} />
+
       {/* Dashboard Routes (Private) */}
       <Route path="/dashboard" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardPage /></ResponsiveLayout></PrivateRoute>} />
       <Route path="/dashboard/digital-products" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardDigitalProductsPage /></ResponsiveLayout></PrivateRoute>} />

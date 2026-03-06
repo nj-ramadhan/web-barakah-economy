@@ -1117,6 +1117,21 @@ const Home = () => {
         </div>
       </div>
 
+      {/* Testimonials section to match user request layout */}
+      <div className="px-4 py-8 bg-gray-50 mb-4">
+        <h1 className="text-lg font-medium mb-4">Testimoni</h1>
+        <div className="space-y-4">
+          <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 italic text-sm text-gray-600">
+            "Alhamdulillah, sangat terbantu dengan program Barakah Economy."
+            <p className="mt-2 text-xs font-bold text-gray-800 not-italic">- Ahmad</p>
+          </div>
+          <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 italic text-sm text-gray-600">
+            "Produk halalnya berkualitas dan pengiriman cepat."
+            <p className="mt-2 text-xs font-bold text-gray-800 not-italic">- Fatimah</p>
+          </div>
+        </div>
+      </div>
+
       {/* Bottom Navigation */}
       <NavigationButton />
     </div>

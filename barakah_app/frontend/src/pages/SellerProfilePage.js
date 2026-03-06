@@ -58,16 +58,17 @@ const SellerProfilePage = () => {
         );
     }
 
-    const { profile, products } = profileData;
+    const profile = profileData?.profile || {};
+    const products = profileData?.products || [];
 
     return (
         <div className="body">
             <Helmet>
                 <title>{username} - Produk Digital - Barakah Economy</title>
-                <meta name="description" content={profile.shop_description || `Koleksi produk digital dari ${username}`} />
+                <meta name="description" content={profile?.shop_description || `Koleksi produk digital dari ${username}`} />
                 <meta property="og:title" content={`${username} - Produk Digital`} />
-                <meta property="og:description" content={profile.shop_description || `Koleksi produk digital dari ${username}`} />
-                <meta property="og:image" content={getMediaUrl(profile.shop_thumbnail || profile.picture)} />
+                <meta property="og:description" content={profile?.shop_description || `Koleksi produk digital dari ${username}`} />
+                <meta property="og:image" content={getMediaUrl(profile?.shop_thumbnail || profile?.picture)} />
             </Helmet>
 
             <Header />

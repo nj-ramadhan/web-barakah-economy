@@ -37,6 +37,7 @@ const DesktopLandingPage = () => {
     const [digitalProducts, setDigitalProducts] = useState([]);
     const [user, setUser] = useState(null);
     const [showProfileMenu, setShowProfileMenu] = useState(false);
+    const [popularSellers, setPopularSellers] = useState([]);
 
     useEffect(() => {
         // Check login status
@@ -47,18 +48,20 @@ const DesktopLandingPage = () => {
 
         const fetchData = async () => {
             try {
-                const [campRes, prodRes, courseRes, artRes, digRes] = await Promise.all([
+                const [campRes, prodRes, courseRes, artRes, digRes, popRes] = await Promise.all([
                     axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/campaigns`),
                     axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/products`),
                     axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/courses`),
                     axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/articles/`),
                     axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/digital-products/products/`).catch(() => ({ data: [] })),
+                    axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/digital-products/products/popular-sellers/`).catch(() => ({ data: [] })),
                 ]);
                 setCampaigns(campRes.data.slice(0, 8));
                 setProducts(prodRes.data.slice(0, 8));
                 setCourses(courseRes.data.slice(0, 8));
                 setArticles(artRes.data.results ? artRes.data.results.slice(0, 8) : artRes.data.slice(0, 8));
                 setDigitalProducts(Array.isArray(digRes.data) ? digRes.data.slice(0, 8) : []);
+                setPopularSellers(Array.isArray(popRes.data) ? popRes.data : []);
             } catch (err) {
                 console.error('Error fetching landing page data:', err);
             }
@@ -426,6 +429,38 @@ const DesktopLandingPage = () => {
                                     </SwiperSlide>
                                 ))}
                             </Swiper>
+                        </div>
+                    </section>
+                )}
+
+                {/* ============ POPULAR SELLERS ============ */}
+                {popularSellers.length > 0 && (
+                    <section className="py-20 px-8 lg:px-24 bg-gray-50 border-t border-b border-gray-100">
+                        <div className="max-w-6xl mx-auto">
+                            <div className="text-center mb-12">
+                                <h2 className="text-3xl font-bold text-gray-900">Penjual Populer</h2>
+                                <p className="text-gray-500 mt-2">Dukung para creator dan UMKM barakah kami</p>
+                            </div>
+                            <div className="flex overflow-x-auto space-x-8 pb-8 scrollbar-hide justify-center">
+                                {popularSellers.map((seller) => (
+                                    <Link
+                                        key={seller.username}
+                                        to={`/digital-produk/${seller.username}`}
+                                        className="flex-shrink-0 w-32 text-center group"
+                                    >
+                                        <div className="w-24 h-24 mx-auto rounded-full overflow-hidden border-4 border-white shadow-md group-hover:border-green-500 transition-all duration-300 p-1 mb-4">
+                                            <img
+                                                src={seller.shop_thumbnail || '/images/pas_foto_standard.png'}
+                                                alt={seller.name}
+                                                className="w-full h-full object-cover rounded-full"
+                                                onError={(e) => { e.target.src = '/images/pas_foto_standard.png'; }}
+                                            />
+                                        </div>
+                                        <p className="font-bold text-gray-900 text-sm group-hover:text-green-700 transition-colors">@{seller.username}</p>
+                                        <p className="text-[10px] text-gray-500 py-1">{seller.name}</p>
+                                    </Link>
+                                ))}
+                            </div>
                         </div>
                     </section>
                 )}
