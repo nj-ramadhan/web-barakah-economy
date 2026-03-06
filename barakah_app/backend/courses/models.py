@@ -72,14 +72,15 @@ class CourseEnrollment(models.Model):
     payment_status = models.CharField(max_length=20, choices=PAYMENT_STATUS_CHOICES, default='pending')
 
     def save(self, *args, **kwargs):
-        if not self.pk:
-            super().save(*args, **kwargs)
         if not self.order_number:
+            # If new record, save once to get ID
+            if not self.id:
+                super().save(*args, **kwargs)
             self.order_number = f"CRS-{self.id:06d}"
-            kwargs['force_insert'] = False
-            super().save(*args, **kwargs)
-        else:
-            super().save(*args, **kwargs)
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.order_number} - {self.course.title} ({self.buyer_name or self.user.username if self.user else 'Guest'})"
 
     class Meta:
         pass
