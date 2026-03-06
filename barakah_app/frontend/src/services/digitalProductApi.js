@@ -52,3 +52,23 @@ export const deleteMyDigitalProduct = (productId) =>
     axios.delete(`${API_BASE}/api/digital-products/products/my-products/${productId}/`, {
         headers: getAuthHeaders(),
     });
+
+// Balance & Withdrawals
+export const getDigitalBalance = () =>
+    axios.get(`${API_BASE}/api/digital-products/withdrawals/balance/`, {
+        headers: getAuthHeaders(),
+    });
+
+export const getWithdrawalHistory = () =>
+    axios.get(`${API_BASE}/api/digital-products/withdrawals/`, {
+        headers: getAuthHeaders(),
+    });
+
+export const createWithdrawalRequest = (data) =>
+    axios.post(`${API_BASE}/api/digital-products/withdrawals/`, data, {
+        headers: getAuthHeaders(),
+    });
+
+// Public Profiles
+export const getPublicDigitalProfile = (username) =>
+    axios.get(`${API_BASE}/api/digital-products/products/public-profile/?username=${username}`);

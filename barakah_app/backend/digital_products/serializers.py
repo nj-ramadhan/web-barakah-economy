@@ -10,7 +10,7 @@ class DigitalProductSerializer(serializers.ModelSerializer):
         model = DigitalProduct
         fields = [
             'id', 'user', 'seller_name', 'title', 'slug', 'description',
-            'category', 'thumbnail', 'price', 'digital_link',
+            'category', 'visibility', 'thumbnail', 'price', 'digital_link',
             'is_active', 'created_at', 'updated_at',
         ]
         read_only_fields = ['id', 'slug', 'user', 'created_at', 'updated_at']
@@ -24,7 +24,7 @@ class DigitalProductPublicSerializer(serializers.ModelSerializer):
         model = DigitalProduct
         fields = [
             'id', 'seller_name', 'title', 'slug', 'description',
-            'category', 'thumbnail', 'price',
+            'category', 'visibility', 'thumbnail', 'price',
             'is_active', 'created_at',
         ]
 
@@ -36,7 +36,7 @@ class DigitalOrderSerializer(serializers.ModelSerializer):
         model = DigitalOrder
         fields = [
             'id', 'order_number', 'digital_product', 'product_title',
-            'buyer', 'buyer_name', 'buyer_email', 'buyer_phone',
+            'product_owner', 'buyer', 'buyer_name', 'buyer_email', 'buyer_phone',
             'amount', 'payment_proof', 'payment_status',
             'ocr_verified', 'email_sent', 'created_at',
         ]
@@ -54,3 +54,18 @@ class DigitalOrderCreateSerializer(serializers.ModelSerializer):
             'digital_product', 'buyer_name', 'buyer_email',
             'buyer_phone', 'amount',
         ]
+
+
+from .models import WithdrawalRequest
+
+class WithdrawalRequestSerializer(serializers.ModelSerializer):
+    user_username = serializers.CharField(source='user.username', read_only=True)
+
+    class Meta:
+        model = WithdrawalRequest
+        fields = [
+            'id', 'user', 'user_username', 'amount', 'donation_amount',
+            'admin_fee', 'total_deduction', 'account_name',
+            'account_number', 'bank_name', 'status', 'created_at'
+        ]
+        read_only_fields = ['id', 'user', 'status', 'created_at']

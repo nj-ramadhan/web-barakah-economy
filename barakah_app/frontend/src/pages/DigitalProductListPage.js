@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
 import Header from '../components/layout/Header';
 import NavigationButton from '../components/layout/Navigation';
-import { getDigitalProducts } from '../services/digitalProductApi';
+import { getDigitalProducts, getPublicDigitalProfile } from '../services/digitalProductApi';
 import '../styles/Body.css';
 
 const formatIDR = (amount) => {
@@ -63,7 +63,7 @@ const DigitalProductListPage = () => {
                 ) : (
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-6">
                         {products.map((product) => (
-                            <Link key={product.id} to={`/digital-products/${product.slug}`} className="block">
+                            <Link key={product.id} to={`/digital_produk/${product.seller_name}/${product.slug}`} className="block">
                                 <div className="bg-white rounded-xl overflow-hidden shadow hover:shadow-lg transition">
                                     <img
                                         src={getMediaUrl(product.thumbnail) || '/placeholder-image.jpg'}
@@ -75,11 +75,41 @@ const DigitalProductListPage = () => {
                                         <h3 className="text-sm font-semibold text-gray-800 line-clamp-2 mb-1">{product.title}</h3>
                                         <span className="inline-block text-[10px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full mb-1">{product.category}</span>
                                         <p className="text-green-700 font-bold text-sm">{formatIDR(product.price)}</p>
-                                        <p className="text-gray-400 text-xs mt-1">oleh {product.seller_name}</p>
+                                        <p className="text-gray-400 text-[10px] mt-1 flex items-center gap-1">
+                                            <span className="material-icons text-[10px]">person</span>
+                                            @{product.seller_name}
+                                        </p>
                                     </div>
                                 </div>
                             </Link>
                         ))}
+                    </div>
+                )}
+
+                {/* Seller Profiles Section */}
+                {!loading && products.length > 0 && (
+                    <div className="mt-12 bg-white rounded-3xl p-6 shadow-sm border border-gray-50">
+                        <div className="flex justify-between items-center mb-4">
+                            <h2 className="text-lg font-bold text-gray-800">Penjual Populer</h2>
+                        </div>
+                        <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
+                            {Array.from(new Set(products.map(p => p.seller_name))).map(username => (
+                                <Link
+                                    key={username}
+                                    to={`/digital_produk/${username}`}
+                                    className="flex flex-col items-center gap-2 min-w-[80px]"
+                                >
+                                    <div className="w-16 h-16 rounded-full border-2 border-green-100 p-0.5">
+                                        <div className="w-full h-full rounded-full bg-gray-50 overflow-hidden flex items-center justify-center">
+                                            <span className="text-green-600 font-bold">
+                                                {username.charAt(0).toUpperCase()}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <span className="text-[10px] font-bold text-gray-700 text-center truncate w-full">@{username}</span>
+                                </Link>
+                            ))}
+                        </div>
                     </div>
                 )}
             </div>

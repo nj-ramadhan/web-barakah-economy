@@ -52,6 +52,7 @@ import DigitalProductPaymentPage from './pages/DigitalProductPaymentPage';
 
 import DashboardPage from './pages/DashboardPage';
 import DashboardDigitalProductsPage from './pages/DashboardDigitalProductsPage';
+import SellerProfilePage from './pages/SellerProfilePage';
 
 import { ResponsiveLayout, MobileContainer } from './components/layout/ResponsiveLayout';
 
@@ -129,6 +130,10 @@ const LayoutWrapper = ({ isDesktop }) => {
       <Route path="/digital-products/:slug" element={<ResponsiveLayout isDesktop={isDesktop}><DigitalProductDetailPage /></ResponsiveLayout>} />
       <Route path="/digital-products/:slug/checkout" element={<ResponsiveLayout isDesktop={isDesktop}><DigitalProductCheckoutPage /></ResponsiveLayout>} />
       <Route path="/digital-products/payment/:orderNumber" element={<ResponsiveLayout isDesktop={isDesktop}><DigitalProductPaymentPage /></ResponsiveLayout>} />
+
+      {/* New Lynk.id style routes */}
+      <Route path="/digital_produk/:username" element={<ResponsiveLayout isDesktop={isDesktop}><SellerProfilePage /></ResponsiveLayout>} />
+      <Route path="/digital_produk/:username/:slug" element={<ResponsiveLayout isDesktop={isDesktop}><DigitalProductDetailPage /></ResponsiveLayout>} />
 
       {/* Dashboard Routes (Private) */}
       <Route path="/dashboard" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardPage /></ResponsiveLayout></PrivateRoute>} />

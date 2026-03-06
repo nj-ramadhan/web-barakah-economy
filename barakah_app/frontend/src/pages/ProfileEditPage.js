@@ -4,11 +4,11 @@ import Header from '../components/layout/Header';
 import NavigationButton from '../components/layout/Navigation';
 import authService from '../services/auth';
 import '../styles/Body.css';
-  
+
 const formatIDR = (amount) => {
-    return new Intl.NumberFormat('id-ID', {
-      minimumFractionDigits: 0,
-    }).format(amount);
+  return new Intl.NumberFormat('id-ID', {
+    minimumFractionDigits: 0,
+  }).format(amount);
 };
 
 const ProfileEditPage = () => {
@@ -37,7 +37,9 @@ const ProfileEditPage = () => {
     address_latitude: '',
     address_longitude: '',
     address_province: '',
-    picture: null, // Initialize picture as null
+    picture: null,
+    shop_thumbnail: null,
+    shop_description: '',
   });
 
   const [activeTab, setActiveTab] = useState('general'); // State to manage active tab
@@ -63,54 +65,57 @@ const ProfileEditPage = () => {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setProfile((prevProfile) => ({
-        ...prevProfile,
-        [name]: name === 'work_salary' ? formatIDR(value.replace(/[^0-9]/g, '')) : value,
+      ...prevProfile,
+      [name]: name === 'work_salary' ? formatIDR(value.replace(/[^0-9]/g, '')) : value,
     }));
   };
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     setProfile((prevProfile) => ({
-        ...prevProfile,
-        picture: file,
+      ...prevProfile,
+      picture: file,
     }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-        const user = JSON.parse(localStorage.getItem('user'));
-        if (user && user.id) {
-            // Create a FormData object
-            const formData = new FormData();
+      const user = JSON.parse(localStorage.getItem('user'));
+      if (user && user.id) {
+        // Create a FormData object
+        const formData = new FormData();
 
-            // Append all fields to the FormData object
-            for (const key in profile) {
-                if (profile[key] !== null && profile[key] !== undefined) {
-                    // Append files directly, and other fields as strings
-                    if (key === 'picture' && profile[key] instanceof File) {
-                        formData.append(key, profile[key]);
-                    } else if (key === 'work_salary') {
-                        formData.append(key, profile[key].replace(/[^0-9]/g, '')); // Parse salary back to number
-                    } else {
-                        formData.append(key, profile[key]);
-                    }
-                }
+        // Append all fields to the FormData object
+        for (const key in profile) {
+          if (profile[key] !== null && profile[key] !== undefined) {
+            // Append files directly, and other fields as strings
+            if (key === 'picture' && profile[key] instanceof File) {
+              formData.append(key, profile[key]);
+            } else if (key === 'work_salary') {
+              formData.append(key, profile[key].replace(/[^0-9]/g, '')); // Parse salary back to number
+            } else {
+              formData.append(key, profile[key]);
             }
-
-            // Append the existing picture URL if the picture is not changed
-            if (!(profile.picture instanceof File)) {
-                formData.delete('picture'); // Remove the picture field if it's not a file
-            }
-
-            // Update profile data using FormData
-            await authService.updateProfile(user.id, formData);
-            alert('Data Profile berhasil diperbaharui');
-            navigate('/profile'); // Redirect to the profile page
+          }
         }
+
+        // Append the existing picture URL if the picture is not changed
+        if (!(profile.picture instanceof File)) {
+          formData.delete('picture');
+        }
+        if (!(profile.shop_thumbnail instanceof File)) {
+          formData.delete('shop_thumbnail');
+        }
+
+        // Update profile data using FormData
+        await authService.updateProfile(user.id, formData);
+        alert('Data Profile berhasil diperbaharui');
+        navigate('/profile'); // Redirect to the profile page
+      }
     } catch (error) {
-        alert('Data Profile gagal diperbaharui');
-        console.error('Failed to update profile:', error);
+      alert('Data Profile gagal diperbaharui');
+      console.error('Failed to update profile:', error);
     }
   };
 
@@ -554,17 +559,17 @@ const ProfileEditPage = () => {
           <div className="p-4">
             <h3 className="text-xl font-bold mb-4">Edit Profile</h3>
             <div className="w-32 h-32 rounded-full overflow-hidden border-2 border-gray-200">
-                <img
-                    src={profile.picture || `${process.env.REACT_APP_API_BASE_URL}/media/profile_images/pas_foto_standard.png`} // Default placeholder image
-                    alt="Profile"
-                    className="w-full h-full object-cover"
-                />
-            </div> 
+              <img
+                src={profile.picture || `${process.env.REACT_APP_API_BASE_URL}/media/profile_images/pas_foto_standard.png`} // Default placeholder image
+                alt="Profile"
+                className="w-full h-full object-cover"
+              />
+            </div>
             <input
-                type="file"
-                onChange={handleFileChange}
-                className="w-full p-2 border rounded-lg"
-                defaultValue={profile.picture}
+              type="file"
+              onChange={handleFileChange}
+              className="w-full p-2 border rounded-lg"
+              defaultValue={profile.picture}
             />
             <form onSubmit={handleSubmit}>
               {/* Tabs */}
@@ -596,6 +601,14 @@ const ProfileEditPage = () => {
                   onClick={() => setActiveTab('work')}
                 >
                   work
+                </button>
+                <button
+                  type="button"
+                  className={`py-2 px-4 material-icons ${activeTab === 'shop' ? 'border-b-2 border-green-600 text-green-600' : 'text-gray-500'}`}
+                  onClick={() => setActiveTab('shop')}
+                  title="Pengaturan Toko Digital"
+                >
+                  storefront
                 </button>
               </div>
 

@@ -157,6 +157,10 @@ class Profile(models.Model):
     address_latitude = models.FloatField(blank=True, null=True)
     address_longitude = models.FloatField(blank=True, null=True)  
     address_province = models.CharField(max_length=50, choices=PROVINCE_CHOICES, blank=True, null=True)
+    
+    # Shop fields for digital product sellers
+    shop_thumbnail = models.ImageField(upload_to='shop_thumbnails/', blank=True, null=True)
+    shop_description = models.TextField(blank=True, null=True)
 
     def __str__(self):
         return f'{self.user.username} Profile'

@@ -84,7 +84,7 @@ const DigitalProductDetailPage = () => {
                             <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">{product.title}</h1>
                             <p className="text-sm text-gray-400 mb-6 flex items-center gap-1">
                                 <span className="material-icons text-sm">person</span>
-                                oleh {product.seller_name}
+                                oleh <Link to={`/digital_produk/${product.seller_name}`} className="text-green-700 font-medium hover:underline">@{product.seller_name}</Link>
                             </p>
                             <p className="text-3xl font-bold text-green-700 mb-8">{formatIDR(product.price)}</p>
 

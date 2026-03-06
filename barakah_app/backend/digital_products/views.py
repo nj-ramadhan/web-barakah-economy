@@ -12,7 +12,10 @@ from .serializers import (
     DigitalProductPublicSerializer,
     DigitalOrderSerializer,
     DigitalOrderCreateSerializer,
+    WithdrawalRequestSerializer,
 )
+from django.db.models import Sum
+from decimal import Decimal
 import logging
 
 logger = logging.getLogger(__name__)
@@ -31,7 +34,8 @@ class DigitalProductViewSet(viewsets.ModelViewSet):
     lookup_field = 'slug'
 
     def get_queryset(self):
-        return DigitalProduct.objects.filter(is_active=True)
+        # Public: only global active products
+        return DigitalProduct.objects.filter(is_active=True, visibility='global')
 
     def get_permissions(self):
         if self.action in ['list', 'retrieve']:
@@ -54,6 +58,39 @@ class DigitalProductViewSet(viewsets.ModelViewSet):
         except Exception as e:
             logger.exception(f"Error in my_products action: {e}")
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    @action(detail=False, methods=['get'], url_path='public-profile', permission_classes=[permissions.AllowAny])
+    def public_profile(self, request):
+        username = request.query_params.get('username')
+        if not username:
+            return Response({'error': 'Username is required'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            from accounts.models import User
+            from profiles.models import Profile
+            user = User.objects.get(username=username)
+            profile = Profile.objects.get(user=user)
+            
+            # Show all active products for the specific user (including exclusive)
+            products = DigitalProduct.objects.filter(user=user, is_active=True)
+            
+            from profiles.serializers import ProfileSerializer  # Assuming it exists
+            # Fallback if ProfileSerializer is not handy, we can use a basic dict or specific fields
+            profile_data = {
+                'name_full': profile.name_full,
+                'picture': profile.picture.url if profile.picture else None,
+                'shop_thumbnail': profile.shop_thumbnail.url if profile.shop_thumbnail else None,
+                'shop_description': profile.shop_description,
+            }
+            
+            product_serializer = DigitalProductPublicSerializer(products, many=True)
+            
+            return Response({
+                'profile': profile_data,
+                'products': product_serializer.data
+            })
+        except (User.DoesNotExist, Profile.DoesNotExist):
+            return Response({'error': 'Profile not found'}, status=status.HTTP_404_NOT_FOUND)
 
     @action(detail=False, methods=['get', 'put', 'patch', 'delete'], url_path='my-products/(?P<product_id>[^/.]+)')
     def my_product_detail(self, request, product_id=None):
@@ -127,8 +164,8 @@ class DigitalOrderViewSet(viewsets.ModelViewSet):
         order.payment_proof = proof_file
         order.save()
 
-        # TODO: Add OCR verification logic here (similar to donation OCR)
-        # For now, we auto-verify and send email
+        # Set product owner
+        order.product_owner = order.digital_product.user
         order.payment_status = 'verified'
         order.ocr_verified = True
         order.save()
@@ -201,3 +238,74 @@ class DigitalOrderViewSet(viewsets.ModelViewSet):
         orders = DigitalOrder.objects.filter(buyer=request.user)
         serializer = DigitalOrderSerializer(orders, many=True)
         return Response(serializer.data)
+
+
+class WithdrawalViewSet(viewsets.ModelViewSet):
+    authentication_classes = [JWTAuthentication, SessionAuthentication]
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = WithdrawalRequestSerializer
+
+    def get_queryset(self):
+        return WithdrawalRequest.objects.filter(user=self.request.user)
+
+    def create(self, request, *args, **kwargs):
+        # Calculate balance
+        total_sales = DigitalOrder.objects.filter(
+            product_owner=request.user,
+            payment_status='verified'
+        ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
+
+        total_withdrawn = WithdrawalRequest.objects.filter(
+            user=request.user,
+            status__in=['pending', 'approved']
+        ).aggregate(total=Sum('total_deduction'))['total'] or Decimal('0')
+
+        available_balance = total_sales - total_withdrawn
+
+        try:
+            amount = Decimal(request.data.get('amount', '0'))
+            donation = Decimal(request.data.get('donation_amount', '0'))
+            bank_name = request.data.get('bank_name', '').upper()
+            
+            # Admin fee logic
+            admin_fee = Decimal('0')
+            if bank_name not in ['BSI', 'GOPAY']:
+                admin_fee = Decimal('6500')
+            
+            total_deduction = amount + donation + admin_fee
+
+            if total_deduction > available_balance:
+                return Response({'error': 'Saldo tidak mencukupi'}, status=status.HTTP_400_BAD_REQUEST)
+            
+            if amount <= 0:
+                return Response({'error': 'Nominal penarikan harus lebih dari 0'}, status=status.HTTP_400_BAD_REQUEST)
+
+            serializer = self.get_serializer(data=request.data)
+            if serializer.is_valid():
+                serializer.save(
+                    user=request.user,
+                    admin_fee=admin_fee,
+                    total_deduction=total_deduction
+                )
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=False, methods=['get'])
+    def balance(self, request):
+        total_sales = DigitalOrder.objects.filter(
+            product_owner=request.user,
+            payment_status='verified'
+        ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
+
+        total_withdrawn = WithdrawalRequest.objects.filter(
+            user=request.user,
+            status__in=['pending', 'approved']
+        ).aggregate(total=Sum('total_deduction'))['total'] or Decimal('0')
+
+        return Response({
+            'total_sales': total_sales,
+            'total_withdrawn': total_withdrawn,
+            'available_balance': total_sales - total_withdrawn
+        })
