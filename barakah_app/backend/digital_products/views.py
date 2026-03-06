@@ -141,9 +141,16 @@ class DigitalProductViewSet(viewsets.ModelViewSet):
     def popular_sellers(self, request):
         try:
             from profiles.models import Profile
-            # Sellers who have active digital products and a shop description
-            seller_ids = DigitalProduct.objects.filter(is_active=True).values_list('user_id', flat=True).distinct()
-            profiles = Profile.objects.filter(user_id__in=seller_ids).exclude(shop_description='').select_related('user')[:10]
+            from courses.models import Course
+            
+            # Sellers who have active digital products OR active courses
+            digital_seller_ids = DigitalProduct.objects.filter(is_active=True).values_list('user_id', flat=True)
+            course_instructor_ids = Course.objects.filter(is_active=True).values_list('instructor_id', flat=True)
+            
+            all_seller_ids = set(list(digital_seller_ids) + list(course_instructor_ids))
+            
+            # Remove strict shop_description requirement to ensure list is populated
+            profiles = Profile.objects.filter(user_id__in=all_seller_ids).select_related('user')[:12]
             
             data = []
             for p in profiles:
@@ -151,7 +158,7 @@ class DigitalProductViewSet(viewsets.ModelViewSet):
                     'username': p.user.username,
                     'name': p.name_full or p.user.username,
                     'shop_thumbnail': request.build_absolute_uri(p.shop_thumbnail.url) if p.shop_thumbnail else None,
-                    'shop_description': p.shop_description
+                    'shop_description': p.shop_description or ""
                 })
             return Response(data)
         except Exception as e:
