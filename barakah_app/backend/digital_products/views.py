@@ -92,6 +92,24 @@ class DigitalProductViewSet(viewsets.ModelViewSet):
         except (User.DoesNotExist, Profile.DoesNotExist):
             return Response({'error': 'Profile not found'}, status=status.HTTP_404_NOT_FOUND)
 
+    @action(detail=False, methods=['get'], url_path='popular-sellers', permission_classes=[permissions.AllowAny])
+    def popular_sellers(self, request):
+        from profiles.models import Profile
+        
+        # Sellers who have active digital products and a shop description
+        seller_ids = DigitalProduct.objects.filter(is_active=True).values_list('user_id', flat=True).distinct()
+        profiles = Profile.objects.filter(user_id__in=seller_ids).exclude(shop_description='')[:10]
+        
+        data = []
+        for p in profiles:
+            data.append({
+                'username': p.user.username,
+                'name': p.name_full or p.user.username,
+                'shop_thumbnail': request.build_absolute_uri(p.shop_thumbnail.url) if p.shop_thumbnail else None,
+                'shop_description': p.shop_description
+            })
+        return Response(data)
+
     @action(detail=False, methods=['get', 'put', 'patch', 'delete'], url_path='my-products/(?P<product_id>[^/.]+)')
     def my_product_detail(self, request, product_id=None):
         try:

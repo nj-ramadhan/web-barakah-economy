@@ -72,14 +72,28 @@ const ProfileEditPage = () => {
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
-    setProfile((prevProfile) => ({
-      ...prevProfile,
-      picture: file,
-    }));
+    if (file) {
+      if (file.size > 2 * 1024 * 1024) {
+        alert('Ukuran foto terlalu besar. Maksimal 2MB.');
+        return;
+      }
+      setProfile((prevProfile) => ({
+        ...prevProfile,
+        picture: file,
+      }));
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (profile.picture instanceof File && profile.picture.size > 2 * 1024 * 1024) {
+      alert('File foto profil terlalu besar (Maks 2MB)');
+      return;
+    }
+    if (profile.shop_thumbnail instanceof File && profile.shop_thumbnail.size > 2 * 1024 * 1024) {
+      alert('File thumbnail toko terlalu besar (Maks 2MB)');
+      return;
+    }
     try {
       const user = JSON.parse(localStorage.getItem('user'));
       if (user && user.id) {

@@ -74,6 +74,7 @@ const Home = () => {
   const [featuredCourses, setFeaturedCourses] = useState([]);
   const [digitalProducts, setDigitalProducts] = useState([]);
   const [featuredDigitalProducts, setFeaturedDigitalProducts] = useState([]);
+  const [popularSellers, setPopularSellers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -134,6 +135,16 @@ const Home = () => {
       }
     };
     fetchFeaturedDigitalProducts();
+
+    const fetchPopularSellers = async () => {
+      try {
+        const response = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/digital-products/popular-sellers/`);
+        setPopularSellers(response.data);
+      } catch (err) {
+        console.error('Error fetching popular sellers:', err);
+      }
+    };
+    fetchPopularSellers();
   }, []);
 
   // Fetch regular products (based on search query)
@@ -1076,6 +1087,34 @@ const Home = () => {
             </Swiper>
           </div>
         )}
+      </div>
+
+      {/* Popular Sellers Section */}
+      <div className="px-4 py-4 mb-4">
+        <h1 className="text-lg font-medium mb-4">Penjual Populer</h1>
+        <div className="flex overflow-x-auto space-x-4 pb-4 scrollbar-hide">
+          {popularSellers.map((seller) => (
+            <Link
+              key={seller.username}
+              to={`/digital-produk/${seller.username}`}
+              className="flex-shrink-0 w-28 text-center"
+            >
+              <div className="w-20 h-20 mx-auto rounded-full overflow-hidden border-2 border-green-500 p-0.5 mb-2">
+                <img
+                  src={seller.shop_thumbnail || '/images/pas_foto_standard.png'}
+                  alt={seller.name}
+                  className="w-full h-full object-cover rounded-full"
+                  onError={(e) => { e.target.src = '/images/pas_foto_standard.png'; }}
+                />
+              </div>
+              <p className="text-xs font-bold text-gray-800 line-clamp-1">@{seller.username}</p>
+              <p className="text-[10px] text-gray-500 line-clamp-1">{seller.name}</p>
+            </Link>
+          ))}
+          {popularSellers.length === 0 && !loading && (
+            <p className="text-sm text-gray-500 italic">Belum ada penjual aktif</p>
+          )}
+        </div>
       </div>
 
       {/* Bottom Navigation */}
