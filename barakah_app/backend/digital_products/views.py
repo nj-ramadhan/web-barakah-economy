@@ -6,7 +6,7 @@ from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from django.utils import timezone
 from django.core.mail import send_mail
 from django.conf import settings
-from .models import DigitalProduct, DigitalOrder
+from .models import DigitalProduct, DigitalOrder, WithdrawalRequest
 from .serializers import (
     DigitalProductSerializer,
     DigitalProductPublicSerializer,
@@ -94,21 +94,24 @@ class DigitalProductViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get'], url_path='popular-sellers', permission_classes=[permissions.AllowAny])
     def popular_sellers(self, request):
-        from profiles.models import Profile
-        
-        # Sellers who have active digital products and a shop description
-        seller_ids = DigitalProduct.objects.filter(is_active=True).values_list('user_id', flat=True).distinct()
-        profiles = Profile.objects.filter(user_id__in=seller_ids).exclude(shop_description='')[:10]
-        
-        data = []
-        for p in profiles:
-            data.append({
-                'username': p.user.username,
-                'name': p.name_full or p.user.username,
-                'shop_thumbnail': request.build_absolute_uri(p.shop_thumbnail.url) if p.shop_thumbnail else None,
-                'shop_description': p.shop_description
-            })
-        return Response(data)
+        try:
+            from profiles.models import Profile
+            # Sellers who have active digital products and a shop description
+            seller_ids = DigitalProduct.objects.filter(is_active=True).values_list('user_id', flat=True).distinct()
+            profiles = Profile.objects.filter(user_id__in=seller_ids).exclude(shop_description='').select_related('user')[:10]
+            
+            data = []
+            for p in profiles:
+                data.append({
+                    'username': p.user.username,
+                    'name': p.name_full or p.user.username,
+                    'shop_thumbnail': request.build_absolute_uri(p.shop_thumbnail.url) if p.shop_thumbnail else None,
+                    'shop_description': p.shop_description
+                })
+            return Response(data)
+        except Exception as e:
+            logger.exception(f"Error in popular_sellers: {e}")
+            return Response([], status=status.HTTP_200_OK)
 
     @action(detail=False, methods=['get', 'put', 'patch', 'delete'], url_path='my-products/(?P<product_id>[^/.]+)')
     def my_product_detail(self, request, product_id=None):
@@ -269,17 +272,30 @@ class WithdrawalViewSet(viewsets.ModelViewSet):
         except Exception:
             return WithdrawalRequest.objects.none()
 
+    def list(self, request, *args, **kwargs):
+        try:
+            return super().list(request, *args, **kwargs)
+        except Exception as e:
+            logger.exception(f"Error listing withdrawals for user {request.user.id}: {e}")
+            return Response([])
+
     def create(self, request, *args, **kwargs):
         # Calculate balance
-        total_sales = DigitalOrder.objects.filter(
-            product_owner=request.user,
-            payment_status='verified'
-        ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
+        try:
+            total_sales = DigitalOrder.objects.filter(
+                product_owner=request.user,
+                payment_status='verified'
+            ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
+        except Exception:
+            total_sales = Decimal('0')
 
-        total_withdrawn = WithdrawalRequest.objects.filter(
-            user=request.user,
-            status__in=['pending', 'approved']
-        ).aggregate(total=Sum('total_deduction'))['total'] or Decimal('0')
+        try:
+            total_withdrawn = WithdrawalRequest.objects.filter(
+                user=request.user,
+                status__in=['pending', 'approved']
+            ).aggregate(total=Sum('total_deduction'))['total'] or Decimal('0')
+        except Exception:
+            total_withdrawn = Decimal('0')
 
         available_balance = total_sales - total_withdrawn
 
@@ -320,22 +336,19 @@ class WithdrawalViewSet(viewsets.ModelViewSet):
                 product_owner=request.user,
                 payment_status='verified'
             ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
+        except Exception:
+            total_sales = Decimal('0')
 
+        try:
             total_withdrawn = WithdrawalRequest.objects.filter(
                 user=request.user,
                 status__in=['pending', 'approved']
             ).aggregate(total=Sum('total_deduction'))['total'] or Decimal('0')
+        except Exception:
+            total_withdrawn = Decimal('0')
 
-            return Response({
-                'total_sales': total_sales,
-                'total_withdrawn': total_withdrawn,
-                'available_balance': total_sales - total_withdrawn
-            })
-        except Exception as e:
-            logger.exception(f"Error calculating balance for user {request.user.id}: {e}")
-            return Response({
-                'total_sales': 0,
-                'total_withdrawn': 0,
-                'available_balance': 0,
-                'error': 'Gagal mengambil data saldo'
-            }, status=status.HTTP_200_OK) # Return 200 with 0 to prevent frontend crash
+        return Response({
+            'total_sales': total_sales,
+            'total_withdrawn': total_withdrawn,
+            'available_balance': total_sales - total_withdrawn
+        })

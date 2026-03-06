@@ -95,12 +95,15 @@ const SellerProfilePage = () => {
 
                 <div className="mt-16 text-center px-4">
                     <h1 className="text-xl font-bold text-gray-900">@{username}</h1>
-                    <p className="text-sm text-gray-500 mt-1">{profile.name_full}</p>
-
-                    {profile.shop_description && (
-                        <div className="mt-4 max-w-md mx-auto">
-                            <p className="text-sm text-gray-600 italic">"{profile.shop_description}"</p>
-                        </div>
+                    {profile && (
+                        <>
+                            <p className="text-sm text-gray-500 mt-1">{profile.name_full}</p>
+                            {profile.shop_description && (
+                                <div className="mt-4 max-w-md mx-auto">
+                                    <p className="text-sm text-gray-600 italic">"{profile.shop_description}"</p>
+                                </div>
+                            )}
+                        </>
                     )}
                 </div>
 
@@ -120,7 +123,7 @@ const SellerProfilePage = () => {
                             {products.map((product) => (
                                 <Link
                                     key={product.id}
-                                    to={`/digital_produk/${username}/${product.slug}`}
+                                    to={`/digital-produk/${username}/${product.slug}`}
                                     className="flex bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 hover:shadow-md transition"
                                 >
                                     <img

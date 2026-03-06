@@ -72,3 +72,6 @@ export const createWithdrawalRequest = (data) =>
 // Public Profiles
 export const getPublicDigitalProfile = (username) =>
     axios.get(`${API_BASE}/api/digital-products/products/public-profile/?username=${username}`);
+
+export const getPopularSellers = () =>
+    axios.get(`${API_BASE}/api/digital-products/products/popular-sellers/`);

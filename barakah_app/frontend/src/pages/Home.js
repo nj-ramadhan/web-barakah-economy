@@ -9,7 +9,7 @@ import 'swiper/swiper-bundle.css';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Pagination, Scrollbar } from 'swiper/modules';
 import ShareButton from '../components/campaigns/ShareButton';
-import { getDigitalProducts } from '../services/digitalProductApi';
+import { getDigitalProducts, getPopularSellers } from '../services/digitalProductApi';
 
 function getCsrfToken() {
   const cookies = document.cookie.split(';');
@@ -138,7 +138,7 @@ const Home = () => {
 
     const fetchPopularSellers = async () => {
       try {
-        const response = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/digital-products/popular-sellers/`);
+        const response = await getPopularSellers();
         setPopularSellers(response.data);
       } catch (err) {
         console.error('Error fetching popular sellers:', err);
