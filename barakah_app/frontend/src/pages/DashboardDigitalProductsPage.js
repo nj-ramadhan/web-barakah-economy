@@ -184,6 +184,10 @@ const DashboardDigitalProductsPage = () => {
     const handleThumbnailChange = (e) => {
         const file = e.target.files[0];
         if (file) {
+            if (file.size > 2 * 1024 * 1024) {
+                alert('Ukuran gambar terlalu besar. Maksimal 2MB.');
+                return;
+            }
             setThumbnail(file);
             setThumbnailPreview(URL.createObjectURL(file));
         }
@@ -274,6 +278,7 @@ const DashboardDigitalProductsPage = () => {
                                     <>
                                         <span className="material-icons text-gray-400 text-3xl">add_photo_alternate</span>
                                         <p className="text-xs text-gray-400 mt-1">Klik untuk upload foto</p>
+                                        <p className="text-[10px] text-gray-400 italic">Maks. 2MB</p>
                                     </>
                                 )}
                             </div>

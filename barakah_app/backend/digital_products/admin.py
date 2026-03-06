@@ -1,21 +1,21 @@
 # digital_products/admin.py
 from django.contrib import admin
-from .models import DigitalProduct, DigitalOrder, EmailSettings
+from .models import DigitalProduct, DigitalOrder, EmailSettings, WithdrawalRequest
 
 
 @admin.register(DigitalProduct)
 class DigitalProductAdmin(admin.ModelAdmin):
-    list_display = ['title', 'user', 'category', 'price', 'is_active', 'created_at']
-    list_filter = ['category', 'is_active', 'created_at']
+    list_display = ['title', 'user', 'category', 'price', 'visibility', 'is_active', 'created_at']
+    list_filter = ['visibility', 'category', 'is_active', 'created_at']
     search_fields = ['title', 'description', 'user__username']
     prepopulated_fields = {'slug': ('title',)}
 
 
 @admin.register(DigitalOrder)
 class DigitalOrderAdmin(admin.ModelAdmin):
-    list_display = ['order_number', 'buyer_name', 'buyer_email', 'digital_product', 'amount', 'payment_status', 'email_sent', 'created_at']
+    list_display = ['order_number', 'buyer_name', 'product_owner', 'digital_product', 'amount', 'payment_status', 'email_sent', 'created_at']
     list_filter = ['payment_status', 'email_sent', 'created_at']
-    search_fields = ['order_number', 'buyer_name', 'buyer_email']
+    search_fields = ['order_number', 'buyer_name', 'buyer_email', 'product_owner__username']
 
 
 @admin.register(EmailSettings)
@@ -46,3 +46,21 @@ class EmailSettingsAdmin(admin.ModelAdmin):
 
     def has_delete_permission(self, request, obj=None):
         return False
+
+
+@admin.register(WithdrawalRequest)
+class WithdrawalRequestAdmin(admin.ModelAdmin):
+    list_display = ['user', 'amount', 'donation_amount', 'admin_fee', 'total_deduction', 'status', 'created_at']
+    list_filter = ['status', 'created_at']
+    search_fields = ['user__username', 'account_name', 'account_number']
+    readonly_fields = ['created_at', 'updated_at']
+    
+    actions = ['approve_withdrawals', 'reject_withdrawals']
+
+    def approve_withdrawals(self, request, queryset):
+        queryset.update(status='approved')
+    approve_withdrawals.short_description = "Approve selected withdrawal requests"
+
+    def reject_withdrawals(self, request, queryset):
+        queryset.update(status='rejected')
+    reject_withdrawals.short_description = "Reject selected withdrawal requests"
