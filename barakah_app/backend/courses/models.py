@@ -33,7 +33,7 @@ class Course(models.Model):
     ]
 
     title = models.CharField(max_length=100)
-    slug = models.SlugField(max_length=100, unique=True, blank=True)
+    slug = models.SlugField(max_length=100, unique=True, blank=True, null=True)
     description = models.TextField()
     instructor = models.ForeignKey(User, on_delete=models.CASCADE, related_name='instructed_courses')
     category = models.CharField(max_length=20, choices=CATEGORY_CHOICES)
@@ -62,7 +62,7 @@ class CourseEnrollment(models.Model):
 
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='course_enrollments')
     course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='enrollments')
-    order_number = models.CharField(max_length=30, unique=True, blank=True)
+    order_number = models.CharField(max_length=30, unique=True, blank=True, null=True)
     buyer_name = models.CharField(max_length=100, blank=True, default='')
     buyer_email = models.EmailField(blank=True, default='')
     buyer_phone = models.CharField(max_length=20, blank=True, default='')
@@ -72,15 +72,24 @@ class CourseEnrollment(models.Model):
     payment_status = models.CharField(max_length=20, choices=PAYMENT_STATUS_CHOICES, default='pending')
 
     def save(self, *args, **kwargs):
+        # Generate order number if not exists
         if not self.order_number:
-            # If new record, save once to get ID
             if not self.id:
                 super().save(*args, **kwargs)
             self.order_number = f"CRS-{self.id:06d}"
-        super().save(*args, **kwargs)
+            # Only update the order_number field to avoid recursion
+            kwargs['force_insert'] = False
+            super().save(*args, **kwargs)
+        else:
+            super().save(*args, **kwargs)
 
     def __str__(self):
-        return f"{self.order_number} - {self.course.title} ({self.buyer_name or self.user.username if self.user else 'Guest'})"
+        try:
+            course_title = self.course.title if self.course else "Unknown Course"
+            user_info = self.buyer_name or (self.user.username if self.user else "Guest")
+            return f"{self.order_number or 'New'} - {course_title} ({user_info})"
+        except Exception:
+            return f"Enrollment #{self.id}"
 
     class Meta:
         pass
