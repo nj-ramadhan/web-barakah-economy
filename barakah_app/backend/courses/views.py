@@ -36,6 +36,10 @@ class CourseViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(instructor=self.request.user)
 
+    def perform_update(self, serializer):
+        # Ensure instructor doesn't change during update
+        serializer.save(instructor=self.request.user)
+
     @action(detail=False, methods=['get'])
     def my_courses(self, request):
         courses = self.get_queryset()
