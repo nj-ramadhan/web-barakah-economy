@@ -28,6 +28,19 @@ def generate_unique_slug(model, name):
     return unique_slug
 
 
+class DigitalProduct(models.Model):
+    CATEGORY_CHOICES = [
+        ('ebook', 'E-Book'),
+        ('template', 'Template'),
+        ('course', 'Online Course'),
+        ('software', 'Software'),
+        ('design', 'Design Asset'),
+        ('music', 'Musik'),
+        ('video', 'Video'),
+        ('document', 'Dokumen'),
+        ('lainnya', 'Lainnya'),
+    ]
+
     VISIBILITY_CHOICES = [
         ('global', 'Global'),
         ('exclusive', 'Exclusive'),
@@ -66,7 +79,7 @@ class DigitalOrder(models.Model):
     ]
 
     order_number = models.CharField(max_length=30, unique=True, blank=True)
-    digital_product = models.ForeignKey(DigitalProduct, on_delete=models.CASCADE, related_name='orders')
+    digital_product = models.ForeignKey('DigitalProduct', on_delete=models.CASCADE, related_name='orders')
     product_owner = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='digital_sales')
     buyer = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='digital_orders')
     buyer_name = models.CharField(max_length=100)
