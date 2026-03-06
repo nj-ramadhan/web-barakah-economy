@@ -20,8 +20,8 @@ const EcourseCourseDetail = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('description');
-  const [showFullDescription, setShowFullDescription] = useState(false); 
-  const [showFullMaterials, setShowFullMaterials] = useState(false);  
+  const [showFullDescription, setShowFullDescription] = useState(false);
+  const [showFullMaterials, setShowFullMaterials] = useState(false);
   const [isEnrolled, setIsEnrolled] = useState(false);
 
   const baseUrl = process.env.REACT_APP_API_BASE_URL;
@@ -100,13 +100,13 @@ const EcourseCourseDetail = () => {
       [materialId]: !prev[materialId],
     }));
   };
-  
+
   if (loading) return <div className="text-center py-8">Loading...</div>;
   if (error) return <div className="text-center py-8 text-red-500">{error}</div>;
   if (!course) return <div className="text-center py-8 text-red-500">Kelas tidak ditemukan.</div>;
 
   const convertRelativeUrlsToAbsolute = (htmlContent, baseUrl) => {
-  // Ensure baseUrl does not have a trailing slash
+    // Ensure baseUrl does not have a trailing slash
     if (baseUrl.endsWith('/')) {
       baseUrl = baseUrl.slice(0, -1);
     }
@@ -130,7 +130,7 @@ const EcourseCourseDetail = () => {
 
       <Header />
       {/* Course Details */}
-      <div className="px-4 py-4">
+      <div className="px-4 py-4 max-w-6xl mx-auto">
         <div className="bg-white rounded-lg overflow-hidden shadow">
           <img
             src={course.thumbnail || '/placeholder-image.jpg'}
@@ -240,7 +240,7 @@ const EcourseCourseDetail = () => {
                 {course.materials && course.materials.length > 0 ? (
                   course.materials.map((material, idx) => (
                     <li key={idx} className="border-b py-2 px-4">
-                      <div 
+                      <div
                         onClick={() => toggleMaterial(material.id)}
                         className="flex justify-between items-center">
                         <span className="font-semibold">{material.title}</span>

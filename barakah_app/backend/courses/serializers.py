@@ -1,21 +1,31 @@
-# campaigns/serializers.py
 from rest_framework import serializers
-from .models import Course, CourseEnrollment, CourseMaterial
+from .models import Course, CourseEnrollment, CourseMaterial, UserCourseProgress, Certificate
 from django.contrib.auth import get_user_model
-
-class CourseEnrollmentSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = CourseEnrollment
-        fields = '__all__'
 
 class CourseMaterialSerializer(serializers.ModelSerializer):
     class Meta:
         model = CourseMaterial
         fields = '__all__'
 
+class UserCourseProgressSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserCourseProgress
+        fields = '__all__'
+
+class CertificateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Certificate
+        fields = '__all__'
+
+class CourseEnrollmentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CourseEnrollment
+        fields = '__all__'
+
 class CourseSerializer(serializers.ModelSerializer):
     materials = CourseMaterialSerializer(many=True, read_only=True)
     students = serializers.SerializerMethodField()
+    instructor_name = serializers.ReadOnlyField(source='instructor.username')
 
     class Meta:
         model = Course

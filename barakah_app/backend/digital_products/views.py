@@ -14,8 +14,9 @@ from .serializers import (
     DigitalOrderCreateSerializer,
     WithdrawalRequestSerializer,
 )
-from django.db.models import Sum
+from django.db.models import Sum, Q, DecimalField
 from decimal import Decimal
+from courses.models import CourseEnrollment
 import logging
 
 logger = logging.getLogger(__name__)
@@ -171,6 +172,14 @@ class DigitalOrderViewSet(viewsets.ModelViewSet):
         except DigitalOrder.DoesNotExist:
             return Response({'error': 'Order not found'}, status=status.HTTP_404_NOT_FOUND)
 
+    @action(detail=False, methods=['get'], url_path='my-purchases')
+    def my_purchases(self, request):
+        if not request.user.is_authenticated:
+            return Response({'error': 'Authentication required'}, status=status.HTTP_401_UNAUTHORIZED)
+        orders = DigitalOrder.objects.filter(buyer=request.user, payment_status='verified')
+        serializer = DigitalOrderSerializer(orders, many=True)
+        return Response(serializer.data)
+
     @action(detail=False, methods=['post'], url_path='upload-proof/(?P<order_number>[^/.]+)')
     def upload_proof(self, request, order_number=None):
         try:
@@ -286,7 +295,16 @@ class WithdrawalViewSet(viewsets.ModelViewSet):
                 product_owner=request.user,
                 payment_status='verified'
             ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
-        except Exception:
+            
+            # Add Course sales
+            total_course_sales = CourseEnrollment.objects.filter(
+                course__instructor=request.user,
+                payment_status='verified'
+            ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
+            
+            total_sales += total_course_sales
+        except Exception as e:
+            logger.error(f"Error calculating total sales: {e}")
             total_sales = Decimal('0')
 
         try:
@@ -332,10 +350,17 @@ class WithdrawalViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'])
     def balance(self, request):
         try:
-            total_sales = DigitalOrder.objects.filter(
+            total_digital_sales = DigitalOrder.objects.filter(
                 product_owner=request.user,
                 payment_status='verified'
             ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
+            
+            total_course_sales = CourseEnrollment.objects.filter(
+                course__instructor=request.user,
+                payment_status='verified'
+            ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
+            
+            total_sales = total_digital_sales + total_course_sales
         except Exception:
             total_sales = Decimal('0')
 
@@ -349,6 +374,8 @@ class WithdrawalViewSet(viewsets.ModelViewSet):
 
         return Response({
             'total_sales': total_sales,
+            'total_digital_sales': total_digital_sales,
+            'total_course_sales': total_course_sales,
             'total_withdrawn': total_withdrawn,
             'available_balance': total_sales - total_withdrawn
         })

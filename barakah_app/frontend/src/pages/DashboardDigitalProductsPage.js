@@ -230,7 +230,7 @@ const DashboardDigitalProductsPage = () => {
 
             <Header />
 
-            <div className="px-4 py-4 pb-24">
+            <div className="max-w-6xl mx-auto px-4 py-4 pb-24">
                 {/* Balance Card */}
                 <div className="bg-gradient-to-br from-green-700 to-green-800 rounded-2xl p-5 mb-6 text-white shadow-lg">
                     <p className="text-xs opacity-80 mb-1">Saldo Tersedia</p>
@@ -244,6 +244,10 @@ const DashboardDigitalProductsPage = () => {
                         </button>
                         <div className="text-[10px] opacity-70 flex flex-col justify-center">
                             <span>Total Penjualan: {formatIDR(balanceData.total_sales)}</span>
+                            <div className="flex gap-2">
+                                <span>Digital: {formatIDR(balanceData.digital_sales_total || 0)}</span>
+                                <span>Course: {formatIDR(balanceData.course_sales_total || 0)}</span>
+                            </div>
                         </div>
                     </div>
                 </div>

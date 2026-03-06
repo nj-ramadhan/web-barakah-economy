@@ -1,6 +1,7 @@
 // pages/ProfilePage.js
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import axios from 'axios';
 import { Helmet } from 'react-helmet';
 import Header from '../components/layout/Header';
 import NavigationButton from '../components/layout/Navigation';
@@ -148,6 +149,121 @@ const PROVINCE_CHOICES = {
     'maluku_utara': 'Maluku Utara',
     'papua': 'Papua',
     'papua_barat': 'Papua Barat',
+};
+
+const CoursesTab = () => {
+    const [courses, setCourses] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchCourses = async () => {
+            const user = JSON.parse(localStorage.getItem('user'));
+            if (!user) return;
+            try {
+                const res = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/courses/enrollments/`, {
+                    headers: { Authorization: `Bearer ${user.access}` }
+                });
+                // res.data is expected to be a list of enrollments
+                // we should filter for only verified ones if the API doesn't do it
+                setCourses(res.data.filter(e => e.payment_status === 'verified' || e.payment_status === 'paid'));
+            } catch (err) {
+                console.error('Error fetching courses:', err);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchCourses();
+    }, []);
+
+    if (loading) return <div className="text-center py-4">Loading...</div>;
+
+    return (
+        <div className="space-y-4">
+            <h2 className="font-bold text-gray-800">E-Course Saya</h2>
+            {courses.length === 0 ? (
+                <div className="text-center py-8 text-gray-400 bg-gray-50 rounded-xl border border-dashed">
+                    <p className="text-sm">Belum ada e-course yang diikuti</p>
+                </div>
+            ) : (
+                <div className="grid grid-cols-1 gap-3">
+                    {courses.map(enroll => (
+                        <div key={enroll.id} className="bg-white p-3 rounded-xl border shadow-sm flex items-center gap-3">
+                            <div className="w-16 h-16 bg-green-100 rounded-lg flex items-center justify-center">
+                                <span className="material-icons text-green-600">school</span>
+                            </div>
+                            <div className="flex-1">
+                                <h3 className="text-sm font-bold text-gray-800">E-Course ID: {enroll.course}</h3>
+                                <p className="text-[10px] text-gray-400">Terdaftar: {formatDate(enroll.enrolled_at)}</p>
+                            </div>
+                            <Link
+                                to={`/kelas/buka/${enroll.course}`}
+                                className="bg-green-600 text-white px-4 py-1.5 rounded-full text-xs font-bold"
+                            >
+                                Buka
+                            </Link>
+                        </div>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+};
+
+const PurchasesTab = () => {
+    const [purchases, setPurchases] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchPurchases = async () => {
+            const user = JSON.parse(localStorage.getItem('user'));
+            if (!user) return;
+            try {
+                const res = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/digital-products/orders/my-purchases/`, {
+                    headers: { Authorization: `Bearer ${user.access}` }
+                });
+                setPurchases(res.data);
+            } catch (err) {
+                console.error('Error fetching purchases:', err);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchPurchases();
+    }, []);
+
+    if (loading) return <div className="text-center py-4">Loading...</div>;
+
+    return (
+        <div className="space-y-4">
+            <h2 className="font-bold text-gray-800">Riwayat Pembelian Digital</h2>
+            {purchases.length === 0 ? (
+                <div className="text-center py-8 text-gray-400 bg-gray-50 rounded-xl border border-dashed">
+                    <p className="text-sm">Belum ada riwayat pembelian</p>
+                </div>
+            ) : (
+                <div className="space-y-3">
+                    {purchases.map(order => (
+                        <div key={order.id} className="bg-white p-3 rounded-xl border shadow-sm">
+                            <div className="flex justify-between items-start mb-2">
+                                <h3 className="text-sm font-bold text-gray-800">{order.product_title}</h3>
+                                <span className="text-[10px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full font-bold">Verified</span>
+                            </div>
+                            <div className="flex justify-between items-center text-[10px] text-gray-400">
+                                <span>Order: {order.order_number}</span>
+                                <span>Rp. {formatIDR(order.amount)}</span>
+                            </div>
+                            <div className="mt-3 pt-2 border-t flex justify-end">
+                                <button className="text-green-600 text-xs font-bold flex items-center gap-1">
+                                    <span className="material-icons text-xs">download</span>
+                                    Akses Produk
+                                </button>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
 };
 
 const ProfilePage = () => {
@@ -404,6 +520,12 @@ const ProfilePage = () => {
                     </div>
                 );
 
+            case 'courses':
+                return <CoursesTab />;
+
+            case 'purchases':
+                return <PurchasesTab />;
+
             default:
                 return null;
         }
@@ -421,7 +543,7 @@ const ProfilePage = () => {
             </Helmet>
 
             <Header />
-            <div className="container">
+            <div className="max-w-6xl mx-auto px-4">
                 <div className="bg-white rounded-lg shadow overflow-hidden mt-6">
                     <div className="p-4">
                         <h3 className="text-xl font-bold mb-4">Profile</h3>
@@ -437,7 +559,7 @@ const ProfilePage = () => {
 
                             {/* Tabs */}
                             <div className="w-full">
-                                <div className="flex space-x-4 border-b">
+                                <div className="flex flex-wrap gap-2 border-b">
                                     <button
                                         className={`py-2 px-4 material-icons ${activeTab === 'general' ? 'border-b-2 border-green-600 text-green-600' : 'text-gray-500'}`}
                                         onClick={() => setActiveTab('general')}
@@ -468,6 +590,20 @@ const ProfilePage = () => {
                                         title="Profil Toko Digital"
                                     >
                                         storefront
+                                    </button>
+                                    <button
+                                        className={`py-2 px-4 material-icons ${activeTab === 'courses' ? 'border-b-2 border-green-600 text-green-600' : 'text-gray-500'}`}
+                                        onClick={() => setActiveTab('courses')}
+                                        title="E-Course Saya"
+                                    >
+                                        school
+                                    </button>
+                                    <button
+                                        className={`py-2 px-4 material-icons ${activeTab === 'purchases' ? 'border-b-2 border-green-600 text-green-600' : 'text-gray-500'}`}
+                                        onClick={() => setActiveTab('purchases')}
+                                        title="Riwayat Pembelian Digital"
+                                    >
+                                        history
                                     </button>
                                 </div>
 

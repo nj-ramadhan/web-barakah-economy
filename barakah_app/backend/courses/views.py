@@ -6,8 +6,8 @@ from rest_framework import status
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from rest_framework.decorators import action
-from .models import Course, CourseEnrollment, CourseMaterial
-from .serializers import CourseSerializer, CourseEnrollmentSerializer, CourseMaterialSerializer
+from .models import Course, CourseEnrollment, CourseMaterial, UserCourseProgress
+from .serializers import CourseSerializer, CourseEnrollmentSerializer, CourseMaterialSerializer, UserCourseProgressSerializer
 
 class CourseViewSet(viewsets.ModelViewSet):
     queryset = Course.objects.filter(is_active=True)
@@ -74,3 +74,24 @@ class CoursePaymentConfirmationView(APIView):
             enrollment.proof_file = request.FILES['proof_file']
         enrollment.save()
         return Response({'detail': 'Payment confirmation received.'}, status=status.HTTP_200_OK)
+
+class UserCourseProgressViewSet(viewsets.ModelViewSet):
+    serializer_class = UserCourseProgressSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return UserCourseProgress.objects.filter(user=self.request.user)
+
+    def create(self, request, *args, **kwargs):
+        material_id = request.data.get('material')
+        material = get_object_or_404(CourseMaterial, id=material_id)
+        progress, created = UserCourseProgress.objects.get_or_create(
+            user=request.user,
+            course=material.course,
+            material=material,
+            defaults={'is_completed': True}
+        )
+        if not created:
+            progress.is_completed = True
+            progress.save()
+        return Response(UserCourseProgressSerializer(progress).data, status=status.HTTP_201_CREATED)

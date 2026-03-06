@@ -72,8 +72,7 @@ const SellerProfilePage = () => {
             </Helmet>
 
             <Header />
-
-            <div className="pb-24">
+            <div className="max-w-6xl mx-auto pb-24">
                 {/* Profile Header */}
                 <div className="relative h-48 bg-green-800">
                     {profile.shop_thumbnail && (
@@ -120,27 +119,24 @@ const SellerProfilePage = () => {
                             <p className="text-sm">Belum ada produk digital yang dipublish</p>
                         </div>
                     ) : (
-                        <div className="space-y-4">
+                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                             {products.map((product) => (
                                 <Link
                                     key={product.id}
                                     to={`/digital-produk/${username}/${product.slug}`}
-                                    className="flex bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 hover:shadow-md transition"
+                                    className="block bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 hover:shadow-md transition"
                                 >
                                     <img
                                         src={getMediaUrl(product.thumbnail) || '/placeholder-image.jpg'}
                                         alt={product.title}
-                                        className="w-24 h-24 object-cover"
+                                        className="w-full h-32 object-cover"
                                     />
-                                    <div className="p-3 flex-1 flex flex-col justify-between">
-                                        <div>
-                                            <h3 className="text-sm font-bold text-gray-800 line-clamp-1">{product.title}</h3>
-                                            <span className="text-[10px] text-gray-400">{product.category}</span>
+                                    <div className="p-3">
+                                        <h3 className="text-sm font-bold text-gray-800 line-clamp-2 min-h-[40px]">{product.title}</h3>
+                                        <div className="mt-2 flex items-center justify-between">
+                                            <span className="text-[10px] text-gray-400 bg-gray-50 px-2 py-0.5 rounded-full">{product.category}</span>
                                         </div>
-                                        <p className="text-green-700 font-bold text-sm">{formatIDR(product.price)}</p>
-                                    </div>
-                                    <div className="p-3 flex items-center">
-                                        <span className="material-icons text-gray-300">chevron_right</span>
+                                        <p className="text-green-700 font-bold text-sm mt-2">{formatIDR(product.price)}</p>
                                     </div>
                                 </Link>
                             ))}
