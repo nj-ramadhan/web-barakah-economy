@@ -16,6 +16,7 @@ const DashboardAdminWithdrawalsPage = () => {
     const [processing, setProcessing] = useState(false);
     const [selectedWithdrawal, setSelectedWithdrawal] = useState(null);
     const [statusChange, setStatusChange] = useState('');
+    const [rejectionReason, setRejectionReason] = useState('');
     const [proofFile, setProofFile] = useState(null);
 
     useEffect(() => {
@@ -45,11 +46,16 @@ const DashboardAdminWithdrawalsPage = () => {
             if (proofFile) {
                 formData.append('transfer_proof', proofFile);
             }
+            if (statusChange === 'rejected' && rejectionReason) {
+                formData.append('rejection_reason', rejectionReason);
+            }
 
             await processAdminWithdrawal(selectedWithdrawal.id, formData);
             alert('Penarikan berhasil diproses');
             setSelectedWithdrawal(null);
             setProofFile(null);
+            setRejectionReason('');
+            setStatusChange('');
             fetchWithdrawals();
         } catch (err) {
             console.error('Failed to process withdrawal:', err);
@@ -165,7 +171,11 @@ const DashboardAdminWithdrawalsPage = () => {
                     <div className="bg-white w-full max-w-md rounded-2xl p-6 shadow-2xl animate-scale-up">
                         <div className="flex justify-between items-center mb-6">
                             <h3 className="text-lg font-bold">Proses Penarikan</h3>
-                            <button onClick={() => setSelectedWithdrawal(null)} className="material-icons text-gray-400">close</button>
+                            <button onClick={() => {
+                                setSelectedWithdrawal(null);
+                                setRejectionReason('');
+                                setStatusChange('');
+                            }} className="material-icons text-gray-400">close</button>
                         </div>
 
                         <div className="bg-gray-50 rounded-xl p-4 mb-6 space-y-2">
@@ -199,6 +209,19 @@ const DashboardAdminWithdrawalsPage = () => {
                                     <option value="rejected">Tolak (Rejected)</option>
                                 </select>
                             </div>
+
+                            {statusChange === 'rejected' && (
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-600 mb-2">Alasan Penolakan</label>
+                                    <textarea
+                                        value={rejectionReason}
+                                        onChange={(e) => setRejectionReason(e.target.value)}
+                                        placeholder="Berikan alasan mengapa penarikan ini ditolak..."
+                                        className="w-full px-4 py-3 bg-gray-100 border-none rounded-xl text-sm focus:ring-2 focus:ring-orange-500 min-h-[100px]"
+                                        required
+                                    />
+                                </div>
+                            )}
 
                             {statusChange === 'approved' && (
                                 <div>
@@ -234,14 +257,18 @@ const DashboardAdminWithdrawalsPage = () => {
                             <div className="flex gap-3 pt-4">
                                 <button
                                     type="button"
-                                    onClick={() => setSelectedWithdrawal(null)}
+                                    onClick={() => {
+                                        setSelectedWithdrawal(null);
+                                        setRejectionReason('');
+                                        setStatusChange('');
+                                    }}
                                     className="flex-1 py-3 border border-gray-200 rounded-xl text-sm font-bold text-gray-500"
                                 >
                                     Batal
                                 </button>
                                 <button
                                     type="submit"
-                                    disabled={processing || (statusChange === 'approved' && !proofFile)}
+                                    disabled={processing || (statusChange === 'approved' && !proofFile) || (statusChange === 'rejected' && !rejectionReason)}
                                     className="flex-1 py-3 bg-orange-600 text-white rounded-xl text-sm font-bold shadow-lg shadow-orange-200 disabled:opacity-50"
                                 >
                                     {processing ? 'Memproses...' : 'Simpan Perubahan'}

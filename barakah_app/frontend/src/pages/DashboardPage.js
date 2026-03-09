@@ -253,20 +253,40 @@ const DashboardPage = () => {
                         <h2 className="font-bold mb-3 text-gray-700 px-1">Riwayat Penarikan</h2>
                         <div className="space-y-2">
                             {withdrawalHistory.map((w) => (
-                                <div key={w.id} className="bg-white p-3 rounded-xl shadow-sm border border-gray-50 flex justify-between items-center">
-                                    <div>
-                                        <p className="text-sm font-bold">{formatIDR(w.amount)}</p>
-                                        <p className="text-[10px] text-gray-400">{new Date(w.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
+                                <div key={w.id} className="bg-white p-3 rounded-xl shadow-sm border border-gray-50">
+                                    <div className="flex justify-between items-center">
+                                        <div>
+                                            <p className="text-sm font-bold">{formatIDR(w.amount)}</p>
+                                            <p className="text-[10px] text-gray-400">{new Date(w.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
+                                        </div>
+                                        <div className="text-right flex flex-col items-end gap-1">
+                                            <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${w.status === 'approved' ? 'bg-green-100 text-green-700' :
+                                                w.status === 'rejected' ? 'bg-red-100 text-red-700' :
+                                                    'bg-yellow-100 text-yellow-700'
+                                                }`}>
+                                                {w.status.toUpperCase()}
+                                            </span>
+                                            {w.status === 'approved' && w.transfer_proof && (
+                                                <a
+                                                    href={w.transfer_proof}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="text-[9px] text-green-700 font-bold flex items-center gap-1 hover:underline"
+                                                >
+                                                    <span className="material-icons text-[12px]">image</span>
+                                                    Lihat Bukti
+                                                </a>
+                                            )}
+                                            <p className="text-[9px] text-gray-400 mt-0.5">{w.bank_name}</p>
+                                        </div>
                                     </div>
-                                    <div className="text-right">
-                                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${w.status === 'approved' ? 'bg-green-100 text-green-700' :
-                                            w.status === 'rejected' ? 'bg-red-100 text-red-700' :
-                                                'bg-yellow-100 text-yellow-700'
-                                            }`}>
-                                            {w.status.toUpperCase()}
-                                        </span>
-                                        <p className="text-[9px] text-gray-400 mt-0.5">{w.bank_name}</p>
-                                    </div>
+                                    {w.status === 'rejected' && w.rejection_reason && (
+                                        <div className="mt-2 p-2 bg-red-50 rounded-lg border border-red-100">
+                                            <p className="text-[10px] text-red-700">
+                                                <span className="font-bold">Alasan Penolakan:</span> {w.rejection_reason}
+                                            </p>
+                                        </div>
+                                    )}
                                 </div>
                             ))}
                         </div>

@@ -158,6 +158,7 @@ class WithdrawalRequest(models.Model):
     bank_name = models.CharField(max_length=100)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
     transfer_proof = models.ImageField(upload_to='withdrawal_proofs/', blank=True, null=True)
+    rejection_reason = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

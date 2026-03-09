@@ -452,9 +452,12 @@ class WithdrawalViewSet(viewsets.ModelViewSet):
         serializer = WithdrawalRequestAdminSerializer(instance, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
-            # If approved, send email
+            # If approved, send success email
             if instance.status == 'approved':
                 self._send_withdrawal_approved_email(instance)
+            # If rejected, send rejection email
+            elif instance.status == 'rejected':
+                self._send_withdrawal_rejected_email(instance)
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -504,3 +507,47 @@ class WithdrawalViewSet(viewsets.ModelViewSet):
             logger.info(f'Withdrawal success email sent to {withdrawal.user.email} for withdrawal {withdrawal.id}')
         except Exception as e:
             logger.error(f'Failed to send withdrawal approval email: {e}')
+
+    def _send_withdrawal_rejected_email(self, withdrawal):
+        try:
+            from .models import EmailSettings
+            from django.core.mail import EmailMessage
+            from django.core.mail.backends.smtp import EmailBackend
+
+            email_settings = EmailSettings.get_settings()
+            if not email_settings.email_host_user or not email_settings.email_host_password:
+                logger.warning(f'Email settings not configured. Skipping email for withdrawal rejection {withdrawal.id}')
+                return
+
+            backend = EmailBackend(
+                host=email_settings.email_host,
+                port=email_settings.email_port,
+                username=email_settings.email_host_user,
+                password=email_settings.email_host_password,
+                use_tls=email_settings.email_use_tls,
+                fail_silently=False,
+            )
+
+            subject = f'Penarikan Saldo Dibatalkan - Barakah Economy'
+            reason_text = f'\nAlasan: {withdrawal.rejection_reason}' if withdrawal.rejection_reason else ''
+            message = (
+                f'Assalamu\'alaikum {withdrawal.user.username},\n\n'
+                f'Mohon maaf, permintaan penarikan saldo Anda senilai Rp {withdrawal.amount:,.0f} tidak dapat kami proses saat ini.{reason_text}\n\n'
+                f'Saldo Anda telah dikembalikan sepenuhnya ke akun Anda. Silakan hubungi admin jika ada pertanyaan lebih lanjut.\n\n'
+                f'Jazakallahu khairan,\n'
+                f'Tim Barakah Economy'
+            )
+
+            from_email = f'{email_settings.sender_name} <{email_settings.email_host_user}>'
+
+            email = EmailMessage(
+                subject=subject,
+                body=message,
+                from_email=from_email,
+                to=[withdrawal.user.email],
+                connection=backend,
+            )
+            email.send()
+            logger.info(f'Withdrawal rejection email sent to {withdrawal.user.email} for withdrawal {withdrawal.id}')
+        except Exception as e:
+            logger.error(f'Failed to send withdrawal rejection email: {e}')
