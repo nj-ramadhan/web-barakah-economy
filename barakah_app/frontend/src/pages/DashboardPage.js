@@ -22,6 +22,7 @@ const DashboardPage = () => {
     // Withdrawal state
     const [withdrawalHistory, setWithdrawalHistory] = useState([]);
     const [showWithdrawModal, setShowWithdrawModal] = useState(false);
+    const [showHistoryModal, setShowHistoryModal] = useState(false);
     const [withdrawAmount, setWithdrawAmount] = useState('');
     const [donationAmount, setDonationAmount] = useState('');
     const [bankName, setBankName] = useState('');
@@ -61,69 +62,82 @@ const DashboardPage = () => {
         fetchStats();
     }, [navigate]);
 
-    const getAdminFee = () => {
-        if (bankName && !['BSI', 'GOPAY'].includes(bankName.toUpperCase())) {
-            return 6500;
-        }
-        return 0;
+    const handleTarikSemua = () => {
+        setWithdrawAmount(balanceData.available_balance.toString());
     };
-
-    const totalDeduction = (parseFloat(withdrawAmount) || 0) + (parseFloat(donationAmount) || 0) + getAdminFee();
-    const isOverBalance = totalDeduction > (balanceData.available_balance || 0);
 
     const handleWithdraw = async (e) => {
         e.preventDefault();
-        if (!withdrawAmount || !bankName || !accountName || !accountNumber) {
-            alert('Mohon lengkapi data penarikan');
+        const amount = parseFloat(withdrawAmount);
+        const donation = parseFloat(donationAmount || 0);
+
+        // Dynamic admin fee calculation
+        let adminFee = 0;
+        if (bankName.toUpperCase() !== 'BSI' && bankName.toUpperCase() !== 'GOPAY') {
+            adminFee = 6500;
+        }
+
+        const totalDeduction = amount + donation + adminFee;
+
+        if (totalDeduction > balanceData.available_balance) {
+            alert('Saldo tidak mencukupi (termasuk biaya admin jika ada)');
             return;
         }
-        if (isOverBalance) {
-            alert('Saldo tidak mencukupi untuk penarikan ini (termasuk biaya admin)');
-            return;
-        }
+
         setWithdrawing(true);
         try {
             await createWithdrawalRequest({
-                amount: withdrawAmount,
-                donation_amount: donationAmount || 0,
+                amount,
+                donation_amount: donation,
                 bank_name: bankName,
                 account_name: accountName,
                 account_number: accountNumber
             });
-            alert('Permintaan penarikan berhasil diajukan');
+
+            alert('Permintaan penarikan berhasil dikirim!');
             setShowWithdrawModal(false);
             setWithdrawAmount('');
             setDonationAmount('');
             setBankName('');
-            setAccountNumber('');
             setAccountName('');
-            // Refetch balance and history
+            setAccountNumber('');
+
+            // Refresh data
             const [balanceRes, historyRes] = await Promise.all([
-                getDigitalBalance().catch(() => ({ data: { available_balance: 0, total_sales: 0 } })),
-                getWithdrawalHistory().catch(() => ({ data: [] }))
+                getDigitalBalance(),
+                getWithdrawalHistory()
             ]);
             setBalanceData(balanceRes.data);
             setWithdrawalHistory(historyRes.data);
         } catch (err) {
             console.error(err);
-            alert(err.response?.data?.error || 'Gagal mengajukan penarikan');
+            alert(err.response?.data?.error || 'Gagal mengirim permintaan penarikan');
         } finally {
             setWithdrawing(false);
         }
     };
 
-
-    const handleTarikSemua = () => {
-        const available = balanceData.available_balance || 0;
-        const currentDonation = parseFloat(donationAmount) || 0;
-        let calculatedAmount = available - currentDonation;
-
-        if (bankName && !['BSI', 'GOPAY'].includes(bankName.toUpperCase())) {
-            calculatedAmount -= 6500;
-        }
-        if (calculatedAmount < 0) calculatedAmount = 0;
-        setWithdrawAmount(calculatedAmount.toString());
+    // Calculate dynamic fee for UI
+    const getAdminFeeForUI = () => {
+        if (!bankName) return 0;
+        if (bankName.toUpperCase() === 'BSI' || bankName.toUpperCase() === 'GOPAY') return 0;
+        return 6500;
     };
+
+    const adminFeeVal = getAdminFeeForUI();
+    const totalDeductionVal = (parseFloat(withdrawAmount) || 0) + (parseFloat(donationAmount) || 0) + adminFeeVal;
+
+    if (loading) {
+        return (
+            <div className="body">
+                <Header />
+                <div className="flex justify-center items-center h-screen">
+                    <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-green-600"></div>
+                </div>
+                <NavigationButton />
+            </div>
+        );
+    }
 
     return (
         <div className="body">
@@ -137,7 +151,14 @@ const DashboardPage = () => {
                 <h1 className="text-xl font-bold mb-6">Dashboard</h1>
 
                 {/* Balance Card */}
-                <div className="bg-gradient-to-br from-green-700 to-green-800 rounded-2xl p-5 mb-6 text-white shadow-lg">
+                <div className="bg-gradient-to-br from-green-700 to-green-800 rounded-2xl p-5 mb-6 text-white shadow-lg relative overflow-hidden">
+                    <button
+                        onClick={() => setShowHistoryModal(true)}
+                        className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center bg-white/20 rounded-full hover:bg-white/30 transition"
+                        title="Riwayat Penarikan"
+                    >
+                        <span className="material-icons text-sm">history</span>
+                    </button>
                     <p className="text-xs opacity-80 mb-1">Saldo Tersedia</p>
                     <h2 className="text-2xl font-bold mb-4">{formatIDR(balanceData.available_balance)}</h2>
                     <div className="flex gap-2">
@@ -179,11 +200,11 @@ const DashboardPage = () => {
                         className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-gray-50 hover:shadow-md transition"
                     >
                         <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
-                            <span className="material-icons text-green-700">storefront</span>
+                            <span className="material-icons text-green-700">inventory_2</span>
                         </div>
                         <div className="flex-1">
                             <h3 className="font-bold text-gray-800 text-sm">Produk Digital Saya</h3>
-                            <p className="text-[11px] text-gray-500">Kelola produk digital yang Anda jual</p>
+                            <p className="text-[11px] text-gray-500">Kelola dan jual produk digital Anda</p>
                         </div>
                         <span className="material-icons text-gray-400">chevron_right</span>
                     </Link>
@@ -248,52 +269,6 @@ const DashboardPage = () => {
                         </Link>
                     )}
                 </div>
-
-                {/* Withdrawal History */}
-                {withdrawalHistory.length > 0 && (
-                    <div className="mt-8">
-                        <h2 className="font-bold mb-3 text-gray-700 px-1">Riwayat Penarikan</h2>
-                        <div className="space-y-2">
-                            {withdrawalHistory.map((w) => (
-                                <div key={w.id} className="bg-white p-3 rounded-xl shadow-sm border border-gray-50">
-                                    <div className="flex justify-between items-center">
-                                        <div>
-                                            <p className="text-sm font-bold">{formatIDR(w.amount)}</p>
-                                            <p className="text-[10px] text-gray-400">{new Date(w.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
-                                        </div>
-                                        <div className="text-right flex flex-col items-end gap-1">
-                                            <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${w.status === 'approved' ? 'bg-green-100 text-green-700' :
-                                                w.status === 'rejected' ? 'bg-red-100 text-red-700' :
-                                                    'bg-yellow-100 text-yellow-700'
-                                                }`}>
-                                                {w.status.toUpperCase()}
-                                            </span>
-                                            {w.status === 'approved' && w.transfer_proof && (
-                                                <a
-                                                    href={w.transfer_proof}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="text-[9px] text-green-700 font-bold flex items-center gap-1 hover:underline"
-                                                >
-                                                    <span className="material-icons text-[12px]">image</span>
-                                                    Lihat Bukti
-                                                </a>
-                                            )}
-                                            <p className="text-[9px] text-gray-400 mt-0.5">{w.bank_name}</p>
-                                        </div>
-                                    </div>
-                                    {w.status === 'rejected' && w.rejection_reason && (
-                                        <div className="mt-2 p-2 bg-red-50 rounded-lg border border-red-100">
-                                            <p className="text-[10px] text-red-700">
-                                                <span className="font-bold">Alasan Penolakan:</span> {w.rejection_reason}
-                                            </p>
-                                        </div>
-                                    )}
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                )}
             </div>
 
             {/* Withdrawal Modal */}
@@ -314,115 +289,152 @@ const DashboardPage = () => {
                                         onClick={handleTarikSemua}
                                         className="text-[10px] text-green-700 font-bold hover:underline"
                                     >
-                                        Tarik Semua Saldo
+                                        Tarik Semua
                                     </button>
                                 </div>
                                 <input
                                     type="number"
                                     value={withdrawAmount}
                                     onChange={(e) => setWithdrawAmount(e.target.value)}
-                                    className="w-full px-4 py-3 bg-gray-50 border-none rounded-xl text-sm font-semibold focus:ring-2 focus:ring-green-500"
-                                    placeholder="Min. 10.000"
+                                    className="w-full px-4 py-3 bg-gray-100 border-none rounded-xl text-sm focus:ring-2 focus:ring-green-500"
+                                    placeholder="Contoh: 50000"
                                     required
                                 />
-                                <p className="text-[10px] text-gray-500 mt-1">Saldo tersedia: {formatIDR(balanceData.available_balance || 0)}</p>
                             </div>
 
                             <div>
-                                <label className="block text-xs font-medium text-gray-500 mb-1">Berbagi / Sadaqoh ke BAE (Opsional)</label>
+                                <label className="block text-xs font-medium text-gray-500 mb-1">Donasi Program Sosial (Opsional)</label>
                                 <input
                                     type="number"
                                     value={donationAmount}
                                     onChange={(e) => setDonationAmount(e.target.value)}
-                                    className="w-full px-4 py-3 bg-gray-50 border-none rounded-xl text-sm font-semibold focus:ring-2 focus:ring-green-500"
-                                    placeholder="Masukkan nominal"
+                                    className="w-full px-4 py-3 bg-gray-100 border-none rounded-xl text-sm focus:ring-2 focus:ring-green-500"
+                                    placeholder="Berapapun donasi Anda sangat berarti"
                                 />
                             </div>
 
                             <div className="grid grid-cols-2 gap-3">
                                 <div>
-                                    <label className="block text-xs font-medium text-gray-500 mb-1">Nama Bank</label>
+                                    <label className="block text-xs font-medium text-gray-500 mb-1">Nama Bank/E-Wallet</label>
                                     <input
                                         type="text"
                                         value={bankName}
                                         onChange={(e) => setBankName(e.target.value)}
-                                        className="w-full px-4 py-3 bg-gray-50 border-none rounded-xl text-sm font-semibold focus:ring-2 focus:ring-green-500"
-                                        placeholder="BSI / BCA / DLL"
+                                        className="w-full px-4 py-3 bg-gray-100 border-none rounded-xl text-sm focus:ring-2 focus:ring-green-500"
+                                        placeholder="Contoh: BSI, BCA, Gopay"
                                         required
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-medium text-gray-500 mb-1">No. Rekening</label>
+                                    <label className="block text-xs font-medium text-gray-500 mb-1">Nomor Rekening</label>
                                     <input
                                         type="text"
                                         value={accountNumber}
                                         onChange={(e) => setAccountNumber(e.target.value)}
-                                        className="w-full px-4 py-3 bg-gray-50 border-none rounded-xl text-sm font-semibold focus:ring-2 focus:ring-green-500"
-                                        required
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-medium text-gray-500 mb-1">Atas Nama Rekening</label>
-                                    <input
-                                        type="text"
-                                        value={accountName}
-                                        onChange={(e) => setAccountName(e.target.value)}
-                                        className="w-full px-4 py-3 bg-gray-50 border-none rounded-xl text-sm font-semibold focus:ring-2 focus:ring-green-500"
-                                        placeholder="Nama Sesuai Buku Tabungan"
+                                        className="w-full px-4 py-3 bg-gray-100 border-none rounded-xl text-sm focus:ring-2 focus:ring-green-500"
+                                        placeholder="Isi nomor rekening"
                                         required
                                     />
                                 </div>
                             </div>
 
                             <div>
-                                <label className="block text-xs font-medium text-gray-500 mb-1">Bank Tujuan</label>
-                                <select
-                                    value={bankName}
-                                    onChange={(e) => setBankName(e.target.value)}
-                                    className="w-full px-4 py-3 bg-gray-50 border-none rounded-xl text-sm font-semibold focus:ring-2 focus:ring-green-500"
+                                <label className="block text-xs font-medium text-gray-500 mb-1">Nama Pemilik Rekening</label>
+                                <input
+                                    type="text"
+                                    value={accountName}
+                                    onChange={(e) => setAccountName(e.target.value)}
+                                    className="w-full px-4 py-3 bg-gray-100 border-none rounded-xl text-sm focus:ring-2 focus:ring-green-500"
+                                    placeholder="Isi nama pemilik rekening"
                                     required
-                                >
-                                    <option value="">Pilih Bank</option>
-                                    <option value="BSI">BSI (Gratis)</option>
-                                    <option value="GOPAY">GOPAY (Gratis)</option>
-                                    <option value="BCA">BCA (Fee 6.5k)</option>
-                                    <option value="MANDIRI">MANDIRI (Fee 6.5k)</option>
-                                    <option value="BNI">BNI (Fee 6.5k)</option>
-                                    <option value="BRI">BRI (Fee 6.5k)</option>
-                                </select>
+                                />
                             </div>
 
-                            {/* Deduction Summary */}
-                            <div className="bg-gray-50 p-4 rounded-2xl space-y-2">
-                                <div className="flex justify-between text-xs text-gray-500">
-                                    <span>Nominal Tarik:</span>
-                                    <span>{formatIDR(parseFloat(withdrawAmount) || 0)}</span>
-                                </div>
-                                <div className="flex justify-between text-xs text-gray-500">
-                                    <span>Sadaqoh:</span>
-                                    <span>{formatIDR(parseFloat(donationAmount) || 0)}</span>
-                                </div>
-                                <div className="flex justify-between text-xs text-gray-500">
+                            <div className="bg-orange-50 p-4 rounded-xl border border-orange-100 space-y-1">
+                                <div className="flex justify-between text-xs text-orange-800">
                                     <span>Biaya Admin:</span>
-                                    <span>{formatIDR(getAdminFee())}</span>
+                                    <span>{formatIDR(adminFeeVal)}</span>
                                 </div>
-                                <div className="pt-2 border-t flex justify-between text-sm font-bold text-gray-800">
-                                    <span>Total Potongan:</span>
-                                    <span className={isOverBalance ? 'text-red-600' : ''}>{formatIDR(totalDeduction)}</span>
+                                <div className="flex justify-between text-xs text-orange-800 font-bold">
+                                    <span>Total Pengurangan Saldo:</span>
+                                    <span>{formatIDR(totalDeductionVal)}</span>
                                 </div>
-                                {isOverBalance && (
-                                    <p className="text-[10px] text-red-500 font-medium">Saldo tidak mencukupi untuk total potongan ini.</p>
-                                )}
+                                <p className="text-[9px] text-orange-600 mt-2">* Gratis biaya admin jika menggunakan BSI atau GOPAY</p>
                             </div>
 
                             <button
                                 type="submit"
-                                disabled={withdrawing || !withdrawAmount || parseFloat(withdrawAmount) <= 0 || isOverBalance}
-                                className="w-full py-4 bg-green-700 text-white rounded-xl text-sm font-bold shadow-lg shadow-green-200 disabled:opacity-50 transition-all active:scale-95"
+                                disabled={withdrawing || totalDeductionVal > balanceData.available_balance || !withdrawAmount}
+                                className="w-full py-4 bg-green-700 text-white rounded-xl text-sm font-bold shadow-lg shadow-green-100 disabled:opacity-50 transition transform active:scale-95"
                             >
-                                {withdrawing ? 'Memproses...' : 'Konfirmasi Tarik Saldo'}
+                                {withdrawing ? 'Memproses...' : 'Ajukan Penarikan'}
                             </button>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {/* History Modal */}
+            {showHistoryModal && (
+                <div className="fixed inset-0 bg-black/50 z-[100] flex items-end sm:items-center justify-center p-4">
+                    <div className="bg-white w-full max-w-md rounded-t-3xl sm:rounded-2xl p-6 shadow-2xl animate-slide-up max-h-[80vh] flex flex-col">
+                        <div className="flex justify-between items-center mb-4">
+                            <h3 className="text-lg font-bold">Riwayat Penarikan</h3>
+                            <button onClick={() => setShowHistoryModal(false)} className="material-icons text-gray-400">close</button>
+                        </div>
+
+                        <div className="overflow-y-auto flex-1 space-y-3 pr-1 custom-scrollbar">
+                            {withdrawalHistory.length === 0 ? (
+                                <div className="text-center py-10">
+                                    <span className="material-icons text-gray-200 text-5xl">payments</span>
+                                    <p className="text-gray-400 text-sm mt-2">Belum ada riwayat penarikan</p>
+                                </div>
+                            ) : (
+                                withdrawalHistory.map((w) => (
+                                    <div key={w.id} className="bg-gray-50 p-4 rounded-2xl border border-gray-100">
+                                        <div className="flex justify-between items-start">
+                                            <div>
+                                                <p className="font-bold text-gray-800">{formatIDR(w.amount)}</p>
+                                                <div className="flex items-center gap-2 mt-1">
+                                                    <span className="material-icons text-[12px] text-gray-400">calendar_today</span>
+                                                    <p className="text-[10px] text-gray-500">{new Date(w.created_at).toLocaleString('id-ID', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
+                                                </div>
+                                            </div>
+                                            <div className="text-right flex flex-col items-end gap-1">
+                                                <span className={`text-[9px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${w.status === 'approved' ? 'bg-green-100 text-green-700' :
+                                                    w.status === 'rejected' ? 'bg-red-100 text-red-700' :
+                                                        'bg-yellow-100 text-yellow-700'
+                                                    }`}>
+                                                    {w.status}
+                                                </span>
+                                                {w.status === 'approved' && w.transfer_proof && (
+                                                    <a
+                                                        href={w.transfer_proof}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="text-[9px] text-green-700 font-bold flex items-center gap-1 hover:underline"
+                                                    >
+                                                        <span className="material-icons text-[12px]">image</span>
+                                                        Lihat Bukti
+                                                    </a>
+                                                )}
+                                                <p className="text-[9px] text-gray-400 flex items-center gap-1">
+                                                    <span className="material-icons text-[10px]">account_balance</span>
+                                                    {w.bank_name}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        {w.status === 'rejected' && w.rejection_reason && (
+                                            <div className="mt-3 p-3 bg-red-50 rounded-xl border border-red-100">
+                                                <p className="text-[10px] text-red-700 leading-relaxed">
+                                                    <span className="font-bold">Alasan Penolakan:</span> {w.rejection_reason}
+                                                </p>
+                                            </div>
+                                        )}
+                                    </div>
+                                ))
+                            )}
+                        </div>
                     </div>
                 </div>
             )}

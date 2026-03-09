@@ -69,7 +69,10 @@ class WithdrawalRequestSerializer(serializers.ModelSerializer):
             'account_number', 'bank_name', 'status', 'transfer_proof',
             'rejection_reason', 'created_at'
         ]
-        read_only_fields = ['id', 'user', 'status', 'transfer_proof', 'rejection_reason', 'created_at']
+        read_only_fields = [
+            'id', 'user', 'user_username', 'status', 'transfer_proof', 
+            'rejection_reason', 'admin_fee', 'total_deduction', 'created_at'
+        ]
 
 
 class WithdrawalRequestAdminSerializer(serializers.ModelSerializer):
