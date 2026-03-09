@@ -47,9 +47,10 @@ const NavigationButton = () => {
       {!isNavVisible && (
         <button
           onClick={() => setIsNavVisible(true)}
-          className="fixed bottom-6 left-6 w-12 h-12 bg-green-700 text-white rounded-full shadow-xl z-[1001] flex items-center justify-center animate-bounce-subtle"
+          className="fixed bottom-6 left-1/2 -translate-x-1/2 px-6 py-2 bg-green-700 text-white rounded-full shadow-xl z-[1001] flex items-center justify-center gap-2 animate-bounce-subtle"
         >
-          <span className="material-icons">menu_open</span>
+          <span className="material-icons text-sm">keyboard_arrow_up</span>
+          <span className="text-sm font-medium">Buka Menu</span>
         </button>
       )}
 

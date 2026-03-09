@@ -67,6 +67,7 @@ const EcourseCourseDetail = () => {
   const handleEnroll = async () => {
     const user = JSON.parse(localStorage.getItem('user'));
     if (!user || !user.access) {
+      alert('Anda harus login terlebih dahulu untuk membeli E-Course.');
       navigate('/login');
       return;
     }

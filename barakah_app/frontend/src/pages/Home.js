@@ -57,6 +57,12 @@ const formatDeadline = (deadline) => {
   });
 };
 
+const getMediaUrl = (url) => {
+  if (!url) return '';
+  if (url.startsWith('http')) return url;
+  return `${process.env.REACT_APP_API_BASE_URL}${url}`;
+};
+
 const getButtonLabel = (title = '') => {
   const lowerTitle = title.toLowerCase();
   if (lowerTitle.includes('infak')) return 'INFAK SEKARANG';
@@ -1101,7 +1107,7 @@ const Home = () => {
             >
               <div className="w-20 h-20 mx-auto rounded-full overflow-hidden border-2 border-green-500 p-0.5 mb-2">
                 <img
-                  src={seller.shop_thumbnail || '/images/pas_foto_standard.png'}
+                  src={getMediaUrl(seller.shop_thumbnail) || '/images/pas_foto_standard.png'}
                   alt={seller.name}
                   className="w-full h-full object-cover rounded-full"
                   onError={(e) => { e.target.src = '/images/pas_foto_standard.png'; }}

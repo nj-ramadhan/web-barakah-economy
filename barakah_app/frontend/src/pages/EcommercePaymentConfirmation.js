@@ -85,8 +85,8 @@ const EcommercePaymentConfirmation = () => {
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      if (file.size > 2 * 1024 * 1024) { // Limit file size to 5MB
-        alert('Ukuran file terlalu besar. Maksimal 2MB.');
+      if (file.size > 5 * 1024 * 1024) { // Limit file size to 5MB
+        alert('Ukuran file terlalu besar. Maksimal 5MB.');
         return;
       }
       if (!['image/jpeg', 'image/png', 'image/jpg'].includes(file.type)) {

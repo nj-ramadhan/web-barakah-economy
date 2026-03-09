@@ -3,6 +3,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
 import Header from '../components/layout/Header';
+import BackButton from '../components/global/BackButton';
 import NavigationButton from '../components/layout/Navigation';
 import { getMyCourses, updateCourse, deleteCourse } from '../services/ecourseApi';
 import '../styles/Body.css';
@@ -72,9 +73,12 @@ const DashboardEcourseListPage = () => {
 
             <div className="max-w-6xl mx-auto px-4 py-4 pb-24">
                 <div className="flex justify-between items-center mb-6">
-                    <div>
-                        <h1 className="text-xl font-bold">E-Course Saya</h1>
-                        <p className="text-xs text-gray-500">Kelola konten pembelajaran Anda</p>
+                    <div className="flex items-center gap-2">
+                        <BackButton />
+                        <div>
+                            <h1 className="text-xl font-bold">E-Course Saya</h1>
+                            <p className="text-xs text-gray-500">Kelola konten pembelajaran Anda</p>
+                        </div>
                     </div>
                     <Link
                         to="/dashboard/ecourses/new"

@@ -450,7 +450,7 @@ const DesktopLandingPage = () => {
                                     >
                                         <div className="w-24 h-24 mx-auto rounded-full overflow-hidden border-4 border-white shadow-md group-hover:border-green-500 transition-all duration-300 p-1 mb-4">
                                             <img
-                                                src={seller.shop_thumbnail || '/images/pas_foto_standard.png'}
+                                                src={getMediaUrl(seller.shop_thumbnail) || '/images/pas_foto_standard.png'}
                                                 alt={seller.name}
                                                 className="w-full h-full object-cover rounded-full"
                                                 onError={(e) => { e.target.src = '/images/pas_foto_standard.png'; }}

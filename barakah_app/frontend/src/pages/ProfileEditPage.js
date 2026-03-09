@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '../components/layout/Header';
+import BackButton from '../components/global/BackButton';
 import NavigationButton from '../components/layout/Navigation';
 import authService from '../services/auth';
 import '../styles/Body.css';
@@ -35,11 +36,8 @@ const ProfileEditPage = () => {
     work_position: '',
     work_salary: '',
     address_latitude: '',
-    address_longitude: '',
     address_province: '',
     picture: null,
-    shop_thumbnail: null,
-    shop_description: '',
   });
 
   const [activeTab, setActiveTab] = useState('general'); // State to manage active tab
@@ -73,8 +71,8 @@ const ProfileEditPage = () => {
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      if (file.size > 2 * 1024 * 1024) {
-        alert('Ukuran foto terlalu besar. Maksimal 2MB.');
+      if (file.size > 5 * 1024 * 1024) {
+        alert('Ukuran foto terlalu besar. Maksimal 5MB.');
         return;
       }
       setProfile((prevProfile) => ({
@@ -86,12 +84,8 @@ const ProfileEditPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (profile.picture instanceof File && profile.picture.size > 2 * 1024 * 1024) {
-      alert('File foto profil terlalu besar (Maks 2MB)');
-      return;
-    }
-    if (profile.shop_thumbnail instanceof File && profile.shop_thumbnail.size > 2 * 1024 * 1024) {
-      alert('File thumbnail toko terlalu besar (Maks 2MB)');
+    if (profile.picture instanceof File && profile.picture.size > 5 * 1024 * 1024) {
+      alert('File foto profil terlalu besar (Maks 5MB)');
       return;
     }
     try {
@@ -117,9 +111,6 @@ const ProfileEditPage = () => {
         // Append the existing picture URL if the picture is not changed
         if (!(profile.picture instanceof File)) {
           formData.delete('picture');
-        }
-        if (!(profile.shop_thumbnail instanceof File)) {
-          formData.delete('shop_thumbnail');
         }
 
         // Update profile data using FormData
@@ -560,58 +551,7 @@ const ProfileEditPage = () => {
           </div>
         );
 
-      case 'shop':
-        return (
-          <div className="space-y-4">
-            <div className="mb-4">
-              <label className="block text-gray-700 font-medium mb-1 italic text-xs">
-                * Informasi ini akan muncul di link personal/toko digital Anda.
-              </label>
-            </div>
-            {/* Shop Thumbnail */}
-            <div className="mb-4">
-              <label className="block text-gray-700 font-medium mb-1">Thumbnail Toko</label>
-              <div className="flex flex-col space-y-2">
-                {profile.shop_thumbnail && (
-                  <div className="w-full h-32 rounded-lg overflow-hidden border bg-gray-50">
-                    <img
-                      src={profile.shop_thumbnail instanceof File ? URL.createObjectURL(profile.shop_thumbnail) : profile.shop_thumbnail}
-                      alt="Shop Thumbnail"
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                )}
-                <input
-                  type="file"
-                  onChange={(e) => {
-                    const file = e.target.files[0];
-                    if (file) {
-                      if (file.size > 2 * 1024 * 1024) {
-                        alert('Ukuran gambar maksimal 2MB');
-                        return;
-                      }
-                      setProfile(prev => ({ ...prev, shop_thumbnail: file }));
-                    }
-                  }}
-                  className="w-full p-2 border rounded-lg text-sm"
-                />
-              </div>
-            </div>
 
-            {/* Shop Description */}
-            <div className="mb-4">
-              <label className="block text-gray-700 font-medium mb-1">Deskripsi Toko</label>
-              <textarea
-                name="shop_description"
-                placeholder="Jelaskan spesialisasi atau deskripsi toko digital Anda"
-                value={profile.shop_description || ''}
-                onChange={handleChange}
-                rows="4"
-                className="w-full p-2 border rounded-lg"
-              />
-            </div>
-          </div>
-        );
 
       default:
         return null;
@@ -624,10 +564,13 @@ const ProfileEditPage = () => {
       <div className="container">
         <div className="bg-white rounded-lg shadow overflow-hidden mt-6">
           <div className="p-4">
-            <h3 className="text-xl font-bold mb-4">Edit Profile</h3>
+            <div className="flex items-center gap-2 mb-4">
+              <BackButton fallback="/profile" />
+              <h3 className="text-xl font-bold">Edit Profile</h3>
+            </div>
             <div className="w-32 h-32 rounded-full overflow-hidden border-2 border-gray-200">
               <img
-                src={profile.picture || `${process.env.REACT_APP_API_BASE_URL}/media/profile_images/pas_foto_standard.png`} // Default placeholder image
+                src={profile.picture || `${process.env.REACT_APP_API_BASE_URL} /media/profile_images / pas_foto_standard.png`} // Default placeholder image
                 alt="Profile"
                 className="w-full h-full object-cover"
               />
@@ -668,14 +611,6 @@ const ProfileEditPage = () => {
                   onClick={() => setActiveTab('work')}
                 >
                   work
-                </button>
-                <button
-                  type="button"
-                  className={`py-2 px-4 material-icons ${activeTab === 'shop' ? 'border-b-2 border-green-600 text-green-600' : 'text-gray-500'}`}
-                  onClick={() => setActiveTab('shop')}
-                  title="Pengaturan Toko Digital"
-                >
-                  storefront
                 </button>
               </div>
 

@@ -124,6 +124,9 @@ class DigitalProductViewSet(viewsets.ModelViewSet):
                 'picture': profile.picture.url if profile.picture else None,
                 'shop_thumbnail': profile.shop_thumbnail.url if profile.shop_thumbnail else None,
                 'shop_description': profile.shop_description,
+                'shop_layout': profile.shop_layout,
+                'shop_theme_color': profile.shop_theme_color,
+                'shop_font': profile.shop_font,
             }
             
             product_serializer = DigitalProductPublicSerializer(products, many=True)
@@ -157,13 +160,13 @@ class DigitalProductViewSet(viewsets.ModelViewSet):
                 data.append({
                     'username': p.user.username,
                     'name': p.name_full or p.user.username,
-                    'shop_thumbnail': request.build_absolute_uri(p.shop_thumbnail.url) if p.shop_thumbnail else None,
+                    'shop_thumbnail': p.shop_thumbnail.url if p.shop_thumbnail else None,
                     'shop_description': p.shop_description or ""
                 })
             return Response(data)
         except Exception as e:
             logger.exception(f"Error in popular_sellers: {e}")
-            return Response([], status=status.HTTP_200_OK)
+            return Response([{"error": str(e)}], status=status.HTTP_200_OK)
 
     @action(detail=False, methods=['get', 'put', 'patch', 'delete'], url_path='my-products/(?P<product_id>[^/.]+)')
     def my_product_detail(self, request, product_id=None):
@@ -211,7 +214,12 @@ class DigitalOrderViewSet(viewsets.ModelViewSet):
             # If user is authenticated, link buyer
             if request.user and request.user.is_authenticated:
                 order.buyer = request.user
-                order.save()
+            
+            # Link the product_owner so balance can be tracked
+            if order.digital_product and order.digital_product.user:
+                order.product_owner = order.digital_product.user
+                
+            order.save()
             return Response(DigitalOrderSerializer(order).data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 

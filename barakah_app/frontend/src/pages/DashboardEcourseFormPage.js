@@ -68,8 +68,8 @@ const DashboardEcourseFormPage = () => {
     const handleThumbnailChange = (e) => {
         const file = e.target.files[0];
         if (file) {
-            if (file.size > 2 * 1024 * 1024) {
-                alert('Ukuran gambar terlalu besar. Maksimal 2MB.');
+            if (file.size > 5 * 1024 * 1024) {
+                alert('Ukuran gambar terlalu besar. Maksimal 5MB.');
                 return;
             }
             setThumbnail(file);
@@ -172,7 +172,7 @@ const DashboardEcourseFormPage = () => {
                                 <>
                                     <span className="material-icons text-gray-300 text-4xl mb-2">add_photo_alternate</span>
                                     <p className="text-xs text-gray-400">Upload Banner / Cover Kursus</p>
-                                    <p className="text-[10px] text-gray-400 mt-1 italic">Rekomendasi 1280x720px (Maks 2MB)</p>
+                                    <p className="text-[10px] text-gray-400 mt-1 italic">Rekomendasi 1280x720px (Maks 5MB)</p>
                                 </>
                             )}
                         </div>
@@ -185,7 +185,7 @@ const DashboardEcourseFormPage = () => {
                         />
                         <p className="mt-2 text-[10px] font-semibold text-red-500 flex items-center gap-1 leading-none">
                             <span className="material-icons text-[12px]">info</span>
-                            Jika gambar terlalu besar ({">"}2MB), upload akan gagal. Harap kecilkan ukuran gambar sebelum upload.
+                            Jika gambar terlalu besar ({">"}5MB), upload akan gagal. Harap kecilkan ukuran gambar sebelum upload.
                         </p>
                     </div>
 

@@ -207,9 +207,18 @@ const DashboardEcourseMaterialsPage = () => {
                             <input
                                 type="file"
                                 accept="application/pdf"
-                                onChange={(e) => setPdfFile(e.target.files[0])}
+                                onChange={(e) => {
+                                    const file = e.target.files[0];
+                                    if (file && file.size > 5 * 1024 * 1024) {
+                                        alert('Ukuran file PDF terlalu besar. Maksimal 5MB.');
+                                        e.target.value = null; // Reset input if file is too large
+                                    } else {
+                                        setPdfFile(file);
+                                    }
+                                }}
                                 className="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-green-50 file:text-green-700 hover:file:bg-green-100"
                             />
+                            <p className="mt-1 text-[10px] text-gray-400 italic">Maksimal 5MB</p>
                         </div>
 
                         <div>

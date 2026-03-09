@@ -6,6 +6,7 @@ import Header from '../components/layout/Header';
 import NavigationButton from '../components/layout/Navigation';
 import { getPublicDigitalProfile } from '../services/digitalProductApi';
 import ShareButton from '../components/campaigns/ShareButton';
+import ShopDecoration from '../components/profile/ShopDecoration';
 import '../styles/Body.css';
 
 const formatIDR = (amount) => {
@@ -50,6 +51,12 @@ const SellerProfilePage = () => {
     }
 
     if (!profileData) {
+        // Prevent matching static routes that aren't users
+        const staticRoutes = ['login', 'register', 'lupa-password', 'reset-password', 'profile', 'charity', 'sinergy', 'incaran', 'keranjang', 'riwayat-belanja', 'bayar-belanja', 'konfirmasi-pembayaran-belanja', 'articles', 'academy', 'kelas', 'ikut-kelas', 'konfirmasi-pembayaran-kelas', 'pembayaran-berhasil', 'pembayaran-gagal', 'pembayaran-tertunda', 'about', 'hubungi-kami', 'digital-products', 'digital-produk', 'dashboard'];
+        if (staticRoutes.includes(username)) {
+            return null;
+        }
+
         return (
             <div className="body">
                 <Header />
@@ -63,8 +70,45 @@ const SellerProfilePage = () => {
     const products = profileData?.products || [];
     const courses = profileData?.courses || [];
 
+    // Custom layout settings with fallbacks
+    const themeColor = profile.shop_theme_color || 'green';
+    const layoutStyle = profile.shop_layout || 'default';
+    const fontStyle = profile.shop_font || 'sans';
+
+    // Map theme colors to Tailwind classes (or use inline styles if needed)
+    const isHex = themeColor?.startsWith('#') || themeColor?.startsWith('rgb');
+    const getThemeClasses = (color) => {
+        if (isHex) {
+            return { bg: '', text: '', hover: '', badge: '', icon: '' };
+        }
+        switch (color) {
+            case 'blue': return { bg: 'bg-blue-800', text: 'text-blue-600', hover: 'hover:text-blue-700', badge: 'bg-blue-600', icon: 'text-blue-600' };
+            case 'purple': return { bg: 'bg-purple-800', text: 'text-purple-600', hover: 'hover:text-purple-700', badge: 'bg-purple-600', icon: 'text-purple-600' };
+            case 'dark': return { bg: 'bg-gray-900', text: 'text-gray-800', hover: 'hover:text-black', badge: 'bg-gray-800', icon: 'text-gray-800' };
+            case 'rose': return { bg: 'bg-rose-800', text: 'text-rose-600', hover: 'hover:text-rose-700', badge: 'bg-rose-600', icon: 'text-rose-600' };
+            case 'green':
+            default: return { bg: 'bg-green-800', text: 'text-green-600', hover: 'hover:text-green-700', badge: 'bg-green-600', icon: 'text-green-600' };
+        }
+    };
+    const theme = getThemeClasses(themeColor);
+
+    // Map font style to Tailwind classes
+    const getFontClass = (font) => {
+        switch (font) {
+            case 'serif': return 'font-serif';
+            case 'mono': return 'font-mono';
+            case 'poppins': return 'font-[Poppins]'; // Requires poppins font to be imported/available globally
+            case 'sans':
+            default: return 'font-sans';
+        }
+    };
+    const fontClass = getFontClass(fontStyle);
+
     return (
-        <div className="body">
+        <div className={`body ${fontClass} ${layoutStyle === 'dark' ? 'bg-gray-900' : ''}`}>
+            {/* Decoration Overlay */}
+            <ShopDecoration decoration={profile.shop_decoration} themeColor={themeColor} isPreview={false} />
+
             <Helmet>
                 <title>{username} - Produk Digital & E-Course - Barakah Economy</title>
                 <meta name="description" content={profile?.shop_description || `Koleksi produk digital dan e-course dari ${username}`} />
@@ -73,15 +117,15 @@ const SellerProfilePage = () => {
                 <meta property="og:image" content={getMediaUrl(profile?.shop_thumbnail || profile?.picture)} />
             </Helmet>
 
-            <Header />
-            <div className="max-w-6xl mx-auto pb-24">
+            <Header className="relative z-10" />
+            <div className={`relative z-10 max-w-6xl mx-auto pb-24 ${layoutStyle === 'biolink' ? 'flex flex-col items-center' : ''}`}>
                 {/* Profile Header */}
-                <div className="relative h-48 bg-green-800">
+                <div className={`relative ${layoutStyle === 'biolink' ? 'h-32 w-full max-w-md rounded-b-3xl mt-0' : 'h-48'} ${theme.bg}`} style={isHex ? { backgroundColor: themeColor } : {}}>
                     {profile.shop_thumbnail && (
                         <img
                             src={getMediaUrl(profile.shop_thumbnail)}
                             alt="Shop Header"
-                            className="w-full h-full object-cover opacity-50"
+                            className={`w-full h-full object-cover opacity-50 ${layoutStyle === 'biolink' ? 'rounded-b-3xl' : ''}`}
                         />
                     )}
                     <div className="absolute -bottom-12 left-1/2 -translate-x-1/2 flex flex-col items-center">
@@ -95,17 +139,17 @@ const SellerProfilePage = () => {
                     </div>
                 </div>
 
-                <div className="mt-16 text-center px-4">
+                <div className={`mt-16 text-center px-4 ${layoutStyle === 'biolink' ? 'w-full max-w-md' : ''}`}>
                     <div className="flex items-center justify-center gap-2">
-                        <h1 className="text-xl font-bold text-gray-900">@{username}</h1>
+                        <h1 className={`text-xl font-bold ${layoutStyle === 'dark' ? 'text-white' : 'text-gray-900'}`}>@{username}</h1>
                         <ShareButton slug={username} title={`Profil Toko @${username}`} type="seller" />
                     </div>
                     {profile && (
                         <>
-                            <p className="text-sm text-gray-500 mt-1">{profile.name_full}</p>
+                            <p className={`text-sm mt-1 ${layoutStyle === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>{profile.name_full}</p>
                             {profile.shop_description && (
                                 <div className="mt-4 max-w-md mx-auto">
-                                    <p className="text-sm text-gray-600 italic">"{profile.shop_description}"</p>
+                                    <p className={`text-sm italic ${layoutStyle === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>"{profile.shop_description}"</p>
                                 </div>
                             )}
                         </>
@@ -114,36 +158,41 @@ const SellerProfilePage = () => {
 
                 {/* Course List Section */}
                 {courses.length > 0 && (
-                    <div className="mt-10 px-4">
-                        <h2 className="text-sm font-bold text-gray-800 mb-4 flex items-center gap-2">
-                            <span className="material-icons text-green-600 text-lg">school</span>
+                    <div className={`mt-10 px-4 ${layoutStyle === 'biolink' ? 'w-full max-w-md text-center' : ''}`}>
+                        <h2 className={`text-sm font-bold mb-4 flex items-center ${layoutStyle === 'biolink' ? 'justify-center' : ''} gap-2 ${layoutStyle === 'dark' ? 'text-gray-200' : 'text-gray-800'}`}>
+                            <span className={`material-icons text-lg ${theme.icon}`} style={isHex ? { color: themeColor } : {}}>school</span>
                             Kelas E-Course
                         </h2>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div className={`grid ${layoutStyle === 'biolink' ? 'grid-cols-1 gap-3' : layoutStyle === 'grid' ? 'grid-cols-2 lg:grid-cols-3 gap-2' : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4'}`}>
                             {courses.map((course) => (
                                 <Link
                                     key={course.id}
-                                    to={`/ecourse/${course.slug}`}
-                                    className="block bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 hover:shadow-md transition"
+                                    to={`/kelas/${course.slug}`}
+                                    className={`block rounded-2xl overflow-hidden shadow-sm border transition backdrop-blur-sm ${layoutStyle === 'dark' ? 'bg-gray-800/90 border-gray-700 hover:border-gray-600' : 'bg-white/90 border-gray-100 hover:shadow-md'
+                                        } ${layoutStyle === 'biolink' ? 'flex items-center text-left' : ''}`}
                                 >
-                                    <div className="relative aspect-video">
+                                    <div className={`relative ${layoutStyle === 'biolink' ? 'w-24 h-24 flex-shrink-0' : 'aspect-video'}`}>
                                         <img
                                             src={getMediaUrl(course.thumbnail) || '/placeholder-image.jpg'}
                                             alt={course.title}
                                             className="w-full h-full object-cover"
                                         />
-                                        <div className="absolute top-2 right-2 bg-green-600 text-white text-[10px] font-bold px-2 py-1 rounded-lg">
-                                            E-Course
-                                        </div>
-                                    </div>
-                                    <div className="p-4">
-                                        <h3 className="text-sm font-bold text-gray-800 line-clamp-2 min-h-[40px] mb-2">{course.title}</h3>
-                                        <div className="flex items-center justify-between mt-auto">
-                                            <div className="flex items-center gap-1 text-[10px] text-gray-400">
-                                                <span className="material-icons text-[12px]">groups</span>
-                                                {course.student_count || 0}
+                                        {layoutStyle !== 'biolink' && (
+                                            <div className={`absolute top-2 right-2 text-white text-[10px] font-bold px-2 py-1 rounded-lg ${theme.badge}`} style={isHex ? { backgroundColor: themeColor } : {}}>
+                                                E-Course
                                             </div>
-                                            <p className="text-green-700 font-extrabold text-sm">
+                                        )}
+                                    </div>
+                                    <div className={`p-4 ${layoutStyle === 'biolink' ? 'flex-1' : ''}`}>
+                                        <h3 className={`text-sm font-bold line-clamp-2 mb-2 ${layoutStyle === 'dark' ? 'text-gray-200' : 'text-gray-800'} ${layoutStyle === 'biolink' ? 'min-h-0' : 'min-h-[40px]'}`}>{course.title}</h3>
+                                        <div className="flex items-center justify-between mt-auto">
+                                            {layoutStyle !== 'biolink' && (
+                                                <div className="flex items-center gap-1 text-[10px] text-gray-400">
+                                                    <span className="material-icons text-[12px]">groups</span>
+                                                    {course.student_count || 0}
+                                                </div>
+                                            )}
+                                            <p className={`font-extrabold text-sm ${theme.text}`} style={isHex ? { color: themeColor } : {}}>
                                                 {course.price > 0 ? formatIDR(course.price) : 'GRATIS'}
                                             </p>
                                         </div>
@@ -155,35 +204,40 @@ const SellerProfilePage = () => {
                 )}
 
                 {/* Product List Section */}
-                <div className="mt-10 px-4">
-                    <h2 className="text-sm font-bold text-gray-800 mb-4 flex items-center gap-2">
-                        <span className="material-icons text-green-600 text-lg">inventory_2</span>
+                <div className={`mt-10 px-4 ${layoutStyle === 'biolink' ? 'w-full max-w-md text-center flex flex-col items-center' : ''}`}>
+                    <h2 className={`text-sm font-bold mb-4 flex items-center gap-2 ${layoutStyle === 'biolink' ? 'justify-center' : ''} ${layoutStyle === 'dark' ? 'text-gray-200' : 'text-gray-800'}`}>
+                        <span className={`material-icons text-lg ${theme.icon}`} style={isHex ? { color: themeColor } : {}}>inventory_2</span>
                         Produk Digital
                     </h2>
 
                     {products.length === 0 ? (
-                        <div className="text-center py-10 text-gray-400 bg-white rounded-2xl border border-dashed border-gray-200">
-                            <p className="text-sm">Belum ada produk digital yang dipublish</p>
+                        <div className={`text-center py-10 rounded-2xl border border-dashed text-sm backdrop-blur-sm ${layoutStyle === 'dark' ? 'text-gray-400 bg-gray-800/90 border-gray-700' : 'text-gray-400 bg-white/90 border-gray-200'}`}>
+                            <p>Belum ada produk digital yang dipublish</p>
                         </div>
                     ) : (
-                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                        <div className={`grid w-full ${layoutStyle === 'biolink' ? 'grid-cols-1 gap-3' : layoutStyle === 'grid' ? 'grid-cols-3 lg:grid-cols-4 gap-2' : 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4'}`}>
                             {products.map((product) => (
                                 <Link
                                     key={product.id}
                                     to={`/digital-produk/${username}/${product.slug}`}
-                                    className="block bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 hover:shadow-md transition"
+                                    className={`block rounded-2xl overflow-hidden shadow-sm border transition backdrop-blur-sm ${layoutStyle === 'dark' ? 'bg-gray-800/90 border-gray-700 hover:border-gray-600' : 'bg-white/90 border-gray-100 hover:shadow-md'
+                                        } ${layoutStyle === 'biolink' ? 'flex items-center text-left' : ''}`}
                                 >
-                                    <img
-                                        src={getMediaUrl(product.thumbnail) || '/placeholder-image.jpg'}
-                                        alt={product.title}
-                                        className="w-full h-32 object-cover"
-                                    />
-                                    <div className="p-3">
-                                        <h3 className="text-sm font-bold text-gray-800 line-clamp-2 min-h-[40px]">{product.title}</h3>
-                                        <div className="mt-2 flex items-center justify-between">
-                                            <span className="text-[10px] text-gray-400 bg-gray-50 px-2 py-0.5 rounded-full">{product.category}</span>
-                                        </div>
-                                        <p className="text-green-700 font-bold text-sm mt-2">{formatIDR(product.price)}</p>
+                                    <div className={`${layoutStyle === 'biolink' ? 'w-24 h-24 flex-shrink-0' : 'w-full'}`}>
+                                        <img
+                                            src={getMediaUrl(product.thumbnail) || '/placeholder-image.jpg'}
+                                            alt={product.title}
+                                            className={`w-full object-cover ${layoutStyle === 'biolink' ? 'h-full' : 'h-32'}`}
+                                        />
+                                    </div>
+                                    <div className={`p-3 ${layoutStyle === 'biolink' ? 'flex-1' : ''}`}>
+                                        <h3 className={`text-sm font-bold line-clamp-2 ${layoutStyle === 'dark' ? 'text-gray-200' : 'text-gray-800'} ${layoutStyle === 'biolink' ? 'min-h-0' : 'min-h-[40px]'}`}>{product.title}</h3>
+                                        {layoutStyle !== 'biolink' && (
+                                            <div className="mt-2 flex items-center justify-between">
+                                                <span className={`text-[10px] px-2 py-0.5 rounded-full ${layoutStyle === 'dark' ? 'text-gray-300 bg-gray-700/80' : 'text-gray-400 bg-gray-50/80'}`}>{product.category}</span>
+                                            </div>
+                                        )}
+                                        <p className={`font-bold text-sm mt-2 ${theme.text}`} style={isHex ? { color: themeColor } : {}}>{formatIDR(product.price)}</p>
                                     </div>
                                 </Link>
                             ))}

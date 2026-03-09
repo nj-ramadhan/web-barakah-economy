@@ -497,46 +497,6 @@ const ProfilePage = () => {
                     </div>
                 );
 
-            case 'shop':
-                return (
-                    <div className="space-y-4">
-                        {/* Shop Thumbnail */}
-                        <div className="w-full">
-                            <label className="block text-gray-700 font-medium mb-1">Thumbnail Toko</label>
-                            {profile.shop_thumbnail ? (
-                                <div className="w-full h-40 rounded-lg overflow-hidden border">
-                                    <img
-                                        src={profile.shop_thumbnail}
-                                        alt="Shop Thumbnail"
-                                        className="w-full h-full object-cover"
-                                    />
-                                </div>
-                            ) : (
-                                <p className="w-full p-2 border rounded-lg bg-gray-50 text-gray-400 italic text-sm">Belum ada thumbnail toko</p>
-                            )}
-                        </div>
-
-                        {/* Shop Description */}
-                        <div className="w-full">
-                            <label className="block text-gray-700 font-medium mb-1">Deskripsi Toko</label>
-                            <div className="w-full p-2 border rounded-lg bg-gray-100 min-h-[100px] whitespace-pre-wrap text-sm">
-                                {profile.shop_description || 'Belum ada deskripsi toko'}
-                            </div>
-                        </div>
-
-                        {/* Public Link Button */}
-                        <div className="pt-2">
-                            <Link
-                                to={`/digital-produk/${profile.user_username || profile.name_full?.split(' ')[0].toLowerCase()}`}
-                                className="inline-flex items-center text-green-600 font-bold text-sm bg-green-50 px-3 py-1.5 rounded-full hover:bg-green-100 transition"
-                            >
-                                <span className="material-icons text-sm mr-1">link</span>
-                                Lihat Link Toko Digital
-                            </Link>
-                        </div>
-                    </div>
-                );
-
             case 'courses':
                 return <CoursesTab />;
 
@@ -601,13 +561,7 @@ const ProfilePage = () => {
                                     >
                                         work
                                     </button>
-                                    <button
-                                        className={`py-2 px-4 material-icons ${activeTab === 'shop' ? 'border-b-2 border-green-600 text-green-600' : 'text-gray-500'}`}
-                                        onClick={() => setActiveTab('shop')}
-                                        title="Profil Toko Digital"
-                                    >
-                                        storefront
-                                    </button>
+
                                     <button
                                         className={`py-2 px-4 material-icons ${activeTab === 'courses' ? 'border-b-2 border-green-600 text-green-600' : 'text-gray-500'}`}
                                         onClick={() => setActiveTab('courses')}
@@ -629,6 +583,17 @@ const ProfilePage = () => {
                                     {renderTabContent()}
                                 </div>
                             </div>
+
+                            {/* Lihat Toko Button */}
+                            <Link
+                                to={`/${profile.username || ''}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="w-full bg-purple-100 hover:bg-purple-200 text-purple-700 py-3 rounded-lg font-bold flex items-center justify-center gap-2 transition"
+                            >
+                                <span className="material-icons text-lg">storefront</span>
+                                Lihat Toko Saya
+                            </Link>
 
                             {/* Edit Button */}
                             <Link

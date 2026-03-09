@@ -57,6 +57,7 @@ import DashboardEcourseListPage from './pages/DashboardEcourseListPage';
 import DashboardEcourseFormPage from './pages/DashboardEcourseFormPage';
 import DashboardEcourseMaterialsPage from './pages/DashboardEcourseMaterialsPage';
 import SellerProfilePage from './pages/SellerProfilePage';
+import DashboardShopSettingsPage from './pages/DashboardShopSettingsPage';
 
 import { ResponsiveLayout, MobileContainer } from './components/layout/ResponsiveLayout';
 
@@ -145,8 +146,13 @@ const LayoutWrapper = ({ isDesktop }) => {
         <Route path="/digital_produk/:username" element={<ResponsiveLayout isDesktop={isDesktop}><SellerProfilePage /></ResponsiveLayout>} />
         <Route path="/digital_produk/:username/:slug" element={<ResponsiveLayout isDesktop={isDesktop}><DigitalProductDetailPage /></ResponsiveLayout>} />
 
+        {/* Catch-all username route for store profile (e.g. /myusername) */}
+        <Route path="/:username" element={<ResponsiveLayout isDesktop={isDesktop}><SellerProfilePage /></ResponsiveLayout>} />
+
+
         {/* Dashboard Routes (Private) */}
         <Route path="/dashboard" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardPage /></ResponsiveLayout></PrivateRoute>} />
+        <Route path="/dashboard/shop-settings" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardShopSettingsPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/digital-products" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardDigitalProductsPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/ecourses" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardEcourseListPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/ecourses/new" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardEcourseFormPage /></ResponsiveLayout></PrivateRoute>} />
