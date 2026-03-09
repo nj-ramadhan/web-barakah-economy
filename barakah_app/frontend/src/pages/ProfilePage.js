@@ -586,7 +586,7 @@ const ProfilePage = () => {
 
                             {/* Lihat Toko Button */}
                             <Link
-                                to={`/${profile.username || ''}`}
+                                to={`/digital-produk/${profile.username || ''}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="w-full bg-purple-100 hover:bg-purple-200 text-purple-700 py-3 rounded-lg font-bold flex items-center justify-center gap-2 transition"

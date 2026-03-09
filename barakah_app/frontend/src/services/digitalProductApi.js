@@ -75,3 +75,14 @@ export const getPublicDigitalProfile = (username) =>
 
 export const getPopularSellers = () =>
     axios.get(`${API_BASE}/api/digital-products/products/popular-sellers/`);
+
+// Admin
+export const getAdminWithdrawals = () =>
+    axios.get(`${API_BASE}/api/digital-products/withdrawals/admin-list/`, {
+        headers: getAuthHeaders(),
+    });
+
+export const processAdminWithdrawal = (id, formData) =>
+    axios.patch(`${API_BASE}/api/digital-products/withdrawals/${id}/admin-process/`, formData, {
+        headers: { ...getAuthHeaders(), 'Content-Type': 'multipart/form-data' },
+    });

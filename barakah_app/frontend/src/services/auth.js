@@ -103,7 +103,7 @@ const updateProfile = async (userId, profileData) => {
     const user = JSON.parse(localStorage.getItem('user'));
     const token = user?.access;
 
-    const response = await axios.put(`${process.env.REACT_APP_API_BASE_URL}/api/profiles/${userId}/`, profileData, {
+    const response = await axios.patch(`${process.env.REACT_APP_API_BASE_URL}/api/profiles/${userId}/`, profileData, {
       headers: {
         Authorization: `Bearer ${token}`,
         'X-CSRFToken': csrfToken, // Include CSRF token for POST/PUT/DELETE requests

@@ -59,10 +59,24 @@ const DashboardPage = () => {
         fetchStats();
     }, [navigate]);
 
+    const getAdminFee = () => {
+        if (bankName && !['BSI', 'GOPAY'].includes(bankName.toUpperCase())) {
+            return 6500;
+        }
+        return 0;
+    };
+
+    const totalDeduction = (parseFloat(withdrawAmount) || 0) + (parseFloat(donationAmount) || 0) + getAdminFee();
+    const isOverBalance = totalDeduction > (balanceData.available_balance || 0);
+
     const handleWithdraw = async (e) => {
         e.preventDefault();
         if (!withdrawAmount || !bankName || !accountName || !accountNumber) {
             alert('Mohon lengkapi data penarikan');
+            return;
+        }
+        if (isOverBalance) {
+            alert('Saldo tidak mencukupi untuk penarikan ini (termasuk biaya admin)');
             return;
         }
         setWithdrawing(true);
@@ -96,8 +110,6 @@ const DashboardPage = () => {
         }
     };
 
-    const adminFee = (bankName && !['BSI', 'GOPAY'].includes(bankName.toUpperCase())) ? 6500 : 0;
-    const totalDeduction = (parseFloat(withdrawAmount) || 0) + (parseFloat(donationAmount) || 0) + adminFee;
 
     const handleTarikSemua = () => {
         const available = balanceData.available_balance || 0;
@@ -189,7 +201,7 @@ const DashboardPage = () => {
                     </Link>
 
                     <Link
-                        to={`/${username}`}
+                        to={`/digital-produk/${username}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-gray-50 hover:shadow-md transition"
@@ -217,6 +229,22 @@ const DashboardPage = () => {
                         </div>
                         <span className="material-icons text-gray-400">chevron_right</span>
                     </Link>
+
+                    {username === 'admin' && (
+                        <Link
+                            to="/dashboard/admin/withdrawals"
+                            className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-orange-100 hover:shadow-md transition"
+                        >
+                            <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center">
+                                <span className="material-icons text-orange-700">payments</span>
+                            </div>
+                            <div className="flex-1">
+                                <h3 className="font-bold text-gray-800 text-sm">Manajemen Penarikan</h3>
+                                <p className="text-[11px] text-gray-500">Proses pengajuan dana dari user (Admin)</p>
+                            </div>
+                            <span className="material-icons text-gray-400">chevron_right</span>
+                        </Link>
+                    )}
                 </div>
 
                 {/* Withdrawal History */}
@@ -311,40 +339,66 @@ const DashboardPage = () => {
                                         required
                                     />
                                 </div>
+                                <div>
+                                    <label className="block text-xs font-medium text-gray-500 mb-1">Atas Nama Rekening</label>
+                                    <input
+                                        type="text"
+                                        value={accountName}
+                                        onChange={(e) => setAccountName(e.target.value)}
+                                        className="w-full px-4 py-3 bg-gray-50 border-none rounded-xl text-sm font-semibold focus:ring-2 focus:ring-green-500"
+                                        placeholder="Nama Sesuai Buku Tabungan"
+                                        required
+                                    />
+                                </div>
                             </div>
 
                             <div>
-                                <label className="block text-xs font-medium text-gray-500 mb-1">Atas Nama Rekening</label>
-                                <input
-                                    type="text"
-                                    value={accountName}
-                                    onChange={(e) => setAccountName(e.target.value)}
+                                <label className="block text-xs font-medium text-gray-500 mb-1">Bank Tujuan</label>
+                                <select
+                                    value={bankName}
+                                    onChange={(e) => setBankName(e.target.value)}
                                     className="w-full px-4 py-3 bg-gray-50 border-none rounded-xl text-sm font-semibold focus:ring-2 focus:ring-green-500"
-                                    placeholder="Nama Sesuai Buku Tabungan"
                                     required
-                                />
+                                >
+                                    <option value="">Pilih Bank</option>
+                                    <option value="BSI">BSI (Gratis)</option>
+                                    <option value="GOPAY">GOPAY (Gratis)</option>
+                                    <option value="BCA">BCA (Fee 6.5k)</option>
+                                    <option value="MANDIRI">MANDIRI (Fee 6.5k)</option>
+                                    <option value="BNI">BNI (Fee 6.5k)</option>
+                                    <option value="BRI">BRI (Fee 6.5k)</option>
+                                </select>
                             </div>
 
-                            <div className="bg-gray-50 p-4 rounded-xl space-y-2">
+                            {/* Deduction Summary */}
+                            <div className="bg-gray-50 p-4 rounded-2xl space-y-2">
                                 <div className="flex justify-between text-xs text-gray-500">
-                                    <span>Biaya Admin</span>
-                                    <span className={adminFee > 0 ? 'text-red-500' : 'text-green-600'}>
-                                        {adminFee > 0 ? formatIDR(adminFee) : 'Gratis'}
-                                    </span>
+                                    <span>Nominal Tarik:</span>
+                                    <span>{formatIDR(parseFloat(withdrawAmount) || 0)}</span>
                                 </div>
-                                <div className="flex justify-between font-bold text-sm pt-2 border-t border-gray-200">
-                                    <span>Total Potongan Saldo</span>
-                                    <span className="text-red-600">{formatIDR(totalDeduction)}</span>
+                                <div className="flex justify-between text-xs text-gray-500">
+                                    <span>Sadaqoh:</span>
+                                    <span>{formatIDR(parseFloat(donationAmount) || 0)}</span>
                                 </div>
-                                {adminFee > 0 && <p className="text-[10px] text-gray-400 italic">* Biaya admin Rp 6.500 berlaku untuk bank selain BSI / GOPAY</p>}
+                                <div className="flex justify-between text-xs text-gray-500">
+                                    <span>Biaya Admin:</span>
+                                    <span>{formatIDR(getAdminFee())}</span>
+                                </div>
+                                <div className="pt-2 border-t flex justify-between text-sm font-bold text-gray-800">
+                                    <span>Total Potongan:</span>
+                                    <span className={isOverBalance ? 'text-red-600' : ''}>{formatIDR(totalDeduction)}</span>
+                                </div>
+                                {isOverBalance && (
+                                    <p className="text-[10px] text-red-500 font-medium">Saldo tidak mencukupi untuk total potongan ini.</p>
+                                )}
                             </div>
 
                             <button
                                 type="submit"
-                                disabled={withdrawing}
-                                className="w-full bg-green-700 text-white py-4 rounded-xl font-bold text-sm shadow-lg hover:bg-green-800 transition disabled:opacity-50"
+                                disabled={withdrawing || !withdrawAmount || parseFloat(withdrawAmount) <= 0 || isOverBalance}
+                                className="w-full py-4 bg-green-700 text-white rounded-xl text-sm font-bold shadow-lg shadow-green-200 disabled:opacity-50 transition-all active:scale-95"
                             >
-                                {withdrawing ? 'Memproses...' : 'Ajukan Penarikan'}
+                                {withdrawing ? 'Memproses...' : 'Konfirmasi Tarik Saldo'}
                             </button>
                         </form>
                     </div>

@@ -66,6 +66,23 @@ class WithdrawalRequestSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'user', 'user_username', 'amount', 'donation_amount',
             'admin_fee', 'total_deduction', 'account_name',
-            'account_number', 'bank_name', 'status', 'created_at'
+            'account_number', 'bank_name', 'status', 'transfer_proof', 'created_at'
         ]
-        read_only_fields = ['id', 'user', 'status', 'created_at']
+        read_only_fields = ['id', 'user', 'status', 'transfer_proof', 'created_at']
+
+
+class WithdrawalRequestAdminSerializer(serializers.ModelSerializer):
+    user_username = serializers.CharField(source='user.username', read_only=True)
+
+    class Meta:
+        model = WithdrawalRequest
+        fields = [
+            'id', 'user', 'user_username', 'amount', 'donation_amount',
+            'admin_fee', 'total_deduction', 'account_name',
+            'account_number', 'bank_name', 'status', 'transfer_proof', 'created_at'
+        ]
+        read_only_fields = [
+            'id', 'user', 'user_username', 'amount', 'donation_amount',
+            'admin_fee', 'total_deduction', 'account_name',
+            'account_number', 'bank_name', 'created_at'
+        ]

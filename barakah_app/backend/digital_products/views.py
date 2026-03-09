@@ -13,6 +13,7 @@ from .serializers import (
     DigitalOrderSerializer,
     DigitalOrderCreateSerializer,
     WithdrawalRequestSerializer,
+    WithdrawalRequestAdminSerializer,
 )
 from django.db.models import Sum, Q, DecimalField
 from decimal import Decimal
@@ -438,3 +439,68 @@ class WithdrawalViewSet(viewsets.ModelViewSet):
             'total_withdrawn': total_withdrawn,
             'available_balance': total_sales - total_withdrawn
         })
+
+    @action(detail=False, methods=['get'], url_path='admin-list', permission_classes=[permissions.IsAdminUser])
+    def admin_list(self, request):
+        queryset = WithdrawalRequest.objects.all()
+        serializer = WithdrawalRequestAdminSerializer(queryset, many=True)
+        return Response(serializer.data)
+
+    @action(detail=True, methods=['patch'], url_path='admin-process', permission_classes=[permissions.IsAdminUser])
+    def admin_process(self, request, pk=None):
+        instance = self.get_object()
+        serializer = WithdrawalRequestAdminSerializer(instance, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            # If approved, send email
+            if instance.status == 'approved':
+                self._send_withdrawal_approved_email(instance)
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def _send_withdrawal_approved_email(self, withdrawal):
+        try:
+            from .models import EmailSettings
+            from django.core.mail import EmailMessage
+            from django.core.mail.backends.smtp import EmailBackend
+
+            email_settings = EmailSettings.get_settings()
+            if not email_settings.email_host_user or not email_settings.email_host_password:
+                logger.warning(f'Email settings not configured. Skipping email for withdrawal success {withdrawal.id}')
+                return
+
+            backend = EmailBackend(
+                host=email_settings.email_host,
+                port=email_settings.email_port,
+                username=email_settings.email_host_user,
+                password=email_settings.email_host_password,
+                use_tls=email_settings.email_use_tls,
+                fail_silently=False,
+            )
+
+            subject = f'Penarikan Saldo Berhasil - Barakah Economy'
+            message = (
+                f'Assalamu\'alaikum {withdrawal.user.username},\n\n'
+                f'Alhamdulillah, permintaan penarikan saldo Anda telah berhasil diproses.\n\n'
+                f'Detail Penarikan:\n'
+                f'- Nominal: Rp {withdrawal.amount:,.0f}\n'
+                f'- Bank: {withdrawal.bank_name}\n'
+                f'- Rekening: {withdrawal.account_number} ({withdrawal.account_name})\n\n'
+                f'Dana telah dikirimkan ke rekening Anda. Silakan cek mutasi rekening Anda secara berkala.\n\n'
+                f'Jazakallahu khairan,\n'
+                f'Tim Barakah Economy'
+            )
+
+            from_email = f'{email_settings.sender_name} <{email_settings.email_host_user}>'
+
+            email = EmailMessage(
+                subject=subject,
+                body=message,
+                from_email=from_email,
+                to=[withdrawal.user.email],
+                connection=backend,
+            )
+            email.send()
+            logger.info(f'Withdrawal success email sent to {withdrawal.user.email} for withdrawal {withdrawal.id}')
+        except Exception as e:
+            logger.error(f'Failed to send withdrawal approval email: {e}')
