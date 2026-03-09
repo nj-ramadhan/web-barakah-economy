@@ -337,6 +337,9 @@ class WithdrawalViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         try:
+            # Admins/Staff can see all withdrawal requests
+            if self.request.user.is_staff or self.request.user.role == 'admin':
+                return WithdrawalRequest.objects.all()
             return WithdrawalRequest.objects.filter(user=self.request.user)
         except Exception:
             return WithdrawalRequest.objects.none()
@@ -451,17 +454,19 @@ class WithdrawalViewSet(viewsets.ModelViewSet):
         instance = self.get_object()
         serializer = WithdrawalRequestAdminSerializer(instance, data=request.data, partial=True)
         if serializer.is_valid():
-            serializer.save()
-            # If approved, send success email
-            if instance.status == 'approved':
-                self._send_withdrawal_approved_email(instance)
-            # If rejected, send rejection email
-            elif instance.status == 'rejected':
-                self._send_withdrawal_rejected_email(instance)
+            # Save and get the updated instance
+            updated_instance = serializer.save()
+            
+            # Use the updated status from the instance
+            if updated_instance.status == 'approved':
+                self._send_withdrawal_approved_email(updated_instance, request)
+            elif updated_instance.status == 'rejected':
+                self._send_withdrawal_rejected_email(updated_instance)
+            
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    def _send_withdrawal_approved_email(self, withdrawal):
+    def _send_withdrawal_approved_email(self, withdrawal, request):
         try:
             from .models import EmailSettings
             from django.core.mail import EmailMessage
@@ -482,13 +487,24 @@ class WithdrawalViewSet(viewsets.ModelViewSet):
             )
 
             subject = f'Penarikan Saldo Berhasil - Barakah Economy'
+            
+            # Proof link logic
+            proof_text = ""
+            if withdrawal.transfer_proof:
+                try:
+                    proof_url = request.build_absolute_uri(withdrawal.transfer_proof.url)
+                    proof_text = f'- Bukti Transfer: {proof_url}\n'
+                except Exception:
+                    pass
+
             message = (
                 f'Assalamu\'alaikum {withdrawal.user.username},\n\n'
                 f'Alhamdulillah, permintaan penarikan saldo Anda telah berhasil diproses.\n\n'
                 f'Detail Penarikan:\n'
                 f'- Nominal: Rp {withdrawal.amount:,.0f}\n'
                 f'- Bank: {withdrawal.bank_name}\n'
-                f'- Rekening: {withdrawal.account_number} ({withdrawal.account_name})\n\n'
+                f'- Rekening: {withdrawal.account_number} ({withdrawal.account_name})\n'
+                f'{proof_text}\n'
                 f'Dana telah dikirimkan ke rekening Anda. Silakan cek mutasi rekening Anda secara berkala.\n\n'
                 f'Jazakallahu khairan,\n'
                 f'Tim Barakah Economy'
