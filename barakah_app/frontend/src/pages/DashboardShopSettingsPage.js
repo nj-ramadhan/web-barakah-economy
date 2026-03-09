@@ -290,7 +290,7 @@ const DashboardShopSettingsPage = () => {
                                     </div>
                                 </div>
 
-                                <div className={`mt-12 px-6 text-center relative z-10 ${profile.shop_layout === 'dark' ? 'text-white' : ''}`}>
+                                <div className={`mt-12 px-6 text-center relative z-10 ${profile.shop_theme_color === 'dark' ? 'text-white' : ''}`}>
                                     <p className="font-bold text-lg">@{profile.username || 'username'}</p>
                                     <p className="text-xs text-gray-500 mt-2 line-clamp-3 leading-relaxed">{profile.shop_description || 'Deskripsi toko digital Anda akan ditampilkan di sini.'}</p>
                                 </div>

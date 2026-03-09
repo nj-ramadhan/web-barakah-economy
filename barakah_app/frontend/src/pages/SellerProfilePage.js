@@ -105,7 +105,7 @@ const SellerProfilePage = () => {
     const fontClass = getFontClass(fontStyle);
 
     return (
-        <div className={`body ${fontClass} ${layoutStyle === 'dark' ? 'bg-gray-900' : ''}`}>
+        <div className={`body ${fontClass} ${themeColor === 'dark' ? 'bg-gray-900' : ''}`}>
             {/* Decoration Overlay */}
             <ShopDecoration decoration={profile.shop_decoration} themeColor={themeColor} isPreview={false} />
 
@@ -141,15 +141,15 @@ const SellerProfilePage = () => {
 
                 <div className={`mt-16 text-center px-4 ${layoutStyle === 'biolink' ? 'w-full max-w-md' : ''}`}>
                     <div className="flex items-center justify-center gap-2">
-                        <h1 className={`text-xl font-bold ${layoutStyle === 'dark' ? 'text-white' : 'text-gray-900'}`}>@{username}</h1>
+                        <h1 className={`text-xl font-bold ${themeColor === 'dark' ? 'text-white' : 'text-gray-900'}`}>@{username}</h1>
                         <ShareButton slug={username} title={`Profil Toko @${username}`} type="seller" />
                     </div>
                     {profile && (
                         <>
-                            <p className={`text-sm mt-1 ${layoutStyle === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>{profile.name_full}</p>
+                            <p className={`text-sm mt-1 ${themeColor === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>{profile.name_full}</p>
                             {profile.shop_description && (
                                 <div className="mt-4 max-w-md mx-auto">
-                                    <p className={`text-sm italic ${layoutStyle === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>"{profile.shop_description}"</p>
+                                    <p className={`text-sm italic ${themeColor === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>"{profile.shop_description}"</p>
                                 </div>
                             )}
                         </>
@@ -159,7 +159,7 @@ const SellerProfilePage = () => {
                 {/* Course List Section */}
                 {courses.length > 0 && (
                     <div className={`mt-10 px-4 ${layoutStyle === 'biolink' ? 'w-full max-w-md text-center' : ''}`}>
-                        <h2 className={`text-sm font-bold mb-4 flex items-center ${layoutStyle === 'biolink' ? 'justify-center' : ''} gap-2 ${layoutStyle === 'dark' ? 'text-gray-200' : 'text-gray-800'}`}>
+                        <h2 className={`text-sm font-bold mb-4 flex items-center ${layoutStyle === 'biolink' ? 'justify-center' : ''} gap-2 ${themeColor === 'dark' ? 'text-gray-200' : 'text-gray-800'}`}>
                             <span className={`material-icons text-lg ${theme.icon}`} style={isHex ? { color: themeColor } : {}}>school</span>
                             Kelas E-Course
                         </h2>
@@ -168,7 +168,7 @@ const SellerProfilePage = () => {
                                 <Link
                                     key={course.id}
                                     to={`/kelas/${course.slug}`}
-                                    className={`block rounded-2xl overflow-hidden shadow-sm border transition backdrop-blur-sm ${layoutStyle === 'dark' ? 'bg-gray-800/90 border-gray-700 hover:border-gray-600' : 'bg-white/90 border-gray-100 hover:shadow-md'
+                                    className={`block rounded-2xl overflow-hidden shadow-sm border transition backdrop-blur-sm ${themeColor === 'dark' ? 'bg-gray-800/90 border-gray-700 hover:border-gray-600' : 'bg-white/90 border-gray-100 hover:shadow-md'
                                         } ${layoutStyle === 'biolink' ? 'flex items-center text-left' : ''}`}
                                 >
                                     <div className={`relative ${layoutStyle === 'biolink' ? 'w-24 h-24 flex-shrink-0' : 'aspect-video'}`}>
@@ -184,7 +184,7 @@ const SellerProfilePage = () => {
                                         )}
                                     </div>
                                     <div className={`p-4 ${layoutStyle === 'biolink' ? 'flex-1' : ''}`}>
-                                        <h3 className={`text-sm font-bold line-clamp-2 mb-2 ${layoutStyle === 'dark' ? 'text-gray-200' : 'text-gray-800'} ${layoutStyle === 'biolink' ? 'min-h-0' : 'min-h-[40px]'}`}>{course.title}</h3>
+                                        <h3 className={`text-sm font-bold line-clamp-2 mb-2 ${themeColor === 'dark' ? 'text-gray-200' : 'text-gray-800'} ${layoutStyle === 'biolink' ? 'min-h-0' : 'min-h-[40px]'}`}>{course.title}</h3>
                                         <div className="flex items-center justify-between mt-auto">
                                             {layoutStyle !== 'biolink' && (
                                                 <div className="flex items-center gap-1 text-[10px] text-gray-400">
@@ -220,7 +220,7 @@ const SellerProfilePage = () => {
                                 <Link
                                     key={product.id}
                                     to={`/digital-produk/${username}/${product.slug}`}
-                                    className={`block rounded-2xl overflow-hidden shadow-sm border transition backdrop-blur-sm ${layoutStyle === 'dark' ? 'bg-gray-800/90 border-gray-700 hover:border-gray-600' : 'bg-white/90 border-gray-100 hover:shadow-md'
+                                    className={`block rounded-2xl overflow-hidden shadow-sm border transition backdrop-blur-sm ${themeColor === 'dark' ? 'bg-gray-800/90 border-gray-700 hover:border-gray-600' : 'bg-white/90 border-gray-100 hover:shadow-md'
                                         } ${layoutStyle === 'biolink' ? 'flex items-center text-left' : ''}`}
                                 >
                                     <div className={`${layoutStyle === 'biolink' ? 'w-24 h-24 flex-shrink-0' : 'w-full'}`}>
