@@ -36,6 +36,8 @@ const DashboardPage = () => {
             return;
         }
 
+        if (user.username) setUsername(user.username);
+
         const fetchStats = async () => {
             try {
                 const [productRes, courseRes, balanceRes, historyRes, profileRes] = await Promise.all([
