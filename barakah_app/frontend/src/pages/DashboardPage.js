@@ -26,6 +26,7 @@ const DashboardPage = () => {
     const [withdrawAmount, setWithdrawAmount] = useState('');
     const [donationAmount, setDonationAmount] = useState('');
     const [bankName, setBankName] = useState('');
+    const [manualBankName, setManualBankName] = useState('');
     const [accountName, setAccountName] = useState('');
     const [accountNumber, setAccountNumber] = useState('');
     const [withdrawing, setWithdrawing] = useState(false);
@@ -72,8 +73,9 @@ const DashboardPage = () => {
         const donation = parseFloat(donationAmount || 0);
 
         // Dynamic admin fee calculation
+        const finalBankName = (bankName === 'Lainnya' ? manualBankName : bankName).toUpperCase();
         let adminFee = 0;
-        if (bankName.toUpperCase() !== 'BSI' && bankName.toUpperCase() !== 'GOPAY') {
+        if (finalBankName !== 'BSI' && finalBankName !== 'GOPAY') {
             adminFee = 6500;
         }
 
@@ -89,7 +91,7 @@ const DashboardPage = () => {
             await createWithdrawalRequest({
                 amount,
                 donation_amount: donation,
-                bank_name: bankName,
+                bank_name: bankName === 'Lainnya' ? manualBankName : bankName,
                 account_name: accountName,
                 account_number: accountNumber
             });
@@ -99,6 +101,7 @@ const DashboardPage = () => {
             setWithdrawAmount('');
             setDonationAmount('');
             setBankName('');
+            setManualBankName('');
             setAccountName('');
             setAccountNumber('');
 
@@ -119,8 +122,9 @@ const DashboardPage = () => {
 
     // Calculate dynamic fee for UI
     const getAdminFeeForUI = () => {
-        if (!bankName) return 0;
-        if (bankName.toUpperCase() === 'BSI' || bankName.toUpperCase() === 'GOPAY') return 0;
+        const finalBankName = (bankName === 'Lainnya' ? manualBankName : bankName).toUpperCase();
+        if (!finalBankName) return 0;
+        if (finalBankName === 'BSI' || finalBankName === 'GOPAY') return 0;
         return 6500;
     };
 
@@ -313,17 +317,40 @@ const DashboardPage = () => {
                                 />
                             </div>
 
-                            <div className="grid grid-cols-2 gap-3">
+                            <div className="space-y-4">
                                 <div>
                                     <label className="block text-xs font-medium text-gray-500 mb-1">Nama Bank/E-Wallet</label>
-                                    <input
-                                        type="text"
+                                    <select
                                         value={bankName}
                                         onChange={(e) => setBankName(e.target.value)}
-                                        className="w-full px-4 py-3 bg-gray-100 border-none rounded-xl text-sm focus:ring-2 focus:ring-green-500"
-                                        placeholder="Contoh: BSI, BCA, Gopay"
+                                        className="w-full px-4 py-3 bg-gray-100 border-none rounded-xl text-sm font-bold focus:ring-2 focus:ring-green-500 mb-2"
                                         required
-                                    />
+                                    >
+                                        <option value="">Pilih Bank/E-Wallet</option>
+                                        <option value="BSI">BSI (Gratis Admin)</option>
+                                        <option value="GOPAY">GOPAY (Gratis Admin)</option>
+                                        <option value="BCA">BCA</option>
+                                        <option value="Mandiri">Mandiri</option>
+                                        <option value="BNI">BNI</option>
+                                        <option value="BRI">BRI</option>
+                                        <option value="BTN">BTN</option>
+                                        <option value="Muamalat">Bank Muamalat</option>
+                                        <option value="DANA">DANA</option>
+                                        <option value="OVO">OVO</option>
+                                        <option value="ShopeePay">ShopeePay</option>
+                                        <option value="Lainnya">Lainnya (Ketik Manual)</option>
+                                    </select>
+
+                                    {bankName === 'Lainnya' && (
+                                        <input
+                                            type="text"
+                                            value={manualBankName}
+                                            onChange={(e) => setManualBankName(e.target.value)}
+                                            className="w-full px-4 py-3 bg-gray-100 border-none rounded-xl text-sm focus:ring-2 focus:ring-green-500 animate-slid-down"
+                                            placeholder="Masukkan nama bank secara manual..."
+                                            required
+                                        />
+                                    )}
                                 </div>
                                 <div>
                                     <label className="block text-xs font-medium text-gray-500 mb-1">Nomor Rekening</label>
