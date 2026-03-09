@@ -74,6 +74,29 @@ class Campaign(models.Model):
     def __str__(self):
         return f"{self.title}"   
 
+class CampaignRealization(models.Model):
+    ASNAF_CHOICES = [
+        ('Fakir', 'Fakir'),
+        ('Miskin', 'Miskin'),
+        ('Amil', 'Amil'),
+        ('Muallaf', 'Muallaf'),
+        ('Riqab', 'Riqab'),
+        ('Gharimin', 'Gharimin'),
+        ('Fisabilillah', 'Fisabilillah'),
+        ('Ibnu Sabil', 'Ibnu Sabil'),
+        ('Lainnya', 'Lainnya'),
+    ]
+    campaign = models.ForeignKey(Campaign, on_delete=models.CASCADE, related_name='realizations')
+    date = models.DateField()
+    description = models.TextField()
+    beneficiaries = models.TextField(help_text="List penerima manfaat")
+    beneficiary_status = models.CharField(max_length=50, choices=ASNAF_CHOICES, default='Lainnya')
+    nominal = models.DecimalField(max_digits=12, decimal_places=2)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Realization for {self.campaign.title} on {self.date}"
+
 class Update(models.Model):
     campaign = models.ForeignKey(Campaign, on_delete=models.CASCADE, related_name='updates')
     title = models.CharField(max_length=100)

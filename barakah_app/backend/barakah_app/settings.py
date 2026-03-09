@@ -98,9 +98,8 @@ INSTALLED_APPS = [
     'reviews',
     
     'courses',  
-
     'article',
-
+    'site_content',
     'digital_products.apps.DigitalProductsConfig',
 ]
 

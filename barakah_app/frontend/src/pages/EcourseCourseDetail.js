@@ -23,8 +23,60 @@ const EcourseCourseDetail = () => {
   const [showFullDescription, setShowFullDescription] = useState(false);
   const [showFullMaterials, setShowFullMaterials] = useState({});
   const [isEnrolled, setIsEnrolled] = useState(false);
+  const [reviews, setReviews] = useState([]);
+  const [reviewForm, setReviewForm] = useState({ rating: 5, comment: '', image: null });
+  const [submittingReview, setSubmittingReview] = useState(false);
 
   const baseUrl = process.env.REACT_APP_API_BASE_URL;
+
+  const fetchReviews = async () => {
+    try {
+      const res = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/reviews/products/0/reviews/?course_id=${course?.id}`);
+      setReviews(res.data);
+    } catch (err) {
+      console.error("Error fetching reviews:", err);
+    }
+  };
+
+  useEffect(() => {
+    if (course) fetchReviews();
+  }, [course]);
+
+  const handleReviewSubmit = async (e) => {
+    e.preventDefault();
+    const token = localStorage.getItem('access_token');
+    if (!token) return;
+
+    if (reviewForm.image && reviewForm.image.size > 5 * 1024 * 1024) {
+      alert("Ukuran gambar maksimal 5MB");
+      return;
+    }
+
+    setSubmittingReview(true);
+    const formData = new FormData();
+    formData.append('course_id', course.id);
+    formData.append('rating', reviewForm.rating);
+    formData.append('comment', reviewForm.comment);
+    if (reviewForm.image) {
+      formData.append('image', reviewForm.image);
+    }
+
+    try {
+      await axios.post(`${process.env.REACT_APP_API_BASE_URL}/api/reviews/products/0/reviews/`, formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+      alert("Review berhasil dikirim!");
+      setReviewForm({ rating: 5, comment: '', image: null });
+      fetchReviews();
+    } catch (err) {
+      alert("Gagal mengirim review. Pastikan Anda sudah memberikan review sebelumnya atau coba lagi.");
+    } finally {
+      setSubmittingReview(false);
+    }
+  };
 
   useEffect(() => {
     const fetchCourseDetails = async () => {
@@ -191,6 +243,12 @@ const EcourseCourseDetail = () => {
             >
               Materi ({course.material_count || 0})
             </button>
+            <button
+              className={`py-3 px-4 text-sm font-bold ${activeTab === 'reviews' ? 'text-green-600 border-b-2 border-green-600' : 'text-gray-500'}`}
+              onClick={() => setActiveTab('reviews')}
+            >
+              Review
+            </button>
           </div>
 
           {/* Tab Content */}
@@ -244,47 +302,94 @@ const EcourseCourseDetail = () => {
               </div>
             )}
 
-            {activeTab === 'materials' && (
-              <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
-                <div className="divide-y divide-gray-50 text-sm">
-                  {course.materials && course.materials.length > 0 ? (
-                    course.materials.map((material, idx) => (
-                      <div key={idx} className="p-4 hover:bg-gray-50/50 transition">
-                        <div
-                          className="flex justify-between items-center group cursor-pointer"
-                          onClick={() => toggleMaterial(material.id)}
-                        >
-                          <div className="flex items-center gap-3">
-                            <span className="w-6 h-6 flex-shrink-0 bg-green-50 text-green-600 rounded-full flex items-center justify-center font-bold text-[10px]">
-                              {idx + 1}
-                            </span>
-                            <span className="font-bold text-gray-800 group-hover:text-green-700">{material.title}</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <span className={`material-icons text-gray-400 transition-transform ${showFullMaterials[material.id] ? 'rotate-180' : ''}`}>
-                              expand_more
-                            </span>
-                          </div>
+            {activeTab === 'reviews' && (
+              <div className="space-y-6">
+                {/* Review Form (Only for enrolled users) */}
+                {isEnrolled && (
+                  <div className="bg-white p-6 rounded-lg shadow-sm border border-green-100">
+                    <h3 className="text-sm font-bold mb-4">Berikan Review Anda</h3>
+                    <form onSubmit={handleReviewSubmit} className="space-y-4">
+                      <div>
+                        <label className="block text-xs font-medium text-gray-500 mb-1">Rating</label>
+                        <div className="flex gap-2">
+                          {[1, 2, 3, 4, 5].map(star => (
+                            <button
+                              key={star}
+                              type="button"
+                              onClick={() => setReviewForm({ ...reviewForm, rating: star })}
+                              className={`material-icons ${star <= reviewForm.rating ? 'text-orange-400' : 'text-gray-300'}`}
+                            >
+                              star
+                            </button>
+                          ))}
                         </div>
-                        {showFullMaterials[material.id] && (
-                          <div className="mt-3 pl-9">
-                            {material.description ? (
-                              <div
-                                className="text-gray-500 text-xs leading-relaxed"
-                                dangerouslySetInnerHTML={{
-                                  __html: convertRelativeUrlsToAbsolute(material.description, baseUrl),
-                                }}
-                              />
-                            ) : (
-                              <p className="text-gray-400 text-[10px] italic">Tidak ada rincian materi.</p>
-                            )}
-                          </div>
-                        )}
                       </div>
-                    ))
+                      <div>
+                        <label className="block text-xs font-medium text-gray-500 mb-1">Komentar</label>
+                        <textarea
+                          required
+                          rows="3"
+                          value={reviewForm.comment}
+                          onChange={(e) => setReviewForm({ ...reviewForm, comment: e.target.value })}
+                          className="w-full px-4 py-3 bg-gray-50 border-none rounded-xl text-xs"
+                          placeholder="Ceritakan pengalaman Anda mengikuti kelas ini..."
+                        ></textarea>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-500 mb-1">Upload Gambar (Optional, Max 5MB)</label>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => setReviewForm({ ...reviewForm, image: e.target.files[0] })}
+                          className="text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-[10px] file:font-bold file:bg-green-50 file:text-green-700 hover:file:bg-green-100"
+                        />
+                      </div>
+                      <button
+                        type="submit"
+                        disabled={submittingReview}
+                        className="w-full py-3 bg-green-700 text-white rounded-xl text-xs font-bold disabled:bg-gray-400"
+                      >
+                        {submittingReview ? 'Mengirim...' : 'Kirim Review'}
+                      </button>
+                    </form>
+                  </div>
+                )}
+
+                {/* Reviews List */}
+                <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
+                  <h3 className="text-sm font-bold mb-6">Review Peserta</h3>
+                  {reviews.length === 0 ? (
+                    <p className="text-center text-gray-400 text-xs italic py-10">Belum ada review untuk kelas ini.</p>
                   ) : (
-                    <div className="p-10 text-center">
-                      <p className="text-gray-400 text-xs italic">Belum ada materi.</p>
+                    <div className="space-y-6">
+                      {reviews.map(review => (
+                        <div key={review.id} className="border-b border-gray-50 pb-6 last:border-0 last:pb-0">
+                          <div className="flex justify-between items-start mb-2">
+                            <div className="flex items-center gap-2">
+                              <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center font-bold text-xs text-gray-500">
+                                {review.username?.[0]?.toUpperCase() || 'U'}
+                              </div>
+                              <div>
+                                <p className="text-xs font-bold text-gray-800">{review.username}</p>
+                                <p className="text-[10px] text-gray-400">{new Date(review.created_at).toLocaleDateString('id-ID')}</p>
+                              </div>
+                            </div>
+                            <div className="flex text-orange-400">
+                              {[...Array(5)].map((_, i) => (
+                                <span key={i} className="material-icons text-[14px]">{i < review.rating ? 'star' : 'star_border'}</span>
+                              ))}
+                            </div>
+                          </div>
+                          <p className="text-xs text-gray-600 leading-relaxed mb-3">{review.comment}</p>
+                          {review.image && (
+                            <img
+                              src={baseUrl + review.image}
+                              alt="Review"
+                              className="w-32 h-32 object-cover rounded-lg border border-gray-100 shadow-sm"
+                            />
+                          )}
+                        </div>
+                      ))}
                     </div>
                   )}
                 </div>

@@ -7,7 +7,7 @@ import HeaderHome from '../components/layout/HeaderHome'; // Import the Header c
 import NavigationButton from '../components/layout/Navigation'; // Import the Navigation component
 import 'swiper/swiper-bundle.css';
 import { Swiper, SwiperSlide } from 'swiper/react';
-import { Navigation, Pagination, Scrollbar } from 'swiper/modules';
+import { Navigation, Pagination, Scrollbar, Autoplay } from 'swiper/modules';
 import ShareButton from '../components/campaigns/ShareButton';
 import { getDigitalProducts, getPopularSellers } from '../services/digitalProductApi';
 
@@ -94,6 +94,10 @@ const Home = () => {
   const sliderIntervalCourse = useRef(null);
   const sliderIntervalDigital = useRef(null);
   const navigate = useNavigate();
+  const [testimonials, setTestimonials] = useState([]);
+  const [partners, setPartners] = useState([]);
+  const [showTestimonialModal, setShowTestimonialModal] = useState(false);
+  const [testimonialForm, setTestimonialForm] = useState({ content: '', rating: 5 });
 
   useEffect(() => {
     const fetchFeaturedProducts = async () => {
@@ -151,7 +155,40 @@ const Home = () => {
       }
     };
     fetchPopularSellers();
+
+    const fetchSiteContent = async () => {
+      try {
+        const [testimonialsRes, partnersRes] = await Promise.all([
+          axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/site-content/testimonials/`),
+          axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/site-content/partners/`)
+        ]);
+        setTestimonials(testimonialsRes.data);
+        setPartners(partnersRes.data);
+      } catch (err) {
+        console.error("Error fetching site content:", err);
+      }
+    };
+    fetchSiteContent();
   }, []);
+
+  const handleTestimonialSubmit = async (e) => {
+    e.preventDefault();
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      navigate('/login');
+      return;
+    }
+    try {
+      await axios.post(`${process.env.REACT_APP_API_BASE_URL}/api/site-content/testimonials/`, testimonialForm, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      alert("Terima kasih! Testimoni Anda sedang menunggu persetujuan admin.");
+      setShowTestimonialModal(false);
+      setTestimonialForm({ content: '', rating: 5 });
+    } catch (err) {
+      alert(err.response?.data?.non_field_errors?.[0] || err.response?.data?.detail || "Gagal mengirim testimoni");
+    }
+  };
 
   // Fetch regular products (based on search query)
   const fetchProducts = async (search = '') => {
@@ -1120,6 +1157,141 @@ const Home = () => {
           {popularSellers.length === 0 && !loading && (
             <p className="text-sm text-gray-500 italic">Belum ada penjual aktif</p>
           )}
+        </div>
+      </div>
+
+      {/* Partner Section */}
+      {partners.length > 0 && (
+        <div className="mb-12">
+          <h2 className="text-xl font-bold mb-6 text-center text-gray-800">Our Partners</h2>
+          <Swiper
+            modules={[Navigation, Pagination, Autoplay]}
+            spaceBetween={20}
+            slidesPerView={2}
+            autoplay={{ delay: 3000 }}
+            breakpoints={{
+              640: { slidesPerView: 3 },
+              1024: { slidesPerView: 5 },
+            }}
+          >
+            {partners.map(partner => (
+              <SwiperSlide key={partner.id}>
+                <div className="flex flex-col items-center justify-center p-4 grayscale hover:grayscale-0 transition duration-300">
+                  <img src={getMediaUrl(partner.logo)} alt={partner.name} className="h-12 object-contain mb-2" />
+                  <span className="text-[10px] font-bold text-gray-400">{partner.name}</span>
+                </div>
+              </SwiperSlide>
+            ))}
+          </Swiper>
+        </div>
+      )}
+
+      {/* Testimonial Section */}
+      <div className="mb-12 bg-green-50 rounded-3xl p-8 border border-green-100 relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-32 h-32 bg-green-100 rounded-full -mr-16 -mt-16 opacity-50"></div>
+        <div className="relative z-10">
+          <div className="flex justify-between items-center mb-8">
+            <h2 className="text-xl font-bold text-gray-800">Review & Testimoni</h2>
+            <button
+              onClick={() => setShowTestimonialModal(true)}
+              className="text-xs font-bold text-green-700 bg-white px-4 py-2 rounded-full border border-green-200 shadow-sm hover:bg-green-600 hover:text-white transition"
+            >
+              Tulis Testimoni
+            </button>
+          </div>
+
+          {testimonials.length === 0 ? (
+            <p className="text-center text-gray-500 py-4 italic">Belum ada testimoni.</p>
+          ) : (
+            <Swiper
+              modules={[Pagination]}
+              spaceBetween={30}
+              slidesPerView={1}
+              pagination={{ clickable: true }}
+              breakpoints={{
+                768: { slidesPerView: 2 },
+              }}
+              className="pb-10"
+            >
+              {testimonials.map(t => (
+                <SwiperSlide key={t.id}>
+                  <div className="bg-white p-6 rounded-2xl shadow-sm border border-green-50 h-full">
+                    <div className="flex items-center gap-1 mb-3 text-orange-400">
+                      {[...Array(5)].map((_, i) => (
+                        <span key={i} className="material-icons text-sm">{i < t.rating ? 'star' : 'star_border'}</span>
+                      ))}
+                    </div>
+                    <p className="text-sm text-gray-600 italic mb-4">"{t.content}"</p>
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-green-700 text-xs font-bold">
+                        {t.name?.[0] || t.username?.[0] || 'U'}
+                      </div>
+                      <span className="text-xs font-bold text-gray-800">{t.name || t.username || 'Hamba Allah'}</span>
+                    </div>
+                  </div>
+                </SwiperSlide>
+              ))}
+            </Swiper>
+          )}
+        </div>
+      </div>
+
+      {/* Testimonial Modal */}
+      {showTestimonialModal && (
+        <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4">
+          <div className="bg-white w-full max-w-md rounded-2xl p-6 shadow-2xl animate-slide-up">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-lg font-bold">Tulis Testimoni Anda</h3>
+              <button onClick={() => setShowTestimonialModal(false)} className="material-icons text-gray-400">close</button>
+            </div>
+            <form onSubmit={handleTestimonialSubmit} className="space-y-4">
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1">Rating</label>
+                <div className="flex gap-2">
+                  {[1, 2, 3, 4, 5].map(star => (
+                    <button
+                      key={star}
+                      type="button"
+                      onClick={() => setTestimonialForm({ ...testimonialForm, rating: star })}
+                      className={`material-icons ${star <= testimonialForm.rating ? 'text-orange-400' : 'text-gray-300'}`}
+                    >
+                      star
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1">Pesan Anda</label>
+                <textarea
+                  required
+                  rows="4"
+                  value={testimonialForm.content}
+                  onChange={(e) => setTestimonialForm({ ...testimonialForm, content: e.target.value })}
+                  className="w-full px-4 py-3 bg-gray-100 border-none rounded-xl text-sm"
+                  placeholder="Ceritakan pengalaman Anda menggunakan Barakah App..."
+                ></textarea>
+              </div>
+              <button
+                type="submit"
+                className="w-full py-4 bg-green-700 text-white rounded-xl text-sm font-bold shadow-lg shadow-green-100"
+              >
+                Kirim Testimoni
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Tentang Kami Section */}
+      <div id="tentang-kami" className="px-4 py-8 bg-white mb-4">
+        <h1 className="text-lg font-medium mb-4">Tentang Kami</h1>
+        <div className="prose prose-sm text-gray-600">
+          <p className="mb-4">
+            <strong>Barakah Economy (BAE)</strong> adalah sebuah inisiatif untuk memperkuat ekosistem ekonomi Islam yang berlandaskan nilai-nilai keberkahan. Kami hadir untuk memfasilitasi umat dalam berdonasi, belajar melalui e-course, dan berniaga dengan produk-produk halal dan thayyib.
+          </p>
+          <p>
+            Misi kami adalah menciptakan kemandirian ekonomi umat melalui platform digital yang aman, amanah, dan profesional. Bergabunglah bersama kami dalam menyebarkan manfaat bagi sesama.
+          </p>
         </div>
       </div>
 

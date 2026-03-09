@@ -74,6 +74,9 @@ const CrowdfundingCampaignDetail = () => {
   const [activeTab, setActiveTab] = useState('description');
   const [showFullDescription, setShowFullDescription] = useState(false);
   const [showFullUpdates, setShowFullUpdates] = useState({});
+  const [realizations, setRealizations] = useState([]);
+  const [canViewRealizations, setCanViewRealizations] = useState(false);
+  const [loadingRealizations, setLoadingRealizations] = useState(false);
 
   const baseUrl = process.env.REACT_APP_API_BASE_URL;
 
@@ -95,6 +98,30 @@ const CrowdfundingCampaignDetail = () => {
 
     fetchCampaignDetails();
   }, [slug]);
+
+  useEffect(() => {
+    const fetchRealizations = async () => {
+      const user = JSON.parse(localStorage.getItem('user'));
+      if (!user || activeTab !== 'realization') return;
+
+      setLoadingRealizations(true);
+      try {
+        const response = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/campaigns/realizations/`, {
+          params: { campaign_slug: slug },
+          headers: { Authorization: `Bearer ${user.access}` }
+        });
+        setRealizations(response.data);
+        setCanViewRealizations(true);
+      } catch (err) {
+        console.error('Error fetching realizations:', err);
+        setCanViewRealizations(false);
+      } finally {
+        setLoadingRealizations(false);
+      }
+    };
+
+    fetchRealizations();
+  }, [slug, activeTab]);
 
   if (loading) {
     return <div className="text-center py-8">Loading...</div>;
@@ -250,6 +277,12 @@ const CrowdfundingCampaignDetail = () => {
           >
             Kabar Terbaru ({campaign.updates ? campaign.updates.length : 0})
           </button>
+          <button
+            className={`py-2 px-4 text-sm font-medium ${activeTab === 'realization' ? 'text-green-600 border-b-2 border-green-600' : 'text-gray-500'}`}
+            onClick={() => setActiveTab('realization')}
+          >
+            Realisasi
+          </button>
         </div>
 
         {/* Tab Content */}
@@ -359,6 +392,50 @@ const CrowdfundingCampaignDetail = () => {
                   <p className="text-gray-500">Belum ada kabar terbaru.</p>
                 )}
               </ul>
+            </div>
+          )}
+          {activeTab === 'realization' && (
+            <div className="bg-white p-4 rounded-lg shadow">
+              {loadingRealizations ? (
+                <div className="text-center py-4">Memuat data realisasi...</div>
+              ) : !canViewRealizations ? (
+                <div className="text-center py-8">
+                  <span className="material-icons text-4xl text-gray-300 mb-2">lock</span>
+                  <p className="text-gray-500">Tab realisasi hanya dapat diakses oleh donatur yang telah berdonasi ke kampanye ini.</p>
+                  {!localStorage.getItem('user') && (
+                    <Link to="/login" className="text-green-600 font-bold mt-2 inline-block">Login sekarang</Link>
+                  )}
+                </div>
+              ) : realizations.length > 0 ? (
+                <div className="space-y-4">
+                  {realizations.map((item) => (
+                    <div key={item.id} className="border-b last:border-0 pb-4 last:pb-0">
+                      <div className="flex justify-between items-start mb-2">
+                        <span className="text-xs font-bold text-green-700 bg-green-50 px-2 py-1 rounded">
+                          {new Date(item.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
+                        </span>
+                        <span className="text-sm font-bold text-gray-900">{formatIDR(item.nominal)}</span>
+                      </div>
+                      <h4 className="font-bold text-gray-800 mb-1">Keterangan:</h4>
+                      <p className="text-sm text-gray-600 mb-2">{item.description}</p>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <h4 className="font-bold text-gray-800 mb-1 text-xs">Penerima Manfaat:</h4>
+                          <p className="text-xs text-gray-600 italic">{item.beneficiaries}</p>
+                        </div>
+                        <div>
+                          <h4 className="font-bold text-gray-800 mb-1 text-xs">Status:</h4>
+                          <span className="text-[10px] bg-orange-50 text-orange-700 px-2 py-0.5 rounded-full font-bold border border-orange-100">
+                            {item.beneficiary_status}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-gray-500 text-center py-4">Belum ada data realisasi untuk kampanye ini.</p>
+              )}
             </div>
           )}
         </div>

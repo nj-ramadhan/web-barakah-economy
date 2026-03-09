@@ -5,8 +5,40 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
-from .models import Campaign
-from .serializers import CampaignSerializer
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
+from .models import Campaign, CampaignRealization
+from .serializers import CampaignSerializer, CampaignRealizationSerializer
+from donations.models import Donation
+
+class CampaignRealizationViewSet(viewsets.ModelViewSet):
+    queryset = CampaignRealization.objects.all()
+    serializer_class = CampaignRealizationSerializer
+
+    def get_permissions(self):
+        if self.action in ['list', 'retrieve']:
+            return [IsAuthenticated()]
+        return [IsAdminUser()]
+
+    def list(self, request, *args, **kwargs):
+        campaign_slug = request.query_params.get('campaign_slug')
+        if not campaign_slug:
+            return Response({"error": "campaign_slug is required"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        campaign = get_object_or_404(Campaign, slug=campaign_slug)
+        
+        # Check if user is admin or donor
+        is_donor = Donation.objects.filter(
+            donor=request.user, 
+            campaign=campaign, 
+            payment_status='verified'
+        ).exists()
+        
+        if not request.user.is_staff and not is_donor:
+            return Response({"error": "Hanya donatur yang dapat melihat realisasi."}, status=status.HTTP_403_FORBIDDEN)
+            
+        realizations = self.queryset.filter(campaign=campaign)
+        serializer = self.get_serializer(realizations, many=True)
+        return Response(serializer.data)
     
 class CampaignViewSet(viewsets.ModelViewSet):
     queryset = Campaign.objects.filter(is_active=True)

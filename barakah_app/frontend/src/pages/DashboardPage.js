@@ -258,19 +258,60 @@ const DashboardPage = () => {
                     </Link>
 
                     {username === 'admin' && (
-                        <Link
-                            to="/dashboard/admin/withdrawals"
-                            className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-orange-100 hover:shadow-md transition"
-                        >
-                            <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center">
-                                <span className="material-icons text-orange-700">payments</span>
-                            </div>
-                            <div className="flex-1">
-                                <h3 className="font-bold text-gray-800 text-sm">Manajemen Penarikan</h3>
-                                <p className="text-[11px] text-gray-500">Proses pengajuan dana dari user (Admin)</p>
-                            </div>
-                            <span className="material-icons text-gray-400">chevron_right</span>
-                        </Link>
+                        <>
+                            <Link
+                                to="/dashboard/admin/withdrawals"
+                                className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-orange-100 hover:shadow-md transition"
+                            >
+                                <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center">
+                                    <span className="material-icons text-orange-700">payments</span>
+                                </div>
+                                <div className="flex-1">
+                                    <h3 className="font-bold text-gray-800 text-sm">Manajemen Penarikan</h3>
+                                    <p className="text-[11px] text-gray-500">Proses pengajuan dana dari user (Admin)</p>
+                                </div>
+                                <span className="material-icons text-gray-400">chevron_right</span>
+                            </Link>
+                            <Link
+                                to="/dashboard/admin/charity"
+                                className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-red-100 hover:shadow-md transition mt-3"
+                            >
+                                <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center">
+                                    <span className="material-icons text-red-700">volunteer_activism</span>
+                                </div>
+                                <div className="flex-1">
+                                    <h3 className="font-bold text-gray-800 text-sm">Manajemen Charity</h3>
+                                    <p className="text-[11px] text-gray-500">Kelola realisasi kampanye sosial (Admin)</p>
+                                </div>
+                                <span className="material-icons text-gray-400">chevron_right</span>
+                            </Link>
+                            <Link
+                                to="/dashboard/admin/partners"
+                                className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-blue-100 hover:shadow-md transition mt-3"
+                            >
+                                <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                                    <span className="material-icons text-blue-700">handshake</span>
+                                </div>
+                                <div className="flex-1">
+                                    <h3 className="font-bold text-gray-800 text-sm">Manajemen Partner</h3>
+                                    <p className="text-[11px] text-gray-500">Kelola logo partner di landing page (Admin)</p>
+                                </div>
+                                <span className="material-icons text-gray-400">chevron_right</span>
+                            </Link>
+                            <Link
+                                to="/dashboard/admin/testimonials"
+                                className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-orange-100 hover:shadow-md transition mt-3"
+                            >
+                                <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center">
+                                    <span className="material-icons text-orange-700">rate_review</span>
+                                </div>
+                                <div className="flex-1">
+                                    <h3 className="font-bold text-gray-800 text-sm">Manajemen Testimoni</h3>
+                                    <p className="text-[11px] text-gray-500">Moderasi dan tambah testimoni (Admin)</p>
+                                </div>
+                                <span className="material-icons text-gray-400">chevron_right</span>
+                            </Link>
+                        </>
                     )}
                 </div>
             </div>
