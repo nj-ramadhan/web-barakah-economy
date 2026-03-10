@@ -6,7 +6,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 from .serializers import UserRegistrationSerializer, CustomTokenObtainPairSerializer, UserAdminSerializer
 from rest_framework.decorators import action
 from django.http import HttpResponse
-from openpyxl import Workbook
+import csv
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -134,19 +134,18 @@ class UserViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAdminUser]
 
     @action(detail=False, methods=['get'])
-    def export_xlsx(self, request):
-        wb = Workbook()
-        ws = wb.active
-        ws.title = "Users"
+    def export_csv(self, request):
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="users.csv"'
 
+        writer = csv.writer(response)
         # Headers
-        headers = ['ID', 'Username', 'Email', 'Phone', 'Role', 'Full Name', 'Gender', 'Join Date']
-        ws.append(headers)
+        writer.writerow(['ID', 'Username', 'Email', 'Phone', 'Role', 'Full Name', 'Gender', 'Join Date'])
 
         # Data
         for user in self.get_queryset():
             profile = getattr(user, 'profile', None)
-            ws.append([
+            writer.writerow([
                 user.id,
                 user.username,
                 user.email,
@@ -157,9 +156,4 @@ class UserViewSet(viewsets.ModelViewSet):
                 user.date_joined.strftime('%Y-%m-%d %H:%M:%S') if user.date_joined else ''
             ])
 
-        response = HttpResponse(
-            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        )
-        response['Content-Disposition'] = 'attachment; filename=users.xlsx'
-        wb.save(response)
         return response
