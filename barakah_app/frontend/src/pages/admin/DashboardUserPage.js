@@ -340,6 +340,7 @@ const DashboardUserPage = () => {
                         </div>
                     </div>
                 </div>
+            )}
             {/* Edit User Modal */}
             {showEditModal && editingUser && (
                 <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[110] flex items-center justify-center p-4 overflow-y-auto">
