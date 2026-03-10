@@ -10,14 +10,19 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AddField(
-            model_name='campaignrealization',
-            name='beneficiary_status',
-            field=models.CharField(choices=[('Fakir', 'Fakir'), ('Miskin', 'Miskin'), ('Amil', 'Amil'), ('Muallaf', 'Muallaf'), ('Riqab', 'Riqab'), ('Gharimin', 'Gharimin'), ('Fisabilillah', 'Fisabilillah'), ('Ibnu Sabil', 'Ibnu Sabil'), ('Lainnya', 'Lainnya')], default='Lainnya', max_length=50),
-        ),
-        migrations.AlterField(
-            model_name='campaignrealization',
-            name='beneficiaries',
-            field=models.TextField(help_text='List penerima manfaat'),
+        migrations.SeparateDatabaseAndState(
+            database_operations=[],
+            state_operations=[
+                migrations.AddField(
+                    model_name='campaignrealization',
+                    name='beneficiary_status',
+                    field=models.CharField(choices=[('Fakir', 'Fakir'), ('Miskin', 'Miskin'), ('Amil', 'Amil'), ('Muallaf', 'Muallaf'), ('Riqab', 'Riqab'), ('Gharimin', 'Gharimin'), ('Fisabilillah', 'Fisabilillah'), ('Ibnu Sabil', 'Ibnu Sabil'), ('Lainnya', 'Lainnya')], default='Lainnya', max_length=50),
+                ),
+                migrations.AlterField(
+                    model_name='campaignrealization',
+                    name='beneficiaries',
+                    field=models.TextField(help_text='List penerima manfaat'),
+                ),
+            ]
         ),
     ]
