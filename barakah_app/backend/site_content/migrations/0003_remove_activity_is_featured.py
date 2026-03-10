@@ -10,8 +10,18 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RemoveField(
-            model_name='activity',
-            name='is_featured',
+        migrations.SeparateDatabaseAndState(
+            database_operations=[
+                migrations.RunSQL(
+                    sql="ALTER TABLE site_content_activity DROP COLUMN IF EXISTS is_featured;",
+                    reverse_sql="ALTER TABLE site_content_activity ADD COLUMN is_featured BOOLEAN DEFAULT FALSE;"
+                ),
+            ],
+            state_operations=[
+                migrations.RemoveField(
+                    model_name='activity',
+                    name='is_featured',
+                ),
+            ],
         ),
     ]
