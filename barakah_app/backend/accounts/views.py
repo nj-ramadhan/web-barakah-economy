@@ -136,24 +136,59 @@ class UserViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'])
     def export_csv(self, request):
         response = HttpResponse(content_type='text/csv')
-        response['Content-Disposition'] = 'attachment; filename="users.csv"'
+        response['Content-Disposition'] = 'attachment; filename="users_full_data.csv"'
 
         writer = csv.writer(response)
         # Headers
-        writer.writerow(['ID', 'Username', 'Email', 'Phone', 'Role', 'Full Name', 'Gender', 'Join Date'])
+        headers = [
+            'ID', 'Username', 'Email', 'Phone', 'Role', 'Verified Member', 'Date Joined',
+            'Full Name', 'Gender', 'Birth Place', 'Birth Date', 'Registration Date',
+            'Marital Status', 'Segment', 'Study Level', 'Study Campus', 'Study Faculty',
+            'Study Department', 'Study Program', 'Semester', 'Start Year', 'Finish Year',
+            'Address', 'Job', 'Work Field', 'Work Institution', 'Work Position', 'Salary', 'Province'
+        ]
+        writer.writerow(headers)
 
         # Data
         for user in self.get_queryset():
             profile = getattr(user, 'profile', None)
-            writer.writerow([
+            row = [
                 user.id,
                 user.username,
                 user.email,
                 user.phone,
                 user.role,
-                profile.name_full if profile else '',
-                profile.get_gender_display() if profile and profile.gender else '',
-                user.date_joined.strftime('%Y-%m-%d %H:%M:%S') if user.date_joined else ''
-            ])
+                user.is_verified_member,
+                user.date_joined.strftime('%Y-%m-%d %H:%M:%S') if user.date_joined else '',
+            ]
+            if profile:
+                row.extend([
+                    profile.name_full or '',
+                    profile.get_gender_display() if profile.gender else '',
+                    profile.birth_place or '',
+                    profile.birth_date or '',
+                    profile.registration_date or '',
+                    profile.get_marital_status_display() if profile.marital_status else '',
+                    profile.get_segment_display() if profile.segment else '',
+                    profile.get_study_level_display() if profile.study_level else '',
+                    profile.study_campus or '',
+                    profile.study_faculty or '',
+                    profile.study_department or '',
+                    profile.study_program or '',
+                    profile.study_semester or '',
+                    profile.study_start_year or '',
+                    profile.study_finish_year or '',
+                    profile.address or '',
+                    profile.get_job_display() if profile.job else '',
+                    profile.get_work_field_display() if profile.work_field else '',
+                    profile.work_institution or '',
+                    profile.work_position or '',
+                    profile.work_salary or '',
+                    profile.get_address_province_display() if profile.address_province else '',
+                ])
+            else:
+                row.extend([''] * (len(headers) - len(row)))
+            
+            writer.writerow(row)
 
         return response

@@ -15,6 +15,9 @@ const DashboardUserPage = () => {
 
     const [selectedUser, setSelectedUser] = useState(null);
     const [showDetailModal, setShowDetailModal] = useState(false);
+    const [editingUser, setEditingUser] = useState(null);
+    const [showEditModal, setShowEditModal] = useState(false);
+    const [editFormData, setEditFormData] = useState({});
 
     const fetchUsers = async (page = 1) => {
         const user = JSON.parse(localStorage.getItem('user'));
@@ -61,7 +64,7 @@ const DashboardUserPage = () => {
             const url = window.URL.createObjectURL(new Blob([response.data]));
             const link = document.createElement('a');
             link.href = url;
-            link.setAttribute('download', 'users.csv');
+            link.setAttribute('download', 'users_full_data.csv');
             document.body.appendChild(link);
             link.click();
             link.remove();
@@ -74,6 +77,51 @@ const DashboardUserPage = () => {
     const handlePageChange = (newPage) => {
         if (newPage >= 1 && newPage <= totalPages) {
             setCurrentPage(newPage);
+        }
+    };
+
+    const openEditModal = (user) => {
+        setEditingUser(user);
+        setEditFormData({
+            username: user.username,
+            email: user.email,
+            phone: user.phone || '',
+            role: user.role,
+            is_verified_member: user.is_verified_member,
+            profile: { ...(user.profile || {}) }
+        });
+        setShowEditModal(true);
+    };
+
+    const handleUpdate = async (e) => {
+        e.preventDefault();
+        const user = JSON.parse(localStorage.getItem('user'));
+        try {
+            await axios.put(`${process.env.REACT_APP_API_BASE_URL}/api/auth/users/${editingUser.id}/`, editFormData, {
+                headers: { Authorization: `Bearer ${user.access}` }
+            });
+            alert('Data user berhasil diperbarui');
+            setShowEditModal(false);
+            fetchUsers(currentPage);
+        } catch (err) {
+            console.error(err);
+            alert('Gagal memperbarui data user');
+        }
+    };
+
+    const handleDelete = async (userId) => {
+        if (!window.confirm('Apakah Anda yakin ingin menghapus user ini?')) return;
+
+        const user = JSON.parse(localStorage.getItem('user'));
+        try {
+            await axios.delete(`${process.env.REACT_APP_API_BASE_URL}/api/auth/users/${userId}/`, {
+                headers: { Authorization: `Bearer ${user.access}` }
+            });
+            alert('User berhasil dihapus');
+            fetchUsers(currentPage);
+        } catch (err) {
+            console.error(err);
+            alert('Gagal menghapus user');
         }
     };
 
@@ -152,14 +200,30 @@ const DashboardUserPage = () => {
                                         <td className="px-6 py-4 text-gray-500 font-medium">
                                             {new Date(u.date_joined).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
                                         </td>
-                                        <td className="px-6 py-4 text-center">
-                                            <button
-                                                onClick={() => openDetailModal(u)}
-                                                className="w-9 h-9 bg-white border border-gray-200 rounded-lg shadow-sm text-gray-400 hover:text-green-700 hover:border-green-200 transition"
-                                                title="Lihat Detail Profile"
-                                            >
-                                                <span className="material-icons text-sm">visibility</span>
-                                            </button>
+                                        <td className="px-6 py-4">
+                                            <div className="flex items-center justify-center gap-2">
+                                                <button
+                                                    onClick={() => openDetailModal(u)}
+                                                    className="w-8 h-8 bg-white border border-gray-200 rounded-lg shadow-sm text-gray-400 hover:text-green-700 hover:border-green-200 transition flex items-center justify-center"
+                                                    title="Lihat Detail"
+                                                >
+                                                    <span className="material-icons text-sm">visibility</span>
+                                                </button>
+                                                <button
+                                                    onClick={() => openEditModal(u)}
+                                                    className="w-8 h-8 bg-white border border-gray-200 rounded-lg shadow-sm text-gray-400 hover:text-blue-700 hover:border-blue-200 transition flex items-center justify-center"
+                                                    title="Edit User"
+                                                >
+                                                    <span className="material-icons text-sm">edit</span>
+                                                </button>
+                                                <button
+                                                    onClick={() => handleDelete(u.id)}
+                                                    className="w-8 h-8 bg-white border border-gray-200 rounded-lg shadow-sm text-gray-400 hover:text-red-700 hover:border-red-200 transition flex items-center justify-center"
+                                                    title="Hapus User"
+                                                >
+                                                    <span className="material-icons text-sm">delete</span>
+                                                </button>
+                                            </div>
                                         </td>
                                     </tr>
                                 ))}
@@ -276,6 +340,120 @@ const DashboardUserPage = () => {
                         </div>
                     </div>
                 </div>
+            {/* Edit User Modal */}
+            {showEditModal && editingUser && (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[110] flex items-center justify-center p-4 overflow-y-auto">
+                    <div className="bg-white w-full max-w-4xl rounded-3xl shadow-2xl animate-slide-up my-auto">
+                        <div className="p-6 border-b border-gray-100 flex justify-between items-center">
+                            <h2 className="text-xl font-bold text-gray-900">Edit Data User & Profile</h2>
+                            <button onClick={() => setShowEditModal(false)} className="text-gray-400 hover:text-gray-600">
+                                <span className="material-icons">close</span>
+                            </button>
+                        </div>
+
+                        <form onSubmit={handleUpdate}>
+                            <div className="p-8 max-h-[70vh] overflow-y-auto">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                    {/* Account Section */}
+                                    <div className="space-y-6">
+                                        <h3 className="text-sm font-bold text-blue-700 uppercase tracking-widest border-b border-blue-100 pb-2">Data Akun</h3>
+                                        <div className="grid grid-cols-1 gap-4">
+                                            <InputGroup label="Username" value={editFormData.username} onChange={v => setEditFormData({ ...editFormData, username: v })} />
+                                            <InputGroup label="Email" value={editFormData.email} onChange={v => setEditFormData({ ...editFormData, email: v })} />
+                                            <InputGroup label="No. Telepon" value={editFormData.phone} onChange={v => setEditFormData({ ...editFormData, phone: v })} />
+                                            <div className="space-y-1">
+                                                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Role</label>
+                                                <select
+                                                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                                                    value={editFormData.role}
+                                                    onChange={e => setEditFormData({ ...editFormData, role: e.target.value })}
+                                                >
+                                                    <option value="user">User</option>
+                                                    <option value="admin">Admin</option>
+                                                </select>
+                                            </div>
+                                            <div className="flex items-center gap-2 mt-2">
+                                                <input
+                                                    type="checkbox"
+                                                    id="is_verified"
+                                                    checked={editFormData.is_verified_member}
+                                                    onChange={e => setEditFormData({ ...editFormData, is_verified_member: e.target.checked })}
+                                                    className="w-4 h-4 text-blue-600 rounded"
+                                                />
+                                                <label htmlFor="is_verified" className="text-sm font-medium text-gray-700">Verified Member</label>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Profile Section - Basic Info */}
+                                    <div className="space-y-6">
+                                        <h3 className="text-sm font-bold text-green-700 uppercase tracking-widest border-b border-green-100 pb-2">Profile: Data Diri</h3>
+                                        <div className="grid grid-cols-1 gap-4">
+                                            <InputGroup label="Nama Lengkap" value={editFormData.profile?.name_full} onChange={v => setEditFormData({ ...editFormData, profile: { ...editFormData.profile, name_full: v } })} />
+                                            <div className="space-y-1">
+                                                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Jenis Kelamin</label>
+                                                <select
+                                                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm outline-none"
+                                                    value={editFormData.profile?.gender || ''}
+                                                    onChange={e => setEditFormData({ ...editFormData, profile: { ...editFormData.profile, gender: e.target.value } })}
+                                                >
+                                                    <option value="">Pilih</option>
+                                                    <option value="l">Laki-laki</option>
+                                                    <option value="p">Perempuan</option>
+                                                </select>
+                                            </div>
+                                            <div className="grid grid-cols-2 gap-3">
+                                                <InputGroup label="Tempat Lahir" value={editFormData.profile?.birth_place} onChange={v => setEditFormData({ ...editFormData, profile: { ...editFormData.profile, birth_place: v } })} />
+                                                <div className="space-y-1">
+                                                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Tgl Lahir</label>
+                                                    <input type="date" className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2 text-sm outline-none" value={editFormData.profile?.birth_date || ''} onChange={e => setEditFormData({ ...editFormData, profile: { ...editFormData.profile, birth_date: e.target.value } })} />
+                                                </div>
+                                            </div>
+                                            <InputGroup label="Alamat" value={editFormData.profile?.address} onChange={v => setEditFormData({ ...editFormData, profile: { ...editFormData.profile, address: v } })} />
+                                        </div>
+                                    </div>
+
+                                    {/* Work & Edu Section */}
+                                    <div className="space-y-6">
+                                        <h3 className="text-sm font-bold text-orange-700 uppercase tracking-widest border-b border-orange-100 pb-2">Pekerjaan & Pendidikan</h3>
+                                        <div className="grid grid-cols-1 gap-4">
+                                            <InputGroup label="Pekerjaan" value={editFormData.profile?.job} onChange={v => setEditFormData({ ...editFormData, profile: { ...editFormData.profile, job: v } })} />
+                                            <InputGroup label="Instansi" value={editFormData.profile?.work_institution} onChange={v => setEditFormData({ ...editFormData, profile: { ...editFormData.profile, work_institution: v } })} />
+                                            <InputGroup label="Pendidikan Terakhir" value={editFormData.profile?.study_level} onChange={v => setEditFormData({ ...editFormData, profile: { ...editFormData.profile, study_level: v } })} />
+                                            <InputGroup label="Gaji" value={editFormData.profile?.work_salary} onChange={v => setEditFormData({ ...editFormData, profile: { ...editFormData.profile, work_salary: v } })} type="number" />
+                                        </div>
+                                    </div>
+
+                                    {/* Bank Section */}
+                                    <div className="space-y-6">
+                                        <h3 className="text-sm font-bold text-purple-700 uppercase tracking-widest border-b border-purple-100 pb-2">Rekening Bank</h3>
+                                        <div className="grid grid-cols-1 gap-4">
+                                            <InputGroup label="Nama Bank" value={editFormData.profile?.bank_name} onChange={v => setEditFormData({ ...editFormData, profile: { ...editFormData.profile, bank_name: v } })} />
+                                            <InputGroup label="No. Rekening" value={editFormData.profile?.bank_account_number} onChange={v => setEditFormData({ ...editFormData, profile: { ...editFormData.profile, bank_account_number: v } })} />
+                                            <InputGroup label="Atas Nama" value={editFormData.profile?.bank_account_name} onChange={v => setEditFormData({ ...editFormData, profile: { ...editFormData.profile, bank_account_name: v } })} />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="p-6 bg-gray-50 border-t border-gray-100 flex justify-end gap-3 rounded-b-3xl">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowEditModal(false)}
+                                    className="px-6 py-2.5 rounded-xl text-sm font-bold text-gray-500 hover:bg-gray-200 transition"
+                                >
+                                    Batal
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="bg-blue-600 text-white px-8 py-2.5 rounded-xl text-sm font-bold shadow-lg shadow-blue-100 hover:bg-blue-700 transition"
+                                >
+                                    Simpan Perubahan
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
             )}
 
             <NavigationButton />
@@ -292,6 +470,18 @@ const DetailItem = ({ icon, label, value }) => (
             <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">{label}</p>
             <p className="text-sm text-gray-800 font-semibold leading-snug">{value}</p>
         </div>
+    </div>
+);
+
+const InputGroup = ({ label, value, onChange, type = "text" }) => (
+    <div className="space-y-1">
+        <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{label}</label>
+        <input
+            type={type}
+            className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition"
+            value={value || ''}
+            onChange={e => onChange(e.target.value)}
+        />
     </div>
 );
 

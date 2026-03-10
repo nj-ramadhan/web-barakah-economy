@@ -8,11 +8,29 @@ from profiles.serializers import ProfileSerializer
 User = get_user_model()
 
 class UserAdminSerializer(serializers.ModelSerializer):
-    profile = ProfileSerializer(read_only=True)
+    profile = ProfileSerializer(required=False)
 
     class Meta:
         model = User
         fields = ('id', 'username', 'email', 'phone', 'role', 'is_verified_member', 'profile', 'date_joined')
+
+    def update(self, instance, validated_data):
+        profile_data = validated_data.pop('profile', None)
+        
+        # Update User fields
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+
+        # Update Profile fields
+        if profile_data:
+            from profiles.models import Profile
+            profile, created = Profile.objects.get_or_create(user=instance)
+            for attr, value in profile_data.items():
+                setattr(profile, attr, value)
+            profile.save()
+            
+        return instance
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, validators=[validate_password])
