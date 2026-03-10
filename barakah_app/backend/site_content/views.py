@@ -70,3 +70,26 @@ class ActivityViewSet(viewsets.ModelViewSet):
         if self.action in ['list', 'retrieve']:
             return [permissions.AllowAny()]
         return [permissions.IsAdminUser()]
+
+class ActivityShareView(viewsets.ViewSet):
+    """
+    View for rendering server-side HTML with Open Graph tags for activity sharing.
+    """
+    permission_classes = [permissions.AllowAny]
+
+    def retrieve(self, request, pk=None):
+        from django.shortcuts import render, get_object_or_404
+        from django.conf import settings
+        
+        activity = get_object_or_404(Activity, pk=pk)
+
+        # Determine frontend URL based on environment
+        if settings.DEBUG:
+            frontend_url = 'http://localhost:3000'
+        else:
+            frontend_url = 'https://barakah-economy.com'
+
+        return render(request, 'site_content/activity_share.html', {
+            'activity': activity,
+            'frontend_url': frontend_url
+        })

@@ -9,4 +9,5 @@ router.register(r'activities', ActivityViewSet)
 
 urlpatterns = [
     path('', include(router.urls)),
+    path('activities/share/<int:pk>/', ActivityShareView.as_view({'get': 'retrieve'}), name='activity-share'),
 ]

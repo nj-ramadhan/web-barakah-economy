@@ -240,9 +240,12 @@ const CrowdfundingMainPage = () => {
 
       {/* Campaign Grid */}
       <div className="px-4 py-8 max-w-6xl mx-auto">
-        <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
-          <span className="w-1.5 h-6 bg-green-600 rounded-full"></span>
-          Semua Program Kebaikan
+        <h2 className="text-xl font-bold mb-6 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <span className="w-1.5 h-6 bg-green-600 rounded-full"></span>
+            Semua Program Kebaikan
+          </div>
+          <ShareButton slug="charity" title="Barakah Charity" type="charity_page" />
         </h2>
         {loading ? (
           <div className="flex justify-center items-center py-8">

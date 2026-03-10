@@ -5,7 +5,10 @@ const ShareButton = ({ slug, title, type = 'campaign' }) => {
     const dropdownRef = useRef(null);
 
     // Construct the share URL using the backend endpoint to ensure preview generation
-    const baseUrl = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000';
+    // Use the origin if REACT_APP_API_BASE_URL is not set or is relative
+    const baseUrl = process.env.REACT_APP_API_BASE_URL && process.env.REACT_APP_API_BASE_URL.startsWith('http')
+        ? process.env.REACT_APP_API_BASE_URL
+        : window.location.origin.replace(':3000', ':8000'); // Fallback for local dev
 
     // Determine share URL based on type
     let shareUrl = '';
@@ -13,6 +16,12 @@ const ShareButton = ({ slug, title, type = 'campaign' }) => {
         shareUrl = `${baseUrl}/api/articles/share/${slug}/`;
     } else if (type === 'seller') {
         shareUrl = `${baseUrl}/api/digital-products/share/seller/${slug}/`;
+    } else if (type === 'activity') {
+        shareUrl = `${baseUrl}/api/site-content/activities/share/${slug}/`;
+    } else if (type === 'charity_page') {
+        // Just share the direct frontend URL for the main page as it has its own meta tags
+        const frontendUrl = window.location.origin;
+        shareUrl = `${frontendUrl}/charity`;
     } else {
         shareUrl = `${baseUrl}/api/campaigns/share/${slug}/`;
     }
@@ -24,6 +33,12 @@ const ShareButton = ({ slug, title, type = 'campaign' }) => {
         }
         if (type === 'seller') {
             return `Bismillah, cek profil penjual digital ini ya: @${slug}\n\nLihat koleksi produk digitalnya di sini:\n${shareUrl}`;
+        }
+        if (type === 'activity') {
+            return `Bismillah, cek kegiatan kebaikan ini ya: ${title}\n\nLihat info selengkapnya di sini:\n${shareUrl}`;
+        }
+        if (type === 'charity_page') {
+            return `Bismillah, mari bantu sesama melalui program-program kebaikan di Barakah Economy:\n\nLihat semua program di sini:\n${shareUrl}`;
         }
         return `Bismillah, izin share informasi kebaikan ini ya: ${title}\n\nKlik tautan ini untuk lihat detail & donasi:\n${shareUrl}`;
     };

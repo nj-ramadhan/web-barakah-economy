@@ -4,6 +4,7 @@ import { Helmet } from 'react-helmet';
 import axios from 'axios';
 import Header from '../components/layout/Header';
 import NavigationButton from '../components/layout/Navigation';
+import ShareButton from '../components/campaigns/ShareButton';
 
 const getMediaUrl = (url) => {
     if (!url) return '';
@@ -82,7 +83,10 @@ const ActivityDetailPage = () => {
                         <span className="material-icons text-sm">calendar_today</span>
                         {new Date(activity.date).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
                     </div>
-                    <h1 className="text-2xl md:text-3xl font-bold text-gray-900">{activity.title}</h1>
+                    <div className="flex justify-between items-start gap-4">
+                        <h1 className="text-2xl md:text-3xl font-bold text-gray-900">{activity.title}</h1>
+                        <ShareButton slug={id} title={activity.title} type="activity" />
+                    </div>
                 </div>
 
                 {/* Rich content */}
