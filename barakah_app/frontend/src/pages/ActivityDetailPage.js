@@ -21,7 +21,16 @@ const ActivityDetailPage = () => {
         const fetchActivity = async () => {
             try {
                 const res = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/site-content/activities/${id}/`);
-                setActivity(res.data);
+                let content = res.data.content;
+
+                // Parse custom link format [Title | URL]
+                content = content.replace(/\[(.*?)\s*\|\s*(https?:\/\/.*?)\]/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-green-700 underline font-semibold">$1</a>');
+
+                // Auto-link plain URLs that are not already in an <a> tag
+                const urlRegex = /(?<!href="|">)(https?:\/\/[^\s<]+)/g;
+                content = content.replace(urlRegex, '<a href="$1" target="_blank" rel="noopener noreferrer" class="text-green-700 underline font-semibold">$1</a>');
+
+                setActivity({ ...res.data, content });
             } catch (err) {
                 console.error(err);
                 alert('Kegiatan tidak ditemukan');

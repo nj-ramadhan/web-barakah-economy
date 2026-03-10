@@ -20,7 +20,8 @@ const DashboardActivitiesPage = () => {
         title: '',
         header_image: null,
         content: '',
-        date: new Date().toISOString().split('T')[0]
+        date: new Date().toISOString().split('T')[0],
+        is_featured: false
     });
     const navigate = useNavigate();
 
@@ -51,13 +52,14 @@ const DashboardActivitiesPage = () => {
         data.append('title', formData.title);
         data.append('content', formData.content);
         data.append('date', formData.date);
+        data.append('is_featured', formData.is_featured);
         if (formData.header_image instanceof File) {
             data.append('header_image', formData.header_image);
         }
 
         try {
             if (isEditing) {
-                await axios.put(`${process.env.REACT_APP_API_BASE_URL}/api/site-content/activities/${currentId}/`, data, {
+                await axios.patch(`${process.env.REACT_APP_API_BASE_URL}/api/site-content/activities/${currentId}/`, data, {
                     headers: {
                         Authorization: `Bearer ${token}`,
                         'Content-Type': 'multipart/form-data'
@@ -86,7 +88,8 @@ const DashboardActivitiesPage = () => {
             title: '',
             header_image: null,
             content: '',
-            date: new Date().toISOString().split('T')[0]
+            date: new Date().toISOString().split('T')[0],
+            is_featured: false
         });
         setIsEditing(false);
         setCurrentId(null);
@@ -97,7 +100,8 @@ const DashboardActivitiesPage = () => {
             title: activity.title,
             header_image: activity.header_image,
             content: activity.content,
-            date: activity.date
+            date: activity.date,
+            is_featured: activity.is_featured || false
         });
         setIsEditing(true);
         setCurrentId(activity.id);
@@ -229,6 +233,19 @@ const DashboardActivitiesPage = () => {
                                 </div>
                             </div>
 
+                            <div className="flex items-center gap-2 p-2 bg-blue-50 rounded-2xl border border-blue-100">
+                                <input
+                                    type="checkbox"
+                                    id="is_featured"
+                                    className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                                    checked={formData.is_featured}
+                                    onChange={(e) => setFormData({ ...formData, is_featured: e.target.checked })}
+                                />
+                                <label htmlFor="is_featured" className="text-sm font-bold text-blue-700 cursor-pointer">
+                                    Tampilkan di Highlight / Slider Utama (Featured)
+                                </label>
+                            </div>
+
                             <div className="space-y-1">
                                 <label className="text-xs font-bold text-gray-500 ml-1">Keterangan / Konten</label>
                                 <div className="border border-gray-100 rounded-2xl overflow-hidden focus-within:ring-2 focus-within:ring-green-500 transition">
@@ -243,12 +260,9 @@ const DashboardActivitiesPage = () => {
                                         placeholder="Tulis detail kegiatan di sini... (Mendukung HTML)"
                                         required
                                         rows="8"
-                                        className="w-full p-4 bg-gray-50 border-none text-sm focus:ring-0 focus:bg-white"
-                                        value={formData.content}
-                                        onChange={(e) => setFormData({ ...formData, content: e.target.value })}
                                     ></textarea>
                                 </div>
-                                <p className="text-[10px] text-gray-400 mt-1 ml-1">* Anda dapat memasukkan kode HTML atau teks biasa.</p>
+                                <p className="text-[10px] text-gray-400 mt-1 ml-1">* Gunakan format [Judul Link | URL] untuk membuat link, atau masukkan URL biasa.</p>
                             </div>
 
                             <div className="flex gap-3 pt-2">
