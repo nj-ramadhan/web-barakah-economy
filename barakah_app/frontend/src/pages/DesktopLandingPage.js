@@ -40,6 +40,7 @@ const DesktopLandingPage = () => {
     const [popularSellers, setPopularSellers] = useState([]);
     const [testimonials, setTestimonials] = useState([]);
     const [activities, setActivities] = useState([]);
+    const [partners, setPartners] = useState([]);
 
     useEffect(() => {
         // Check login status
@@ -50,15 +51,16 @@ const DesktopLandingPage = () => {
 
         const fetchData = async () => {
             try {
-                const [campRes, prodRes, courseRes, articleRes, digiRes, sellerRes, testRes, actRes] = await Promise.all([
+                const [campRes, prodRes, courseRes, articleRes, digiRes, sellerRes, testRes, actRes, partnerRes] = await Promise.all([
                     axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/campaigns/`),
                     axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/products/`),
                     axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/courses/`),
                     axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/articles/`),
-                    axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/digital-products/`).catch(() => ({ data: [] })),
+                    axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/digital-products/products/`).catch(() => ({ data: [] })),
                     axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/digital-products/products/popular-sellers/`).catch(() => ({ data: [] })),
                     axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/site-content/testimonials/`).catch(() => ({ data: [] })),
-                    axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/site-content/activities/`).catch(() => ({ data: [] }))
+                    axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/site-content/activities/`).catch(() => ({ data: [] })),
+                    axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/site-content/partners/`).catch(() => ({ data: [] }))
                 ]);
                 setCampaigns(campRes.data.slice(0, 8));
                 setProducts(prodRes.data.results ? prodRes.data.results.slice(0, 8) : prodRes.data.slice(0, 8));
@@ -67,7 +69,8 @@ const DesktopLandingPage = () => {
                 setDigitalProducts(Array.isArray(digiRes.data) ? digiRes.data.slice(0, 8) : []);
                 setPopularSellers(Array.isArray(sellerRes.data) ? sellerRes.data : []);
                 setTestimonials(Array.isArray(testRes.data) ? testRes.data.filter(t => t.is_approved) : []);
-                setActivities(Array.isArray(actRes.data) ? actRes.data.slice(0, 3) : []); // Only show latest 3
+                setActivities(Array.isArray(actRes.data) ? actRes.data.slice(0, 3) : []);
+                setPartners(Array.isArray(partnerRes.data) ? partnerRes.data : []);
             } catch (err) {
                 console.error('Error fetching landing page data:', err);
             }
@@ -372,59 +375,44 @@ const DesktopLandingPage = () => {
                     </section>
                 )}
 
-                {/* ============ ARTICLES CAROUSEL ============ */}
-                {articles.length > 0 && (
+                {/* ============ KEGIATAN & BERITA ============ */}
+                {activities.length > 0 && (
                     <section className="py-20 px-8 lg:px-24 bg-gray-50">
                         <div className="max-w-6xl mx-auto">
-                            <div className="flex justify-between items-center mb-8">
+                            <div className="flex justify-between items-end mb-12">
                                 <div>
-                                    <h2 className="text-3xl font-bold text-gray-900">Artikel Terbaru</h2>
-                                    <p className="text-gray-500 mt-2">Tambah wawasan dengan artikel Islami</p>
+                                    <h2 className="text-3xl font-bold text-gray-900 mb-2">Kegiatan Komunitas</h2>
+                                    <div className="w-20 h-1 bg-green-600 rounded-full"></div>
                                 </div>
-                                <Link to="/articles" className="px-6 py-2 border border-orange-500 text-orange-600 font-semibold rounded-lg hover:bg-orange-50 transition">
+                                <Link to="/kegiatan" className="px-6 py-2 border border-green-600 text-green-700 font-semibold rounded-lg hover:bg-green-50 transition">
                                     Lihat Semua
                                 </Link>
                             </div>
-                            <Swiper
-                                spaceBetween={24}
-                                slidesPerView={3}
-                                navigation
-                                pagination={{ clickable: true }}
-                                autoplay={{ delay: 5000, disableOnInteraction: false }}
-                                modules={[Navigation, Pagination, Autoplay]}
-                                breakpoints={{
-                                    320: { slidesPerView: 1 },
-                                    640: { slidesPerView: 2 },
-                                    1024: { slidesPerView: 3 },
-                                }}
-                            >
-                                {articles.map((article) => (
-                                    <SwiperSlide key={article.id}>
-                                        <div className="bg-white rounded-2xl overflow-hidden shadow-md border border-gray-100 hover:shadow-xl transition group">
-                                            <Link to={`/articles/${article.id}`}>
-                                                <img
-                                                    src={getMediaUrl(article.images?.[0]?.path) || '/placeholder-image.jpg'}
-                                                    alt={article.title}
-                                                    className="w-full h-44 object-cover group-hover:scale-105 transition-transform duration-300"
-                                                    onError={(e) => { e.target.src = '/placeholder-image.jpg'; }}
-                                                />
-                                            </Link>
-                                            <div className="p-5">
-                                                <h3 className="font-bold text-gray-900 mb-2 line-clamp-2">{article.title}</h3>
-                                                <p className="text-gray-500 text-xs line-clamp-3">
-                                                    {stripHtml(article.content?.substring(0, 160))}
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                                {activities.map((act) => (
+                                    <Link key={act.id} to={`/kegiatan/${act.id}`} className="bg-white rounded-3xl overflow-hidden shadow-sm border border-gray-100 hover:shadow-xl transition-all duration-300 group">
+                                        <div className="relative h-48 overflow-hidden">
+                                            <img
+                                                src={getMediaUrl(act.header_image)}
+                                                alt={act.title}
+                                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                                                onError={(e) => { e.target.src = '/placeholder-image.jpg'; }}
+                                            />
+                                            <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full shadow-sm">
+                                                <p className="text-[10px] font-bold text-green-700">
+                                                    {new Date(act.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
                                                 </p>
-                                                <Link
-                                                    to={`/articles/${article.id}`}
-                                                    className="inline-block mt-3 text-orange-600 font-semibold text-sm hover:underline"
-                                                >
-                                                    Baca Selengkapnya &rarr;
-                                                </Link>
                                             </div>
                                         </div>
-                                    </SwiperSlide>
+                                        <div className="p-6">
+                                            <h3 className="font-bold text-lg text-gray-900 mb-3 line-clamp-2 group-hover:text-green-700 transition">
+                                                {act.title}
+                                            </h3>
+                                            <div className="text-gray-600 text-sm line-clamp-3 mb-4 last:mb-0" dangerouslySetInnerHTML={{ __html: act.content }}></div>
+                                        </div>
+                                    </Link>
                                 ))}
-                            </Swiper>
+                            </div>
                         </div>
                     </section>
                 )}
@@ -512,40 +500,59 @@ const DesktopLandingPage = () => {
                     </section>
                 )}
 
-                {/* ============ KEGIATAN & BERITA ============ */}
-                {activities.length > 0 && (
+                {/* ============ ARTICLES CAROUSEL ============ */}
+                {articles.length > 0 && (
                     <section className="py-20 px-8 lg:px-24 bg-white">
                         <div className="max-w-6xl mx-auto">
-                            <div className="flex justify-between items-end mb-12">
+                            <div className="flex justify-between items-center mb-8">
                                 <div>
-                                    <h2 className="text-3xl font-bold text-gray-900 mb-2">Kegiatan Komunitas</h2>
-                                    <div className="w-20 h-1 bg-green-600 rounded-full"></div>
+                                    <h2 className="text-3xl font-bold text-gray-900">Artikel Terbaru</h2>
+                                    <p className="text-gray-500 mt-2">Tambah wawasan dengan artikel Islami</p>
                                 </div>
+                                <Link to="/articles" className="px-6 py-2 border border-orange-500 text-orange-600 font-semibold rounded-lg hover:bg-orange-50 transition">
+                                    Lihat Semua
+                                </Link>
                             </div>
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                                {activities.map((act) => (
-                                    <div key={act.id} className="bg-white rounded-3xl overflow-hidden shadow-sm border border-gray-100 hover:shadow-xl transition-all duration-300 group">
-                                        <div className="relative h-48 overflow-hidden">
-                                            <img
-                                                src={getMediaUrl(act.header_image)}
-                                                alt={act.title}
-                                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                                            />
-                                            <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full shadow-sm">
-                                                <p className="text-[10px] font-bold text-green-700">
-                                                    {new Date(act.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
+                            <Swiper
+                                spaceBetween={24}
+                                slidesPerView={3}
+                                navigation
+                                pagination={{ clickable: true }}
+                                autoplay={{ delay: 5000, disableOnInteraction: false }}
+                                modules={[Navigation, Pagination, Autoplay]}
+                                breakpoints={{
+                                    320: { slidesPerView: 1 },
+                                    640: { slidesPerView: 2 },
+                                    1024: { slidesPerView: 3 },
+                                }}
+                            >
+                                {articles.map((article) => (
+                                    <SwiperSlide key={article.id}>
+                                        <div className="bg-white rounded-2xl overflow-hidden shadow-md border border-gray-100 hover:shadow-xl transition group">
+                                            <Link to={`/articles/${article.id}`}>
+                                                <img
+                                                    src={getMediaUrl(article.images?.[0]?.path) || '/placeholder-image.jpg'}
+                                                    alt={article.title}
+                                                    className="w-full h-44 object-cover group-hover:scale-105 transition-transform duration-300"
+                                                    onError={(e) => { e.target.src = '/placeholder-image.jpg'; }}
+                                                />
+                                            </Link>
+                                            <div className="p-5">
+                                                <h3 className="font-bold text-gray-900 mb-2 line-clamp-2">{article.title}</h3>
+                                                <p className="text-gray-500 text-xs line-clamp-3">
+                                                    {stripHtml(article.content?.substring(0, 160))}
                                                 </p>
+                                                <Link
+                                                    to={`/articles/${article.id}`}
+                                                    className="inline-block mt-3 text-orange-600 font-semibold text-sm hover:underline"
+                                                >
+                                                    Baca Selengkapnya &rarr;
+                                                </Link>
                                             </div>
                                         </div>
-                                        <div className="p-6">
-                                            <h3 className="font-bold text-lg text-gray-900 mb-3 line-clamp-2 group-hover:text-green-700 transition">
-                                                {act.title}
-                                            </h3>
-                                            <div className="text-gray-600 text-sm line-clamp-3 mb-4 last:mb-0" dangerouslySetInnerHTML={{ __html: act.content }}></div>
-                                        </div>
-                                    </div>
+                                    </SwiperSlide>
                                 ))}
-                            </div>
+                            </Swiper>
                         </div>
                     </section>
                 )}
@@ -588,10 +595,10 @@ const DesktopLandingPage = () => {
                                                 </p>
                                                 <div className="flex items-center gap-4 pt-4 border-t border-gray-50">
                                                     <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center text-green-700 font-bold text-sm uppercase">
-                                                        {(t.username || t.name || 'U').charAt(0)}
+                                                        {(t.user_full_name || t.name || 'U').charAt(0)}
                                                     </div>
                                                     <div>
-                                                        <p className="font-bold text-gray-900 text-sm">{t.username || t.name || 'User'}</p>
+                                                        <p className="font-bold text-gray-900 text-sm">{t.user_full_name || t.name || 'User'}</p>
                                                         <p className="text-[10px] text-gray-400">Pengguna Terverifikasi</p>
                                                     </div>
                                                 </div>
@@ -625,8 +632,33 @@ const DesktopLandingPage = () => {
                     </div>
                 </section>
 
+                {/* ============ OUR PARTNERS ============ */}
+                {partners.length > 0 && (
+                    <section className="py-16 px-8 lg:px-24 bg-white border-t border-gray-100">
+                        <div className="max-w-6xl mx-auto">
+                            <div className="text-center mb-10">
+                                <h2 className="text-3xl font-bold text-gray-900 mb-2">Partner Kami</h2>
+                                <p className="text-gray-500 text-sm">Kolaborasi bersama mitra terpercaya</p>
+                            </div>
+                            <div className="flex flex-wrap justify-center items-center gap-8 md:gap-12">
+                                {partners.map((partner) => (
+                                    <div key={partner.id} className="w-24 h-24 md:w-28 md:h-28 bg-white rounded-2xl shadow-sm border border-gray-100 p-3 flex items-center justify-center hover:shadow-md transition group">
+                                        <img
+                                            src={getMediaUrl(partner.logo)}
+                                            alt={partner.name}
+                                            className="max-w-full max-h-full object-contain grayscale group-hover:grayscale-0 transition-all duration-300"
+                                            title={partner.name}
+                                            onError={(e) => { e.target.src = '/placeholder-image.jpg'; }}
+                                        />
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </section>
+                )}
+
                 {/* ============ ABOUT US (paling bawah) ============ */}
-                <section id="about" className="py-20 px-8 lg:px-24 bg-white">
+                <section id="about" className="py-20 px-8 lg:px-24 bg-gray-50">
                     <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-start gap-12">
                         <div className="flex-1 space-y-6">
                             <h2 className="text-3xl font-bold text-gray-900">Tentang Kami</h2>

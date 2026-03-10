@@ -16,7 +16,7 @@ class UpdateSerializer(serializers.ModelSerializer):
 class CampaignRealizationSerializer(serializers.ModelSerializer):
     class Meta:
         model = CampaignRealization
-        fields = ['id', 'date', 'description', 'beneficiaries', 'beneficiary_status', 'nominal', 'created_at']
+        fields = ['id', 'campaign', 'date', 'description', 'beneficiaries', 'beneficiary_status', 'nominal', 'created_at']
 
 class CampaignSerializer(serializers.ModelSerializer):
     donations = DonationSerializer(many=True, read_only=True)

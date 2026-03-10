@@ -45,6 +45,8 @@ import PaymentPendingPage from './pages/PaymentPendingPage';
 import AboutUs from './pages/AboutUs';
 import ContactUs from './pages/ContactUs';
 import AcademyMain from './pages/AcademyMain';
+import ActivityListPage from './pages/ActivityListPage';
+import ActivityDetailPage from './pages/ActivityDetailPage';
 
 import DigitalProductListPage from './pages/DigitalProductListPage';
 import DigitalProductDetailPage from './pages/DigitalProductDetailPage';
@@ -138,6 +140,10 @@ const LayoutWrapper = ({ isDesktop }) => {
         {/* Information Routes */}
         <Route path="/about" element={<ResponsiveLayout isDesktop={isDesktop}><AboutUs /></ResponsiveLayout>} />
         <Route path="/hubungi-kami" element={<ResponsiveLayout isDesktop={isDesktop}><ContactUs /></ResponsiveLayout>} />
+
+        {/* Activity Routes */}
+        <Route path="/kegiatan" element={<ResponsiveLayout isDesktop={isDesktop}><ActivityListPage /></ResponsiveLayout>} />
+        <Route path="/kegiatan/:id" element={<ResponsiveLayout isDesktop={isDesktop}><ActivityDetailPage /></ResponsiveLayout>} />
 
         {/* Digital Product Routes (Public) */}
         <Route path="/digital-products" element={<ResponsiveLayout isDesktop={isDesktop}><DigitalProductListPage /></ResponsiveLayout>} />
