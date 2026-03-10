@@ -7,7 +7,7 @@ router.register(r'articles', ArticleViewSet, basename='articles')
 router.register(r'article-images', ArticleImageViewSet, basename='article-images')
 
 urlpatterns = [
-    path('', include(router.urls)),
     path('articles/share/<slug:slug>/', ArticleShareView.as_view(), name='article-share'),
+    path('', include(router.urls)),
     path('ckeditor/', include('ckeditor_uploader.urls')),
 ]

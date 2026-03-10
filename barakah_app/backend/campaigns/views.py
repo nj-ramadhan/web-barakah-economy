@@ -45,7 +45,8 @@ class CampaignRealizationViewSet(viewsets.ModelViewSet):
 class CampaignViewSet(viewsets.ModelViewSet):
     queryset = Campaign.objects.filter(is_active=True)
     serializer_class = CampaignSerializer
-    
+    lookup_field = 'slug'
+
     def get_queryset(self):
         queryset = Campaign.objects.filter(is_active=True)
         search = self.request.query_params.get('search', None)
@@ -56,11 +57,25 @@ class CampaignViewSet(viewsets.ModelViewSet):
             )
         return queryset
 
-class CampaignDetailView(APIView):
-    def get(self, request, slug):
-        campaign = get_object_or_404(Campaign, slug=slug)
-        serializer = CampaignSerializer(campaign)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+    def get_object(self):
+        """Logic Hybrid: Cek Slug dulu, kalau gagal cek ID"""
+        queryset = self.filter_queryset(self.get_queryset())
+        lookup_value = self.kwargs.get('slug')
+        obj = None
+
+        if lookup_value is not None:
+            # 1. Coba cari pakai ID jika inputnya angka
+            if lookup_value.isdigit():
+                obj = queryset.filter(id=lookup_value).first()
+            
+            # 2. Jika belum ketemu, cari pakai Slug
+            if not obj:
+                obj = get_object_or_404(queryset, slug=lookup_value)
+
+        self.check_object_permissions(self.request, obj)
+        return obj
+
+# CampaignDetailView removed as CampaignViewSet now handles slugs
 
 class CampaignShareView(APIView):
     """
