@@ -11,3 +11,8 @@ class TestimonialSerializer(serializers.ModelSerializer):
     class Meta:
         model = Testimonial
         fields = ['id', 'user', 'username', 'name', 'content', 'rating', 'is_approved', 'created_at']
+
+class ActivitySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Activity
+        fields = '__all__'

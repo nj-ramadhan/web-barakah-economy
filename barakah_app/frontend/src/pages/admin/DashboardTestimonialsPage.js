@@ -10,7 +10,8 @@ const DashboardTestimonialsPage = () => {
     const [formData, setFormData] = useState({ name: '', content: '', rating: 5 });
 
     const fetchTestimonials = async () => {
-        const token = localStorage.getItem('access_token');
+        const user = JSON.parse(localStorage.getItem('user'));
+        const token = user?.access;
         try {
             const res = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/site-content/testimonials/`, {
                 headers: { Authorization: `Bearer ${token}` }
@@ -29,7 +30,8 @@ const DashboardTestimonialsPage = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        const token = localStorage.getItem('access_token');
+        const user = JSON.parse(localStorage.getItem('user'));
+        const token = user?.access;
         try {
             await axios.post(`${process.env.REACT_APP_API_BASE_URL}/api/site-content/testimonials/`, formData, {
                 headers: { Authorization: `Bearer ${token}` }
@@ -43,7 +45,8 @@ const DashboardTestimonialsPage = () => {
     };
 
     const handleApprove = async (id, status) => {
-        const token = localStorage.getItem('access_token');
+        const user = JSON.parse(localStorage.getItem('user'));
+        const token = user?.access;
         try {
             await axios.patch(`${process.env.REACT_APP_API_BASE_URL}/api/site-content/testimonials/${id}/`, { is_approved: status }, {
                 headers: { Authorization: `Bearer ${token}` }
@@ -56,7 +59,8 @@ const DashboardTestimonialsPage = () => {
 
     const handleDelete = async (id) => {
         if (!window.confirm("Hapus testimoni ini?")) return;
-        const token = localStorage.getItem('access_token');
+        const user = JSON.parse(localStorage.getItem('user'));
+        const token = user?.access;
         try {
             await axios.delete(`${process.env.REACT_APP_API_BASE_URL}/api/site-content/testimonials/${id}/`, {
                 headers: { Authorization: `Bearer ${token}` }
@@ -112,10 +116,22 @@ const DashboardTestimonialsPage = () => {
                         <h3 className="text-lg font-bold mb-4">Tambah Testimoni Admin</h3>
                         <form onSubmit={handleSubmit} className="space-y-4">
                             <input type="text" placeholder="Nama Pemberi Testimoni" required className="w-full p-3 bg-gray-50 rounded-xl text-sm" onChange={(e) => setFormData({ ...formData, name: e.target.value })} />
-                            <select className="w-full p-3 bg-gray-50 rounded-xl text-sm font-bold" value={formData.rating} onChange={(e) => setFormData({ ...formData, rating: e.target.value })}>
-                                {[1, 2, 3, 4, 5].map(r => <option key={r} value={r}>Rating {r}</option>)}
-                            </select>
-                            <textarea placeholder="Konten Testimoni" required rows="3" className="w-full p-3 bg-gray-50 rounded-xl text-sm" onChange={(e) => setFormData({ ...formData, content: e.target.value })}></textarea>
+                            <div className="space-y-1">
+                                <label className="text-xs font-medium text-gray-500">Rating</label>
+                                <div className="flex gap-2">
+                                    {[1, 2, 3, 4, 5].map(star => (
+                                        <button
+                                            key={star}
+                                            type="button"
+                                            onClick={() => setFormData({ ...formData, rating: star })}
+                                            className={`material-icons ${star <= formData.rating ? 'text-orange-400' : 'text-gray-300'}`}
+                                        >
+                                            star
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                            <textarea placeholder="Konten Testimoni" required rows="3" className="w-full p-3 bg-gray-50 rounded-xl text-sm" value={formData.content} onChange={(e) => setFormData({ ...formData, content: e.target.value })}></textarea>
                             <div className="flex gap-2">
                                 <button type="submit" className="flex-1 py-3 bg-green-700 text-white rounded-xl font-bold">Simpan</button>
                                 <button type="button" onClick={() => setShowModal(false)} className="flex-1 py-3 bg-gray-100 text-gray-600 rounded-xl font-bold">Batal</button>

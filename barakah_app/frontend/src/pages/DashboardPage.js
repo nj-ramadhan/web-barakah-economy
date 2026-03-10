@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
+import axios from 'axios';
 import Header from '../components/layout/Header';
 import NavigationButton from '../components/layout/Navigation';
 import { getMyDigitalProducts, getDigitalBalance, getWithdrawalHistory, createWithdrawalRequest } from '../services/digitalProductApi';
@@ -31,6 +32,12 @@ const DashboardPage = () => {
     const [accountNumber, setAccountNumber] = useState('');
     const [withdrawing, setWithdrawing] = useState(false);
 
+    // Testimonial state
+    const [myTestimonial, setMyTestimonial] = useState(null);
+    const [showTestimonialModal, setShowTestimonialModal] = useState(false);
+    const [testimonialForm, setTestimonialForm] = useState({ content: '', rating: 5 });
+    const [savingTestimonial, setSavingTestimonial] = useState(false);
+
     useEffect(() => {
         const user = JSON.parse(localStorage.getItem('user'));
         if (!user || !user.access) {
@@ -42,18 +49,26 @@ const DashboardPage = () => {
 
         const fetchStats = async () => {
             try {
-                const [productRes, courseRes, balanceRes, historyRes, profileRes] = await Promise.all([
+                const user = JSON.parse(localStorage.getItem('user'));
+                const [productRes, courseRes, balanceRes, historyRes, profileRes, testimonialRes] = await Promise.all([
                     getMyDigitalProducts(),
                     getMyCourses(),
                     getDigitalBalance().catch(() => ({ data: { available_balance: 0, total_sales: 0 } })),
                     getWithdrawalHistory().catch(() => ({ data: [] })),
-                    authService.getProfile(user.id).catch(() => ({ username: '' }))
+                    authService.getProfile(user.id).catch(() => ({ username: '' })),
+                    axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/site-content/testimonials/my_testimonial/`, {
+                        headers: { Authorization: `Bearer ${user.access}` }
+                    }).catch(() => ({ data: {} }))
                 ]);
                 setProductCount(productRes.data.length);
                 setCourseCount(courseRes.data.length);
                 setBalanceData(balanceRes.data);
                 setWithdrawalHistory(historyRes.data);
                 if (profileRes.username) setUsername(profileRes.username);
+                if (testimonialRes.data.id) {
+                    setMyTestimonial(testimonialRes.data);
+                    setTestimonialForm({ content: testimonialRes.data.content, rating: testimonialRes.data.rating });
+                }
             } catch (err) {
                 console.error(err);
             } finally {
@@ -62,6 +77,25 @@ const DashboardPage = () => {
         };
         fetchStats();
     }, [navigate]);
+
+    const handleTestimonialSubmit = async (e) => {
+        e.preventDefault();
+        const user = JSON.parse(localStorage.getItem('user'));
+        setSavingTestimonial(true);
+        try {
+            const res = await axios.post(`${process.env.REACT_APP_API_BASE_URL}/api/site-content/testimonials/my_testimonial/`, testimonialForm, {
+                headers: { Authorization: `Bearer ${user.access}` }
+            });
+            setMyTestimonial(res.data);
+            alert('Testimoni berhasil disimpan dan akan segera dimoderasi!');
+            setShowTestimonialModal(false);
+        } catch (err) {
+            console.error(err);
+            alert('Gagal menyimpan testimoni');
+        } finally {
+            setSavingTestimonial(false);
+        }
+    };
 
     const handleTarikSemua = () => {
         setWithdrawAmount(balanceData.available_balance.toString());
@@ -257,6 +291,24 @@ const DashboardPage = () => {
                         <span className="material-icons text-gray-400">chevron_right</span>
                     </Link>
 
+                    <div
+                        onClick={() => setShowTestimonialModal(true)}
+                        className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-orange-50 hover:shadow-md transition cursor-pointer"
+                    >
+                        <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center">
+                            <span className="material-icons text-orange-700">rate_review</span>
+                        </div>
+                        <div className="flex-1">
+                            <h3 className="font-bold text-gray-800 text-sm">Testimoni Saya</h3>
+                            <p className="text-[11px] text-gray-500">
+                                {myTestimonial
+                                    ? (myTestimonial.is_approved ? 'Testimoni Anda sudah tayang' : 'Menunggu moderasi admin')
+                                    : 'Berikan ulasan Anda tentang Barakah App'}
+                            </p>
+                        </div>
+                        <span className="material-icons text-gray-400">{myTestimonial ? 'edit' : 'add'}</span>
+                    </div>
+
                     {username === 'admin' && (
                         <>
                             <Link
@@ -311,10 +363,70 @@ const DashboardPage = () => {
                                 </div>
                                 <span className="material-icons text-gray-400">chevron_right</span>
                             </Link>
+                            <Link
+                                to="/dashboard/admin/activities"
+                                className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-green-100 hover:shadow-md transition mt-3"
+                            >
+                                <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
+                                    <span className="material-icons text-green-700">event_note</span>
+                                </div>
+                                <div className="flex-1">
+                                    <h3 className="font-bold text-gray-800 text-sm">Manajemen Kegiatan</h3>
+                                    <p className="text-[11px] text-gray-500">Kelola berita dan kegiatan komunitas (Admin)</p>
+                                </div>
+                                <span className="material-icons text-gray-400">chevron_right</span>
+                            </Link>
                         </>
                     )}
                 </div>
             </div>
+
+            {/* Testimonial Modal */}
+            {showTestimonialModal && (
+                <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4">
+                    <div className="bg-white w-full max-w-md rounded-2xl p-6 shadow-2xl animate-slide-up">
+                        <div className="flex justify-between items-center mb-6">
+                            <h3 className="text-lg font-bold">{myTestimonial ? 'Ubah Testimoni' : 'Tulis Testimoni'}</h3>
+                            <button onClick={() => setShowTestimonialModal(false)} className="material-icons text-gray-400">close</button>
+                        </div>
+                        <form onSubmit={handleTestimonialSubmit} className="space-y-4">
+                            <div>
+                                <label className="block text-xs font-medium text-gray-500 mb-2">Beri Rating (Klik Bintang)</label>
+                                <div className="flex gap-2">
+                                    {[1, 2, 3, 4, 5].map(star => (
+                                        <button
+                                            key={star}
+                                            type="button"
+                                            onClick={() => setTestimonialForm({ ...testimonialForm, rating: star })}
+                                            className={`material-icons text-2xl ${star <= testimonialForm.rating ? 'text-orange-400' : 'text-gray-300'}`}
+                                        >
+                                            star
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                            <div>
+                                <label className="block text-xs font-medium text-gray-500 mb-1">Ulasan Anda</label>
+                                <textarea
+                                    required
+                                    rows="4"
+                                    value={testimonialForm.content}
+                                    onChange={(e) => setTestimonialForm({ ...testimonialForm, content: e.target.value })}
+                                    className="w-full px-4 py-3 bg-gray-100 border-none rounded-xl text-sm focus:ring-2 focus:ring-green-500"
+                                    placeholder="Ceritakan pengalaman Anda menggunakan Barakah App..."
+                                ></textarea>
+                            </div>
+                            <button
+                                type="submit"
+                                disabled={savingTestimonial}
+                                className="w-full py-4 bg-green-700 text-white rounded-xl text-sm font-bold shadow-lg shadow-green-100 disabled:opacity-50"
+                            >
+                                {savingTestimonial ? 'Menyimpan...' : (myTestimonial ? 'Update Testimoni' : 'Kirim Testimoni')}
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            )}
 
             {/* Withdrawal Modal */}
             {showWithdrawModal && (

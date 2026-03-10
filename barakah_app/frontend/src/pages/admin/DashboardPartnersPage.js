@@ -34,7 +34,8 @@ const DashboardPartnersPage = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        const token = localStorage.getItem('access_token');
+        const user = JSON.parse(localStorage.getItem('user'));
+        const token = user?.access;
         const data = new FormData();
         data.append('name', formData.name);
         data.append('order', formData.order);
@@ -57,7 +58,8 @@ const DashboardPartnersPage = () => {
 
     const handleDelete = async (id) => {
         if (!window.confirm("Hapus partner ini?")) return;
-        const token = localStorage.getItem('access_token');
+        const user = JSON.parse(localStorage.getItem('user'));
+        const token = user?.access;
         try {
             await axios.delete(`${process.env.REACT_APP_API_BASE_URL}/api/site-content/partners/${id}/`, {
                 headers: { Authorization: `Bearer ${token}` }

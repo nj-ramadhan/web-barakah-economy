@@ -96,6 +96,7 @@ const Home = () => {
   const navigate = useNavigate();
   const [testimonials, setTestimonials] = useState([]);
   const [partners, setPartners] = useState([]);
+  const [activities, setActivities] = useState([]);
   const [showTestimonialModal, setShowTestimonialModal] = useState(false);
   const [testimonialForm, setTestimonialForm] = useState({ content: '', rating: 5 });
 
@@ -158,12 +159,14 @@ const Home = () => {
 
     const fetchSiteContent = async () => {
       try {
-        const [testimonialsRes, partnersRes] = await Promise.all([
+        const [testimonialsRes, partnersRes, activitiesRes] = await Promise.all([
           axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/site-content/testimonials/`),
-          axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/site-content/partners/`)
+          axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/site-content/partners/`),
+          axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/site-content/activities/`)
         ]);
-        setTestimonials(testimonialsRes.data);
-        setPartners(partnersRes.data);
+        setTestimonials((testimonialsRes.data.results || testimonialsRes.data).filter(t => t.is_approved));
+        setPartners(partnersRes.data.results || partnersRes.data);
+        setActivities((activitiesRes.data.results || activitiesRes.data).slice(0, 3));
       } catch (err) {
         console.error("Error fetching site content:", err);
       }
@@ -173,7 +176,8 @@ const Home = () => {
 
   const handleTestimonialSubmit = async (e) => {
     e.preventDefault();
-    const token = localStorage.getItem('access_token');
+    const user = JSON.parse(localStorage.getItem('user'));
+    const token = user?.access;
     if (!token) {
       navigate('/login');
       return;
@@ -1282,18 +1286,67 @@ const Home = () => {
         </div>
       )}
 
-      {/* Tentang Kami Section */}
-      <div id="tentang-kami" className="px-4 py-8 bg-white mb-4">
-        <h1 className="text-lg font-medium mb-4">Tentang Kami</h1>
-        <div className="prose prose-sm text-gray-600">
-          <p className="mb-4">
-            <strong>Barakah Economy (BAE)</strong> adalah sebuah inisiatif untuk memperkuat ekosistem ekonomi Islam yang berlandaskan nilai-nilai keberkahan. Kami hadir untuk memfasilitasi umat dalam berdonasi, belajar melalui e-course, dan berniaga dengan produk-produk halal dan thayyib.
-          </p>
-          <p>
-            Misi kami adalah menciptakan kemandirian ekonomi umat melalui platform digital yang aman, amanah, dan profesional. Bergabunglah bersama kami dalam menyebarkan manfaat bagi sesama.
-          </p>
+      {/* Kegiatan Komunitas */}
+      {activities.length > 0 && (
+        <div className="bg-gray-50 py-10 px-4">
+          <div className="max-w-md mx-auto">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-bold text-gray-800">Kegiatan Terbaru</h2>
+              <span className="text-green-700 text-xs font-bold">Lihat Semua</span>
+            </div>
+            <div className="space-y-4">
+              {activities.map(act => (
+                <div key={act.id} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex h-28">
+                  <div className="w-1/3 h-full">
+                    <img src={getMediaUrl(act.header_image)} alt={act.title} className="w-full h-full object-cover" />
+                  </div>
+                  <div className="w-2/3 p-3 flex flex-col justify-between">
+                    <div>
+                      <h3 className="text-sm font-bold text-gray-800 line-clamp-2">{act.title}</h3>
+                      <div className="text-[10px] text-gray-500 mt-1 line-clamp-2" dangerouslySetInnerHTML={{ __html: act.content }}></div>
+                    </div>
+                    <p className="text-[10px] text-green-700 font-bold">{new Date(act.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
-      </div>
+      )}
+
+      {/* Tentang Kami Section */}
+      <section id="about" className="py-20 px-8 lg:px-24 bg-white">
+        <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-start gap-12">
+          <div className="flex-1 space-y-6">
+            <h2 className="text-3xl font-bold text-gray-900">Tentang Kami</h2>
+            <div className="w-20 h-1 bg-green-600 rounded-full"></div>
+            <p className="text-gray-600 leading-relaxed">
+              BAE Community berdiri pada tanggal 29 Februari 2024 di Jalan Tubagus Ismail Dalam No.19C dan bertempat di Dago, Kota Bandung, Jawa Barat. Tujuan BAE Community adalah meningkatkan kestabilan finansial masyarakat melalui pengembangan ekosistem ekonomi yang berlandaskan syariah Islam dengan memberdayakan pemuda dan mahasiswa sebagai pionir perubahan.
+            </p>
+            <p className="text-gray-600 leading-relaxed">
+              BAE Community memiliki tugas pokok menyelenggarakan kegiatan yang bersifat pemberdayaan, pendidikan, kolaborasi, pengembangan serta sosial baik ke dalam yaitu internal komunitas maupun keluar yaitu lingkungan masyarakat.
+            </p>
+          </div>
+          <div className="flex-1 space-y-6">
+            <div className="bg-green-50 p-6 rounded-2xl border border-green-100">
+              <h3 className="text-lg font-bold text-green-800 mb-3">🎯 Visi</h3>
+              <p className="text-gray-700 text-sm leading-relaxed">
+                Menjadi komunitas yang unggul dalam mengembangkan perekonomian berbasis syariah yang berkeadilan dan berkelanjutan, serta berkontribusi secara aktif dalam kesejahteraan umat.
+              </p>
+            </div>
+            <div className="bg-green-50 p-6 rounded-2xl border border-green-100">
+              <h3 className="text-lg font-bold text-green-800 mb-3">🚀 Misi</h3>
+              <ul className="space-y-1.5 text-sm text-gray-700">
+                <li className="flex items-start gap-2"><span className="text-green-600 mt-1">•</span> Mendorong Pemberdayaan Ekonomi</li>
+                <li className="flex items-start gap-2"><span className="text-green-600 mt-1">•</span> Pendidikan dan Literasi Keuangan Syariah</li>
+                <li className="flex items-start gap-2"><span className="text-green-600 mt-1">•</span> Kolaborasi dan Sinergi Antar Komunitas</li>
+                <li className="flex items-start gap-2"><span className="text-green-600 mt-1">•</span> Pengembangan Usaha Berbasis Syariah</li>
+                <li className="flex items-start gap-2"><span className="text-green-600 mt-1">•</span> Kepedulian Sosial dan Amal</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
 
       {/* Bottom Navigation */}
       <NavigationButton />

@@ -62,14 +62,17 @@ import DashboardAdminWithdrawalsPage from './pages/DashboardAdminWithdrawalsPage
 import DashboardRealizationPage from './pages/admin/DashboardRealizationPage';
 import DashboardPartnersPage from './pages/admin/DashboardPartnersPage';
 import DashboardTestimonialsPage from './pages/admin/DashboardTestimonialsPage';
+import DashboardActivitiesPage from './pages/admin/DashboardActivitiesPage';
 
 import { ResponsiveLayout, MobileContainer } from './components/layout/ResponsiveLayout';
+import ScrollToTop from './components/layout/ScrollToTop';
 
 const App = () => {
   const isDesktop = useMediaQuery('(min-width: 1024px)');
 
   return (
     <Router>
+      <ScrollToTop />
       <div className="min-h-screen bg-gray-100 flex justify-center">
         <Routes>
           <Route path="/*" element={<LayoutWrapper isDesktop={isDesktop} />} />
@@ -161,6 +164,7 @@ const LayoutWrapper = ({ isDesktop }) => {
         <Route path="/dashboard/admin/charity" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardRealizationPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/admin/partners" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardPartnersPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/admin/testimonials" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardTestimonialsPage /></ResponsiveLayout></PrivateRoute>} />
+        <Route path="/dashboard/admin/activities" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardActivitiesPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/digital-products" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardDigitalProductsPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/ecourses" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardEcourseListPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/ecourses/new" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardEcourseFormPage /></ResponsiveLayout></PrivateRoute>} />
