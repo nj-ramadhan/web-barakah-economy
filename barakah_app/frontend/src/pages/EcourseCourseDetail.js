@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { Helmet } from 'react-helmet';
@@ -21,7 +21,6 @@ const EcourseCourseDetail = () => {
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('description');
   const [showFullDescription, setShowFullDescription] = useState(false);
-  const [showFullMaterials, setShowFullMaterials] = useState({});
   const [isEnrolled, setIsEnrolled] = useState(false);
   const [reviews, setReviews] = useState([]);
   const [reviewForm, setReviewForm] = useState({ rating: 5, comment: '', image: null });
@@ -29,18 +28,18 @@ const EcourseCourseDetail = () => {
 
   const baseUrl = process.env.REACT_APP_API_BASE_URL;
 
-  const fetchReviews = async () => {
+  const fetchReviews = useCallback(async () => {
     try {
       const res = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/reviews/products/0/reviews/?course_id=${course?.id}`);
       setReviews(res.data);
     } catch (err) {
       console.error("Error fetching reviews:", err);
     }
-  };
+  }, [course?.id]);
 
   useEffect(() => {
     if (course) fetchReviews();
-  }, [course]);
+  }, [course, fetchReviews]);
 
   const handleReviewSubmit = async (e) => {
     e.preventDefault();
@@ -145,13 +144,6 @@ const EcourseCourseDetail = () => {
 
   const toggleDescription = () => {
     setShowFullDescription(!showFullDescription);
-  };
-
-  const toggleMaterial = (materialId) => {
-    setShowFullMaterials((prev) => ({
-      ...prev,
-      [materialId]: !prev[materialId],
-    }));
   };
 
   if (loading) return <div className="text-center py-8">Loading...</div>;

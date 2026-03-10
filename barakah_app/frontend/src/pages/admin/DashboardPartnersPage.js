@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import Header from '../../components/layout/Header';
 import NavigationButton from '../../components/layout/Navigation';
@@ -15,7 +14,6 @@ const DashboardPartnersPage = () => {
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
     const [formData, setFormData] = useState({ name: '', logo: null, order: 0 });
-    const navigate = useNavigate();
 
     const fetchPartners = async () => {
         try {

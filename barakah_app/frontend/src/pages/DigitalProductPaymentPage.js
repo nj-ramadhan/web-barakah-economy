@@ -5,7 +5,6 @@ import { Helmet } from 'react-helmet';
 import Header from '../components/layout/Header';
 import { uploadPaymentProof, getDigitalOrderStatus } from '../services/digitalProductApi';
 import Tesseract from 'tesseract.js';
-import axios from 'axios';
 import '../styles/Body.css';
 
 const DigitalProductPaymentPage = () => {
@@ -31,12 +30,6 @@ const DigitalProductPaymentPage = () => {
         fetchOrder();
     }, [orderNumber]);
 
-    const formatWAString = (template, order) => {
-        if (!template) return '';
-        return template
-            .replace('[nama]', order.buyer_name)
-            .replace('[order_number]', order.order_number);
-    };
 
     const sendWhatsAppMessage = async (phone, message) => {
         try {

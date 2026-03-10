@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
 import axios from 'axios';
@@ -19,7 +19,7 @@ const DashboardUserPage = () => {
     const [showEditModal, setShowEditModal] = useState(false);
     const [editFormData, setEditFormData] = useState({});
 
-    const fetchUsers = async (page = 1) => {
+    const fetchUsers = useCallback(async (page = 1) => {
         const user = JSON.parse(localStorage.getItem('user'));
         if (!user || user.username !== 'admin') {
             navigate('/dashboard');
@@ -47,11 +47,11 @@ const DashboardUserPage = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [navigate]);
 
     useEffect(() => {
         fetchUsers(currentPage);
-    }, [currentPage, navigate]);
+    }, [currentPage, fetchUsers]);
 
     const handleExportCsv = async () => {
         const user = JSON.parse(localStorage.getItem('user'));

@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 
 const DesktopHeader = () => {
-    const navigate = useNavigate();
     const [user, setUser] = useState(null);
     const [showProfileMenu, setShowProfileMenu] = useState(false);
 

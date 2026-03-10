@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
 import Header from '../components/layout/Header';
 import NavigationButton from '../components/layout/Navigation';
-import { getDigitalProducts, getPublicDigitalProfile } from '../services/digitalProductApi';
+import { getDigitalProducts } from '../services/digitalProductApi';
 import '../styles/Body.css';
 
 const formatIDR = (amount) => {

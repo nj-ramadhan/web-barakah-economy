@@ -5,7 +5,6 @@ import { Helmet } from 'react-helmet';
 import Header from '../components/layout/Header';
 import NavigationButton from '../components/layout/Navigation';
 import { useNavigate, Link } from 'react-router-dom';
-import axios from 'axios';
 import '../styles/Body.css';
 
 const LoginPage = () => {
@@ -57,7 +56,7 @@ const LoginPage = () => {
                     console.log('Failed to fetch profile data');
                 }
             };
-    
+
             fetchProfile();
         }
     }, [navigate]);
@@ -153,13 +152,13 @@ const LoginPage = () => {
                             </div>
 
                             <h3 className="text-sm font-medium mb-2 line-clamp-2 mt-6">Lihat Riwayat Belanja</h3>
-                            <div className="flex flex-col space-y-4">                                                          
+                            <div className="flex flex-col space-y-4">
                                 <Link
                                     to="/incaran" // Wishlist page
                                     className="w-full bg-gray-200 hover:bg-green-600 text-green py-3 rounded-lg text-sm flex items-center justify-left"
                                 >
                                     <span className="material-icons text-sm ml-4 mr-2">favorite</span>
-                                    Produk Incaran 
+                                    Produk Incaran
                                 </Link>
                                 <Link
                                     to="/keranjang" // Cart page
@@ -189,7 +188,7 @@ const LoginPage = () => {
                             </div>
 
                             <h3 className="text-sm font-medium mb-2 line-clamp-2 mt-6">Log Keluar</h3>
-                            <div className="flex flex-col space-y-4">                                  
+                            <div className="flex flex-col space-y-4">
                                 <button
                                     onClick={handleLogout}
                                     className="w-full bg-red-600 hover:bg-red-700 text-white py-3 rounded-lg text-sm flex items-center justify-left"
@@ -216,7 +215,7 @@ const LoginPage = () => {
                 <meta property="og:type" content="website" />
                 <meta property="og:url" content={window.location.href} />
             </Helmet>
-                        
+
             <Header />
             <div className="container">
                 <div className="bg-white rounded-lg shadow overflow-hidden mt-6">
@@ -250,7 +249,7 @@ const LoginPage = () => {
                                 <Link to="/lupa-password" className="text-green-600 hover:underline">
                                     Lupa kata sandi?
                                 </Link>
-                            </div>                            
+                            </div>
                             <button
                                 type="submit"
                                 className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-medium flex items-center justify-center"

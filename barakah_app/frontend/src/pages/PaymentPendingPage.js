@@ -11,29 +11,29 @@ const PaymentPendingPage = () => {
   const [paymentStatus, setPaymentStatus] = useState('pending');
   const intervalRef = useRef(null);
 
-  // Fungsi untuk memeriksa status pembayaran
-  const checkPaymentStatus = async () => {
-    try {
-      const response = await fetch(`https://your-backend-url/api/check-payment-status?order_id=${orderId}`);
-      const data = await response.json();
-      setPaymentStatus(data.status);
-
-      // Jika status selesai atau gagal, hentikan polling
-      if (data.status === 'success' || data.status === 'failed') {
-        clearInterval(intervalRef.current);
-        if (data.status === 'success') {
-          window.location.href = `/payment-success?order_id=${orderId}&transaction_status=success`;
-        } else {
-          window.location.href = `/payment-failed?order_id=${orderId}&transaction_status=failed`;
-        }
-      }
-    } catch (error) {
-      console.error('Error checking payment status:', error);
-    }
-  };
-
   // Mulai polling saat komponen dimount
   useEffect(() => {
+    // Fungsi untuk memeriksa status pembayaran
+    const checkPaymentStatus = async () => {
+      try {
+        const response = await fetch(`https://your-backend-url/api/check-payment-status?order_id=${orderId}`);
+        const data = await response.json();
+        setPaymentStatus(data.status);
+
+        // Jika status selesai atau gagal, hentikan polling
+        if (data.status === 'success' || data.status === 'failed') {
+          clearInterval(intervalRef.current);
+          if (data.status === 'success') {
+            window.location.href = `/payment-success?order_id=${orderId}&transaction_status=success`;
+          } else {
+            window.location.href = `/payment-failed?order_id=${orderId}&transaction_status=failed`;
+          }
+        }
+      } catch (error) {
+        console.error('Error checking payment status:', error);
+      }
+    };
+
     intervalRef.current = setInterval(checkPaymentStatus, 5000);
     return () => clearInterval(intervalRef.current);
   }, [orderId]);

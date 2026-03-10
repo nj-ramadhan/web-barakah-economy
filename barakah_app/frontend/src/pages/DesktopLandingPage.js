@@ -5,7 +5,6 @@ import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Pagination, Autoplay } from 'swiper/modules';
 import 'swiper/swiper-bundle.css';
 import DesktopHeader from '../components/layout/DesktopHeader';
-import DesktopFooter from '../components/layout/DesktopFooter';
 
 const formatIDR = (amount) => {
     return 'Rp. ' + new Intl.NumberFormat('id-ID', { minimumFractionDigits: 0 }).format(amount);
@@ -35,19 +34,13 @@ const DesktopLandingPage = () => {
     const [courses, setCourses] = useState([]);
     const [articles, setArticles] = useState([]);
     const [digitalProducts, setDigitalProducts] = useState([]);
-    const [user, setUser] = useState(null);
-    const [showProfileMenu, setShowProfileMenu] = useState(false);
     const [popularSellers, setPopularSellers] = useState([]);
     const [testimonials, setTestimonials] = useState([]);
     const [activities, setActivities] = useState([]);
     const [partners, setPartners] = useState([]);
 
     useEffect(() => {
-        // Check login status
-        const userData = JSON.parse(localStorage.getItem('user'));
-        if (userData && userData.access) {
-            setUser(userData);
-        }
+        // Fetch data
 
         const fetchData = async () => {
             try {

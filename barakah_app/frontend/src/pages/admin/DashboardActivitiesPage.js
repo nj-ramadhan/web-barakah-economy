@@ -22,7 +22,6 @@ const DashboardActivitiesPage = () => {
         content: '',
         date: new Date().toISOString().split('T')[0]
     });
-    const navigate = useNavigate();
 
     const fetchActivities = async () => {
         try {
@@ -243,6 +242,9 @@ const DashboardActivitiesPage = () => {
                                         placeholder="Tulis detail kegiatan di sini... (Mendukung HTML)"
                                         required
                                         rows="8"
+                                        className="w-full p-4 bg-gray-50 border-none rounded-b-2xl text-sm focus:ring-0 transition"
+                                        value={formData.content}
+                                        onChange={(e) => setFormData({ ...formData, content: e.target.value })}
                                     ></textarea>
                                 </div>
                                 <p className="text-[10px] text-gray-400 mt-1 ml-1">* Gunakan format [Judul Link | URL] untuk membuat link, atau masukkan URL biasa.</p>

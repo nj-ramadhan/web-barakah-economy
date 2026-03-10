@@ -4,7 +4,6 @@ const ShopDecoration = ({ decoration, themeColor, isPreview = false }) => {
     if (!decoration || decoration === 'none') return null;
 
     const isDark = themeColor === 'dark';
-    const opacity = isDark ? 0.3 : 0.6;
 
     // For previews, we want the element to cover the preview box completely.
     // For the actual page, fixed inset-0 to cover the whole viewport behind content.
