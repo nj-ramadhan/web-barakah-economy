@@ -19,10 +19,6 @@ const HeaderHome = ({ onSearch }) => {
             <img src="/images/logo.png" alt="BAE Community" className="h-8" />
             <span className="ml-2 font-semibold text-green-700">BARAKAH APP</span>
           </div>
-          <div className="hidden md:flex items-center space-x-6 ml-8">
-            <a href="/" className="text-sm font-medium text-gray-700 hover:text-green-700 transition">Home</a>
-            <a href="#tentang-kami" className="text-sm font-medium text-gray-700 hover:text-green-700 transition">Tentang Kami</a>
-          </div>
           <div className="flex-1 max-w-[200px] ml-4">
             <input
               type="text"

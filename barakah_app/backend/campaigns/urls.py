@@ -7,7 +7,7 @@ router.register(r'realizations', CampaignRealizationViewSet, basename='campaign-
 router.register(r'', CampaignViewSet, basename='campaign')
 
 urlpatterns = [
-    path('', include(router.urls)),
     path('<slug:slug>/', CampaignDetailView.as_view(), name='campaign-detail-slug'),  # Detail berdasarkan slug
+    path('', include(router.urls)),
     path('share/<slug:slug>/', CampaignShareView.as_view(), name='campaign-share'), # Share link preview
 ]

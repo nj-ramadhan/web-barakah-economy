@@ -4,6 +4,12 @@ import axios from 'axios';
 import Header from '../../components/layout/Header';
 import NavigationButton from '../../components/layout/Navigation';
 
+const getMediaUrl = (url) => {
+    if (!url) return '';
+    if (url.startsWith('http')) return url;
+    return `${process.env.REACT_APP_API_BASE_URL}${url}`;
+};
+
 const DashboardPartnersPage = () => {
     const [partners, setPartners] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -77,7 +83,7 @@ const DashboardPartnersPage = () => {
                     {partners.map(p => (
                         <div key={p.id} className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between">
                             <div className="flex items-center gap-4">
-                                <img src={p.logo} alt={p.name} className="h-10 w-16 object-contain" />
+                                <img src={getMediaUrl(p.logo)} alt={p.name} className="h-10 w-16 object-contain" />
                                 <div>
                                     <p className="font-bold text-sm text-gray-800">{p.name}</p>
                                     <p className="text-[10px] text-gray-400">Order: {p.order}</p>
