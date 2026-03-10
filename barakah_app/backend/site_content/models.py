@@ -30,7 +30,6 @@ class Activity(models.Model):
     header_image = models.ImageField(upload_to='activities/')
     content = RichTextField()
     date = models.DateField()
-    is_featured = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

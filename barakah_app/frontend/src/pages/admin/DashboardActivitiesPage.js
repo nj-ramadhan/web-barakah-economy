@@ -20,8 +20,7 @@ const DashboardActivitiesPage = () => {
         title: '',
         header_image: null,
         content: '',
-        date: new Date().toISOString().split('T')[0],
-        is_featured: false
+        date: new Date().toISOString().split('T')[0]
     });
     const navigate = useNavigate();
 
@@ -52,7 +51,6 @@ const DashboardActivitiesPage = () => {
         data.append('title', formData.title);
         data.append('content', formData.content);
         data.append('date', formData.date);
-        data.append('is_featured', formData.is_featured);
         if (formData.header_image instanceof File) {
             data.append('header_image', formData.header_image);
         }
@@ -88,8 +86,7 @@ const DashboardActivitiesPage = () => {
             title: '',
             header_image: null,
             content: '',
-            date: new Date().toISOString().split('T')[0],
-            is_featured: false
+            date: new Date().toISOString().split('T')[0]
         });
         setIsEditing(false);
         setCurrentId(null);
@@ -100,8 +97,7 @@ const DashboardActivitiesPage = () => {
             title: activity.title,
             header_image: activity.header_image,
             content: activity.content,
-            date: activity.date,
-            is_featured: activity.is_featured || false
+            date: activity.date
         });
         setIsEditing(true);
         setCurrentId(activity.id);
@@ -231,19 +227,6 @@ const DashboardActivitiesPage = () => {
                                         </label>
                                     </div>
                                 </div>
-                            </div>
-
-                            <div className="flex items-center gap-2 p-2 bg-blue-50 rounded-2xl border border-blue-100">
-                                <input
-                                    type="checkbox"
-                                    id="is_featured"
-                                    className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
-                                    checked={formData.is_featured}
-                                    onChange={(e) => setFormData({ ...formData, is_featured: e.target.checked })}
-                                />
-                                <label htmlFor="is_featured" className="text-sm font-bold text-blue-700 cursor-pointer">
-                                    Tampilkan di Highlight / Slider Utama (Featured)
-                                </label>
                             </div>
 
                             <div className="space-y-1">
