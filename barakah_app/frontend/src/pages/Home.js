@@ -649,6 +649,51 @@ const Home = () => {
         )}
       </div>
 
+      {/* Activities Carousel */}
+      {activities.length > 0 && (
+        <div className="px-4 pt-4">
+          <div className="flex justify-between items-center mb-2">
+            <div>
+              <h1 className="text-lg font-medium line-clamp-2">Kegiatan Kami</h1>
+              <h2 className="text-sm font-medium text-gray-500">Program dan aktivitas komunitas BAE</h2>
+            </div>
+            <Link to="/kegiatan" className="text-green-700 text-xs font-semibold hover:underline whitespace-nowrap">
+              Lihat Semua →
+            </Link>
+          </div>
+          <Swiper
+            spaceBetween={12}
+            slidesPerView={1.5}
+            navigation
+            modules={[Navigation, Autoplay]}
+            autoplay={{ delay: 4000, disableOnInteraction: false }}
+          >
+            {activities.map((act) => (
+              <SwiperSlide key={act.id}>
+                <Link to={`/kegiatan/${act.id}`} className="block bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100">
+                  <div className="relative h-32">
+                    <img
+                      src={getMediaUrl(act.header_image)}
+                      alt={act.title}
+                      className="w-full h-full object-cover"
+                      onError={(e) => { e.target.src = '/placeholder-image.jpg'; }}
+                    />
+                    <div className="absolute top-2 left-2 bg-white/90 backdrop-blur-sm px-2 py-0.5 rounded-full">
+                      <p className="text-[10px] font-bold text-green-700">
+                        {new Date(act.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="p-3">
+                    <h3 className="font-semibold text-sm text-gray-900 line-clamp-2">{act.title}</h3>
+                  </div>
+                </Link>
+              </SwiperSlide>
+            ))}
+          </Swiper>
+        </div>
+      )}
+
       {/* Product Slider */}
       <div className="px-4 pt-4" style={{ position: 'relative', zIndex: 10 }}>
         <h1 className="text-lg font-medium mb-2 line-clamp-2">Penuhi kebutuhan harianmu</h1>
@@ -1228,9 +1273,9 @@ const Home = () => {
                     <p className="text-sm text-gray-600 italic mb-4">"{t.content}"</p>
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-green-700 text-xs font-bold">
-                        {t.name?.[0] || t.username?.[0] || 'U'}
+                        {t.user_full_name?.[0] || 'U'}
                       </div>
-                      <span className="text-xs font-bold text-gray-800">{t.name || t.username || 'Hamba Allah'}</span>
+                      <span className="text-xs font-bold text-gray-800">{t.user_full_name || 'Hamba Allah'}</span>
                     </div>
                   </div>
                 </SwiperSlide>

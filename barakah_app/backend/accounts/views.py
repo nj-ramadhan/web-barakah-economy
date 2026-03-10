@@ -1,9 +1,12 @@
 from django.core.mail import send_mail
 from django.contrib.auth import get_user_model
 from django.contrib.auth.tokens import default_token_generator
-from rest_framework import generics, permissions
+from rest_framework import generics, permissions, viewsets
 from rest_framework_simplejwt.views import TokenObtainPairView
-from .serializers import UserRegistrationSerializer, CustomTokenObtainPairSerializer
+from .serializers import UserRegistrationSerializer, CustomTokenObtainPairSerializer, UserAdminSerializer
+from rest_framework.decorators import action
+from django.http import HttpResponse
+from openpyxl import Workbook
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -123,4 +126,40 @@ class PasswordResetConfirmView(APIView):
             user.set_password(new_password)
             user.save()
             return Response({'message': 'Password reset successful.'}, status=status.HTTP_200_OK)
-        return Response({'error': 'Invalid token or user.'}, status=status.HTTP_400_BAD_REQUEST)        
+        return Response({'error': 'Invalid token or user.'}, status=status.HTTP_400_BAD_REQUEST)
+
+class UserViewSet(viewsets.ModelViewSet):
+    queryset = User.objects.all().select_related('profile').order_by('-date_joined')
+    serializer_class = UserAdminSerializer
+    permission_classes = [permissions.IsAdminUser]
+
+    @action(detail=False, methods=['get'])
+    def export_xlsx(self, request):
+        wb = Workbook()
+        ws = wb.active
+        ws.title = "Users"
+
+        # Headers
+        headers = ['ID', 'Username', 'Email', 'Phone', 'Role', 'Full Name', 'Gender', 'Join Date']
+        ws.append(headers)
+
+        # Data
+        for user in self.get_queryset():
+            profile = getattr(user, 'profile', None)
+            ws.append([
+                user.id,
+                user.username,
+                user.email,
+                user.phone,
+                user.role,
+                profile.name_full if profile else '',
+                profile.get_gender_display() if profile and profile.gender else '',
+                user.date_joined.strftime('%Y-%m-%d %H:%M:%S') if user.date_joined else ''
+            ])
+
+        response = HttpResponse(
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        )
+        response['Content-Disposition'] = 'attachment; filename=users.xlsx'
+        wb.save(response)
+        return response

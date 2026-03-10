@@ -22,6 +22,8 @@ const DashboardRealizationPage = () => {
     const [realizations, setRealizations] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showAddModal, setShowAddModal] = useState(false);
+    const [showDetailModal, setShowDetailModal] = useState(false);
+    const [selectedRealization, setSelectedRealization] = useState(null);
 
     // Form state
     const [formData, setFormData] = useState({
@@ -211,10 +213,20 @@ const DashboardRealizationPage = () => {
                                             </div>
                                             <div className="flex items-center gap-3">
                                                 <span className="text-sm font-bold text-gray-900">{formatIDR(r.nominal)}</span>
+                                                <button
+                                                    onClick={() => {
+                                                        setSelectedRealization(r);
+                                                        setShowDetailModal(true);
+                                                    }}
+                                                    className="material-icons text-blue-500 text-sm"
+                                                    title="Detail"
+                                                >
+                                                    visibility
+                                                </button>
                                                 <button onClick={() => handleDeleteRealization(r.id)} className="material-icons text-red-500 text-sm">delete</button>
                                             </div>
                                         </div>
-                                        <p className="text-sm text-gray-700 mb-2">{r.description}</p>
+                                        <p className="text-sm text-gray-700 mb-2 line-clamp-2">{r.description}</p>
                                         <p className="text-xs text-gray-500 italic">Penerima: {r.beneficiaries}</p>
                                     </div>
                                 ))
@@ -223,6 +235,52 @@ const DashboardRealizationPage = () => {
                     </div>
                 )}
             </div>
+
+            {/* Detail Modal */}
+            {showDetailModal && selectedRealization && (
+                <div className="fixed inset-0 bg-black/50 z-[110] flex items-center justify-center p-4">
+                    <div className="bg-white w-full max-w-md rounded-2xl p-6 shadow-2xl animate-slide-up">
+                        <div className="flex justify-between items-center mb-6">
+                            <h3 className="text-lg font-bold">Detail Realisasi</h3>
+                            <button onClick={() => setShowDetailModal(false)} className="material-icons text-gray-400">close</button>
+                        </div>
+                        <div className="space-y-4">
+                            <div>
+                                <label className="block text-[10px] uppercase tracking-wider font-bold text-gray-400 mb-1">Tanggal</label>
+                                <p className="text-sm font-medium">{new Date(selectedRealization.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-[10px] uppercase tracking-wider font-bold text-gray-400 mb-1">Nominal</label>
+                                    <p className="text-sm font-bold text-green-700">{formatIDR(selectedRealization.nominal)}</p>
+                                </div>
+                                <div>
+                                    <label className="block text-[10px] uppercase tracking-wider font-bold text-gray-400 mb-1">Status (Asnaf)</label>
+                                    <p className="text-sm font-medium">{selectedRealization.beneficiary_status}</p>
+                                </div>
+                            </div>
+                            <div>
+                                <label className="block text-[10px] uppercase tracking-wider font-bold text-gray-400 mb-1">Keterangan</label>
+                                <p className="text-sm text-gray-700 bg-gray-50 p-3 rounded-xl border border-gray-100 leading-relaxed">
+                                    {selectedRealization.description}
+                                </p>
+                            </div>
+                            <div>
+                                <label className="block text-[10px] uppercase tracking-wider font-bold text-gray-400 mb-1">Penerima Manfaat</label>
+                                <p className="text-sm text-gray-600 italic bg-orange-50/30 p-3 rounded-xl border border-orange-100/50">
+                                    {selectedRealization.beneficiaries}
+                                </p>
+                            </div>
+                        </div>
+                        <button
+                            onClick={() => setShowDetailModal(false)}
+                            className="w-full mt-6 py-3 bg-gray-100 text-gray-600 rounded-xl text-sm font-bold"
+                        >
+                            Tutup
+                        </button>
+                    </div>
+                </div>
+            )}
 
             {showAddModal && (
                 <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4">

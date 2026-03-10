@@ -166,7 +166,7 @@ const DesktopLandingPage = () => {
                         <h2 className="text-3xl font-bold text-gray-900 mb-4">Layanan Unggulan Kami</h2>
                         <div className="w-24 h-1 bg-green-600 mx-auto rounded-full"></div>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-7xl mx-auto">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-7xl mx-auto">
                         {/* Charity */}
                         <div className="p-8 rounded-2xl bg-white border border-gray-100 hover:border-green-300 hover:shadow-xl transition group">
                             <div className="w-16 h-16 bg-green-100 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-green-600 transition">
@@ -202,6 +202,24 @@ const DesktopLandingPage = () => {
                             <h3 className="text-xl font-bold text-gray-900 mb-3">Kegiatan Komunitas</h3>
                             <p className="text-gray-600 mb-4 text-sm">Ikuti berbagai kegiatan pemberdayaan dan kolaborasi sosial bersama BAE Community.</p>
                             <Link className="text-orange-700 font-semibold hover:underline text-sm" to="/kegiatan">Lihat Kegiatan →</Link>
+                        </div>
+                        {/* Barakah Mart (Digital Products) */}
+                        <div className="p-8 rounded-2xl bg-white border border-gray-100 hover:border-cyan-300 hover:shadow-xl transition group">
+                            <div className="w-16 h-16 bg-cyan-100 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-cyan-600 transition">
+                                <span className="material-icons text-3xl text-cyan-700 group-hover:text-white">storefront</span>
+                            </div>
+                            <h3 className="text-xl font-bold text-gray-900 mb-3">Barakah Digital Mart</h3>
+                            <p className="text-gray-600 mb-4 text-sm">Akses berbagai produk digital pilihan untuk mendukung produktivitas dan bisnis Anda.</p>
+                            <Link className="text-cyan-700 font-semibold hover:underline text-sm" to="/digital-products">Lihat Produk →</Link>
+                        </div>
+                        {/* Relawan BAE */}
+                        <div className="p-8 rounded-2xl bg-white border border-gray-100 hover:border-red-300 hover:shadow-xl transition group">
+                            <div className="w-16 h-16 bg-red-100 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-red-600 transition">
+                                <span className="material-icons text-3xl text-red-700 group-hover:text-white">volunteer_activism</span>
+                            </div>
+                            <h3 className="text-xl font-bold text-gray-900 mb-3">Relawan BAE</h3>
+                            <p className="text-gray-600 mb-4 text-sm">Jadilah bagian dari perubahan positif. Bergabunglah sebagai relawan Barakah Economy.</p>
+                            <Link className="text-red-700 font-semibold hover:underline text-sm" to="#">Daftar Relawan →</Link>
                         </div>
                     </div>
                 </section>

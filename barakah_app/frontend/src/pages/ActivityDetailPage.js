@@ -81,9 +81,17 @@ const ActivityDetailPage = () => {
                     className="prose prose-green max-w-none text-gray-700 leading-relaxed
                         prose-img:rounded-xl prose-img:shadow-md
                         prose-headings:text-gray-900
-                        prose-a:text-green-700
+                        prose-a:text-green-700 prose-a:underline prose-a:font-semibold
                     "
                     dangerouslySetInnerHTML={{ __html: activity.content }}
+                    ref={(el) => {
+                        if (el) {
+                            el.querySelectorAll('a').forEach(link => {
+                                link.setAttribute('target', '_blank');
+                                link.setAttribute('rel', 'noopener noreferrer');
+                            });
+                        }
+                    }}
                 />
             </div>
             <NavigationButton />

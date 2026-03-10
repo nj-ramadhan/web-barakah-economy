@@ -47,6 +47,7 @@ import ContactUs from './pages/ContactUs';
 import AcademyMain from './pages/AcademyMain';
 import ActivityListPage from './pages/ActivityListPage';
 import ActivityDetailPage from './pages/ActivityDetailPage';
+import DashboardUserPage from './pages/admin/DashboardUserPage';
 
 import DigitalProductListPage from './pages/DigitalProductListPage';
 import DigitalProductDetailPage from './pages/DigitalProductDetailPage';
@@ -171,6 +172,7 @@ const LayoutWrapper = ({ isDesktop }) => {
         <Route path="/dashboard/admin/partners" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardPartnersPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/admin/testimonials" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardTestimonialsPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/admin/activities" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardActivitiesPage /></ResponsiveLayout></PrivateRoute>} />
+        <Route path="/dashboard/admin/users" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardUserPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/digital-products" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardDigitalProductsPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/ecourses" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardEcourseListPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/ecourses/new" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardEcourseFormPage /></ResponsiveLayout></PrivateRoute>} />
