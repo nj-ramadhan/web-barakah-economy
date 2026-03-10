@@ -376,6 +376,20 @@ const DashboardPage = () => {
                                 </div>
                                 <span className="material-icons text-gray-400">chevron_right</span>
                             </Link>
+
+                            <Link
+                                to="/dashboard/admin/users"
+                                className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-indigo-100 hover:shadow-md transition mt-3"
+                            >
+                                <div className="w-12 h-12 bg-indigo-100 rounded-xl flex items-center justify-center">
+                                    <span className="material-icons text-indigo-700">people</span>
+                                </div>
+                                <div className="flex-1">
+                                    <h3 className="font-bold text-gray-800 text-sm">Manajemen User</h3>
+                                    <p className="text-[11px] text-gray-500">Kelola data user dan lihat profile lengkap (Admin)</p>
+                                </div>
+                                <span className="material-icons text-gray-400">chevron_right</span>
+                            </Link>
                         </>
                     )}
                 </div>
