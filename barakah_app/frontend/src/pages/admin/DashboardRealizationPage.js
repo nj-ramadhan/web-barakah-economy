@@ -42,7 +42,7 @@ const DashboardRealizationPage = () => {
 
         const fetchCampaigns = async () => {
             try {
-                const response = await axios.get(`${process.env.REACT_APP_API_BASE_URL} /api/campaigns / `);
+                const response = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/campaigns/`);
                 setCampaigns(response.data);
             } catch (err) {
                 console.error(err);
@@ -56,9 +56,9 @@ const DashboardRealizationPage = () => {
     const fetchRealizations = async (slug) => {
         const user = JSON.parse(localStorage.getItem('user'));
         try {
-            const response = await axios.get(`${process.env.REACT_APP_API_BASE_URL} /api/campaigns / realizations / `, {
+            const response = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/campaigns/realizations/`, {
                 params: { campaign_slug: slug },
-                headers: { Authorization: `Bearer ${user.access} ` }
+                headers: { Authorization: `Bearer ${user.access}` }
             });
             setRealizations(response.data);
         } catch (err) {
@@ -75,11 +75,11 @@ const DashboardRealizationPage = () => {
         e.preventDefault();
         const user = JSON.parse(localStorage.getItem('user'));
         try {
-            await axios.post(`${process.env.REACT_APP_API_BASE_URL} /api/campaigns / realizations / `, {
+            await axios.post(`${process.env.REACT_APP_API_BASE_URL}/api/campaigns/realizations/`, {
                 campaign: selectedCampaign.id,
                 ...formData
             }, {
-                headers: { Authorization: `Bearer ${user.access} ` }
+                headers: { Authorization: `Bearer ${user.access}` }
             });
             alert('Realisasi berhasil ditambahkan!');
             setShowAddModal(false);
@@ -101,7 +101,7 @@ const DashboardRealizationPage = () => {
         if (!window.confirm('Hapus realisasi ini?')) return;
         const user = JSON.parse(localStorage.getItem('user'));
         try {
-            await axios.delete(`${process.env.REACT_APP_API_BASE_URL} /api/campaigns / realizations / ${id}/`, {
+            await axios.delete(`${process.env.REACT_APP_API_BASE_URL}/api/campaigns/realizations/${id}/`, {
                 headers: { Authorization: `Bearer ${user.access}` }
             });
             fetchRealizations(selectedCampaign.slug);
