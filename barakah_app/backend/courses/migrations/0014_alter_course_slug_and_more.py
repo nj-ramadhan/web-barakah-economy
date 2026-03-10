@@ -11,21 +11,21 @@ class Migration(migrations.Migration):
 
     operations = [
         # Repair missing columns if any migration was interrupted/faked
-        migrations.RunSQL(
-            "ALTER TABLE courses_courseenrollment ADD COLUMN IF NOT EXISTS order_number varchar(30);"
-        ),
-        migrations.RunSQL(
-            "ALTER TABLE courses_courseenrollment ADD COLUMN IF NOT EXISTS amount decimal(12,2) DEFAULT 0;"
-        ),
-        migrations.RunSQL(
-            "ALTER TABLE courses_courseenrollment ADD COLUMN IF NOT EXISTS buyer_email varchar(254) DEFAULT '';"
-        ),
-        migrations.RunSQL(
-            "ALTER TABLE courses_courseenrollment ADD COLUMN IF NOT EXISTS buyer_name varchar(100) DEFAULT '';"
-        ),
-        migrations.RunSQL(
-            "ALTER TABLE courses_courseenrollment ADD COLUMN IF NOT EXISTS buyer_phone varchar(20) DEFAULT '';"
-        ),
+        # migrations.RunSQL(
+        #     "ALTER TABLE courses_courseenrollment ADD COLUMN IF NOT EXISTS order_number varchar(30);"
+        # ),
+        # migrations.RunSQL(
+        #     "ALTER TABLE courses_courseenrollment ADD COLUMN IF NOT EXISTS amount decimal(12,2) DEFAULT 0;"
+        # ),
+        # migrations.RunSQL(
+        #     "ALTER TABLE courses_courseenrollment ADD COLUMN IF NOT EXISTS buyer_email varchar(254) DEFAULT '';"
+        # ),
+        # migrations.RunSQL(
+        #     "ALTER TABLE courses_courseenrollment ADD COLUMN IF NOT EXISTS buyer_name varchar(100) DEFAULT '';"
+        # ),
+        # migrations.RunSQL(
+        #     "ALTER TABLE courses_courseenrollment ADD COLUMN IF NOT EXISTS buyer_phone varchar(20) DEFAULT '';"
+        # ),
         migrations.AlterField(
             model_name='course',
             name='slug',
