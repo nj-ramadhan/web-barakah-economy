@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Partner, Testimonial
+from .models import Partner, Testimonial, Activity
 
 class PartnerSerializer(serializers.ModelSerializer):
     class Meta:
