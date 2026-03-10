@@ -25,7 +25,7 @@ const DashboardUserPage = () => {
 
         setLoading(true);
         try {
-            const response = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/accounts/users/`, {
+            const response = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/auth/users/`, {
                 params: { page },
                 headers: { Authorization: `Bearer ${user.access}` }
             });
@@ -53,7 +53,7 @@ const DashboardUserPage = () => {
     const handleExportCsv = async () => {
         const user = JSON.parse(localStorage.getItem('user'));
         try {
-            const response = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/accounts/users/export_csv/`, {
+            const response = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/auth/users/export_csv/`, {
                 headers: { Authorization: `Bearer ${user.access}` },
                 responseType: 'blob'
             });
