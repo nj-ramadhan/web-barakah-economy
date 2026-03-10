@@ -232,7 +232,7 @@ const DashboardPage = () => {
 
                 {/* Menu */}
                 <h2 className="font-semibold text-gray-700 mb-3 px-1">Manajemen Bisnis</h2>
-                <div className="space-y-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     <Link
                         to="/dashboard/digital-products"
                         className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-gray-50 hover:shadow-md transition"
@@ -326,7 +326,7 @@ const DashboardPage = () => {
                             </Link>
                             <Link
                                 to="/dashboard/admin/charity"
-                                className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-red-100 hover:shadow-md transition mt-3"
+                                className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-red-100 hover:shadow-md transition"
                             >
                                 <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center">
                                     <span className="material-icons text-red-700">volunteer_activism</span>
@@ -339,7 +339,7 @@ const DashboardPage = () => {
                             </Link>
                             <Link
                                 to="/dashboard/admin/partners"
-                                className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-blue-100 hover:shadow-md transition mt-3"
+                                className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-blue-100 hover:shadow-md transition"
                             >
                                 <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
                                     <span className="material-icons text-blue-700">handshake</span>
@@ -352,7 +352,7 @@ const DashboardPage = () => {
                             </Link>
                             <Link
                                 to="/dashboard/admin/testimonials"
-                                className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-orange-100 hover:shadow-md transition mt-3"
+                                className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-orange-100 hover:shadow-md transition"
                             >
                                 <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center">
                                     <span className="material-icons text-orange-700">rate_review</span>
@@ -365,7 +365,7 @@ const DashboardPage = () => {
                             </Link>
                             <Link
                                 to="/dashboard/admin/activities"
-                                className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-green-100 hover:shadow-md transition mt-3"
+                                className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-green-100 hover:shadow-md transition"
                             >
                                 <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
                                     <span className="material-icons text-green-700">event_note</span>
@@ -379,7 +379,7 @@ const DashboardPage = () => {
 
                             <Link
                                 to="/dashboard/admin/users"
-                                className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-indigo-100 hover:shadow-md transition mt-3"
+                                className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-indigo-100 hover:shadow-md transition"
                             >
                                 <div className="w-12 h-12 bg-indigo-100 rounded-xl flex items-center justify-center">
                                     <span className="material-icons text-indigo-700">people</span>
