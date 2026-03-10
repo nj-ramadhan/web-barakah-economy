@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
 import axios from 'axios';
-import * as XLSX from 'xlsx';
 import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
 import Header from '../../components/layout/Header';
@@ -111,20 +110,6 @@ const DashboardRealizationPage = () => {
         }
     };
 
-    const exportToExcel = () => {
-        const dataToExport = realizations.map(r => ({
-            'Tanggal': r.date,
-            'Keterangan': r.description,
-            'Penerima Manfaat': r.beneficiaries,
-            'Status': r.beneficiary_status,
-            'Nominal': parseFloat(r.nominal)
-        }));
-
-        const ws = XLSX.utils.json_to_sheet(dataToExport);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Realisasi");
-        XLSX.writeFile(wb, `Realisasi_${selectedCampaign.slug}.xlsx`);
-    };
 
     const exportToPDF = () => {
         const doc = new jsPDF();
@@ -191,13 +176,6 @@ const DashboardRealizationPage = () => {
                                 >
                                     <span className="material-icons text-sm">add</span>
                                     Tambah
-                                </button>
-                                <button
-                                    onClick={exportToExcel}
-                                    className="bg-green-600 text-white px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 border border-green-500"
-                                >
-                                    <span className="material-icons text-sm">description</span>
-                                    Excel
                                 </button>
                                 <button
                                     onClick={exportToPDF}
