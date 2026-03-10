@@ -1,11 +1,13 @@
 from rest_framework import viewsets, permissions, status, response
 from rest_framework.decorators import action
+from rest_framework_simplejwt.authentication import JWTAuthentication
 from .models import Partner, Testimonial, Activity
 from .serializers import PartnerSerializer, TestimonialSerializer, ActivitySerializer
 
 class PartnerViewSet(viewsets.ModelViewSet):
     queryset = Partner.objects.all()
     serializer_class = PartnerSerializer
+    authentication_classes = [JWTAuthentication]
 
     def get_permissions(self):
         if self.action in ['list', 'retrieve']:
@@ -15,6 +17,7 @@ class PartnerViewSet(viewsets.ModelViewSet):
 class TestimonialViewSet(viewsets.ModelViewSet):
     queryset = Testimonial.objects.all()
     serializer_class = TestimonialSerializer
+    authentication_classes = [JWTAuthentication]
 
     def get_permissions(self):
         if self.action in ['list', 'retrieve']:
@@ -61,6 +64,7 @@ class TestimonialViewSet(viewsets.ModelViewSet):
 class ActivityViewSet(viewsets.ModelViewSet):
     queryset = Activity.objects.all()
     serializer_class = ActivitySerializer
+    authentication_classes = [JWTAuthentication]
 
     def get_permissions(self):
         if self.action in ['list', 'retrieve']:

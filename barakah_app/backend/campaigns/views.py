@@ -6,6 +6,7 @@ from rest_framework import status
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
+from rest_framework_simplejwt.authentication import JWTAuthentication
 from .models import Campaign, CampaignRealization
 from .serializers import CampaignSerializer, CampaignRealizationSerializer
 from donations.models import Donation
@@ -13,6 +14,7 @@ from donations.models import Donation
 class CampaignRealizationViewSet(viewsets.ModelViewSet):
     queryset = CampaignRealization.objects.all()
     serializer_class = CampaignRealizationSerializer
+    authentication_classes = [JWTAuthentication]
 
     def get_permissions(self):
         if self.action in ['list', 'retrieve']:

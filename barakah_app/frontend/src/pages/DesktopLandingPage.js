@@ -56,7 +56,7 @@ const DesktopLandingPage = () => {
                     axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/courses/`),
                     axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/articles/`),
                     axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/digital-products/`).catch(() => ({ data: [] })),
-                    axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/digital-products/popular-sellers/`).catch(() => ({ data: [] })),
+                    axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/digital-products/products/popular-sellers/`).catch(() => ({ data: [] })),
                     axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/site-content/testimonials/`).catch(() => ({ data: [] })),
                     axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/site-content/activities/`).catch(() => ({ data: [] }))
                 ]);
@@ -119,7 +119,7 @@ const DesktopLandingPage = () => {
                                         modules={[Autoplay, Pagination]}
                                         pagination={{ clickable: true }}
                                         autoplay={{ delay: 3500, disableOnInteraction: false }}
-                                        loop={true}
+                                        loop={[activities[0], articles[0], campaigns[0], courses[0], products[0], digitalProducts[0]].filter(Boolean).length > 2}
                                         className="rounded-[1.8rem] overflow-hidden"
                                     >
                                         {/* Dynamic Carousel Items Picker */}
