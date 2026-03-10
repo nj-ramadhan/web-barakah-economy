@@ -81,47 +81,76 @@ const DesktopLandingPage = () => {
 
             <main className="flex-1 pt-20">
                 {/* ============ HERO ============ */}
-                <section className="w-full bg-gradient-to-br from-green-50 via-white to-green-100 py-24 px-8 lg:px-24 flex flex-col md:flex-row items-center gap-12">
-                    <div className="flex-1 space-y-6">
-                        <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 leading-tight">
-                            Bersama Membangun <br />
-                            <span className="text-green-700">Ekonomi Umat yang Barakah</span>
-                        </h1>
-                        <p className="text-lg text-gray-600 leading-relaxed max-w-xl">
-                            Aplikasi super untuk kebutuhan ibadah harta Anda. Zakat, Infaq, Sedekah, Wakaf hingga belanja produk halal dan thoyyib dalam satu genggaman.
-                        </p>
-                        <div className="flex gap-4 pt-4">
-                            <Link to="/charity" className="px-8 py-3 bg-green-700 text-white font-bold rounded-xl shadow-lg hover:bg-green-800 hover:-translate-y-1 transition transform duration-200">
-                                Mulai Donasi
-                            </Link>
-                            <Link to="/sinergy" className="px-8 py-3 bg-white text-green-700 font-bold rounded-xl shadow border border-green-200 hover:bg-gray-50 transition">
-                                Belanja Halal
-                            </Link>
+                <section className="w-full bg-gradient-to-br from-green-50 via-white to-green-100 py-16 lg:py-24 px-8 lg:px-24">
+                    <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center gap-12">
+                        {/* LEFT: 7/12 (approx) */}
+                        <div className="md:w-[58%] space-y-8 animate-fade-in">
+                            <div className="space-y-4">
+                                <span className="inline-block bg-green-100 text-green-700 px-4 py-1.5 rounded-full text-xs font-bold tracking-wider uppercase">
+                                    Solusi Ekonomi Syariah Terintegrasi
+                                </span>
+                                <h1 className="text-4xl md:text-6xl font-extrabold text-gray-900 leading-tight">
+                                    Bersama Membangun <br />
+                                    <span className="text-green-700 relative inline-block">
+                                        Ekonomi Umat
+                                        <div className="absolute -bottom-2 left-0 w-full h-2 bg-green-200/50 -rotate-1"></div>
+                                    </span> yang Barakah
+                                </h1>
+                                <p className="text-lg text-gray-600 leading-relaxed max-w-xl">
+                                    Aplikasi super untuk kebutuhan ibadah harta Anda. Zakat, Infaq, Sedekah, Wakaf hingga belanja produk halal dan thoyyib dalam satu genggaman.
+                                </p>
+                            </div>
+                            <div className="flex flex-wrap gap-4 pt-2">
+                                <Link to="/charity" className="px-8 py-4 bg-green-700 text-white font-bold rounded-2xl shadow-xl shadow-green-200 hover:bg-green-800 hover:-translate-y-1 transition transform duration-300 flex items-center gap-2">
+                                    Mulai Donasi <span className="material-icons text-sm">volunteer_activism</span>
+                                </Link>
+                                <Link to="/sinergy" className="px-8 py-4 bg-white text-green-700 font-bold rounded-2xl shadow-sm border border-green-200 hover:bg-green-50 hover:-translate-y-1 transition transform duration-300 flex items-center gap-2">
+                                    Belanja Halal <span className="material-icons text-sm">shopping_bag</span>
+                                </Link>
+                            </div>
                         </div>
-                    </div>
-                    <div className="flex-1 flex justify-center">
-                        <div className="relative">
-                            <div className="absolute inset-0 bg-green-300 rounded-full blur-3xl opacity-20 animate-pulse"></div>
-                            <div className="relative z-10 grid grid-cols-2 gap-4 max-w-sm">
-                                <div className="bg-white p-6 rounded-2xl shadow-lg text-center">
-                                    <span className="material-icons text-4xl text-green-600 mb-2">volunteer_activism</span>
-                                    <p className="font-bold text-gray-800">Charity</p>
-                                    <p className="text-xs text-gray-500 mt-1">ZISWAF Online</p>
-                                </div>
-                                <div className="bg-white p-6 rounded-2xl shadow-lg text-center">
-                                    <span className="material-icons text-4xl text-blue-600 mb-2">shopping_bag</span>
-                                    <p className="font-bold text-gray-800">Sinergy</p>
-                                    <p className="text-xs text-gray-500 mt-1">Halal Mart</p>
-                                </div>
-                                <div className="bg-white p-6 rounded-2xl shadow-lg text-center">
-                                    <span className="material-icons text-4xl text-purple-600 mb-2">school</span>
-                                    <p className="font-bold text-gray-800">Academy</p>
-                                    <p className="text-xs text-gray-500 mt-1">E-Course & Artikel</p>
-                                </div>
-                                <div className="bg-white p-6 rounded-2xl shadow-lg text-center">
-                                    <span className="material-icons text-4xl text-orange-500 mb-2">groups</span>
-                                    <p className="font-bold text-gray-800">Community</p>
-                                    <p className="text-xs text-gray-500 mt-1">BAE Community</p>
+
+                        {/* RIGHT: 5/12 (approx) */}
+                        <div className="md:w-[42%] w-full">
+                            <div className="relative group">
+                                <div className="absolute -inset-4 bg-gradient-to-tr from-green-300 to-blue-300 rounded-[2.5rem] blur-2xl opacity-20 group-hover:opacity-30 transition duration-500"></div>
+                                <div className="relative bg-white p-2 rounded-[2rem] shadow-2xl border border-white overflow-hidden">
+                                    <Swiper
+                                        modules={[Autoplay, Pagination]}
+                                        pagination={{ clickable: true }}
+                                        autoplay={{ delay: 3500, disableOnInteraction: false }}
+                                        loop={true}
+                                        className="rounded-[1.8rem] overflow-hidden"
+                                    >
+                                        {/* Dynamic Carousel Items Picker */}
+                                        {[
+                                            activities[0] && { type: 'Kegiatan', title: activities[0].title, img: activities[0].header_image, link: '/kegiatan' },
+                                            articles[0] && { type: 'Artikel', title: articles[0].title, img: articles[0].images?.[0]?.path, link: `/articles/${articles[0].id}` },
+                                            campaigns[0] && { type: 'Charity', title: campaigns[0].title, img: campaigns[0].thumbnail, link: `/kampanye/${campaigns[0].slug || campaigns[0].id}` },
+                                            courses[0] && { type: 'Academy', title: courses[0].title, img: courses[0].thumbnail, link: `/kelas/${courses[0].slug || courses[0].id}` },
+                                            products[0] && { type: 'Sinergy', title: products[0].title, img: products[0].thumbnail, link: `/produk/${products[0].slug || products[0].id}` },
+                                            digitalProducts[0] && { type: 'Digital', title: digitalProducts[0].title, img: digitalProducts[0].thumbnail, link: `/digital-products/${digitalProducts[0].slug}` }
+                                        ].filter(Boolean).map((item, idx) => (
+                                            <SwiperSlide key={idx}>
+                                                <div className="relative h-[380px] group/slide">
+                                                    <img
+                                                        src={getMediaUrl(item.img)}
+                                                        alt={item.title}
+                                                        className="w-full h-full object-cover"
+                                                    />
+                                                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+                                                    <div className="absolute bottom-0 left-0 p-8 w-full text-white">
+                                                        <span className="inline-block bg-white/20 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-bold uppercase mb-3 border border-white/30">
+                                                            {item.type} Terbaru
+                                                        </span>
+                                                        <h3 className="text-xl font-bold leading-snug line-clamp-2 cursor-pointer hover:text-green-300 transition" onClick={() => navigate(item.link)}>
+                                                            {item.title}
+                                                        </h3>
+                                                    </div>
+                                                </div>
+                                            </SwiperSlide>
+                                        ))}
+                                    </Swiper>
                                 </div>
                             </div>
                         </div>
@@ -134,30 +163,42 @@ const DesktopLandingPage = () => {
                         <h2 className="text-3xl font-bold text-gray-900 mb-4">Layanan Unggulan Kami</h2>
                         <div className="w-24 h-1 bg-green-600 mx-auto rounded-full"></div>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-7xl mx-auto">
+                        {/* Charity */}
                         <div className="p-8 rounded-2xl bg-white border border-gray-100 hover:border-green-300 hover:shadow-xl transition group">
                             <div className="w-16 h-16 bg-green-100 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-green-600 transition">
                                 <span className="material-icons text-3xl text-green-700 group-hover:text-white">volunteer_activism</span>
                             </div>
-                            <h3 className="text-xl font-bold text-gray-900 mb-3">Charity & ZISWAF</h3>
-                            <p className="text-gray-600 mb-4">Salurkan zakat, infaq, dan sedekah Anda ke berbagai program sosial yang amanah dan transparan.</p>
-                            <Link to="/charity" className="text-green-700 font-semibold hover:underline text-sm">Lihat Program &rarr;</Link>
+                            <h3 className="text-xl font-bold text-gray-900 mb-3">Charity &amp; ZISWAF</h3>
+                            <p className="text-gray-600 mb-4 text-sm">Salurkan zakat, infaq, dan sedekah Anda ke berbagai program sosial yang amanah dan transparan.</p>
+                            <Link className="text-green-700 font-semibold hover:underline text-sm" to="/charity">Lihat Program →</Link>
                         </div>
+                        {/* Sinergy */}
                         <div className="p-8 rounded-2xl bg-white border border-gray-100 hover:border-blue-300 hover:shadow-xl transition group">
                             <div className="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-blue-600 transition">
                                 <span className="material-icons text-3xl text-blue-700 group-hover:text-white">shopping_bag</span>
                             </div>
                             <h3 className="text-xl font-bold text-gray-900 mb-3">Sinergy Halal Mart</h3>
-                            <p className="text-gray-600 mb-4">Penuhi kebutuhan harian dengan produk halal, bermutu, dan mendukung ekonomi umat.</p>
-                            <Link to="/sinergy" className="text-blue-700 font-semibold hover:underline text-sm">Lihat Produk &rarr;</Link>
+                            <p className="text-gray-600 mb-4 text-sm">Penuhi kebutuhan harian dengan produk halal, bermutu, dan mendukung ekonomi umat.</p>
+                            <Link className="text-blue-700 font-semibold hover:underline text-sm" to="/sinergy">Lihat Produk →</Link>
                         </div>
+                        {/* Academy */}
                         <div className="p-8 rounded-2xl bg-white border border-gray-100 hover:border-purple-300 hover:shadow-xl transition group">
                             <div className="w-16 h-16 bg-purple-100 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-purple-600 transition">
                                 <span className="material-icons text-3xl text-purple-700 group-hover:text-white">school</span>
                             </div>
                             <h3 className="text-xl font-bold text-gray-900 mb-3">Barakah Academy</h3>
-                            <p className="text-gray-600 mb-4">Tingkatkan ilmu dan keterampilan melalui e-course dan artikel islami bersertifikat.</p>
-                            <Link to="/academy" className="text-purple-700 font-semibold hover:underline text-sm">Lihat Kelas &rarr;</Link>
+                            <p className="text-gray-600 mb-4 text-sm">Tingkatkan ilmu dan keterampilan melalui e-course dan artikel islami bersertifikat.</p>
+                            <Link className="text-purple-700 font-semibold hover:underline text-sm" to="/academy">Lihat Kelas →</Link>
+                        </div>
+                        {/* Kegiatan / Community */}
+                        <div className="p-8 rounded-2xl bg-white border border-gray-100 hover:border-orange-300 hover:shadow-xl transition group">
+                            <div className="w-16 h-16 bg-orange-100 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-orange-600 transition">
+                                <span className="material-icons text-3xl text-orange-700 group-hover:text-white">groups</span>
+                            </div>
+                            <h3 className="text-xl font-bold text-gray-900 mb-3">Kegiatan Komunitas</h3>
+                            <p className="text-gray-600 mb-4 text-sm">Ikuti berbagai kegiatan pemberdayaan dan kolaborasi sosial bersama BAE Community.</p>
+                            <Link className="text-orange-700 font-semibold hover:underline text-sm" to="/kegiatan">Lihat Kegiatan →</Link>
                         </div>
                     </div>
                 </section>
