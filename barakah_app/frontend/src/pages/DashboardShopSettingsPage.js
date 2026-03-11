@@ -299,14 +299,8 @@ const DashboardShopSettingsPage = () => {
                                     className="w-full px-4 py-3 bg-gray-50 border-none rounded-xl text-sm font-semibold focus:ring-2 focus:ring-green-500"
                                 >
                                     <option value="none">Tanpa Dekorasi</option>
-                                    <option value="geometric">Pola Geometris</option>
-                                    <option value="islamic">Pola Islami & Lentera</option>
-                                    <option value="stars">Bintang Berkilau</option>
-                                    <option value="bubbles">Gelembung Melayang</option>
-                                    <option value="floating_icons">Ikon Animasi (✨💰💖)</option>
-                                    <option value="diagonal_lines">Garis Modern</option>
-                                    <option value="confetti">Perayaan Confetti</option>
-                                    <option value="clouds">Awan Lembut ☁️</option>
+                                    <option value="islamic">Islamic - Ramadan</option>
+                                    <option value="clouds">Awan Lembut</option>
                                 </select>
                             </div>
 

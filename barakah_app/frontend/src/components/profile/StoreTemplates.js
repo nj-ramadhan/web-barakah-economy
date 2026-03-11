@@ -125,29 +125,35 @@ export const HijrahElegan = ({ profile, username, products, courses, isPreview, 
     const profileTextColor = textColor || (isHex ? '#ffffff' : '#fbbf24');
 
     return (
-        <div className={`min-h-screen text-white ${getFontClass(font)} relative ${isPreview ? 'rounded-[2.5rem] h-[650px] overflow-hidden' : ''} ${!isHex && (themeColor === 'blue' ? 'bg-[#1e3a8a]' : themeColor === 'purple' ? 'bg-[#4c1d95]' : themeColor === 'rose' ? 'bg-[#881337]' : themeColor === 'dark' ? 'bg-[#111827]' : 'bg-[#064e3b]')}`} style={bgStyle}>
+        <div className={`min-h-screen text-white ${getFontClass(font)} relative overflow-x-hidden ${isPreview ? 'rounded-[2.5rem] h-[650px] overflow-hidden' : ''} ${!isHex && (themeColor === 'blue' ? 'bg-[#1e3a8a]' : themeColor === 'purple' ? 'bg-[#4c1d95]' : themeColor === 'rose' ? 'bg-[#881337]' : themeColor === 'dark' ? 'bg-[#111827]' : 'bg-[#064e3b]')}`} style={bgStyle}>
             <ShopDecoration decoration={decoration} themeColor={themeColor} isPreview={isPreview} />
-            <div className="max-w-md mx-auto py-16 px-6 flex flex-col items-center relative z-10 h-full overflow-y-auto no-scrollbar">
-                <header className={`flex flex-col items-center mb-12 w-full text-center p-6 rounded-3xl transition-all ${isTransparentHeader ? 'bg-transparent' : 'bg-emerald-950/20 backdrop-blur-md border border-white/5'}`}>
-                    <div className="relative mb-8">
+            <div className="max-w-md mx-auto flex flex-col items-center relative z-10 h-full overflow-y-auto no-scrollbar pb-16">
+                {profile.shop_thumbnail && (
+                    <div className="w-full h-40 relative overflow-hidden flex-shrink-0">
+                        <img src={getMediaUrl(profile.shop_thumbnail)} alt="Header" className="w-full h-full object-cover opacity-60" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-emerald-950/80 to-transparent"></div>
+                    </div>
+                )}
+                <header className={`flex flex-col items-center mb-10 w-full text-center p-8 rounded-b-[2rem] transition-all ${profile.shop_thumbnail ? '-mt-12 bg-inherit' : 'pt-16'} ${isTransparentHeader ? 'bg-transparent' : 'bg-emerald-950/20 backdrop-blur-md border-b border-white/5'}`}>
+                    <div className="relative mb-6">
                         <div className="absolute inset-0 bg-yellow-500/20 blur-2xl rounded-full animate-pulse"></div>
-                        <div className="w-28 h-28 rounded-full border-[3px] border-yellow-500 p-1.5 flex items-center justify-center bg-emerald-900/30 backdrop-blur-md relative z-10">
-                            <div className="w-full h-full rounded-full bg-emerald-700 overflow-hidden shadow-2xl">
+                        <div className="w-28 h-28 rounded-full border-[4px] border-yellow-500 p-1.5 flex items-center justify-center bg-emerald-900/30 backdrop-blur-md relative z-10 shadow-xl">
+                            <div className="w-full h-full rounded-full bg-emerald-700 overflow-hidden">
                                 <img src={getMediaUrl(profile.picture)} alt={username} className="w-full h-full object-cover" />
                             </div>
                         </div>
                     </div>
-                    <h1 className="text-3xl font-black mb-3 tracking-wider drop-shadow-md uppercase" style={{ color: profileTextColor }}>{profile.name_full || username}</h1>
-                    <div className="w-12 h-1 rounded-full mb-4 mx-auto" style={{ backgroundColor: profileTextColor + '40' }}></div>
-                    <p className="text-sm leading-relaxed font-medium italic opacity-80 px-4" style={{ color: profileTextColor }}>{profile.shop_description || 'Berbagi inspirasi dan keberkahan.'}</p>
+                    <h1 className="text-4xl font-black mb-2 tracking-wider drop-shadow-lg uppercase" style={{ color: profileTextColor }}>{profile.name_full || username}</h1>
+                    <p className="text-lg font-bold opacity-80 mb-4" style={{ color: profileTextColor }}>@{username}</p>
+                    <div className="w-16 h-1 rounded-full mb-6 mx-auto opacity-30" style={{ backgroundColor: profileTextColor }}></div>
+                    <p className="text-sm leading-relaxed font-serif italic max-w-[280px] mx-auto px-4" style={{ color: profileTextColor }}>{profile.shop_description || 'Berbagi inspirasi dan keberkahan.'}</p>
                 </header>
 
-                <div className={`w-full ${layout === 'grid' ? 'grid grid-cols-2 gap-4' : 'flex flex-col gap-4'}`}>
+                <div className={`w-full px-6 ${layout === 'grid' ? 'grid grid-cols-2 gap-4' : 'flex flex-col gap-4'}`}>
                     {[...courses, ...products].slice(0, 15).map((item, idx) => (
                         <ProductCard key={idx} item={item} layout={layout} templateType="hijrah" themeColor={themeColor} textStyle={textStyle} badgeBg="bg-yellow-600" isHex={isHex} username={username} isPreview={isPreview} />
                     ))}
                 </div>
-                <div className="h-12 flex-shrink-0"></div>
             </div>
         </div>
     );
@@ -161,27 +167,42 @@ export const KetenanganSenja = ({ profile, username, products, courses, isPrevie
     const profileTextColor = textColor || '#ffffff';
 
     return (
-        <div className={`min-h-screen text-white ${getFontClass(font)} relative ${isPreview ? 'rounded-[2.5rem] h-[650px] overflow-hidden' : ''} ${!isHex && 'bg-gradient-to-b from-orange-500 via-orange-600 to-amber-700'}`} style={bgStyle}>
+        <div className={`min-h-screen text-white ${getFontClass(font)} relative overflow-x-hidden ${isPreview ? 'rounded-[2.5rem] h-[650px] overflow-hidden' : ''} ${!isHex && 'bg-gradient-to-b from-orange-500 via-orange-600 to-amber-700'}`} style={bgStyle}>
             <ShopDecoration decoration={decoration} themeColor={themeColor} isPreview={isPreview} />
-            <div className="max-w-md mx-auto py-16 px-6 flex flex-col items-center h-full relative z-10 overflow-y-auto no-scrollbar">
-                <header className={`flex flex-col items-center mb-12 w-full text-center p-6 rounded-3xl transition-all ${isTransparentHeader ? 'bg-transparent' : 'bg-white/10 backdrop-blur-md border border-white/10'}`}>
-                    <div className="w-24 h-24 rounded-full border-4 border-white/20 overflow-hidden shadow-2xl mb-6 ring-4 ring-orange-400/10">
+            <div className="max-w-md mx-auto flex flex-col items-center h-full relative z-10 overflow-y-auto no-scrollbar pb-16">
+                <div className="w-full h-48 relative flex-shrink-0">
+                    <img src={getMediaUrl(profile.shop_thumbnail || profile.picture)} alt="Thumbnail" className="w-full h-full object-cover opacity-80" />
+                    <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-orange-600"></div>
+                    <div className="absolute top-8 right-8">
+                        <ShareButton size="sm" />
+                    </div>
+                </div>
+                <header className={`flex flex-col items-center mb-12 w-full text-center p-8 transition-all -mt-20 relative z-20 ${isTransparentHeader ? 'bg-transparent' : 'bg-white/10 backdrop-blur-xl rounded-t-[3rem] border-t border-white/20'}`}>
+                    <div className="w-28 h-28 rounded-full border-4 border-white/40 overflow-hidden shadow-2xl mb-6 ring-4 ring-orange-400/20 group hover:scale-105 transition-transform">
                         <img src={getMediaUrl(profile.picture)} alt={username} className="w-full h-full object-cover" />
                     </div>
-                    <h1 className="text-2xl font-black tracking-tight mb-2 drop-shadow-sm uppercase" style={{ color: profileTextColor }}>@{username}</h1>
-                    <p className="text-sm opacity-90 font-bold mt-1 italic leading-snug px-6" style={{ color: profileTextColor }}>"{profile.shop_description || 'Menikmati harmoni dalam diam'}"</p>
+                    <h1 className="text-3xl font-black tracking-tight mb-2 drop-shadow-md uppercase" style={{ color: profileTextColor }}>@{username}</h1>
+                    <div className="px-6 py-2 bg-black/10 backdrop-blur-sm rounded-full mb-4">
+                        <p className="text-xs tracking-[0.2em] font-bold opacity-90 uppercase" style={{ color: profileTextColor }}>{profile.name_full || 'Creator'}</p>
+                    </div>
+                    <p className="text-sm font-medium italic leading-relaxed px-10" style={{ color: profileTextColor }}>"{profile.shop_description || 'Menikmati harmoni dalam diam'}"</p>
                 </header>
 
-                <div className={`w-full ${layout === 'grid' ? 'grid grid-cols-2 gap-4' : 'flex flex-col gap-4'}`}>
+                <div className={`w-full px-6 ${layout === 'grid' ? 'grid grid-cols-2 gap-4' : 'flex flex-col gap-4'}`}>
                     {[...courses, ...products].slice(0, 15).map((item, idx) => (
                         <ProductCard key={idx} item={item} layout={layout} templateType="senja" themeColor={themeColor} badgeBg="bg-orange-600" username={username} isPreview={isPreview} />
                     ))}
                 </div>
-                <div className="h-12 flex-shrink-0"></div>
             </div>
         </div>
     );
 };
+
+const ShareButton = ({ size = "md" }) => (
+    <div className={`${size === 'sm' ? 'w-8 h-8' : 'w-10 h-10'} rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center cursor-pointer hover:bg-white/40 transition-colors`}>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-white"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+    </div>
+);
 
 // --- TEMPLATE 3: DUNIA BERMAIN ---
 export const DuniaBermain = ({ profile, username, products, courses, isPreview, themeColor, font, decoration, layout, headerStyle, textColor }) => {
@@ -190,27 +211,33 @@ export const DuniaBermain = ({ profile, username, products, courses, isPreview, 
     const profileTextColor = textColor || '#1e3a8a';
 
     return (
-        <div className={`min-h-screen text-[#1e3a8a] ${getFontClass(font)} relative ${isPreview ? 'rounded-[2.5rem] h-[650px] overflow-hidden' : ''} ${!isHex && 'bg-[#87CEEB]'}`} style={isHex ? { backgroundColor: themeColor } : {}}>
+        <div className={`min-h-screen text-[#1e3a8a] ${getFontClass(font)} relative overflow-x-hidden ${isPreview ? 'rounded-[2.5rem] h-[650px] overflow-hidden' : ''} ${!isHex && 'bg-[#87CEEB]'}`} style={isHex ? { backgroundColor: themeColor } : {}}>
             <ShopDecoration decoration={decoration} themeColor={themeColor} isPreview={isPreview} />
-            <div className="max-w-md mx-auto pt-16 text-center px-6 relative z-10 h-full overflow-y-auto no-scrollbar">
-                <header className={`mb-14 p-8 rounded-[3.5rem] transition-all ${isTransparentHeader ? 'bg-transparent' : 'bg-white/40 backdrop-blur-lg border-4 border-white shadow-2xl'}`}>
-                    <h1 className="text-5xl font-black drop-shadow-[0_4px_0_rgba(255,255,255,0.8)] uppercase tracking-tighter italic mb-10 transform -rotate-3 scale-110" style={{ color: profileTextColor }}>@{username}</h1>
-                    <div className="mb-10 flex justify-center scale-110">
-                        <div className="w-36 h-36 bg-[#FFD700] rounded-[2.5rem] border-8 border-white flex items-center justify-center shadow-[0_12px_24px_rgba(0,0,0,0.1)] relative animate-bounce overflow-hidden transform rotate-6 ring-8 ring-white/20">
-                            <img src={getMediaUrl(profile.picture)} className="w-full h-full object-cover" alt="Profile" />
+            <div className="max-w-md mx-auto h-full overflow-y-auto no-scrollbar pb-20">
+                <div className="pt-12 px-6">
+                    <header className={`mb-14 p-10 rounded-[3.5rem] transition-all relative z-10 ${isTransparentHeader ? 'bg-transparent' : 'bg-white/50 backdrop-blur-xl border-4 border-white shadow-[0_20px_40px_rgba(0,0,0,0.1)]'}`}>
+                        {profile.shop_thumbnail && (
+                            <div className="absolute -top-6 -right-6 w-32 h-32 rotate-12 bg-white p-2 rounded-3xl shadow-lg z-20 hidden sm:block overflow-hidden transform hover:rotate-0 transition-transform">
+                                <img src={getMediaUrl(profile.shop_thumbnail)} className="w-full h-full object-cover rounded-2xl" alt="Store" />
+                            </div>
+                        )}
+                        <h1 className="text-5xl font-black drop-shadow-[0_4px_0_rgba(255,255,255,1)] uppercase tracking-tighter italic mb-10 transform -rotate-3 scale-110" style={{ color: profileTextColor }}>@{username}</h1>
+                        <div className="mb-10 flex justify-center scale-110">
+                            <div className="w-36 h-36 bg-[#FFD700] rounded-[3rem] border-8 border-white flex items-center justify-center shadow-[0_15px_30px_rgba(0,0,0,0.1)] relative animate-bounce overflow-hidden transform rotate-6 ring-8 ring-white/30">
+                                <img src={getMediaUrl(profile.picture)} className="w-full h-full object-cover" alt="Profile" />
+                            </div>
                         </div>
-                    </div>
-                    <div className={`${isTransparentHeader ? 'bg-white/40' : 'bg-white/20'} backdrop-blur-md p-6 rounded-[2.5rem] border-4 border-white mb-6 shadow-sm inline-block transform hover:rotate-1 transition-transform`}>
-                        <p className="font-black text-xl tracking-tight" style={{ color: profileTextColor }}> {profile.shop_description || 'Waktunya Bersenang-senang!'} </p>
-                    </div>
-                </header>
+                        <div className={`${isTransparentHeader ? 'bg-white/40' : 'bg-white/30'} backdrop-blur-md p-6 rounded-[2.5rem] border-4 border-white mb-6 shadow-sm inline-block transform hover:rotate-1 transition-transform max-w-full overflow-hidden`}>
+                            <p className="font-black text-xl tracking-tight leading-tight" style={{ color: profileTextColor }}> {profile.shop_description || 'Waktunya Bersenang-senang!'} </p>
+                        </div>
+                    </header>
 
-                <div className={`w-full ${layout === 'grid' ? 'grid grid-cols-2 gap-4' : 'flex flex-col gap-6'}`}>
-                    {[...courses, ...products].slice(0, 12).map((item, idx) => (
-                        <ProductCard key={idx} item={item} layout={layout} templateType="bermain" themeColor={themeColor} textStyle={{ color: '#1e3a8a' }} badgeBg="bg-blue-900" username={username} isPreview={isPreview} />
-                    ))}
+                    <div className={`w-full ${layout === 'grid' ? 'grid grid-cols-2 gap-4' : 'flex flex-col gap-6'}`}>
+                        {[...courses, ...products].slice(0, 12).map((item, idx) => (
+                            <ProductCard key={idx} item={item} layout={layout} templateType="bermain" themeColor={themeColor} textStyle={{ color: '#1e3a8a' }} badgeBg="bg-blue-900" username={username} isPreview={isPreview} />
+                        ))}
+                    </div>
                 </div>
-                <div className="h-16 flex-shrink-0"></div>
             </div>
         </div>
     );
@@ -223,15 +250,19 @@ export const BukuGambar = ({ profile, username, products, courses, isPreview, th
     const profileTextColor = textColor || '#4A4A4A';
 
     return (
-        <div className={`min-h-screen text-[#4A4A4A] p-6 relative ${getFontClass(font)} ${isPreview ? 'rounded-[2.5rem] h-[650px] overflow-hidden' : ''} ${!isHex && 'bg-[#fff5f7]'}`} style={isHex ? { backgroundColor: themeColor } : {}}>
+        <div className={`min-h-screen text-[#4A4A4A] p-6 relative overflow-x-hidden ${getFontClass(font)} ${isPreview ? 'rounded-[2.5rem] h-[650px] overflow-hidden' : ''} ${!isHex && 'bg-[#fff5f7]'}`} style={isHex ? { backgroundColor: themeColor } : {}}>
             <ShopDecoration decoration={decoration} themeColor={themeColor} isPreview={isPreview} />
-            <div className="max-w-md mx-auto h-full overflow-y-auto no-scrollbar pb-10">
-                <header className={`w-full flex flex-col items-center mt-12 mb-12 relative z-10 text-center p-8 rounded-[2.5rem] transition-all ${isTransparentHeader ? 'bg-transparent' : 'bg-white/60 backdrop-blur-md border-2 border-pink-100 shadow-sm'}`}>
-                    <div className="text-7xl mb-6 animate-[bounce_3s_infinite] drop-shadow-lg text-pink-300">
+            <div className="max-w-md mx-auto h-full overflow-y-auto no-scrollbar pb-16">
+                <header className={`w-full flex flex-col items-center mt-12 mb-12 relative z-10 text-center p-8 rounded-[3rem] transition-all ${isTransparentHeader ? 'bg-transparent' : 'bg-white/70 backdrop-blur-md border-[6px] border-white shadow-xl shadow-pink-200/20'}`}>
+                    <div className="absolute -top-10 -left-4 w-24 h-24 rotate-[-15deg] bg-white p-2 rounded-2xl shadow-md border-2 border-pink-50 hidden sm:block">
+                        <img src={getMediaUrl(profile.shop_thumbnail || profile.picture)} alt="Shop" className="w-full h-full object-cover rounded-lg" />
+                    </div>
+                    <div className="text-7xl mb-8 animate-[bounce_3s_infinite] drop-shadow-lg text-pink-300">
                         <svg width="60" height="60" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" /></svg>
                     </div>
-                    <h1 className="text-4xl font-black tracking-tight text-center border-b-4 border-pink-200 inline-block px-2 uppercase transform rotate-1" style={{ color: profileTextColor, borderColor: profileTextColor + '40' }}>@{username}</h1>
-                    <p className="text-lg opacity-80 mt-6 italic font-medium max-w-[280px]" style={{ color: profileTextColor }}>"{profile.shop_description || ''}"</p>
+                    <h1 className="text-4xl font-black tracking-tight text-center border-b-[6px] border-pink-200 inline-block px-4 mb-4 uppercase transform rotate-1" style={{ color: profileTextColor }}>@{username}</h1>
+                    <p className="text-sm font-black opacity-60 uppercase tracking-[0.3em] mb-4" style={{ color: profileTextColor }}>Doodle Space</p>
+                    <p className="text-xl opacity-90 mt-2 italic font-serif leading-relaxed max-w-[260px]" style={{ color: profileTextColor }}>"{profile.shop_description || 'Mari berkreasi hari ini!'}"</p>
                 </header>
 
                 <div className={`w-full ${layout === 'grid' ? 'grid grid-cols-2 gap-5' : 'flex flex-col gap-6'} relative z-10`}>
@@ -251,29 +282,41 @@ export const NeonCyber = ({ profile, username, products, courses, isPreview, the
     const profileTextColor = textColor || '#05f9ff';
 
     return (
-        <div className={`min-h-screen text-slate-100 p-6 relative ${getFontClass(font)} ${isPreview ? 'rounded-[2.5rem] h-[650px] overflow-hidden' : ''} ${!isHex && 'bg-[#050810]'}`} style={isHex ? { backgroundColor: themeColor } : {}}>
+        <div className={`min-h-screen text-slate-100 p-6 relative overflow-x-hidden ${getFontClass(font)} ${isPreview ? 'rounded-[2.5rem] h-[650px] overflow-hidden' : ''} ${!isHex && 'bg-[#050810]'}`} style={isHex ? { backgroundColor: themeColor } : {}}>
             <ShopDecoration decoration={decoration} themeColor={themeColor} isPreview={isPreview} />
-            <div className="max-w-md mx-auto h-full overflow-y-auto no-scrollbar pb-12">
-                <header className={`w-full flex justify-between items-center mb-14 relative z-10 mt-6 p-6 rounded-2xl transition-all ${isTransparentHeader ? 'bg-transparent border-l-4 border-[#05f9ff]' : 'bg-slate-900/60 backdrop-blur-xl border-l-4 border-[#05f9ff] border-y border-r border-white/5 shadow-[0_0_30px_rgba(5,249,255,0.05)]'}`}>
-                    <div className="flex flex-col text-left">
-                        <h1 className="text-2xl font-black tracking-tighter italic drop-shadow-[0_0_12px_rgba(5,249,255,0.7)]" style={{ color: profileTextColor }}>@{username}</h1>
-                        <div className="flex items-center gap-2">
-                            <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse shadow-[0_0_8px_green]"></span>
-                            <span className="text-[10px] uppercase tracking-[0.4em] text-[#bc13fe] font-black"></span>
+            <div className="max-w-md mx-auto h-full overflow-y-auto no-scrollbar pb-20">
+                <header className={`w-full flex flex-col gap-6 mb-12 relative z-10 mt-6 transition-all`}>
+                    <div className={`flex justify-between items-center p-6 rounded-3xl transition-all ${isTransparentHeader ? 'bg-transparent border-l-[6px] border-[#05f9ff]' : 'bg-slate-900/80 backdrop-blur-2xl border-l-[6px] border-[#05f9ff] border-y border-r border-[#05f9ff]/10 shadow-[0_0_40px_rgba(5,249,255,0.15)]'}`}>
+                        <div className="flex flex-col text-left">
+                            <h1 className="text-3xl font-black tracking-tighter italic drop-shadow-[0_0_15px_rgba(5,249,255,1)]" style={{ color: profileTextColor }}>@{username}</h1>
+                            <div className="flex items-center gap-2 mt-2">
+                                <span className="w-2.5 h-2.5 bg-[#05f9ff] rounded-full animate-pulse shadow-[0_0_12px_#05f9ff]"></span>
+                                <span className="text-[10px] uppercase tracking-[0.5em] font-black text-[#bc13fe]">AUTHORIZED</span>
+                            </div>
+                        </div>
+                        <div className="w-20 h-20 rounded-2xl border-2 border-[#bc13fe] flex items-center justify-center bg-slate-800 shadow-[0_0_20px_rgba(188,19,254,0.5)] rotate-3 overflow-hidden">
+                            <img src={getMediaUrl(profile.picture)} className="w-full h-full object-cover" alt="Profile" />
                         </div>
                     </div>
-                    <div className="w-16 h-16 rounded-2xl border-2 border-[#bc13fe] flex items-center justify-center bg-slate-800 shadow-[0_0_15px_rgba(188,19,254,0.4)] rotate-3">
-                        <img src={getMediaUrl(profile.picture)} className="w-full h-full object-cover rounded-xl" alt="P" />
+
+                    {profile.shop_thumbnail && (
+                        <div className="w-full h-24 rounded-2xl border border-[#05f9ff]/20 overflow-hidden relative group">
+                            <img src={getMediaUrl(profile.shop_thumbnail)} className="w-full h-full object-cover opacity-60 group-hover:scale-105 transition-transform" alt="Banner" />
+                            <div className="absolute inset-0 bg-gradient-to-r from-[#05f9ff]/20 to-transparent"></div>
+                            <div className="absolute bottom-3 left-4">
+                                <p className="text-[10px] font-mono uppercase tracking-widest text-[#05f9ff]">Network_Banner.v1</p>
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="bg-slate-900/60 border border-[#05f9ff]/10 p-5 rounded-2xl text-center shadow-inner">
+                        <p className="text-sm font-mono tracking-wide leading-relaxed" style={{ color: profileTextColor }}> {profile.shop_description || 'SYSTEMS_CORE_ACTIVE'} </p>
                     </div>
                 </header>
 
-                <div className="bg-slate-900/30 border border-white/5 p-4 rounded-xl mb-10 text-center relative z-10">
-                    <p className="text-xs font-mono uppercase tracking-widest tracking-tighter italic" style={{ color: profileTextColor }}> {profile.shop_description || ''} </p>
-                </div>
-
-                <div className={`w-full ${layout === 'grid' ? 'grid grid-cols-2 gap-4' : 'flex flex-col gap-5'} relative z-10`}>
+                <div className={`w-full ${layout === 'grid' ? 'grid grid-cols-2 gap-4' : 'flex flex-col gap-6'} relative z-10`}>
                     {[...courses, ...products].slice(0, 15).map((item, idx) => (
-                        <ProductCard key={idx} item={item} layout={layout} templateType="cyber" themeColor={themeColor} textStyle={{ color: '#05f9ff', textShadow: '0 0 8px rgba(5,249,255,0.6)' }} badgeBg="bg-[#bc13fe]" username={username} isPreview={isPreview} />
+                        <ProductCard key={idx} item={item} layout={layout} templateType="cyber" themeColor={themeColor} textStyle={{ color: '#05f9ff', textShadow: '0 0 10px rgba(5,249,255,0.7)' }} badgeBg="bg-[#bc13fe]" username={username} isPreview={isPreview} />
                     ))}
                 </div>
             </div>
@@ -288,26 +331,32 @@ export const AestheticLoFi = ({ profile, username, products, courses, isPreview,
     const profileTextColor = textColor || '#ffffff';
 
     return (
-        <div className={`min-h-screen text-[#5d5c4b] relative ${getFontClass(font)} ${isPreview ? 'rounded-[2.5rem] h-[650px] overflow-hidden' : ''} ${!isHex && 'bg-[#f4f1ea]'}`} style={isHex ? { backgroundColor: themeColor } : {}}>
+        <div className={`min-h-screen text-[#5d5c4b] relative overflow-x-hidden ${getFontClass(font)} ${isPreview ? 'rounded-[2.5rem] h-[650px] overflow-hidden' : ''} ${!isHex && 'bg-[#f4f1ea]'}`} style={isHex ? { backgroundColor: themeColor } : {}}>
             <ShopDecoration decoration={decoration} themeColor={themeColor} isPreview={isPreview} />
-            <div className="max-w-md mx-auto h-full overflow-y-auto no-scrollbar">
-                <div className="w-full h-56 bg-stone-200 relative overflow-hidden rounded-b-[3rem] shadow-lg">
-                    <img src={getMediaUrl(profile.shop_thumbnail || profile.picture)} className="w-full h-full object-cover" alt="B" />
-                    <div className={`absolute inset-0 transition-all ${isTransparentHeader ? 'bg-transparent' : 'bg-stone-900/20 backdrop-blur-[2px]'}`}></div>
-                    <div className="absolute bottom-10 left-8 text-left z-10">
-                        <h1 className="text-3xl font-serif italic mb-1 drop-shadow-md" style={{ color: profileTextColor }}>@{username}</h1>
-                        <p className="text-[11px] tracking-[0.3em] uppercase opacity-80 font-bold" style={{ color: profileTextColor }}> </p>
+            <div className="max-w-md mx-auto h-full overflow-y-auto no-scrollbar pb-16">
+                <div className="w-full h-64 bg-stone-200 relative overflow-hidden rounded-b-[4rem] shadow-xl">
+                    <img src={getMediaUrl(profile.shop_thumbnail || profile.picture)} className="w-full h-full object-cover" alt="Shop Hero" />
+                    <div className={`absolute inset-0 transition-all ${isTransparentHeader ? 'bg-black/10' : 'bg-stone-900/30 backdrop-blur-[1px]'}`}></div>
+                    <div className="absolute bottom-16 left-10 text-left z-20">
+                        <h1 className="text-4xl font-serif italic mb-2 drop-shadow-xl" style={{ color: profileTextColor }}>@{username}</h1>
+                        <div className="flex items-center gap-3">
+                            <span className="w-8 h-[2px] bg-white opacity-60"></span>
+                            <p className="text-xs tracking-[0.4em] uppercase font-bold text-white shadow-sm">Slow & Steady</p>
+                        </div>
                     </div>
                 </div>
 
-                <section className="px-6 space-y-8 -mt-10 bg-inherit rounded-t-[3rem] relative z-20 text-center pb-12">
-                    <div className={`p-6 rounded-3xl transition-all max-w-[320px] mx-auto ${isTransparentHeader ? 'bg-transparent' : 'bg-white/90 backdrop-blur-lg border border-stone-200 shadow-xl'}`}>
-                        <p className="text-base leading-relaxed italic font-serif" style={{ color: profileTextColor === '#ffffff' ? '#5d5c4b' : profileTextColor }}>
+                <section className="px-6 space-y-10 -mt-12 bg-inherit rounded-t-[4rem] relative z-30 text-center">
+                    <div className={`p-8 rounded-[2.5rem] transition-all max-w-sm mx-auto ${isTransparentHeader ? 'bg-transparent' : 'bg-white/95 backdrop-blur-xl border border-stone-100 shadow-2xl shadow-stone-900/5'}`}>
+                        <div className="w-20 h-20 rounded-full overflow-hidden mx-auto mb-6 border-4 border-stone-50 shadow-md">
+                            <img src={getMediaUrl(profile.picture)} className="w-full h-full object-cover" alt="A" />
+                        </div>
+                        <p className="text-lg leading-relaxed italic font-serif" style={{ color: profileTextColor === '#ffffff' ? '#5d5c4b' : profileTextColor }}>
                             "{profile.shop_description || 'Menikmati setiap momen kecil dalam hidup.'}"
                         </p>
                     </div>
 
-                    <div className={`w-full ${layout === 'grid' ? 'grid grid-cols-2 gap-5' : 'flex flex-col gap-5'}`}>
+                    <div className={`w-full ${layout === 'grid' ? 'grid grid-cols-2 gap-5' : 'flex flex-col gap-6'}`}>
                         {[...courses, ...products].slice(0, 15).map((item, idx) => (
                             <ProductCard key={idx} item={item} layout={layout} templateType="lofi" themeColor={themeColor} badgeBg="bg-stone-500" username={username} isPreview={isPreview} />
                         ))}

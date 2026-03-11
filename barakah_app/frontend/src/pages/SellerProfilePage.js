@@ -75,7 +75,7 @@ const SellerProfilePage = () => {
     const fontStyle = profile.shop_font || 'sans';
     const decoration = profile.shop_decoration || 'none';
     const headerStyle = profile.shop_header_style || 'theme';
-    const textColor = profile.shop_text_color || (themeColor === 'dark' ? '#ffffff' : '#111827');
+    const textColor = profile.shop_text_color; // Direct from DB, let templates or default layout decide fallback
 
     const isHex = themeColor?.startsWith('#') || themeColor?.startsWith('rgb');
     const getThemeClasses = (color) => {
@@ -171,15 +171,15 @@ const SellerProfilePage = () => {
 
                 <div className={`mt-16 text-center px-4 ${layoutStyle === 'biolink' ? 'w-full max-w-md' : ''}`}>
                     <div className="flex items-center justify-center gap-2">
-                        <h1 className="text-xl font-bold" style={{ color: textColor }}>@{username}</h1>
+                        <h1 className="text-xl font-bold" style={{ color: textColor || (themeColor === 'dark' ? '#ffffff' : '#111827') }}>@{username}</h1>
                         <ShareButton slug={username} title={`Profil Toko @${username}`} type="seller" />
                     </div>
                     {profile && (
                         <>
-                            <p className="text-sm mt-1 opacity-80" style={{ color: textColor }}>{profile.name_full}</p>
+                            <p className="text-sm mt-1 opacity-80" style={{ color: textColor || (themeColor === 'dark' ? '#ffffff' : '#111827') }}>{profile.name_full}</p>
                             {profile.shop_description && (
                                 <div className="mt-4 max-w-md mx-auto">
-                                    <p className="text-sm italic opacity-90" style={{ color: textColor }}>"{profile.shop_description}"</p>
+                                    <p className="text-sm italic opacity-90" style={{ color: textColor || (themeColor === 'dark' ? '#ffffff' : '#111827') }}>"{profile.shop_description}"</p>
                                 </div>
                             )}
                         </>
