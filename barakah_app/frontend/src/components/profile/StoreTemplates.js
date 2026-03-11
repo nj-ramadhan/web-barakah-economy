@@ -131,7 +131,7 @@ export const HijrahElegan = ({ profile, username, products, courses, isPreview, 
                         <div className="absolute inset-0 bg-gradient-to-t from-emerald-950/80 to-transparent"></div>
                     </div>
                 )}
-                <header className={`flex flex-col items-center mb-10 w-full text-center p-8 rounded-b-[2rem] transition-all ${profile.shop_thumbnail ? '-mt-12 bg-inherit' : 'pt-16'} bg-emerald-950/20 backdrop-blur-md border-b border-white/5`}>
+                <header className={`flex flex-col items-center mb-10 w-full text-center p-8 rounded-b-[2rem] transition-all ${profile.shop_thumbnail ? '-mt-12 bg-inherit' : 'pt-16'} `}>
                     <div className="relative mb-6">
                         <div className="absolute inset-0 bg-yellow-500/20 blur-2xl rounded-full animate-pulse"></div>
                         <div className="w-28 h-28 rounded-full border-[4px] border-yellow-500 p-1.5 flex items-center justify-center bg-emerald-900/30 backdrop-blur-md relative z-10 shadow-xl">
@@ -200,11 +200,7 @@ export const AestheticLoFi = ({ profile, username, products, courses, isPreview,
                     <img src={getMediaUrl(profile.shop_thumbnail || profile.picture)} className="w-full h-full object-cover" alt="Shop Hero" />
                     <div className={`absolute inset-0 transition-all bg-stone-900/30 backdrop-blur-[1px]`}></div>
                     <div className="absolute bottom-16 left-10 text-left z-20">
-                        <h1 className="text-4xl font-serif italic mb-2 drop-shadow-xl">@{username}</h1>
-                        <div className="flex items-center gap-3">
-                            <span className="w-8 h-[2px] bg-white opacity-60"></span>
-                            <p className="text-xs tracking-[0.4em] uppercase font-bold text-white shadow-sm">Slow & Steady</p>
-                        </div>
+                        <h1 className="text-4xl text-white font-serif italic mb-2 drop-shadow-xl">@{username}</h1>
                     </div>
                 </div>
 
