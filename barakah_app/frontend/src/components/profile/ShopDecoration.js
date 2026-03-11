@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
-import anime from 'animejs';
+import * as anime_module from 'animejs';
+const anime = anime_module.default || anime_module;
 
 const ShopDecoration = ({ decoration, themeColor, isPreview = false }) => {
     const containerRef = useRef(null);
