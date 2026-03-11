@@ -166,6 +166,8 @@ class Profile(models.Model):
     shop_font = models.CharField(max_length=50, default='sans', blank=True)
     shop_decoration = models.CharField(max_length=50, default='none', blank=True)
     shop_template = models.CharField(max_length=50, default='none', blank=True)
+    shop_header_style = models.CharField(max_length=50, default='theme', blank=True) # Options: 'theme', 'transparent'
+    shop_text_color = models.CharField(max_length=50, default='#ffffff', blank=True)
 
     def __str__(self):
         return f'{self.user.username} Profile'

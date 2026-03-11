@@ -206,31 +206,22 @@ const DashboardShopSettingsPage = () => {
                             <div>
                                 <label className="block font-bold text-gray-700 mb-2 text-sm">Tema Warna</label>
                                 <div className="flex gap-2 flex-wrap mb-3">
-                                    {['green', 'blue', 'purple', 'dark', 'rose'].map(color => {
-                                        const isCurrent = profile.shop_theme_color === color || profile.shop_theme_color === `glass:${color}`;
-                                        return (
-                                            <button
-                                                key={color}
-                                                type="button"
-                                                onClick={() => {
-                                                    const isGlass = profile.shop_theme_color?.startsWith('glass:');
-                                                    setProfile(prev => ({ ...prev, shop_theme_color: isGlass ? `glass:${color}` : color }))
-                                                }}
-                                                className={`px-4 py-1.5 rounded-full text-xs font-bold border ${isCurrent ? 'border-gray-800 ring-2 ring-gray-300' : 'border-gray-200'} capitalize transition`}
-                                            >
-                                                {color}
-                                            </button>
-                                        );
-                                    })}
+                                    {['green', 'blue', 'purple', 'dark', 'rose'].map(color => (
+                                        <button
+                                            key={color}
+                                            type="button"
+                                            onClick={() => setProfile(prev => ({ ...prev, shop_theme_color: color }))}
+                                            className={`px-4 py-1.5 rounded-full text-xs font-bold border ${profile.shop_theme_color === color ? 'border-gray-800 ring-2 ring-gray-300' : 'border-gray-200'} capitalize transition`}
+                                        >
+                                            {color}
+                                        </button>
+                                    ))}
                                 </div>
                                 <div className="flex items-center gap-3">
                                     <input
                                         type="color"
-                                        value={profile.shop_theme_color?.replace('glass:', '')?.startsWith('#') ? profile.shop_theme_color.replace('glass:', '') : '#166534'}
-                                        onChange={(e) => {
-                                            const isGlass = profile.shop_theme_color?.startsWith('glass:');
-                                            setProfile(prev => ({ ...prev, shop_theme_color: isGlass ? `glass:${e.target.value}` : e.target.value }))
-                                        }}
+                                        value={profile.shop_theme_color?.startsWith('#') ? profile.shop_theme_color : '#166534'}
+                                        onChange={(e) => setProfile(prev => ({ ...prev, shop_theme_color: e.target.value }))}
                                         className="w-12 h-12 rounded-lg cursor-pointer border-0 p-0 shadow-sm"
                                         title="Pilih Warna Custom"
                                     />
@@ -242,34 +233,6 @@ const DashboardShopSettingsPage = () => {
                                         className="flex-1 px-4 py-3 bg-gray-50 border-none rounded-xl text-sm font-semibold uppercase focus:ring-2 focus:ring-green-500"
                                     />
                                 </div>
-                            </div>
-
-                            {/* Background Style Toggle */}
-                            <div>
-                                <label className="block font-bold text-gray-700 mb-2 text-sm">Gaya Background</label>
-                                <div className="flex gap-2">
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            const color = profile.shop_theme_color?.replace('glass:', '') || 'green';
-                                            setProfile(prev => ({ ...prev, shop_theme_color: color }));
-                                        }}
-                                        className={`flex-1 py-3 px-4 rounded-xl text-xs font-bold border transition ${!profile.shop_theme_color?.startsWith('glass:') ? 'bg-green-700 text-white border-green-700 shadow-md' : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'}`}
-                                    >
-                                        Solid (Penuh)
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            const color = profile.shop_theme_color?.replace('glass:', '') || 'green';
-                                            setProfile(prev => ({ ...prev, shop_theme_color: `glass:${color}` }));
-                                        }}
-                                        className={`flex-1 py-3 px-4 rounded-xl text-xs font-bold border transition ${profile.shop_theme_color?.startsWith('glass:') ? 'bg-green-700 text-white border-green-700 shadow-md' : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'}`}
-                                    >
-                                        Glassmorphism (Transparan)
-                                    </button>
-                                </div>
-                                <p className="text-[10px] text-gray-400 mt-2 italic px-1">* Glassmorphism memberikan efek transparan yang modern pada template.</p>
                             </div>
 
                             {/* Shop Font */}
@@ -286,6 +249,44 @@ const DashboardShopSettingsPage = () => {
                                     <option value="mono">Tech Mono</option>
                                     <option value="poppins">Poppins (Friendly)</option>
                                 </select>
+                            </div>
+
+                            {/* Shop Header Style */}
+                            <div>
+                                <label className="block font-bold text-gray-700 mb-2 text-sm">Gaya Header Profil</label>
+                                <select
+                                    name="shop_header_style"
+                                    value={profile.shop_header_style || 'theme'}
+                                    onChange={handleChange}
+                                    className="w-full px-4 py-3 bg-gray-50 border-none rounded-xl text-sm font-semibold focus:ring-2 focus:ring-green-500"
+                                >
+                                    <option value="theme">Warna Tema (Solid/Gradient)</option>
+                                    <option value="transparent">Transparan (Menyatu Background)</option>
+                                </select>
+                            </div>
+
+                            {/* Shop Text Color */}
+                            <div>
+                                <label className="block font-bold text-gray-700 mb-2 text-sm">Warna Teks Profil (Username/Deskripsi)</label>
+                                <div className="flex flex-wrap gap-2 mb-2">
+                                    {['#ffffff', '#000000', '#1e3a8a', '#064e3b', '#881337', '#ea580c', '#fbbf24', '#05f9ff', '#bc13fe'].map(color => (
+                                        <button
+                                            key={color}
+                                            type="button"
+                                            onClick={() => setProfile({ ...profile, shop_text_color: color })}
+                                            className={`w-8 h-8 rounded-full border-2 transition ${profile.shop_text_color === color ? 'border-green-500 scale-110' : 'border-transparent'}`}
+                                            style={{ backgroundColor: color }}
+                                        />
+                                    ))}
+                                </div>
+                                <input
+                                    type="text"
+                                    name="shop_text_color"
+                                    value={profile.shop_text_color || '#ffffff'}
+                                    onChange={handleChange}
+                                    placeholder="#ffffff"
+                                    className="w-full px-4 py-3 bg-gray-50 border-none rounded-xl text-sm font-mono focus:ring-2 focus:ring-green-500"
+                                />
                             </div>
 
                             {/* Shop Decoration */}
@@ -351,7 +352,7 @@ const DashboardShopSettingsPage = () => {
                         <div className="w-full lg:w-[350px] flex-shrink-0 bg-gray-50 rounded-2xl p-4 border flex flex-col items-center">
                             <h4 className="text-xs font-bold text-gray-400 mb-4 w-full text-center tracking-widest uppercase">Live Preview (Mobile)</h4>
 
-                            <div className={`w-full rounded-[2.5rem] shadow-sm border-[6px] border-gray-200 overflow-hidden relative h-[650px] flex flex-col transition-all duration-700 ${profile.shop_font === 'serif' ? 'font-serif' : profile.shop_font === 'mono' ? 'font-mono' : profile.shop_font === 'poppins' ? 'font-[Poppins]' : 'font-sans'} ${profile.shop_template === 'none' && !profile.shop_theme_color?.includes('#') && !profile.shop_theme_color?.includes('rgb') ? (profile.shop_theme_color?.replace('glass:', '') === 'dark' ? 'bg-gray-900' : profile.shop_theme_color?.replace('glass:', '') === 'blue' ? 'bg-blue-900' : profile.shop_theme_color?.replace('glass:', '') === 'purple' ? 'bg-purple-900' : profile.shop_theme_color?.replace('glass:', '') === 'rose' ? 'bg-rose-900' : 'bg-white') : 'bg-white'}`} style={profile.shop_template === 'none' && (profile.shop_theme_color?.replace('glass:', '')?.startsWith('#') || profile.shop_theme_color?.replace('glass:', '')?.startsWith('rgb')) ? { backgroundColor: profile.shop_theme_color.replace('glass:', '') } : {}}>
+                            <div className={`w-full bg-white rounded-[2.5rem] shadow-sm border-[6px] border-gray-200 overflow-hidden relative h-[650px] flex flex-col ${profile.shop_font === 'serif' ? 'font-serif' : profile.shop_font === 'mono' ? 'font-mono' : profile.shop_font === 'poppins' ? 'font-[Poppins]' : 'font-sans'}`}>
                                 {profile.shop_template !== 'none' ? (
                                     <StoreTemplates
                                         templateName={profile.shop_template}
@@ -362,6 +363,8 @@ const DashboardShopSettingsPage = () => {
                                         font={profile.shop_font}
                                         decoration={profile.shop_decoration}
                                         layout={profile.shop_layout}
+                                        headerStyle={profile.shop_header_style}
+                                        textColor={profile.shop_text_color || '#ffffff'}
                                         products={[
                                             { title: 'Produk Digital 1', price: 50000, thumbnail: 'https://barakah-economy.com/media/products/course_social_media.jpg', category: 'Marketing' },
                                             { title: 'Produk Digital 2', price: 75000, thumbnail: 'https://barakah-economy.com/media/products/design_bundle.jpg', category: 'Design' }
@@ -375,86 +378,83 @@ const DashboardShopSettingsPage = () => {
                                         {/* Decoration Overlay */}
                                         <ShopDecoration decoration={profile.shop_decoration} themeColor={profile.shop_theme_color} isPreview={true} />
 
-                                        {/* Content Wrapper for Glassmorphism */}
-                                        <div className={`flex-1 flex flex-col relative z-20 transition-all duration-700 ${profile.shop_theme_color?.startsWith('glass:') ? 'bg-white/10 backdrop-blur-xl' : ''}`}>
-                                            {/* Header bg / Shop Thumbnail */}
-                                            <div
-                                                className={`h-32 w-full relative z-10 overflow-hidden ${!profile.shop_thumbnail && (profile.shop_theme_color?.replace('glass:', '') === 'dark' ? 'bg-gray-800' : profile.shop_theme_color?.replace('glass:', '') === 'blue' ? 'bg-blue-700' : profile.shop_theme_color?.replace('glass:', '') === 'purple' ? 'bg-purple-700' : profile.shop_theme_color?.replace('glass:', '') === 'rose' ? 'bg-rose-700' : profile.shop_theme_color?.replace('glass:', '') === 'green' ? 'bg-green-700' : 'bg-gray-100')}`}
-                                                style={{ backgroundColor: (!profile.shop_thumbnail && (profile.shop_theme_color?.replace('glass:', '')?.startsWith('#') || profile.shop_theme_color?.replace('glass:', '')?.startsWith('rgb'))) ? profile.shop_theme_color.replace('glass:', '') : undefined }}
-                                            >
-                                                {profile.shop_thumbnail && (
-                                                    <img
-                                                        src={profile.shop_thumbnail instanceof File ? URL.createObjectURL(profile.shop_thumbnail) : getMediaUrl(profile.shop_thumbnail)}
-                                                        alt="Thumbnail Preview"
-                                                        className="w-full h-full object-cover opacity-100"
-                                                    />
-                                                )}
-                                            </div>
+                                        {/* Header bg / Shop Thumbnail */}
+                                        <div
+                                            className={`h-32 w-full relative z-10 overflow-hidden ${profile.shop_header_style === 'transparent' ? 'bg-transparent' : (!profile.shop_thumbnail && (profile.shop_theme_color === 'dark' ? 'bg-gray-900' : profile.shop_theme_color === 'blue' ? 'bg-blue-800' : profile.shop_theme_color === 'purple' ? 'bg-purple-800' : profile.shop_theme_color === 'rose' ? 'bg-rose-800' : profile.shop_theme_color === 'green' ? 'bg-green-800' : 'bg-gray-800'))}`}
+                                            style={{ backgroundColor: (profile.shop_header_style !== 'transparent' && !profile.shop_thumbnail && (profile.shop_theme_color?.startsWith('#') || profile.shop_theme_color?.startsWith('rgb'))) ? profile.shop_theme_color : undefined }}
+                                        >
+                                            {profile.shop_thumbnail && (
+                                                <img
+                                                    src={profile.shop_thumbnail instanceof File ? URL.createObjectURL(profile.shop_thumbnail) : getMediaUrl(profile.shop_thumbnail)}
+                                                    alt="Thumbnail Preview"
+                                                    className="w-full h-full object-cover opacity-100"
+                                                />
+                                            )}
+                                        </div>
 
-                                            {/* Fake Profile img */}
-                                            <div className="absolute top-20 left-1/2 -translate-x-1/2 z-20">
-                                                <div className="w-20 h-20 rounded-full border-4 border-white bg-gray-200 overflow-hidden shadow-md">
-                                                    {profile.picture ? (
-                                                        <img src={profile.picture instanceof File ? URL.createObjectURL(profile.picture) : profile.picture} alt="Preview" className="w-full h-full object-cover" />
-                                                    ) : (
-                                                        <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs bg-white shadow-inner">Foto Profil</div>
-                                                    )}
-                                                </div>
-                                            </div>
-
-                                            <div className={`mt-12 px-6 text-center relative z-10 ${profile.shop_theme_color?.replace('glass:', '') === 'dark' || profile.shop_theme_color?.startsWith('glass:') ? 'text-white' : 'text-gray-800'}`}>
-                                                <p className="font-bold text-lg">@{profile.username || 'username'}</p>
-                                                <p className={`text-xs mt-2 line-clamp-3 leading-relaxed ${profile.shop_theme_color?.startsWith('glass:') ? 'text-white/80' : 'text-gray-500'}`}>{profile.shop_description || 'Deskripsi toko digital Anda akan ditampilkan di sini.'}</p>
-                                            </div>
-
-                                            {/* Fake Content Area based on Layout */}
-                                            <div className="mt-6 p-4 flex-1 relative z-10 border-t border-white/10">
-                                                {profile.shop_layout === 'biolink' ? (
-                                                    <div className="flex flex-col gap-3">
-                                                        <div className="w-full h-12 bg-white/90 backdrop-blur-sm rounded-2xl border shadow-sm flex items-center justify-center text-sm font-bold text-gray-700">Contoh Produk Digital 1</div>
-                                                        <div className="w-full h-12 bg-white/90 backdrop-blur-sm rounded-2xl border shadow-sm flex items-center justify-center text-sm font-bold text-gray-700">Contoh Produk Digital 2</div>
-                                                        <div className="w-full h-12 bg-white/90 backdrop-blur-sm rounded-2xl border shadow-sm flex items-center justify-center text-sm font-bold text-gray-700">Mini E-Course Belajar</div>
-                                                    </div>
-                                                ) : profile.shop_layout === 'grid' ? (
-                                                    <div className="grid grid-cols-2 gap-3">
-                                                        <div className="aspect-square bg-white/90 backdrop-blur-sm rounded-2xl border shadow-sm flex flex-col items-center justify-center p-3">
-                                                            <div className="w-full h-full bg-gray-100 rounded-xl mb-2"></div>
-                                                            <div className="w-3/4 h-2 bg-gray-200 rounded"></div>
-                                                        </div>
-                                                        <div className="aspect-square bg-white/90 backdrop-blur-sm rounded-2xl border shadow-sm flex flex-col items-center justify-center p-3">
-                                                            <div className="w-full h-full bg-gray-100 rounded-xl mb-2"></div>
-                                                            <div className="w-3/4 h-2 bg-gray-200 rounded"></div>
-                                                        </div>
-                                                        <div className="aspect-square bg-white/90 backdrop-blur-sm rounded-2xl border shadow-sm flex flex-col items-center justify-center p-3">
-                                                            <div className="w-full h-full bg-gray-100 rounded-xl mb-2"></div>
-                                                            <div className="w-3/4 h-2 bg-gray-200 rounded"></div>
-                                                        </div>
-                                                        <div className="aspect-square bg-white/90 backdrop-blur-sm rounded-2xl border shadow-sm flex flex-col items-center justify-center p-3">
-                                                            <div className="w-full h-full bg-gray-100 rounded-xl mb-2"></div>
-                                                            <div className="w-3/4 h-2 bg-gray-200 rounded"></div>
-                                                        </div>
-                                                    </div>
+                                        {/* Fake Profile img */}
+                                        <div className="absolute top-20 left-1/2 -translate-x-1/2 z-20">
+                                            <div className="w-20 h-20 rounded-full border-4 border-white bg-gray-200 overflow-hidden shadow-md">
+                                                {profile.picture ? (
+                                                    <img src={profile.picture instanceof File ? URL.createObjectURL(profile.picture) : profile.picture} alt="Preview" className="w-full h-full object-cover" />
                                                 ) : (
-                                                    <div className="flex flex-col gap-3">
-                                                        <div className="w-full bg-white/90 backdrop-blur-sm rounded-2xl border shadow-sm flex items-center p-3 gap-3">
-                                                            <div className="w-16 h-16 bg-gray-100 rounded-xl"></div>
-                                                            <div className="flex-1">
-                                                                <div className="h-3 bg-gray-200 rounded w-3/4 mb-2"></div>
-                                                                <div className="h-2 bg-gray-100 rounded w-1/2"></div>
-                                                                <div className="h-3 bg-green-100 rounded w-1/3 mt-2"></div>
-                                                            </div>
-                                                        </div>
-                                                        <div className="w-full bg-white/90 backdrop-blur-sm rounded-2xl border shadow-sm flex items-center p-3 gap-3">
-                                                            <div className="w-16 h-16 bg-gray-100 rounded-xl"></div>
-                                                            <div className="flex-1">
-                                                                <div className="h-3 bg-gray-200 rounded w-3/4 mb-2"></div>
-                                                                <div className="h-2 bg-gray-100 rounded w-1/2"></div>
-                                                                <div className="h-3 bg-green-100 rounded w-1/3 mt-2"></div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
+                                                    <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs bg-white shadow-inner">Foto Profil</div>
                                                 )}
                                             </div>
+                                        </div>
+
+                                        <div className={`mt-12 px-6 text-center relative z-10 ${profile.shop_theme_color === 'dark' ? 'text-white' : ''}`}>
+                                            <p className="font-bold text-lg">@{profile.username || 'username'}</p>
+                                            <p className="text-xs text-gray-500 mt-2 line-clamp-3 leading-relaxed">{profile.shop_description || 'Deskripsi toko digital Anda akan ditampilkan di sini.'}</p>
+                                        </div>
+
+                                        {/* Fake Content Area based on Layout */}
+                                        <div className={`mt-6 p-4 flex-1 relative z-10 border-t border-gray-100 ${profile.shop_theme_color === 'dark' ? 'bg-gray-900/80' : 'bg-gray-50/50'}`}>
+                                            {profile.shop_layout === 'biolink' ? (
+                                                <div className="flex flex-col gap-3">
+                                                    <div className="w-full h-12 bg-white/90 backdrop-blur-sm rounded-2xl border shadow-sm flex items-center justify-center text-sm font-bold text-gray-700">Contoh Produk Digital 1</div>
+                                                    <div className="w-full h-12 bg-white/90 backdrop-blur-sm rounded-2xl border shadow-sm flex items-center justify-center text-sm font-bold text-gray-700">Contoh Produk Digital 2</div>
+                                                    <div className="w-full h-12 bg-white/90 backdrop-blur-sm rounded-2xl border shadow-sm flex items-center justify-center text-sm font-bold text-gray-700">Mini E-Course Belajar</div>
+                                                </div>
+                                            ) : profile.shop_layout === 'grid' ? (
+                                                <div className="grid grid-cols-2 gap-3">
+                                                    <div className="aspect-square bg-white/90 backdrop-blur-sm rounded-2xl border shadow-sm flex flex-col items-center justify-center p-3">
+                                                        <div className="w-full h-full bg-gray-100 rounded-xl mb-2"></div>
+                                                        <div className="w-3/4 h-2 bg-gray-200 rounded"></div>
+                                                    </div>
+                                                    <div className="aspect-square bg-white/90 backdrop-blur-sm rounded-2xl border shadow-sm flex flex-col items-center justify-center p-3">
+                                                        <div className="w-full h-full bg-gray-100 rounded-xl mb-2"></div>
+                                                        <div className="w-3/4 h-2 bg-gray-200 rounded"></div>
+                                                    </div>
+                                                    <div className="aspect-square bg-white/90 backdrop-blur-sm rounded-2xl border shadow-sm flex flex-col items-center justify-center p-3">
+                                                        <div className="w-full h-full bg-gray-100 rounded-xl mb-2"></div>
+                                                        <div className="w-3/4 h-2 bg-gray-200 rounded"></div>
+                                                    </div>
+                                                    <div className="aspect-square bg-white/90 backdrop-blur-sm rounded-2xl border shadow-sm flex flex-col items-center justify-center p-3">
+                                                        <div className="w-full h-full bg-gray-100 rounded-xl mb-2"></div>
+                                                        <div className="w-3/4 h-2 bg-gray-200 rounded"></div>
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <div className="flex flex-col gap-3">
+                                                    <div className="w-full bg-white/90 backdrop-blur-sm rounded-2xl border shadow-sm flex items-center p-3 gap-3">
+                                                        <div className="w-16 h-16 bg-gray-100 rounded-xl"></div>
+                                                        <div className="flex-1">
+                                                            <div className="h-3 bg-gray-200 rounded w-3/4 mb-2"></div>
+                                                            <div className="h-2 bg-gray-100 rounded w-1/2"></div>
+                                                            <div className="h-3 bg-green-100 rounded w-1/3 mt-2"></div>
+                                                        </div>
+                                                    </div>
+                                                    <div className="w-full bg-white/90 backdrop-blur-sm rounded-2xl border shadow-sm flex items-center p-3 gap-3">
+                                                        <div className="w-16 h-16 bg-gray-100 rounded-xl"></div>
+                                                        <div className="flex-1">
+                                                            <div className="h-3 bg-gray-200 rounded w-3/4 mb-2"></div>
+                                                            <div className="h-2 bg-gray-100 rounded w-1/2"></div>
+                                                            <div className="h-3 bg-green-100 rounded w-1/3 mt-2"></div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )}
                                         </div>
                                     </>
                                 )}

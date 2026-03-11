@@ -130,6 +130,8 @@ class DigitalProductViewSet(viewsets.ModelViewSet):
                 'shop_font': profile.shop_font,
                 'shop_decoration': profile.shop_decoration,
                 'shop_template': profile.shop_template,
+                'shop_header_style': profile.shop_header_style,
+                'shop_text_color': profile.shop_text_color,
             }
             
             product_serializer = DigitalProductPublicSerializer(products, many=True)

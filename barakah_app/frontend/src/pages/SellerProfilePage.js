@@ -74,6 +74,8 @@ const SellerProfilePage = () => {
     const layoutStyle = profile.shop_layout || 'default';
     const fontStyle = profile.shop_font || 'sans';
     const decoration = profile.shop_decoration || 'none';
+    const headerStyle = profile.shop_header_style || 'theme';
+    const textColor = profile.shop_text_color || (themeColor === 'dark' ? '#ffffff' : '#111827');
 
     const isHex = themeColor?.startsWith('#') || themeColor?.startsWith('rgb');
     const getThemeClasses = (color) => {
@@ -118,6 +120,8 @@ const SellerProfilePage = () => {
                     font={fontStyle}
                     decoration={decoration}
                     layout={layoutStyle}
+                    headerStyle={headerStyle}
+                    textColor={textColor}
                 />
                 <NavigationButton />
             </div>
@@ -141,9 +145,9 @@ const SellerProfilePage = () => {
             <div className={`relative z-10 max-w-6xl mx-auto pb-24 ${layoutStyle === 'biolink' ? 'flex flex-col items-center' : ''}`}>
                 {/* Header / Shop Thumbnail */}
                 <div
-                    className={`h-48 w-full relative z-10 overflow-hidden ${layoutStyle === 'biolink' ? 'max-w-md rounded-b-3xl mt-0 shadow-lg' : ''} ${!profile.shop_thumbnail && (themeColor === 'dark' ? 'bg-gray-800' : themeColor === 'blue' ? 'bg-blue-700' : themeColor === 'purple' ? 'bg-purple-700' : themeColor === 'rose' ? 'bg-rose-700' : 'bg-green-700')}`}
+                    className={`h-48 w-full relative z-10 overflow-hidden ${layoutStyle === 'biolink' ? 'max-w-md rounded-b-3xl mt-0 shadow-lg' : ''} ${headerStyle === 'transparent' ? 'bg-transparent' : (!profile.shop_thumbnail && (themeColor === 'dark' ? 'bg-gray-800' : themeColor === 'blue' ? 'bg-blue-700' : themeColor === 'purple' ? 'bg-purple-700' : themeColor === 'rose' ? 'bg-rose-700' : 'bg-green-700'))}`}
                     style={{
-                        backgroundColor: (!profile.shop_thumbnail && isHex) ? themeColor : undefined,
+                        backgroundColor: (headerStyle !== 'transparent' && !profile.shop_thumbnail && isHex) ? themeColor : undefined,
                     }}
                 >
                     {profile.shop_thumbnail && (
@@ -167,15 +171,15 @@ const SellerProfilePage = () => {
 
                 <div className={`mt-16 text-center px-4 ${layoutStyle === 'biolink' ? 'w-full max-w-md' : ''}`}>
                     <div className="flex items-center justify-center gap-2">
-                        <h1 className={`text-xl font-bold ${themeColor === 'dark' ? 'text-white' : 'text-gray-900'}`}>@{username}</h1>
+                        <h1 className="text-xl font-bold" style={{ color: textColor }}>@{username}</h1>
                         <ShareButton slug={username} title={`Profil Toko @${username}`} type="seller" />
                     </div>
                     {profile && (
                         <>
-                            <p className={`text-sm mt-1 ${themeColor === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>{profile.name_full}</p>
+                            <p className="text-sm mt-1 opacity-80" style={{ color: textColor }}>{profile.name_full}</p>
                             {profile.shop_description && (
                                 <div className="mt-4 max-w-md mx-auto">
-                                    <p className={`text-sm italic ${themeColor === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>"{profile.shop_description}"</p>
+                                    <p className="text-sm italic opacity-90" style={{ color: textColor }}>"{profile.shop_description}"</p>
                                 </div>
                             )}
                         </>
