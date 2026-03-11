@@ -115,12 +115,11 @@ const ProductCard = ({ item, layout, templateType, themeColor, textStyle, badgeB
 };
 
 // --- TEMPLATE 1: HIJRAH ELEGAN ---
-export const HijrahElegan = ({ profile, username, products, courses, isPreview, themeColor, font, decoration, layout, headerStyle, textColor }) => {
+export const HijrahElegan = ({ profile, username, products, courses, isPreview, themeColor, font, decoration, layout }) => {
     const isHex = themeColor?.startsWith('#') || themeColor?.startsWith('rgb');
     const bgStyle = isHex ? { backgroundColor: themeColor } : {};
     const textStyle = isHex ? { color: themeColor } : { color: '#fbbf24' };
-    const isTransparentHeader = headerStyle === 'transparent';
-    const profileTextColor = textColor || (isHex ? '#ffffff' : '#fbbf24');
+    const profileTextColor = isHex ? '#ffffff' : '#fbbf24';
 
     return (
         <div className={`min-h-screen text-white ${getFontClass(font)} relative overflow-x-hidden ${isPreview ? 'rounded-[2.5rem] h-[650px] overflow-hidden' : ''} ${!isHex && (themeColor === 'blue' ? 'bg-[#1e3a8a]' : themeColor === 'purple' ? 'bg-[#4c1d95]' : themeColor === 'rose' ? 'bg-[#881337]' : themeColor === 'dark' ? 'bg-[#111827]' : 'bg-[#064e3b]')}`} style={bgStyle}>
@@ -132,7 +131,7 @@ export const HijrahElegan = ({ profile, username, products, courses, isPreview, 
                         <div className="absolute inset-0 bg-gradient-to-t from-emerald-950/80 to-transparent"></div>
                     </div>
                 )}
-                <header className={`flex flex-col items-center mb-10 w-full text-center p-8 rounded-b-[2rem] transition-all ${profile.shop_thumbnail ? '-mt-12 bg-inherit' : 'pt-16'} ${isTransparentHeader ? 'bg-transparent' : 'bg-emerald-950/20 backdrop-blur-md border-b border-white/5'}`}>
+                <header className={`flex flex-col items-center mb-10 w-full text-center p-8 rounded-b-[2rem] transition-all ${profile.shop_thumbnail ? '-mt-12 bg-inherit' : 'pt-16'} bg-emerald-950/20 backdrop-blur-md border-b border-white/5`}>
                     <div className="relative mb-6">
                         <div className="absolute inset-0 bg-yellow-500/20 blur-2xl rounded-full animate-pulse"></div>
                         <div className="w-28 h-28 rounded-full border-[4px] border-yellow-500 p-1.5 flex items-center justify-center bg-emerald-900/30 backdrop-blur-md relative z-10 shadow-xl">
@@ -141,10 +140,9 @@ export const HijrahElegan = ({ profile, username, products, courses, isPreview, 
                             </div>
                         </div>
                     </div>
-                    <h1 className="text-4xl font-black mb-2 tracking-wider drop-shadow-lg uppercase" style={{ color: profileTextColor }}>{profile.name_full || username}</h1>
-                    <p className="text-lg font-bold opacity-80 mb-4" style={{ color: profileTextColor }}>@{username}</p>
+                    <h2 className="text-lg font-bold opacity-80 mb-4">@{username}</h2>
                     <div className="w-16 h-1 rounded-full mb-6 mx-auto opacity-30" style={{ backgroundColor: profileTextColor }}></div>
-                    <p className="text-sm leading-relaxed font-serif italic max-w-[280px] mx-auto px-4" style={{ color: profileTextColor }}>{profile.shop_description || 'Berbagi inspirasi dan keberkahan.'}</p>
+                    <p className="text-sm leading-relaxed font-serif italic max-w-[280px] mx-auto px-4">{profile.shop_description || 'Berbagi inspirasi dan keberkahan.'}</p>
                 </header>
 
                 <div className={`w-full px-6 ${layout === 'grid' ? 'grid grid-cols-2 gap-4' : 'flex flex-col gap-4'}`}>
@@ -158,11 +156,10 @@ export const HijrahElegan = ({ profile, username, products, courses, isPreview, 
 };
 
 // --- TEMPLATE 2: KETENANGAN SENJA ---
-export const KetenanganSenja = ({ profile, username, products, courses, isPreview, themeColor, font, decoration, layout, headerStyle, textColor }) => {
+export const KetenanganSenja = ({ profile, username, products, courses, isPreview, themeColor, font, decoration, layout }) => {
     const isHex = themeColor?.startsWith('#') || themeColor?.startsWith('rgb');
     const bgStyle = isHex ? { background: `linear-gradient(to bottom, ${themeColor}, #ea580c)` } : {};
-    const isTransparentHeader = headerStyle === 'transparent';
-    const profileTextColor = textColor || '#ffffff';
+    const profileTextColor = '#ffffff';
 
     return (
         <div className={`min-h-screen text-white ${getFontClass(font)} relative overflow-x-hidden ${isPreview ? 'rounded-[2.5rem] h-[650px] overflow-hidden' : ''} ${!isHex && 'bg-gradient-to-b from-orange-500 via-orange-600 to-amber-700'}`} style={bgStyle}>
@@ -171,19 +168,13 @@ export const KetenanganSenja = ({ profile, username, products, courses, isPrevie
                 <div className="w-full h-48 relative flex-shrink-0">
                     <img src={getMediaUrl(profile.shop_thumbnail || profile.picture)} alt="Thumbnail" className="w-full h-full object-cover opacity-80" />
                     <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-orange-600"></div>
-                    <div className="absolute top-8 right-8">
-                        <ShareButton size="sm" />
-                    </div>
                 </div>
-                <header className={`flex flex-col items-center mb-12 w-full text-center p-8 transition-all -mt-20 relative z-20 ${isTransparentHeader ? 'bg-transparent' : 'bg-white/10 backdrop-blur-xl rounded-t-[3rem] border-t border-white/20'}`}>
+                <header className={`flex flex-col items-center mb-12 w-full text-center p-8 transition-all -mt-20 relative z-20 bg-white/10 backdrop-blur-xl rounded-t-[3rem] border-t border-white/20`}>
                     <div className="w-28 h-28 rounded-full border-4 border-white/40 overflow-hidden shadow-2xl mb-6 ring-4 ring-orange-400/20 group hover:scale-105 transition-transform">
                         <img src={getMediaUrl(profile.picture)} alt={username} className="w-full h-full object-cover" />
                     </div>
-                    <h1 className="text-3xl font-black tracking-tight mb-2 drop-shadow-md uppercase" style={{ color: profileTextColor }}>@{username}</h1>
-                    <div className="px-6 py-2 bg-black/10 backdrop-blur-sm rounded-full mb-4">
-                        <p className="text-xs tracking-[0.2em] font-bold opacity-90 uppercase" style={{ color: profileTextColor }}>{profile.name_full || 'Creator'}</p>
-                    </div>
-                    <p className="text-sm font-medium italic leading-relaxed px-10" style={{ color: profileTextColor }}>"{profile.shop_description || 'Menikmati harmoni dalam diam'}"</p>
+                    <h1 className="text-3xl font-black tracking-tight mb-2 drop-shadow-md uppercase">@{username}</h1>
+                    <p className="text-sm font-medium italic leading-relaxed px-10">"{profile.shop_description || 'Menikmati harmoni dalam diam'}"</p>
                 </header>
 
                 <div className={`w-full px-6 ${layout === 'grid' ? 'grid grid-cols-2 gap-4' : 'flex flex-col gap-4'}`}>
@@ -196,17 +187,10 @@ export const KetenanganSenja = ({ profile, username, products, courses, isPrevie
     );
 };
 
-const ShareButton = ({ size = "md" }) => (
-    <div className={`${size === 'sm' ? 'w-8 h-8' : 'w-10 h-10'} rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center cursor-pointer hover:bg-white/40 transition-colors`}>
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-white"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
-    </div>
-);
-
 // --- TEMPLATE 3: AESthetic LO-FI ---
-export const AestheticLoFi = ({ profile, username, products, courses, isPreview, themeColor, font, decoration, layout, headerStyle, textColor }) => {
+export const AestheticLoFi = ({ profile, username, products, courses, isPreview, themeColor, font, decoration, layout }) => {
     const isHex = themeColor?.startsWith('#') || themeColor?.startsWith('rgb');
-    const isTransparentHeader = headerStyle === 'transparent';
-    const profileTextColor = textColor || '#ffffff';
+    const profileTextColor = '#ffffff';
 
     return (
         <div className={`min-h-screen text-[#5d5c4b] relative overflow-x-hidden ${getFontClass(font)} ${isPreview ? 'rounded-[2.5rem] h-[650px] overflow-hidden' : ''} ${!isHex && 'bg-[#f4f1ea]'}`} style={isHex ? { backgroundColor: themeColor } : {}}>
@@ -214,9 +198,9 @@ export const AestheticLoFi = ({ profile, username, products, courses, isPreview,
             <div className="max-w-md mx-auto h-full overflow-y-auto no-scrollbar pb-16">
                 <div className="w-full h-64 bg-stone-200 relative overflow-hidden rounded-b-[4rem] shadow-xl">
                     <img src={getMediaUrl(profile.shop_thumbnail || profile.picture)} className="w-full h-full object-cover" alt="Shop Hero" />
-                    <div className={`absolute inset-0 transition-all ${isTransparentHeader ? 'bg-black/10' : 'bg-stone-900/30 backdrop-blur-[1px]'}`}></div>
+                    <div className={`absolute inset-0 transition-all bg-stone-900/30 backdrop-blur-[1px]`}></div>
                     <div className="absolute bottom-16 left-10 text-left z-20">
-                        <h1 className="text-4xl font-serif italic mb-2 drop-shadow-xl" style={{ color: profileTextColor }}>@{username}</h1>
+                        <h1 className="text-4xl font-serif italic mb-2 drop-shadow-xl">@{username}</h1>
                         <div className="flex items-center gap-3">
                             <span className="w-8 h-[2px] bg-white opacity-60"></span>
                             <p className="text-xs tracking-[0.4em] uppercase font-bold text-white shadow-sm">Slow & Steady</p>
@@ -225,11 +209,11 @@ export const AestheticLoFi = ({ profile, username, products, courses, isPreview,
                 </div>
 
                 <section className="px-6 space-y-10 -mt-12 bg-inherit rounded-t-[4rem] relative z-30 text-center">
-                    <div className={`p-8 rounded-[2.5rem] transition-all max-w-sm mx-auto ${isTransparentHeader ? 'bg-transparent' : 'bg-white/95 backdrop-blur-xl border border-stone-100 shadow-2xl shadow-stone-900/5'}`}>
+                    <div className={`p-8 rounded-[2.5rem] transition-all max-w-sm mx-auto bg-white/95 backdrop-blur-xl border border-stone-100 shadow-2xl shadow-stone-900/5`}>
                         <div className="w-20 h-20 rounded-full overflow-hidden mx-auto mb-6 border-4 border-stone-50 shadow-md">
                             <img src={getMediaUrl(profile.picture)} className="w-full h-full object-cover" alt="A" />
                         </div>
-                        <p className="text-lg leading-relaxed italic font-serif" style={{ color: profileTextColor === '#ffffff' ? '#5d5c4b' : profileTextColor }}>
+                        <p className="text-lg leading-relaxed italic font-serif" style={{ color: '#5d5c4b' }}>
                             "{profile.shop_description || 'Menikmati setiap momen kecil dalam hidup.'}"
                         </p>
                     </div>
@@ -246,8 +230,8 @@ export const AestheticLoFi = ({ profile, username, products, courses, isPreview,
 };
 
 // --- MAIN EXPORT WRAPPER ---
-const StoreTemplates = ({ templateName, profile, username, products = [], courses = [], isPreview = false, themeColor, font, decoration, layout, headerStyle, textColor }) => {
-    const props = { profile, username, products, courses, isPreview, themeColor, font, decoration, layout, headerStyle, textColor };
+const StoreTemplates = ({ templateName, profile, username, products = [], courses = [], isPreview = false, themeColor, font, decoration, layout }) => {
+    const props = { profile, username, products, courses, isPreview, themeColor, font, decoration, layout };
 
     switch (templateName) {
         case 'hijrah_elegan': return <HijrahElegan {...props} />;

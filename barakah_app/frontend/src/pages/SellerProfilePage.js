@@ -74,8 +74,6 @@ const SellerProfilePage = () => {
     const layoutStyle = profile.shop_layout || 'default';
     const fontStyle = profile.shop_font || 'sans';
     const decoration = profile.shop_decoration || 'none';
-    const headerStyle = profile.shop_header_style || 'theme';
-    const textColor = profile.shop_text_color; // Direct from DB, let templates or default layout decide fallback
 
     const isHex = themeColor?.startsWith('#') || themeColor?.startsWith('rgb');
     const getThemeClasses = (color) => {
@@ -120,8 +118,6 @@ const SellerProfilePage = () => {
                     font={fontStyle}
                     decoration={decoration}
                     layout={layoutStyle}
-                    headerStyle={headerStyle}
-                    textColor={textColor}
                 />
                 <NavigationButton />
             </div>
@@ -129,7 +125,7 @@ const SellerProfilePage = () => {
     }
 
     return (
-        <div className={`body ${fontClass} ${themeColor === 'dark' ? 'bg-gray-900' : ''}`}>
+        <div className={`body min-h-screen ${fontClass} ${themeColor === 'dark' ? 'bg-gray-900 text-white' : 'bg-white text-gray-900'}`}>
             <ShopDecoration decoration={decoration} themeColor={themeColor} isPreview={false} />
 
             <Helmet>
@@ -145,9 +141,9 @@ const SellerProfilePage = () => {
             <div className={`relative z-10 max-w-6xl mx-auto pb-24 ${layoutStyle === 'biolink' ? 'flex flex-col items-center' : ''}`}>
                 {/* Header / Shop Thumbnail */}
                 <div
-                    className={`h-48 w-full relative z-10 overflow-hidden ${layoutStyle === 'biolink' ? 'max-w-md rounded-b-3xl mt-0 shadow-lg' : ''} ${headerStyle === 'transparent' ? 'bg-transparent' : (!profile.shop_thumbnail && (themeColor === 'dark' ? 'bg-gray-800' : themeColor === 'blue' ? 'bg-blue-700' : themeColor === 'purple' ? 'bg-purple-700' : themeColor === 'rose' ? 'bg-rose-700' : 'bg-green-700'))}`}
+                    className={`h-48 w-full relative z-10 overflow-hidden ${layoutStyle === 'biolink' ? 'max-w-md rounded-b-3xl mt-0 shadow-lg' : ''} ${!profile.shop_thumbnail && (themeColor === 'dark' ? 'bg-gray-800' : themeColor === 'blue' ? 'bg-blue-700' : themeColor === 'purple' ? 'bg-purple-700' : themeColor === 'rose' ? 'bg-rose-700' : 'bg-green-700')}`}
                     style={{
-                        backgroundColor: (headerStyle !== 'transparent' && !profile.shop_thumbnail && isHex) ? themeColor : undefined,
+                        backgroundColor: (!profile.shop_thumbnail && isHex) ? themeColor : undefined,
                     }}
                 >
                     {profile.shop_thumbnail && (
@@ -169,17 +165,17 @@ const SellerProfilePage = () => {
                     </div>
                 </div>
 
-                <div className={`mt-16 text-center px-4 transition-all ${layoutStyle === 'biolink' ? 'w-full max-w-md' : 'max-w-md mx-auto'} ${headerStyle === 'theme' ? (themeColor === 'dark' ? 'bg-gray-800/80 border border-gray-700' : 'bg-white/80 border border-white') : ''} ${headerStyle === 'theme' ? 'p-8 rounded-[3rem] backdrop-blur-md shadow-xl' : ''}`}>
+                <div className={`mt-16 text-center px-4 ${layoutStyle === 'biolink' ? 'w-full max-w-md' : ''}`}>
                     <div className="flex items-center justify-center gap-2">
-                        <h1 className="text-2xl font-black" style={{ color: textColor || (themeColor === 'dark' ? '#ffffff' : '#111827') }}>@{username}</h1>
+                        <h1 className="text-xl font-bold">@{username}</h1>
                         <ShareButton slug={username} title={`Profil Toko @${username}`} type="seller" />
                     </div>
                     {profile && (
                         <>
-                            <p className="text-base mt-2 font-bold opacity-90" style={{ color: textColor || (themeColor === 'dark' ? '#ffffff' : '#111827') }}>{profile.name_full}</p>
+                            <p className="text-sm mt-1 opacity-80">{profile.name_full}</p>
                             {profile.shop_description && (
-                                <div className="mt-4">
-                                    <p className="text-sm italic font-medium leading-relaxed" style={{ color: textColor || (themeColor === 'dark' ? '#ffffff' : '#111827') }}>"{profile.shop_description}"</p>
+                                <div className="mt-4 max-w-md mx-auto">
+                                    <p className="text-sm italic opacity-90">"{profile.shop_description}"</p>
                                 </div>
                             )}
                         </>
@@ -189,8 +185,8 @@ const SellerProfilePage = () => {
                 {/* Course List Section */}
                 {courses.length > 0 && (
                     <div className={`mt-10 px-4 ${layoutStyle === 'biolink' ? 'w-full max-w-md text-center' : ''}`}>
-                        <h2 className="text-sm font-bold mb-4 flex items-center gap-2" style={{ color: textColor || (themeColor === 'dark' ? '#e5e7eb' : '#1f2937'), justifyContent: layoutStyle === 'biolink' ? 'center' : 'flex-start' }}>
-                            <span className="material-icons text-lg" style={{ color: textColor || (isHex ? themeColor : undefined) }}>school</span>
+                        <h2 className={`text-sm font-bold mb-4 flex items-center ${layoutStyle === 'biolink' ? 'justify-center' : 'flex-start'} gap-2 ${themeColor === 'dark' ? 'text-gray-200' : 'text-gray-800'}`}>
+                            <span className={`material-icons text-lg ${theme.icon}`} style={isHex ? { color: themeColor } : {}}>school</span>
                             Kelas E-Course
                         </h2>
                         <div className={`grid ${layoutStyle === 'biolink' ? 'grid-cols-1 gap-3' : layoutStyle === 'grid' ? 'grid-cols-2 lg:grid-cols-3 gap-2' : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4'}`}>
@@ -198,34 +194,23 @@ const SellerProfilePage = () => {
                                 <Link
                                     key={course.id}
                                     to={`/kelas/${course.slug}`}
-                                    className={`block rounded-2xl overflow-hidden shadow-sm border transition backdrop-blur-sm ${themeColor === 'dark' ? 'bg-gray-800/90 border-gray-700 hover:border-gray-600' : 'bg-white/90 border-gray-100 hover:shadow-md'
-                                        } ${layoutStyle === 'biolink' ? 'flex items-center text-left' : ''}`}
+                                    className={`relative group rounded-2xl overflow-hidden border transition-all hover:shadow-xl ${themeColor === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'}`}
                                 >
-                                    <div className={`relative ${layoutStyle === 'biolink' ? 'w-24 h-24 flex-shrink-0' : 'aspect-video'}`}>
+                                    <div className="aspect-[16/9] relative overflow-hidden">
                                         <img
-                                            src={getMediaUrl(course.thumbnail) || '/placeholder-image.jpg'}
+                                            src={getMediaUrl(course.thumbnail) || '/placeholder-course.png'}
                                             alt={course.title}
-                                            className="w-full h-full object-cover"
+                                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                                         />
-                                        {layoutStyle !== 'biolink' && (
-                                            <div className={`absolute top-2 right-2 text-white text-[10px] font-bold px-2 py-1 rounded-lg ${theme.badge}`} style={isHex ? { backgroundColor: themeColor } : {}}>
-                                                E-Course
-                                            </div>
-                                        )}
-                                    </div>
-                                    <div className={`p-4 ${layoutStyle === 'biolink' ? 'flex-1' : ''}`}>
-                                        <h3 className={`text-sm font-bold line-clamp-2 mb-2 ${themeColor === 'dark' ? 'text-gray-200' : 'text-gray-800'} ${layoutStyle === 'biolink' ? 'min-h-0' : 'min-h-[40px]'}`}>{course.title}</h3>
-                                        <div className="flex items-center justify-between mt-auto">
-                                            {layoutStyle !== 'biolink' && (
-                                                <div className="flex items-center gap-1 text-[10px] text-gray-400">
-                                                    <span className="material-icons text-[12px]">groups</span>
-                                                    {course.student_count || 0}
-                                                </div>
-                                            )}
-                                            <p className={`font-extrabold text-sm ${theme.text}`} style={isHex ? { color: themeColor } : {}}>
-                                                {course.price > 0 ? formatIDR(course.price) : 'GRATIS'}
-                                            </p>
+                                        <div className="absolute top-2 right-2 px-2 py-1 bg-blue-600 text-white text-[10px] font-bold rounded-lg shadow-lg uppercase tracking-wider">
+                                            ECourse
                                         </div>
+                                    </div>
+                                    <div className="p-3">
+                                        <h3 className="text-sm font-bold line-clamp-2 min-h-[32px]">{course.title}</h3>
+                                        <p className="mt-2 text-sm font-black text-green-600">
+                                            {course.price > 0 ? formatIDR(course.price) : 'Gratis'}
+                                        </p>
                                     </div>
                                 </Link>
                             ))}
@@ -235,8 +220,8 @@ const SellerProfilePage = () => {
 
                 {/* Product List Section */}
                 <div className={`mt-10 px-4 ${layoutStyle === 'biolink' ? 'w-full max-w-md text-center flex flex-col items-center' : ''}`}>
-                    <h2 className="text-sm font-bold mb-4 flex items-center gap-2" style={{ color: textColor || (themeColor === 'dark' ? '#e5e7eb' : '#1f2937'), justifyContent: layoutStyle === 'biolink' ? 'center' : 'flex-start' }}>
-                        <span className="material-icons text-lg" style={{ color: textColor || (isHex ? themeColor : undefined) }}>receipt_long</span>
+                    <h2 className={`text-sm font-bold mb-4 flex items-center gap-2 ${layoutStyle === 'biolink' ? 'justify-center' : ''} ${themeColor === 'dark' ? 'text-gray-200' : 'text-gray-800'}`}>
+                        <span className={`material-icons text-lg ${theme.icon}`} style={isHex ? { color: themeColor } : {}}>receipt_long</span>
                         Produk Digital
                     </h2>
 

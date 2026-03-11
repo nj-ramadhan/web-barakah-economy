@@ -251,43 +251,6 @@ const DashboardShopSettingsPage = () => {
                                 </select>
                             </div>
 
-                            {/* Shop Header Style */}
-                            <div>
-                                <label className="block font-bold text-gray-700 mb-2 text-sm">Gaya Header Profil</label>
-                                <select
-                                    name="shop_header_style"
-                                    value={profile.shop_header_style || 'theme'}
-                                    onChange={handleChange}
-                                    className="w-full px-4 py-3 bg-gray-50 border-none rounded-xl text-sm font-semibold focus:ring-2 focus:ring-green-500"
-                                >
-                                    <option value="theme">Warna Tema (Solid/Gradient)</option>
-                                    <option value="transparent">Transparan (Menyatu Background)</option>
-                                </select>
-                            </div>
-
-                            {/* Shop Text Color */}
-                            <div>
-                                <label className="block font-bold text-gray-700 mb-2 text-sm">Warna Teks Profil (Username/Deskripsi)</label>
-                                <div className="flex flex-wrap gap-2 mb-2">
-                                    {['#ffffff', '#000000', '#1e3a8a', '#064e3b', '#881337', '#ea580c', '#fbbf24', '#05f9ff', '#bc13fe'].map(color => (
-                                        <button
-                                            key={color}
-                                            type="button"
-                                            onClick={() => setProfile({ ...profile, shop_text_color: color })}
-                                            className={`w-8 h-8 rounded-full border-2 transition ${profile.shop_text_color === color ? 'border-green-500 scale-110' : 'border-transparent'}`}
-                                            style={{ backgroundColor: color }}
-                                        />
-                                    ))}
-                                </div>
-                                <input
-                                    type="text"
-                                    name="shop_text_color"
-                                    value={profile.shop_text_color || '#ffffff'}
-                                    onChange={handleChange}
-                                    placeholder="#ffffff"
-                                    className="w-full px-4 py-3 bg-gray-50 border-none rounded-xl text-sm font-mono focus:ring-2 focus:ring-green-500"
-                                />
-                            </div>
 
                             {/* Shop Decoration */}
                             <div>
@@ -353,9 +316,7 @@ const DashboardShopSettingsPage = () => {
                                         themeColor={profile.shop_theme_color}
                                         font={profile.shop_font}
                                         decoration={profile.shop_decoration}
-                                        layout={profile.shop_layout}
-                                        headerStyle={profile.shop_header_style}
-                                        textColor={profile.shop_text_color || '#ffffff'}
+                                        layout={profile.shop_layout || 'default'}
                                         products={[
                                             { title: 'Produk Digital 1', price: 50000, thumbnail: 'https://barakah-economy.com/media/products/course_social_media.jpg', category: 'Marketing' },
                                             { title: 'Produk Digital 2', price: 75000, thumbnail: 'https://barakah-economy.com/media/products/design_bundle.jpg', category: 'Design' }
@@ -371,8 +332,8 @@ const DashboardShopSettingsPage = () => {
 
                                         {/* Header bg / Shop Thumbnail */}
                                         <div
-                                            className={`h-32 w-full relative z-10 overflow-hidden ${profile.shop_header_style === 'transparent' ? 'bg-transparent' : (!profile.shop_thumbnail && (profile.shop_theme_color === 'dark' ? 'bg-gray-900' : profile.shop_theme_color === 'blue' ? 'bg-blue-800' : profile.shop_theme_color === 'purple' ? 'bg-purple-800' : profile.shop_theme_color === 'rose' ? 'bg-rose-800' : profile.shop_theme_color === 'green' ? 'bg-green-800' : 'bg-gray-800'))}`}
-                                            style={{ backgroundColor: (profile.shop_header_style !== 'transparent' && !profile.shop_thumbnail && (profile.shop_theme_color?.startsWith('#') || profile.shop_theme_color?.startsWith('rgb'))) ? profile.shop_theme_color : undefined }}
+                                            className={`h-32 w-full relative z-10 overflow-hidden ${!profile.shop_thumbnail && (profile.shop_theme_color === 'dark' ? 'bg-gray-900' : profile.shop_theme_color === 'blue' ? 'bg-blue-800' : profile.shop_theme_color === 'purple' ? 'bg-purple-800' : profile.shop_theme_color === 'rose' ? 'bg-rose-800' : profile.shop_theme_color === 'green' ? 'bg-green-800' : 'bg-gray-800')}`}
+                                            style={{ backgroundColor: (!profile.shop_thumbnail && (profile.shop_theme_color?.startsWith('#') || profile.shop_theme_color?.startsWith('rgb'))) ? profile.shop_theme_color : undefined }}
                                         >
                                             {profile.shop_thumbnail && (
                                                 <img
