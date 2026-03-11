@@ -24,6 +24,14 @@ const getFontClass = (font) => {
     }
 };
 
+// --- THEME HELPER ---
+const parseTheme = (themeColor) => {
+    const isGlass = themeColor?.startsWith('glass:');
+    const color = isGlass ? themeColor.replace('glass:', '') : themeColor;
+    const isHex = color?.startsWith('#') || color?.startsWith('rgb');
+    return { isGlass, color, isHex };
+};
+
 // --- PRODUCT CARD COMPONENT ---
 const ProductCard = ({ item, layout, templateType, themeColor, textStyle, badgeBg, isHex, username, isPreview }) => {
     const cardRef = useRef(null);
@@ -68,7 +76,7 @@ const ProductCard = ({ item, layout, templateType, themeColor, textStyle, badgeB
                         <img src={getMediaUrl(item.thumbnail)} alt={item.title} className="w-full h-full object-cover" />
                     </div>
                 )}
-                <div className="flex-1 text-left line-clamp-1 font-bold text-sm">{item.title}</div>
+                <div className="flex-1 text-left line-clamp-1 font-bold text-sm tracking-tight">{item.title}</div>
                 <div className="font-black text-sm whitespace-nowrap">{item.price > 0 ? formatIDR(item.price) : 'Gratis'}</div>
             </CardWrapper>
         );
@@ -118,90 +126,31 @@ const ProductCard = ({ item, layout, templateType, themeColor, textStyle, badgeB
 
 // --- TEMPLATE 1: HIJRAH ELEGAN ---
 export const HijrahElegan = ({ profile, username, products, courses, isPreview, themeColor, font, decoration, layout }) => {
-    const isHex = themeColor?.startsWith('#') || themeColor?.startsWith('rgb');
-    const bgStyle = isHex ? { backgroundColor: themeColor } : {};
-    const textStyle = isHex ? { color: themeColor } : { color: '#fbbf24' };
+    const { isGlass, color, isHex } = parseTheme(themeColor);
+    const bgStyle = isHex ? { backgroundColor: isGlass ? `${color}dd` : color } : {};
+    const textStyle = isHex ? { color: color } : { color: '#fbbf24' };
 
     return (
-        <div className={`min-h-screen text-white ${getFontClass(font)} relative ${isPreview ? 'rounded-[2.5rem] h-[650px] overflow-hidden' : ''} ${!isHex && (themeColor === 'blue' ? 'bg-[#1e3a8a]' : themeColor === 'purple' ? 'bg-[#4c1d95]' : themeColor === 'rose' ? 'bg-[#881337]' : themeColor === 'dark' ? 'bg-[#111827]' : 'bg-[#064e3b]')}`} style={bgStyle}>
-            <ShopDecoration decoration={decoration} themeColor={themeColor} isPreview={isPreview} />
-            <div className="max-w-md mx-auto py-16 px-6 flex flex-col items-center relative z-10 h-full overflow-y-auto no-scrollbar">
-                <header className="flex flex-col items-center mb-12 w-full text-center">
-                    <div className="relative mb-8">
+        <div className={`min-h-screen text-white ${getFontClass(font)} relative ${isPreview ? 'rounded-[2.5rem] h-[650px] overflow-hidden' : ''} ${!isHex && (color === 'blue' ? (isGlass ? 'bg-[#1e3a8a]/80' : 'bg-[#1e3a8a]') : color === 'purple' ? (isGlass ? 'bg-[#4c1d95]/80' : 'bg-[#4c1d95]') : color === 'rose' ? (isGlass ? 'bg-[#881337]/80' : 'bg-[#881337]') : color === 'dark' ? (isGlass ? 'bg-[#111827]/80' : 'bg-[#111827]') : (isGlass ? 'bg-[#064e3b]/80' : 'bg-[#064e3b]'))}`} style={bgStyle}>
+            <ShopDecoration decoration={decoration} themeColor={color} isPreview={isPreview} />
+            <div className={`max-w-md mx-auto h-full flex flex-col relative z-20 overflow-y-auto no-scrollbar py-20 px-6 transition-all duration-700 ${isGlass ? 'bg-black/20 backdrop-blur-3xl shadow-2xl' : ''}`}>
+                <header className="flex flex-col items-center mb-14 w-full text-center">
+                    <div className="relative mb-10">
                         <div className="absolute inset-0 bg-yellow-500/20 blur-2xl rounded-full animate-pulse"></div>
-                        <div className="w-28 h-28 rounded-full border-[3px] border-yellow-500 p-1.5 flex items-center justify-center bg-emerald-900/30 backdrop-blur-md relative z-10">
+                        <div className="w-32 h-32 rounded-full border-[3px] border-yellow-500 p-2 flex items-center justify-center bg-emerald-900/30 backdrop-blur-md relative z-10">
                             <div className="w-full h-full rounded-full bg-emerald-700 overflow-hidden shadow-2xl">
                                 <img src={getMediaUrl(profile.picture)} alt={username} className="w-full h-full object-cover" />
                             </div>
                         </div>
                     </div>
-                    <h1 className="text-3xl font-black text-yellow-500 mb-3 tracking-wider drop-shadow-md uppercase">{profile.name_full || username}</h1>
-                    <div className="w-12 h-1 bg-yellow-500/30 rounded-full mb-4 mx-auto"></div>
-                    <p className="text-sm text-emerald-100/90 leading-relaxed font-medium italic opacity-80 px-4">{profile.shop_description || 'Berbagi inspirasi dan keberkahan.'}</p>
+                    <h1 className="text-4xl font-black text-yellow-500 mb-4 tracking-tighter drop-shadow-md uppercase">{profile.name_full || username}</h1>
+                    <div className="w-16 h-1.5 bg-yellow-500 border-yellow-600/50 border rounded-full mb-6 mx-auto opacity-40"></div>
+                    <p className="text-sm text-emerald-100 font-bold italic opacity-80 px-8 leading-relaxed">"{profile.shop_description || 'Berbagi inspirasi dan keberkahan.'}"</p>
                 </header>
 
                 <div className={`w-full ${layout === 'grid' ? 'grid grid-cols-2 gap-4' : 'flex flex-col gap-4'}`}>
-                    {[...courses, ...products].slice(0, 15).map((item, idx) => (
-                        <ProductCard key={idx} item={item} layout={layout} templateType="hijrah" themeColor={themeColor} textStyle={textStyle} badgeBg="bg-yellow-600" isHex={isHex} username={username} isPreview={isPreview} />
-                    ))}
-                </div>
-                <div className="h-12 flex-shrink-0"></div>
-            </div>
-        </div>
-    );
-};
-
-// --- TEMPLATE 2: KETENANGAN SENJA ---
-export const KetenanganSenja = ({ profile, username, products, courses, isPreview, themeColor, font, decoration, layout }) => {
-    const isHex = themeColor?.startsWith('#') || themeColor?.startsWith('rgb');
-    const bgStyle = isHex ? { background: `linear-gradient(to bottom, ${themeColor}, #ea580c)` } : {};
-
-    return (
-        <div className={`min-h-screen text-white ${getFontClass(font)} relative ${isPreview ? 'rounded-[2.5rem] h-[650px] overflow-hidden' : ''} ${!isHex && 'bg-gradient-to-b from-orange-500 via-orange-600 to-amber-700'}`} style={bgStyle}>
-            <ShopDecoration decoration={decoration} themeColor={themeColor} isPreview={isPreview} />
-            <div className="max-w-md mx-auto py-16 px-6 flex flex-col items-center h-full relative z-10 overflow-y-auto no-scrollbar">
-                <header className="flex flex-col items-center mb-12 w-full text-center">
-                    <div className="w-24 h-24 rounded-full border-4 border-white/20 overflow-hidden shadow-2xl mb-6 ring-4 ring-orange-400/10">
-                        <img src={getMediaUrl(profile.picture)} alt={username} className="w-full h-full object-cover" />
-                    </div>
-                    <h1 className="text-2xl font-black tracking-tight mb-2 drop-shadow-sm uppercase">@{username}</h1>
-                    <p className="text-sm opacity-90 font-bold mt-1 italic leading-snug px-6 text-orange-50">"{profile.shop_description || 'Menikmati harmoni dalam diam'}"</p>
-                </header>
-
-                <div className={`w-full ${layout === 'grid' ? 'grid grid-cols-2 gap-4' : 'flex flex-col gap-4'}`}>
-                    {[...courses, ...products].slice(0, 15).map((item, idx) => (
-                        <ProductCard key={idx} item={item} layout={layout} templateType="senja" themeColor={themeColor} badgeBg="bg-orange-600" username={username} isPreview={isPreview} />
-                    ))}
-                </div>
-                <div className="h-12 flex-shrink-0"></div>
-            </div>
-        </div>
-    );
-};
-
-// --- TEMPLATE 3: DUNIA BERMAIN ---
-export const DuniaBermain = ({ profile, username, products, courses, isPreview, themeColor, font, decoration, layout }) => {
-    const isHex = themeColor?.startsWith('#') || themeColor?.startsWith('rgb');
-
-    return (
-        <div className={`min-h-screen text-[#1e3a8a] ${getFontClass(font)} relative ${isPreview ? 'rounded-[2.5rem] h-[650px] overflow-hidden' : ''} ${!isHex && 'bg-[#87CEEB]'}`} style={isHex ? { backgroundColor: themeColor } : {}}>
-            <ShopDecoration decoration={decoration} themeColor={themeColor} isPreview={isPreview} />
-            <div className="max-w-md mx-auto pt-16 text-center px-6 relative z-10 h-full overflow-y-auto no-scrollbar">
-                <header className="mb-10">
-                    <h1 className="text-4xl font-black text-white drop-shadow-[0_4px_0_rgba(0,0,0,0.2)] uppercase tracking-tighter italic mb-8 transform -rotate-2">@{username}</h1>
-                    <div className="mb-8 flex justify-center">
-                        <div className="w-32 h-32 bg-[#FFD700] rounded-3xl border-8 border-white flex items-center justify-center shadow-[0_10px_0_rgba(0,0,0,0.05)] relative animate-bounce overflow-hidden transform rotate-3">
-                            <img src={getMediaUrl(profile.picture)} className="w-full h-full object-cover" alt="Profile" />
-                        </div>
-                    </div>
-                    <div className="bg-white/40 backdrop-blur-md p-5 rounded-[2rem] border-4 border-white mb-4 shadow-sm inline-block">
-                        <p className="font-black text-lg"> {profile.shop_description || 'Waktunya Bersenang-senang!'} </p>
-                    </div>
-                </header>
-
-                <div className={`w-full ${layout === 'grid' ? 'grid grid-cols-2 gap-4' : 'flex flex-col gap-6'}`}>
-                    {[...courses, ...products].slice(0, 12).map((item, idx) => (
-                        <ProductCard key={idx} item={item} layout={layout} templateType="bermain" themeColor={themeColor} textStyle={{ color: '#1e3a8a' }} badgeBg="bg-blue-900" username={username} isPreview={isPreview} />
+                    {[...courses, ...products].slice(0, 20).map((item, idx) => (
+                        <ProductCard key={idx} item={item} layout={layout} templateType="hijrah" themeColor={color} textStyle={textStyle} badgeBg="bg-yellow-600" isHex={isHex} username={username} isPreview={isPreview} />
                     ))}
                 </div>
                 <div className="h-16 flex-shrink-0"></div>
@@ -210,23 +159,88 @@ export const DuniaBermain = ({ profile, username, products, courses, isPreview, 
     );
 };
 
-// --- TEMPLATE 4: BUKU GAMBAR ---
-export const BukuGambar = ({ profile, username, products, courses, isPreview, themeColor, font, decoration, layout }) => {
-    const isHex = themeColor?.startsWith('#') || themeColor?.startsWith('rgb');
+// --- TEMPLATE 2: KETENANGAN SENJA ---
+export const KetenanganSenja = ({ profile, username, products, courses, isPreview, themeColor, font, decoration, layout }) => {
+    const { isGlass, color, isHex } = parseTheme(themeColor);
+    const bgStyle = isHex ? { background: `linear-gradient(to bottom, ${color}${isGlass ? 'cc' : ''}, #ea580c${isGlass ? 'cc' : ''})` } : {};
 
     return (
-        <div className={`min-h-screen text-[#4A4A4A] p-6 relative ${getFontClass(font)} ${isPreview ? 'rounded-[2.5rem] h-[650px] overflow-hidden' : ''} ${!isHex && 'bg-[#fff5f7]'}`} style={isHex ? { backgroundColor: themeColor } : {}}>
-            <ShopDecoration decoration={decoration} themeColor={themeColor} isPreview={isPreview} />
-            <div className="max-w-md mx-auto h-full overflow-y-auto no-scrollbar pb-10">
-                <header className="w-full flex flex-col items-center mt-12 mb-12 relative z-10 text-center">
-                    <div className="text-7xl mb-6 animate-[bounce_3s_infinite] drop-shadow-lg">✨</div>
-                    <h1 className="text-4xl font-black tracking-tight text-center border-b-4 border-pink-200 inline-block px-2 uppercase transform rotate-1">@{username}</h1>
-                    <p className="text-lg opacity-80 mt-6 italic font-medium max-w-[280px]">"{profile.shop_description || 'Mari berkreasi hari ini!'}"</p>
+        <div className={`min-h-screen text-white ${getFontClass(font)} relative ${isPreview ? 'rounded-[2.5rem] h-[650px] overflow-hidden' : ''} ${!isHex && (isGlass ? 'bg-gradient-to-b from-orange-500/80 via-orange-600/80 to-amber-700/80' : 'bg-gradient-to-b from-orange-500 via-orange-600 to-amber-700')}`} style={bgStyle}>
+            <ShopDecoration decoration={decoration} themeColor={color} isPreview={isPreview} />
+            <div className={`max-w-md mx-auto h-full flex flex-col relative z-20 overflow-y-auto no-scrollbar py-20 px-6 transition-all duration-700 ${isGlass ? 'bg-white/10 backdrop-blur-2xl shadow-2xl' : ''}`}>
+                <header className="flex flex-col items-center mb-14 w-full text-center">
+                    <div className="relative mb-8">
+                        <div className="absolute inset-[-8px] border-4 border-white/20 rounded-full animate-spin-slow"></div>
+                        <div className="w-28 h-28 rounded-full border-4 border-white overflow-hidden shadow-2xl relative z-10">
+                            <img src={getMediaUrl(profile.picture)} alt={username} className="w-full h-full object-cover" />
+                        </div>
+                    </div>
+                    <h1 className="text-3xl font-black tracking-tight mb-3 drop-shadow-md uppercase tracking-widest text-orange-50">@{username}</h1>
+                    <div className="h-0.5 w-12 bg-white/30 rounded-full mb-6 mx-auto"></div>
+                    <p className="text-sm font-extrabold italic leading-snug px-10 text-orange-100 opacity-90 drop-shadow-sm">"{profile.shop_description || 'Menikmati harmoni dalam diam'}"</p>
                 </header>
 
-                <div className={`w-full ${layout === 'grid' ? 'grid grid-cols-2 gap-5' : 'flex flex-col gap-6'} relative z-10`}>
-                    {[...courses, ...products].slice(0, 15).map((item, idx) => (
-                        <ProductCard key={idx} item={item} layout={layout} templateType="lofi" themeColor={themeColor} badgeBg="bg-pink-400" username={username} isPreview={isPreview} />
+                <div className={`w-full ${layout === 'grid' ? 'grid grid-cols-2 gap-4' : 'flex flex-col gap-4'}`}>
+                    {[...courses, ...products].slice(0, 20).map((item, idx) => (
+                        <ProductCard key={idx} item={item} layout={layout} templateType="senja" themeColor={color} badgeBg="bg-orange-600" username={username} isPreview={isPreview} />
+                    ))}
+                </div>
+                <div className="h-16 flex-shrink-0"></div>
+            </div>
+        </div>
+    );
+};
+
+// --- TEMPLATE 3: DUNIA BERMAIN ---
+export const DuniaBermain = ({ profile, username, products, courses, isPreview, themeColor, font, decoration, layout }) => {
+    const { isGlass, color, isHex } = parseTheme(themeColor);
+
+    return (
+        <div className={`min-h-screen text-[#1e3a8a] ${getFontClass(font)} relative ${isPreview ? 'rounded-[2.5rem] h-[650px] overflow-hidden' : ''} ${!isHex && (isGlass ? 'bg-[#87CEEB]/80' : 'bg-[#87CEEB]')}`} style={isHex ? { backgroundColor: isGlass ? `${color}bb` : color } : {}}>
+            <ShopDecoration decoration={decoration} themeColor={color} isPreview={isPreview} />
+            <div className={`max-w-md mx-auto h-full flex flex-col relative z-20 overflow-y-auto no-scrollbar pt-20 px-6 transition-all duration-700 ${isGlass ? 'bg-white/30 backdrop-blur-xl border-x border-white/20' : ''}`}>
+                <header className="mb-14 px-4 text-center">
+                    <h1 className="text-5xl font-black text-white drop-shadow-[0_6px_0_rgba(0,0,0,0.15)] uppercase tracking-tighter italic mb-10 transform -rotate-3 scale-110">@{username}</h1>
+                    <div className="mb-10 flex justify-center scale-110">
+                        <div className="w-36 h-36 bg-[#FFD700] rounded-[2.5rem] border-8 border-white flex items-center justify-center shadow-[0_12px_20px_rgba(0,0,0,0.1)] relative animate-bounce overflow-hidden transform rotate-6 ring-8 ring-white/30">
+                            <img src={getMediaUrl(profile.picture)} className="w-full h-full object-cover" alt="Profile" />
+                        </div>
+                    </div>
+                    <div className="bg-white/60 backdrop-blur-lg p-6 rounded-[2.5rem] border-4 border-white mb-6 shadow-xl inline-block transform hover:rotate-1 transition-transform">
+                        <p className="font-black text-xl tracking-tight text-[#1e3a8a]"> {profile.shop_description || 'Waktunya Bersenang-senang!'} </p>
+                    </div>
+                </header>
+
+                <div className={`w-full ${layout === 'grid' ? 'grid grid-cols-2 gap-5' : 'flex flex-col gap-7'}`}>
+                    {[...courses, ...products].slice(0, 20).map((item, idx) => (
+                        <ProductCard key={idx} item={item} layout={layout} templateType="bermain" themeColor={color} textStyle={{ color: '#1e3a8a' }} badgeBg="bg-blue-900" username={username} isPreview={isPreview} />
+                    ))}
+                </div>
+                <div className="h-20 flex-shrink-0"></div>
+            </div>
+        </div>
+    );
+};
+
+// --- TEMPLATE 4: BUKU GAMBAR ---
+export const BukuGambar = ({ profile, username, products, courses, isPreview, themeColor, font, decoration, layout }) => {
+    const { isGlass, color, isHex } = parseTheme(themeColor);
+
+    return (
+        <div className={`min-h-screen text-[#4A4A4A] p-6 relative ${getFontClass(font)} ${isPreview ? 'rounded-[2.5rem] h-[650px] overflow-hidden' : ''} ${!isHex && (isGlass ? 'bg-[#fffcf9]/80' : 'bg-[#fffcf9]')}`} style={isHex ? { backgroundColor: isGlass ? `${color}cc` : color } : {}}>
+            <ShopDecoration decoration={decoration} themeColor={color} isPreview={isPreview} />
+            <div className={`max-w-md mx-auto h-full flex flex-col relative z-20 overflow-y-auto no-scrollbar pb-16 pt-12 transition-all duration-700 ${isGlass ? 'bg-white/30 backdrop-blur-xl border border-white/40 rounded-[3rem] shadow-2xl' : ''}`}>
+                <header className="w-full flex flex-col items-center mb-16 relative z-10 text-center">
+                    <div className="text-8xl mb-8 animate-[bounce_4s_infinite] drop-shadow-xl filter saturate-150">🎨</div>
+                    <h1 className="text-4xl font-black tracking-tight text-center border-b-[8px] border-pink-100/60 inline-block px-4 uppercase transform -rotate-1 skew-x-1 shadow-sm">@{username}</h1>
+                    <div className="p-8 bg-white/40 border-2 border-dashed border-pink-200 rounded-[2rem] mt-10 backdrop-blur-sm max-w-[300px]">
+                        <p className="text-xl opacity-90 italic font-black leading-relaxed">"{profile.shop_description || 'Mari berkreasi hari ini!'}"</p>
+                    </div>
+                </header>
+
+                <div className={`w-full ${layout === 'grid' ? 'grid grid-cols-2 gap-6' : 'flex flex-col gap-8'} relative z-10 px-2`}>
+                    {[...courses, ...products].slice(0, 20).map((item, idx) => (
+                        <ProductCard key={idx} item={item} layout={layout} templateType="lofi" themeColor={color} badgeBg="bg-pink-400" username={username} isPreview={isPreview} />
                     ))}
                 </div>
             </div>
@@ -236,32 +250,35 @@ export const BukuGambar = ({ profile, username, products, courses, isPreview, th
 
 // --- TEMPLATE 5: NEON CYBER ---
 export const NeonCyber = ({ profile, username, products, courses, isPreview, themeColor, font, decoration, layout }) => {
-    const isHex = themeColor?.startsWith('#') || themeColor?.startsWith('rgb');
+    const { isGlass, color, isHex } = parseTheme(themeColor);
 
     return (
-        <div className={`min-h-screen text-slate-100 p-6 relative ${getFontClass(font)} ${isPreview ? 'rounded-[2.5rem] h-[650px] overflow-hidden' : ''} ${!isHex && 'bg-[#050810]'}`} style={isHex ? { backgroundColor: themeColor } : {}}>
-            <ShopDecoration decoration={decoration} themeColor={themeColor} isPreview={isPreview} />
-            <div className="max-w-md mx-auto h-full overflow-y-auto no-scrollbar pb-12">
-                <header className="w-full flex justify-between items-center mb-14 relative z-10 mt-6 p-4 border-l-4 border-[#05f9ff] bg-slate-900/40 backdrop-blur-md rounded-r-2xl">
+        <div className={`min-h-screen text-slate-100 p-6 relative ${getFontClass(font)} ${isPreview ? 'rounded-[2.5rem] h-[650px] overflow-hidden' : ''} ${!isHex && (isGlass ? 'bg-[#020617]/90' : 'bg-[#020617]')}`} style={isHex ? { backgroundColor: isGlass ? `${color}dd` : color } : {}}>
+            <ShopDecoration decoration={decoration} themeColor={color} isPreview={isPreview} />
+            <div className={`max-w-md mx-auto h-full flex flex-col relative z-20 overflow-y-auto no-scrollbar pb-20 pt-8 transition-all duration-700 ${isGlass ? 'bg-blue-900/20 backdrop-blur-2xl border-x border-white/5' : ''}`}>
+                <header className="w-full flex justify-between items-center mb-16 relative z-10 mt-8 p-6 border-l-[6px] border-[#05f9ff] bg-slate-900/60 backdrop-blur-xl rounded-r-3xl shadow-[0_0_30px_rgba(5,249,255,0.15)] ring-1 ring-white/10">
                     <div className="flex flex-col text-left">
-                        <h1 className="text-2xl font-black tracking-tighter italic text-[#05f9ff] drop-shadow-[0_0_12px_rgba(5,249,255,0.7)]">@{username}</h1>
-                        <div className="flex items-center gap-2">
-                            <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse shadow-[0_0_8px_green]"></span>
-                            <span className="text-[10px] uppercase tracking-[0.4em] text-[#bc13fe] font-black">SYSTEM_ACTIVE</span>
+                        <h1 className="text-3xl font-black tracking-tighter italic text-[#05f9ff] drop-shadow-[0_0_15px_rgba(5,249,255,1)] mb-2">@{username}</h1>
+                        <div className="flex items-center gap-3">
+                            <div className="relative">
+                                <div className="absolute inset-0 bg-green-500 rounded-full blur-sm opacity-60 animate-ping"></div>
+                                <div className="w-3 h-3 bg-green-400 rounded-full border border-green-200"></div>
+                            </div>
+                            <span className="text-xs uppercase tracking-[0.5em] text-[#bc13fe] font-black drop-shadow-[0_0_8px_rgba(188,19,254,0.8)]">CORE_ACTIVE</span>
                         </div>
                     </div>
-                    <div className="w-16 h-16 rounded-2xl border-2 border-[#bc13fe] flex items-center justify-center bg-slate-800 shadow-[0_0_15px_rgba(188,19,254,0.4)] rotate-3">
+                    <div className="w-20 h-20 rounded-2xl border-2 border-[#bc13fe] p-1 flex items-center justify-center bg-slate-900 shadow-[0_0_20px_rgba(188,19,254,0.6)] rotate-6 transition-transform hover:rotate-0">
                         <img src={getMediaUrl(profile.picture)} className="w-full h-full object-cover rounded-xl" alt="P" />
                     </div>
                 </header>
 
-                <div className="bg-slate-900/30 border border-white/5 p-4 rounded-xl mb-10 text-center relative z-10">
-                    <p className="text-slate-400 text-xs font-mono uppercase tracking-widest tracking-tighter italic"> {profile.shop_description || 'Sistem Aktif - Siap Beraksi'} </p>
+                <div className="bg-slate-900/40 border border-[#05f9ff]/20 p-5 rounded-2xl mb-12 text-center relative z-10 backdrop-blur-md shadow-inner">
+                    <p className="text-slate-200 text-xs font-mono uppercase tracking-[0.2em] font-black italic"> {profile.shop_description || 'Sistem Aktif - Siap Beraksi'} </p>
                 </div>
 
-                <div className={`w-full ${layout === 'grid' ? 'grid grid-cols-2 gap-4' : 'flex flex-col gap-5'} relative z-10`}>
-                    {[...courses, ...products].slice(0, 15).map((item, idx) => (
-                        <ProductCard key={idx} item={item} layout={layout} templateType="cyber" themeColor={themeColor} textStyle={{ color: '#05f9ff', textShadow: '0 0 8px rgba(5,249,255,0.6)' }} badgeBg="bg-[#bc13fe]" username={username} isPreview={isPreview} />
+                <div className={`w-full ${layout === 'grid' ? 'grid grid-cols-2 gap-4' : 'flex flex-col gap-6'} relative z-10`}>
+                    {[...courses, ...products].slice(0, 20).map((item, idx) => (
+                        <ProductCard key={idx} item={item} layout={layout} templateType="cyber" themeColor={color} textStyle={{ color: '#05f9ff', textShadow: '0 0 10px rgba(5,249,255,0.8)' }} badgeBg="bg-[#bc13fe]" username={username} isPreview={isPreview} />
                     ))}
                 </div>
             </div>
@@ -271,31 +288,32 @@ export const NeonCyber = ({ profile, username, products, courses, isPreview, the
 
 // --- TEMPLATE 6: AESthetic LO-FI ---
 export const AestheticLoFi = ({ profile, username, products, courses, isPreview, themeColor, font, decoration, layout }) => {
-    const isHex = themeColor?.startsWith('#') || themeColor?.startsWith('rgb');
+    const { isGlass, color, isHex } = parseTheme(themeColor);
 
     return (
-        <div className={`min-h-screen text-[#5d5c4b] relative ${getFontClass(font)} ${isPreview ? 'rounded-[2.5rem] h-[650px] overflow-hidden' : ''} ${!isHex && 'bg-[#f4f1ea]'}`} style={isHex ? { backgroundColor: themeColor } : {}}>
-            <ShopDecoration decoration={decoration} themeColor={themeColor} isPreview={isPreview} />
-            <div className="max-w-md mx-auto h-full overflow-y-auto no-scrollbar">
-                <div className="w-full h-56 bg-stone-200 relative overflow-hidden rounded-b-[3rem] shadow-lg">
-                    <img src={getMediaUrl(profile.shop_thumbnail || profile.picture)} className="w-full h-full object-cover" alt="B" />
-                    <div className="absolute inset-0 bg-stone-900/20 backdrop-blur-[2px]"></div>
-                    <div className="absolute bottom-10 left-8 text-white text-left z-10">
-                        <h1 className="text-3xl font-serif italic mb-1 drop-shadow-md">@{username}</h1>
-                        <p className="text-[11px] tracking-[0.3em] uppercase opacity-80 font-bold">Tenang & Teduh</p>
+        <div className={`min-h-screen text-[#5d5c4b] relative ${getFontClass(font)} ${isPreview ? 'rounded-[2.5rem] h-[650px] overflow-hidden' : ''} ${!isHex && (isGlass ? 'bg-[#f4f1ea]/80' : 'bg-[#f4f1ea]')}`} style={isHex ? { backgroundColor: isGlass ? `${color}cc` : color } : {}}>
+            <ShopDecoration decoration={decoration} themeColor={color} isPreview={isPreview} />
+            <div className={`max-w-md mx-auto h-full flex flex-col relative z-20 overflow-y-auto no-scrollbar transition-all duration-700 ${isGlass ? 'bg-white/10 backdrop-blur-2xl shadow-xl' : ''}`}>
+                <div className="w-full h-72 bg-stone-100 relative flex-shrink-0 overflow-hidden rounded-b-[4rem] shadow-2xl">
+                    <img src={getMediaUrl(profile.shop_thumbnail || profile.picture)} className="w-full h-full object-cover transition-transform duration-[2s] hover:scale-105" alt="B" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-stone-900/40 to-transparent"></div>
+                    <div className="absolute bottom-14 left-10 text-white text-left z-30">
+                        <h1 className="text-4xl font-serif italic mb-2 drop-shadow-xl tracking-wide">@{username}</h1>
+                        <div className="w-10 h-1 bg-white/40 rounded-full mb-3"></div>
+                        <p className="text-xs tracking-[0.4em] uppercase opacity-90 font-bold drop-shadow-md">TIDAK ADA TERBURU-BURU</p>
                     </div>
                 </div>
 
-                <section className="px-6 space-y-8 -mt-10 bg-inherit rounded-t-[3rem] relative z-20 text-center pb-12">
-                    <div className="bg-white/90 backdrop-blur-lg p-6 rounded-3xl border border-stone-200 shadow-xl max-w-[320px] mx-auto">
-                        <p className="text-base leading-relaxed italic text-stone-600 font-serif">
+                <section className="px-8 space-y-12 -mt-14 bg-inherit rounded-t-[4rem] relative z-20 text-center pb-20">
+                    <div className="bg-white/95 backdrop-blur-xl p-10 rounded-[3rem] border border-stone-100 shadow-[0_20px_40px_rgba(0,0,0,0.05)] max-w-[340px] mx-auto ring-1 ring-stone-900/5 hover:-translate-y-1 transition-transform">
+                        <p className="text-lg leading-relaxed italic text-stone-700 font-serif font-medium">
                             "{profile.shop_description || 'Menikmati setiap momen kecil dalam hidup.'}"
                         </p>
                     </div>
 
-                    <div className={`w-full ${layout === 'grid' ? 'grid grid-cols-2 gap-5' : 'flex flex-col gap-5'}`}>
-                        {[...courses, ...products].slice(0, 15).map((item, idx) => (
-                            <ProductCard key={idx} item={item} layout={layout} templateType="lofi" themeColor={themeColor} badgeBg="bg-stone-500" username={username} isPreview={isPreview} />
+                    <div className={`w-full ${layout === 'grid' ? 'grid grid-cols-2 gap-6' : 'flex flex-col gap-6'} px-2`}>
+                        {[...courses, ...products].slice(0, 20).map((item, idx) => (
+                            <ProductCard key={idx} item={item} layout={layout} templateType="lofi" themeColor={color} badgeBg="bg-stone-500" username={username} isPreview={isPreview} />
                         ))}
                     </div>
                 </section>
