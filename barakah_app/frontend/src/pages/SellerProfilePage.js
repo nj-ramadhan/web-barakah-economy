@@ -117,6 +117,7 @@ const SellerProfilePage = () => {
                     themeColor={themeColor}
                     font={fontStyle}
                     decoration={decoration}
+                    layout={layoutStyle}
                 />
                 <NavigationButton />
             </div>
