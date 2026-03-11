@@ -9,6 +9,13 @@ import StoreTemplates from '../components/profile/StoreTemplates';
 import authService from '../services/auth';
 import '../styles/Body.css';
 
+const getMediaUrl = (url) => {
+    if (!url) return '';
+    if (url.startsWith('http')) return url;
+    const baseUrl = process.env.REACT_APP_API_BASE_URL || '';
+    return `${baseUrl}${url}`;
+};
+
 const DashboardShopSettingsPage = () => {
     const navigate = useNavigate();
     const [profile, setProfile] = useState({
