@@ -99,6 +99,7 @@ const Home = () => {
   const [activities, setActivities] = useState([]);
   const [showTestimonialModal, setShowTestimonialModal] = useState(false);
   const [testimonialForm, setTestimonialForm] = useState({ content: '', rating: 5 });
+  const [myTestimonial, setMyTestimonial] = useState(null);
 
   useEffect(() => {
     const fetchFeaturedProducts = async () => {
@@ -167,6 +168,18 @@ const Home = () => {
         setTestimonials((testimonialsRes.data.results || testimonialsRes.data).filter(t => t.is_approved));
         setPartners(partnersRes.data.results || partnersRes.data);
         setActivities((activitiesRes.data.results || activitiesRes.data).slice(0, 3));
+
+        const user = JSON.parse(localStorage.getItem('user'));
+        if (user?.access) {
+          axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/site-content/testimonials/my_testimonial/`, {
+            headers: { Authorization: `Bearer ${user.access}` }
+          }).then(res => {
+            if (res.data.id) {
+              setMyTestimonial(res.data);
+              setTestimonialForm({ content: res.data.content, rating: res.data.rating });
+            }
+          }).catch(err => console.error("Error fetching my testimonial:", err));
+        }
       } catch (err) {
         console.error("Error fetching site content:", err);
       }
@@ -183,12 +196,12 @@ const Home = () => {
       return;
     }
     try {
-      await axios.post(`${process.env.REACT_APP_API_BASE_URL}/api/site-content/testimonials/`, testimonialForm, {
+      const res = await axios.post(`${process.env.REACT_APP_API_BASE_URL}/api/site-content/testimonials/my_testimonial/`, testimonialForm, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      alert("Terima kasih! Testimoni Anda sedang menunggu persetujuan admin.");
+      setMyTestimonial(res.data);
+      alert(myTestimonial ? "Testimoni berhasil diperbarui!" : "Terima kasih! Testimoni Anda sedang menunggu persetujuan admin.");
       setShowTestimonialModal(false);
-      setTestimonialForm({ content: '', rating: 5 });
     } catch (err) {
       alert(err.response?.data?.non_field_errors?.[0] || err.response?.data?.detail || "Gagal mengirim testimoni");
     }
@@ -1245,7 +1258,7 @@ const Home = () => {
               onClick={() => setShowTestimonialModal(true)}
               className="text-xs font-bold text-green-700 bg-white px-4 py-2 rounded-full border border-green-200 shadow-sm hover:bg-green-600 hover:text-white transition"
             >
-              Tulis Testimoni
+              {myTestimonial ? 'Ubah Testimoni' : 'Tulis Testimoni'}
             </button>
           </div>
 
@@ -1290,7 +1303,7 @@ const Home = () => {
         <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4">
           <div className="bg-white w-full max-w-md rounded-2xl p-6 shadow-2xl animate-slide-up">
             <div className="flex justify-between items-center mb-6">
-              <h3 className="text-lg font-bold">Tulis Testimoni Anda</h3>
+              <h3 className="text-lg font-bold">{myTestimonial ? 'Ubah Testimoni Anda' : 'Tulis Testimoni Anda'}</h3>
               <button onClick={() => setShowTestimonialModal(false)} className="material-icons text-gray-400">close</button>
             </div>
             <form onSubmit={handleTestimonialSubmit} className="space-y-4">
@@ -1324,7 +1337,7 @@ const Home = () => {
                 type="submit"
                 className="w-full py-4 bg-green-700 text-white rounded-xl text-sm font-bold shadow-lg shadow-green-100"
               >
-                Kirim Testimoni
+                {myTestimonial ? 'Simpan Perubahan' : 'Kirim Testimoni'}
               </button>
             </form>
           </div>
@@ -1333,7 +1346,7 @@ const Home = () => {
 
       {/* Kegiatan Komunitas */}
       {activities.length > 0 && (
-        <div className="bg-gray-50 py-10 px-4">
+        <div className="hidden md:block bg-gray-50 py-10 px-4">
           <div className="max-w-md mx-auto">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-bold text-gray-800">Kegiatan Terbaru</h2>

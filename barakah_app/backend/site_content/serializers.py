@@ -17,7 +17,12 @@ class TestimonialSerializer(serializers.ModelSerializer):
     def get_user_full_name(self, obj):
         if obj.user:
             try:
-                return obj.user.profile.name_full or obj.user.username
+                profile = obj.user.profile
+                name = profile.name_full or obj.user.username
+                rank = profile.get_job_display() or profile.get_segment_display()
+                if rank:
+                    return f"{name} ({rank})"
+                return name
             except Exception:
                 return obj.user.username
         return obj.name or 'Anonim'

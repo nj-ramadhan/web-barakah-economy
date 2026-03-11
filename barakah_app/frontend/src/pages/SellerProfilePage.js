@@ -7,6 +7,7 @@ import NavigationButton from '../components/layout/Navigation';
 import { getPublicDigitalProfile } from '../services/digitalProductApi';
 import ShareButton from '../components/campaigns/ShareButton';
 import ShopDecoration from '../components/profile/ShopDecoration';
+import StoreTemplates from '../components/profile/StoreTemplates';
 import '../styles/Body.css';
 
 const formatIDR = (amount) => {
@@ -51,7 +52,6 @@ const SellerProfilePage = () => {
     }
 
     if (!profileData) {
-        // Prevent matching static routes that aren't users
         const staticRoutes = ['login', 'register', 'lupa-password', 'reset-password', 'profile', 'charity', 'sinergy', 'incaran', 'keranjang', 'riwayat-belanja', 'bayar-belanja', 'konfirmasi-pembayaran-belanja', 'articles', 'academy', 'kelas', 'ikut-kelas', 'konfirmasi-pembayaran-kelas', 'pembayaran-berhasil', 'pembayaran-gagal', 'pembayaran-tertunda', 'about', 'hubungi-kami', 'digital-products', 'digital-produk', 'dashboard'];
         if (staticRoutes.includes(username)) {
             return null;
@@ -70,17 +70,14 @@ const SellerProfilePage = () => {
     const products = profileData?.products || [];
     const courses = profileData?.courses || [];
 
-    // Custom layout settings with fallbacks
     const themeColor = profile.shop_theme_color || 'green';
     const layoutStyle = profile.shop_layout || 'default';
     const fontStyle = profile.shop_font || 'sans';
+    const decoration = profile.shop_decoration || 'none';
 
-    // Map theme colors to Tailwind classes (or use inline styles if needed)
     const isHex = themeColor?.startsWith('#') || themeColor?.startsWith('rgb');
     const getThemeClasses = (color) => {
-        if (isHex) {
-            return { bg: '', text: '', hover: '', badge: '', icon: '' };
-        }
+        if (isHex) return { bg: '', text: '', hover: '', badge: '', icon: '' };
         switch (color) {
             case 'blue': return { bg: 'bg-blue-800', text: 'text-blue-600', hover: 'hover:text-blue-700', badge: 'bg-blue-600', icon: 'text-blue-600' };
             case 'purple': return { bg: 'bg-purple-800', text: 'text-purple-600', hover: 'hover:text-purple-700', badge: 'bg-purple-600', icon: 'text-purple-600' };
@@ -92,22 +89,43 @@ const SellerProfilePage = () => {
     };
     const theme = getThemeClasses(themeColor);
 
-    // Map font style to Tailwind classes
     const getFontClass = (font) => {
         switch (font) {
             case 'serif': return 'font-serif';
             case 'mono': return 'font-mono';
-            case 'poppins': return 'font-[Poppins]'; // Requires poppins font to be imported/available globally
-            case 'sans':
+            case 'poppins': return 'font-[Poppins]';
             default: return 'font-sans';
         }
     };
     const fontClass = getFontClass(fontStyle);
 
+    if (profile.shop_template && profile.shop_template !== 'none') {
+        return (
+            <div className={`body ${fontClass}`}>
+                <Helmet>
+                    <title>{username} - Produk Digital & E-Course - Barakah Economy</title>
+                    <meta name="description" content={profile?.shop_description || `Koleksi produk digital dan e-course dari ${username}`} />
+                </Helmet>
+                <Header className="relative z-[100]" />
+                <StoreTemplates
+                    templateName={profile.shop_template}
+                    profile={profile}
+                    username={username}
+                    products={products}
+                    courses={courses}
+                    isPreview={false}
+                    themeColor={themeColor}
+                    font={fontStyle}
+                    decoration={decoration}
+                />
+                <NavigationButton />
+            </div>
+        );
+    }
+
     return (
         <div className={`body ${fontClass} ${themeColor === 'dark' ? 'bg-gray-900' : ''}`}>
-            {/* Decoration Overlay */}
-            <ShopDecoration decoration={profile.shop_decoration} themeColor={themeColor} isPreview={false} />
+            <ShopDecoration decoration={decoration} themeColor={themeColor} isPreview={false} />
 
             <Helmet>
                 <title>{username} - Produk Digital & E-Course - Barakah Economy</title>
@@ -118,17 +136,24 @@ const SellerProfilePage = () => {
             </Helmet>
 
             <Header className="relative z-10" />
+
             <div className={`relative z-10 max-w-6xl mx-auto pb-24 ${layoutStyle === 'biolink' ? 'flex flex-col items-center' : ''}`}>
-                {/* Profile Header */}
-                <div className={`relative ${layoutStyle === 'biolink' ? 'h-32 w-full max-w-md rounded-b-3xl mt-0' : 'h-48'} ${theme.bg}`} style={isHex ? { backgroundColor: themeColor } : {}}>
+                {/* Header / Shop Thumbnail */}
+                <div
+                    className={`h-48 w-full relative z-10 overflow-hidden ${layoutStyle === 'biolink' ? 'max-w-md rounded-b-3xl mt-0 shadow-lg' : ''} ${!profile.shop_thumbnail && (themeColor === 'dark' ? 'bg-gray-800' : themeColor === 'blue' ? 'bg-blue-700' : themeColor === 'purple' ? 'bg-purple-700' : themeColor === 'rose' ? 'bg-rose-700' : 'bg-green-700')}`}
+                    style={{
+                        backgroundColor: (!profile.shop_thumbnail && isHex) ? themeColor : undefined,
+                    }}
+                >
                     {profile.shop_thumbnail && (
                         <img
                             src={getMediaUrl(profile.shop_thumbnail)}
-                            alt="Shop Header"
-                            className={`w-full h-full object-cover opacity-50 ${layoutStyle === 'biolink' ? 'rounded-b-3xl' : ''}`}
+                            alt="Shop Thumbnail"
+                            className="w-full h-full object-cover opacity-100"
                         />
                     )}
-                    <div className="absolute -bottom-12 left-1/2 -translate-x-1/2 flex flex-col items-center">
+
+                    <div className="absolute -bottom-12 left-1/2 -translate-x-1/2 flex flex-col items-center z-20">
                         <div className="w-24 h-24 rounded-full border-4 border-white overflow-hidden bg-white shadow-lg">
                             <img
                                 src={getMediaUrl(profile.picture) || '/placeholder-profile.png'}
@@ -205,13 +230,13 @@ const SellerProfilePage = () => {
 
                 {/* Product List Section */}
                 <div className={`mt-10 px-4 ${layoutStyle === 'biolink' ? 'w-full max-w-md text-center flex flex-col items-center' : ''}`}>
-                    <h2 className={`text-sm font-bold mb-4 flex items-center gap-2 ${layoutStyle === 'biolink' ? 'justify-center' : ''} ${layoutStyle === 'dark' ? 'text-gray-200' : 'text-gray-800'}`}>
+                    <h2 className={`text-sm font-bold mb-4 flex items-center gap-2 ${layoutStyle === 'biolink' ? 'justify-center' : ''} ${themeColor === 'dark' ? 'text-gray-200' : 'text-gray-800'}`}>
                         <span className={`material-icons text-lg ${theme.icon}`} style={isHex ? { color: themeColor } : {}}>inventory_2</span>
                         Produk Digital
                     </h2>
 
                     {products.length === 0 ? (
-                        <div className={`text-center py-10 rounded-2xl border border-dashed text-sm backdrop-blur-sm ${layoutStyle === 'dark' ? 'text-gray-400 bg-gray-800/90 border-gray-700' : 'text-gray-400 bg-white/90 border-gray-200'}`}>
+                        <div className={`text-center py-10 rounded-2xl border border-dashed text-sm backdrop-blur-sm ${themeColor === 'dark' ? 'text-gray-400 bg-gray-800/90 border-gray-700' : 'text-gray-400 bg-white/90 border-gray-200'}`}>
                             <p>Belum ada produk digital yang dipublish</p>
                         </div>
                     ) : (
@@ -231,10 +256,10 @@ const SellerProfilePage = () => {
                                         />
                                     </div>
                                     <div className={`p-3 ${layoutStyle === 'biolink' ? 'flex-1' : ''}`}>
-                                        <h3 className={`text-sm font-bold line-clamp-2 ${layoutStyle === 'dark' ? 'text-gray-200' : 'text-gray-800'} ${layoutStyle === 'biolink' ? 'min-h-0' : 'min-h-[40px]'}`}>{product.title}</h3>
+                                        <h3 className={`text-sm font-bold line-clamp-2 ${themeColor === 'dark' ? 'text-gray-200' : 'text-gray-800'} ${layoutStyle === 'biolink' ? 'min-h-0' : 'min-h-[40px]'}`}>{product.title}</h3>
                                         {layoutStyle !== 'biolink' && (
                                             <div className="mt-2 flex items-center justify-between">
-                                                <span className={`text-[10px] px-2 py-0.5 rounded-full ${layoutStyle === 'dark' ? 'text-gray-300 bg-gray-700/80' : 'text-gray-400 bg-gray-50/80'}`}>{product.category}</span>
+                                                <span className={`text-[10px] px-2 py-0.5 rounded-full ${themeColor === 'dark' ? 'text-gray-300 bg-gray-700/80' : 'text-gray-400 bg-gray-50/80'}`}>{product.category}</span>
                                             </div>
                                         )}
                                         <p className={`font-bold text-sm mt-2 ${theme.text}`} style={isHex ? { color: themeColor } : {}}>{formatIDR(product.price)}</p>

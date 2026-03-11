@@ -5,6 +5,7 @@ import Header from '../components/layout/Header';
 import BackButton from '../components/global/BackButton';
 import NavigationButton from '../components/layout/Navigation';
 import ShopDecoration from '../components/profile/ShopDecoration';
+import StoreTemplates from '../components/profile/StoreTemplates';
 import authService from '../services/auth';
 import '../styles/Body.css';
 
@@ -19,6 +20,7 @@ const DashboardShopSettingsPage = () => {
         shop_theme_color: 'green',
         shop_font: 'sans',
         shop_decoration: 'none',
+        shop_template: 'none',
     });
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -38,6 +40,7 @@ const DashboardShopSettingsPage = () => {
                         shop_theme_color: profileData.shop_theme_color || 'green',
                         shop_font: profileData.shop_font || 'sans',
                         shop_decoration: profileData.shop_decoration || 'none',
+                        shop_template: profileData.shop_template || 'none',
                     });
                 } else {
                     navigate('/login');
@@ -78,6 +81,7 @@ const DashboardShopSettingsPage = () => {
                 formData.append('shop_theme_color', profile.shop_theme_color);
                 formData.append('shop_font', profile.shop_font);
                 formData.append('shop_decoration', profile.shop_decoration);
+                formData.append('shop_template', profile.shop_template);
 
                 if (profile.shop_thumbnail instanceof File) {
                     formData.append('shop_thumbnail', profile.shop_thumbnail);
@@ -251,8 +255,36 @@ const DashboardShopSettingsPage = () => {
                                 >
                                     <option value="none">Tanpa Dekorasi</option>
                                     <option value="geometric">Pola Geometris</option>
-                                    <option value="islamic">Ornamen Islami</option>
                                 </select>
+                            </div>
+
+                            {/* Shop Template Selection */}
+                            <div>
+                                <label className="block font-bold text-gray-700 mb-2 text-sm">Template Toko Khusus</label>
+                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                                    {[
+                                        { id: 'none', name: 'Standard (Default)', color: 'bg-gray-100' },
+                                        { id: 'hijrah_elegan', name: 'Hijrah Elegan', color: 'bg-emerald-800' },
+                                        { id: 'ketenangan_senja', name: 'Ketenangan Senja', color: 'bg-orange-500' },
+                                        { id: 'dunia_bermain', name: 'Dunia Bermain', color: 'bg-sky-400' },
+                                        { id: 'buku_gambar', name: 'Buku Gambar', color: 'bg-pink-200' },
+                                        { id: 'neon_cyber', name: 'Neon Cyber', color: 'bg-slate-900' },
+                                        { id: 'aesthetic_lofi', name: 'Aesthetic Lo-Fi', color: 'bg-[#f2ede4]' }
+                                    ].map(tmpl => (
+                                        <button
+                                            key={tmpl.id}
+                                            type="button"
+                                            onClick={() => setProfile(prev => ({ ...prev, shop_template: tmpl.id }))}
+                                            className={`p-2 rounded-xl border-2 transition-all flex flex-col items-center gap-2 ${profile.shop_template === tmpl.id ? 'border-green-600 bg-green-50 shadow-md' : 'border-gray-100 bg-white hover:border-gray-200'}`}
+                                        >
+                                            <div className={`w-full aspect-video rounded-lg ${tmpl.color} flex items-center justify-center text-white text-[10px] font-bold shadow-inner`}>
+                                                {tmpl.id === 'none' ? 'Barakah Standard' : 'Premium'}
+                                            </div>
+                                            <span className="text-[10px] font-bold text-gray-600">{tmpl.name}</span>
+                                        </button>
+                                    ))}
+                                </div>
+                                <p className="text-[10px] text-gray-400 mt-2 italic">* Memilih template khusus akan menimpa pengaturan Layout & Warna di bawah ini.</p>
                             </div>
 
                             <button
@@ -269,80 +301,108 @@ const DashboardShopSettingsPage = () => {
                             <h4 className="text-xs font-bold text-gray-400 mb-4 w-full text-center tracking-widest uppercase">Live Preview (Mobile)</h4>
 
                             <div className={`w-full bg-white rounded-[2.5rem] shadow-sm border-[6px] border-gray-200 overflow-hidden relative h-[650px] flex flex-col ${profile.shop_font === 'serif' ? 'font-serif' : profile.shop_font === 'mono' ? 'font-mono' : profile.shop_font === 'poppins' ? 'font-[Poppins]' : 'font-sans'}`}>
-                                {/* Decoration Overlay */}
-                                <ShopDecoration decoration={profile.shop_decoration} themeColor={profile.shop_theme_color} isPreview={true} />
+                                {profile.shop_template !== 'none' ? (
+                                    <StoreTemplates
+                                        templateName={profile.shop_template}
+                                        profile={profile}
+                                        username={profile.username}
+                                        isPreview={true}
+                                        themeColor={profile.shop_theme_color}
+                                        font={profile.shop_font}
+                                        decoration={profile.shop_decoration}
+                                        products={[
+                                            { title: 'Produk Digital 1', price: 50000, thumbnail: '' },
+                                            { title: 'Produk Digital 2', price: 75000, thumbnail: '' }
+                                        ]}
+                                        courses={[
+                                            { title: 'E-Course Premium', price: 150000, thumbnail: '' }
+                                        ]}
+                                    />
+                                ) : (
+                                    <>
+                                        {/* Decoration Overlay */}
+                                        <ShopDecoration decoration={profile.shop_decoration} themeColor={profile.shop_theme_color} isPreview={true} />
 
-                                {/* Header bg */}
-                                <div
-                                    className={`h-32 w-full relative z-10 ${profile.shop_theme_color === 'dark' ? 'bg-gray-900' : profile.shop_theme_color === 'blue' ? 'bg-blue-800' : profile.shop_theme_color === 'purple' ? 'bg-purple-800' : profile.shop_theme_color === 'rose' ? 'bg-rose-800' : profile.shop_theme_color === 'green' ? 'bg-green-800' : 'bg-gray-800'}`}
-                                    style={{ backgroundColor: (profile.shop_theme_color?.startsWith('#') || profile.shop_theme_color?.startsWith('rgb')) ? profile.shop_theme_color : undefined }}
-                                >
-                                </div>
-
-                                {/* Fake Profile img */}
-                                <div className="absolute top-20 left-1/2 -translate-x-1/2 z-20">
-                                    <div className="w-20 h-20 rounded-full border-4 border-white bg-gray-200 overflow-hidden shadow-md">
-                                        {profile.picture ? (
-                                            <img src={profile.picture instanceof File ? URL.createObjectURL(profile.picture) : profile.picture} alt="Preview" className="w-full h-full object-cover" />
-                                        ) : (
-                                            <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs bg-white shadow-inner">Foto Profil</div>
-                                        )}
-                                    </div>
-                                </div>
-
-                                <div className={`mt-12 px-6 text-center relative z-10 ${profile.shop_theme_color === 'dark' ? 'text-white' : ''}`}>
-                                    <p className="font-bold text-lg">@{profile.username || 'username'}</p>
-                                    <p className="text-xs text-gray-500 mt-2 line-clamp-3 leading-relaxed">{profile.shop_description || 'Deskripsi toko digital Anda akan ditampilkan di sini.'}</p>
-                                </div>
-
-                                {/* Fake Content Area based on Layout */}
-                                <div className={`mt-6 p-4 flex-1 relative z-10 border-t border-gray-100 ${profile.shop_theme_color === 'dark' ? 'bg-gray-900/80' : 'bg-gray-50/50'}`}>
-                                    {profile.shop_layout === 'biolink' ? (
-                                        <div className="flex flex-col gap-3">
-                                            <div className="w-full h-12 bg-white/90 backdrop-blur-sm rounded-2xl border shadow-sm flex items-center justify-center text-sm font-bold text-gray-700">Contoh Produk Digital 1</div>
-                                            <div className="w-full h-12 bg-white/90 backdrop-blur-sm rounded-2xl border shadow-sm flex items-center justify-center text-sm font-bold text-gray-700">Contoh Produk Digital 2</div>
-                                            <div className="w-full h-12 bg-white/90 backdrop-blur-sm rounded-2xl border shadow-sm flex items-center justify-center text-sm font-bold text-gray-700">Mini E-Course Belajar</div>
+                                        {/* Header bg / Shop Thumbnail */}
+                                        <div
+                                            className={`h-32 w-full relative z-10 overflow-hidden ${!profile.shop_thumbnail && (profile.shop_theme_color === 'dark' ? 'bg-gray-900' : profile.shop_theme_color === 'blue' ? 'bg-blue-800' : profile.shop_theme_color === 'purple' ? 'bg-purple-800' : profile.shop_theme_color === 'rose' ? 'bg-rose-800' : profile.shop_theme_color === 'green' ? 'bg-green-800' : 'bg-gray-800')}`}
+                                            style={{ backgroundColor: (!profile.shop_thumbnail && (profile.shop_theme_color?.startsWith('#') || profile.shop_theme_color?.startsWith('rgb'))) ? profile.shop_theme_color : undefined }}
+                                        >
+                                            {profile.shop_thumbnail && (
+                                                <img
+                                                    src={profile.shop_thumbnail instanceof File ? URL.createObjectURL(profile.shop_thumbnail) : getMediaUrl(profile.shop_thumbnail)}
+                                                    alt="Thumbnail Preview"
+                                                    className="w-full h-full object-cover opacity-100"
+                                                />
+                                            )}
                                         </div>
-                                    ) : profile.shop_layout === 'grid' ? (
-                                        <div className="grid grid-cols-2 gap-3">
-                                            <div className="aspect-square bg-white/90 backdrop-blur-sm rounded-2xl border shadow-sm flex flex-col items-center justify-center p-3">
-                                                <div className="w-full h-full bg-gray-100 rounded-xl mb-2"></div>
-                                                <div className="w-3/4 h-2 bg-gray-200 rounded"></div>
-                                            </div>
-                                            <div className="aspect-square bg-white/90 backdrop-blur-sm rounded-2xl border shadow-sm flex flex-col items-center justify-center p-3">
-                                                <div className="w-full h-full bg-gray-100 rounded-xl mb-2"></div>
-                                                <div className="w-3/4 h-2 bg-gray-200 rounded"></div>
-                                            </div>
-                                            <div className="aspect-square bg-white/90 backdrop-blur-sm rounded-2xl border shadow-sm flex flex-col items-center justify-center p-3">
-                                                <div className="w-full h-full bg-gray-100 rounded-xl mb-2"></div>
-                                                <div className="w-3/4 h-2 bg-gray-200 rounded"></div>
-                                            </div>
-                                            <div className="aspect-square bg-white/90 backdrop-blur-sm rounded-2xl border shadow-sm flex flex-col items-center justify-center p-3">
-                                                <div className="w-full h-full bg-gray-100 rounded-xl mb-2"></div>
-                                                <div className="w-3/4 h-2 bg-gray-200 rounded"></div>
+
+                                        {/* Fake Profile img */}
+                                        <div className="absolute top-20 left-1/2 -translate-x-1/2 z-20">
+                                            <div className="w-20 h-20 rounded-full border-4 border-white bg-gray-200 overflow-hidden shadow-md">
+                                                {profile.picture ? (
+                                                    <img src={profile.picture instanceof File ? URL.createObjectURL(profile.picture) : profile.picture} alt="Preview" className="w-full h-full object-cover" />
+                                                ) : (
+                                                    <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs bg-white shadow-inner">Foto Profil</div>
+                                                )}
                                             </div>
                                         </div>
-                                    ) : (
-                                        <div className="flex flex-col gap-3">
-                                            <div className="w-full bg-white/90 backdrop-blur-sm rounded-2xl border shadow-sm flex items-center p-3 gap-3">
-                                                <div className="w-16 h-16 bg-gray-100 rounded-xl"></div>
-                                                <div className="flex-1">
-                                                    <div className="h-3 bg-gray-200 rounded w-3/4 mb-2"></div>
-                                                    <div className="h-2 bg-gray-100 rounded w-1/2"></div>
-                                                    <div className="h-3 bg-green-100 rounded w-1/3 mt-2"></div>
+
+                                        <div className={`mt-12 px-6 text-center relative z-10 ${profile.shop_theme_color === 'dark' ? 'text-white' : ''}`}>
+                                            <p className="font-bold text-lg">@{profile.username || 'username'}</p>
+                                            <p className="text-xs text-gray-500 mt-2 line-clamp-3 leading-relaxed">{profile.shop_description || 'Deskripsi toko digital Anda akan ditampilkan di sini.'}</p>
+                                        </div>
+
+                                        {/* Fake Content Area based on Layout */}
+                                        <div className={`mt-6 p-4 flex-1 relative z-10 border-t border-gray-100 ${profile.shop_theme_color === 'dark' ? 'bg-gray-900/80' : 'bg-gray-50/50'}`}>
+                                            {profile.shop_layout === 'biolink' ? (
+                                                <div className="flex flex-col gap-3">
+                                                    <div className="w-full h-12 bg-white/90 backdrop-blur-sm rounded-2xl border shadow-sm flex items-center justify-center text-sm font-bold text-gray-700">Contoh Produk Digital 1</div>
+                                                    <div className="w-full h-12 bg-white/90 backdrop-blur-sm rounded-2xl border shadow-sm flex items-center justify-center text-sm font-bold text-gray-700">Contoh Produk Digital 2</div>
+                                                    <div className="w-full h-12 bg-white/90 backdrop-blur-sm rounded-2xl border shadow-sm flex items-center justify-center text-sm font-bold text-gray-700">Mini E-Course Belajar</div>
                                                 </div>
-                                            </div>
-                                            <div className="w-full bg-white/90 backdrop-blur-sm rounded-2xl border shadow-sm flex items-center p-3 gap-3">
-                                                <div className="w-16 h-16 bg-gray-100 rounded-xl"></div>
-                                                <div className="flex-1">
-                                                    <div className="h-3 bg-gray-200 rounded w-3/4 mb-2"></div>
-                                                    <div className="h-2 bg-gray-100 rounded w-1/2"></div>
-                                                    <div className="h-3 bg-green-100 rounded w-1/3 mt-2"></div>
+                                            ) : profile.shop_layout === 'grid' ? (
+                                                <div className="grid grid-cols-2 gap-3">
+                                                    <div className="aspect-square bg-white/90 backdrop-blur-sm rounded-2xl border shadow-sm flex flex-col items-center justify-center p-3">
+                                                        <div className="w-full h-full bg-gray-100 rounded-xl mb-2"></div>
+                                                        <div className="w-3/4 h-2 bg-gray-200 rounded"></div>
+                                                    </div>
+                                                    <div className="aspect-square bg-white/90 backdrop-blur-sm rounded-2xl border shadow-sm flex flex-col items-center justify-center p-3">
+                                                        <div className="w-full h-full bg-gray-100 rounded-xl mb-2"></div>
+                                                        <div className="w-3/4 h-2 bg-gray-200 rounded"></div>
+                                                    </div>
+                                                    <div className="aspect-square bg-white/90 backdrop-blur-sm rounded-2xl border shadow-sm flex flex-col items-center justify-center p-3">
+                                                        <div className="w-full h-full bg-gray-100 rounded-xl mb-2"></div>
+                                                        <div className="w-3/4 h-2 bg-gray-200 rounded"></div>
+                                                    </div>
+                                                    <div className="aspect-square bg-white/90 backdrop-blur-sm rounded-2xl border shadow-sm flex flex-col items-center justify-center p-3">
+                                                        <div className="w-full h-full bg-gray-100 rounded-xl mb-2"></div>
+                                                        <div className="w-3/4 h-2 bg-gray-200 rounded"></div>
+                                                    </div>
                                                 </div>
-                                            </div>
+                                            ) : (
+                                                <div className="flex flex-col gap-3">
+                                                    <div className="w-full bg-white/90 backdrop-blur-sm rounded-2xl border shadow-sm flex items-center p-3 gap-3">
+                                                        <div className="w-16 h-16 bg-gray-100 rounded-xl"></div>
+                                                        <div className="flex-1">
+                                                            <div className="h-3 bg-gray-200 rounded w-3/4 mb-2"></div>
+                                                            <div className="h-2 bg-gray-100 rounded w-1/2"></div>
+                                                            <div className="h-3 bg-green-100 rounded w-1/3 mt-2"></div>
+                                                        </div>
+                                                    </div>
+                                                    <div className="w-full bg-white/90 backdrop-blur-sm rounded-2xl border shadow-sm flex items-center p-3 gap-3">
+                                                        <div className="w-16 h-16 bg-gray-100 rounded-xl"></div>
+                                                        <div className="flex-1">
+                                                            <div className="h-3 bg-gray-200 rounded w-3/4 mb-2"></div>
+                                                            <div className="h-2 bg-gray-100 rounded w-1/2"></div>
+                                                            <div className="h-3 bg-green-100 rounded w-1/3 mt-2"></div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )}
                                         </div>
-                                    )}
-                                </div>
+                                    </>
+                                )}
                             </div>
                         </div>
 
