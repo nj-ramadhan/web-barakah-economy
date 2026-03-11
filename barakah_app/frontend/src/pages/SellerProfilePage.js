@@ -169,17 +169,17 @@ const SellerProfilePage = () => {
                     </div>
                 </div>
 
-                <div className={`mt-16 text-center px-4 ${layoutStyle === 'biolink' ? 'w-full max-w-md' : ''}`}>
+                <div className={`mt-16 text-center px-4 transition-all ${layoutStyle === 'biolink' ? 'w-full max-w-md' : 'max-w-md mx-auto'} ${headerStyle === 'theme' ? (themeColor === 'dark' ? 'bg-gray-800/80 border border-gray-700' : 'bg-white/80 border border-white') : ''} ${headerStyle === 'theme' ? 'p-8 rounded-[3rem] backdrop-blur-md shadow-xl' : ''}`}>
                     <div className="flex items-center justify-center gap-2">
-                        <h1 className="text-xl font-bold" style={{ color: textColor || (themeColor === 'dark' ? '#ffffff' : '#111827') }}>@{username}</h1>
+                        <h1 className="text-2xl font-black" style={{ color: textColor || (themeColor === 'dark' ? '#ffffff' : '#111827') }}>@{username}</h1>
                         <ShareButton slug={username} title={`Profil Toko @${username}`} type="seller" />
                     </div>
                     {profile && (
                         <>
-                            <p className="text-sm mt-1 opacity-80" style={{ color: textColor || (themeColor === 'dark' ? '#ffffff' : '#111827') }}>{profile.name_full}</p>
+                            <p className="text-base mt-2 font-bold opacity-90" style={{ color: textColor || (themeColor === 'dark' ? '#ffffff' : '#111827') }}>{profile.name_full}</p>
                             {profile.shop_description && (
-                                <div className="mt-4 max-w-md mx-auto">
-                                    <p className="text-sm italic opacity-90" style={{ color: textColor || (themeColor === 'dark' ? '#ffffff' : '#111827') }}>"{profile.shop_description}"</p>
+                                <div className="mt-4">
+                                    <p className="text-sm italic font-medium leading-relaxed" style={{ color: textColor || (themeColor === 'dark' ? '#ffffff' : '#111827') }}>"{profile.shop_description}"</p>
                                 </div>
                             )}
                         </>
@@ -189,8 +189,8 @@ const SellerProfilePage = () => {
                 {/* Course List Section */}
                 {courses.length > 0 && (
                     <div className={`mt-10 px-4 ${layoutStyle === 'biolink' ? 'w-full max-w-md text-center' : ''}`}>
-                        <h2 className={`text-sm font-bold mb-4 flex items-center ${layoutStyle === 'biolink' ? 'justify-center' : ''} gap-2 ${themeColor === 'dark' ? 'text-gray-200' : 'text-gray-800'}`}>
-                            <span className={`material-icons text-lg ${theme.icon}`} style={isHex ? { color: themeColor } : {}}>school</span>
+                        <h2 className="text-sm font-bold mb-4 flex items-center gap-2" style={{ color: textColor || (themeColor === 'dark' ? '#e5e7eb' : '#1f2937'), justifyContent: layoutStyle === 'biolink' ? 'center' : 'flex-start' }}>
+                            <span className="material-icons text-lg" style={{ color: textColor || (isHex ? themeColor : undefined) }}>school</span>
                             Kelas E-Course
                         </h2>
                         <div className={`grid ${layoutStyle === 'biolink' ? 'grid-cols-1 gap-3' : layoutStyle === 'grid' ? 'grid-cols-2 lg:grid-cols-3 gap-2' : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4'}`}>
@@ -235,8 +235,8 @@ const SellerProfilePage = () => {
 
                 {/* Product List Section */}
                 <div className={`mt-10 px-4 ${layoutStyle === 'biolink' ? 'w-full max-w-md text-center flex flex-col items-center' : ''}`}>
-                    <h2 className={`text-sm font-bold mb-4 flex items-center gap-2 ${layoutStyle === 'biolink' ? 'justify-center' : ''} ${themeColor === 'dark' ? 'text-gray-200' : 'text-gray-800'}`}>
-                        <span className={`material-icons text-lg ${theme.icon}`} style={isHex ? { color: themeColor } : {}}>inventory_2</span>
+                    <h2 className="text-sm font-bold mb-4 flex items-center gap-2" style={{ color: textColor || (themeColor === 'dark' ? '#e5e7eb' : '#1f2937'), justifyContent: layoutStyle === 'biolink' ? 'center' : 'flex-start' }}>
+                        <span className="material-icons text-lg" style={{ color: textColor || (isHex ? themeColor : undefined) }}>receipt_long</span>
                         Produk Digital
                     </h2>
 

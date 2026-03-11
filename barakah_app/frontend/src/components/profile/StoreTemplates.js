@@ -55,8 +55,6 @@ const ProductCard = ({ item, layout, templateType, themeColor, textStyle, badgeB
         switch (templateType) {
             case 'hijrah': themeClasses = "bg-emerald-900/60 text-yellow-500 border-yellow-500/40 hover:bg-emerald-800/80 hover:border-yellow-400"; break;
             case 'senja': themeClasses = "bg-white/15 hover:bg-white/25 border-white/30 text-white shadow-orange-900/10"; break;
-            case 'cyber': themeClasses = "bg-black/40 border-[#bc13fe] text-[#bc13fe] shadow-[0_0_15px_rgba(188,19,254,0.3)] hover:shadow-[0_0_20px_rgba(188,19,254,0.6)]"; break;
-            case 'bermain': themeClasses = "bg-[#FFD700] text-blue-900 border-white border-4 shadow-[0_6px_0_rgba(0,0,0,0.1)] hover:translate-y-[-2px] hover:shadow-[0_8px_0_rgba(0,0,0,0.1)]"; break;
             case 'lofi': themeClasses = "bg-[#fcfaf7] border-[#e5e0d8] text-gray-700 hover:bg-[#fffcf9]"; break;
             default: break;
         }
@@ -79,7 +77,7 @@ const ProductCard = ({ item, layout, templateType, themeColor, textStyle, badgeB
             <CardWrapper
                 {...wrapperProps}
                 ref={cardRef}
-                className={`rounded-3xl overflow-hidden border transition-all hover:scale-[1.05] active:scale-95 opacity-0 shadow-lg ${templateType === 'lofi' ? 'bg-[#fcfaf7] border-[#e5e0d8] p-2 rotate-[-1deg] hover:rotate-0' : templateType === 'cyber' ? 'bg-slate-900/70 border-[#05f9ff]/40 hover:border-[#05f9ff] shadow-[0_0_20px_rgba(5,249,255,0.1)]' : 'bg-white/10 border-white/20 hover:bg-white/20'}`}
+                className={`rounded-3xl overflow-hidden border transition-all hover:scale-[1.05] active:scale-95 opacity-0 shadow-lg ${templateType === 'lofi' ? 'bg-[#fcfaf7] border-[#e5e0d8] p-2 rotate-[-1deg] hover:rotate-0' : 'bg-white/10 border-white/20 hover:bg-white/20'}`}
             >
                 <div className="aspect-square relative overflow-hidden">
                     <img src={getMediaUrl(item.thumbnail) || '/placeholder-image.jpg'} alt={item.title} className={`w-full h-full object-cover transition-transform duration-500 hover:scale-110 ${templateType === 'lofi' ? 'sepia-[10%] opacity-90' : ''}`} />
@@ -100,7 +98,7 @@ const ProductCard = ({ item, layout, templateType, themeColor, textStyle, badgeB
         <CardWrapper
             {...wrapperProps}
             ref={cardRef}
-            className={`flex gap-4 p-4 rounded-3xl border transition-all hover:translate-x-1 hover:bg-white/10 opacity-0 backdrop-blur-sm ${templateType === 'lofi' ? 'bg-[#fcfaf7] border-[#e5e0d8] shadow-sm' : templateType === 'cyber' ? 'bg-slate-900/50 border-[#bc13fe]/30 hover:border-[#bc13fe]/70 shadow-[0_0_15px_rgba(188,19,254,0.1)]' : 'bg-white/5 border-white/10'}`}
+            className={`flex gap-4 p-4 rounded-3xl border transition-all hover:translate-x-1 hover:bg-white/10 opacity-0 backdrop-blur-sm ${templateType === 'lofi' ? 'bg-[#fcfaf7] border-[#e5e0d8] shadow-sm' : 'bg-white/5 border-white/10'}`}
         >
             <div className="w-20 h-20 rounded-2xl overflow-hidden flex-shrink-0 shadow-md">
                 <img src={getMediaUrl(item.thumbnail) || '/placeholder-image.jpg'} alt={item.title} className="w-full h-full object-cover" />
@@ -204,127 +202,7 @@ const ShareButton = ({ size = "md" }) => (
     </div>
 );
 
-// --- TEMPLATE 3: DUNIA BERMAIN ---
-export const DuniaBermain = ({ profile, username, products, courses, isPreview, themeColor, font, decoration, layout, headerStyle, textColor }) => {
-    const isHex = themeColor?.startsWith('#') || themeColor?.startsWith('rgb');
-    const isTransparentHeader = headerStyle === 'transparent';
-    const profileTextColor = textColor || '#1e3a8a';
-
-    return (
-        <div className={`min-h-screen text-[#1e3a8a] ${getFontClass(font)} relative overflow-x-hidden ${isPreview ? 'rounded-[2.5rem] h-[650px] overflow-hidden' : ''} ${!isHex && 'bg-[#87CEEB]'}`} style={isHex ? { backgroundColor: themeColor } : {}}>
-            <ShopDecoration decoration={decoration} themeColor={themeColor} isPreview={isPreview} />
-            <div className="max-w-md mx-auto h-full overflow-y-auto no-scrollbar pb-20">
-                <div className="pt-12 px-6">
-                    <header className={`mb-14 p-10 rounded-[3.5rem] transition-all relative z-10 ${isTransparentHeader ? 'bg-transparent' : 'bg-white/50 backdrop-blur-xl border-4 border-white shadow-[0_20px_40px_rgba(0,0,0,0.1)]'}`}>
-                        {profile.shop_thumbnail && (
-                            <div className="absolute -top-6 -right-6 w-32 h-32 rotate-12 bg-white p-2 rounded-3xl shadow-lg z-20 hidden sm:block overflow-hidden transform hover:rotate-0 transition-transform">
-                                <img src={getMediaUrl(profile.shop_thumbnail)} className="w-full h-full object-cover rounded-2xl" alt="Store" />
-                            </div>
-                        )}
-                        <h1 className="text-5xl font-black drop-shadow-[0_4px_0_rgba(255,255,255,1)] uppercase tracking-tighter italic mb-10 transform -rotate-3 scale-110" style={{ color: profileTextColor }}>@{username}</h1>
-                        <div className="mb-10 flex justify-center scale-110">
-                            <div className="w-36 h-36 bg-[#FFD700] rounded-[3rem] border-8 border-white flex items-center justify-center shadow-[0_15px_30px_rgba(0,0,0,0.1)] relative animate-bounce overflow-hidden transform rotate-6 ring-8 ring-white/30">
-                                <img src={getMediaUrl(profile.picture)} className="w-full h-full object-cover" alt="Profile" />
-                            </div>
-                        </div>
-                        <div className={`${isTransparentHeader ? 'bg-white/40' : 'bg-white/30'} backdrop-blur-md p-6 rounded-[2.5rem] border-4 border-white mb-6 shadow-sm inline-block transform hover:rotate-1 transition-transform max-w-full overflow-hidden`}>
-                            <p className="font-black text-xl tracking-tight leading-tight" style={{ color: profileTextColor }}> {profile.shop_description || 'Waktunya Bersenang-senang!'} </p>
-                        </div>
-                    </header>
-
-                    <div className={`w-full ${layout === 'grid' ? 'grid grid-cols-2 gap-4' : 'flex flex-col gap-6'}`}>
-                        {[...courses, ...products].slice(0, 12).map((item, idx) => (
-                            <ProductCard key={idx} item={item} layout={layout} templateType="bermain" themeColor={themeColor} textStyle={{ color: '#1e3a8a' }} badgeBg="bg-blue-900" username={username} isPreview={isPreview} />
-                        ))}
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
-};
-
-// --- TEMPLATE 4: BUKU GAMBAR ---
-export const BukuGambar = ({ profile, username, products, courses, isPreview, themeColor, font, decoration, layout, headerStyle, textColor }) => {
-    const isHex = themeColor?.startsWith('#') || themeColor?.startsWith('rgb');
-    const isTransparentHeader = headerStyle === 'transparent';
-    const profileTextColor = textColor || '#4A4A4A';
-
-    return (
-        <div className={`min-h-screen text-[#4A4A4A] p-6 relative overflow-x-hidden ${getFontClass(font)} ${isPreview ? 'rounded-[2.5rem] h-[650px] overflow-hidden' : ''} ${!isHex && 'bg-[#fff5f7]'}`} style={isHex ? { backgroundColor: themeColor } : {}}>
-            <ShopDecoration decoration={decoration} themeColor={themeColor} isPreview={isPreview} />
-            <div className="max-w-md mx-auto h-full overflow-y-auto no-scrollbar pb-16">
-                <header className={`w-full flex flex-col items-center mt-12 mb-12 relative z-10 text-center p-8 rounded-[3rem] transition-all ${isTransparentHeader ? 'bg-transparent' : 'bg-white/70 backdrop-blur-md border-[6px] border-white shadow-xl shadow-pink-200/20'}`}>
-                    <div className="absolute -top-10 -left-4 w-24 h-24 rotate-[-15deg] bg-white p-2 rounded-2xl shadow-md border-2 border-pink-50 hidden sm:block">
-                        <img src={getMediaUrl(profile.shop_thumbnail || profile.picture)} alt="Shop" className="w-full h-full object-cover rounded-lg" />
-                    </div>
-                    <div className="text-7xl mb-8 animate-[bounce_3s_infinite] drop-shadow-lg text-pink-300">
-                        <svg width="60" height="60" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" /></svg>
-                    </div>
-                    <h1 className="text-4xl font-black tracking-tight text-center border-b-[6px] border-pink-200 inline-block px-4 mb-4 uppercase transform rotate-1" style={{ color: profileTextColor }}>@{username}</h1>
-                    <p className="text-sm font-black opacity-60 uppercase tracking-[0.3em] mb-4" style={{ color: profileTextColor }}>Doodle Space</p>
-                    <p className="text-xl opacity-90 mt-2 italic font-serif leading-relaxed max-w-[260px]" style={{ color: profileTextColor }}>"{profile.shop_description || 'Mari berkreasi hari ini!'}"</p>
-                </header>
-
-                <div className={`w-full ${layout === 'grid' ? 'grid grid-cols-2 gap-5' : 'flex flex-col gap-6'} relative z-10`}>
-                    {[...courses, ...products].slice(0, 15).map((item, idx) => (
-                        <ProductCard key={idx} item={item} layout={layout} templateType="lofi" themeColor={themeColor} badgeBg="bg-pink-400" username={username} isPreview={isPreview} />
-                    ))}
-                </div>
-            </div>
-        </div>
-    );
-};
-
-// --- TEMPLATE 5: NEON CYBER ---
-export const NeonCyber = ({ profile, username, products, courses, isPreview, themeColor, font, decoration, layout, headerStyle, textColor }) => {
-    const isHex = themeColor?.startsWith('#') || themeColor?.startsWith('rgb');
-    const isTransparentHeader = headerStyle === 'transparent';
-    const profileTextColor = textColor || '#05f9ff';
-
-    return (
-        <div className={`min-h-screen text-slate-100 p-6 relative overflow-x-hidden ${getFontClass(font)} ${isPreview ? 'rounded-[2.5rem] h-[650px] overflow-hidden' : ''} ${!isHex && 'bg-[#050810]'}`} style={isHex ? { backgroundColor: themeColor } : {}}>
-            <ShopDecoration decoration={decoration} themeColor={themeColor} isPreview={isPreview} />
-            <div className="max-w-md mx-auto h-full overflow-y-auto no-scrollbar pb-20">
-                <header className={`w-full flex flex-col gap-6 mb-12 relative z-10 mt-6 transition-all`}>
-                    <div className={`flex justify-between items-center p-6 rounded-3xl transition-all ${isTransparentHeader ? 'bg-transparent border-l-[6px] border-[#05f9ff]' : 'bg-slate-900/80 backdrop-blur-2xl border-l-[6px] border-[#05f9ff] border-y border-r border-[#05f9ff]/10 shadow-[0_0_40px_rgba(5,249,255,0.15)]'}`}>
-                        <div className="flex flex-col text-left">
-                            <h1 className="text-3xl font-black tracking-tighter italic drop-shadow-[0_0_15px_rgba(5,249,255,1)]" style={{ color: profileTextColor }}>@{username}</h1>
-                            <div className="flex items-center gap-2 mt-2">
-                                <span className="w-2.5 h-2.5 bg-[#05f9ff] rounded-full animate-pulse shadow-[0_0_12px_#05f9ff]"></span>
-                                <span className="text-[10px] uppercase tracking-[0.5em] font-black text-[#bc13fe]">AUTHORIZED</span>
-                            </div>
-                        </div>
-                        <div className="w-20 h-20 rounded-2xl border-2 border-[#bc13fe] flex items-center justify-center bg-slate-800 shadow-[0_0_20px_rgba(188,19,254,0.5)] rotate-3 overflow-hidden">
-                            <img src={getMediaUrl(profile.picture)} className="w-full h-full object-cover" alt="Profile" />
-                        </div>
-                    </div>
-
-                    {profile.shop_thumbnail && (
-                        <div className="w-full h-24 rounded-2xl border border-[#05f9ff]/20 overflow-hidden relative group">
-                            <img src={getMediaUrl(profile.shop_thumbnail)} className="w-full h-full object-cover opacity-60 group-hover:scale-105 transition-transform" alt="Banner" />
-                            <div className="absolute inset-0 bg-gradient-to-r from-[#05f9ff]/20 to-transparent"></div>
-                            <div className="absolute bottom-3 left-4">
-                                <p className="text-[10px] font-mono uppercase tracking-widest text-[#05f9ff]">Network_Banner.v1</p>
-                            </div>
-                        </div>
-                    )}
-
-                    <div className="bg-slate-900/60 border border-[#05f9ff]/10 p-5 rounded-2xl text-center shadow-inner">
-                        <p className="text-sm font-mono tracking-wide leading-relaxed" style={{ color: profileTextColor }}> {profile.shop_description || 'SYSTEMS_CORE_ACTIVE'} </p>
-                    </div>
-                </header>
-
-                <div className={`w-full ${layout === 'grid' ? 'grid grid-cols-2 gap-4' : 'flex flex-col gap-6'} relative z-10`}>
-                    {[...courses, ...products].slice(0, 15).map((item, idx) => (
-                        <ProductCard key={idx} item={item} layout={layout} templateType="cyber" themeColor={themeColor} textStyle={{ color: '#05f9ff', textShadow: '0 0 10px rgba(5,249,255,0.7)' }} badgeBg="bg-[#bc13fe]" username={username} isPreview={isPreview} />
-                    ))}
-                </div>
-            </div>
-        </div>
-    );
-};
-
-// --- TEMPLATE 6: AESthetic LO-FI ---
+// --- TEMPLATE 3: AESthetic LO-FI ---
 export const AestheticLoFi = ({ profile, username, products, courses, isPreview, themeColor, font, decoration, layout, headerStyle, textColor }) => {
     const isHex = themeColor?.startsWith('#') || themeColor?.startsWith('rgb');
     const isTransparentHeader = headerStyle === 'transparent';
@@ -374,9 +252,6 @@ const StoreTemplates = ({ templateName, profile, username, products = [], course
     switch (templateName) {
         case 'hijrah_elegan': return <HijrahElegan {...props} />;
         case 'ketenangan_senja': return <KetenanganSenja {...props} />;
-        case 'dunia_bermain': return <DuniaBermain {...props} />;
-        case 'buku_gambar': return <BukuGambar {...props} />;
-        case 'neon_cyber': return <NeonCyber {...props} />;
         case 'aesthetic_lofi': return <AestheticLoFi {...props} />;
         default: return null;
     }

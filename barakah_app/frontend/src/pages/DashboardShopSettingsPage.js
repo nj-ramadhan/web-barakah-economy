@@ -312,11 +312,8 @@ const DashboardShopSettingsPage = () => {
                                         { id: 'none', name: 'Standard (Default)', color: 'bg-gray-100' },
                                         { id: 'hijrah_elegan', name: 'Hijrah Elegan', color: 'bg-emerald-800' },
                                         { id: 'ketenangan_senja', name: 'Ketenangan Senja', color: 'bg-orange-500' },
-                                        { id: 'dunia_bermain', name: 'Dunia Bermain', color: 'bg-sky-400' },
-                                        { id: 'buku_gambar', name: 'Buku Gambar', color: 'bg-pink-200' },
-                                        { id: 'neon_cyber', name: 'Neon Cyber', color: 'bg-slate-900' },
-                                        { id: 'aesthetic_lofi', name: 'Aesthetic Lo-Fi', color: 'bg-[#f2ede4]' }
-                                    ].map(tmpl => (
+                                        { id: 'aesthetic_lofi', name: 'Aesthetic LoFi', color: 'bg-[#f4f1ea]' },
+                                    ].map((tmpl) => (
                                         <button
                                             key={tmpl.id}
                                             type="button"
@@ -457,10 +454,10 @@ const DashboardShopSettingsPage = () => {
 
                     </form>
                 </div>
-            </div>
+            </div >
 
             <NavigationButton />
-        </div>
+        </div >
     );
 };
 
