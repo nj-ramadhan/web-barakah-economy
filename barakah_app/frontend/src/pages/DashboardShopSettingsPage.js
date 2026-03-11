@@ -262,6 +262,13 @@ const DashboardShopSettingsPage = () => {
                                 >
                                     <option value="none">Tanpa Dekorasi</option>
                                     <option value="geometric">Pola Geometris</option>
+                                    <option value="islamic">Pola Islami & Lentera</option>
+                                    <option value="stars">Bintang Berkilau</option>
+                                    <option value="bubbles">Gelembung Melayang</option>
+                                    <option value="floating_icons">Ikon Animasi (✨💰💖)</option>
+                                    <option value="diagonal_lines">Garis Modern</option>
+                                    <option value="confetti">Perayaan Confetti</option>
+                                    <option value="clouds">Awan Lembut ☁️</option>
                                 </select>
                             </div>
 
