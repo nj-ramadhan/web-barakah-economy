@@ -1,7 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import * as anime_module from 'animejs';
-const anime = anime_module.default || anime_module;
+import anime from 'animejs';
 import ShopDecoration from './ShopDecoration';
 
 // Common functions helper
