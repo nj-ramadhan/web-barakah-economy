@@ -6,6 +6,7 @@ const API_BASE = '/courses';
 // Public
 export const getCourses = () => api.get(`${API_BASE}/list/`);
 export const getCourseBySlug = (slug) => api.get(`${API_BASE}/detail/${slug}/`);
+export const getCourseDetail = (id) => api.get(`${API_BASE}/${id}/`);
 
 // Enrollments
 export const createEnrollment = (data) =>
@@ -47,6 +48,9 @@ export const updateCourse = (id, formData) =>
 
 export const deleteCourse = (id) =>
     api.delete(`${API_BASE}/instructor/courses/${id}/`);
+
+export const getCourseMaterials = (courseId) =>
+    api.get(`${API_BASE}/materials/?course_id=${courseId}`);
 
 // Sections & Materials
 export const createSection = (data) =>
