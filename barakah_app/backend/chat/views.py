@@ -32,7 +32,18 @@ class ConsultantCategoryViewSet(viewsets.ModelViewSet):
 class ConsultantProfileViewSet(viewsets.ModelViewSet):
     queryset = ConsultantProfile.objects.all()
     serializer_class = ConsultantProfileSerializer
-    permission_classes = [permissions.IsAdminUser]
+    
+    def get_queryset(self):
+        queryset = ConsultantProfile.objects.filter(is_available=True)
+        category_id = self.request.query_params.get('category')
+        if category_id:
+            queryset = queryset.filter(category_id=category_id)
+        return queryset
+
+    def get_permissions(self):
+        if self.action in ['list', 'retrieve']:
+            return [permissions.IsAuthenticated()]
+        return [permissions.IsAdminUser()]
 
 class ChatSessionViewSet(viewsets.ModelViewSet):
     serializer_class = ChatSessionSerializer
@@ -44,34 +55,45 @@ class ChatSessionViewSet(viewsets.ModelViewSet):
 
     def create(self, request, *args, **kwargs):
         category_id = request.data.get('category')
+        consultant_id = request.data.get('consultant') # Explicit consultant choice
         user = request.user
 
-        # Find available consultant in this category
-        consultant_profile = ConsultantProfile.objects.filter(category_id=category_id, is_available=True).first()
-        
-        if not consultant_profile:
-            # Fallback to admin or first staff if no specific consultant
-            admin_user = User.objects.filter(username='admin').first() or User.objects.filter(is_staff=True).first()
-            if not admin_user:
-                return response.Response({"error": "No consultants available"}, status=status.HTTP_400_BAD_REQUEST)
-            consultant = admin_user
-        else:
-            consultant = consultant_profile.user
+        category = ConsultantCategory.objects.filter(id=category_id).first()
+        if not category:
+            return response.Response({"error": "Kategori tidak ditemukan"}, status=status.HTTP_404_NOT_FOUND)
+
+        consultant = None
+        if consultant_id:
+            try:
+                consultant = User.objects.get(id=consultant_id)
+                # Verify consultant belongs to category
+                if not ConsultantProfile.objects.filter(user=consultant, category_id=category_id).exists():
+                    # For safety, allow staff/admin to consult anywhere
+                    if not (consultant.is_staff or consultant.role == 'admin'):
+                        return response.Response({"error": "Pakar tidak terdaftar di kategori ini"}, status=status.HTTP_400_BAD_REQUEST)
+            except User.DoesNotExist:
+                return response.Response({"error": "Pakar tidak ditemukan"}, status=status.HTTP_404_NOT_FOUND)
 
         # Check if session already exists for this pair and category
-        existing_session = ChatSession.objects.filter(user=user, consultant=consultant, category_id=category_id).first()
+        existing_session = ChatSession.objects.filter(user=user, consultant=consultant, category=category).first()
         if existing_session:
             return response.Response(ChatSessionSerializer(existing_session).data)
 
-        session = ChatSession.objects.create(user=user, consultant=consultant, category_id=category_id)
+        session = ChatSession.objects.create(user=user, consultant=consultant, category=category)
         
         # Auto-send welcome message if exists in category
         if session.category and session.category.welcome_message:
-            Message.objects.create(
-                session=session,
-                sender=consultant, # Represented by consultant
-                content=session.category.welcome_message
-            )
+            # Use consultant as sender if exists, otherwise admin/system
+            sender = consultant
+            if not sender:
+                sender = User.objects.filter(is_superuser=True).first() or User.objects.filter(is_staff=True).first()
+            
+            if sender:
+                Message.objects.create(
+                    session=session,
+                    sender=sender,
+                    content=session.category.welcome_message
+                )
 
         return response.Response(ChatSessionSerializer(session).data, status=status.HTTP_201_CREATED)
 
@@ -116,12 +138,20 @@ class MessageViewSet(viewsets.ModelViewSet):
         if session.category and session.category.is_ai_enabled and session.is_ai_active:
             ai_reply = AIService.get_response(serializer.data['content'], session_id=session.id)
             
-            # Use admin or specific system user as sender
-            admin_user = User.objects.filter(username='admin').first() or User.objects.filter(is_superuser=True).first()
-            if admin_user:
+            ai_sender = None
+            if session.consultant:
+                ai_sender = session.consultant
+            else:
+                # Try to find a dedicated 'Asisten AI' user
+                ai_sender = User.objects.filter(username='Asisten AI').first()
+                if not ai_sender:
+                    # Fallback to admin user
+                    ai_sender = User.objects.filter(username='admin').first() or User.objects.filter(is_superuser=True).first()
+            
+            if ai_sender:
                 Message.objects.create(
                     session=session,
-                    sender=admin_user,
+                    sender=ai_sender,
                     content=ai_reply
                 )
                 # Update session timestamp

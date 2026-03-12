@@ -31,6 +31,10 @@ class AIService:
                 system_content += f"\n\nContext Kategori: {category.name}"
                 if category.welcome_message:
                     system_content += f"\nTemplate Sapaan: {category.welcome_message}"
+            
+            # Grounding with Knowledge Base (Materi/Module)
+            if category.knowledge_base:
+                system_content += f"\n\nMATERI/MODUL REFERENSI (Grounding):\n{category.knowledge_base}\n\nInstruksi: Gunakan materi di atas sebagai referensi utama dalam menjawab pertanyaan user agar jawaban tidak melenceng dari kurikulum/materi kategori ini."
 
         messages = [
             {"role": "system", "content": system_content}
@@ -51,8 +55,9 @@ class AIService:
         }
 
         try:
+            base_url = settings.base_url.rstrip('/')
             response = requests.post(
-                f"{settings.base_url}/chat/completions",
+                f"{base_url}/chat/completions",
                 headers=headers,
                 json=data,
                 timeout=30
@@ -60,6 +65,9 @@ class AIService:
             response.raise_for_status()
             result = response.json()
             return result['choices'][0]['message']['content']
+        except requests.exceptions.HTTPError as e:
+            print(f"AI API HTTP Error: {e.response.status_code} - {e.response.text}")
+            return "Maaf, asisten AI sedang mengalami gangguan koneksi ke provider."
         except Exception as e:
-            print(f"AI Service Error: {e}")
-            return "Maaf, terjadi kesalahan saat menghubungi asisten AI."
+            print(f"AI Service General Error: {e}")
+            return "Maaf, terjadi kesalahan teknis pada sistem AI kami."

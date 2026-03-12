@@ -10,6 +10,13 @@ const formatIDR = (amount) => {
     return 'Rp. ' + new Intl.NumberFormat('id-ID', { minimumFractionDigits: 0 }).format(amount);
 };
 
+const getMediaUrl = (url) => {
+    if (!url) return '';
+    if (url.startsWith('http')) return url;
+    const baseUrl = process.env.REACT_APP_API_BASE_URL || '';
+    return `${baseUrl}${url}`;
+};
+
 const DigitalProductCheckoutPage = () => {
     const { slug } = useParams();
     const navigate = useNavigate();
@@ -102,7 +109,7 @@ const DigitalProductCheckoutPage = () => {
                 {/* Product Summary */}
                 <div className="flex items-center gap-3 bg-gray-50 p-3 rounded-xl mb-6">
                     <img
-                        src={product.thumbnail || '/placeholder-image.jpg'}
+                        src={getMediaUrl(product.thumbnail) || '/placeholder-image.jpg'}
                         alt={product.title}
                         className="w-16 h-16 rounded-lg object-cover"
                         onError={(e) => { e.target.src = '/placeholder-image.jpg'; }}

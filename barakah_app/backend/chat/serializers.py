@@ -15,7 +15,7 @@ class UserBriefSerializer(serializers.ModelSerializer):
 class ConsultantCategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = ConsultantCategory
-        fields = ['id', 'name', 'icon', 'is_active', 'is_ai_enabled', 'welcome_message', 'ai_system_prompt']
+        fields = ['id', 'name', 'icon', 'is_active', 'is_ai_enabled', 'welcome_message', 'ai_system_prompt', 'knowledge_base']
 
 class ConsultantProfileSerializer(serializers.ModelSerializer):
     user_details = UserBriefSerializer(source='user', read_only=True)

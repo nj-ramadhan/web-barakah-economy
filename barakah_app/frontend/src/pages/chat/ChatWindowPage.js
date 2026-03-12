@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getMessages, sendMessage, markRead, getSessionDetail, toggleAISession } from '../../services/chatApi';
+import { getMessages, sendMessage, markRead, getSessionDetail, toggleAISession, getConsultantsByCategory, createSession } from '../../services/chatApi';
 
 const ChatWindowPage = () => {
     const { sessionId } = useParams();
@@ -14,6 +14,9 @@ const ChatWindowPage = () => {
     const [session, setSession] = useState(null);
     const [sending, setSending] = useState(false);
     const [showCommands, setShowCommands] = useState(false);
+    const [showExpertModal, setShowExpertModal] = useState(false);
+    const [availableExperts, setAvailableExperts] = useState([]);
+    const [loadingExperts, setLoadingExperts] = useState(false);
 
     const commands = [
         { code: '/pakar', label: 'Chat dengan Pakar', desc: 'AI akan dinonaktifkan sementara', icon: 'person' },
@@ -173,6 +176,33 @@ const ChatWindowPage = () => {
         }
     };
 
+    const handleOpenExpertModal = async () => {
+        if (!session?.category) return;
+        setShowExpertModal(true);
+        setLoadingExperts(true);
+        try {
+            const res = await getConsultantsByCategory(session.category);
+            setAvailableExperts(res.data);
+        } catch (err) {
+            console.error('Failed to load experts:', err);
+        } finally {
+            setLoadingExperts(false);
+        }
+    };
+
+    const handleSelectExpert = async (expertId) => {
+        try {
+            setLoading(true);
+            const res = await createSession(session.category, expertId);
+            setShowExpertModal(false);
+            navigate(`/chat/${res.data.id}`);
+        } catch (err) {
+            alert('Gagal menghubungkan ke pakar.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return (
         <div className="flex flex-col h-[calc(100vh-80px)] lg:h-[700px] bg-white lg:rounded-3xl lg:shadow-2xl max-w-md mx-auto relative overflow-hidden lg:my-4">
             {/* Header Chat */}
@@ -184,10 +214,8 @@ const ChatWindowPage = () => {
                 <div className="flex-1 min-w-0">
                     <h2 className="font-bold text-gray-800 text-sm truncate">
                         {session ? (
-                            currentUser.id === session.user
-                                ? session.consultant_details?.username
-                                : session.user_details?.username
-                        ) : 'Pakar'}
+                            session.consultant_details?.username || `Chat ${session.category_name} `
+                        ) : 'Memuat...'}
                     </h2>
                     <p className="text-[10px] text-green-600 font-bold uppercase tracking-wider flex items-center gap-1">
                         <span className={`w-1.5 h-1.5 rounded-full animate-pulse ${session?.is_ai_active ? 'bg-green-500' : 'bg-orange-500'}`}></span>
@@ -197,6 +225,15 @@ const ChatWindowPage = () => {
                         )}
                     </p>
                 </div>
+                {session && !session.consultant && (
+                    <button
+                        onClick={handleOpenExpertModal}
+                        className="bg-green-700 text-white px-3 py-1.5 rounded-xl text-[10px] font-bold flex items-center gap-1 hover:bg-green-800 shadow-md transition whitespace-nowrap"
+                    >
+                        <span className="material-icons text-xs">person</span>
+                        Tanya Pakar
+                    </button>
+                )}
                 {session?.is_ai_active === false && currentUser.is_staff && (
                     <button
                         onClick={() => handleToggleAI(true)}
@@ -234,7 +271,7 @@ const ChatWindowPage = () => {
                                 <div className={`max-w-[80%] rounded-2xl px-4 py-2 shadow-sm ${isMe
                                     ? 'bg-green-700 text-white rounded-tr-none'
                                     : 'bg-white text-gray-800 rounded-tl-none'
-                                    }`}>
+                                    } `}>
                                     {msg.attachment && (
                                         <div className="mb-2">
                                             {msg.attachment.match(/\.(jpeg|jpg|gif|png)$/) ? (
@@ -367,6 +404,55 @@ const ChatWindowPage = () => {
                     </button>
                 </form>
             </div>
+
+            {/* Expert Selection Modal */}
+            {showExpertModal && (
+                <div className="fixed inset-0 bg-black/60 z-[2000] flex items-end sm:items-center justify-center p-4 backdrop-blur-sm">
+                    <div className="bg-white w-full max-w-sm rounded-t-3xl sm:rounded-2xl p-6 animate-slide-up shadow-2xl">
+                        <div className="flex justify-between items-center mb-6">
+                            <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
+                                <span className="material-icons text-green-600">psychology</span>
+                                Pilih Pakar {session?.category_name}
+                            </h3>
+                            <button onClick={() => setShowExpertModal(false)} className="material-icons text-gray-400 hover:text-gray-600 transition">close</button>
+                        </div>
+
+                        <div className="space-y-3 mb-6 max-h-[400px] overflow-y-auto pr-1 custom-scrollbar">
+                            {loadingExperts ? (
+                                <div className="flex justify-center py-10">
+                                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
+                                </div>
+                            ) : availableExperts.length === 0 ? (
+                                <div className="text-center py-10 bg-gray-50 rounded-2xl">
+                                    <span className="material-icons text-gray-300 text-4xl mb-2">person_off</span>
+                                    <p className="text-xs text-gray-500 px-4">Maaf, saat ini belum ada pakar tersedia di kategori ini.</p>
+                                </div>
+                            ) : (
+                                availableExperts.map((exp) => (
+                                    <div
+                                        key={exp.id}
+                                        onClick={() => handleSelectExpert(exp.user)}
+                                        className="flex items-center gap-4 p-4 bg-gray-50 rounded-2xl border border-transparent hover:border-green-200 hover:bg-green-50/50 transition cursor-pointer group"
+                                    >
+                                        <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-sm group-hover:bg-green-600 group-hover:text-white transition-colors">
+                                            <span className="material-icons">person</span>
+                                        </div>
+                                        <div className="flex-1">
+                                            <div className="font-bold text-gray-800 text-sm group-hover:text-green-700 transition-colors">{exp.user_details.username}</div>
+                                            <div className="text-[10px] text-gray-400 italic line-clamp-1">{exp.bio || 'Pakar profesional'}</div>
+                                        </div>
+                                        <span className="material-icons text-gray-300 group-hover:text-green-600 transition-colors">chevron_right</span>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+
+                        <p className="text-[9px] text-gray-400 text-center italic mt-4 bg-gray-50 py-2 rounded-lg">
+                            Memulai chat dengan pakar akan membuat sesi diskusi baru yang lebih personal.
+                        </p>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

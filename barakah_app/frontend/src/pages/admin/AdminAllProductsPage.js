@@ -3,6 +3,13 @@ import Header from '../../components/layout/Header';
 import NavigationButton from '../../components/layout/Navigation';
 import { getAdminAllProducts, deleteAdminProduct } from '../../services/digitalProductApi';
 
+const getMediaUrl = (url) => {
+    if (!url) return '';
+    if (url.startsWith('http')) return url;
+    const baseUrl = process.env.REACT_APP_API_BASE_URL || '';
+    return `${baseUrl}${url}`;
+};
+
 const AdminAllProductsPage = () => {
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -36,7 +43,7 @@ const AdminAllProductsPage = () => {
     };
 
     const filteredProducts = products.filter(p =>
-        (p.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (p.title || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
         (p.seller_name || '').toLowerCase().includes(searchTerm.toLowerCase())
     );
 
@@ -75,7 +82,7 @@ const AdminAllProductsPage = () => {
                             <div key={product.id} className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex gap-4">
                                 <div className="w-20 h-20 bg-gray-100 rounded-xl overflow-hidden flex-shrink-0">
                                     {product.thumbnail ? (
-                                        <img src={product.thumbnail} alt={product.name} className="w-full h-full object-cover" />
+                                        <img src={getMediaUrl(product.thumbnail)} alt={product.title} className="w-full h-full object-cover" />
                                     ) : (
                                         <div className="w-full h-full flex items-center justify-center text-gray-300">
                                             <span className="material-icons">image</span>
@@ -83,7 +90,7 @@ const AdminAllProductsPage = () => {
                                     )}
                                 </div>
                                 <div className="flex-1 min-w-0 flex flex-col">
-                                    <h3 className="font-bold text-gray-800 text-sm truncate">{product.name}</h3>
+                                    <h3 className="font-bold text-gray-800 text-sm truncate">{product.title}</h3>
                                     <p className="text-[10px] text-emerald-600 font-bold mb-1">Rp {product.price.toLocaleString()}</p>
                                     <div className="flex items-center gap-1.5 mb-2">
                                         <div className="w-4 h-4 bg-gray-100 rounded-full flex items-center justify-center">

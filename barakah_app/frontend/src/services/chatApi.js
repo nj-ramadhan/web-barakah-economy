@@ -18,8 +18,15 @@ export const getSessions = () => {
     return axios.get(`${API_URL}sessions/`, { headers: getAuthHeader() });
 };
 
-export const createSession = (categoryId) => {
-    return axios.post(`${API_URL}sessions/`, { category: categoryId }, { headers: getAuthHeader() });
+export const createSession = (categoryId, consultantId = null) => {
+    return axios.post(`${API_URL}sessions/`, {
+        category: categoryId,
+        consultant: consultantId
+    }, { headers: getAuthHeader() });
+};
+
+export const getConsultantsByCategory = (categoryId) => {
+    return axios.get(`${API_URL}consultants/?category=${categoryId}`, { headers: getAuthHeader() });
 };
 
 export const getSessionDetail = (sessionId) => {

@@ -15,7 +15,8 @@ class ConsultantCategory(models.Model):
     is_ai_enabled = models.BooleanField(default=False)
     welcome_message = models.TextField(blank=True, null=True)
     ai_system_prompt = models.TextField(blank=True, null=True, help_text="Custom personality for this category. Fallback to global if empty.")
-    created_at = models.DateTimeField(auto_now_add=True)
+    knowledge_base = models.TextField(blank=True, default='', help_text="Materi/Modul untuk grounding AI di kategori ini (Format: Markdown/Text).")
+    created_at = models.DateTimeField(auto_now_add=True, null=True)
 
     def __str__(self):
         return self.name
@@ -25,14 +26,14 @@ class ConsultantProfile(models.Model):
     category = models.ForeignKey(ConsultantCategory, on_delete=models.CASCADE)
     bio = models.TextField(blank=True)
     is_available = models.BooleanField(default=True)
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True, null=True)
 
     def __str__(self):
         return f"{self.user.username} - {self.category.name}"
 
 class ChatSession(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='chat_user')
-    consultant = models.ForeignKey(User, on_delete=models.CASCADE, related_name='chat_consultant')
+    consultant = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='chat_consultant')
     category = models.ForeignKey(ConsultantCategory, on_delete=models.SET_NULL, null=True)
     is_ai_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '../../components/layout/Header';
 import NavigationButton from '../../components/layout/Navigation';
-import { getSessions, getCategories, createSession } from '../../services/chatApi';
+import { getSessions, getCategories, createSession, getConsultantsByCategory } from '../../services/chatApi';
 
 const ChatListPage = () => {
     const navigate = useNavigate();
@@ -10,6 +10,12 @@ const ChatListPage = () => {
     const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showNewChat, setShowNewChat] = useState(false);
+
+    // Step Flow State
+    const [chatStep, setChatStep] = useState('category'); // 'category' or 'expert'
+    const [selectedCategory, setSelectedCategory] = useState(null);
+    const [experts, setExperts] = useState([]);
+    const [loadingExperts, setLoadingExperts] = useState(false);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -19,7 +25,7 @@ const ChatListPage = () => {
                     getCategories()
                 ]);
                 setSessions(sessionsRes.data);
-                setCategories(categoriesRes.data);
+                setCategories(categoriesRes.data.filter(c => c.is_active));
             } catch (err) {
                 console.error('Failed to fetch chat data:', err);
             } finally {
@@ -29,9 +35,18 @@ const ChatListPage = () => {
         fetchData();
     }, []);
 
-    const handleStartChat = async (categoryId) => {
+    const handleCategorySelect = async (category) => {
         try {
-            const res = await createSession(categoryId);
+            const res = await createSession(category.id, null);
+            navigate(`/chat/${res.data.id}`);
+        } catch (err) {
+            alert('Gagal memulai konsultasi. Silakan coba lagi nanti.');
+        }
+    };
+
+    const handleStartChat = async (consultantId = null) => {
+        try {
+            const res = await createSession(selectedCategory.id, consultantId);
             navigate(`/chat/${res.data.id}`);
         } catch (err) {
             alert('Gagal memulai konsultasi. Silakan coba lagi nanti.');
@@ -49,6 +64,8 @@ const ChatListPage = () => {
         );
     }
 
+    const currentUser = JSON.parse(localStorage.getItem('user'));
+
     return (
         <div className="min-h-screen bg-gray-50 flex flex-col pb-20 pt-16">
             <Header />
@@ -57,7 +74,10 @@ const ChatListPage = () => {
                 <div className="flex justify-between items-center mb-6">
                     <h1 className="text-xl font-bold text-gray-800">Konsultasi</h1>
                     <button
-                        onClick={() => setShowNewChat(true)}
+                        onClick={() => {
+                            setShowNewChat(true);
+                            setChatStep('category');
+                        }}
                         className="flex items-center gap-2 bg-green-700 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-md hover:bg-green-800 transition"
                     >
                         <span className="material-icons text-sm">add</span>
@@ -73,7 +93,10 @@ const ChatListPage = () => {
                         <h2 className="font-bold text-gray-800 text-lg mb-2">Belum ada obrolan</h2>
                         <p className="text-gray-500 text-sm mb-6">Silakan mulai konsultasi baru dengan pakar kami.</p>
                         <button
-                            onClick={() => setShowNewChat(true)}
+                            onClick={() => {
+                                setShowNewChat(true);
+                                setChatStep('category');
+                            }}
                             className="bg-green-700 text-white px-8 py-3 rounded-xl font-bold shadow-lg"
                         >
                             Pilih Kategori
@@ -93,9 +116,11 @@ const ChatListPage = () => {
                                 <div className="flex-1 min-w-0">
                                     <div className="flex justify-between items-start mb-1">
                                         <h3 className="font-bold text-gray-800 text-sm truncate">
-                                            {session.consultant_details.username === JSON.parse(localStorage.getItem('user')).username
-                                                ? session.user_details.username
-                                                : session.consultant_details.username}
+                                            {session.consultant_details
+                                                ? (session.consultant_details.username === currentUser.username
+                                                    ? session.user_details.username
+                                                    : session.consultant_details.username)
+                                                : `Chat ${session.category_name}`}
                                         </h3>
                                         <span className="text-[10px] text-gray-400">
                                             {session.last_message ? new Date(session.last_message.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
@@ -108,7 +133,7 @@ const ChatListPage = () => {
                                             : 'Klik untuk memulai obrolan'}
                                     </p>
                                 </div>
-                                {session.last_message && !session.last_message.is_read && session.last_message.sender !== JSON.parse(localStorage.getItem('user')).id && (
+                                {session.last_message && !session.last_message.is_read && session.last_message.sender !== currentUser.id && (
                                     <div className="w-2.5 h-2.5 bg-green-500 rounded-full"></div>
                                 )}
                             </div>
@@ -117,19 +142,22 @@ const ChatListPage = () => {
                 )}
             </div>
 
-            {/* Modal Pilih Kategori */}
+            {/* Modal Flow Konsultasi Baru */}
             {showNewChat && (
                 <div className="fixed inset-0 bg-black/50 z-[1100] flex items-end sm:items-center justify-center p-4">
                     <div className="bg-white w-full max-w-md rounded-t-3xl sm:rounded-2xl p-6 animate-slide-up">
                         <div className="flex justify-between items-center mb-6">
-                            <h3 className="text-lg font-bold text-gray-800">Pilih Kategori Konsultasi</h3>
+                            <h3 className="text-lg font-bold text-gray-800">
+                                Pilih Kategori Konsultasi
+                            </h3>
                             <button onClick={() => setShowNewChat(false)} className="material-icons text-gray-400">close</button>
                         </div>
+
                         <div className="grid grid-cols-2 gap-3 mb-6">
                             {categories.map((cat) => (
                                 <button
                                     key={cat.id}
-                                    onClick={() => handleStartChat(cat.id)}
+                                    onClick={() => handleCategorySelect(cat)}
                                     className="flex flex-col items-center justify-center p-4 bg-gray-50 rounded-2xl hover:bg-green-50 hover:border-green-200 border border-transparent transition"
                                 >
                                     <span className="material-icons text-green-700 text-3xl mb-2">{cat.icon || 'chat'}</span>
@@ -137,8 +165,9 @@ const ChatListPage = () => {
                                 </button>
                             ))}
                         </div>
+
                         <p className="text-[10px] text-gray-400 text-center italic">
-                            Kami akan menghubungkan Anda dengan konsultan yang tersedia di bidang tersebut.
+                            Pilih bidang masalah yang ingin Anda konsultasikan.
                         </p>
                     </div>
                 </div>
