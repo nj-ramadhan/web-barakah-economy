@@ -21,7 +21,7 @@ const AdminConsultantSettingsPage = () => {
     const [activeTab, setActiveTab] = useState('categories');
 
     // Category Form
-    const [catForm, setCatForm] = useState({ name: '', icon: 'chat', is_active: true, is_ai_enabled: false, welcome_message: '' });
+    const [catForm, setCatForm] = useState({ name: '', icon: 'chat', is_active: true, is_ai_enabled: false, welcome_message: '', ai_system_prompt: '' });
     const [editingCatId, setEditingCatId] = useState(null);
     const [showIconPicker, setShowIconPicker] = useState(false);
 
@@ -78,7 +78,7 @@ const AdminConsultantSettingsPage = () => {
                 await adminCreateCategory(catForm);
             }
             fetchData();
-            setCatForm({ name: '', icon: 'chat', is_active: true, is_ai_enabled: false, welcome_message: '' });
+            setCatForm({ name: '', icon: 'chat', is_active: true, is_ai_enabled: false, welcome_message: '', ai_system_prompt: '' });
             setEditingCatId(null);
         } catch (err) { alert('Gagal menyimpan kategori.'); }
     };
@@ -203,6 +203,17 @@ const AdminConsultantSettingsPage = () => {
                                 />
                                 <p className="text-[10px] text-gray-400 italic mt-1">*Pesan ini akan otomatis terkirim saat user baru memulai chat di kategori ini.</p>
                             </div>
+                            <div className="mt-4">
+                                <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">AI Personality / System Prompt (Kategori)</label>
+                                <textarea
+                                    rows="3"
+                                    value={catForm.ai_system_prompt || ''}
+                                    onChange={(e) => setCatForm({ ...catForm, ai_system_prompt: e.target.value })}
+                                    className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500 resize-none"
+                                    placeholder="Contoh: Anda adalah pakar ekonomi syariah yang bijaksana. Gunakan bahasa yang sopan dan kutipan hadist jika relevan..."
+                                />
+                                <p className="text-[10px] text-gray-400 italic mt-1">*Jika dikosongkan, akan menggunakan karakter AI global.</p>
+                            </div>
                             <div className="mt-4 flex justify-between items-center">
                                 <div className="flex gap-4 items-center">
                                     <label className="flex items-center gap-2 cursor-pointer group">
@@ -237,7 +248,7 @@ const AdminConsultantSettingsPage = () => {
                                     {editingCatId && (
                                         <button
                                             type="button"
-                                            onClick={() => { setEditingCatId(null); setCatForm({ name: '', icon: 'chat', is_active: true, is_ai_enabled: false, welcome_message: '' }); }}
+                                            onClick={() => { setEditingCatId(null); setCatForm({ name: '', icon: 'chat', is_active: true, is_ai_enabled: false, welcome_message: '', ai_system_prompt: '' }); }}
                                             className="px-6 py-2.5 rounded-2xl text-sm font-bold text-gray-400 hover:text-gray-600"
                                         >
                                             Batal
@@ -276,7 +287,7 @@ const AdminConsultantSettingsPage = () => {
                                     </div>
                                     <div className="flex gap-1">
                                         <button
-                                            onClick={() => { setEditingCatId(cat.id); setCatForm({ name: cat.name, icon: cat.icon, is_active: cat.is_active, is_ai_enabled: cat.is_ai_enabled, welcome_message: cat.welcome_message || '' }); }}
+                                            onClick={() => { setEditingCatId(cat.id); setCatForm({ name: cat.name, icon: cat.icon, is_active: cat.is_active, is_ai_enabled: cat.is_ai_enabled, welcome_message: cat.welcome_message || '', ai_system_prompt: cat.ai_system_prompt || '' }); }}
                                             className="w-9 h-9 flex items-center justify-center rounded-xl bg-gray-50 text-gray-400 hover:bg-indigo-50 hover:text-indigo-600 transition"
                                         >
                                             <span className="material-icons text-sm">edit</span>
@@ -483,17 +494,34 @@ const AdminConsultantSettingsPage = () => {
                                             onChange={(e) => setAiSettings({ ...aiSettings, model_name: e.target.value })}
                                             className="w-full bg-gray-50/80 border-2 border-transparent focus:border-indigo-500 focus:bg-white rounded-2xl px-5 py-3.5 text-sm transition-all appearance-none cursor-pointer"
                                         >
-                                            <optgroup label="Fast Models (OpenAI)">
-                                                <option value="gpt-4o-mini">gpt-4o-mini (Rekomendasi)</option>
-                                                <option value="gpt-4o">gpt-4o (Smart)</option>
+                                            <optgroup label="OpenAI (Highly Recommended)">
+                                                <option value="gpt-4o-mini">gpt-4o-mini (Fast & Cost-Efficient)</option>
+                                                <option value="gpt-4o">gpt-4o (Most Intelligent)</option>
+                                                <option value="o1-mini">o1-mini (Reasoning)</option>
+                                                <option value="gpt-4-turbo">gpt-4-turbo</option>
+                                                <option value="gpt-3.5-turbo">gpt-3.5-turbo</option>
                                             </optgroup>
-                                            <optgroup label="DeepSeek (Technical)">
-                                                <option value="deepseek-chat">deepseek-chat</option>
-                                                <option value="deepseek-r1">deepseek-r1</option>
+                                            <optgroup label="DeepSeek (Powerful & Open)">
+                                                <option value="deepseek-chat">deepseek-chat (V3)</option>
+                                                <option value="deepseek-r1">deepseek-r1 (Reasoning)</option>
                                             </optgroup>
-                                            <optgroup label="Anthropic">
-                                                <option value="claude-3-haiku">claude-3-haiku</option>
-                                                <option value="claude-3-5-sonnet">claude-3.5-sonnet</option>
+                                            <optgroup label="Google Gemini">
+                                                <option value="gemini-1.5-flash">gemini-1.5-flash (Lightning Fast)</option>
+                                                <option value="gemini-1.5-pro">gemini-1.5-pro (High Context)</option>
+                                            </optgroup>
+                                            <optgroup label="Anthropic Claude">
+                                                <option value="claude-3-5-sonnet">claude-3.5-sonnet (Best Performance)</option>
+                                                <option value="claude-3-haiku">claude-3-haiku (Fast)</option>
+                                                <option value="claude-3-opus">claude-3-opus (Complex Tasks)</option>
+                                            </optgroup>
+                                            <optgroup label="Meta Llama (Open Source)">
+                                                <option value="llama-3.1-405b">llama-3.1-405b (State of the art)</option>
+                                                <option value="llama-3.1-70b">llama-3.1-70b</option>
+                                                <option value="llama-3.1-8b">llama-3.1-8b</option>
+                                            </optgroup>
+                                            <optgroup label="Mistral AI">
+                                                <option value="mistral-large-latest">mistral-large</option>
+                                                <option value="pixtral-12b">pixtral-12b</option>
                                             </optgroup>
                                         </select>
                                     </div>

@@ -75,6 +75,14 @@ class ChatSessionViewSet(viewsets.ModelViewSet):
 
         return response.Response(ChatSessionSerializer(session).data, status=status.HTTP_201_CREATED)
 
+    @action(detail=True, methods=['post'])
+    def toggle_ai(self, request, pk=None):
+        session = self.get_object()
+        is_active = request.data.get('is_ai_active', not session.is_ai_active)
+        session.is_ai_active = is_active
+        session.save()
+        return response.Response({"is_ai_active": session.is_ai_active})
+
 class MessageViewSet(viewsets.ModelViewSet):
     serializer_class = MessageSerializer
     permission_classes = [permissions.IsAuthenticated]
@@ -104,8 +112,8 @@ class MessageViewSet(viewsets.ModelViewSet):
         
         serializer.save(sender=self.request.user)
 
-        # Trigger AI Response if session category has AI enabled
-        if session.category and session.category.is_ai_enabled:
+        # Trigger AI Response if session category has AI enabled AND session AI is active
+        if session.category and session.category.is_ai_enabled and session.is_ai_active:
             ai_reply = AIService.get_response(serializer.data['content'], session_id=session.id)
             
             # Use admin or specific system user as sender

@@ -8,21 +8,33 @@ class AIService:
         if not settings or not settings.is_enabled or not settings.api_key:
             return "Maaf, sistem AI sedang dinonaktifkan."
 
-        messages = [
-            {"role": "system", "content": settings.system_prompt}
-        ]
+        # Prepare system content for the AI
+        system_content = f"You are a helpful assistant for Barakah Economy. "
+        if settings.system_prompt:
+            system_content = settings.system_prompt
         
+        category = None
         # Add Welcome Message and Category context if session_id is provided
         if session_id:
             from .models import ChatSession
             session = ChatSession.objects.filter(id=session_id).first()
             if session and session.category:
-                context_prefix = f"Kategori: {session.category.name}. "
-                if session.category.welcome_message:
-                    context_prefix += f"Pesan perkenalan Anda: \"{session.category.welcome_message}\". "
-                
-                # Insert context before the actual prompt or into system prompt
-                messages[0]["content"] += f"\n\nContext: {context_prefix}"
+                category = session.category
+        
+        # Add category context if available
+        if category:
+            # If category has its own AI system prompt, it overrides everything else
+            if category.ai_system_prompt:
+                system_content = category.ai_system_prompt
+            else:
+                # Otherwise, append category specific context
+                system_content += f"\n\nContext Kategori: {category.name}"
+                if category.welcome_message:
+                    system_content += f"\nTemplate Sapaan: {category.welcome_message}"
+
+        messages = [
+            {"role": "system", "content": system_content}
+        ]
 
         messages.append({"role": "user", "content": user_message})
 

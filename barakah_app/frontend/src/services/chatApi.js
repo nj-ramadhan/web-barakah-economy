@@ -58,3 +58,7 @@ export const searchUsers = (q) => axios.get(`${process.env.REACT_APP_API_BASE_UR
 
 export const adminGetAISettings = () => axios.get(`${API_URL}ai-settings/`, { headers: getAuthHeader() });
 export const adminUpdateAISettings = (data) => axios.patch(`${API_URL}ai-settings/update_settings/`, data, { headers: getAuthHeader() });
+
+export const toggleAISession = (sessionId, isActive) => {
+    return axios.post(`${API_URL}sessions/${sessionId}/toggle_ai/`, { is_ai_active: isActive }, { headers: getAuthHeader() });
+};

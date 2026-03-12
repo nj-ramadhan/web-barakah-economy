@@ -12,28 +12,29 @@ class ConsultantCategory(models.Model):
     name = models.CharField(max_length=100)
     icon = models.CharField(max_length=50, help_text="Material icon name", default="chat")
     is_active = models.BooleanField(default=True)
-    is_ai_enabled = models.BooleanField(default=False, help_text="If True, AI will respond to messages in this category")
-    welcome_message = models.TextField(blank=True, help_text="Template pesan awal otomatis")
+    is_ai_enabled = models.BooleanField(default=False)
+    welcome_message = models.TextField(blank=True, null=True)
+    ai_system_prompt = models.TextField(blank=True, null=True, help_text="Custom personality for this category. Fallback to global if empty.")
+    created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return self.name
 
-    class Meta:
-        verbose_name_plural = "Consultant Categories"
-
 class ConsultantProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='consultant_profile')
-    category = models.ForeignKey(ConsultantCategory, on_delete=models.SET_NULL, null=True, related_name='consultants')
-    is_available = models.BooleanField(default=True)
+    category = models.ForeignKey(ConsultantCategory, on_delete=models.CASCADE)
     bio = models.TextField(blank=True)
+    is_available = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.user.username} - {self.category.name if self.category else 'No Category'}"
+        return f"{self.user.username} - {self.category.name}"
 
 class ChatSession(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='chat_sessions_as_user')
-    consultant = models.ForeignKey(User, on_delete=models.CASCADE, related_name='chat_sessions_as_consultant')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='chat_user')
+    consultant = models.ForeignKey(User, on_delete=models.CASCADE, related_name='chat_consultant')
     category = models.ForeignKey(ConsultantCategory, on_delete=models.SET_NULL, null=True)
+    is_ai_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

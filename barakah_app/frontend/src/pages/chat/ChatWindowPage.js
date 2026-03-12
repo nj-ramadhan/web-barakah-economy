@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getMessages, sendMessage, markRead, getSessionDetail } from '../../services/chatApi';
+import { getMessages, sendMessage, markRead, getSessionDetail, toggleAISession } from '../../services/chatApi';
 
 const ChatWindowPage = () => {
     const { sessionId } = useParams();
@@ -13,6 +13,12 @@ const ChatWindowPage = () => {
     const [file, setFile] = useState(null);
     const [session, setSession] = useState(null);
     const [sending, setSending] = useState(false);
+    const [showCommands, setShowCommands] = useState(false);
+
+    const commands = [
+        { code: '/pakar', label: 'Chat dengan Pakar', desc: 'AI akan dinonaktifkan sementara', icon: 'person' },
+        { code: '/ai', label: 'Aktifkan AI', desc: 'Asisten AI akan mulai menjawab kembali', icon: 'smart_toy' }
+    ];
 
     const messagesEndRef = useRef(null);
     const scrollContainerRef = useRef(null);
@@ -134,6 +140,28 @@ const ChatWindowPage = () => {
         }
     };
 
+    const handleToggleAI = async (isActive) => {
+        try {
+            await toggleAISession(sessionId, isActive);
+            setSession(prev => ({ ...prev, is_ai_active: isActive }));
+        } catch (err) {
+            alert('Gagal mengubah status AI.');
+        }
+    };
+
+    const handleCommandSelect = async (cmd) => {
+        if (cmd === '/pakar') {
+            await handleToggleAI(false);
+            handleQuickReply('🚩 *Mode Pakar diaktifkan. AI dinonaktifkan sementara.*');
+        }
+        if (cmd === '/ai') {
+            await handleToggleAI(true);
+            handleQuickReply('🤖 *Mode AI diaktifkan kembali.*');
+        }
+        setContent('');
+        setShowCommands(false);
+    };
+
     const handleFileChange = (e) => {
         const selectedFile = e.target.files[0];
         if (selectedFile) {
@@ -162,10 +190,22 @@ const ChatWindowPage = () => {
                         ) : 'Pakar'}
                     </h2>
                     <p className="text-[10px] text-green-600 font-bold uppercase tracking-wider flex items-center gap-1">
-                        <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
+                        <span className={`w-1.5 h-1.5 rounded-full animate-pulse ${session?.is_ai_active ? 'bg-green-500' : 'bg-orange-500'}`}></span>
                         {session?.category_name || 'Konsultasi'}
+                        {session && !session.is_ai_active && (
+                            <span className="bg-orange-100 text-orange-600 px-1.5 py-0.5 rounded text-[8px] ml-1">PAKAR MODE</span>
+                        )}
                     </p>
                 </div>
+                {session?.is_ai_active === false && currentUser.is_staff && (
+                    <button
+                        onClick={() => handleToggleAI(true)}
+                        className="bg-indigo-50 text-indigo-600 px-2.5 py-1.5 rounded-xl text-[10px] font-bold flex items-center gap-1 hover:bg-indigo-100 transition"
+                    >
+                        <span className="material-icons text-xs">smart_toy</span>
+                        Aktifkan AI
+                    </button>
+                )}
             </div>
 
             {/* Chat Area */}
@@ -232,8 +272,7 @@ const ChatWindowPage = () => {
 
             {/* Input Area */}
             <div className="bg-white p-3 shadow-[0_-4px_12px_rgba(0,0,0,0.05)]">
-                {/* Quick Reply Trigger */}
-                {session?.category_welcome_message && messages.length < 5 && (
+                {session?.category_welcome_message && messages.length < 5 && !content && (
                     <div className="flex overflow-x-auto pb-2 mb-2 gap-2 scrollbar-hide">
                         <button
                             onClick={() => handleQuickReply(session.category_welcome_message)}
@@ -244,6 +283,32 @@ const ChatWindowPage = () => {
                                 ? session.category_welcome_message.substring(0, 30) + '...'
                                 : session.category_welcome_message}
                         </button>
+                    </div>
+                )}
+
+                {/* Command Popup */}
+                {showCommands && (
+                    <div className="absolute bottom-full left-4 right-4 bg-white/95 backdrop-blur-sm border border-gray-100 rounded-2xl shadow-2xl mb-2 overflow-hidden animate-slide-up z-50">
+                        <div className="bg-gray-50 px-4 py-2 flex justify-between items-center border-b border-gray-100">
+                            <span className="text-[10px] font-bold text-gray-400 tracking-widest uppercase">Pilih Perintah</span>
+                            <button onClick={() => setShowCommands(false)} className="material-icons text-xs text-gray-300">close</button>
+                        </div>
+                        {commands.map((cmd) => (
+                            <button
+                                key={cmd.code}
+                                onClick={() => handleCommandSelect(cmd.code)}
+                                className="w-full text-left px-4 py-3 hover:bg-indigo-50 flex items-center gap-3 transition group"
+                            >
+                                <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center group-hover:bg-indigo-600 group-hover:text-white transition-colors">
+                                    <span className="material-icons text-sm">{cmd.icon}</span>
+                                </div>
+                                <div>
+                                    <div className="text-xs font-bold text-gray-800">{cmd.label}</div>
+                                    <div className="text-[9px] text-gray-400">{cmd.desc}</div>
+                                </div>
+                                <span className="ml-auto text-[10px] font-mono text-gray-300 bg-gray-50 px-1.5 py-0.5 rounded uppercase">{cmd.code}</span>
+                            </button>
+                        ))}
                     </div>
                 )}
                 {file && (
@@ -274,13 +339,20 @@ const ChatWindowPage = () => {
                     <textarea
                         rows="1"
                         value={content}
-                        onChange={(e) => setContent(e.target.value)}
-                        placeholder="Tulis pesan..."
+                        onChange={(e) => {
+                            const val = e.target.value;
+                            setContent(val);
+                            if (val === '/') setShowCommands(true);
+                            else if (showCommands && !val.startsWith('/')) setShowCommands(false);
+                        }}
+                        placeholder="Tulis pesan... atau ketik /"
                         className="flex-1 bg-gray-100 border-none rounded-xl px-4 py-2.5 text-sm focus:ring-1 focus:ring-green-500 resize-none max-h-32"
                         onKeyDown={(e) => {
                             if (e.key === 'Enter' && !e.shiftKey) {
                                 e.preventDefault();
                                 handleSend(e);
+                            } else if (e.key === 'Escape') {
+                                setShowCommands(false);
                             }
                         }}
                     />
