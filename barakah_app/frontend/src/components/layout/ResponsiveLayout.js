@@ -7,9 +7,9 @@ const MobileContainer = ({ children }) => (
     </div>
 );
 
-const ResponsiveLayout = ({ isDesktop, children }) => {
+const ResponsiveLayout = ({ isDesktop, children, hideFooter = false }) => {
     if (isDesktop) {
-        return <DesktopLayout>{children}</DesktopLayout>;
+        return <DesktopLayout hideFooter={hideFooter}>{children}</DesktopLayout>;
     }
     return <MobileContainer>{children}</MobileContainer>;
 };

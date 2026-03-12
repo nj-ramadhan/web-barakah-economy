@@ -12,6 +12,7 @@ const AdminConsultantSettingsPage = () => {
     const [profiles, setProfiles] = useState([]);
     const [aiSettings, setAiSettings] = useState({
         api_key: '',
+        base_url: 'https://api.openai.com/v1',
         model_name: 'gpt-4o-mini',
         system_prompt: '',
         is_enabled: false
@@ -44,14 +45,22 @@ const AdminConsultantSettingsPage = () => {
     const fetchData = async () => {
         setLoading(true);
         try {
-            const [catRes, profRes, aiRes] = await Promise.all([
-                adminGetCategories(),
-                adminGetProfiles(),
-                adminGetAISettings()
-            ]);
+            const catRes = await adminGetCategories();
             setCategories(catRes.data);
+
+            const profRes = await adminGetProfiles();
             setProfiles(profRes.data);
-            if (aiRes.data) setAiSettings(aiRes.data);
+
+            try {
+                const aiRes = await adminGetAISettings();
+                if (aiRes.data) {
+                    // Handle list vs object
+                    const data = Array.isArray(aiRes.data) ? aiRes.data[0] : aiRes.data;
+                    if (data) setAiSettings(data);
+                }
+            } catch (err) {
+                console.error('Failed to fetch AI settings:', err);
+            }
         } catch (err) {
             console.error('Failed to fetch consultant data:', err);
         } finally {
@@ -455,6 +464,19 @@ const AdminConsultantSettingsPage = () => {
                                         </div>
                                     </div>
                                     <div className="space-y-1.5">
+                                        <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-1">API Base URL</label>
+                                        <div className="relative">
+                                            <input
+                                                type="text"
+                                                value={aiSettings.base_url}
+                                                onChange={(e) => setAiSettings({ ...aiSettings, base_url: e.target.value })}
+                                                className="w-full bg-gray-50/80 border-2 border-transparent focus:border-indigo-500 focus:bg-white rounded-2xl px-5 py-3.5 text-sm transition-all focus:ring-0"
+                                                placeholder="https://ai.sumopod.com/v1"
+                                            />
+                                            <span className="material-icons absolute right-4 top-1/2 -translate-y-1/2 text-gray-300 pointer-events-none">language</span>
+                                        </div>
+                                    </div>
+                                    <div className="space-y-1.5">
                                         <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-1">AI Model Name</label>
                                         <select
                                             value={aiSettings.model_name}
@@ -520,43 +542,45 @@ const AdminConsultantSettingsPage = () => {
                                 </div>
                             </div>
                         </form>
-                    </div>
+                    </div >
                 )}
-            </div>
+            </div >
 
             {/* Icon Picker Modal */}
-            {showIconPicker && (
-                <div className="fixed inset-0 bg-black/60 z-[2000] flex items-center justify-center p-4 backdrop-blur-sm">
-                    <div className="bg-white w-full max-w-sm rounded-[2rem] p-6 shadow-2xl animate-in zoom-in-95 duration-200">
-                        <div className="flex justify-between items-center mb-6">
-                            <h3 className="text-lg font-bold text-gray-800">Pilih Icon Kategori</h3>
-                            <button
-                                onClick={() => setShowIconPicker(false)}
-                                className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-50 text-gray-400 hover:bg-rose-50 hover:text-rose-600 transition"
-                            >
-                                <span className="material-icons">close</span>
-                            </button>
-                        </div>
-                        <div className="grid grid-cols-4 gap-4 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
-                            {materialIcons.map(icon => (
+            {
+                showIconPicker && (
+                    <div className="fixed inset-0 bg-black/60 z-[2000] flex items-center justify-center p-4 backdrop-blur-sm">
+                        <div className="bg-white w-full max-w-sm rounded-[2rem] p-6 shadow-2xl animate-in zoom-in-95 duration-200">
+                            <div className="flex justify-between items-center mb-6">
+                                <h3 className="text-lg font-bold text-gray-800">Pilih Icon Kategori</h3>
                                 <button
-                                    key={icon}
-                                    onClick={() => {
-                                        setCatForm({ ...catForm, icon: icon });
-                                        setShowIconPicker(false);
-                                    }}
-                                    className={`w-full aspect-square flex items-center justify-center rounded-2xl transition ${catForm.icon === icon ? 'bg-indigo-600 text-white shadow-lg' : 'bg-gray-50 text-gray-400 hover:bg-indigo-50 hover:text-indigo-600'}`}
+                                    onClick={() => setShowIconPicker(false)}
+                                    className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-50 text-gray-400 hover:bg-rose-50 hover:text-rose-600 transition"
                                 >
-                                    <span className="material-icons text-2xl">{icon}</span>
+                                    <span className="material-icons">close</span>
                                 </button>
-                            ))}
+                            </div>
+                            <div className="grid grid-cols-4 gap-4 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
+                                {materialIcons.map(icon => (
+                                    <button
+                                        key={icon}
+                                        onClick={() => {
+                                            setCatForm({ ...catForm, icon: icon });
+                                            setShowIconPicker(false);
+                                        }}
+                                        className={`w-full aspect-square flex items-center justify-center rounded-2xl transition ${catForm.icon === icon ? 'bg-indigo-600 text-white shadow-lg' : 'bg-gray-50 text-gray-400 hover:bg-indigo-50 hover:text-indigo-600'}`}
+                                    >
+                                        <span className="material-icons text-2xl">{icon}</span>
+                                    </button>
+                                ))}
+                            </div>
                         </div>
                     </div>
-                </div>
-            )}
+                )
+            }
 
             <NavigationButton />
-        </div>
+        </div >
     );
 };
 

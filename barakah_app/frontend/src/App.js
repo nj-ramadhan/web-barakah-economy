@@ -82,7 +82,7 @@ const App = () => {
   return (
     <Router>
       <ScrollToTop />
-      <div className="h-screen bg-gray-100 flex justify-center overflow-hidden">
+      <div className="min-h-screen bg-gray-100 flex justify-center">
         <Routes>
           <Route path="/*" element={<LayoutWrapper isDesktop={isDesktop} />} />
         </Routes>
@@ -155,7 +155,7 @@ const LayoutWrapper = ({ isDesktop }) => {
 
         {/* Chat Routes */}
         <Route path="/chat" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><ChatListPage /></ResponsiveLayout></PrivateRoute>} />
-        <Route path="/chat/:sessionId" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><ChatWindowPage /></ResponsiveLayout></PrivateRoute>} />
+        <Route path="/chat/:sessionId" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop} hideFooter={true}><ChatWindowPage /></ResponsiveLayout></PrivateRoute>} />
 
         {/* Digital Product Routes (Public) */}
         <Route path="/digital-products" element={<ResponsiveLayout isDesktop={isDesktop}><DigitalProductListPage /></ResponsiveLayout>} />
