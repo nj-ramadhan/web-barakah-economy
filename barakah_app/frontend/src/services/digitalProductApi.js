@@ -1,98 +1,66 @@
 // services/digitalProductApi.js
-import axios from 'axios';
+import api from './api';
 
-const API_BASE = process.env.REACT_APP_API_BASE_URL;
-
-function getAuthHeaders() {
-    const user = JSON.parse(localStorage.getItem('user'));
-    if (user && user.access) {
-        return { Authorization: `Bearer ${user.access}` };
-    }
-    return {};
-}
+const API_BASE = '/digital-products';
 
 // Public
 export const getDigitalProducts = () =>
-    axios.get(`${API_BASE}/api/digital-products/products/`);
+    api.get(`${API_BASE}/products/`);
 
 export const getDigitalProductBySlug = (slug) =>
-    axios.get(`${API_BASE}/api/digital-products/products/${slug}/`);
+    api.get(`${API_BASE}/products/${slug}/`);
 
 // Orders (no auth needed)
 export const createDigitalOrder = (data) =>
-    axios.post(`${API_BASE}/api/digital-products/orders/`, data, {
-        headers: getAuthHeaders(),
-    });
+    api.post(`${API_BASE}/orders/`, data);
 
 export const getDigitalOrderStatus = (orderNumber) =>
-    axios.get(`${API_BASE}/api/digital-products/orders/status/${orderNumber}/`);
+    api.get(`${API_BASE}/orders/status/${orderNumber}/`);
 
 export const uploadPaymentProof = (orderNumber, formData) =>
-    axios.post(`${API_BASE}/api/digital-products/orders/upload-proof/${orderNumber}/`, formData, {
+    api.post(`${API_BASE}/orders/status/${orderNumber}/pay/`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
     });
 
-// Authenticated - My Products (Dashboard)
-export const getMyDigitalProducts = () =>
-    axios.get(`${API_BASE}/api/digital-products/products/my-products/`, {
-        headers: getAuthHeaders(),
+// Seller Profile
+export const getSellerProfile = (username) =>
+    api.get(`${API_BASE}/profiles/${username}/`);
+
+// Dashboard Member - My Products
+export const getMyProducts = () =>
+    api.get(`${API_BASE}/products/my-products/`);
+
+export const createProduct = (formData) =>
+    api.post(`${API_BASE}/products/`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
     });
 
-export const createMyDigitalProduct = (formData) =>
-    axios.post(`${API_BASE}/api/digital-products/products/my-products/`, formData, {
-        headers: { ...getAuthHeaders(), 'Content-Type': 'multipart/form-data' },
+export const updateProduct = (id, formData) =>
+    api.patch(`${API_BASE}/products/${id}/`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
     });
 
-export const updateMyDigitalProduct = (productId, formData) =>
-    axios.patch(`${API_BASE}/api/digital-products/products/my-products/${productId}/`, formData, {
-        headers: { ...getAuthHeaders(), 'Content-Type': 'multipart/form-data' },
-    });
-
-export const deleteMyDigitalProduct = (productId) =>
-    axios.delete(`${API_BASE}/api/digital-products/products/my-products/${productId}/`, {
-        headers: getAuthHeaders(),
-    });
-
-// Balance & Withdrawals
-export const getDigitalBalance = () =>
-    axios.get(`${API_BASE}/api/digital-products/withdrawals/balance/`, {
-        headers: getAuthHeaders(),
-    });
-
-export const getWithdrawalHistory = () =>
-    axios.get(`${API_BASE}/api/digital-products/withdrawals/`, {
-        headers: getAuthHeaders(),
-    });
-
-export const createWithdrawalRequest = (data) =>
-    axios.post(`${API_BASE}/api/digital-products/withdrawals/`, data, {
-        headers: getAuthHeaders(),
-    });
-
-// Public Profiles
-export const getPublicDigitalProfile = (username) =>
-    axios.get(`${API_BASE}/api/digital-products/products/public-profile/?username=${username}`);
-
-export const getPopularSellers = () =>
-    axios.get(`${API_BASE}/api/digital-products/products/popular-sellers/`);
+export const deleteProduct = (id) =>
+    api.delete(`${API_BASE}/products/${id}/`);
 
 // Admin
-export const getAdminWithdrawals = () =>
-    axios.get(`${API_BASE}/api/digital-products/withdrawals/admin-list/`, {
-        headers: getAuthHeaders(),
-    });
-
-export const processAdminWithdrawal = (id, formData) =>
-    axios.patch(`${API_BASE}/api/digital-products/withdrawals/${id}/admin-process/`, formData, {
-        headers: { ...getAuthHeaders(), 'Content-Type': 'multipart/form-data' },
-    });
-
 export const getAdminAllProducts = () =>
-    axios.get(`${API_BASE}/api/digital-products/admin-products/`, {
-        headers: getAuthHeaders(),
-    });
+    api.get(`${API_BASE}/admin/products/`);
 
 export const deleteAdminProduct = (id) =>
-    axios.delete(`${API_BASE}/api/digital-products/admin-products/${id}/`, {
-        headers: getAuthHeaders(),
-    });
+    api.delete(`${API_BASE}/admin/products/${id}/`);
+
+// Sales history for seller
+export const getSellerSales = () =>
+    api.get(`${API_BASE}/orders/my-sales/`);
+
+export const updateOrderShipping = (orderId, data) =>
+    api.post(`${API_BASE}/orders/${orderId}/update-shipping/`, data);
+
+// Purchase history for buyer
+export const getMyPurchases = () =>
+    api.get(`${API_BASE}/orders/my-purchases/`);
+
+// Dashboard Statistics
+export const getSellerStats = () =>
+    api.get(`${API_BASE}/orders/seller-stats/`);

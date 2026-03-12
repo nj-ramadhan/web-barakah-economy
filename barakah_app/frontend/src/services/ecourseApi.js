@@ -1,103 +1,77 @@
 // services/ecourseApi.js
-import axios from 'axios';
+import api from './api';
 
-const API_BASE = process.env.REACT_APP_API_BASE_URL;
+const API_BASE = '/courses';
 
-function getAuthHeaders() {
-    const user = JSON.parse(localStorage.getItem('user'));
-    if (user && user.access) {
-        return { Authorization: `Bearer ${user.access}` };
-    }
-    return {};
-}
+// Public
+export const getCourses = () => api.get(`${API_BASE}/list/`);
+export const getCourseBySlug = (slug) => api.get(`${API_BASE}/detail/${slug}/`);
 
-// Public Courses
-export const getCourses = (search = '') =>
-    axios.get(`${API_BASE}/api/courses/${search ? `?search=${search}` : ''}`);
+// Enrollments
+export const createEnrollment = (data) =>
+    api.post(`${API_BASE}/enroll/`, data);
 
-export const getCourseDetail = (slug) =>
-    axios.get(`${API_BASE}/api/courses/${slug}/`);
+export const getEnrollmentStatus = (orderNumber) =>
+    api.get(`${API_BASE}/enroll/status/${orderNumber}/`);
 
-// Instructor Management
-export const getMyCourses = () =>
-    axios.get(`${API_BASE}/api/courses/my-courses/`, {
-        headers: getAuthHeaders(),
+export const uploadCoursePaymentProof = (orderNumber, formData) =>
+    api.post(`${API_BASE}/enroll/status/${orderNumber}/pay/`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
     });
 
+// My Courses (Learner)
+export const getMyEnrolledCourses = () =>
+    api.get(`${API_BASE}/enrollments/`);
+
+export const getCourseStructure = (slug) =>
+    api.get(`${API_BASE}/viewer/${slug}/structure/`);
+
+export const getMaterialDetail = (slug, materialId) =>
+    api.get(`${API_BASE}/viewer/${slug}/material/${materialId}/`);
+
+// Instructor Dashboard
+export const getInstructorCourses = () =>
+    api.get(`${API_BASE}/instructor/courses/`);
+
 export const createCourse = (formData) =>
-    axios.post(`${API_BASE}/api/courses/`, formData, {
-        headers: { ...getAuthHeaders(), 'Content-Type': 'multipart/form-data' },
+    api.post(`${API_BASE}/instructor/courses/`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
     });
 
 export const updateCourse = (id, formData) =>
-    axios.patch(`${API_BASE}/api/courses/${id}/`, formData, {
-        headers: { ...getAuthHeaders(), 'Content-Type': 'multipart/form-data' },
+    api.patch(`${API_BASE}/instructor/courses/${id}/`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
     });
 
 export const deleteCourse = (id) =>
-    axios.delete(`${API_BASE}/api/courses/${id}/`, {
-        headers: getAuthHeaders(),
-    });
+    api.delete(`${API_BASE}/instructor/courses/${id}/`);
 
-// Materials Management
-export const getCourseMaterials = (courseId) =>
-    axios.get(`${API_BASE}/api/courses/materials/?course_id=${courseId}`, {
-        headers: getAuthHeaders(),
-    });
+// Sections & Materials
+export const createSection = (data) =>
+    api.post(`${API_BASE}/instructor/sections/`, data);
+
+export const updateSection = (id, data) =>
+    api.patch(`${API_BASE}/instructor/sections/${id}/`, data);
+
+export const deleteSection = (id) =>
+    api.delete(`${API_BASE}/instructor/sections/${id}/`);
 
 export const createMaterial = (formData) =>
-    axios.post(`${API_BASE}/api/courses/materials/`, formData, {
-        headers: { ...getAuthHeaders(), 'Content-Type': 'multipart/form-data' },
+    api.post(`${API_BASE}/instructor/materials/`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
     });
 
 export const updateMaterial = (id, formData) =>
-    axios.patch(`${API_BASE}/api/courses/materials/${id}/`, formData, {
-        headers: { ...getAuthHeaders(), 'Content-Type': 'multipart/form-data' },
+    api.patch(`${API_BASE}/instructor/materials/${id}/`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
     });
 
 export const deleteMaterial = (id) =>
-    axios.delete(`${API_BASE}/api/courses/materials/${id}/`, {
-        headers: getAuthHeaders(),
-    });
+    api.delete(`${API_BASE}/instructor/materials/${id}/`);
 
-// Enrollment & Progress
-export const enrollInCourse = (courseId) =>
-    axios.post(`${API_BASE}/api/courses/enrollments/`, { course: courseId }, {
-        headers: getAuthHeaders(),
-    });
-
-export const getMyEnrollments = () =>
-    axios.get(`${API_BASE}/api/courses/enrollments/`, {
-        headers: getAuthHeaders(),
-    });
-
-export const markMaterialCompleted = (materialId) =>
-    axios.post(`${API_BASE}/api/courses/progress/`, { material: materialId }, {
-        headers: getAuthHeaders(),
-    });
-
-export const getUserProgress = () =>
-    axios.get(`${API_BASE}/api/courses/progress/`, {
-        headers: getAuthHeaders(),
-    });
-
-// Certificates
-export const getCertificateRequest = (courseId) =>
-    axios.get(`${API_BASE}/api/courses/certificate-requests/by-course/${courseId}/`, {
-        headers: getAuthHeaders(),
-    });
-
-export const requestCertificate = (data) =>
-    axios.post(`${API_BASE}/api/courses/certificate-requests/`, data, {
-        headers: getAuthHeaders(),
-    });
-
+// Admin
 export const getAdminAllCourses = () =>
-    axios.get(`${API_BASE}/api/courses/admin-courses/`, {
-        headers: getAuthHeaders(),
-    });
+    api.get(`${API_BASE}/admin/courses/`);
 
 export const deleteAdminCourse = (id) =>
-    axios.delete(`${API_BASE}/api/courses/admin-courses/${id}/`, {
-        headers: getAuthHeaders(),
-    });
+    api.delete(`${API_BASE}/admin/courses/${id}/`);

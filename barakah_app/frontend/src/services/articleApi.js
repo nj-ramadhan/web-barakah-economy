@@ -1,25 +1,13 @@
-import axios from "axios";
-
-const API = process.env.REACT_APP_API_BASE_URL;
-
-function getAuthHeaders() {
-  const user = JSON.parse(localStorage.getItem('user'));
-  if (user && user.access) {
-    return { Authorization: `Bearer ${user.access}` };
-  }
-  return {};
-}
+import api from "./api";
 
 export const getArticles = (page = 1) =>
-  axios.get(`${API}/api/articles/?page=${page}`);
+  api.get(`/articles/?page=${page}`);
 
 export const getArticle = (id) =>
-  axios.get(`${API}/api/articles/${id}/`);
+  api.get(`/articles/${id}/`);
 
 export const createArticle = (data) =>
-  axios.post(`${API}/api/articles/`, data, {
-    headers: getAuthHeaders(),
-  });
+  api.post(`/articles/`, data);
 
 export const uploadArticleImages = (id, files, title) => {
   const formData = new FormData();
@@ -28,7 +16,7 @@ export const uploadArticleImages = (id, files, title) => {
 
   if (title) formData.append("title", title);
 
-  return axios.post(`${API}/api/articles/${id}/upload-images/`, formData, {
-    headers: { ...getAuthHeaders(), "Content-Type": "multipart/form-data" },
+  return api.post(`/articles/${id}/upload-images/`, formData, {
+    headers: { "Content-Type": "multipart/form-data" },
   });
 };

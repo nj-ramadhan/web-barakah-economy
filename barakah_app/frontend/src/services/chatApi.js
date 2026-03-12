@@ -1,101 +1,92 @@
-import axios from 'axios';
+import api from './api';
 
-const API_URL = process.env.REACT_APP_API_BASE_URL + '/api/chat/';
-
-const getAuthHeader = () => {
-    const user = JSON.parse(localStorage.getItem('user'));
-    if (user && user.access) {
-        return { Authorization: `Bearer ${user.access}` };
-    }
-    return {};
-};
+const API_URL = '/chat/';
 
 export const getCategories = () => {
-    return axios.get(`${API_URL}categories/`, { headers: getAuthHeader() });
+    return api.get(`${API_URL}categories/`);
 };
 
 export const getSessions = () => {
-    return axios.get(`${API_URL}sessions/`, { headers: getAuthHeader() });
+    return api.get(`${API_URL}sessions/`);
 };
 
 export const createSession = (categoryId, consultantId = null) => {
-    return axios.post(`${API_URL}sessions/`, {
+    return api.post(`${API_URL}sessions/`, {
         category: categoryId,
         consultant: consultantId
-    }, { headers: getAuthHeader() });
+    });
 };
 
 export const getConsultantsByCategory = (categoryId) => {
-    return axios.get(`${API_URL}consultants/?category=${categoryId}`, { headers: getAuthHeader() });
+    return api.get(`${API_URL}consultants/?category=${categoryId}`);
 };
 
 export const getSessionDetail = (sessionId) => {
-    return axios.get(`${API_URL}sessions/${sessionId}/`, { headers: getAuthHeader() });
+    return api.get(`${API_URL}sessions/${sessionId}/`);
 };
 
 export const getMessages = (sessionId, page = 1) => {
-    return axios.get(`${API_URL}messages/?session=${sessionId}&page=${page}`, { headers: getAuthHeader() });
+    return api.get(`${API_URL}messages/?session=${sessionId}&page=${page}`);
 };
 
 export const sendMessage = (formData) => {
-    return axios.post(`${API_URL}messages/`, formData, {
+    return api.post(`${API_URL}messages/`, formData, {
         headers: {
-            ...getAuthHeader(),
             'Content-Type': 'multipart/form-data',
         },
     });
 };
 
 export const markRead = (sessionId) => {
-    return axios.post(`${API_URL}messages/mark_read/`, { session: sessionId }, { headers: getAuthHeader() });
+    return api.post(`${API_URL}messages/mark_read/`, { session: sessionId });
 };
 
 // Admin Management
-export const adminGetCategories = () => axios.get(`${API_URL}categories/`, { headers: getAuthHeader() });
-export const adminCreateCategory = (data) => axios.post(`${API_URL}categories/`, data, { headers: getAuthHeader() });
-export const adminUpdateCategory = (id, data) => axios.patch(`${API_URL}categories/${id}/`, data, { headers: getAuthHeader() });
-export const adminDeleteCategory = (id) => axios.delete(`${API_URL}categories/${id}/`, { headers: getAuthHeader() });
+export const adminGetCategories = () => api.get(`${API_URL}categories/`);
+export const adminCreateCategory = (data) => api.post(`${API_URL}categories/`, data);
+export const adminUpdateCategory = (id, data) => api.patch(`${API_URL}categories/${id}/`, data);
+export const adminDeleteCategory = (id) => api.delete(`${API_URL}categories/${id}/`);
 export const adminDeleteCommand = (id) => {
-    return axios.delete(`${API_URL}commands/${id}/`, { headers: getAuthHeader() });
+    return api.delete(`${API_URL}commands/${id}/`);
 };
 
 export const adminCreateCommand = (data) => {
-    return axios.post(`${API_URL}commands/`, data, { headers: getAuthHeader() });
+    return api.post(`${API_URL}commands/`, data);
 };
 
 export const adminUpdateCommand = (id, data) => {
-    return axios.patch(`${API_URL}commands/${id}/`, data, { headers: getAuthHeader() });
+    return api.patch(`${API_URL}commands/${id}/`);
 };
 
 export const closeSession = (sessionId) => {
-    return axios.post(`${API_URL}sessions/${sessionId}/close_session/`, {}, { headers: getAuthHeader() });
+    return api.post(`${API_URL}sessions/${sessionId}/close_session/`, {});
 };
 
 export const submitReview = (data) => {
-    return axios.post(`${API_URL}reviews/`, data, { headers: getAuthHeader() });
+    return api.post(`${API_URL}reviews/`, data);
 };
 
 export const submitGeneralFeedback = (data) => {
-    return axios.post(`${API_URL}general-feedback/`, data, { headers: getAuthHeader() });
+    return api.post(`${API_URL}general-feedback/`, data);
 };
 
-export const adminGetFeedback = () => axios.get(`${API_URL}general-feedback/`, { headers: getAuthHeader() });
-export const adminDeleteFeedback = (id) => axios.delete(`${API_URL}general-feedback/${id}/`, { headers: getAuthHeader() });
+export const adminGetFeedback = () => api.get(`${API_URL}general-feedback/`);
+export const adminDeleteFeedback = (id) => api.delete(`${API_URL}general-feedback/${id}/`);
 
-export const adminGetProfiles = () => axios.get(`${API_URL}consultants/`, { headers: getAuthHeader() });
-export const adminCreateProfile = (data) => axios.post(`${API_URL}consultants/`, data, { headers: getAuthHeader() });
-export const adminUpdateProfile = (id, data) => axios.patch(`${API_URL}consultants/${id}/`, data, { headers: getAuthHeader() });
-export const adminDeleteProfile = (id) => axios.delete(`${API_URL}consultants/${id}/`, { headers: getAuthHeader() });
+export const adminGetProfiles = () => api.get(`${API_URL}consultants/`);
+export const adminCreateProfile = (data) => api.post(`${API_URL}consultants/`, data);
+export const adminUpdateProfile = (id, data) => api.patch(`${API_URL}consultants/${id}/`, data);
+export const adminDeleteProfile = (id) => api.delete(`${API_URL}consultants/${id}/`);
 
-export const searchUsers = (q) => axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/profiles/search/?q=${q}`, { headers: getAuthHeader() });
+export const searchUsers = (q) => api.get(`/profiles/search/?q=${q}`);
 
-export const adminGetAISettings = () => axios.get(`${API_URL}ai-settings/`, { headers: getAuthHeader() });
-export const adminUpdateAISettings = (data) => axios.patch(`${API_URL}ai-settings/update_settings/`, data, { headers: getAuthHeader() });
+export const adminGetAISettings = () => api.get(`${API_URL}ai-settings/`);
+export const adminUpdateAISettings = (data) => api.patch(`${API_URL}ai-settings/update_settings/`, data);
 
 export const toggleAISession = (sessionId, isActive) => {
-    return axios.post(`${API_URL}sessions/${sessionId}/toggle_ai/`, { is_ai_active: isActive }, { headers: getAuthHeader() });
+    return api.post(`${API_URL}sessions/${sessionId}/toggle_ai/`, { is_ai_active: isActive });
 };
 
 export const getChatCommands = () => {
-    return axios.get(`${API_URL}commands/`, { headers: getAuthHeader() });
+    return api.get(`${API_URL}commands/`);
 };

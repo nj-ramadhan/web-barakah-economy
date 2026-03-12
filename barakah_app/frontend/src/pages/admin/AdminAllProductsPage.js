@@ -48,7 +48,7 @@ const AdminAllProductsPage = () => {
     );
 
     return (
-        <div className="min-h-screen bg-gray-50 flex flex-col pb-20 pt-16">
+        <div className="min-h-screen bg-gray-50 flex flex-col pb-20">
             <Header />
             <div className="max-w-4xl mx-auto w-full px-4 py-6">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">

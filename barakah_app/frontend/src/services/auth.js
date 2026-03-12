@@ -1,4 +1,5 @@
 import axios from 'axios';
+import api from './api';
 
 const API_URL = `${process.env.REACT_APP_API_BASE_URL}/api/auth/`;
 
@@ -29,6 +30,19 @@ const axiosInstance = axios.create({
     'X-CSRFToken': csrfToken, // Include CSRF token in headers
   },
 });
+
+// Add 401 interceptor to axiosInstance as well
+axiosInstance.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response && error.response.status === 401 && !error.config.url.includes('login')) {
+      alert('Sesi Anda telah berakhir. Silakan login kembali.');
+      localStorage.removeItem('user');
+      window.location.href = '/login';
+    }
+    return Promise.reject(error);
+  }
+);
 
 const googleLogin = (token) => {
   return axiosInstance.post('google-login/', {
@@ -82,15 +96,7 @@ const logout = () => {
 
 const getProfile = async (userId) => {
   try {
-    const user = JSON.parse(localStorage.getItem('user'));
-    const token = user?.access; // Use the access token
-
-    const response = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/profiles/${userId}/`, {
-      headers: {
-        Authorization: `Bearer ${token}`, // Include the token in the request headers
-        'X-CSRFToken': csrfToken, // Include CSRF token for POST/PUT/DELETE requests
-      },
-    });
+    const response = await api.get(`/profiles/${userId}/`);
     return response.data;
   } catch (error) {
     console.error('Failed to fetch profile:', error);
@@ -100,15 +106,7 @@ const getProfile = async (userId) => {
 
 const updateProfile = async (userId, profileData) => {
   try {
-    const user = JSON.parse(localStorage.getItem('user'));
-    const token = user?.access;
-
-    const response = await axios.patch(`${process.env.REACT_APP_API_BASE_URL}/api/profiles/${userId}/`, profileData, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'X-CSRFToken': csrfToken, // Include CSRF token for POST/PUT/DELETE requests
-      },
-    });
+    const response = await api.patch(`/profiles/${userId}/`, profileData);
     return response.data;
   } catch (error) {
     console.error('Failed to update profile:', error);

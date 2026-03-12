@@ -353,10 +353,10 @@ const ChatWindowPage = () => {
                         Beri Review
                     </button>
                 )}
-                {session && !session.is_active && session.review && (isExpert || currentUser?.is_staff || currentUser?.role === 'admin') && (
+                {(isExpert || currentUser?.is_staff || currentUser?.role === 'admin') && session?.review && (
                     <button
                         onClick={() => setShowViewReviewModal(true)}
-                        className="bg-amber-50 text-amber-600 px-2.5 py-1.5 rounded-xl text-[10px] font-bold flex items-center gap-1 hover:bg-amber-100 transition whitespace-nowrap"
+                        className="bg-amber-100 text-amber-600 px-3 py-1.5 rounded-xl text-[10px] font-bold flex items-center gap-1 hover:bg-amber-200 transition whitespace-nowrap shadow-sm"
                     >
                         <span className="material-icons text-xs">star</span>
                         Lihat Review
@@ -430,14 +430,19 @@ const ChatWindowPage = () => {
                 {session && !session.is_active ? (
                     <div className="text-center py-4 bg-gray-50 rounded-2xl text-gray-500 text-xs font-bold">
                         Sesi konsultasi ini telah ditutup.
-                        {session.review && !isExpert && !currentUser?.is_staff && (
+                        {session.review ? (
+                            <span className="ml-2 text-amber-600">
+                                ⭐ Anda memberikan {session.review.rating} bintang
+                            </span>
+                        ) : (!isExpert && !currentUser?.is_staff && (
                             <button
-                                onClick={() => setShowViewReviewModal(true)}
-                                className="ml-2 text-amber-600 hover:underline"
+                                onClick={() => setShowReviewModal(true)}
+                                className="ml-2 text-indigo-600 hover:underline flex inline-items items-center gap-0.5"
                             >
-                                Lihat Review Anda
+                                <span className="material-icons text-xs">edit_note</span>
+                                Klik di sini untuk memberi penilaian
                             </button>
-                        )}
+                        ))}
                     </div>
                 ) : (
                     <>

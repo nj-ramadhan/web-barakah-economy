@@ -5,7 +5,6 @@ import {
     adminGetCategories, adminCreateCategory, adminUpdateCategory, adminDeleteCategory,
     adminGetProfiles, adminCreateProfile, adminUpdateProfile, adminDeleteProfile,
     searchUsers, adminGetAISettings, adminUpdateAISettings,
-    getChatCommands, adminCreateCommand, adminUpdateCommand, adminDeleteCommand,
     adminGetFeedback, adminDeleteFeedback
 } from '../../services/chatApi';
 
@@ -44,14 +43,6 @@ const AdminConsultantSettingsPage = () => {
     const [searchResults, setSearchResults] = useState([]);
     const [editingProfId, setEditingProfId] = useState(null);
 
-    // Commands Form
-    const [commands, setCommands] = useState([]);
-    const [cmdForm, setCmdForm] = useState({
-        code: '', label: '', content: '', icon: 'chat', role: 'public', is_active: true,
-        is_close_session: false, is_request_review: false, is_toggle_ai_on: false, is_toggle_ai_off: false
-    });
-    const [editingCmdId, setEditingCmdId] = useState(null);
-    const [showCmdIconPicker, setShowCmdIconPicker] = useState(false);
 
     useEffect(() => {
         fetchData();
@@ -77,8 +68,6 @@ const AdminConsultantSettingsPage = () => {
                 console.error('Failed to fetch AI settings:', err);
             }
 
-            const cmdRes = await getChatCommands();
-            setCommands(cmdRes.data);
 
             const feedbackRes = await adminGetFeedback();
             setFeedbacks(feedbackRes.data);
@@ -156,33 +145,9 @@ const AdminConsultantSettingsPage = () => {
         }
     };
 
-    // Command Handlers
-    const handleCmdSubmit = async (e) => {
-        e.preventDefault();
-        try {
-            if (editingCmdId) {
-                await adminUpdateCommand(editingCmdId, cmdForm);
-            } else {
-                await adminCreateCommand(cmdForm);
-            }
-            fetchData();
-            setCmdForm({
-                code: '', label: '', content: '', icon: 'chat', role: 'public', is_active: true,
-                is_close_session: false, is_request_review: false, is_toggle_ai_on: false, is_toggle_ai_off: false
-            });
-            setEditingCmdId(null);
-            alert('Command berhasil disimpan!');
-        } catch (err) { alert('Gagal menyimpan command.'); }
-    };
-
-    const handleCmdDelete = async (id) => {
-        if (window.confirm('Hapus command ini?')) {
-            try { await adminDeleteCommand(id); fetchData(); } catch (err) { alert('Gagal menghapus command.'); }
-        }
-    };
 
     return (
-        <div className="min-h-screen bg-gray-50 flex flex-col pb-20 pt-16">
+        <div className="min-h-screen bg-gray-50 flex flex-col pb-20">
             <Header />
             <div className="max-w-4xl mx-auto w-full px-4 py-6">
                 <h1 className="text-xl font-bold text-gray-800 mb-6 font-display">Pengaturan Konsultasi</h1>
@@ -201,13 +166,6 @@ const AdminConsultantSettingsPage = () => {
                     >
                         <span className="material-icons text-xs">person</span>
                         Pakar
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('commands')}
-                        className={`flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-sm font-bold transition whitespace-nowrap ${activeTab === 'commands' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-100' : 'text-gray-400 hover:bg-gray-50'}`}
-                    >
-                        <span className="material-icons text-xs">terminal</span>
-                        Commands
                     </button>
                     <button
                         onClick={() => setActiveTab('ai')}
@@ -649,182 +607,6 @@ const AdminConsultantSettingsPage = () => {
                     </div >
                 )}
 
-                {activeTab === 'commands' && (
-                    <div className="space-y-6 animate-in fade-in duration-500">
-                        <form onSubmit={handleCmdSubmit} className="bg-white p-6 rounded-3xl shadow-sm border border-indigo-50">
-                            <h3 className="font-bold text-gray-800 mb-4">{editingCmdId ? 'Edit Shortcut Command' : 'Tambah Command Baru'}</h3>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Kode Command (Diawali /)</label>
-                                    <input
-                                        type="text" required
-                                        value={cmdForm.code}
-                                        onChange={(e) => setCmdForm({ ...cmdForm, code: e.target.value })}
-                                        className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500"
-                                        placeholder="Contoh: /pakar"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Label Menu</label>
-                                    <input
-                                        type="text" required
-                                        value={cmdForm.label}
-                                        onChange={(e) => setCmdForm({ ...cmdForm, label: e.target.value })}
-                                        className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500"
-                                        placeholder="Contoh: Chat dengan Pakar"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Akses Role</label>
-                                    <select
-                                        value={cmdForm.role}
-                                        onChange={(e) => setCmdForm({ ...cmdForm, role: e.target.value })}
-                                        className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm focus:ring-2 focus:ring-2 focus:ring-indigo-500 appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2020%2020%22%3E%3Cpath%20stroke%3D%22%236b7280%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%20d%3D%22m6%208%204%204%204-4%22%2F%3E%3C%2Fsvg%3E')] bg-[length:1.25rem_1.25rem] bg-[right_0.75rem_center] bg-no-repeat"
-                                    >
-                                        <option value="public">Semua Pengguna (User)</option>
-                                        <option value="expert">Pakar Saja</option>
-                                        <option value="admin">Admin Saja</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Pick Icon</label>
-                                    <div
-                                        onClick={() => setShowCmdIconPicker(true)}
-                                        className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500 flex items-center justify-between cursor-pointer"
-                                    >
-                                        <div className="flex items-center gap-2">
-                                            <span className="material-icons text-indigo-600 text-sm">{cmdForm.icon || 'chat'}</span>
-                                            <span className="text-gray-600 text-xs">{cmdForm.icon || 'Pilih icon...'}</span>
-                                        </div>
-                                        <span className="material-icons text-gray-400 text-sm">expand_more</span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="mt-4">
-                                <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Isi Pesan / Template (Dukungan Markdown)</label>
-                                <textarea
-                                    rows="4" required
-                                    value={cmdForm.content}
-                                    onChange={(e) => setCmdForm({ ...cmdForm, content: e.target.value })}
-                                    className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500 resize-none font-mono"
-                                    placeholder="Gunakan *bold* atau _italic_ jika perlu..."
-                                />
-                            </div>
-                            <div className="mt-4 flex justify-between items-center">
-                                <label className="flex items-center gap-2 cursor-pointer group">
-                                    <div className="relative">
-                                        <input
-                                            type="checkbox"
-                                            checked={cmdForm.is_active}
-                                            onChange={(e) => setCmdForm({ ...cmdForm, is_active: e.target.checked })}
-                                            className="sr-only"
-                                        />
-                                        <div className={`w-10 h-6 rounded-full transition-colors ${cmdForm.is_active ? 'bg-indigo-600' : 'bg-gray-200'}`}></div>
-                                        <div className={`absolute top-1 left-1 bg-white w-4 h-4 rounded-full transition-transform ${cmdForm.is_active ? 'translate-x-4' : ''}`}></div>
-                                    </div>
-                                    <span className="text-xs font-bold text-gray-500 group-hover:text-indigo-600">Aktif</span>
-                                </label>
-                                <div className="flex flex-wrap gap-4">
-                                    <label className="flex items-center gap-2 cursor-pointer group">
-                                        <input
-                                            type="checkbox"
-                                            checked={cmdForm.is_close_session}
-                                            onChange={(e) => setCmdForm({ ...cmdForm, is_close_session: e.target.checked })}
-                                            className="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-                                        />
-                                        <span className="text-[10px] font-bold text-gray-400 group-hover:text-indigo-600 uppercase">Tutup Sesi</span>
-                                    </label>
-                                    <label className="flex items-center gap-2 cursor-pointer group">
-                                        <input
-                                            type="checkbox"
-                                            checked={cmdForm.is_request_review}
-                                            onChange={(e) => setCmdForm({ ...cmdForm, is_request_review: e.target.checked })}
-                                            className="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-                                        />
-                                        <span className="text-[10px] font-bold text-gray-400 group-hover:text-indigo-600 uppercase">Minta Review</span>
-                                    </label>
-                                    <label className="flex items-center gap-2 cursor-pointer group">
-                                        <input
-                                            type="checkbox"
-                                            checked={cmdForm.is_toggle_ai_on}
-                                            onChange={(e) => setCmdForm({ ...cmdForm, is_toggle_ai_on: e.target.checked })}
-                                            className="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-                                        />
-                                        <span className="text-[10px] font-bold text-gray-400 group-hover:text-indigo-600 uppercase">Aktifkan AI</span>
-                                    </label>
-                                    <label className="flex items-center gap-2 cursor-pointer group">
-                                        <input
-                                            type="checkbox"
-                                            checked={cmdForm.is_toggle_ai_off}
-                                            onChange={(e) => setCmdForm({ ...cmdForm, is_toggle_ai_off: e.target.checked })}
-                                            className="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-                                        />
-                                        <span className="text-[10px] font-bold text-gray-400 group-hover:text-indigo-600 uppercase">Expert Mode</span>
-                                    </label>
-                                </div>
-                                <div className="flex gap-2">
-                                    {editingCmdId && (
-                                        <button
-                                            type="button"
-                                            onClick={() => {
-                                                setEditingCmdId(null);
-                                                setCmdForm({
-                                                    code: '', label: '', content: '', icon: 'chat', role: 'public', is_active: true,
-                                                    is_close_session: false, is_request_review: false, is_toggle_ai_on: false, is_toggle_ai_off: false
-                                                });
-                                            }}
-                                            className="px-6 py-2.5 rounded-2xl text-sm font-bold text-gray-400"
-                                        >
-                                            Batal
-                                        </button>
-                                    )}
-                                    <button type="submit" className="bg-indigo-600 text-white px-8 py-2.5 rounded-2xl text-sm font-bold">
-                                        {editingCmdId ? 'Update Command' : 'Tambah Command'}
-                                    </button>
-                                </div>
-                            </div>
-                        </form>
-
-                        <div className="grid grid-cols-1 gap-4">
-                            {commands.map(cmd => (
-                                <div key={cmd.id} className="bg-white p-5 rounded-3xl shadow-sm border border-gray-100 flex items-center justify-between group hover:border-indigo-200 transition">
-                                    <div className="flex items-center gap-4">
-                                        <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center group-hover:bg-indigo-600 transition-colors">
-                                            <span className="material-icons text-indigo-600 group-hover:text-white text-sm">{cmd.icon || 'chat'}</span>
-                                        </div>
-                                        <div>
-                                            <div className="flex items-center gap-2">
-                                                <h4 className="font-bold text-gray-800 text-sm">{cmd.label}</h4>
-                                                <span className="text-[10px] font-mono text-gray-400 bg-gray-50 px-1.5 py-0.5 rounded uppercase">{cmd.code}</span>
-                                            </div>
-                                            <div className="flex items-center gap-1.5 mt-0.5">
-                                                <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${cmd.role === 'admin' ? 'bg-rose-50 text-rose-600' : cmd.role === 'expert' ? 'bg-amber-50 text-amber-600' : 'bg-indigo-50 text-indigo-600'}`}>
-                                                    {cmd.role.toUpperCase()}
-                                                </span>
-                                                <div className="w-1 h-1 rounded-full bg-gray-300"></div>
-                                                <p className="text-[10px] text-gray-400 truncate max-w-[200px] md:max-w-md">{cmd.content}</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div className="flex gap-1">
-                                        <button
-                                            onClick={() => { setEditingCmdId(cmd.id); setCmdForm({ ...cmd }); }}
-                                            className="w-9 h-9 flex items-center justify-center rounded-xl bg-gray-50 text-gray-400 hover:bg-indigo-50 hover:text-indigo-600 transition"
-                                        >
-                                            <span className="material-icons text-sm">edit</span>
-                                        </button>
-                                        <button
-                                            onClick={() => handleCmdDelete(cmd.id)}
-                                            className="w-9 h-9 flex items-center justify-center rounded-xl bg-gray-50 text-gray-400 hover:bg-rose-50 hover:text-rose-600 transition"
-                                        >
-                                            <span className="material-icons text-sm">delete</span>
-                                        </button>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                )}
 
                 {activeTab === 'feedback' && (
                     <div className="space-y-6 animate-in fade-in duration-500">
@@ -915,36 +697,6 @@ const AdminConsultantSettingsPage = () => {
                 </div>
             )}
 
-            {/* Icon Picker Modal for Commands */}
-            {showCmdIconPicker && (
-                <div className="fixed inset-0 bg-black/60 z-[2000] flex items-center justify-center p-4 backdrop-blur-sm">
-                    <div className="bg-white w-full max-w-sm rounded-[2rem] p-6 shadow-2xl animate-in zoom-in-95 duration-200">
-                        <div className="flex justify-between items-center mb-6">
-                            <h3 className="text-lg font-bold text-gray-800">Pilih Icon Command</h3>
-                            <button
-                                onClick={() => setShowCmdIconPicker(false)}
-                                className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-50 text-gray-400 hover:bg-rose-50 hover:text-rose-600 transition"
-                            >
-                                <span className="material-icons">close</span>
-                            </button>
-                        </div>
-                        <div className="grid grid-cols-4 gap-4 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
-                            {materialIcons.map(icon => (
-                                <button
-                                    key={icon}
-                                    onClick={() => {
-                                        setCmdForm({ ...cmdForm, icon: icon });
-                                        setShowCmdIconPicker(false);
-                                    }}
-                                    className={`w-full aspect-square flex items-center justify-center rounded-2xl transition ${cmdForm.icon === icon ? 'bg-indigo-600 text-white shadow-lg' : 'bg-gray-50 text-gray-400 hover:bg-indigo-50 hover:text-indigo-600'}`}
-                                >
-                                    <span className="material-icons text-2xl">{icon}</span>
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-            )}
 
             <NavigationButton />
         </div>

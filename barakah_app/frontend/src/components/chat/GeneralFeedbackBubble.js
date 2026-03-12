@@ -32,11 +32,16 @@ const GeneralFeedbackBubble = () => {
             {/* Bubble Button */}
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className={`w-14 h-14 rounded-full flex items-center justify-center shadow-2xl transition-all duration-300 ${isOpen ? 'bg-rose-500 rotate-90 scale-110' : 'bg-indigo-600 hover:bg-indigo-700 animate-bounce hover:animate-none'}`}
+                className={`w-14 h-14 rounded-full flex items-center justify-center shadow-2xl transition-all duration-300 ${isOpen ? 'bg-rose-500 rotate-90 scale-110' : 'bg-indigo-600 hover:bg-indigo-700 hover:scale-110'}`}
             >
-                <span className="material-icons text-white text-2xl">
-                    {isOpen ? 'close' : 'rate_review'}
-                </span>
+                <div className="relative w-6 h-6 flex items-center justify-center">
+                    <span className={`material-icons text-white text-2xl absolute transition-all duration-300 ${isOpen ? 'opacity-100 rotate-0' : 'opacity-0 -rotate-45'}`}>
+                        close
+                    </span>
+                    <span className={`material-icons text-white text-2xl absolute transition-all duration-300 ${!isOpen ? 'opacity-100 rotate-0' : 'opacity-0 rotate-45'}`}>
+                        rate_review
+                    </span>
+                </div>
             </button>
 
             {/* Modal/Popup */}
