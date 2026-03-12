@@ -59,6 +59,14 @@ export const adminDeleteCommand = (id) => {
     return axios.delete(`${API_URL}commands/${id}/`, { headers: getAuthHeader() });
 };
 
+export const adminCreateCommand = (data) => {
+    return axios.post(`${API_URL}commands/`, data, { headers: getAuthHeader() });
+};
+
+export const adminUpdateCommand = (id, data) => {
+    return axios.patch(`${API_URL}commands/${id}/`, data, { headers: getAuthHeader() });
+};
+
 export const closeSession = (sessionId) => {
     return axios.post(`${API_URL}sessions/${sessionId}/close_session/`, {}, { headers: getAuthHeader() });
 };
