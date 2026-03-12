@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
 import Header from '../components/layout/Header';
 import NavigationButton from '../components/layout/Navigation';
-import { getDigitalProducts } from '../services/digitalProductApi';
+import { getDigitalProducts, getPopularSellers } from '../services/digitalProductApi';
 import '../styles/Body.css';
 
 const formatIDR = (amount) => {
@@ -20,20 +20,25 @@ const getMediaUrl = (url) => {
 
 const DigitalProductListPage = () => {
     const [products, setProducts] = useState([]);
+    const [popularSellers, setPopularSellers] = useState([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const fetchProducts = async () => {
+        const fetchData = async () => {
             try {
-                const res = await getDigitalProducts();
-                setProducts(res.data);
+                const [productsRes, sellersRes] = await Promise.all([
+                    getDigitalProducts(),
+                    getPopularSellers()
+                ]);
+                setProducts(productsRes.data);
+                setPopularSellers(sellersRes.data);
             } catch (err) {
-                console.error('Error fetching digital products:', err);
+                console.error('Error fetching digital products or sellers:', err);
             } finally {
                 setLoading(false);
             }
         };
-        fetchProducts();
+        fetchData();
     }, []);
 
     return (
@@ -87,26 +92,35 @@ const DigitalProductListPage = () => {
                 )}
 
                 {/* Seller Profiles Section */}
-                {!loading && products.length > 0 && (
+                {!loading && popularSellers.length > 0 && (
                     <div className="mt-12 bg-white rounded-3xl p-6 shadow-sm border border-gray-50">
                         <div className="flex justify-between items-center mb-4">
                             <h2 className="text-lg font-bold text-gray-800">Penjual Populer</h2>
                         </div>
                         <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
-                            {Array.from(new Set(products.map(p => p.seller_name))).map(username => (
+                            {popularSellers.map(seller => (
                                 <Link
-                                    key={username}
-                                    to={`/digital_produk/${username}`}
+                                    key={seller.username}
+                                    to={`/digital-produk/${seller.username}`}
                                     className="flex flex-col items-center gap-2 min-w-[80px]"
                                 >
                                     <div className="w-16 h-16 rounded-full border-2 border-green-100 p-0.5">
                                         <div className="w-full h-full rounded-full bg-gray-50 overflow-hidden flex items-center justify-center">
-                                            <span className="text-green-600 font-bold">
-                                                {username.charAt(0).toUpperCase()}
-                                            </span>
+                                            {seller.picture || seller.shop_thumbnail ? (
+                                                <img
+                                                    src={getMediaUrl(seller.picture || seller.shop_thumbnail)}
+                                                    alt={seller.username}
+                                                    className="w-full h-full object-cover rounded-full"
+                                                    onError={(e) => { e.target.src = '/images/pas_foto_standard.png'; }}
+                                                />
+                                            ) : (
+                                                <span className="text-green-600 font-bold">
+                                                    {seller.username.charAt(0).toUpperCase()}
+                                                </span>
+                                            )}
                                         </div>
                                     </div>
-                                    <span className="text-[10px] font-bold text-gray-700 text-center truncate w-full">@{username}</span>
+                                    <span className="text-[10px] font-bold text-gray-700 text-center truncate w-full">@{seller.username}</span>
                                 </Link>
                             ))}
                         </div>
