@@ -13,6 +13,9 @@ export const getDigitalProductBySlug = (slug) =>
 export const getPublicDigitalProfile = (username) =>
     api.get(`${API_BASE}/products/public-profile/?username=${username}`);
 
+export const getPopularSellers = () =>
+    api.get(`${API_BASE}/products/popular-sellers/`);
+
 // Alias for getPublicDigitalProfile
 export const getSellerProfile = getPublicDigitalProfile;
 
