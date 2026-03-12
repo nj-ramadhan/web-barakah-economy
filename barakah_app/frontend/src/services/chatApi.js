@@ -79,6 +79,9 @@ export const submitGeneralFeedback = (data) => {
     return axios.post(`${API_URL}general-feedback/`, data, { headers: getAuthHeader() });
 };
 
+export const adminGetFeedback = () => axios.get(`${API_URL}general-feedback/`, { headers: getAuthHeader() });
+export const adminDeleteFeedback = (id) => axios.delete(`${API_URL}general-feedback/${id}/`, { headers: getAuthHeader() });
+
 export const adminGetProfiles = () => axios.get(`${API_URL}consultants/`, { headers: getAuthHeader() });
 export const adminCreateProfile = (data) => axios.post(`${API_URL}consultants/`, data, { headers: getAuthHeader() });
 export const adminUpdateProfile = (id, data) => axios.patch(`${API_URL}consultants/${id}/`, data, { headers: getAuthHeader() });

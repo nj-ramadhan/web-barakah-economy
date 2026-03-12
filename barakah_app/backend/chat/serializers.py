@@ -10,7 +10,7 @@ class AISettingsSerializer(serializers.ModelSerializer):
 class UserBriefSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['id', 'username', 'first_name', 'last_name']
+        fields = ['id', 'username', 'first_name', 'last_name', 'role', 'is_staff']
 
 class ConsultantCategorySerializer(serializers.ModelSerializer):
     class Meta:

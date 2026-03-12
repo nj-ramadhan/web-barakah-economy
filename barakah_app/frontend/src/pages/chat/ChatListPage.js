@@ -104,40 +104,76 @@ const ChatListPage = () => {
                     </div>
                 ) : (
                     <div className="space-y-3">
-                        {sessions.map((session) => (
-                            <div
-                                key={session.id}
-                                onClick={() => navigate(`/chat/${session.id}`)}
-                                className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4 cursor-pointer hover:border-green-200 transition"
-                            >
-                                <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center flex-shrink-0">
-                                    <span className="material-icons text-gray-400">person</span>
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                    <div className="flex justify-between items-start mb-1">
-                                        <h3 className="font-bold text-gray-800 text-sm truncate">
-                                            {session.consultant_details
-                                                ? (session.consultant_details.username === currentUser.username
-                                                    ? session.user_details.username
-                                                    : session.consultant_details.username)
-                                                : `Chat ${session.category_name}`}
-                                        </h3>
-                                        <span className="text-[10px] text-gray-400">
-                                            {session.last_message ? new Date(session.last_message.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
-                                        </span>
+                        {sessions.map((session) => {
+                            const otherUser = session.consultant_details?.username === currentUser.username
+                                ? session.user_details
+                                : session.consultant_details;
+                            const otherUserRole = otherUser?.role || 'user';
+                            const isStaff = otherUser?.is_staff;
+
+                            let borderClass = 'border-gray-100 hover:border-green-200';
+                            let iconBg = 'bg-gray-100 text-gray-400';
+                            let roleLabel = '';
+                            let roleColor = 'text-gray-400';
+
+                            if (isStaff || otherUserRole === 'admin') {
+                                borderClass = 'border-rose-100 hover:border-rose-300 bg-rose-50/10';
+                                iconBg = 'bg-rose-100 text-rose-500';
+                                roleLabel = 'Admin';
+                                roleColor = 'text-rose-500';
+                            } else if (otherUserRole === 'expert' || session.consultant_details) {
+                                borderClass = 'border-green-100 hover:border-green-300 bg-green-50/10';
+                                iconBg = 'bg-green-100 text-green-600';
+                                roleLabel = 'Pakar';
+                                roleColor = 'text-green-600';
+                            }
+
+                            return (
+                                <div
+                                    key={session.id}
+                                    onClick={() => navigate(`/chat/${session.id}`)}
+                                    className={`bg-white p-4 rounded-2xl shadow-sm border ${borderClass} flex items-center gap-4 cursor-pointer transition relative overflow-hidden`}
+                                >
+                                    <div className={`w-12 h-12 ${iconBg} rounded-full flex items-center justify-center flex-shrink-0`}>
+                                        <span className="material-icons">{roleLabel === 'Admin' ? 'verified_user' : (roleLabel === 'Pakar' ? 'psychology' : 'person')}</span>
                                     </div>
-                                    <p className="text-[11px] text-gray-400 font-bold uppercase tracking-wider mb-1">{session.category_name}</p>
-                                    <p className="text-xs text-gray-500 truncate">
-                                        {session.last_message
-                                            ? (session.last_message.attachment ? '🖼️ Mengirim file' : session.last_message.content)
-                                            : 'Klik untuk memulai obrolan'}
-                                    </p>
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex justify-between items-start mb-1">
+                                            <div className="flex items-center gap-2">
+                                                <h3 className="font-bold text-gray-800 text-sm truncate">
+                                                    {otherUser?.username || `Chat ${session.category_name}`}
+                                                </h3>
+                                                {roleLabel && (
+                                                    <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded-full border ${roleColor} border-current uppercase tracking-wider`}>
+                                                        {roleLabel}
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <span className="text-[10px] text-gray-400">
+                                                {session.last_message ? new Date(session.last_message.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
+                                            </span>
+                                        </div>
+                                        <div className="flex justify-between items-center mb-1">
+                                            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">{session.category_name}</p>
+                                            {session.review && (
+                                                <div className="flex items-center gap-0.5 text-amber-500">
+                                                    <span className="material-icons text-[10px]">star</span>
+                                                    <span className="text-[10px] font-bold">{session.review.rating}</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                        <p className="text-xs text-gray-500 truncate">
+                                            {session.last_message
+                                                ? (session.last_message.attachment ? '🖼️ Mengirim file' : session.last_message.content)
+                                                : 'Klik untuk memulai obrolan'}
+                                        </p>
+                                    </div>
+                                    {session.last_message && !session.last_message.is_read && session.last_message.sender !== currentUser.id && (
+                                        <div className="w-2.5 h-2.5 bg-green-500 rounded-full shadow-lg shadow-green-200"></div>
+                                    )}
                                 </div>
-                                {session.last_message && !session.last_message.is_read && session.last_message.sender !== currentUser.id && (
-                                    <div className="w-2.5 h-2.5 bg-green-500 rounded-full"></div>
-                                )}
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
                 )}
             </div>

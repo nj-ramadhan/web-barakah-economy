@@ -143,23 +143,25 @@ class ChatSessionViewSet(viewsets.ModelViewSet):
         session = self.get_object()
         user = request.user
         
-        # Only expert or admin can close
+        # Only owner, expert or admin can close
+        is_owner = session.user == user
         is_expert = session.consultant == user
         is_admin = user.is_staff or user.role == 'admin'
         
-        if not (is_expert or is_admin):
-            return response.Response({"error": "Hanya pakar atau admin yang dapat menutup sesi."}, status=status.HTTP_403_FORBIDDEN)
+        if not (is_owner or is_expert or is_admin):
+            return response.Response({"error": "Anda tidak memiliki izin untuk menutup sesi ini."}, status=status.HTTP_403_FORBIDDEN)
             
         session.is_active = False
         session.save()
         
-        # Send closure template message
-        closure_msg = "terima kasih telah menggunakan jasa konsultasi barakah app, silahkan berikan review, kritik dan saran disini. \n\nRating (1-5): \nKomentar: \nKritik/Saran Platform: "
-        Message.objects.create(
-            session=session,
-            sender=user,
-            content=closure_msg
-        )
+        # Only send closure message if CLOSED BY EXPERT/ADMIN
+        if is_expert or is_admin:
+            closure_msg = "Sesi konsultasi ini telah ditutup oleh pakar. Terima kasih."
+            Message.objects.create(
+                session=session,
+                sender=user,
+                content=closure_msg
+            )
         
         return response.Response(ChatSessionSerializer(session).data)
 

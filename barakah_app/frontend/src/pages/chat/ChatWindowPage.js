@@ -114,6 +114,20 @@ const ChatWindowPage = () => {
         e.preventDefault();
         if ((!content.trim() && !file) || sending) return;
 
+        // Command handler: if content starts with / and it's a known command
+        if (content.startsWith('/') && !file) {
+            const cmd = filteredCommands.find(c => c.code === content.trim());
+            if (cmd) {
+                handleCommandSelect(cmd);
+                return;
+            } else if (content.length > 1) {
+                // If it looks like a command but unknown, warn or just send?
+                // User said "jangan di tampilkan /{command}", so let's block unknown commands too
+                alert('Command tidak dikenal.');
+                return;
+            }
+        }
+
         setSending(true);
         const formData = new FormData();
         formData.append('session', sessionId);

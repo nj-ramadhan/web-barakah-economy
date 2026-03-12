@@ -5,7 +5,8 @@ import {
     adminGetCategories, adminCreateCategory, adminUpdateCategory, adminDeleteCategory,
     adminGetProfiles, adminCreateProfile, adminUpdateProfile, adminDeleteProfile,
     searchUsers, adminGetAISettings, adminUpdateAISettings,
-    getChatCommands, adminCreateCommand, adminUpdateCommand, adminDeleteCommand
+    getChatCommands, adminCreateCommand, adminUpdateCommand, adminDeleteCommand,
+    adminGetFeedback, adminDeleteFeedback
 } from '../../services/chatApi';
 
 const AdminConsultantSettingsPage = () => {
@@ -18,6 +19,7 @@ const AdminConsultantSettingsPage = () => {
         system_prompt: '',
         is_enabled: false
     });
+    const [feedbacks, setFeedbacks] = useState([]);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('categories');
 
@@ -77,6 +79,9 @@ const AdminConsultantSettingsPage = () => {
 
             const cmdRes = await getChatCommands();
             setCommands(cmdRes.data);
+
+            const feedbackRes = await adminGetFeedback();
+            setFeedbacks(feedbackRes.data);
         } catch (err) {
             console.error('Failed to fetch consultant data:', err);
         } finally {
@@ -182,30 +187,41 @@ const AdminConsultantSettingsPage = () => {
             <div className="max-w-4xl mx-auto w-full px-4 py-6">
                 <h1 className="text-xl font-bold text-gray-800 mb-6 font-display">Pengaturan Konsultasi</h1>
 
-                <div className="flex gap-2 mb-6 overflow-x-auto pb-2 scrollbar-hide">
+                <div className="flex bg-white p-1 rounded-2xl shadow-sm border border-gray-100 overflow-x-auto no-scrollbar">
                     <button
                         onClick={() => setActiveTab('categories')}
-                        className={`px-5 py-2.5 rounded-2xl text-sm font-bold whitespace-nowrap transition-all ${activeTab === 'categories' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-100 scale-105' : 'bg-white text-gray-400 border border-gray-100 hover:border-indigo-200'}`}
+                        className={`flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-sm font-bold transition whitespace-nowrap ${activeTab === 'categories' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-100' : 'text-gray-400 hover:bg-gray-50'}`}
                     >
-                        📂 Kategori
+                        <span className="material-icons text-xs">category</span>
+                        Kategori
                     </button>
                     <button
                         onClick={() => setActiveTab('profiles')}
-                        className={`px-5 py-2.5 rounded-2xl text-sm font-bold whitespace-nowrap transition-all ${activeTab === 'profiles' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-100 scale-105' : 'bg-white text-gray-400 border border-gray-100 hover:border-indigo-200'}`}
+                        className={`flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-sm font-bold transition whitespace-nowrap ${activeTab === 'profiles' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-100' : 'text-gray-400 hover:bg-gray-50'}`}
                     >
-                        👨‍🏫 Daftar Pakar
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('ai')}
-                        className={`px-5 py-2.5 rounded-2xl text-sm font-bold whitespace-nowrap transition-all ${activeTab === 'ai' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-100 scale-105' : 'bg-white text-gray-400 border border-gray-100 hover:border-indigo-200'}`}
-                    >
-                        🤖 AI Chatbot
+                        <span className="material-icons text-xs">person</span>
+                        Pakar
                     </button>
                     <button
                         onClick={() => setActiveTab('commands')}
-                        className={`px-5 py-2.5 rounded-2xl text-sm font-bold whitespace-nowrap transition-all ${activeTab === 'commands' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-100 scale-105' : 'bg-white text-gray-400 border border-gray-100 hover:border-indigo-200'}`}
+                        className={`flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-sm font-bold transition whitespace-nowrap ${activeTab === 'commands' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-100' : 'text-gray-400 hover:bg-gray-50'}`}
                     >
-                        ⌨️ Shortcut Command
+                        <span className="material-icons text-xs">terminal</span>
+                        Commands
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('ai')}
+                        className={`flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-sm font-bold transition whitespace-nowrap ${activeTab === 'ai' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-100' : 'text-gray-400 hover:bg-gray-50'}`}
+                    >
+                        <span className="material-icons text-xs">bolt</span>
+                        AI Chat
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('feedback')}
+                        className={`flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-sm font-bold transition whitespace-nowrap ${activeTab === 'feedback' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-100' : 'text-gray-400 hover:bg-gray-50'}`}
+                    >
+                        <span className="material-icons text-xs">rate_review</span>
+                        Feedback
                     </button>
                 </div>
 
@@ -809,43 +825,129 @@ const AdminConsultantSettingsPage = () => {
                         </div>
                     </div>
                 )}
-            </div >
 
-            {/* Icon Picker Modal for Categories */}
-            {
-                showIconPicker && (
-                    <div className="fixed inset-0 bg-black/60 z-[2000] flex items-center justify-center p-4 backdrop-blur-sm">
-                        <div className="bg-white w-full max-w-sm rounded-[2rem] p-6 shadow-2xl animate-in zoom-in-95 duration-200">
-                            <div className="flex justify-between items-center mb-6">
-                                <h3 className="text-lg font-bold text-gray-800">Pilih Icon Kategori</h3>
-                                <button
-                                    onClick={() => setShowIconPicker(false)}
-                                    className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-50 text-gray-400 hover:bg-rose-50 hover:text-rose-600 transition"
-                                >
-                                    <span className="material-icons">close</span>
-                                </button>
-                            </div>
-                            <div className="grid grid-cols-4 gap-4 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
-                                {materialIcons.map(icon => (
-                                    <button
-                                        key={icon}
-                                        onClick={() => {
-                                            setCatForm({ ...catForm, icon: icon });
-                                            setShowIconPicker(false);
-                                        }}
-                                        className={`w-full aspect-square flex items-center justify-center rounded-2xl transition ${catForm.icon === icon ? 'bg-indigo-600 text-white shadow-lg' : 'bg-gray-50 text-gray-400 hover:bg-indigo-50 hover:text-indigo-600'}`}
-                                    >
-                                        <span className="material-icons text-2xl">{icon}</span>
-                                    </button>
-                                ))}
+                {activeTab === 'feedback' && (
+                    <div className="space-y-6 animate-in fade-in duration-500">
+                        <div className="flex justify-between items-center">
+                            <div>
+                                <h2 className="text-xl font-bold text-gray-800">Kritik & Saran Platform</h2>
+                                <p className="text-xs text-gray-400">Daftar masukan global dari pengguna</p>
                             </div>
                         </div>
+
+                        <div className="grid gap-4">
+                            {feedbacks.length === 0 ? (
+                                <div className="text-center py-12 bg-gray-50 rounded-3xl border-2 border-dashed border-gray-200">
+                                    <span className="material-icons text-gray-300 text-4xl mb-2">rate_review</span>
+                                    <p className="text-sm text-gray-400 font-bold">Belum ada feedback yang masuk</p>
+                                </div>
+                            ) : (
+                                feedbacks.map((fb) => (
+                                    <div key={fb.id} className="bg-white p-5 rounded-3xl shadow-sm border border-gray-100 hover:border-indigo-100 transition group">
+                                        <div className="flex justify-between items-start mb-3">
+                                            <div className="flex items-center gap-3">
+                                                <div className={`w-10 h-10 rounded-full flex items-center justify-center ${fb.urgent ? 'bg-rose-50 text-rose-500' : 'bg-indigo-50 text-indigo-500'}`}>
+                                                    <span className="material-icons text-xl">{fb.urgent ? 'report_problem' : 'rate_review'}</span>
+                                                </div>
+                                                <div>
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-sm font-bold text-gray-800">{fb.user_details?.username || 'User'}</span>
+                                                        {fb.urgent && (
+                                                            <span className="px-2 py-0.5 bg-rose-100 text-rose-600 text-[10px] font-bold rounded-full uppercase">Mendesak</span>
+                                                        )}
+                                                    </div>
+                                                    <span className="text-[10px] text-gray-400">{new Date(fb.created_at).toLocaleString()}</span>
+                                                </div>
+                                            </div>
+                                            <button
+                                                onClick={async () => {
+                                                    if (window.confirm('Hapus feedback ini?')) {
+                                                        try {
+                                                            await adminDeleteFeedback(fb.id);
+                                                            fetchData();
+                                                        } catch (err) { alert('Gagal menghapus feedback.'); }
+                                                    }
+                                                }}
+                                                className="p-2 text-gray-300 hover:text-rose-500 transition"
+                                            >
+                                                <span className="material-icons text-sm">delete</span>
+                                            </button>
+                                        </div>
+                                        <div className="bg-gray-50 p-4 rounded-2xl text-xs text-gray-600 leading-relaxed whitespace-pre-wrap">
+                                            {fb.content}
+                                        </div>
+                                    </div>
+                                ))
+                            )}
+                        </div>
                     </div>
-                )
-            }
+                )}
+            </div>
+
+            {/* Icon Picker Modal for Categories */}
+            {showIconPicker && (
+                <div className="fixed inset-0 bg-black/60 z-[2000] flex items-center justify-center p-4 backdrop-blur-sm">
+                    <div className="bg-white w-full max-w-sm rounded-[2rem] p-6 shadow-2xl animate-in zoom-in-95 duration-200">
+                        <div className="flex justify-between items-center mb-6">
+                            <h3 className="text-lg font-bold text-gray-800">Pilih Icon Kategori</h3>
+                            <button
+                                onClick={() => setShowIconPicker(false)}
+                                className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-50 text-gray-400 hover:bg-rose-50 hover:text-rose-600 transition"
+                            >
+                                <span className="material-icons">close</span>
+                            </button>
+                        </div>
+                        <div className="grid grid-cols-4 gap-4 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
+                            {materialIcons.map(icon => (
+                                <button
+                                    key={icon}
+                                    onClick={() => {
+                                        setCatForm({ ...catForm, icon: icon });
+                                        setShowIconPicker(false);
+                                    }}
+                                    className={`w-full aspect-square flex items-center justify-center rounded-2xl transition ${catForm.icon === icon ? 'bg-indigo-600 text-white shadow-lg' : 'bg-gray-50 text-gray-400 hover:bg-indigo-50 hover:text-indigo-600'}`}
+                                >
+                                    <span className="material-icons text-2xl">{icon}</span>
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Icon Picker Modal for Commands */}
+            {showCmdIconPicker && (
+                <div className="fixed inset-0 bg-black/60 z-[2000] flex items-center justify-center p-4 backdrop-blur-sm">
+                    <div className="bg-white w-full max-w-sm rounded-[2rem] p-6 shadow-2xl animate-in zoom-in-95 duration-200">
+                        <div className="flex justify-between items-center mb-6">
+                            <h3 className="text-lg font-bold text-gray-800">Pilih Icon Command</h3>
+                            <button
+                                onClick={() => setShowCmdIconPicker(false)}
+                                className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-50 text-gray-400 hover:bg-rose-50 hover:text-rose-600 transition"
+                            >
+                                <span className="material-icons">close</span>
+                            </button>
+                        </div>
+                        <div className="grid grid-cols-4 gap-4 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
+                            {materialIcons.map(icon => (
+                                <button
+                                    key={icon}
+                                    onClick={() => {
+                                        setCmdForm({ ...cmdForm, icon: icon });
+                                        setShowCmdIconPicker(false);
+                                    }}
+                                    className={`w-full aspect-square flex items-center justify-center rounded-2xl transition ${cmdForm.icon === icon ? 'bg-indigo-600 text-white shadow-lg' : 'bg-gray-50 text-gray-400 hover:bg-indigo-50 hover:text-indigo-600'}`}
+                                >
+                                    <span className="material-icons text-2xl">{icon}</span>
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            )}
 
             <NavigationButton />
-        </div >
+        </div>
     );
 };
 
