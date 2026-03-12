@@ -74,8 +74,8 @@ const AdminAllProductsPage = () => {
                         {filteredProducts.map((product) => (
                             <div key={product.id} className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex gap-4">
                                 <div className="w-20 h-20 bg-gray-100 rounded-xl overflow-hidden flex-shrink-0">
-                                    {product.image ? (
-                                        <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
+                                    {product.thumbnail ? (
+                                        <img src={product.thumbnail} alt={product.name} className="w-full h-full object-cover" />
                                     ) : (
                                         <div className="w-full h-full flex items-center justify-center text-gray-300">
                                             <span className="material-icons">image</span>

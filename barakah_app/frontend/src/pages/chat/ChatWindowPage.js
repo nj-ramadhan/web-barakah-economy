@@ -116,6 +116,24 @@ const ChatWindowPage = () => {
         }
     };
 
+    const handleQuickReply = async (text) => {
+        if (!text || sending) return;
+        setSending(true);
+        const formData = new FormData();
+        formData.append('session', sessionId);
+        formData.append('content', text);
+
+        try {
+            const res = await sendMessage(formData);
+            setMessages(prev => [...prev, res.data]);
+            setTimeout(scrollToBottom, 50);
+        } catch (err) {
+            alert('Gagal mengirim template.');
+        } finally {
+            setSending(false);
+        }
+    };
+
     const handleFileChange = (e) => {
         const selectedFile = e.target.files[0];
         if (selectedFile) {
@@ -128,7 +146,7 @@ const ChatWindowPage = () => {
     };
 
     return (
-        <div className="flex flex-col h-screen bg-gray-100 max-w-md mx-auto relative overflow-hidden">
+        <div className="flex flex-col h-[calc(100vh-80px)] lg:h-[700px] bg-white lg:rounded-3xl lg:shadow-2xl max-w-md mx-auto relative overflow-hidden lg:my-4">
             {/* Header Chat */}
             <div className="bg-white px-4 py-3 flex items-center gap-4 shadow-sm z-10">
                 <button onClick={() => navigate('/chat')} className="material-icons text-gray-500">arrow_back</button>
@@ -137,7 +155,11 @@ const ChatWindowPage = () => {
                 </div>
                 <div className="flex-1 min-w-0">
                     <h2 className="font-bold text-gray-800 text-sm truncate">
-                        {session?.consultant_details?.username || 'Pakar'}
+                        {session ? (
+                            currentUser.id === session.user
+                                ? session.consultant_details?.username
+                                : session.user_details?.username
+                        ) : 'Pakar'}
                     </h2>
                     <p className="text-[10px] text-green-600 font-bold uppercase tracking-wider flex items-center gap-1">
                         <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
@@ -210,6 +232,20 @@ const ChatWindowPage = () => {
 
             {/* Input Area */}
             <div className="bg-white p-3 shadow-[0_-4px_12px_rgba(0,0,0,0.05)]">
+                {/* Quick Reply Trigger */}
+                {session?.category_welcome_message && messages.length < 5 && (
+                    <div className="flex overflow-x-auto pb-2 mb-2 gap-2 scrollbar-hide">
+                        <button
+                            onClick={() => handleQuickReply(session.category_welcome_message)}
+                            className="flex-shrink-0 bg-green-50 text-green-700 px-3 py-1.5 rounded-full text-[10px] font-bold border border-green-100 hover:bg-green-100 transition flex items-center gap-1.5"
+                        >
+                            <span className="material-icons text-xs">auto_fix_high</span>
+                            {session.category_welcome_message.length > 30
+                                ? session.category_welcome_message.substring(0, 30) + '...'
+                                : session.category_welcome_message}
+                        </button>
+                    </div>
+                )}
                 {file && (
                     <div className="bg-gray-50 p-2 rounded-xl mb-3 flex items-center justify-between border border-gray-100 animate-slide-up">
                         <div className="flex items-center gap-2 overflow-hidden">

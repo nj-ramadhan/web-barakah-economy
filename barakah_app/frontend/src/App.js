@@ -82,7 +82,7 @@ const App = () => {
   return (
     <Router>
       <ScrollToTop />
-      <div className="min-h-screen bg-gray-100 flex justify-center">
+      <div className="h-screen bg-gray-100 flex justify-center overflow-hidden">
         <Routes>
           <Route path="/*" element={<LayoutWrapper isDesktop={isDesktop} />} />
         </Routes>

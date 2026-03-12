@@ -55,3 +55,6 @@ export const adminUpdateProfile = (id, data) => axios.patch(`${API_URL}consultan
 export const adminDeleteProfile = (id) => axios.delete(`${API_URL}consultants/${id}/`, { headers: getAuthHeader() });
 
 export const searchUsers = (q) => axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/profiles/search/?q=${q}`, { headers: getAuthHeader() });
+
+export const adminGetAISettings = () => axios.get(`${API_URL}ai-settings/`, { headers: getAuthHeader() });
+export const adminUpdateAISettings = (data) => axios.patch(`${API_URL}ai-settings/update_settings/`, data, { headers: getAuthHeader() });

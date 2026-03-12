@@ -2,8 +2,13 @@ from rest_framework import viewsets, permissions, status, response
 from rest_framework.decorators import action
 from rest_framework.pagination import PageNumberPagination
 from django.db.models import Q
-from .models import ConsultantCategory, ConsultantProfile, ChatSession, Message
-from .serializers import ConsultantCategorySerializer, ConsultantProfileSerializer, ChatSessionSerializer, MessageSerializer, UserBriefSerializer
+from .models import ConsultantCategory, ConsultantProfile, ChatSession, Message, AISettings
+from .serializers import (
+    ConsultantCategorySerializer, ConsultantProfileSerializer, 
+    ChatSessionSerializer, MessageSerializer, UserBriefSerializer,
+    AISettingsSerializer
+)
+from .ai_service import AIService
 from accounts.models import User
 
 class StandardResultsSetPagination(PageNumberPagination):
@@ -59,6 +64,15 @@ class ChatSessionViewSet(viewsets.ModelViewSet):
             return response.Response(ChatSessionSerializer(existing_session).data)
 
         session = ChatSession.objects.create(user=user, consultant=consultant, category_id=category_id)
+        
+        # Auto-send welcome message if exists in category
+        if session.category and session.category.welcome_message:
+            Message.objects.create(
+                session=session,
+                sender=consultant, # Represented by consultant
+                content=session.category.welcome_message
+            )
+
         return response.Response(ChatSessionSerializer(session).data, status=status.HTTP_201_CREATED)
 
 class MessageViewSet(viewsets.ModelViewSet):
@@ -90,8 +104,43 @@ class MessageViewSet(viewsets.ModelViewSet):
         
         serializer.save(sender=self.request.user)
 
+        # Trigger AI Response if session category has AI enabled
+        if session.category and session.category.is_ai_enabled:
+            ai_reply = AIService.get_response(serializer.data['content'], session_id=session.id)
+            
+            # Use admin or specific system user as sender
+            admin_user = User.objects.filter(username='admin').first() or User.objects.filter(is_superuser=True).first()
+            if admin_user:
+                Message.objects.create(
+                    session=session,
+                    sender=admin_user,
+                    content=ai_reply
+                )
+                # Update session timestamp
+                session.save()
+
     @action(detail=False, methods=['post'])
     def mark_read(self, request):
         session_id = request.data.get('session')
         Message.objects.filter(session_id=session_id).exclude(sender=request.user).update(is_read=True)
         return response.Response({"status": "read"})
+
+class AISettingsViewSet(viewsets.ModelViewSet):
+    queryset = AISettings.objects.all()
+    serializer_class = AISettingsSerializer
+    permission_classes = [permissions.IsAdminUser]
+
+    def list(self, request, *args, **kwargs):
+        # Always return the first (and only) settings object
+        settings, _ = AISettings.objects.get_or_create(id=1)
+        serializer = self.get_serializer(settings)
+        return response.Response(serializer.data)
+
+    @action(detail=False, methods=['patch', 'put'])
+    def update_settings(self, request):
+        settings, _ = AISettings.objects.get_or_create(id=1)
+        serializer = self.get_serializer(settings, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return response.Response(serializer.data)
+        return response.Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

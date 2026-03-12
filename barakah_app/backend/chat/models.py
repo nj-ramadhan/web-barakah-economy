@@ -12,6 +12,8 @@ class ConsultantCategory(models.Model):
     name = models.CharField(max_length=100)
     icon = models.CharField(max_length=50, help_text="Material icon name", default="chat")
     is_active = models.BooleanField(default=True)
+    is_ai_enabled = models.BooleanField(default=False, help_text="If True, AI will respond to messages in this category")
+    welcome_message = models.TextField(blank=True, help_text="Template pesan awal otomatis")
 
     def __str__(self):
         return self.name
@@ -54,3 +56,15 @@ class Message(models.Model):
 
     class Meta:
         ordering = ['created_at']
+class AISettings(models.Model):
+    api_key = models.CharField(max_length=255, blank=True)
+    base_url = models.URLField(default="https://ai.sumopod.com/v1")
+    model_name = models.CharField(max_length=100, default="gpt-4o-mini")
+    system_prompt = models.TextField(default="Kamu adalah asisten pintar dari Barakah Economy.")
+    is_enabled = models.BooleanField(default=False)
+
+    class Meta:
+        verbose_name_plural = "AI Settings"
+
+    def __str__(self):
+        return f"AI Settings ({self.model_name})"
