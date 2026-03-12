@@ -40,7 +40,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-4ch6(*qpo)!6)c4^^-+cth=)9*kfr9n)@wxez$*%a)*^^@$h+_'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 if DEBUG:
     ALLOWED_HOSTS = ['*']
 else:
@@ -150,7 +150,7 @@ WSGI_APPLICATION = 'barakah_app.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
-DEBUG = True
+DEBUG = False
 if DEBUG:
     DATABASES = {
         'default': {
