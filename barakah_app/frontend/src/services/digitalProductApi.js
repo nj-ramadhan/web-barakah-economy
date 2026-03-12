@@ -83,6 +83,10 @@ export const getMyWithdrawals = () =>
 export const createWithdrawalRequest = (data) =>
     api.post(`${API_BASE}/withdrawals/`, data);
 
+// Aliases for dashboard statistics and history
+export const getDigitalBalance = getWithdrawalBalance;
+export const getWithdrawalHistory = getMyWithdrawals;
+
 // Admin Withdrawals
 export const getAdminWithdrawals = () =>
     api.get(`${API_BASE}/withdrawals/admin-list/`);
