@@ -85,6 +85,12 @@ class ChatCommand(models.Model):
     icon = models.CharField(max_length=50, default="chat", help_text="Material icon name")
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='public')
     is_active = models.BooleanField(default=True)
+    
+    # Action flags
+    is_close_session = models.BooleanField(default=False, help_text="Tutup sesi otomatis")
+    is_request_review = models.BooleanField(default=False, help_text="Munculkan modal review otomatis")
+    is_toggle_ai_on = models.BooleanField(default=False, help_text="Aktifkan AI otomatis")
+    is_toggle_ai_off = models.BooleanField(default=False, help_text="Nonaktifkan AI otomatis")
 
     def __str__(self):
         return f"{self.code} ({self.get_role_display()})"

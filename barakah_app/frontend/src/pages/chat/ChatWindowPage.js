@@ -198,17 +198,34 @@ const ChatWindowPage = () => {
 
     const handleCommandSelect = async (cmd) => {
         // Built-in handlers
-        if (cmd.code === '/pakar') {
-            await handleToggleAI(false);
-            handleQuickReply('🚩 *Mode Pakar diaktifkan. AI dinonaktifkan sementara.*');
-        } else if (cmd.code === '/ai') {
-            await handleToggleAI(true);
-            handleQuickReply('🤖 *Mode AI diaktifkan kembali.*');
-        } else if (cmd.code === '/selesai') {
-            handleCloseSession();
+        if (cmd.isBuiltIn) {
+            if (cmd.code === '/pakar') {
+                await handleToggleAI(false);
+                handleQuickReply('🚩 *Mode Pakar diaktifkan. AI dinonaktifkan sementara.*');
+            } else if (cmd.code === '/ai') {
+                await handleToggleAI(true);
+                handleQuickReply('🤖 *Mode AI diaktifkan kembali.*');
+            } else if (cmd.code === '/selesai') {
+                handleCloseSession();
+            }
         } else {
-            // Dynamic commands
-            handleQuickReply(cmd.content);
+            // Dynamic commands with actions
+            if (cmd.content) {
+                handleQuickReply(cmd.content);
+            }
+
+            // Perform actions if flags are set
+            if (cmd.is_toggle_ai_on) await handleToggleAI(true);
+            if (cmd.is_toggle_ai_off) await handleToggleAI(false);
+            if (cmd.is_close_session) {
+                try {
+                    const res = await closeSession(sessionId);
+                    setSession(res.data);
+                } catch (err) { console.error('Failed to close via command', err); }
+            }
+            if (cmd.is_request_review) {
+                setTimeout(() => setShowReviewModal(true), 1000); // Small delay to let message appear
+            }
         }
         setContent('');
         setShowCommands(false);
@@ -256,9 +273,9 @@ const ChatWindowPage = () => {
 
     const filteredCommands = [
         ...builtInCommands.map(c => ({ ...c, isBuiltIn: true })).filter(cmd => {
-            if (cmd.code === '/ai') return currentUser.is_staff || currentUser.role === 'admin';
-            if (cmd.code === '/pakar') return !session?.consultant && !currentUser.is_staff;
-            if (cmd.code === '/selesai') return isExpert || currentUser.is_staff || currentUser.role === 'admin';
+            if (cmd.code === '/ai') return currentUser?.is_staff || currentUser?.role === 'admin';
+            if (cmd.code === '/pakar') return !session?.consultant && !currentUser?.is_staff;
+            if (cmd.code === '/selesai') return isExpert || currentUser?.is_staff || currentUser?.role === 'admin';
             return true;
         }),
         ...availableCommands
@@ -295,7 +312,7 @@ const ChatWindowPage = () => {
                         Tanya Pakar
                     </button>
                 )}
-                {session && session.is_active && session.is_ai_active === false && currentUser.is_staff && (
+                {session && session.is_active && session.is_ai_active === false && currentUser?.is_staff && (
                     <button
                         onClick={() => handleToggleAI(true)}
                         className="bg-indigo-50 text-indigo-600 px-2.5 py-1.5 rounded-xl text-[10px] font-bold flex items-center gap-1 hover:bg-indigo-100 transition"
@@ -304,7 +321,7 @@ const ChatWindowPage = () => {
                         Aktifkan AI
                     </button>
                 )}
-                {session && session.is_active && (isExpert || currentUser.is_staff || currentUser.role === 'admin') && (
+                {session && session.is_active && (isExpert || currentUser?.is_staff || currentUser?.role === 'admin') && (
                     <button
                         onClick={handleCloseSession}
                         className="bg-red-50 text-red-600 px-2.5 py-1.5 rounded-xl text-[10px] font-bold flex items-center gap-1 hover:bg-red-100 transition whitespace-nowrap"
@@ -313,7 +330,7 @@ const ChatWindowPage = () => {
                         Selesai
                     </button>
                 )}
-                {session && !session.is_active && !session.review && !isExpert && !currentUser.is_staff && (
+                {session && !session.is_active && !session.review && !isExpert && !currentUser?.is_staff && (
                     <button
                         onClick={() => setShowReviewModal(true)}
                         className="bg-amber-50 text-amber-600 px-2.5 py-1.5 rounded-xl text-[10px] font-bold flex items-center gap-1 hover:bg-amber-100 transition whitespace-nowrap"
@@ -322,7 +339,7 @@ const ChatWindowPage = () => {
                         Beri Review
                     </button>
                 )}
-                {session && !session.is_active && session.review && (isExpert || currentUser.is_staff || currentUser.role === 'admin') && (
+                {session && !session.is_active && session.review && (isExpert || currentUser?.is_staff || currentUser?.role === 'admin') && (
                     <button
                         onClick={() => setShowViewReviewModal(true)}
                         className="bg-amber-50 text-amber-600 px-2.5 py-1.5 rounded-xl text-[10px] font-bold flex items-center gap-1 hover:bg-amber-100 transition whitespace-nowrap"
@@ -353,7 +370,7 @@ const ChatWindowPage = () => {
                     </div>
                 ) : (
                     messages.map((msg, index) => {
-                        const isMe = msg.sender === currentUser.id;
+                        const isMe = msg.sender === currentUser?.id;
                         return (
                             <div key={msg.id || index} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
                                 <div className={`max-w-[80%] rounded-2xl px-4 py-2 shadow-sm ${isMe
@@ -396,10 +413,10 @@ const ChatWindowPage = () => {
 
             {/* Input Area */}
             <div className="bg-white p-3 shadow-[0_-4px_12px_rgba(0,0,0,0.05)]">
-                {!session?.is_active ? (
+                {session && !session.is_active ? (
                     <div className="text-center py-4 bg-gray-50 rounded-2xl text-gray-500 text-xs font-bold">
                         Sesi konsultasi ini telah ditutup.
-                        {session.review && !isExpert && !currentUser.is_staff && (
+                        {session.review && !isExpert && !currentUser?.is_staff && (
                             <button
                                 onClick={() => setShowViewReviewModal(true)}
                                 className="ml-2 text-amber-600 hover:underline"

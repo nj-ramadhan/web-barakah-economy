@@ -44,7 +44,10 @@ const AdminConsultantSettingsPage = () => {
 
     // Commands Form
     const [commands, setCommands] = useState([]);
-    const [cmdForm, setCmdForm] = useState({ code: '', label: '', content: '', icon: 'chat', role: 'public', is_active: true });
+    const [cmdForm, setCmdForm] = useState({
+        code: '', label: '', content: '', icon: 'chat', role: 'public', is_active: true,
+        is_close_session: false, is_request_review: false, is_toggle_ai_on: false, is_toggle_ai_off: false
+    });
     const [editingCmdId, setEditingCmdId] = useState(null);
     const [showCmdIconPicker, setShowCmdIconPicker] = useState(false);
 
@@ -158,7 +161,10 @@ const AdminConsultantSettingsPage = () => {
                 await adminCreateCommand(cmdForm);
             }
             fetchData();
-            setCmdForm({ code: '', label: '', content: '', icon: 'chat', role: 'public', is_active: true });
+            setCmdForm({
+                code: '', label: '', content: '', icon: 'chat', role: 'public', is_active: true,
+                is_close_session: false, is_request_review: false, is_toggle_ai_on: false, is_toggle_ai_off: false
+            });
             setEditingCmdId(null);
             alert('Command berhasil disimpan!');
         } catch (err) { alert('Gagal menyimpan command.'); }
@@ -702,11 +708,55 @@ const AdminConsultantSettingsPage = () => {
                                     </div>
                                     <span className="text-xs font-bold text-gray-500 group-hover:text-indigo-600">Aktif</span>
                                 </label>
+                                <div className="flex flex-wrap gap-4">
+                                    <label className="flex items-center gap-2 cursor-pointer group">
+                                        <input
+                                            type="checkbox"
+                                            checked={cmdForm.is_close_session}
+                                            onChange={(e) => setCmdForm({ ...cmdForm, is_close_session: e.target.checked })}
+                                            className="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                        />
+                                        <span className="text-[10px] font-bold text-gray-400 group-hover:text-indigo-600 uppercase">Tutup Sesi</span>
+                                    </label>
+                                    <label className="flex items-center gap-2 cursor-pointer group">
+                                        <input
+                                            type="checkbox"
+                                            checked={cmdForm.is_request_review}
+                                            onChange={(e) => setCmdForm({ ...cmdForm, is_request_review: e.target.checked })}
+                                            className="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                        />
+                                        <span className="text-[10px] font-bold text-gray-400 group-hover:text-indigo-600 uppercase">Minta Review</span>
+                                    </label>
+                                    <label className="flex items-center gap-2 cursor-pointer group">
+                                        <input
+                                            type="checkbox"
+                                            checked={cmdForm.is_toggle_ai_on}
+                                            onChange={(e) => setCmdForm({ ...cmdForm, is_toggle_ai_on: e.target.checked })}
+                                            className="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                        />
+                                        <span className="text-[10px] font-bold text-gray-400 group-hover:text-indigo-600 uppercase">Aktifkan AI</span>
+                                    </label>
+                                    <label className="flex items-center gap-2 cursor-pointer group">
+                                        <input
+                                            type="checkbox"
+                                            checked={cmdForm.is_toggle_ai_off}
+                                            onChange={(e) => setCmdForm({ ...cmdForm, is_toggle_ai_off: e.target.checked })}
+                                            className="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                        />
+                                        <span className="text-[10px] font-bold text-gray-400 group-hover:text-indigo-600 uppercase">Expert Mode</span>
+                                    </label>
+                                </div>
                                 <div className="flex gap-2">
                                     {editingCmdId && (
                                         <button
                                             type="button"
-                                            onClick={() => { setEditingCmdId(null); setCmdForm({ code: '', label: '', content: '', icon: 'chat', role: 'public', is_active: true }); }}
+                                            onClick={() => {
+                                                setEditingCmdId(null);
+                                                setCmdForm({
+                                                    code: '', label: '', content: '', icon: 'chat', role: 'public', is_active: true,
+                                                    is_close_session: false, is_request_review: false, is_toggle_ai_on: false, is_toggle_ai_off: false
+                                                });
+                                            }}
                                             className="px-6 py-2.5 rounded-2xl text-sm font-bold text-gray-400"
                                         >
                                             Batal
