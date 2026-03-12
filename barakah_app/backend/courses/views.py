@@ -223,3 +223,14 @@ class CertificateRequestViewSet(viewsets.ModelViewSet):
         if request_obj:
             return Response(CertificateRequestSerializer(request_obj).data)
         return Response({'detail': 'Not found'}, status=status.HTTP_404_NOT_FOUND)
+
+class AdminCourseViewSet(viewsets.ModelViewSet):
+    queryset = Course.objects.all()
+    serializer_class = CourseSerializer
+    permission_classes = [permissions.IsAdminUser]
+
+    @action(detail=False, methods=['get'])
+    def all_courses(self, request):
+        courses = self.get_queryset()
+        serializer = self.get_serializer(courses, many=True)
+        return Response(serializer.data)
