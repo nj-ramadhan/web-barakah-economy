@@ -10,6 +10,12 @@ export const getDigitalProducts = () =>
 export const getDigitalProductBySlug = (slug) =>
     api.get(`${API_BASE}/products/${slug}/`);
 
+export const getPublicDigitalProfile = (username) =>
+    api.get(`${API_BASE}/products/public-profile/?username=${username}`);
+
+// Alias for getPublicDigitalProfile
+export const getSellerProfile = getPublicDigitalProfile;
+
 // Orders (no auth needed)
 export const createDigitalOrder = (data) =>
     api.post(`${API_BASE}/orders/`, data);
@@ -18,37 +24,39 @@ export const getDigitalOrderStatus = (orderNumber) =>
     api.get(`${API_BASE}/orders/status/${orderNumber}/`);
 
 export const uploadPaymentProof = (orderNumber, formData) =>
-    api.post(`${API_BASE}/orders/status/${orderNumber}/pay/`, formData, {
+    api.post(`${API_BASE}/orders/upload-proof/${orderNumber}/`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
     });
-
-// Seller Profile
-export const getSellerProfile = (username) =>
-    api.get(`${API_BASE}/profiles/${username}/`);
 
 // Dashboard Member - My Products
-export const getMyProducts = () =>
+export const getMyDigitalProducts = () =>
     api.get(`${API_BASE}/products/my-products/`);
 
-export const createProduct = (formData) =>
-    api.post(`${API_BASE}/products/`, formData, {
+export const createMyDigitalProduct = (formData) =>
+    api.post(`${API_BASE}/products/my-products/`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
     });
 
-export const updateProduct = (id, formData) =>
-    api.patch(`${API_BASE}/products/${id}/`, formData, {
+export const updateMyDigitalProduct = (id, formData) =>
+    api.patch(`${API_BASE}/products/my-products/${id}/`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
     });
 
-export const deleteProduct = (id) =>
-    api.delete(`${API_BASE}/products/${id}/`);
+export const deleteMyDigitalProduct = (id) =>
+    api.delete(`${API_BASE}/products/my-products/${id}/`);
 
-// Admin
+// Aliases for dashboard functions (some components might use these)
+export const getMyProducts = getMyDigitalProducts;
+export const createProduct = createMyDigitalProduct;
+export const updateProduct = updateMyDigitalProduct;
+export const deleteProduct = deleteMyDigitalProduct;
+
+// Admin Products
 export const getAdminAllProducts = () =>
-    api.get(`${API_BASE}/admin/products/`);
+    api.get(`${API_BASE}/admin-products/`);
 
 export const deleteAdminProduct = (id) =>
-    api.delete(`${API_BASE}/admin/products/${id}/`);
+    api.delete(`${API_BASE}/admin-products/${id}/`);
 
 // Sales history for seller
 export const getSellerSales = () =>
@@ -64,3 +72,20 @@ export const getMyPurchases = () =>
 // Dashboard Statistics
 export const getSellerStats = () =>
     api.get(`${API_BASE}/orders/seller-stats/`);
+
+// Withdrawals
+export const getWithdrawalBalance = () =>
+    api.get(`${API_BASE}/withdrawals/balance/`);
+
+export const getMyWithdrawals = () =>
+    api.get(`${API_BASE}/withdrawals/`);
+
+export const createWithdrawalRequest = (data) =>
+    api.post(`${API_BASE}/withdrawals/`, data);
+
+// Admin Withdrawals
+export const getAdminWithdrawals = () =>
+    api.get(`${API_BASE}/withdrawals/admin-list/`);
+
+export const processAdminWithdrawal = (id, data) =>
+    api.patch(`${API_BASE}/withdrawals/${id}/admin-process/`, data);

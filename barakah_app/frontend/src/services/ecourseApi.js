@@ -30,8 +30,10 @@ export const getMaterialDetail = (slug, materialId) =>
     api.get(`${API_BASE}/viewer/${slug}/material/${materialId}/`);
 
 // Instructor Dashboard
-export const getInstructorCourses = () =>
+export const getMyCourses = () =>
     api.get(`${API_BASE}/instructor/courses/`);
+
+export const getInstructorCourses = getMyCourses;
 
 export const createCourse = (formData) =>
     api.post(`${API_BASE}/instructor/courses/`, formData, {
