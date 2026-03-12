@@ -4,6 +4,7 @@ import '../../styles/Navigation.css';
 
 const LAYANAN_ITEMS = [
   { to: '/', icon: 'home', label: 'Home', color: 'text-green-600' },
+  { to: '/chat', icon: 'psychology', label: 'Konsultasi', color: 'text-green-600' },
   { to: '/charity', icon: 'volunteer_activism', label: 'Charity', color: 'text-red-500' },
   { to: '/kegiatan', icon: 'event_note', label: 'Kegiatan', color: 'text-green-700' },
   { to: '/sinergy', icon: 'shopping_bag', label: 'Sinergy', color: 'text-blue-600' },
@@ -104,14 +105,14 @@ const NavigationButton = () => {
               </button>
             </div>
 
-            {/* DONASI (Tengah - 6 cols) */}
+            {/* KONSULTASI (Tengah - 6 cols) */}
             <div className="col-span-6 flex justify-center">
               <Link
-                to="/charity"
+                to="/chat"
                 className="w-full flex items-center justify-center gap-1.5 py-2.5 bg-gradient-to-r from-green-500 to-green-700 rounded-2xl shadow-lg shadow-green-200 text-white hover:scale-105 active:scale-95 transition-all -mt-3"
               >
-                <span className="material-icons text-xl">volunteer_activism</span>
-                <span className="text-sm font-bold">Donasi</span>
+                <span className="material-icons text-xl">psychology</span>
+                <span className="text-sm font-bold">Konsultasi</span>
               </Link>
             </div>
 

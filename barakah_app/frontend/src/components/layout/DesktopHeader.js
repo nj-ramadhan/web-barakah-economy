@@ -28,6 +28,7 @@ const DesktopHeader = () => {
             <nav className="flex gap-6 items-center">
                 <Link to="/" className="text-gray-600 hover:text-green-700 font-medium transition">Home</Link>
                 <Link to="/#about" className="text-gray-600 hover:text-green-700 font-medium transition">Tentang Kami</Link>
+                <Link to="/chat" className="text-gray-600 hover:text-green-700 font-medium transition">Konsultasi</Link>
                 <Link to="/charity" className="text-gray-600 hover:text-green-700 font-medium transition">Charity</Link>
                 <Link to="/sinergy" className="text-gray-600 hover:text-green-700 font-medium transition">Sinergy</Link>
                 <Link to="/academy/ecourse" className="text-gray-600 hover:text-green-700 font-medium transition">E-Course</Link>

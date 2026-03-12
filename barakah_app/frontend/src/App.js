@@ -1,6 +1,6 @@
 // App.js
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import PrivateRoute from './utils/PrivateRoute';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
@@ -74,19 +74,71 @@ import AdminConsultantSettingsPage from './pages/admin/AdminConsultantSettingsPa
 
 import { ResponsiveLayout, MobileContainer } from './components/layout/ResponsiveLayout';
 import ScrollToTop from './components/layout/ScrollToTop';
-import FloatingChatBubble from './components/chat/FloatingChatBubble';
+import NotificationService from './services/NotificationService';
+import { getSessions } from './services/chatApi';
 
+const NotificationHandler = () => {
+  const location = useLocation();
+  const lastSessionData = React.useRef({});
+  const currentUser = JSON.parse(localStorage.getItem('user'));
+
+  React.useEffect(() => {
+    if (currentUser) {
+      NotificationService.requestPermission();
+    }
+  }, []);
+
+  React.useEffect(() => {
+    if (!currentUser) return;
+
+    const checkNewMessages = async () => {
+      try {
+        const res = await getSessions();
+        const sessions = res.data;
+        const activeSessionId = location.pathname.split('/chat/')[1];
+
+        sessions.forEach(session => {
+          const lastMsg = session.last_message;
+          if (lastMsg && !lastMsg.is_read && lastMsg.sender !== currentUser.id) {
+            // Check if it's a new message since last check
+            const prevLastMsgId = lastSessionData.current[session.id];
+
+            // Don't notify if we are currently in that chat window
+            if (session.id.toString() !== activeSessionId && lastMsg.id !== prevLastMsgId) {
+              const senderName = session.consultant_details?.username || `Chat ${session.category_name}`;
+              NotificationService.showNotification(`Pesan Baru dari ${senderName}`, {
+                body: lastMsg.content || 'Mengirim file...',
+                url: `/chat/${session.id}`
+              });
+            }
+          }
+          // Update tracker
+          if (session.last_message) {
+            lastSessionData.current[session.id] = session.last_message.id;
+          }
+        });
+      } catch (err) {
+        console.error('Failed to poll for notifications:', err);
+      }
+    };
+
+    const interval = setInterval(checkNewMessages, 10000); // Check every 10s
+    return () => clearInterval(interval);
+  }, [location.pathname, currentUser?.id]);
+
+  return null;
+};
 const App = () => {
   const isDesktop = useMediaQuery('(min-width: 1024px)');
 
   return (
     <Router>
       <ScrollToTop />
+      <NotificationHandler />
       <div className="min-h-screen bg-gray-100 flex justify-center">
         <Routes>
           <Route path="/*" element={<LayoutWrapper isDesktop={isDesktop} />} />
         </Routes>
-        <FloatingChatBubble />
       </div>
     </Router>
   );
