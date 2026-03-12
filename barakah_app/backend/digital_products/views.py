@@ -223,7 +223,15 @@ class DigitalOrderViewSet(viewsets.ModelViewSet):
             if order.digital_product and order.digital_product.user:
                 order.product_owner = order.digital_product.user
                 
-            order.save()
+            # Auto-verify if amount is 0 (Free product)
+            if order.amount == 0:
+                order.payment_status = 'verified'
+                order.ocr_verified = True
+                order.save()
+                # Send email immediately
+                self._send_digital_product_email(order)
+            else:
+                order.save()
             return Response(DigitalOrderSerializer(order).data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 

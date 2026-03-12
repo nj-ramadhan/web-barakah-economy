@@ -14,6 +14,7 @@ import BackButton from '../components/global/BackButton';
 import '../styles/Body.css';
 
 const formatIDR = (amount) => {
+    if (amount === 0 || amount === '0') return 'Gratis';
     return 'Rp. ' + new Intl.NumberFormat('id-ID', { minimumFractionDigits: 0 }).format(amount);
 };
 

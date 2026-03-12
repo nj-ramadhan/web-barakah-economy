@@ -7,6 +7,7 @@ import { getDigitalProductBySlug, createDigitalOrder } from '../services/digital
 import '../styles/Body.css';
 
 const formatIDR = (amount) => {
+    if (amount === 0 || amount === '0' || amount === 0.00) return 'Gratis';
     return 'Rp. ' + new Intl.NumberFormat('id-ID', { minimumFractionDigits: 0 }).format(amount);
 };
 
@@ -66,7 +67,13 @@ const DigitalProductCheckoutPage = () => {
                 buyer_phone: buyerPhone,
                 amount: product.price,
             });
-            navigate(`/digital-products/payment/${res.data.order_number}`);
+
+            if (product.price == 0) {
+                alert('Pesanan berhasil! Silakan cek email Anda untuk link produk digital.');
+                navigate('/digital-products');
+            } else {
+                navigate(`/digital-products/payment/${res.data.order_number}`);
+            }
         } catch (err) {
             console.error(err);
             alert('Gagal membuat pesanan. Silakan coba lagi.');
@@ -94,6 +101,8 @@ const DigitalProductCheckoutPage = () => {
             </div>
         );
     }
+
+    const isFree = product.price == 0;
 
     return (
         <div className="body">
@@ -172,7 +181,7 @@ const DigitalProductCheckoutPage = () => {
                         disabled={submitting}
                         className="w-full bg-green-700 text-white py-3 rounded-xl font-bold text-sm shadow-lg hover:bg-green-800 transition disabled:opacity-50"
                     >
-                        {submitting ? 'Memproses...' : 'Lanjut ke Pembayaran'}
+                        {submitting ? 'Memproses...' : (isFree ? 'Dapatkan Sekarang' : 'Lanjut ke Pembayaran')}
                     </button>
                 </form>
             </div>
