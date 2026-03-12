@@ -36,8 +36,8 @@ const AdminAllCoursesPage = () => {
     };
 
     const filteredCourses = courses.filter(c =>
-        c.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        c.instructor_name.toLowerCase().includes(searchTerm.toLowerCase())
+        (c.title || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (c.instructor_name || '').toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     return (
@@ -95,7 +95,7 @@ const AdminAllCoursesPage = () => {
                                     </div>
                                     <div className="mt-auto flex gap-2">
                                         <button
-                                            onClick={() => window.open(`/academy/ecourse/${course.slug}`, '_blank')}
+                                            onClick={() => window.open(`/kelas/${course.slug}`, '_blank')}
                                             className="flex-1 bg-gray-50 text-gray-600 py-1.5 rounded-lg text-[10px] font-bold hover:bg-gray-100 transition"
                                         >
                                             Lihat detail

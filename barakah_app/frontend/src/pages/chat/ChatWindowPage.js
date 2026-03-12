@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getMessages, sendMessage, markRead } from '../../services/chatApi';
+import { getMessages, sendMessage, markRead, getSessionDetail } from '../../services/chatApi';
 
 const ChatWindowPage = () => {
     const { sessionId } = useParams();
@@ -11,6 +11,7 @@ const ChatWindowPage = () => {
     const [hasMore, setHasMore] = useState(true);
     const [content, setContent] = useState('');
     const [file, setFile] = useState(null);
+    const [session, setSession] = useState(null);
     const [sending, setSending] = useState(false);
 
     const messagesEndRef = useRef(null);
@@ -22,6 +23,24 @@ const ChatWindowPage = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     };
 
+    const fetchData = async () => {
+        try {
+            const [msgRes, sessRes] = await Promise.all([
+                getMessages(sessionId, 1),
+                getSessionDetail(sessionId)
+            ]);
+            setMessages(msgRes.data.results.reverse());
+            setSession(sessRes.data);
+            setHasMore(!!msgRes.data.next);
+            setTimeout(scrollToBottom, 50);
+            await markRead(sessionId);
+        } catch (err) {
+            console.error('Failed to load chat data:', err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const fetchMessages = async (pageNum = 1, isInitial = false) => {
         try {
             const res = await getMessages(sessionId, pageNum);
@@ -29,24 +48,35 @@ const ChatWindowPage = () => {
 
             if (isInitial) {
                 setMessages(newMessages.reverse());
-                setTimeout(scrollToBottom, 100);
+                setTimeout(scrollToBottom, 50);
             } else {
-                setMessages(prev => [...newMessages.reverse(), ...prev]);
+                setMessages(prev => {
+                    const existingIds = new Set(prev.map(m => m.id));
+                    const uniqueNew = newMessages.filter(m => !existingIds.has(m.id));
+                    if (uniqueNew.length === 0) return prev;
+
+                    // If pageNum is 1, these are "new" messages, so append to end
+                    if (pageNum === 1) {
+                        const updated = [...prev, ...uniqueNew.reverse()];
+                        setTimeout(scrollToBottom, 50);
+                        return updated;
+                    }
+                    // If pageNum > 1, these are "older" messages, so prepend to start
+                    return [...uniqueNew.reverse(), ...prev];
+                });
             }
 
             setHasMore(!!res.data.next);
             await markRead(sessionId);
         } catch (err) {
             console.error('Failed to load messages:', err);
-        } finally {
-            setLoading(false);
         }
     };
 
     useEffect(() => {
-        fetchMessages(1, true);
+        setLoading(true);
+        fetchData();
 
-        // Polling for new messages every 5 seconds (Simple implementation for now)
         const interval = setInterval(() => {
             fetchMessages(1, false);
         }, 5000);
@@ -78,7 +108,7 @@ const ChatWindowPage = () => {
             setMessages(prev => [...prev, res.data]);
             setContent('');
             setFile(null);
-            setTimeout(scrollToBottom, 100);
+            setTimeout(scrollToBottom, 50);
         } catch (err) {
             alert('Gagal mengirim pesan.');
         } finally {
@@ -105,9 +135,14 @@ const ChatWindowPage = () => {
                 <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
                     <span className="material-icons text-green-700">person</span>
                 </div>
-                <div className="flex-1">
-                    <h2 className="font-bold text-gray-800 text-sm">Consultant Pakar</h2>
-                    <p className="text-[10px] text-green-600 font-bold uppercase tracking-wider">Online</p>
+                <div className="flex-1 min-w-0">
+                    <h2 className="font-bold text-gray-800 text-sm truncate">
+                        {session?.consultant_details?.username || 'Pakar'}
+                    </h2>
+                    <p className="text-[10px] text-green-600 font-bold uppercase tracking-wider flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
+                        {session?.category_name || 'Konsultasi'}
+                    </p>
                 </div>
             </div>
 
@@ -135,8 +170,8 @@ const ChatWindowPage = () => {
                         return (
                             <div key={msg.id || index} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
                                 <div className={`max-w-[80%] rounded-2xl px-4 py-2 shadow-sm ${isMe
-                                        ? 'bg-green-700 text-white rounded-tr-none'
-                                        : 'bg-white text-gray-800 rounded-tl-none'
+                                    ? 'bg-green-700 text-white rounded-tr-none'
+                                    : 'bg-white text-gray-800 rounded-tl-none'
                                     }`}>
                                     {msg.attachment && (
                                         <div className="mb-2">

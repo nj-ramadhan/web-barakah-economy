@@ -36,8 +36,8 @@ const AdminAllProductsPage = () => {
     };
 
     const filteredProducts = products.filter(p =>
-        p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        p.seller_name.toLowerCase().includes(searchTerm.toLowerCase())
+        (p.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (p.seller_name || '').toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     return (

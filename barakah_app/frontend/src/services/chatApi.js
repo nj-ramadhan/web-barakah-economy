@@ -22,6 +22,10 @@ export const createSession = (categoryId) => {
     return axios.post(`${API_URL}sessions/`, { category: categoryId }, { headers: getAuthHeader() });
 };
 
+export const getSessionDetail = (sessionId) => {
+    return axios.get(`${API_URL}sessions/${sessionId}/`, { headers: getAuthHeader() });
+};
+
 export const getMessages = (sessionId, page = 1) => {
     return axios.get(`${API_URL}messages/?session=${sessionId}&page=${page}`, { headers: getAuthHeader() });
 };
@@ -45,9 +49,9 @@ export const adminCreateCategory = (data) => axios.post(`${API_URL}categories/`,
 export const adminUpdateCategory = (id, data) => axios.patch(`${API_URL}categories/${id}/`, data, { headers: getAuthHeader() });
 export const adminDeleteCategory = (id) => axios.delete(`${API_URL}categories/${id}/`, { headers: getAuthHeader() });
 
-export const adminGetProfiles = () => axios.get(`${API_URL}profiles/`, { headers: getAuthHeader() });
-export const adminCreateProfile = (data) => axios.post(`${API_URL}profiles/`, data, { headers: getAuthHeader() });
-export const adminUpdateProfile = (id, data) => axios.patch(`${API_URL}profiles/${id}/`, data, { headers: getAuthHeader() });
-export const adminDeleteProfile = (id) => axios.delete(`${API_URL}profiles/${id}/`, { headers: getAuthHeader() });
+export const adminGetProfiles = () => axios.get(`${API_URL}consultants/`, { headers: getAuthHeader() });
+export const adminCreateProfile = (data) => axios.post(`${API_URL}consultants/`, data, { headers: getAuthHeader() });
+export const adminUpdateProfile = (id, data) => axios.patch(`${API_URL}consultants/${id}/`, data, { headers: getAuthHeader() });
+export const adminDeleteProfile = (id) => axios.delete(`${API_URL}consultants/${id}/`, { headers: getAuthHeader() });
 
 export const searchUsers = (q) => axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/profiles/search/?q=${q}`, { headers: getAuthHeader() });

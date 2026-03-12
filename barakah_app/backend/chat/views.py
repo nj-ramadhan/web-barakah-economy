@@ -12,8 +12,12 @@ class StandardResultsSetPagination(PageNumberPagination):
     max_page_size = 100
 
 class ConsultantCategoryViewSet(viewsets.ModelViewSet):
-    queryset = ConsultantCategory.objects.filter(is_active=True)
     serializer_class = ConsultantCategorySerializer
+    
+    def get_queryset(self):
+        if self.request.user.is_staff:
+            return ConsultantCategory.objects.all()
+        return ConsultantCategory.objects.filter(is_active=True)
     
     def get_permissions(self):
         if self.action in ['list', 'retrieve']:
