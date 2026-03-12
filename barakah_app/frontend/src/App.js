@@ -66,9 +66,15 @@ import DashboardRealizationPage from './pages/admin/DashboardRealizationPage';
 import DashboardPartnersPage from './pages/admin/DashboardPartnersPage';
 import DashboardTestimonialsPage from './pages/admin/DashboardTestimonialsPage';
 import DashboardActivitiesPage from './pages/admin/DashboardActivitiesPage';
+import ChatListPage from './pages/chat/ChatListPage';
+import ChatWindowPage from './pages/chat/ChatWindowPage';
+import AdminAllProductsPage from './pages/admin/AdminAllProductsPage';
+import AdminAllCoursesPage from './pages/admin/AdminAllCoursesPage';
+import AdminConsultantSettingsPage from './pages/admin/AdminConsultantSettingsPage';
 
 import { ResponsiveLayout, MobileContainer } from './components/layout/ResponsiveLayout';
 import ScrollToTop from './components/layout/ScrollToTop';
+import FloatingChatBubble from './components/chat/FloatingChatBubble';
 
 const App = () => {
   const isDesktop = useMediaQuery('(min-width: 1024px)');
@@ -80,6 +86,7 @@ const App = () => {
         <Routes>
           <Route path="/*" element={<LayoutWrapper isDesktop={isDesktop} />} />
         </Routes>
+        <FloatingChatBubble />
       </div>
     </Router>
   );
@@ -146,6 +153,10 @@ const LayoutWrapper = ({ isDesktop }) => {
         <Route path="/kegiatan" element={<ResponsiveLayout isDesktop={isDesktop}><ActivityListPage /></ResponsiveLayout>} />
         <Route path="/kegiatan/:id" element={<ResponsiveLayout isDesktop={isDesktop}><ActivityDetailPage /></ResponsiveLayout>} />
 
+        {/* Chat Routes */}
+        <Route path="/chat" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><ChatListPage /></ResponsiveLayout></PrivateRoute>} />
+        <Route path="/chat/:sessionId" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><ChatWindowPage /></ResponsiveLayout></PrivateRoute>} />
+
         {/* Digital Product Routes (Public) */}
         <Route path="/digital-products" element={<ResponsiveLayout isDesktop={isDesktop}><DigitalProductListPage /></ResponsiveLayout>} />
         <Route path="/digital-products/:slug" element={<ResponsiveLayout isDesktop={isDesktop}><DigitalProductDetailPage /></ResponsiveLayout>} />
@@ -173,6 +184,9 @@ const LayoutWrapper = ({ isDesktop }) => {
         <Route path="/dashboard/admin/testimonials" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardTestimonialsPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/admin/activities" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardActivitiesPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/admin/users" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardUserPage /></ResponsiveLayout></PrivateRoute>} />
+        <Route path="/dashboard/admin/all-products" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><AdminAllProductsPage /></ResponsiveLayout></PrivateRoute>} />
+        <Route path="/dashboard/admin/all-courses" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><AdminAllCoursesPage /></ResponsiveLayout></PrivateRoute>} />
+        <Route path="/dashboard/admin/consultants" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><AdminConsultantSettingsPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/digital-products" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardDigitalProductsPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/ecourses" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardEcourseListPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/ecourses/new" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardEcourseFormPage /></ResponsiveLayout></PrivateRoute>} />

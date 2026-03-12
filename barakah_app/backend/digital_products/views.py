@@ -569,3 +569,15 @@ class WithdrawalViewSet(viewsets.ModelViewSet):
             logger.info(f'Withdrawal rejection email sent to {withdrawal.user.email} for withdrawal {withdrawal.id}')
         except Exception as e:
             logger.error(f'Failed to send withdrawal rejection email: {e}')
+
+class AdminDigitalProductViewSet(viewsets.ModelViewSet):
+    queryset = DigitalProduct.objects.all()
+    serializer_class = DigitalProductSerializer
+    permission_classes = [permissions.IsAdminUser]
+    parser_classes = [JSONParser, MultiPartParser, FormParser]
+
+    @action(detail=False, methods=['get'])
+    def all_products(self, request):
+        products = self.get_queryset()
+        serializer = self.get_serializer(products, many=True)
+        return Response(serializer.data)

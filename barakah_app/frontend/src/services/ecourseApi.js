@@ -91,3 +91,13 @@ export const requestCertificate = (data) =>
     axios.post(`${API_BASE}/api/courses/certificate-requests/`, data, {
         headers: getAuthHeaders(),
     });
+
+export const getAdminAllCourses = () =>
+    axios.get(`${API_BASE}/api/courses/admin-courses/`, {
+        headers: getAuthHeaders(),
+    });
+
+export const deleteAdminCourse = (id) =>
+    axios.delete(`${API_BASE}/api/courses/admin-courses/${id}/`, {
+        headers: getAuthHeaders(),
+    });

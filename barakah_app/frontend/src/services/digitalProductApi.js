@@ -86,3 +86,13 @@ export const processAdminWithdrawal = (id, formData) =>
     axios.patch(`${API_BASE}/api/digital-products/withdrawals/${id}/admin-process/`, formData, {
         headers: { ...getAuthHeaders(), 'Content-Type': 'multipart/form-data' },
     });
+
+export const getAdminAllProducts = () =>
+    axios.get(`${API_BASE}/api/digital-products/admin-products/`, {
+        headers: getAuthHeaders(),
+    });
+
+export const deleteAdminProduct = (id) =>
+    axios.delete(`${API_BASE}/api/digital-products/admin-products/${id}/`, {
+        headers: getAuthHeaders(),
+    });

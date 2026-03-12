@@ -390,6 +390,48 @@ const DashboardPage = () => {
                                 </div>
                                 <span className="material-icons text-gray-400">chevron_right</span>
                             </Link>
+
+                            <Link
+                                to="/dashboard/admin/all-products"
+                                className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-emerald-100 hover:shadow-md transition"
+                            >
+                                <div className="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center">
+                                    <span className="material-icons text-emerald-700">inventory</span>
+                                </div>
+                                <div className="flex-1">
+                                    <h3 className="font-bold text-gray-800 text-sm">Semua Produk Digital</h3>
+                                    <p className="text-[11px] text-gray-500">Pantau dan kelola produk semua user (Admin)</p>
+                                </div>
+                                <span className="material-icons text-gray-400">chevron_right</span>
+                            </Link>
+
+                            <Link
+                                to="/dashboard/admin/all-courses"
+                                className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-blue-100 hover:shadow-md transition"
+                            >
+                                <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                                    <span className="material-icons text-blue-700">video_library</span>
+                                </div>
+                                <div className="flex-1">
+                                    <h3 className="font-bold text-gray-800 text-sm">Semua E-Course</h3>
+                                    <p className="text-[11px] text-gray-500">Pantau dan kelola course semua user (Admin)</p>
+                                </div>
+                                <span className="material-icons text-gray-400">chevron_right</span>
+                            </Link>
+
+                            <Link
+                                to="/dashboard/admin/consultants"
+                                className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-purple-100 hover:shadow-md transition"
+                            >
+                                <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
+                                    <span className="material-icons text-purple-700">psychology</span>
+                                </div>
+                                <div className="flex-1">
+                                    <h3 className="font-bold text-gray-800 text-sm">Pengaturan Konsultasi</h3>
+                                    <p className="text-[11px] text-gray-500">Atur kategori dan pakar konsultasi (Admin)</p>
+                                </div>
+                                <span className="material-icons text-gray-400">chevron_right</span>
+                            </Link>
                         </>
                     )}
                 </div>
