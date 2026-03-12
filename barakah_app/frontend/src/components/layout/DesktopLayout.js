@@ -15,3 +15,5 @@ const DesktopLayout = ({ children, hideFooter = false }) => {
         </div>
     );
 };
+
+export default DesktopLayout;

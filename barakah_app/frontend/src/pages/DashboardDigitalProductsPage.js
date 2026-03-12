@@ -117,7 +117,7 @@ const DashboardDigitalProductsPage = () => {
     const handleToggleActive = async (product) => {
         try {
             const formData = new FormData();
-            formData.append('is_active', !product.is_active);
+            formData.append('is_active', !product.is_active ? 'true' : 'false');
             await updateMyDigitalProduct(product.id, formData);
             fetchDashboardData();
         } catch (err) {
@@ -140,7 +140,7 @@ const DashboardDigitalProductsPage = () => {
         formData.append('category', category);
         formData.append('price', price);
         formData.append('digital_link', digitalLink);
-        formData.append('is_active', isActive);
+        formData.append('is_active', isActive ? 'true' : 'false');
         formData.append('visibility', visibility);
         if (thumbnail) {
             formData.append('thumbnail', thumbnail);
@@ -152,11 +152,13 @@ const DashboardDigitalProductsPage = () => {
             } else {
                 await createMyDigitalProduct(formData);
             }
+            alert('Produk berhasil disimpan!');
             resetForm();
             fetchDashboardData();
         } catch (err) {
             console.error(err);
-            alert('Gagal menyimpan produk. Silakan coba lagi.');
+            const errorMsg = err.response?.data ? JSON.stringify(err.response.data) : 'Silakan coba lagi.';
+            alert(`Gagal menyimpan produk: ${errorMsg}`);
         } finally {
             setSubmitting(false);
         }
