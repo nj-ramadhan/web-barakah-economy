@@ -55,6 +55,21 @@ export const adminGetCategories = () => axios.get(`${API_URL}categories/`, { hea
 export const adminCreateCategory = (data) => axios.post(`${API_URL}categories/`, data, { headers: getAuthHeader() });
 export const adminUpdateCategory = (id, data) => axios.patch(`${API_URL}categories/${id}/`, data, { headers: getAuthHeader() });
 export const adminDeleteCategory = (id) => axios.delete(`${API_URL}categories/${id}/`, { headers: getAuthHeader() });
+export const adminDeleteCommand = (id) => {
+    return axios.delete(`${API_URL}commands/${id}/`, { headers: getAuthHeader() });
+};
+
+export const closeSession = (sessionId) => {
+    return axios.post(`${API_URL}sessions/${sessionId}/close_session/`, {}, { headers: getAuthHeader() });
+};
+
+export const submitReview = (data) => {
+    return axios.post(`${API_URL}reviews/`, data, { headers: getAuthHeader() });
+};
+
+export const submitGeneralFeedback = (data) => {
+    return axios.post(`${API_URL}general-feedback/`, data, { headers: getAuthHeader() });
+};
 
 export const adminGetProfiles = () => axios.get(`${API_URL}consultants/`, { headers: getAuthHeader() });
 export const adminCreateProfile = (data) => axios.post(`${API_URL}consultants/`, data, { headers: getAuthHeader() });
@@ -68,4 +83,8 @@ export const adminUpdateAISettings = (data) => axios.patch(`${API_URL}ai-setting
 
 export const toggleAISession = (sessionId, isActive) => {
     return axios.post(`${API_URL}sessions/${sessionId}/toggle_ai/`, { is_ai_active: isActive }, { headers: getAuthHeader() });
+};
+
+export const getChatCommands = () => {
+    return axios.get(`${API_URL}commands/`, { headers: getAuthHeader() });
 };

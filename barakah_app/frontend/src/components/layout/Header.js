@@ -4,7 +4,7 @@ import '../../styles/Header.css';
 
 const Header = () => {
   return (
-    <header className="bg-white shadow-sm sticky top-0 z-[1001] lg:hidden">
+    <header className="bg-white shadow-sm sticky top-0 z-[1001] lg:hidden" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
       <div className="container px-4 py-2 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <img src="/images/logo.png" alt="BAE Community" className="h-8 w-8 object-contain" />

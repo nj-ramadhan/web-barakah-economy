@@ -1,12 +1,15 @@
 /* styles/Body.css */
 .body {
-    background-color: #f3f4f6; /* Gray-100 */
-    min-height: 100vh;
-    padding-bottom: 5rem; /* Adjust based on footer height */
-  }
-  
-  .body .container {
-    max-width: 1500px;
-    margin: 0 auto;
-    padding: 1rem;
-  }
+  background-color: #f3f4f6;
+  /* Gray-100 */
+  min-height: 100vh;
+  /* Removed padding-top here to avoid empty space at top. Header will handle it. */
+  padding-bottom: calc(5rem + env(safe-area-inset-bottom, 0px));
+  /* Adjust based on footer height + safe area */
+}
+
+.body .container {
+  max-width: 1500px;
+  margin: 0 auto;
+  padding: 1rem;
+}

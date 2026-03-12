@@ -1,6 +1,7 @@
 import React from 'react';
 import DesktopHeader from './DesktopHeader';
 import DesktopFooter from './DesktopFooter';
+import GeneralFeedbackBubble from '../chat/GeneralFeedbackBubble';
 
 const DesktopLayout = ({ children, hideFooter = false }) => {
     return (
@@ -10,8 +11,7 @@ const DesktopLayout = ({ children, hideFooter = false }) => {
                 {children}
             </main>
             {!hideFooter && <DesktopFooter />}
+            <GeneralFeedbackBubble />
         </div>
     );
 };
-
-export default DesktopLayout;

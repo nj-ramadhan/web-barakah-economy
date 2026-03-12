@@ -36,6 +36,8 @@ class ChatSession(models.Model):
     consultant = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='chat_consultant')
     category = models.ForeignKey(ConsultantCategory, on_delete=models.SET_NULL, null=True)
     is_ai_active = models.BooleanField(default=True)
+    is_active = models.BooleanField(default=True, help_text="Sesi aktif atau sudah ditutup")
+    last_welcome_sent_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -70,3 +72,38 @@ class AISettings(models.Model):
 
     def __str__(self):
         return f"AI Settings ({self.model_name})"
+
+class ChatCommand(models.Model):
+    ROLE_CHOICES = [
+        ('public', 'Semua Pengguna'),
+        ('expert', 'Pakar Saja'),
+        ('admin', 'Admin Saja'),
+    ]
+    code = models.CharField(max_length=50, unique=True, help_text="Contoh: /pakar")
+    label = models.CharField(max_length=100)
+    content = models.TextField(help_text="Pesan yang akan dikirim saat command diklik")
+    icon = models.CharField(max_length=50, default="chat", help_text="Material icon name")
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='public')
+    is_active = models.BooleanField(default=True)
+
+    def __str__(self):
+        return f"{self.code} ({self.get_role_display()})"
+
+class ConsultationReview(models.Model):
+    session = models.OneToOneField(ChatSession, on_delete=models.CASCADE, related_name='review')
+    rating = models.IntegerField(default=5)
+    comment = models.TextField(blank=True, null=True)
+    criticism_suggestion = models.TextField(blank=True, null=True, help_text="Kritik & Saran khusus untuk platform/admin")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Review for Session {self.session.id}"
+
+class GeneralFeedback(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='feedbacks')
+    content = models.TextField()
+    urgent = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Feedback from {self.user.username} at {self.created_at}"

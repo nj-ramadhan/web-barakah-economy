@@ -4,7 +4,7 @@ import '../../styles/Navigation.css';
 
 const LAYANAN_ITEMS = [
   { to: '/', icon: 'home', label: 'Home', color: 'text-green-600' },
-  { to: '/chat', icon: 'psychology', label: 'Konsultasi', color: 'text-green-600' },
+  { to: '/chat', icon: 'chat', label: 'Konsultasi', color: 'text-green-600' },
   { to: '/charity', icon: 'volunteer_activism', label: 'Charity', color: 'text-red-500' },
   { to: '/kegiatan', icon: 'event_note', label: 'Kegiatan', color: 'text-green-700' },
   { to: '/sinergy', icon: 'shopping_bag', label: 'Sinergy', color: 'text-blue-600' },
@@ -57,7 +57,7 @@ const NavigationButton = () => {
       )}
 
       {isNavVisible && (
-        <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 max-w-md mx-auto z-50 rounded-t-3xl shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] transition-transform duration-300">
+        <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 max-w-md mx-auto z-50 rounded-t-3xl shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] transition-transform duration-300" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
           <div className="grid grid-cols-12 items-center px-4 py-2 relative">
 
             {/* Close Toggle Button */}
@@ -111,7 +111,7 @@ const NavigationButton = () => {
                 to="/chat"
                 className="w-full flex items-center justify-center gap-1.5 py-2.5 bg-gradient-to-r from-green-500 to-green-700 rounded-2xl shadow-lg shadow-green-200 text-white hover:scale-105 active:scale-95 transition-all -mt-3"
               >
-                <span className="material-icons text-xl">psychology</span>
+                <span className="material-icons text-xl">chat</span>
                 <span className="text-sm font-bold">Konsultasi</span>
               </Link>
             </div>

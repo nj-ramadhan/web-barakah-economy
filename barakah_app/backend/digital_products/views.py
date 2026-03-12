@@ -163,6 +163,7 @@ class DigitalProductViewSet(viewsets.ModelViewSet):
                 data.append({
                     'username': p.user.username,
                     'name': p.name_full or p.user.username,
+                    'picture': p.picture.url if p.picture else None,
                     'shop_thumbnail': p.shop_thumbnail.url if p.shop_thumbnail else None,
                     'shop_description': p.shop_description or ""
                 })

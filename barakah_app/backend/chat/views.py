@@ -2,14 +2,17 @@ from rest_framework import viewsets, permissions, status, response
 from rest_framework.decorators import action
 from rest_framework.pagination import PageNumberPagination
 from django.db.models import Q
-from .models import ConsultantCategory, ConsultantProfile, ChatSession, Message, AISettings
+from .models import ConsultantCategory, ConsultantProfile, ChatSession, Message, AISettings, ChatCommand, ConsultationReview, GeneralFeedback
 from .serializers import (
     ConsultantCategorySerializer, ConsultantProfileSerializer, 
     ChatSessionSerializer, MessageSerializer, UserBriefSerializer,
-    AISettingsSerializer
+    AISettingsSerializer, ChatCommandSerializer, ConsultationReviewSerializer,
+    GeneralFeedbackSerializer
 )
 from .ai_service import AIService
 from accounts.models import User
+from django.utils import timezone
+from datetime import timedelta
 
 class StandardResultsSetPagination(PageNumberPagination):
     page_size = 20
@@ -45,6 +48,33 @@ class ConsultantProfileViewSet(viewsets.ModelViewSet):
             return [permissions.IsAuthenticated()]
         return [permissions.IsAdminUser()]
 
+class ConsultationReviewViewSet(viewsets.ModelViewSet):
+    queryset = ConsultationReview.objects.all()
+    serializer_class = ConsultationReviewSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def perform_create(self, serializer):
+        session_id = self.request.data.get('session')
+        session = ChatSession.objects.get(id=session_id)
+        
+        # Only the user of the session can submit review
+        if session.user != self.request.user:
+            raise permissions.PermissionDenied("Anda tidak dapat memberikan review untuk sesi ini.")
+            
+        serializer.save()
+
+class GeneralFeedbackViewSet(viewsets.ModelViewSet):
+    queryset = GeneralFeedback.objects.all().order_by('-created_at')
+    serializer_class = GeneralFeedbackSerializer
+    
+    def get_permissions(self):
+        if self.action == 'create':
+            return [permissions.IsAuthenticated()]
+        return [permissions.IsAdminUser()]
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
 class ChatSessionViewSet(viewsets.ModelViewSet):
     serializer_class = ChatSessionSerializer
     permission_classes = [permissions.IsAuthenticated]
@@ -76,13 +106,21 @@ class ChatSessionViewSet(viewsets.ModelViewSet):
 
         # Check if session already exists for this pair and category
         existing_session = ChatSession.objects.filter(user=user, consultant=consultant, category=category).first()
-        if existing_session:
-            return response.Response(ChatSessionSerializer(existing_session).data)
-
-        session = ChatSession.objects.create(user=user, consultant=consultant, category=category)
         
-        # Auto-send welcome message if exists in category
+        session = existing_session
+        created = False
+        if not session:
+            session = ChatSession.objects.create(user=user, consultant=consultant, category=category)
+            created = True
+        
+        # Auto-send welcome message if exists in category AND (is new OR was sent > 24h ago)
+        should_send_welcome = False
         if session.category and session.category.welcome_message:
+            now = timezone.now()
+            if not session.last_welcome_sent_at or session.last_welcome_sent_at < now - timedelta(days=1):
+                should_send_welcome = True
+
+        if should_send_welcome:
             # Use consultant as sender if exists, otherwise admin/system
             sender = consultant
             if not sender:
@@ -94,8 +132,36 @@ class ChatSessionViewSet(viewsets.ModelViewSet):
                     sender=sender,
                     content=session.category.welcome_message
                 )
+                session.last_welcome_sent_at = timezone.now()
+                session.save()
 
-        return response.Response(ChatSessionSerializer(session).data, status=status.HTTP_201_CREATED)
+        status_code = status.HTTP_201_CREATED if created else status.HTTP_200_OK
+        return response.Response(ChatSessionSerializer(session).data, status=status_code)
+
+    @action(detail=True, methods=['post'])
+    def close_session(self, request, pk=None):
+        session = self.get_object()
+        user = request.user
+        
+        # Only expert or admin can close
+        is_expert = session.consultant == user
+        is_admin = user.is_staff or user.role == 'admin'
+        
+        if not (is_expert or is_admin):
+            return response.Response({"error": "Hanya pakar atau admin yang dapat menutup sesi."}, status=status.HTTP_403_FORBIDDEN)
+            
+        session.is_active = False
+        session.save()
+        
+        # Send closure template message
+        closure_msg = "terima kasih telah menggunakan jasa konsultasi barakah app, silahkan berikan review, kritik dan saran disini. \n\nRating (1-5): \nKomentar: \nKritik/Saran Platform: "
+        Message.objects.create(
+            session=session,
+            sender=user,
+            content=closure_msg
+        )
+        
+        return response.Response(ChatSessionSerializer(session).data)
 
     @action(detail=True, methods=['post'])
     def toggle_ai(self, request, pk=None):
@@ -182,3 +248,27 @@ class AISettingsViewSet(viewsets.ModelViewSet):
             serializer.save()
             return response.Response(serializer.data)
         return response.Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class ChatCommandViewSet(viewsets.ModelViewSet):
+    serializer_class = ChatCommandSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        queryset = ChatCommand.objects.filter(is_active=True)
+        
+        # Filter based on role
+        if user.is_staff or user.role == 'admin':
+            return queryset # Admins see all active commands
+        
+        # Check if user is expert
+        is_expert = ConsultantProfile.objects.filter(user=user).exists()
+        if is_expert:
+            return queryset.filter(Q(role='public') | Q(role='expert'))
+            
+        return queryset.filter(role='public')
+
+    def get_permissions(self):
+        if self.action in ['list', 'retrieve']:
+            return [permissions.IsAuthenticated()]
+        return [permissions.IsAdminUser()]

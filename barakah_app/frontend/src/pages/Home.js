@@ -1206,7 +1206,7 @@ const Home = () => {
             >
               <div className="w-20 h-20 mx-auto rounded-full overflow-hidden border-2 border-green-500 p-0.5 mb-2">
                 <img
-                  src={getMediaUrl(seller.shop_thumbnail) || '/images/pas_foto_standard.png'}
+                  src={getMediaUrl(seller.picture || seller.shop_thumbnail) || '/images/pas_foto_standard.png'}
                   alt={seller.name}
                   className="w-full h-full object-cover rounded-full"
                   onError={(e) => { e.target.src = '/images/pas_foto_standard.png'; }}
