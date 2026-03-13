@@ -36,9 +36,12 @@ axiosInstance.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response && error.response.status === 401 && !error.config.url.includes('login')) {
-      alert('Sesi Anda telah berakhir. Silakan login kembali.');
-      localStorage.removeItem('user');
-      window.location.href = '/login';
+      const user = localStorage.getItem('user');
+      if (user) {
+        alert('Sesi Anda telah berakhir. Silakan login kembali.');
+        localStorage.removeItem('user');
+        window.location.reload();
+      }
     }
     return Promise.reject(error);
   }

@@ -30,9 +30,12 @@ api.interceptors.response.use(
   (error) => {
     if (error.response && error.response.status === 401) {
       // Token expired or invalid
-      alert('Sesi Anda telah berakhir. Silakan login kembali.');
-      localStorage.removeItem('user');
-      window.location.href = '/login';
+      const user = localStorage.getItem('user');
+      if (user) {
+        alert('Sesi Anda telah berakhir. Silakan login kembali.');
+        localStorage.removeItem('user');
+        window.location.reload();
+      }
     }
     return Promise.reject(error);
   }
