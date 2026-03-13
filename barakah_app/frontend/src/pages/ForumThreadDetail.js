@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
 import { forumApi } from '../services/forumApi';
-import { FaUserCircle, FaArrowLeft, FaReply } from 'react-icons/fa';
 
 const ForumThreadDetail = () => {
     const { slug } = useParams();
@@ -189,7 +188,7 @@ const ForumThreadDetail = () => {
                                 onClick={() => setReplyingTo(reply.id)}
                                 className="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1 font-medium bg-blue-50 px-3 py-1.5 rounded-md hover:bg-blue-100 transition-colors"
                             >
-                                <FaReply className="text-[10px]" /> Balas
+                                <span className="material-icons text-[14px]">reply</span> Balas
                             </button>
                         </div>
                     )}
@@ -219,7 +218,7 @@ const ForumThreadDetail = () => {
                     onClick={() => navigate('/forum')}
                     className="text-blue-600 hover:text-blue-800 flex items-center gap-2 mb-4 text-sm font-medium"
                 >
-                    <FaArrowLeft /> Kembali ke Forum
+                    <span className="material-icons text-[18px]">arrow_back</span> Kembali ke Forum
                 </button>
 
                 {/* Main Thread Content */}

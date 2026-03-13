@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
 import { forumApi } from '../services/forumApi';
-import { FaComments, FaEye, FaPlus } from 'react-icons/fa';
 
 const ForumMainPage = () => {
     const [threads, setThreads] = useState([]);
@@ -116,7 +115,7 @@ const ForumMainPage = () => {
                             onClick={() => setShowForm(!showForm)}
                             className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none"
                         >
-                            <FaPlus className="mr-2" /> Buat Diskusi
+                            <span className="material-icons mr-2 text-[18px]">add</span> Buat Diskusi
                         </button>
                     ) : (
                         <button
@@ -235,11 +234,11 @@ const ForumMainPage = () => {
 
                             <div className="bg-gray-50 px-4 py-3 border-t border-gray-100 flex justify-between text-xs text-gray-500">
                                 <div className="flex items-center gap-1">
-                                    <FaComments className="text-gray-400" />
+                                    <span className="material-icons text-gray-400 text-[16px]">chat</span>
                                     <span>{thread.replies_count} Balasan</span>
                                 </div>
                                 <div className="flex items-center gap-1">
-                                    <FaEye className="text-gray-400" />
+                                    <span className="material-icons text-gray-400 text-[16px]">visibility</span>
                                     <span>{thread.views} Dilihat</span>
                                 </div>
                             </div>
