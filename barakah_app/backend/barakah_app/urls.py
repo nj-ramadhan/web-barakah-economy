@@ -38,6 +38,7 @@ urlpatterns = [
     path('api/digital-products/', include('digital_products.urls')),
     path('api/site-content/', include('site_content.urls')),
     path('api/chat/', include('chat.urls')),
+    path('api/forum/', include('forum.urls')),
     path('ckeditor/', include('ckeditor_uploader.urls')),
     path('ckeditor/upload/', ckeditor_views.upload, name='ckeditor_upload'),
     

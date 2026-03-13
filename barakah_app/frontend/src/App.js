@@ -73,10 +73,14 @@ import AdminAllCoursesPage from './pages/admin/AdminAllCoursesPage';
 import AdminConsultantSettingsPage from './pages/admin/AdminConsultantSettingsPage';
 import AdminTransactionHistoryPage from './pages/admin/AdminTransactionHistoryPage';
 
+import ForumMainPage from './pages/ForumMainPage';
+import ForumThreadDetail from './pages/ForumThreadDetail';
+
 import { ResponsiveLayout, MobileContainer } from './components/layout/ResponsiveLayout';
 import ScrollToTop from './components/layout/ScrollToTop';
 import NotificationService from './services/NotificationService';
 import { getSessions } from './services/chatApi';
+import { forumApi } from './services/forumApi';
 
 const NotificationHandler = () => {
   const location = useLocation();
@@ -91,10 +95,9 @@ const NotificationHandler = () => {
   }, [location.pathname]);
 
   React.useEffect(() => {
-    if (currentUser) {
-      NotificationService.requestPermission();
-    }
-  }, [currentUser?.id]);
+    // Request push notification permission for all visitors, particularly mobile browsers/APK builders, as requested.
+    NotificationService.requestPermission();
+  }, []);
 
   React.useEffect(() => {
     if (!currentUser) return;
@@ -127,6 +130,25 @@ const NotificationHandler = () => {
             lastSessionData.current[session.id] = session.last_message.id;
           }
         });
+
+        // Check forum mentions
+        try {
+          const forumRes = await forumApi.getNotifications();
+          const pNotifs = forumRes.data;
+
+          pNotifs.forEach(async (notif) => {
+            if (!notif.is_read) {
+              NotificationService.showNotification(`Mention dari @${notif.sender_name}`, {
+                body: notif.snippet || `Anda disebut di '${notif.thread_title}'`,
+                url: `/forum/${notif.thread_slug}`
+              });
+              await forumApi.markNotificationRead(notif.id);
+            }
+          });
+        } catch (fe) {
+          console.error('Failed to poll forum mentions:', fe);
+        }
+
       } catch (err) {
         console.error('Failed to poll for notifications:', err);
       } finally {
@@ -223,6 +245,10 @@ const LayoutWrapper = ({ isDesktop }) => {
         {/* Chat Routes */}
         <Route path="/chat" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><ChatListPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/chat/:sessionId" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop} hideFooter={true}><ChatWindowPage /></ResponsiveLayout></PrivateRoute>} />
+
+        {/* Forum Routes */}
+        <Route path="/forum" element={<ResponsiveLayout isDesktop={isDesktop}><ForumMainPage /></ResponsiveLayout>} />
+        <Route path="/forum/:slug" element={<ResponsiveLayout isDesktop={isDesktop}><ForumThreadDetail /></ResponsiveLayout>} />
 
         {/* Digital Product Routes (Public) */}
         <Route path="/digital-products" element={<ResponsiveLayout isDesktop={isDesktop}><DigitalProductListPage /></ResponsiveLayout>} />

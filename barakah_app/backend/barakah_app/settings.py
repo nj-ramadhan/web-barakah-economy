@@ -102,6 +102,7 @@ INSTALLED_APPS = [
     'site_content',
     'digital_products.apps.DigitalProductsConfig',
     'chat',
+    'forum',
 ]
 
 MIDDLEWARE = [

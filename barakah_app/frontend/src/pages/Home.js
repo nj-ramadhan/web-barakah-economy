@@ -1372,6 +1372,27 @@ const Home = () => {
         </div>
       )}
 
+      {/* Forum Tanya Jawab */}
+      <div className="px-4 py-8 mb-4 border-t border-gray-100">
+        <div className="flex justify-between items-center mb-4">
+          <div>
+            <h1 className="text-xl font-bold text-gray-800">Forum Tanya Jawab</h1>
+            <h2 className="text-sm text-gray-500 mt-1">Diskusikan topik bersama para pakar</h2>
+          </div>
+        </div>
+        <div className="bg-indigo-50 p-6 rounded-2xl flex flex-col items-center justify-center text-center border border-indigo-100">
+          <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mb-4 shadow-sm">
+            <span className="material-icons text-indigo-600 text-3xl">forum</span>
+          </div>
+          <p className="text-sm text-gray-700 mb-6">
+            Dapatkan jawaban atas pertanyaan seputar bisnis, fiqih, dan masalah keseharian dari para ahlinya.
+          </p>
+          <Link to="/forum" className="w-full max-w-[200px] py-3 bg-indigo-600 text-white rounded-xl text-sm font-bold shadow-md hover:bg-indigo-700 transition">
+            Buka Forum
+          </Link>
+        </div>
+      </div>
+
       {/* Tentang Kami Section */}
       <section id="about" className="py-20 px-8 lg:px-24 bg-white">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-start gap-12">

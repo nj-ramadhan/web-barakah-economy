@@ -17,7 +17,17 @@ const NotificationService = {
         return false;
     },
 
-    showNotification: (title, options = {}) => {
+    showNotification: async (title, options = {}) => {
+        // Handle android builders or webviews offering a native bridge
+        if (window.Android && typeof window.Android.showNotification === 'function') {
+            window.Android.showNotification(title, options.body || '');
+            return null;
+        }
+
+        if (!('Notification' in window)) {
+            return null;
+        }
+
         if (Notification.permission === 'granted') {
             const defaultOptions = {
                 icon: '/logo192.png',
@@ -26,18 +36,41 @@ const NotificationService = {
                 ...options
             };
 
-            const notification = new Notification(title, defaultOptions);
-
-            notification.onclick = (event) => {
-                event.preventDefault();
-                window.focus();
-                if (options.url) {
-                    window.location.href = options.url;
+            // First try Service Worker implementation which works on Mobile Chrome
+            if ('serviceWorker' in navigator) {
+                try {
+                    const registration = await navigator.serviceWorker.ready;
+                    if (registration) {
+                        const swOptions = {
+                            ...defaultOptions,
+                            data: { url: options.url || window.location.href, ...options.data }
+                        };
+                        await registration.showNotification(title, swOptions);
+                        return null;
+                    }
+                } catch (e) {
+                    console.error("Error using service worker for notification:", e);
                 }
-                notification.close();
-            };
+            }
 
-            return notification;
+            // Fallback for Desktop where new Notification() constructor is allowed
+            try {
+                const notification = new Notification(title, defaultOptions);
+
+                notification.onclick = (event) => {
+                    event.preventDefault();
+                    window.focus();
+                    if (options.url) {
+                        window.location.href = options.url;
+                    }
+                    notification.close();
+                };
+
+                return notification;
+            } catch (err) {
+                // The old "Illegal constructor" error implies we're on mobile and SW isn't ready
+                console.error("Failed to show notification natively:", err);
+            }
         }
         return null;
     }

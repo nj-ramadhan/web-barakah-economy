@@ -214,6 +214,15 @@ const DesktopLandingPage = () => {
                             <p className="text-gray-600 mb-4 text-sm">Jadilah bagian dari perubahan positif. Bergabunglah sebagai relawan Barakah Economy.</p>
                             <Link className="text-red-700 font-semibold hover:underline text-sm" to="#">Daftar Relawan →</Link>
                         </div>
+                        {/* Forum Tanya Jawab */}
+                        <div className="p-8 rounded-2xl bg-white border border-gray-100 hover:border-indigo-300 hover:shadow-xl transition group">
+                            <div className="w-16 h-16 bg-indigo-100 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-indigo-600 transition">
+                                <span className="material-icons text-3xl text-indigo-700 group-hover:text-white">forum</span>
+                            </div>
+                            <h3 className="text-xl font-bold text-gray-900 mb-3">Forum Tanya Jawab</h3>
+                            <p className="text-gray-600 mb-4 text-sm">Diskusikan topik bisnis, fiqih, dan ummat bersama para pakar.</p>
+                            <Link className="text-indigo-700 font-semibold hover:underline text-sm" to="/forum">Buka Forum →</Link>
+                        </div>
                     </div>
                 </section>
 
