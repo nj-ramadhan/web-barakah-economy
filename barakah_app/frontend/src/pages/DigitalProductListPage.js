@@ -2,7 +2,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
-import { Helmet } from 'react-helmet';
 import HeaderHome from '../components/layout/HeaderHome';
 import NavigationButton from '../components/layout/Navigation';
 import { getDigitalProducts, getPopularSellers } from '../services/digitalProductApi';
