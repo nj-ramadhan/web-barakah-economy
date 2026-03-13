@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Thread, Reply
+from .models import Thread, Reply, MentionNotification
 from accounts.models import User
 
 class AuthorSerializer(serializers.ModelSerializer):
