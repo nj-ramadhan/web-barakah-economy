@@ -732,6 +732,7 @@ const DesktopLandingPage = () => {
                             <li><Link to="/academy" className="hover:text-white transition">Academy</Link></li>
                             <li><Link to="/articles" className="hover:text-white transition">Artikel</Link></li>
                             <li><Link to="/digital-products" className="hover:text-white transition">Produk Digital</Link></li>
+                            <li><Link to="/forum" className="hover:text-white transition">Forum Tanya Jawab</Link></li>
                         </ul>
                     </div>
                     <div>

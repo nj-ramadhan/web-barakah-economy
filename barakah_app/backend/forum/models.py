@@ -8,6 +8,7 @@ class Thread(models.Model):
     slug = models.SlugField(max_length=255, unique=True, blank=True)
     content = models.TextField()
     author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='forum_threads')
+    image = models.ImageField(upload_to='forum/threads/', null=True, blank=True)
     views = models.PositiveIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

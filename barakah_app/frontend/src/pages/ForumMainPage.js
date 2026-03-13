@@ -7,7 +7,7 @@ const ForumMainPage = () => {
     const [threads, setThreads] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showForm, setShowForm] = useState(false);
-    const [newThread, setNewThread] = useState({ title: '', content: '' });
+    const [newThread, setNewThread] = useState({ title: '', content: '', image: null });
     const [mentionQuery, setMentionQuery] = useState('');
     const [mentionUsers, setMentionUsers] = useState([]);
     const [showMentionDropdown, setShowMentionDropdown] = useState(false);
@@ -34,9 +34,16 @@ const ForumMainPage = () => {
     const handleCreateThread = async (e) => {
         e.preventDefault();
         try {
-            await forumApi.createThread(newThread);
+            const formData = new FormData();
+            formData.append('title', newThread.title);
+            formData.append('content', newThread.content);
+            if (newThread.image) {
+                formData.append('image', newThread.image);
+            }
+            
+            await forumApi.createThread(formData);
             setShowForm(false);
-            setNewThread({ title: '', content: '' });
+            setNewThread({ title: '', content: '', image: null });
             fetchThreads();
         } catch (error) {
             console.error('Failed to create thread', error);
@@ -169,6 +176,24 @@ const ForumMainPage = () => {
                                     ))}
                                 </div>
                             )}
+                        </div>
+                        <div className="mb-4">
+                            <label className="block text-gray-700 text-sm font-bold mb-2">Unggah Gambar (Opsional, Max 5MB)</label>
+                            <input
+                                type="file"
+                                accept="image/*"
+                                onChange={(e) => {
+                                    const file = e.target.files[0];
+                                    if (file && file.size > 5 * 1024 * 1024) {
+                                        alert('Ukuran gambar maksimal 5MB');
+                                        e.target.value = null;
+                                        setNewThread({ ...newThread, image: null });
+                                    } else {
+                                        setNewThread({ ...newThread, image: file });
+                                    }
+                                }}
+                                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            />
                         </div>
                         <div className="flex justify-end gap-2">
                             <button

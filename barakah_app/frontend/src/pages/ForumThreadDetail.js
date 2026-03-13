@@ -222,43 +222,66 @@ const ForumThreadDetail = () => {
                 </button>
 
                 {/* Main Thread Content */}
-                <div className="bg-white rounded-xl shadow-md border border-gray-200 p-6 md:p-8">
-                    <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4">{thread.title}</h1>
-
-                    <div className="flex items-center gap-3 mb-6 pb-6 border-b border-gray-100">
-                        <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-800 font-bold text-lg">
-                            {thread.author?.full_name?.charAt(0) || 'U'}
+                <div className="bg-white rounded-2xl shadow-sm overflow-hidden mb-8 border border-gray-100">
+                    <div className="p-6 md:p-8">
+                        {/* Thread Header */}
+                        <div className="flex justify-between items-start mb-6">
+                            <div className="flex items-center gap-4">
+                                <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-800 font-bold text-lg">
+                                    {thread.author?.full_name?.charAt(0) || 'U'}
+                                </div>
+                                <div>
+                                    <p className="font-bold text-gray-900">
+                                        {thread.author?.full_name}
+                                        {thread.author?.is_expert && (
+                                            <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
+                                                Pakar
+                                            </span>
+                                        )}
+                                    </p>
+                                    <p className="text-sm text-gray-500">{formatDate(thread.created_at)} • {thread.views} Dilihat</p>
+                                </div>
+                            </div>
+                            
+                            {(isAdmin || user?.id === thread.author?.id) && (
+                                <button 
+                                    onClick={handleThreadDelete}
+                                    className="text-red-600 hover:text-red-800 text-sm font-medium flex items-center gap-1"
+                                >
+                                    <span className="material-icons text-sm">delete</span> Hapus
+                                </button>
+                            )}
                         </div>
-                        <div className="flex-1">
-                            <p className="text-sm font-semibold text-gray-900 flex items-center gap-2">
-                                {thread.author?.full_name}
-                                {thread.author?.is_expert && (
-                                    <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
-                                        Pakar
-                                    </span>
-                                )}
-                            </p>
-                            <p className="text-xs text-gray-500">{formatDate(thread.created_at)}</p>
-                        </div>
 
-                        {(isAdmin || user?.id === thread.author?.id) && (
-                            <button
-                                onClick={handleThreadDelete}
-                                className="text-xs text-red-500 hover:text-red-700 bg-red-50 px-3 py-1.5 rounded-md hover:bg-red-100 font-medium"
-                            >
-                                Hapus Thread
-                            </button>
+                        <h1 className="text-2xl md:text-3xl font-extrabold text-gray-900 mb-6 leading-tight">
+                            {thread.title}
+                        </h1>
+
+                        {thread.image && (
+                            <div className="mb-6 rounded-xl overflow-hidden border border-gray-100 max-h-96 flex justify-center bg-gray-50">
+                                <img 
+                                    src={thread.image.startsWith('http') ? thread.image : `${process.env.REACT_APP_API_BASE_URL}${thread.image}`} 
+                                    alt={thread.title}
+                                    className="max-h-96 object-contain"
+                                />
+                            </div>
                         )}
-                    </div>
 
-                    <div className="prose max-w-none text-gray-800 whitespace-pre-wrap">
-                        {renderContentWithMentions(thread.content)}
-                    </div>
+                        <div className="text-lg text-gray-800 leading-relaxed whitespace-pre-wrap mb-8">
+                            {renderContentWithMentions(thread.content)}
+                        </div>
 
-                    <div className="mt-6 flex items-center gap-4 text-sm text-gray-500 border-t border-gray-100 pt-4">
-                        <span>{thread.views} tayangan</span>
-                        <span>•</span>
-                        <span>{thread.replies_count} balasan</span>
+                        <div className="mt-8 flex items-center gap-4 text-xs text-gray-400 border-t border-gray-50 pt-6">
+                            <div className="flex items-center gap-1">
+                                <span className="material-icons text-sm">visibility</span>
+                                <span>{thread.views} tayangan</span>
+                            </div>
+                            <span>•</span>
+                            <div className="flex items-center gap-1">
+                                <span className="material-icons text-sm">forum</span>
+                                <span>{thread.replies_count} balasan</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
 

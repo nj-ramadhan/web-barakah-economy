@@ -1,29 +1,21 @@
-import axios from 'axios';
+import api from './api';
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000/api';
-
-const getAuthHeaders = () => {
-    let token = localStorage.getItem('access');
-    if (!token) {
-        const userStr = localStorage.getItem('user');
-        if (userStr) {
-            try {
-                const userObj = JSON.parse(userStr);
-                token = userObj.access || userObj.token;
-            } catch (e) { }
-        }
-    }
-    return token ? { Authorization: `Bearer ${token}` } : {};
-};
+const API_ROOT = '/forum';
 
 export const forumApi = {
-    getThreads: () => axios.get(`${API_URL}/forum/threads/`),
-    getThread: (slug) => axios.get(`${API_URL}/forum/threads/${slug}/`),
-    createThread: (data) => axios.post(`${API_URL}/forum/threads/`, data, { headers: getAuthHeaders() }),
-    deleteThread: (slug) => axios.delete(`${API_URL}/forum/threads/${slug}/`, { headers: getAuthHeaders() }),
-    replyToThread: (data) => axios.post(`${API_URL}/forum/replies/`, data, { headers: getAuthHeaders() }),
-    deleteReply: (id) => axios.delete(`${API_URL}/forum/replies/${id}/`, { headers: getAuthHeaders() }),
-    searchUsers: (query) => axios.get(`${API_URL}/forum/users/search/?q=${query}`, { headers: getAuthHeaders() }),
-    getNotifications: () => axios.get(`${API_URL}/forum/notifications/`, { headers: getAuthHeaders() }),
-    markNotificationRead: (id) => axios.post(`${API_URL}/forum/notifications/${id}/mark_read/`, {}, { headers: getAuthHeaders() }),
+    getThreads: () => api.get(`${API_ROOT}/threads/`),
+    getThread: (slug) => api.get(`${API_ROOT}/threads/${slug}/`),
+    createThread: (data) => {
+        // If data is FormData, send as is, otherwise it will be JSON by default in api interceptors if we pass it directly
+        // But better to be explicit if we are going to use FormData for images
+        return api.post(`${API_ROOT}/threads/`, data, {
+            headers: (data instanceof FormData) ? { 'Content-Type': 'multipart/form-data' } : {}
+        });
+    },
+    deleteThread: (slug) => api.delete(`${API_ROOT}/threads/${slug}/`),
+    replyToThread: (data) => api.post(`${API_ROOT}/replies/`, data),
+    deleteReply: (id) => api.delete(`${API_ROOT}/replies/${id}/`),
+    searchUsers: (query) => api.get(`${API_ROOT}/users/search/?q=${query}`),
+    getNotifications: () => api.get(`${API_ROOT}/notifications/`),
+    markNotificationRead: (id) => api.post(`${API_ROOT}/notifications/${id}/mark_read/`, {}),
 };

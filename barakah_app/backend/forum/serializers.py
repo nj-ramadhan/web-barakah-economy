@@ -42,7 +42,7 @@ class ThreadSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Thread
-        fields = ['id', 'title', 'slug', 'content', 'author', 'views', 'created_at', 'updated_at', 'replies_count']
+        fields = ['id', 'title', 'slug', 'content', 'author', 'image', 'views', 'created_at', 'updated_at', 'replies_count']
         read_only_fields = ['author', 'slug', 'views']
 
     def get_replies_count(self, obj):
