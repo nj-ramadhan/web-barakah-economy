@@ -102,7 +102,22 @@ const DashboardPartnersPage = () => {
                         <form onSubmit={handleSubmit} className="space-y-4">
                             <input type="text" placeholder="Nama Partner" required className="w-full p-3 bg-gray-50 rounded-xl text-sm" onChange={(e) => setFormData({ ...formData, name: e.target.value })} />
                             <input type="number" placeholder="Order" className="w-full p-3 bg-gray-50 rounded-xl text-sm" onChange={(e) => setFormData({ ...formData, order: e.target.value })} />
-                            <input type="file" accept="image/*" required className="text-xs" onChange={(e) => setFormData({ ...formData, logo: e.target.files[0] })} />
+                            <input
+                                type="file"
+                                accept="image/*"
+                                required
+                                className="text-xs"
+                                onChange={(e) => {
+                                    const file = e.target.files[0];
+                                    if (file && file.size > 5 * 1024 * 1024) {
+                                        alert("Ukuran logo terlalu besar. Maksimal 5MB.");
+                                        e.target.value = null;
+                                        return;
+                                    }
+                                    setFormData({ ...formData, logo: file });
+                                }}
+                            />
+                            <p className="text-[10px] text-gray-400 italic">Maks. 5MB</p>
                             <div className="flex gap-2">
                                 <button type="submit" className="flex-1 py-3 bg-green-700 text-white rounded-xl font-bold">Simpan</button>
                                 <button type="button" onClick={() => setShowModal(false)} className="flex-1 py-3 bg-gray-100 text-gray-600 rounded-xl font-bold">Batal</button>

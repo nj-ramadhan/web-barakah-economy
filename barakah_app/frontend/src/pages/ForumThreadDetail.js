@@ -185,11 +185,59 @@ const ForumThreadDetail = () => {
                                 )}
                             </div>
                             <button
-                                onClick={() => setReplyingTo(reply.id)}
-                                className="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1 font-medium bg-blue-50 px-3 py-1.5 rounded-md hover:bg-blue-100 transition-colors"
+                                onClick={() => setReplyingTo(replyingTo === reply.id ? null : reply.id)}
+                                className={`text-xs flex items-center gap-1 font-medium px-3 py-1.5 rounded-md transition-colors ${
+                                    replyingTo === reply.id 
+                                    ? 'bg-red-50 text-red-600 hover:bg-red-100' 
+                                    : 'bg-blue-50 text-blue-600 hover:bg-blue-100'
+                                }`}
                             >
-                                <span className="material-icons text-[14px]">reply</span> Balas
+                                <span className="material-icons text-[14px]">
+                                    {replyingTo === reply.id ? 'close' : 'reply'}
+                                </span> 
+                                {replyingTo === reply.id ? 'Batal' : 'Balas'}
                             </button>
+                        </div>
+                    )}
+
+                    {/* Inline Reply Form */}
+                    {user && replyingTo === reply.id && (
+                        <div className="mt-4 pt-4 border-t border-gray-100">
+                            <form onSubmit={handleReplySubmit}>
+                                <div className="relative">
+                                    <textarea
+                                        className="w-full border rounded-lg p-3 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                        rows="3"
+                                        placeholder={`Balas ${reply.author?.full_name}...`}
+                                        value={replyContent}
+                                        onChange={handleTextChange}
+                                        autoFocus
+                                        required
+                                    ></textarea>
+                                    {showMentionDropdown && mentionUsers.length > 0 && (
+                                        <div className="absolute z-10 w-full bg-white border border-gray-200 rounded-md shadow-lg -mt-1 max-h-48 overflow-y-auto">
+                                            {mentionUsers.map((u) => (
+                                                <div
+                                                    key={u.id}
+                                                    onClick={() => handleMentionSelect(u.username)}
+                                                    className="px-4 py-2 hover:bg-blue-50 cursor-pointer flex flex-col border-b last:border-0"
+                                                >
+                                                    <span className="font-semibold text-sm text-gray-800">{u.name}</span>
+                                                    <span className="text-xs text-gray-500">@{u.username}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="mt-2 flex justify-end">
+                                    <button
+                                        type="submit"
+                                        className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 text-xs font-bold"
+                                    >
+                                        Kirim Balasan
+                                    </button>
+                                </div>
+                            </form>
                         </div>
                     )}
                 </div>
@@ -285,24 +333,26 @@ const ForumThreadDetail = () => {
                     </div>
                 </div>
 
-                {/* Reply Form */}
                 <div className="mt-8">
                     <h3 className="text-lg font-bold text-gray-900 mb-4">
-                        {user ? (replyingTo ? 'Balas Komentar' : 'Tambahkan Balasan') : 'Login untuk membalas'}
+                        {user ? (replyingTo ? 'Tambahkan Balasan Baru' : 'Tambahkan Balasan') : 'Login untuk membalas'}
                     </h3>
 
                     {user ? (
                         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
                             <form onSubmit={handleReplySubmit}>
                                 {replyingTo && (
-                                    <div className="mb-2 text-xs text-gray-500 flex justify-between items-center">
-                                        <span>Membalas komentar spesifik</span>
+                                    <div className="mb-3 p-3 bg-blue-50 rounded-lg text-xs text-blue-800 flex justify-between items-center">
+                                        <div className="flex items-center gap-2">
+                                            <span className="material-icons text-sm">info</span>
+                                            <span>Anda sedang membalas salah satu komentar di atas.</span>
+                                        </div>
                                         <button
                                             type="button"
                                             onClick={() => setReplyingTo(null)}
-                                            className="text-red-500 hover:text-red-700"
+                                            className="text-blue-600 hover:underline font-bold"
                                         >
-                                            Batal membalas ini
+                                            Ubah jadi balasan umum
                                         </button>
                                     </div>
                                 )}

@@ -307,11 +307,13 @@ const ChatWindowPage = () => {
                     <h2 className="font-bold text-gray-800 text-sm truncate">
                         {session ? (
                             session.consultant_details?.username || `Chat ${session.category_name}`
-                        ) : 'Memuat...'}
+                        ) : (loading ? 'Memuat...' : 'Chat')}
                     </h2>
                     <p className="text-[10px] text-green-600 font-bold uppercase tracking-wider flex items-center gap-1">
-                        <span className={`w-1.5 h-1.5 rounded-full animate-pulse ${session?.is_ai_active ? 'bg-green-500' : 'bg-orange-500'}`}></span>
-                        {session?.category_name || 'Konsultasi'}
+                        {session && (
+                            <span className={`w-1.5 h-1.5 rounded-full animate-pulse ${session?.is_ai_active ? 'bg-green-500' : 'bg-orange-500'}`}></span>
+                        )}
+                        {session?.category_name || (loading ? 'Memuat...' : 'Konsultasi')}
                         {session && !session.is_ai_active && (
                             <span className="bg-orange-100 text-orange-600 px-1.5 py-0.5 rounded text-[8px] ml-1">PAKAR MODE</span>
                         )}

@@ -230,7 +230,15 @@ const DashboardAdminWithdrawalsPage = () => {
                                         <input
                                             type="file"
                                             accept="image/*"
-                                            onChange={(e) => setProofFile(e.target.files[0])}
+                                            onChange={(e) => {
+                                                const file = e.target.files[0];
+                                                if (file && file.size > 5 * 1024 * 1024) {
+                                                    alert("Ukuran bukti transfer terlalu besar. Maksimal 5MB.");
+                                                    e.target.value = null;
+                                                    return;
+                                                }
+                                                setProofFile(file);
+                                            }}
                                             className="hidden"
                                             id="transfer-proof-upload"
                                         />

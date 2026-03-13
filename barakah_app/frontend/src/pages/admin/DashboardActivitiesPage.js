@@ -39,7 +39,13 @@ const DashboardActivitiesPage = () => {
     }, []);
 
     const handleFileChange = (e) => {
-        setFormData({ ...formData, header_image: e.target.files[0] });
+        const file = e.target.files[0];
+        if (file && file.size > 5 * 1024 * 1024) {
+            alert("Ukuran gambar terlalu besar. Maksimal 5MB.");
+            e.target.value = null;
+            return;
+        }
+        setFormData({ ...formData, header_image: file });
     };
 
     const handleSubmit = async (e) => {

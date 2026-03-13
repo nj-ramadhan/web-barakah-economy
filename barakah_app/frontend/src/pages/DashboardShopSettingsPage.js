@@ -72,8 +72,8 @@ const DashboardShopSettingsPage = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (profile.shop_thumbnail instanceof File && profile.shop_thumbnail.size > 2 * 1024 * 1024) {
-            alert('File thumbnail toko terlalu besar (Maks 2MB)');
+        if (profile.shop_thumbnail instanceof File && profile.shop_thumbnail.size > 5 * 1024 * 1024) {
+            alert('File thumbnail toko terlalu besar (Maks 5MB)');
             return;
         }
 
@@ -162,8 +162,8 @@ const DashboardShopSettingsPage = () => {
                                         onChange={(e) => {
                                             const file = e.target.files[0];
                                             if (file) {
-                                                if (file.size > 2 * 1024 * 1024) {
-                                                    alert('Ukuran gambar maksimal 2MB');
+                                                if (file.size > 5 * 1024 * 1024) {
+                                                    alert('Ukuran gambar maksimal 5MB');
                                                     return;
                                                 }
                                                 setProfile(prev => ({ ...prev, shop_thumbnail: file }));
