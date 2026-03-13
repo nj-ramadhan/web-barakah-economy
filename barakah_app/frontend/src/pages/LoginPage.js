@@ -68,9 +68,10 @@ const LoginPage = () => {
             const userProfile = {
                 access: response.access,
                 refresh: response.refresh,
-                id: response.id, // Ensure this is included in the backend response
+                id: response.id,
                 username: response.username,
                 email: response.email,
+                role: response.role,
             };
             localStorage.setItem('user', JSON.stringify(userProfile));
             setIsLoggedIn(true);
@@ -88,9 +89,10 @@ const LoginPage = () => {
             const userProfile = {
                 access: response.access,
                 refresh: response.refresh,
-                id: response.id, // Ensure this is included in the backend response
+                id: response.id,
                 username: response.username,
                 email: response.email,
+                role: response.role,
             };
             localStorage.setItem('user', JSON.stringify(userProfile));
             setIsLoggedIn(true);

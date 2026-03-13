@@ -33,6 +33,7 @@ class CustomTokenObtainPairView(TokenObtainPairView):
         response.data['id'] = user.id
         response.data['username'] = user.username
         response.data['email'] = user.email        
+        response.data['role'] = user.role
         return response
     
 class LoginView(CustomTokenObtainPairView):
@@ -93,6 +94,7 @@ class GoogleLoginView(APIView):
                 'id': user.id,
                 'username': user.username,
                 'email': user.email,
+                'role': user.role,
             }, status=status.HTTP_200_OK)
         except ValueError as e:
             logger.error(f"Token verification failed: {e}")

@@ -19,7 +19,7 @@ const ForumMainPage = () => {
     const navigate = useNavigate();
 
     const user = JSON.parse(localStorage.getItem('user'));
-    const isAdmin = user?.role === 'admin';
+    const isAdmin = user?.role === 'admin' || user?.role === 'staff' || user?.is_staff || user?.is_superuser;
 
     useEffect(() => {
         fetchThreads();

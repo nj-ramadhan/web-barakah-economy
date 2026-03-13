@@ -55,9 +55,10 @@ const googleLogin = (token) => {
       localStorage.setItem('user', JSON.stringify({
         access: response.data.access,
         refresh: response.data.refresh,
-        id: response.data.id, // Ensure this is included in the backend response
-        username: response.data.username, // Optional, but useful
-        email: response.data.email, // Optional, but useful
+        id: response.data.id,
+        username: response.data.username,
+        email: response.data.email,
+        role: response.data.role,
       }));
     }
     return response.data;
@@ -84,9 +85,10 @@ const login = (username, password) => {
       localStorage.setItem('user', JSON.stringify({
         access: response.data.access,
         refresh: response.data.refresh,
-        id: response.data.id, // Ensure this is included in the backend response
-        username: response.data.username, // Optional, but useful
-        email: response.data.email, // Optional, but useful
+        id: response.data.id,
+        username: response.data.username,
+        email: response.data.email,
+        role: response.data.role,
       }));
     }
     return response.data;
