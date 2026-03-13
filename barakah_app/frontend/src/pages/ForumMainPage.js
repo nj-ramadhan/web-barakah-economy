@@ -19,6 +19,7 @@ const ForumMainPage = () => {
     const navigate = useNavigate();
 
     const user = JSON.parse(localStorage.getItem('user'));
+    const isAdmin = user?.role === 'admin';
 
     useEffect(() => {
         fetchThreads();
@@ -280,19 +281,28 @@ const ForumMainPage = () => {
                                 </h3>
 
                                 <p className="text-sm text-gray-600 line-clamp-3 mb-4 flex-grow">
-                                    {renderContentWithMentions(thread.content)}
                                 </p>
                             </div>
 
-                            <div className="bg-gray-50 px-4 py-3 border-t border-gray-100 flex justify-between text-xs text-gray-500">
-                                <div className="flex items-center gap-1">
-                                    <span className="material-icons text-gray-400 text-[16px]">chat</span>
-                                    <span>{thread.replies_count} Balasan</span>
+                            <div className="bg-gray-50 px-4 py-3 border-t border-gray-100 flex justify-between items-center text-xs text-gray-500">
+                                <div className="flex gap-4">
+                                    <div className="flex items-center gap-1">
+                                        <span className="material-icons text-gray-400 text-[16px]">chat</span>
+                                        <span>{thread.replies_count} Balasan</span>
+                                    </div>
+                                    <div className="flex items-center gap-1">
+                                        <span className="material-icons text-gray-400 text-[16px]">visibility</span>
+                                        <span>{thread.views} Dilihat</span>
+                                    </div>
                                 </div>
-                                <div className="flex items-center gap-1">
-                                    <span className="material-icons text-gray-400 text-[16px]">visibility</span>
-                                    <span>{thread.views} Dilihat</span>
-                                </div>
+                                {(isAdmin || user?.id === thread.author?.id) && (
+                                    <button
+                                        onClick={(e) => handleDeleteThread(e, thread.slug)}
+                                        className="text-red-500 hover:text-red-700 flex items-center gap-0.5 font-bold"
+                                    >
+                                        <span className="material-icons text-[14px]">delete</span> Hapus
+                                    </button>
+                                )}
                             </div>
                         </Link>
                     ))}

@@ -17,7 +17,7 @@ class IsAuthorOrAdminOrReadOnly(permissions.BasePermission):
         if not user.is_authenticated:
             return False
             
-        is_admin = getattr(user, 'role', '') == 'admin'
+        is_admin = getattr(user, 'role', '') == 'admin' or user.is_staff or user.is_superuser
         is_author = obj.author == user
         
         return is_admin or is_author
