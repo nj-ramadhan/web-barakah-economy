@@ -19,14 +19,22 @@ const HeaderHome = ({ onSearch }) => {
             <img src="/images/logo.png" alt="BAE Community" className="h-8" />
             <span className="ml-2 font-semibold text-green-700">BARAKAH APP</span>
           </div>
-          <div className="flex-1 max-w-[200px] ml-4">
+          <div className="flex-1 max-w-[200px] mx-4">
             <input
               type="text"
-              placeholder="Cari Program"
+              placeholder="Cari..."
               value={searchQuery}
               onChange={handleSearchChange}
-              className="w-full px-4 py-2 border rounded-full text-sm"
+              className="w-full px-4 py-2 border rounded-full text-sm focus:outline-none focus:ring-1 focus:ring-green-500"
             />
+          </div>
+          <div className="flex items-center gap-2">
+            <a
+              href={localStorage.getItem('user') ? "/profile" : "/login"}
+              className="w-10 h-10 flex items-center justify-center text-gray-500 bg-gray-50 rounded-full"
+            >
+              <span className="material-icons text-xl">{localStorage.getItem('user') ? 'account_circle' : 'login'}</span>
+            </a>
           </div>
         </div>
       </div>

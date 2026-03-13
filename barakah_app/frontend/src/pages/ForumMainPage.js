@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
 import { forumApi } from '../services/forumApi';
+import HeaderHome from '../components/layout/HeaderHome';
+import NavigationButton from '../components/layout/Navigation';
 
 const ForumMainPage = () => {
     const [threads, setThreads] = useState([]);
@@ -12,6 +14,8 @@ const ForumMainPage = () => {
     const [mentionUsers, setMentionUsers] = useState([]);
     const [showMentionDropdown, setShowMentionDropdown] = useState(false);
     const [cursorPosition, setCursorPosition] = useState(0);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [filteredThreads, setFilteredThreads] = useState([]);
     const navigate = useNavigate();
 
     const user = JSON.parse(localStorage.getItem('user'));
@@ -24,10 +28,24 @@ const ForumMainPage = () => {
         try {
             const res = await forumApi.getThreads();
             setThreads(res.data);
+            setFilteredThreads(res.data);
             setLoading(false);
         } catch (error) {
             console.error('Failed to fetch threads:', error);
             setLoading(false);
+        }
+    };
+
+    const handleSearch = (query) => {
+        setSearchQuery(query);
+        if (!query) {
+            setFilteredThreads(threads);
+        } else {
+            const filtered = threads.filter(thread => 
+                thread.title.toLowerCase().includes(query.toLowerCase()) ||
+                thread.content.toLowerCase().includes(query.toLowerCase())
+            );
+            setFilteredThreads(filtered);
         }
     };
 
@@ -111,23 +129,28 @@ const ForumMainPage = () => {
                 <meta name="description" content="Forum diskusi dan tanya jawab Barakah Economy. Diskusikan berbagai topik seputar bisnis, fiqih, dan ummat." />
             </Helmet>
 
-            <div className="py-8 flex flex-col md:flex-row justify-between items-center bg-white shadow-sm -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 mb-8 border-b border-gray-200">
+            <HeaderHome onSearch={handleSearch} />
+
+            <div className="py-6 flex flex-col md:flex-row justify-between items-center mb-6">
                 <div>
-                    <h1 className="text-3xl font-bold text-gray-900">Forum Tanya Jawab</h1>
-                    <p className="mt-2 text-gray-600">Diskusikan topik, tanya pakar, dan berbagai pengalaman.</p>
+                    <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                        <span className="w-1.5 h-6 bg-green-600 rounded-full"></span>
+                        Forum Tanya Jawab
+                    </h1>
+                    <p className="mt-1 text-sm text-gray-500">Diskusikan topik, tanya pakar, dan berbagai pengalaman.</p>
                 </div>
                 <div className="mt-4 md:mt-0">
                     {user ? (
                         <button
                             onClick={() => setShowForm(!showForm)}
-                            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none"
+                            className="inline-flex items-center px-4 py-2 border border-transparent rounded-full shadow-sm text-sm font-medium text-white bg-green-700 hover:bg-green-800 focus:outline-none"
                         >
                             <span className="material-icons mr-2 text-[18px]">add</span> Buat Diskusi
                         </button>
                     ) : (
                         <button
                             onClick={() => navigate('/login')}
-                            className="inline-flex items-center px-4 py-2 border border-blue-600 rounded-md shadow-sm text-sm font-medium text-blue-600 bg-white hover:bg-blue-50 focus:outline-none"
+                            className="inline-flex items-center px-4 py-2 border border-green-700 rounded-full shadow-sm text-sm font-medium text-green-700 bg-white hover:bg-green-50 focus:outline-none"
                         >
                             Login untuk Diskusi
                         </button>
@@ -218,13 +241,17 @@ const ForumMainPage = () => {
                 <div className="flex justify-center py-20">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
                 </div>
-            ) : threads.length === 0 ? (
+            ) : filteredThreads.length === 0 ? (
                 <div className="text-center py-10">
-                    <p className="text-gray-500">Belum ada diskusi yang dibuat.</p>
+                    {searchQuery ? (
+                        <p className="text-gray-500">Tidak ditemukan hasil untuk "{searchQuery}"</p>
+                    ) : (
+                        <p className="text-gray-500">Belum ada diskusi yang dibuat.</p>
+                    )}
                 </div>
             ) : (
                 <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-                    {threads.map((thread) => (
+                    {filteredThreads.map((thread) => (
                         <Link
                             to={`/forum/${thread.slug}`}
                             key={thread.id}
@@ -271,6 +298,7 @@ const ForumMainPage = () => {
                     ))}
                 </div>
             )}
+            <NavigationButton />
         </div>
     );
 };

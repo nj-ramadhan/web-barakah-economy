@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Header from '../../components/layout/Header';
+import HeaderHome from '../../components/layout/HeaderHome';
 import NavigationButton from '../../components/layout/Navigation';
 import { getSessions, getCategories, createSession, getConsultantsByCategory } from '../../services/chatApi';
 
@@ -10,6 +10,8 @@ const ChatListPage = () => {
     const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showNewChat, setShowNewChat] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [filteredSessions, setFilteredSessions] = useState([]);
 
     // Step Flow State
     const [chatStep, setChatStep] = useState('category'); // 'category' or 'expert'
@@ -25,6 +27,7 @@ const ChatListPage = () => {
                     getCategories()
                 ]);
                 setSessions(sessionsRes.data);
+                setFilteredSessions(sessionsRes.data);
                 setCategories(categoriesRes.data.filter(c => c.is_active));
             } catch (err) {
                 console.error('Failed to fetch chat data:', err);
@@ -34,6 +37,24 @@ const ChatListPage = () => {
         };
         fetchData();
     }, []);
+
+    const handleSearch = (query) => {
+        setSearchQuery(query);
+        if (!query) {
+            setFilteredSessions(sessions);
+        } else {
+            const filtered = sessions.filter(session => {
+                const otherUser = session.consultant_details?.username === currentUser.username
+                    ? session.user_details
+                    : session.consultant_details;
+                const nameMatch = (otherUser?.username || '').toLowerCase().includes(query.toLowerCase());
+                const categoryMatch = session.category_name.toLowerCase().includes(query.toLowerCase());
+                const lastMsgMatch = (session.last_message?.content || '').toLowerCase().includes(query.toLowerCase());
+                return nameMatch || categoryMatch || lastMsgMatch;
+            });
+            setFilteredSessions(filtered);
+        }
+    };
 
     const handleCategorySelect = async (category) => {
         try {
@@ -56,7 +77,7 @@ const ChatListPage = () => {
     if (loading) {
         return (
             <div className="min-h-screen bg-gray-50 flex flex-col pt-16">
-                <Header />
+            <HeaderHome onSearch={handleSearch} />
                 <div className="flex-1 flex items-center justify-center">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
                 </div>
@@ -68,7 +89,7 @@ const ChatListPage = () => {
 
     return (
         <div className="min-h-screen bg-gray-50 flex flex-col pb-20">
-            <Header />
+            <HeaderHome onSearch={handleSearch} />
 
             <div className="max-w-2xl mx-auto w-full px-4 py-6">
                 <div className="flex justify-between items-center mb-6">
@@ -104,7 +125,13 @@ const ChatListPage = () => {
                     </div>
                 ) : (
                     <div className="space-y-3">
-                        {sessions.map((session) => {
+                        {filteredSessions.length === 0 && searchQuery ? (
+                            <div className="text-center py-10 text-gray-400">
+                                <span className="material-icons text-4xl mb-2 opacity-20">search_off</span>
+                                <p className="text-sm">Tidak ada hasil untuk "{searchQuery}"</p>
+                            </div>
+                        ) : (
+                            filteredSessions.map((session) => {
                             const otherUser = session.consultant_details?.username === currentUser.username
                                 ? session.user_details
                                 : session.consultant_details;
@@ -173,9 +200,10 @@ const ChatListPage = () => {
                                     )}
                                 </div>
                             );
-                        })}
-                    </div>
-                )}
+                        })
+                    )}
+                </div>
+            )}
             </div>
 
             {/* Modal Flow Konsultasi Baru */}

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
 import axios from 'axios';
-import Header from '../components/layout/Header';
+import HeaderHome from '../components/layout/HeaderHome';
 import NavigationButton from '../components/layout/Navigation';
 
 const getMediaUrl = (url) => {
@@ -14,12 +14,16 @@ const getMediaUrl = (url) => {
 const ActivityListPage = () => {
     const [activities, setActivities] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [filteredActivities, setFilteredActivities] = useState([]);
 
     useEffect(() => {
         const fetchActivities = async () => {
             try {
                 const res = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/site-content/activities/`);
-                setActivities(Array.isArray(res.data) ? res.data : []);
+                const data = Array.isArray(res.data) ? res.data : [];
+                setActivities(data);
+                setFilteredActivities(data);
             } catch (err) {
                 console.error(err);
             } finally {
@@ -28,6 +32,18 @@ const ActivityListPage = () => {
         };
         fetchActivities();
     }, []);
+
+    const handleSearch = (query) => {
+        setSearchQuery(query);
+        if (!query) {
+            setFilteredActivities(activities);
+        } else {
+            const filtered = activities.filter(act => 
+                act.title.toLowerCase().includes(query.toLowerCase())
+            );
+            setFilteredActivities(filtered);
+        }
+    };
 
     if (loading) {
         return (
@@ -40,7 +56,7 @@ const ActivityListPage = () => {
     return (
         <div className="body">
             <Helmet><title>Kegiatan Kami - Barakah Economy</title></Helmet>
-            <Header />
+            <HeaderHome onSearch={handleSearch} />
             <div className="max-w-4xl mx-auto px-4 py-6 pb-24">
                 <h1 className="text-2xl font-bold text-gray-900 mb-1">Kegiatan Kami</h1>
                 <p className="text-gray-500 text-sm mb-6">Program dan aktivitas komunitas BAE</p>

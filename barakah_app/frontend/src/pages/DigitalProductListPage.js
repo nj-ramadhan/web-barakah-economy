@@ -2,7 +2,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
-import Header from '../components/layout/Header';
+import { Helmet } from 'react-helmet';
+import HeaderHome from '../components/layout/HeaderHome';
 import NavigationButton from '../components/layout/Navigation';
 import { getDigitalProducts, getPopularSellers } from '../services/digitalProductApi';
 import '../styles/Body.css';
@@ -22,6 +23,8 @@ const DigitalProductListPage = () => {
     const [products, setProducts] = useState([]);
     const [popularSellers, setPopularSellers] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [filteredProducts, setFilteredProducts] = useState([]);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -31,6 +34,7 @@ const DigitalProductListPage = () => {
                     getPopularSellers()
                 ]);
                 setProducts(productsRes.data);
+                setFilteredProducts(productsRes.data);
                 setPopularSellers(sellersRes.data);
             } catch (err) {
                 console.error('Error fetching digital products or sellers:', err);
@@ -41,6 +45,20 @@ const DigitalProductListPage = () => {
         fetchData();
     }, []);
 
+    const handleSearch = (query) => {
+        setSearchQuery(query);
+        if (!query) {
+            setFilteredProducts(products);
+        } else {
+            const filtered = products.filter(product => 
+                product.title.toLowerCase().includes(query.toLowerCase()) ||
+                product.category.toLowerCase().includes(query.toLowerCase()) ||
+                product.seller_name.toLowerCase().includes(query.toLowerCase())
+            );
+            setFilteredProducts(filtered);
+        }
+    };
+
     return (
         <div className="body">
             <Helmet>
@@ -48,7 +66,7 @@ const DigitalProductListPage = () => {
                 <meta name="description" content="Produk digital berkualitas di Barakah Economy" />
             </Helmet>
 
-            <Header />
+            <HeaderHome onSearch={handleSearch} />
 
             <div className="px-4 py-8 pb-20 max-w-6xl mx-auto">
                 <h1 className="text-2xl font-bold mb-6 flex items-center gap-2">
@@ -60,14 +78,14 @@ const DigitalProductListPage = () => {
                     <div className="flex justify-center items-center py-8">
                         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500"></div>
                     </div>
-                ) : products.length === 0 ? (
+                ) : filteredProducts.length === 0 ? (
                     <div className="text-center py-8 text-gray-500">
-                        <span className="material-icons text-5xl mb-2">inventory_2</span>
-                        <p>Belum ada produk digital</p>
+                        <span className="material-icons text-5xl mb-2">search_off</span>
+                        <p>{searchQuery ? `Tidak ada hasil untuk "${searchQuery}"` : 'Belum ada produk digital'}</p>
                     </div>
                 ) : (
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-6">
-                        {products.map((product) => (
+                        {filteredProducts.map((product) => (
                             <Link key={product.id} to={`/digital_produk/${product.seller_name}/${product.slug}`} className="block">
                                 <div className="bg-white rounded-xl overflow-hidden shadow hover:shadow-lg transition">
                                     <img
