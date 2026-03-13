@@ -4,6 +4,7 @@ import axios from 'axios';
 import { Helmet } from 'react-helmet';
 import Header from '../components/layout/Header';
 import NavigationButton from '../components/layout/Navigation';
+import ShareButton from '../components/campaigns/ShareButton';
 import '../styles/Body.css';
 
 const formatIDR = (amount) => {
@@ -25,6 +26,28 @@ const EcourseCourseDetail = () => {
   const [reviews, setReviews] = useState([]);
   const [reviewForm, setReviewForm] = useState({ rating: 5, comment: '', image: null });
   const [submittingReview, setSubmittingReview] = useState(false);
+  const [shareMessage, setShareMessage] = useState('');
+
+  const handleShare = () => {
+    const shareUrl = `${window.location.origin}/api/courses/share/${slug}`;
+    const title = `${course?.title} - Barakah Economy`;
+
+    if (navigator.share) {
+      navigator.share({
+        title: title,
+        url: shareUrl
+      }).catch(console.error);
+    } else {
+      navigator.clipboard.writeText(shareUrl)
+        .then(() => {
+          setShareMessage('Link disalin!');
+          setTimeout(() => setShareMessage(''), 3000);
+        })
+        .catch(err => {
+          console.error('Gagal menyalin link:', err);
+        });
+    }
+  };
 
   const baseUrl = process.env.REACT_APP_API_BASE_URL;
 
@@ -186,10 +209,21 @@ const EcourseCourseDetail = () => {
             }}
           />
           <div className="p-4">
-            <h1 className="text-xl font-bold mb-2">{course.title}</h1>
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600 mb-2">
-                {course.price ? formatIDR(course.price) : 'Rp. 0'}
+            <div className="flex justify-between items-start mb-2">
+              <h1 className="text-xl font-bold">{course.title}</h1>
+              <div className="flex-shrink-0">
+                <ShareButton slug={course.slug} title={course.title} type="course" />
+              </div>
+            </div>
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center">
+                <span className="material-icons text-green-700 text-[14px]">person</span>
+              </div>
+              <span className="text-xs font-bold text-gray-600">@{course.instructor_name}</span>
+            </div>
+            <div className="flex justify-between items-center mb-4">
+              <span className="text-lg font-black text-green-700">
+                {formatIDR(course.price)}
               </span>
             </div>
             {!isEnrolled && (
@@ -393,6 +427,21 @@ const EcourseCourseDetail = () => {
 
 
       <NavigationButton />
+
+      {/* Fixed share button for mobile */}
+      <div className="md:hidden fixed bottom-24 right-4 z-50">
+        <button
+          onClick={handleShare}
+          className="bg-white border border-gray-200 text-gray-600 w-12 h-12 rounded-full shadow-lg flex items-center justify-center relative active:scale-95 transition-transform"
+        >
+          <span className="material-icons">share</span>
+          {shareMessage && (
+            <span className="absolute -top-10 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-xs py-1 px-2 rounded whitespace-nowrap">
+              {shareMessage}
+            </span>
+          )}
+        </button>
+      </div>
     </div>
   );
 };

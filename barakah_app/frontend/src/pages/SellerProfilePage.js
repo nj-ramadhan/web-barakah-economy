@@ -177,19 +177,21 @@ const SellerProfilePage = () => {
 
             <div className={`relative z-10 max-w-6xl mx-auto pb-24 ${layoutStyle === 'biolink' ? 'flex flex-col items-center' : ''}`}>
                 {/* Header / Shop Thumbnail */}
-                <div
-                    className={`h-48 w-full relative z-10 overflow-hidden ${layoutStyle === 'biolink' ? 'max-w-md rounded-b-3xl mt-0 shadow-lg' : ''} ${!profile.shop_thumbnail && (themeColor === 'dark' ? 'bg-gray-800' : themeColor === 'blue' ? 'bg-blue-700' : themeColor === 'purple' ? 'bg-purple-700' : themeColor === 'rose' ? 'bg-rose-700' : 'bg-green-700')}`}
-                    style={{
-                        backgroundColor: (!profile.shop_thumbnail && isHex) ? themeColor : undefined,
-                    }}
-                >
-                    {profile.shop_thumbnail && (
-                        <img
-                            src={getMediaUrl(profile.shop_thumbnail)}
-                            alt="Shop Thumbnail"
-                            className="w-full h-full object-cover opacity-100"
-                        />
-                    )}
+                <div className="relative w-full">
+                    <div
+                        className={`h-48 w-full relative z-10 overflow-hidden ${layoutStyle === 'biolink' ? 'max-w-md rounded-b-3xl mt-0 shadow-lg' : ''} ${!profile.shop_thumbnail && (themeColor === 'dark' ? 'bg-gray-800' : themeColor === 'blue' ? 'bg-blue-700' : themeColor === 'purple' ? 'bg-purple-700' : themeColor === 'rose' ? 'bg-rose-700' : 'bg-green-700')}`}
+                        style={{
+                            backgroundColor: (!profile.shop_thumbnail && isHex) ? themeColor : undefined,
+                        }}
+                    >
+                        {profile.shop_thumbnail && (
+                            <img
+                                src={getMediaUrl(profile.shop_thumbnail)}
+                                alt="Shop Thumbnail"
+                                className="w-full h-full object-cover opacity-100"
+                            />
+                        )}
+                    </div>
 
                     <div className="absolute -bottom-12 left-1/2 -translate-x-1/2 flex flex-col items-center z-20">
                         <div className="w-24 h-24 rounded-full border-4 border-white overflow-hidden bg-white shadow-lg">

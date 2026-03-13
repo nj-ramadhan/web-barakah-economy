@@ -1,8 +1,8 @@
 from django.urls import path
 from .views import (
-    CourseViewSet, CourseDetailViewSet, CourseEnrollmentViewSet, 
     CourseMaterialViewSet, CoursePaymentConfirmationView, 
-    UserCourseProgressViewSet, CertificateRequestViewSet, AdminCourseViewSet
+    UserCourseProgressViewSet, CertificateRequestViewSet, AdminCourseViewSet,
+    CourseShareView
 )
 
 # Endpoint untuk list dan create course
@@ -32,6 +32,7 @@ urlpatterns = [
     path('<slug:slug>/payment-confirmation/', CoursePaymentConfirmationView.as_view(), name='course-payment-confirmation'),
     path('admin-courses/', AdminCourseViewSet.as_view({'get': 'list'}), name='admin-course-list'),
     path('admin-courses/<int:pk>/', AdminCourseViewSet.as_view({'delete': 'destroy', 'get': 'retrieve', 'put': 'update', 'patch': 'partial_update'}), name='admin-course-detail'),
+    path('share/<slug:slug>/', CourseShareView.as_view(), name='course-share'),
     path('<int:pk>/', course_detail, name='course-detail-id'),  # Detail by ID
     path('<slug:slug>/', CourseDetailViewSet.as_view(), name='course-detail-slug'),  # Detail by slug   
     path('', course_list, name='course-list'),  # List and create

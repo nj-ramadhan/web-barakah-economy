@@ -9,6 +9,8 @@ from django.shortcuts import get_object_or_404
 from rest_framework.decorators import action
 from .models import Course, CourseEnrollment, CourseMaterial, UserCourseProgress, CertificateRequest
 from .serializers import CourseSerializer, CourseEnrollmentSerializer, CourseMaterialSerializer, UserCourseProgressSerializer, CertificateRequestSerializer
+from django.conf import settings
+from django.shortcuts import render
 
 class CourseViewSet(viewsets.ModelViewSet):
     serializer_class = CourseSerializer
@@ -234,3 +236,59 @@ class AdminCourseViewSet(viewsets.ModelViewSet):
         courses = self.get_queryset()
         serializer = self.get_serializer(courses, many=True)
         return Response(serializer.data)
+
+class CourseShareView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request, slug):
+        course = get_object_or_404(Course, slug=slug)
+        instructor = course.instructor
+        
+        # Build course name/title
+        course_title = course.title
+        instructor_name = instructor.username
+            
+        # Determine frontend domain
+        if settings.DEBUG:
+            frontend_url = 'http://localhost:3000'
+        else:
+            frontend_url = 'https://barakah-economy.com'
+
+        # Build absolute thumbnail URL
+        thumbnail_url = None
+        if course.thumbnail:
+            img_url = course.thumbnail.url
+            if img_url.startswith('http'):
+                thumbnail_url = img_url
+            else:
+                import urllib.parse
+                encoded_path = urllib.parse.quote(img_url, safe='/:')
+                thumbnail_url = f"{frontend_url}{encoded_path}"
+        else:
+            # Fallback to instructor profile picture
+            profile = getattr(instructor, 'profile', None)
+            if profile and profile.picture:
+                img_url = profile.picture.url
+                if img_url.startswith('http'):
+                    thumbnail_url = img_url
+                else:
+                    import urllib.parse
+                    encoded_path = urllib.parse.quote(img_url, safe='/:')
+                    thumbnail_url = f"{frontend_url}{encoded_path}"
+            
+        # Build target frontend URL (Course Detail Page)
+        target_url = f"{frontend_url}/kelas/{slug}"
+        
+        # Build share URL (the URL of this view)
+        share_url = request.build_absolute_uri()
+
+        return render(request, 'digital_products/product_share.html', {
+            'item': course,
+            'title': course_title,
+            'description': course.description,
+            'frontend_url': frontend_url,
+            'thumbnail_url': thumbnail_url,
+            'target_url': target_url,
+            'share_url': share_url,
+            'redirect_message': 'Membuka kelas...'
+        })

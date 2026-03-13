@@ -16,6 +16,8 @@ const ShareButton = ({ slug, title, type = 'campaign' }) => {
         shareUrl = `${baseUrl}/api/articles/share/${slug}/`;
     } else if (type === 'seller') {
         shareUrl = `${baseUrl}/api/digital-products/share/seller/${slug}/`;
+    } else if (type === 'course') {
+        shareUrl = `${baseUrl}/api/courses/share/${slug}/`;
     } else if (type === 'activity') {
         shareUrl = `${baseUrl}/api/site-content/activities/share/${slug}/`;
     } else if (type === 'charity_page') {
@@ -33,6 +35,9 @@ const ShareButton = ({ slug, title, type = 'campaign' }) => {
         }
         if (type === 'seller') {
             return `Bismillah, cek profil penjual digital ini ya: @${slug}\n\nLihat koleksi produk digitalnya di sini:\n${shareUrl}`;
+        }
+        if (type === 'course') {
+            return `Bismillah, cek e-course bermanfaat ini ya: ${title}\n\nLihat info selengkapnya & daftar di sini:\n${shareUrl}`;
         }
         if (type === 'activity') {
             return `Bismillah, cek kegiatan kebaikan ini ya: ${title}\n\nLihat info selengkapnya di sini:\n${shareUrl}`;

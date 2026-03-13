@@ -87,7 +87,13 @@ const ProductCard = ({ item, layout, templateType, themeColor, textStyle, badgeB
                     )}
                 </div>
                 <div className="p-4 bg-inherit backdrop-blur-sm">
-                    <h3 className="text-xs font-bold line-clamp-2 min-h-[32px] mb-2 leading-tight">{item.title}</h3>
+                    <h3 className="text-xs font-bold line-clamp-2 min-h-[32px] mb-1 leading-tight">{item.title}</h3>
+                    {isCourse && (
+                        <div className="flex items-center gap-1 mb-2 opacity-60">
+                            <span className="material-icons text-[10px]">person</span>
+                            <span className="text-[10px] font-bold">@{item.instructor_name}</span>
+                        </div>
+                    )}
                     <p className="font-black text-sm" style={textStyle}>{item.price > 0 ? formatIDR(item.price) : 'Gratis'}</p>
                 </div>
             </CardWrapper>
@@ -104,10 +110,18 @@ const ProductCard = ({ item, layout, templateType, themeColor, textStyle, badgeB
             <div className="w-20 h-20 rounded-2xl overflow-hidden flex-shrink-0 shadow-md">
                 <img src={getMediaUrl(item.thumbnail) || '/placeholder-image.jpg'} alt={item.title} className="w-full h-full object-cover" />
             </div>
-            <div className="flex-1 flex flex-col justify-center gap-1">
+            <div className="flex-1 flex flex-col justify-center gap-0.5">
                 <div>
                     <h3 className="text-sm font-black line-clamp-1 mb-0.5">{item.title}</h3>
-                    <p className="text-[10px] opacity-60 font-bold uppercase tracking-wider">{isCourse ? 'E-Course' : item.category || 'Digital Content'}</p>
+                    <div className="flex items-center justify-between">
+                        <p className="text-[10px] opacity-60 font-bold uppercase tracking-wider">{isCourse ? 'E-Course' : item.category || 'Digital Content'}</p>
+                        {isCourse && (
+                            <div className="flex items-center gap-1 opacity-60">
+                                <span className="material-icons text-[10px]">person</span>
+                                <span className="text-[10px] font-bold">@{item.instructor_name}</span>
+                            </div>
+                        )}
+                    </div>
                 </div>
                 <p className="font-extrabold text-base" style={textStyle}>{item.price > 0 ? formatIDR(item.price) : 'Gratis'}</p>
             </div>
