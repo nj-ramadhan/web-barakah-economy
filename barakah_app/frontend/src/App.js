@@ -81,27 +81,36 @@ import { getSessions } from './services/chatApi';
 const NotificationHandler = () => {
   const location = useLocation();
   const lastSessionData = React.useRef({});
+  const isFetching = React.useRef(false);
+  const pathRef = React.useRef(location.pathname);
   const currentUser = JSON.parse(localStorage.getItem('user'));
+
+  // Update pathRef whenever location changes, without re-triggering the interval effect
+  React.useEffect(() => {
+    pathRef.current = location.pathname;
+  }, [location.pathname]);
 
   React.useEffect(() => {
     if (currentUser) {
       NotificationService.requestPermission();
     }
-  }, []);
+  }, [currentUser?.id]);
 
   React.useEffect(() => {
     if (!currentUser) return;
 
     const checkNewMessages = async () => {
+      if (isFetching.current) return;
+      isFetching.current = true;
+
       try {
         const res = await getSessions();
         const sessions = res.data;
-        const activeSessionId = location.pathname.split('/chat/')[1];
+        const activeSessionId = pathRef.current.split('/chat/')[1];
 
         sessions.forEach(session => {
           const lastMsg = session.last_message;
           if (lastMsg && !lastMsg.is_read && lastMsg.sender !== currentUser.id) {
-            // Check if it's a new message since last check
             const prevLastMsgId = lastSessionData.current[session.id];
 
             // Don't notify if we are currently in that chat window
@@ -120,12 +129,17 @@ const NotificationHandler = () => {
         });
       } catch (err) {
         console.error('Failed to poll for notifications:', err);
+      } finally {
+        isFetching.current = false;
       }
     };
 
-    const interval = setInterval(checkNewMessages, 10000); // Check every 10s
+    // Initial check on mount
+    checkNewMessages();
+
+    const interval = setInterval(checkNewMessages, 30000); // Check every 30s instead of 10s
     return () => clearInterval(interval);
-  }, [location.pathname, currentUser?.id]);
+  }, [currentUser?.id]); // Only re-run if user changes, not on every navigation
 
   return null;
 };

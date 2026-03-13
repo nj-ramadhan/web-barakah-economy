@@ -4,19 +4,19 @@ import api from './api';
 const API_BASE = '/courses';
 
 // Public
-export const getCourses = () => api.get(`${API_BASE}/list/`);
-export const getCourseBySlug = (slug) => api.get(`${API_BASE}/detail/${slug}/`);
+export const getCourses = () => api.get(`${API_BASE}/`);
+export const getCourseBySlug = (slug) => api.get(`${API_BASE}/${slug}/`);
 export const getCourseDetail = (id) => api.get(`${API_BASE}/${id}/`);
 
 // Enrollments
 export const createEnrollment = (data) =>
-    api.post(`${API_BASE}/enroll/`, data);
+    api.post(`${API_BASE}/enrollments/`, data);
 
 export const getEnrollmentStatus = (orderNumber) =>
-    api.get(`${API_BASE}/enroll/status/${orderNumber}/`);
+    api.get(`${API_BASE}/enrollments/status/${orderNumber}/`);
 
 export const uploadCoursePaymentProof = (orderNumber, formData) =>
-    api.post(`${API_BASE}/enroll/status/${orderNumber}/pay/`, formData, {
+    api.post(`${API_BASE}/enrollments/status/${orderNumber}/pay/`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
     });
 
@@ -32,52 +32,47 @@ export const getMaterialDetail = (slug, materialId) =>
 
 // Instructor Dashboard
 export const getMyCourses = () =>
-    api.get(`${API_BASE}/instructor/courses/`);
+    api.get(`${API_BASE}/my-courses/`);
 
 export const getInstructorCourses = getMyCourses;
 
 export const createCourse = (formData) =>
-    api.post(`${API_BASE}/instructor/courses/`, formData, {
+    api.post(`${API_BASE}/`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
     });
 
 export const updateCourse = (id, formData) =>
-    api.patch(`${API_BASE}/instructor/courses/${id}/`, formData, {
+    api.patch(`${API_BASE}/${id}/`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
     });
 
 export const deleteCourse = (id) =>
-    api.delete(`${API_BASE}/instructor/courses/${id}/`);
+    api.delete(`${API_BASE}/${id}/`);
 
 export const getCourseMaterials = (courseId) =>
     api.get(`${API_BASE}/materials/?course_id=${courseId}`);
 
-// Sections & Materials
-export const createSection = (data) =>
-    api.post(`${API_BASE}/instructor/sections/`, data);
-
-export const updateSection = (id, data) =>
-    api.patch(`${API_BASE}/instructor/sections/${id}/`, data);
-
-export const deleteSection = (id) =>
-    api.delete(`${API_BASE}/instructor/sections/${id}/`);
-
+// Materials
 export const createMaterial = (formData) =>
-    api.post(`${API_BASE}/instructor/materials/`, formData, {
+    api.post(`${API_BASE}/materials/`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
     });
 
 export const updateMaterial = (id, formData) =>
-    api.patch(`${API_BASE}/instructor/materials/${id}/`, formData, {
+    api.patch(`${API_BASE}/materials/${id}/`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
     });
 
 export const deleteMaterial = (id) =>
-    api.delete(`${API_BASE}/instructor/materials/${id}/`);
+    api.delete(`${API_BASE}/materials/${id}/`);
+
+// Sections (Not implemented in backend, keeping placeholders or removing)
+// Removing to avoid 404s and confusion
 
 // Admin
 export const getAdminAllCourses = () =>
-    api.get(`${API_BASE}/admin/courses/`);
+    api.get(`${API_BASE}/admin-courses/`);
 
 export const deleteAdminCourse = (id) =>
-    api.delete(`${API_BASE}/admin/courses/${id}/`);
+    api.delete(`${API_BASE}/admin-courses/${id}/`);
+

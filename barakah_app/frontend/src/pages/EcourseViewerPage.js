@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import axios from 'axios';
-import { Helmet } from 'react-helmet';
 import Header from '../components/layout/Header';
 import NavigationButton from '../components/layout/Navigation';
+import { getCourseDetail, getCourseMaterials, getMyEnrolledCourses } from '../services/ecourseApi'; // Assuming progress can be derived or fetched similarly
+import api from '../services/api';
 import '../styles/Body.css';
 
 const EcourseViewerPage = () => {
@@ -33,13 +33,11 @@ const EcourseViewerPage = () => {
 
             try {
                 // Fetch course details
-                const courseRes = await axios.get(`${baseUrl}/api/courses/${slug}/`);
+                const courseRes = await getCourseDetail(slug);
                 setCourse(courseRes.data);
 
                 // Fetch materials
-                const materialsRes = await axios.get(`${baseUrl}/api/courses/materials/?course_id=${courseRes.data.id}`, {
-                    headers: { Authorization: `Bearer ${user.access}` }
-                });
+                const materialsRes = await getCourseMaterials(courseRes.data.id);
                 const sortedMaterials = (materialsRes.data || []).sort((a, b) => a.order - b.order);
                 setMaterials(sortedMaterials);
                 if (sortedMaterials.length > 0) {
@@ -48,9 +46,7 @@ const EcourseViewerPage = () => {
 
                 // Fetch progress
                 try {
-                    const progressRes = await axios.get(`${baseUrl}/api/courses/progress/`, {
-                        headers: { Authorization: `Bearer ${user.access}` }
-                    });
+                    const progressRes = await api.get('/courses/progress/');
                     const courseProgress = (progressRes.data || [])
                         .filter(p => p.course === courseRes.data.id || p.course_id === courseRes.data.id)
                         .map(p => p.material);
@@ -59,9 +55,7 @@ const EcourseViewerPage = () => {
                     // Fetch certificate request if course has one
                     if (courseRes.data.has_certificate) {
                         try {
-                            const certRes = await axios.get(`${baseUrl}/api/courses/certificate-requests/by-course/${courseRes.data.id}/`, {
-                                headers: { Authorization: `Bearer ${user.access}` }
-                            });
+                            const certRes = await api.get(`/courses/certificate-requests/by-course/${courseRes.data.id}/`);
                             setCertRequest(certRes.data);
                         } catch (cErr) {
                             // 404 is fine, means not yet requested
@@ -107,10 +101,8 @@ const EcourseViewerPage = () => {
         if (!user) return;
 
         try {
-            await axios.post(`${baseUrl}/api/courses/progress/`, {
+            await api.post('/courses/progress/', {
                 material: materialId
-            }, {
-                headers: { Authorization: `Bearer ${user.access}` }
             });
 
             if (!progress.includes(materialId)) {
@@ -138,13 +130,11 @@ const EcourseViewerPage = () => {
 
         setSubmittingCert(true);
         try {
-            const res = await axios.post(`${baseUrl}/api/courses/certificate-requests/`, {
+            const res = await api.post('/courses/certificate-requests/', {
                 course: course.id,
                 full_name: certName,
                 email: certEmail,
                 whatsapp: certWhatsapp
-            }, {
-                headers: { Authorization: `Bearer ${user.access}` }
             });
             setCertRequest(res.data);
             alert('Permintaan sertifikat berhasil dikirim!');

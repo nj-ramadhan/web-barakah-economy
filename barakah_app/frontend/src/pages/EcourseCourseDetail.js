@@ -5,6 +5,7 @@ import { Helmet } from 'react-helmet';
 import Header from '../components/layout/Header';
 import NavigationButton from '../components/layout/Navigation';
 import ShareButton from '../components/campaigns/ShareButton';
+import { getCourseBySlug, getMyEnrolledCourses, createEnrollment } from '../services/ecourseApi';
 import '../styles/Body.css';
 
 const formatIDR = (amount) => {
@@ -103,8 +104,8 @@ const EcourseCourseDetail = () => {
   useEffect(() => {
     const fetchCourseDetails = async () => {
       try {
-        const courseResponse = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/courses/${slug}/`);
-        setCourse(courseResponse.data);
+        const res = await getCourseBySlug(slug);
+        setCourse(res.data);
       } catch (err) {
         setError('Failed to load course details');
       } finally {
@@ -117,15 +118,10 @@ const EcourseCourseDetail = () => {
   useEffect(() => {
     const checkEnrollment = async () => {
       const user = JSON.parse(localStorage.getItem('user'));
-      if (!user || !user.access) {
-        navigate('/login');
-        return;
-      }
+      if (!user) return;
+
       try {
-        const res = await axios.get(
-          `${process.env.REACT_APP_API_BASE_URL}/api/courses/enrollments/`,
-          { headers: { Authorization: `Bearer ${user.access}` } }
-        );
+        const res = await getMyEnrolledCourses();
         // Check if user is enrolled in this course and payment_status is 'verified' or 'paid'
         const enrolled = res.data.some(
           enroll => (enroll.course === course.id || enroll.course === course.slug) && ['paid', 'verified'].includes(enroll.payment_status)
@@ -136,22 +132,18 @@ const EcourseCourseDetail = () => {
       }
     };
     if (course) checkEnrollment();
-  }, [course, navigate]); // <-- add navigate here
+  }, [course]);
 
   const handleEnroll = async () => {
     const user = JSON.parse(localStorage.getItem('user'));
-    if (!user || !user.access) {
+    if (!user) {
       alert('Anda harus login terlebih dahulu untuk membeli E-Course.');
       navigate('/login');
       return;
     }
     try {
       // Create enrollment
-      await axios.post(
-        `${process.env.REACT_APP_API_BASE_URL}/api/courses/enrollments/`,
-        { course: course.id },
-        { headers: { Authorization: `Bearer ${user.access}` } }
-      );
+      await createEnrollment({ course: course.id });
       setIsEnrolled(true);
       if (Number(course.price) > 0) {
         navigate(`/konfirmasi-pembayaran-kelas/${course.slug || course.id}`);
@@ -325,6 +317,48 @@ const EcourseCourseDetail = () => {
                     </div>
                   )}
                 </div>
+              </div>
+            )}
+
+            {activeTab === 'materials' && (
+              <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100 min-h-[200px]">
+                <h3 className="text-sm font-bold mb-4">Kurikulum Kelas</h3>
+                <div className="space-y-3">
+                  {course.materials && course.materials.length > 0 ? (
+                    course.materials.map((mat, idx) => (
+                      <div key={idx} className="flex items-center gap-4 p-4 rounded-2xl bg-gray-50 border border-gray-100">
+                        <div className="w-8 h-8 bg-green-100 text-green-700 rounded-full flex items-center justify-center font-bold text-xs ring-4 ring-green-50">
+                          {idx + 1}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h4 className="text-sm font-bold text-gray-800 truncate">{mat.title}</h4>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            <span className="text-[10px] text-gray-400 flex items-center gap-0.5">
+                              <span className="material-icons text-xs">videocam</span> Video
+                            </span>
+                            {mat.pdf_file && (
+                              <span className="text-[10px] text-blue-500 flex items-center gap-0.5 font-bold">
+                                <span className="material-icons text-xs">description</span> Modul PDF
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        {!isEnrolled ? (
+                          <span className="material-icons text-gray-300 text-sm">lock</span>
+                        ) : (
+                          <span className="material-icons text-green-600 text-sm">play_circle_filled</span>
+                        )}
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-gray-400 italic text-center py-10">Materi belum tersedia.</p>
+                  )}
+                </div>
+                {!isEnrolled && (
+                  <div className="mt-8 p-4 bg-orange-50 border border-orange-100 rounded-2xl text-center">
+                    <p className="text-xs text-orange-700 font-medium">Beli kelas untuk membuka akses ke semua materi dan video pembelajaran.</p>
+                  </div>
+                )}
               </div>
             )}
 
