@@ -91,3 +91,17 @@ class WithdrawalRequestAdminSerializer(serializers.ModelSerializer):
             'admin_fee', 'total_deduction', 'account_name',
             'account_number', 'bank_name', 'created_at'
         ]
+
+
+class UnifiedTransactionSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    order_number = serializers.CharField()
+    type = serializers.CharField()  # 'digital' or 'course'
+    product_title = serializers.CharField()
+    buyer_name = serializers.CharField()
+    buyer_email = serializers.EmailField()
+    buyer_phone = serializers.CharField()
+    amount = serializers.DecimalField(max_digits=12, decimal_places=2)
+    payment_status = serializers.CharField()
+    created_at = serializers.DateTimeField()
+    seller_name = serializers.CharField()

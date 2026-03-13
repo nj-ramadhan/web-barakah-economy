@@ -14,6 +14,7 @@ from .serializers import (
     DigitalOrderCreateSerializer,
     WithdrawalRequestSerializer,
     WithdrawalRequestAdminSerializer,
+    UnifiedTransactionSerializer,
 )
 from django.db.models import Sum, Q, DecimalField
 from decimal import Decimal
@@ -658,4 +659,46 @@ class AdminDigitalProductViewSet(viewsets.ModelViewSet):
     def all_products(self, request):
         products = self.get_queryset()
         serializer = self.get_serializer(products, many=True)
+        return Response(serializer.data)
+    @action(detail=False, methods=['get'])
+    def all_transactions(self, request):
+        digital_orders = DigitalOrder.objects.all().select_related('digital_product', 'digital_product__user')
+        course_enrollments = CourseEnrollment.objects.all().select_related('course', 'course__instructor')
+        
+        transactions = []
+        
+        for order in digital_orders:
+            transactions.append({
+                'id': order.id,
+                'order_number': order.order_number,
+                'type': 'digital',
+                'product_title': order.digital_product.title if order.digital_product else "Unknown",
+                'buyer_name': order.buyer_name,
+                'buyer_email': order.buyer_email,
+                'buyer_phone': order.buyer_phone,
+                'amount': order.amount,
+                'payment_status': order.payment_status,
+                'created_at': order.created_at,
+                'seller_name': order.digital_product.user.username if order.digital_product and order.digital_product.user else "Unknown"
+            })
+            
+        for enrollment in course_enrollments:
+            transactions.append({
+                'id': enrollment.id,
+                'order_number': enrollment.order_number,
+                'type': 'course',
+                'product_title': enrollment.course.title if enrollment.course else "Unknown",
+                'buyer_name': enrollment.buyer_name,
+                'buyer_email': enrollment.buyer_email,
+                'buyer_phone': enrollment.buyer_phone,
+                'amount': enrollment.amount,
+                'payment_status': enrollment.payment_status,
+                'created_at': enrollment.enrolled_at,
+                'seller_name': enrollment.course.instructor.username if enrollment.course and enrollment.course.instructor else "Unknown"
+            })
+            
+        # Sort by date descending
+        transactions.sort(key=lambda x: x['created_at'], reverse=True)
+        
+        serializer = UnifiedTransactionSerializer(transactions, many=True)
         return Response(serializer.data)

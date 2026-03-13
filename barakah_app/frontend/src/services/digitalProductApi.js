@@ -96,3 +96,7 @@ export const getAdminWithdrawals = () =>
 
 export const processAdminWithdrawal = (id, data) =>
     api.patch(`${API_BASE}/withdrawals/${id}/admin-process/`, data);
+
+// Admin Transactions
+export const getAdminAllTransactions = () =>
+    api.get(`${API_BASE}/admin-products/all_transactions/`);
