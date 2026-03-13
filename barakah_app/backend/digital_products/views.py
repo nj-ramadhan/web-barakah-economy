@@ -45,19 +45,88 @@ class SellerShareView(APIView):
         if not store_name.lower().startswith("toko"):
             store_name = f"Toko {store_name}"
             
-        # Build target URL (the actual frontend profile page)
-        # Force production domain if not in debug, or use current host
-        host = request.get_host()
-        if 'localhost' not in host and '127.0.0.1' not in host:
-            host = 'barakah-economy.com'
+        # Determine frontend domain
+        if settings.DEBUG:
+            frontend_url = 'http://localhost:3000'
+        else:
+            frontend_url = 'https://barakah-economy.com'
+
+        # Build absolute thumbnail URL (Shop Thumbnail / Header)
+        thumbnail_url = None
+        if profile.shop_thumbnail:
+            img_url = profile.shop_thumbnail.url
+            if img_url.startswith('http'):
+                thumbnail_url = img_url
+            else:
+                import urllib.parse
+                encoded_path = urllib.parse.quote(img_url, safe='/:')
+                thumbnail_url = f"{frontend_url}{encoded_path}"
+        elif profile.picture:
+            img_url = profile.picture.url
+            if img_url.startswith('http'):
+                thumbnail_url = img_url
+            else:
+                import urllib.parse
+                encoded_path = urllib.parse.quote(img_url, safe='/:')
+                thumbnail_url = f"{frontend_url}{encoded_path}"
             
-        target_url = f"https://{host}/digital_produk/{username}"
+        # Build target frontend URL
+        target_url = f"{frontend_url}/digital_produk/{username}"
         
+        # Build share URL (the URL of this view)
+        share_url = request.build_absolute_uri()
+
         return render(request, 'digital_products/seller_share.html', {
             'profile': profile,
             'store_name': store_name,
             'username': username,
-            'target_url': target_url
+            'frontend_url': frontend_url,
+            'thumbnail_url': thumbnail_url,
+            'target_url': target_url,
+            'share_url': share_url
+        })
+
+class DigitalProductShareView(APIView):
+    """
+    View for rendering server-side HTML with Open Graph tags for digital product sharing.
+    """
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request, username, slug):
+        product = get_object_or_404(DigitalProduct, slug=slug)
+        
+        # Determine frontend domain
+        if settings.DEBUG:
+            frontend_url = 'http://localhost:3000'
+        else:
+            frontend_url = 'https://barakah-economy.com'
+
+        # Build absolute thumbnail URL
+        thumbnail_url = None
+        if product.thumbnail:
+            img_url = product.thumbnail.url
+            if img_url.startswith('http'):
+                thumbnail_url = img_url
+            else:
+                import urllib.parse
+                encoded_path = urllib.parse.quote(img_url, safe='/:')
+                if encoded_path.startswith('/'):
+                    thumbnail_url = f"{frontend_url}{encoded_path}"
+                else:
+                    thumbnail_url = f"{frontend_url}/{encoded_path}"
+
+        # Build target frontend URL
+        target_url = f"{frontend_url}/digital_produk/{username}/{slug}"
+        
+        # Build share URL (the URL of this view)
+        share_url = request.build_absolute_uri()
+
+        return render(request, 'digital_products/product_share.html', {
+            'product': product,
+            'frontend_url': frontend_url,
+            'thumbnail_url': thumbnail_url,
+            'target_url': target_url,
+            'share_url': share_url
         })
 
 class DigitalProductViewSet(viewsets.ModelViewSet):

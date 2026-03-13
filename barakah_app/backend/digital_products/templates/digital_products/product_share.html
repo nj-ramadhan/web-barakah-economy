@@ -4,15 +4,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ store_name }} - Produk Digital</title>
+    <title>{{ product.title }} - Barakah Economy</title>
 
     <!-- Open Graph / Facebook -->
     <meta property="og:site_name" content="Barakah Economy">
     <meta property="og:type" content="website">
     <meta property="og:url" content="{{ share_url }}">
-    <meta property="og:title" content="{{ store_name }} - Produk Digital">
-    <meta property="og:description"
-        content="{{ profile.shop_description|default:'Koleksi produk digital berkualitas di Barakah Economy.'|striptags|truncatewords:20 }}">
+    <meta property="og:title" content="{{ product.title }} - Barakah Economy">
+    <meta property="og:description" content="{{ product.description|striptags|truncatewords:20 }}">
 
     {% if thumbnail_url %}
     <meta property="og:image" content="{{ thumbnail_url }}">
@@ -26,9 +25,8 @@
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image">
     <meta property="twitter:url" content="{{ share_url }}">
-    <meta property="twitter:title" content="{{ store_name }} - Produk Digital">
-    <meta property="twitter:description"
-        content="{{ profile.shop_description|default:'Koleksi produk digital berkualitas di Barakah Economy.'|striptags|truncatewords:20 }}">
+    <meta property="twitter:title" content="{{ product.title }} - Barakah Economy">
+    <meta property="twitter:description" content="{{ product.description|striptags|truncatewords:20 }}">
 
     {% if thumbnail_url %}
     <meta property="twitter:image" content="{{ thumbnail_url }}">
@@ -79,7 +77,7 @@
 
 <body>
     <div class="loader"></div>
-    <div class="redirect-text">Membuka profil penjual...</div>
+    <div class="redirect-text">Membuka produk...</div>
 
     <script>
         var targetUrl = "{{ target_url|safe }}";

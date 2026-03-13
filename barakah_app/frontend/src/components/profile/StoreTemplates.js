@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import anime from 'animejs/lib/anime.es.js';
 import ShopDecoration from './ShopDecoration';
+import ShareButton from '../campaigns/ShareButton';
 
 // Common functions helper
 const formatIDR = (amount) => {
@@ -139,6 +140,10 @@ export const HijrahElegan = ({ profile, username, products, courses, isPreview, 
                                 <img src={getMediaUrl(profile.picture)} alt={username} className="w-full h-full object-cover" />
                             </div>
                         </div>
+                        {/* Share Button for Template */}
+                        <div className="absolute -right-4 top-0 z-20">
+                            <ShareButton slug={username} title={`Profil Toko @${username}`} type="seller" />
+                        </div>
                     </div>
                     <h2 className="text-lg font-bold opacity-80 mb-4">@{username}</h2>
                     <div className="w-16 h-1 rounded-full mb-6 mx-auto opacity-30" style={{ backgroundColor: profileTextColor }}></div>
@@ -170,8 +175,11 @@ export const KetenanganSenja = ({ profile, username, products, courses, isPrevie
                     <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-orange-600"></div>
                 </div>
                 <header className={`flex flex-col items-center mb-12 w-full text-center p-8 transition-all -mt-20 relative z-20 bg-white/10 backdrop-blur-xl rounded-t-[3rem] border-t border-white/20`}>
-                    <div className="w-28 h-28 rounded-full border-4 border-white/40 overflow-hidden shadow-2xl mb-6 ring-4 ring-orange-400/20 group hover:scale-105 transition-transform">
+                    <div className="w-28 h-28 rounded-full border-4 border-white/40 overflow-hidden shadow-2xl mb-6 ring-4 ring-orange-400/20 group hover:scale-105 transition-transform relative">
                         <img src={getMediaUrl(profile.picture)} alt={username} className="w-full h-full object-cover" />
+                        <div className="absolute -right-2 -bottom-2 z-20 scale-75 origin-bottom-right">
+                            <ShareButton slug={username} title={`Profil Toko @${username}`} type="seller" />
+                        </div>
                     </div>
                     <h1 className="text-3xl font-black tracking-tight mb-2 drop-shadow-md uppercase">@{username}</h1>
                     <p className="text-sm font-medium italic leading-relaxed px-10">"{profile.shop_description || 'Menikmati harmoni dalam diam'}"</p>
@@ -206,8 +214,11 @@ export const AestheticLoFi = ({ profile, username, products, courses, isPreview,
 
                 <section className="px-6 space-y-10 -mt-12 bg-inherit rounded-t-[4rem] relative z-30 text-center">
                     <div className={`p-8 rounded-[2.5rem] transition-all max-w-sm mx-auto bg-white/95 backdrop-blur-xl border border-stone-100 shadow-2xl shadow-stone-900/5`}>
-                        <div className="w-20 h-20 rounded-full overflow-hidden mx-auto mb-6 border-4 border-stone-50 shadow-md">
+                        <div className="w-20 h-20 rounded-full overflow-hidden mx-auto mb-6 border-4 border-stone-50 shadow-md relative">
                             <img src={getMediaUrl(profile.picture)} className="w-full h-full object-cover" alt="A" />
+                            <div className="absolute -right-4 -bottom-4 z-20 scale-75">
+                                <ShareButton slug={username} title={`Profil Toko @${username}`} type="seller" />
+                            </div>
                         </div>
                         <p className="text-lg leading-relaxed italic font-serif" style={{ color: '#5d5c4b' }}>
                             "{profile.shop_description || 'Menikmati setiap momen kecil dalam hidup.'}"

@@ -25,6 +25,28 @@ const SellerProfilePage = () => {
     const { username } = useParams();
     const [profileData, setProfileData] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [shareMessage, setShareMessage] = useState('');
+
+    const handleShare = () => {
+        const shareUrl = `${window.location.origin}/api/digital-products/share/seller/${username}`;
+        const title = `Profil Toko @${username} - Barakah Economy`;
+
+        if (navigator.share) {
+            navigator.share({
+                title: title,
+                url: shareUrl
+            }).catch(console.error);
+        } else {
+            navigator.clipboard.writeText(shareUrl)
+                .then(() => {
+                    setShareMessage('Link disalin!');
+                    setTimeout(() => setShareMessage(''), 3000);
+                })
+                .catch(err => {
+                    console.error('Gagal menyalin link:', err);
+                });
+        }
+    };
 
     useEffect(() => {
         const fetchProfile = async () => {
@@ -120,6 +142,21 @@ const SellerProfilePage = () => {
                     layout={layoutStyle}
                 />
                 <NavigationButton />
+
+                {/* Fixed share button for mobile */}
+                <div className="md:hidden fixed bottom-24 right-4 z-50">
+                    <button
+                        onClick={handleShare}
+                        className="bg-white border border-gray-200 text-gray-600 w-12 h-12 rounded-full shadow-lg flex items-center justify-center relative active:scale-95 transition-transform"
+                    >
+                        <span className="material-icons">share</span>
+                        {shareMessage && (
+                            <span className="absolute -top-10 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-xs py-1 px-2 rounded whitespace-nowrap">
+                                {shareMessage}
+                            </span>
+                        )}
+                    </button>
+                </div>
             </div>
         );
     }
@@ -262,6 +299,21 @@ const SellerProfilePage = () => {
             </div>
 
             <NavigationButton />
+
+            {/* Fixed share button for mobile */}
+            <div className="md:hidden fixed bottom-24 right-4 z-50">
+                <button
+                    onClick={handleShare}
+                    className="bg-white border border-gray-200 text-gray-600 w-12 h-12 rounded-full shadow-lg flex items-center justify-center relative active:scale-95 transition-transform"
+                >
+                    <span className="material-icons">share</span>
+                    {shareMessage && (
+                        <span className="absolute -top-10 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-xs py-1 px-2 rounded whitespace-nowrap">
+                            {shareMessage}
+                        </span>
+                    )}
+                </button>
+            </div>
         </div>
     );
 };

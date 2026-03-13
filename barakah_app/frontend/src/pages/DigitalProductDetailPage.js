@@ -22,6 +22,28 @@ const DigitalProductDetailPage = () => {
     const { slug } = useParams();
     const [product, setProduct] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [shareMessage, setShareMessage] = useState('');
+
+    const handleShare = () => {
+        const shareUrl = `${window.location.origin}/api/digital-products/share/${product.seller_name}/${product.slug}`;
+        const title = `Cek produk digital ini: ${product.title}`;
+
+        if (navigator.share) {
+            navigator.share({
+                title: title,
+                url: shareUrl
+            }).catch(console.error);
+        } else {
+            navigator.clipboard.writeText(shareUrl)
+                .then(() => {
+                    setShareMessage('Link berhasil disalin!');
+                    setTimeout(() => setShareMessage(''), 3000);
+                })
+                .catch(err => {
+                    console.error('Gagal menyalin link:', err);
+                });
+        }
+    };
 
     useEffect(() => {
         const fetchProduct = async () => {
@@ -86,7 +108,22 @@ const DigitalProductDetailPage = () => {
                                 <span className="material-icons text-sm">person</span>
                                 oleh <Link to={`/digital_produk/${product.seller_name}`} className="text-green-700 font-medium hover:underline">@{product.seller_name}</Link>
                             </p>
-                            <p className="text-3xl font-bold text-green-700 mb-8">{formatIDR(product.price)}</p>
+
+                            <div className="flex items-center gap-4 mb-4">
+                                <p className="text-3xl font-bold text-green-700">{formatIDR(product.price)}</p>
+                                <button
+                                    onClick={handleShare}
+                                    className="p-2 bg-gray-100 text-gray-600 rounded-full hover:bg-gray-200 transition relative flex items-center justify-center"
+                                    title="Bagikan produk"
+                                >
+                                    <span className="material-icons">share</span>
+                                    {shareMessage && (
+                                        <span className="absolute -top-10 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-xs py-1 px-2 rounded whitespace-nowrap">
+                                            {shareMessage}
+                                        </span>
+                                    )}
+                                </button>
+                            </div>
 
                             <div className="bg-gray-50 rounded-xl p-6 mb-6">
                                 <h2 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
@@ -115,12 +152,23 @@ const DigitalProductDetailPage = () => {
                 </div>
 
                 {/* Fixed buy button for mobile - hidden on md+ */}
-                <div className="md:hidden fixed bottom-24 left-0 right-0 max-w-md mx-auto px-4 pb-2 z-40">
+                <div className="md:hidden fixed bottom-24 left-0 right-0 max-w-md mx-auto px-4 pb-2 z-40 flex gap-2">
+                    <button
+                        onClick={handleShare}
+                        className="bg-white border border-gray-200 text-gray-600 p-3 rounded-xl shadow-lg flex items-center justify-center relative"
+                    >
+                        <span className="material-icons">share</span>
+                        {shareMessage && (
+                            <span className="absolute -top-10 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-xs py-1 px-2 rounded whitespace-nowrap">
+                                {shareMessage}
+                            </span>
+                        )}
+                    </button>
                     <Link
                         to={`/digital-products/${product.slug}/checkout`}
-                        className="block w-full text-center bg-green-700 text-white py-3 rounded-xl font-bold shadow-lg hover:bg-green-800 transition"
+                        className="flex-1 text-center bg-green-700 text-white py-3 rounded-xl font-bold shadow-lg hover:bg-green-800 transition"
                     >
-                        Beli Sekarang - {formatIDR(product.price)}
+                        Beli: {formatIDR(product.price)}
                     </Link>
                 </div>
             </div>
