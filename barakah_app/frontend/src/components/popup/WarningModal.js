@@ -13,6 +13,10 @@ const WarningModal = ({ onClose }) => {
         navigate('/login'); // Redirect to login page
     };
 
+    const handleGoToHome = () => {
+        navigate('/'); // Redirect to home page
+    };
+
     return (
         <div className="body flex items-center justify-center">
             <div className="bg-white p-6 rounded-2xl shadow-xl py-12 max-w-md mx-6">
