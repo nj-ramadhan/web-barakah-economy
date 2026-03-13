@@ -1,5 +1,6 @@
 from django.urls import path
 from .views import (
+    CourseViewSet, CourseDetailViewSet, CourseEnrollmentViewSet, 
     CourseMaterialViewSet, CoursePaymentConfirmationView, 
     UserCourseProgressViewSet, CertificateRequestViewSet, AdminCourseViewSet,
     CourseShareView
