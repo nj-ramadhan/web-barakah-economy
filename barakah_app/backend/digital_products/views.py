@@ -146,7 +146,7 @@ class DigitalProductViewSet(viewsets.ModelViewSet):
         return DigitalProduct.objects.filter(is_active=True)
 
     def get_permissions(self):
-        if self.action in ['list', 'retrieve']:
+        if self.action in ['list', 'retrieve', 'popular_sellers', 'public_profile']:
             return [permissions.AllowAny()]
         return [permissions.IsAuthenticated()]
 
