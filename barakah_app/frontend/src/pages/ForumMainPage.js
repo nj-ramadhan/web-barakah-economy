@@ -37,6 +37,18 @@ const ForumMainPage = () => {
         }
     };
 
+    const handleDeleteThread = async (e, slug) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (!window.confirm("Yakin ingin menghapus diskusi ini beserta seluruh balasannya?")) return;
+        try {
+            await forumApi.deleteThread(slug);
+            fetchThreads();
+        } catch (error) {
+            alert('Gagal menghapus diskusi');
+        }
+    };
+
     const handleSearch = (query) => {
         setSearchQuery(query);
         if (!query) {
@@ -281,6 +293,7 @@ const ForumMainPage = () => {
                                 </h3>
 
                                 <p className="text-sm text-gray-600 line-clamp-3 mb-4 flex-grow">
+                                    {renderContentWithMentions(thread.content)}
                                 </p>
                             </div>
 
