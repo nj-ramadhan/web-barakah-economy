@@ -72,6 +72,7 @@ import AdminAllProductsPage from './pages/admin/AdminAllProductsPage';
 import AdminAllCoursesPage from './pages/admin/AdminAllCoursesPage';
 import AdminConsultantSettingsPage from './pages/admin/AdminConsultantSettingsPage';
 import AdminTransactionHistoryPage from './pages/admin/AdminTransactionHistoryPage';
+import DashboardAdminForumPage from './pages/admin/DashboardAdminForumPage';
 
 import ForumMainPage from './pages/ForumMainPage';
 import ForumThreadDetail from './pages/ForumThreadDetail';
@@ -281,6 +282,7 @@ const LayoutWrapper = ({ isDesktop }) => {
         <Route path="/dashboard/admin/all-courses" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><AdminAllCoursesPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/admin/consultants" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><AdminConsultantSettingsPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/admin/transactions" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><AdminTransactionHistoryPage /></ResponsiveLayout></PrivateRoute>} />
+        <Route path="/dashboard/admin/forum" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardAdminForumPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/digital-products" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardDigitalProductsPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/ecourses" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardEcourseListPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/ecourses/new" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardEcourseFormPage /></ResponsiveLayout></PrivateRoute>} />
