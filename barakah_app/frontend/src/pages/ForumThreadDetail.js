@@ -3,7 +3,152 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
 import { forumApi } from '../services/forumApi';
 
+const RenderReply = ({ 
+    reply, 
+    depth = 0, 
+    user, 
+    isAdmin, 
+    replyingTo, 
+    setReplyingTo, 
+    handleReplySubmit, 
+    handleReplyDelete, 
+    handleTextChange, 
+    replyContent, 
+    showMentionDropdown, 
+    mentionUsers, 
+    handleMentionSelect, 
+    renderContentWithMentions, 
+    formatDate 
+}) => {
+    const isExpert = reply.is_expert;
+
+    return (
+        <div className={`mt-4 ${depth > 0 ? 'ml-6 md:ml-12 border-l-2 border-gray-200 pl-4' : ''}`}>
+            <div className={`bg-white rounded-lg shadow-sm border ${isExpert ? 'border-green-300 bg-green-50' : 'border-gray-200'} p-4`}>
+                <div className="flex items-center gap-3 mb-2">
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${isExpert ? 'bg-green-200 text-green-900' : 'bg-blue-100 text-blue-800'}`}>
+                        {reply.author?.full_name?.charAt(0) || 'U'}
+                    </div>
+                    <div>
+                        <p className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+                            {reply.author?.full_name}
+                            {isExpert && (
+                                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
+                                    Pakar
+                                </span>
+                            )}
+                        </p>
+                        <p className="text-xs text-gray-500">{formatDate(reply.created_at)}</p>
+                    </div>
+                </div>
+                <div className="text-gray-800 text-sm md:text-base whitespace-pre-wrap">
+                    {renderContentWithMentions(reply.content)}
+                </div>
+
+                {user && (
+                    <div className="mt-3 flex justify-between items-center">
+                        <div className="flex gap-4">
+                            {(isAdmin || user.id === reply.author?.id) && (
+                                <button
+                                    onClick={() => handleReplyDelete(reply.id)}
+                                    className="text-xs text-red-500 hover:text-red-700 flex items-center gap-1 font-medium"
+                                >
+                                    Hapus
+                                </button>
+                            )}
+                        </div>
+                        {replyingTo !== reply.id && (
+                            <button
+                                onClick={() => setReplyingTo(reply.id)}
+                                className="text-xs flex items-center gap-1 font-medium px-3 py-1.5 rounded-md bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors"
+                            >
+                                <span className="material-icons text-[14px]">reply</span> 
+                                Balas
+                            </button>
+                        )}
+                    </div>
+                )}
+
+                {/* Inline Reply Form */}
+                {user && replyingTo === reply.id && (
+                    <div className="mt-4 pt-4 border-t border-gray-100">
+                        <form onSubmit={handleReplySubmit}>
+                            <div className="relative">
+                                <textarea
+                                    className="w-full border rounded-lg p-3 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                    rows="3"
+                                    placeholder={`Balas ${reply.author?.full_name}...`}
+                                    value={replyContent}
+                                    onChange={handleTextChange}
+                                    autoFocus
+                                    required
+                                ></textarea>
+                                {showMentionDropdown && mentionUsers.length > 0 && (
+                                    <div className="absolute z-10 w-full bg-white border border-gray-200 rounded-md shadow-lg -mt-1 max-h-48 overflow-y-auto">
+                                        {mentionUsers.map((u) => (
+                                            <div
+                                                key={u.id}
+                                                onClick={() => handleMentionSelect(u.username)}
+                                                className="px-4 py-2 hover:bg-blue-50 cursor-pointer flex flex-col border-b last:border-0"
+                                            >
+                                                <span className="font-semibold text-sm text-gray-800">{u.name}</span>
+                                                <span className="text-xs text-gray-500">@{u.username}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                            <div className="mt-2 flex justify-end gap-2">
+                                <button
+                                    type="button"
+                                    onClick={() => setReplyingTo(null)}
+                                    className="bg-gray-100 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-200 text-xs font-bold"
+                                >
+                                    Batal
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 text-xs font-bold"
+                                >
+                                    Kirim Balasan
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                )}
+            </div>
+
+            {/* Render children replies */}
+            {reply.children && reply.children.length > 0 && (
+                <div className="mt-2">
+                    {reply.children.map(child => (
+                        <RenderReply 
+                            key={child.id} 
+                            reply={child} 
+                            depth={depth + 1} 
+                            user={user}
+                            isAdmin={isAdmin}
+                            replyingTo={replyingTo}
+                            setReplyingTo={setReplyingTo}
+                            handleReplySubmit={handleReplySubmit}
+                            handleReplyDelete={handleReplyDelete}
+                            handleTextChange={handleTextChange}
+                            replyContent={replyContent}
+                            showMentionDropdown={showMentionDropdown}
+                            mentionUsers={mentionUsers}
+                            handleMentionSelect={handleMentionSelect}
+                            renderContentWithMentions={renderContentWithMentions}
+                            formatDate={formatDate}
+                        />
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+};
+
 const ForumThreadDetail = () => {
+
     const { slug } = useParams();
     const navigate = useNavigate();
     const [thread, setThread] = useState(null);
@@ -145,114 +290,6 @@ const ForumThreadDetail = () => {
         );
     }
 
-    // Recursive component to render replies
-    const RenderReply = ({ reply, depth = 0 }) => {
-        const isExpert = reply.is_expert;
-
-        return (
-            <div className={`mt-4 ${depth > 0 ? 'ml-6 md:ml-12 border-l-2 border-gray-200 pl-4' : ''}`}>
-                <div className={`bg-white rounded-lg shadow-sm border ${isExpert ? 'border-green-300 bg-green-50' : 'border-gray-200'} p-4`}>
-                    <div className="flex items-center gap-3 mb-2">
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${isExpert ? 'bg-green-200 text-green-900' : 'bg-blue-100 text-blue-800'}`}>
-                            {reply.author?.full_name?.charAt(0) || 'U'}
-                        </div>
-                        <div>
-                            <p className="text-sm font-semibold text-gray-900 flex items-center gap-2">
-                                {reply.author?.full_name}
-                                {isExpert && (
-                                    <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
-                                        Pakar
-                                    </span>
-                                )}
-                            </p>
-                            <p className="text-xs text-gray-500">{formatDate(reply.created_at)}</p>
-                        </div>
-                    </div>
-                    <div className="text-gray-800 text-sm md:text-base whitespace-pre-wrap">
-                        {renderContentWithMentions(reply.content)}
-                    </div>
-
-                    {user && (
-                        <div className="mt-3 flex justify-between items-center">
-                            <div className="flex gap-4">
-                                {(isAdmin || user.id === reply.author?.id) && (
-                                    <button
-                                        onClick={() => handleReplyDelete(reply.id)}
-                                        className="text-xs text-red-500 hover:text-red-700 flex items-center gap-1 font-medium"
-                                    >
-                                        Hapus
-                                    </button>
-                                )}
-                            </div>
-                            <button
-                                onClick={() => setReplyingTo(replyingTo === reply.id ? null : reply.id)}
-                                className={`text-xs flex items-center gap-1 font-medium px-3 py-1.5 rounded-md transition-colors ${
-                                    replyingTo === reply.id 
-                                    ? 'bg-red-50 text-red-600 hover:bg-red-100' 
-                                    : 'bg-blue-50 text-blue-600 hover:bg-blue-100'
-                                }`}
-                            >
-                                <span className="material-icons text-[14px]">
-                                    {replyingTo === reply.id ? 'close' : 'reply'}
-                                </span> 
-                                {replyingTo === reply.id ? 'Batal' : 'Balas'}
-                            </button>
-                        </div>
-                    )}
-
-                    {/* Inline Reply Form */}
-                    {user && replyingTo === reply.id && (
-                        <div className="mt-4 pt-4 border-t border-gray-100">
-                            <form onSubmit={handleReplySubmit}>
-                                <div className="relative">
-                                    <textarea
-                                        className="w-full border rounded-lg p-3 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                                        rows="3"
-                                        placeholder={`Balas ${reply.author?.full_name}...`}
-                                        value={replyContent}
-                                        onChange={handleTextChange}
-                                        autoFocus
-                                        required
-                                    ></textarea>
-                                    {showMentionDropdown && mentionUsers.length > 0 && (
-                                        <div className="absolute z-10 w-full bg-white border border-gray-200 rounded-md shadow-lg -mt-1 max-h-48 overflow-y-auto">
-                                            {mentionUsers.map((u) => (
-                                                <div
-                                                    key={u.id}
-                                                    onClick={() => handleMentionSelect(u.username)}
-                                                    className="px-4 py-2 hover:bg-blue-50 cursor-pointer flex flex-col border-b last:border-0"
-                                                >
-                                                    <span className="font-semibold text-sm text-gray-800">{u.name}</span>
-                                                    <span className="text-xs text-gray-500">@{u.username}</span>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    )}
-                                </div>
-                                <div className="mt-2 flex justify-end">
-                                    <button
-                                        type="submit"
-                                        className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 text-xs font-bold"
-                                    >
-                                        Kirim Balasan
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
-                    )}
-                </div>
-
-                {/* Render children replies */}
-                {reply.children && reply.children.length > 0 && (
-                    <div className="mt-2">
-                        {reply.children.map(child => (
-                            <RenderReply key={child.id} reply={child} depth={depth + 1} />
-                        ))}
-                    </div>
-                )}
-            </div>
-        );
-    };
 
     return (
         <div className="min-h-screen bg-gray-50 pb-12 w-full max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -411,7 +448,23 @@ const ForumThreadDetail = () => {
                     {thread.replies && thread.replies.length > 0 ? (
                         <div className="space-y-4 text-sm md:text-base">
                             {thread.replies.map(reply => (
-                                <RenderReply key={reply.id} reply={reply} />
+                                <RenderReply 
+                                    key={reply.id} 
+                                    reply={reply} 
+                                    user={user}
+                                    isAdmin={isAdmin}
+                                    replyingTo={replyingTo}
+                                    setReplyingTo={setReplyingTo}
+                                    handleReplySubmit={handleReplySubmit}
+                                    handleReplyDelete={handleReplyDelete}
+                                    handleTextChange={handleTextChange}
+                                    replyContent={replyContent}
+                                    showMentionDropdown={showMentionDropdown}
+                                    mentionUsers={mentionUsers}
+                                    handleMentionSelect={handleMentionSelect}
+                                    renderContentWithMentions={renderContentWithMentions}
+                                    formatDate={formatDate}
+                                />
                             ))}
                         </div>
                     ) : (
