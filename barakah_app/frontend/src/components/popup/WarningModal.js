@@ -2,15 +2,17 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../../styles/Body.css';
 
-const WarningModal = ({ onClose }) => {
+const WarningModal = ({ onClose, redirectPath }) => {
     const navigate = useNavigate();
 
     const handleRegister = () => {
-        navigate('/register'); // Redirect to register page
+        const path = redirectPath ? `/register?next=${redirectPath}` : '/register';
+        navigate(path);
     };
 
     const handleLogin = () => {
-        navigate('/login'); // Redirect to login page
+        const path = redirectPath ? `/login?next=${redirectPath}` : '/login';
+        navigate(path);
     };
 
     const handleGoToHome = () => {

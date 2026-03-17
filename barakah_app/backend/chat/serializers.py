@@ -8,9 +8,10 @@ class AISettingsSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class UserBriefSerializer(serializers.ModelSerializer):
+    picture = serializers.ImageField(source='profile.picture', read_only=True)
     class Meta:
         model = User
-        fields = ['id', 'username', 'first_name', 'last_name', 'role', 'is_staff']
+        fields = ['id', 'username', 'first_name', 'last_name', 'role', 'is_staff', 'picture']
 
 class ConsultantCategorySerializer(serializers.ModelSerializer):
     class Meta:
@@ -27,10 +28,11 @@ class ConsultantProfileSerializer(serializers.ModelSerializer):
 
 class MessageSerializer(serializers.ModelSerializer):
     sender_name = serializers.ReadOnlyField(source='sender.username')
+    sender_picture = serializers.ImageField(source='sender.profile.picture', read_only=True)
     
     class Meta:
         model = Message
-        fields = ['id', 'session', 'sender', 'sender_name', 'content', 'attachment', 'is_read', 'created_at']
+        fields = ['id', 'session', 'sender', 'sender_name', 'sender_picture', 'content', 'attachment', 'is_read', 'created_at']
         read_only_fields = ['sender', 'created_at']
 
 class ConsultationReviewSerializer(serializers.ModelSerializer):

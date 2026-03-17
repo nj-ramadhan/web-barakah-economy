@@ -527,35 +527,71 @@ const AdminConsultantSettingsPage = () => {
                                             className="w-full bg-gray-50/80 border-2 border-transparent focus:border-indigo-500 focus:bg-white rounded-2xl px-5 py-3.5 text-sm transition-all appearance-none cursor-pointer"
                                         >
                                             <optgroup label="OpenAI">
-                                                <option value="gpt-4o-mini">GPT-4o Mini (Default)</option>
+                                                <option value="gpt-5.2">GPT-5.2 Pro</option>
+                                                <option value="gpt-5.2-codex">GPT-5.2 Codex</option>
+                                                <option value="gpt-5.1">GPT-5.1</option>
+                                                <option value="gpt-5.1-codex">GPT-5.1 Codex</option>
+                                                <option value="gpt-5">GPT-5</option>
+                                                <option value="gpt-5-mini">GPT-5 Mini</option>
+                                                <option value="gpt-5-nano">GPT-5 Nano</option>
+                                                <option value="gpt-4.1">GPT-4.1</option>
+                                                <option value="gpt-4.1-mini">GPT-4.1 Mini</option>
+                                                <option value="gpt-4.1-nano">GPT-4.1 Nano</option>
                                                 <option value="gpt-4o">GPT-4o</option>
+                                                <option value="gpt-4o-mini">GPT-4o Mini</option>
                                                 <option value="gpt-4-turbo">GPT-4 Turbo</option>
                                                 <option value="o1-mini">o1-mini</option>
                                                 <option value="o1-preview">o1-preview</option>
+                                                <option value="gpt-image-1">GPT Image-1</option>
+                                                <option value="whisper-1">Whisper-1 (Audio)</option>
+                                                <option value="text-embedding-3-large">Embedding-3 Large</option>
+                                                <option value="text-embedding-3-small">Embedding-3 Small</option>
+                                            </optgroup>
+                                            <optgroup label="Google (Gemini)">
+                                                <option value="gemini/gemini-3-pro-preview">Gemini 3 Pro Preview</option>
+                                                <option value="gemini/gemini-3-flash-preview">Gemini 3 Flash Preview</option>
+                                                <option value="gemini-3.1-pro">Gemini 3.1 Pro</option>
+                                                <option value="gemini-3-flash">Gemini 3 Flash</option>
+                                                <option value="gemini/gemini-2.5-pro">Gemini 2.5 Pro</option>
+                                                <option value="gemini/gemini-2.5-flash">Gemini 2.5 Flash</option>
+                                                <option value="gemini/gemini-2.5-flash-lite">Gemini 2.5 Flash Lite</option>
+                                                <option value="gemini/gemini-2.0-flash">Gemini 2.0 Flash</option>
+                                                <option value="gemini/gemini-2.0-flash-lite">Gemini 2.0 Flash Lite</option>
+                                                <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
+                                                <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
                                             </optgroup>
                                             <optgroup label="Anthropic">
+                                                <option value="claude-haiku-4-5">Claude 4.5 Haiku</option>
                                                 <option value="claude-3-5-sonnet">Claude 3.5 Sonnet</option>
                                                 <option value="claude-3-opus">Claude 3 Opus</option>
                                                 <option value="claude-3-haiku">Claude 3 Haiku</option>
                                             </optgroup>
-                                            <optgroup label="DeepSeek">
-                                                <option value="deepseek-chat">DeepSeek V3</option>
-                                                <option value="deepseek-reasoner">DeepSeek R1</option>
+                                            <optgroup label="DeepSeek / BytePlus">
+                                                <option value="deepseek-r1">DeepSeek R1 (BytePlus)</option>
+                                                <option value="deepseek-v3-2">DeepSeek V3.2 (BytePlus)</option>
+                                                <option value="deepseek-chat">DeepSeek V3 (Direct)</option>
+                                                <option value="deepseek-reasoner">DeepSeek R1 (Direct)</option>
                                             </optgroup>
-                                            <optgroup label="Google">
-                                                <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
-                                                <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
+                                            <optgroup label="BytePlus (Kimi / Seed / GLM)">
+                                                <option value="kimi-k2">Kimi K2</option>
+                                                <option value="kimi-k2-5-260127">Kimi K2.5</option>
+                                                <option value="kimi-k2-thinking">Kimi K2 Thinking</option>
+                                                <option value="glm-4-7">GLM-4.7</option>
+                                                <option value="seed-2-0-mini">Seed 2.0 Mini</option>
+                                                <option value="seed-2-0-mini-free">Seed 2.0 Mini Free</option>
+                                                <option value="seed-2-0-lite-free">Seed 2.0 Lite Free</option>
+                                                <option value="seed-1-8">Seed 1.8</option>
                                             </optgroup>
-                                            <optgroup label="Meta">
+                                            <optgroup label="Z.ai (GLM)">
+                                                <option value="glm-5">GLM-5</option>
+                                                <option value="glm-5-code">GLM-5 Code</option>
+                                                <option value="glm-5-turbo">GLM-5 Turbo</option>
+                                            </optgroup>
+                                            <optgroup label="Meta & Others">
                                                 <option value="llama-3.1-405b">Llama 3.1 405B</option>
                                                 <option value="llama-3.1-70b">Llama 3.1 70B</option>
-                                            </optgroup>
-                                            <optgroup label="Other Models">
-                                                <option value="moonshot-v1-8k">Kimi K1.0 (Moonshot)</option>
                                                 <option value="qwen-max">Qwen Max</option>
                                                 <option value="qwen-plus">Qwen Plus</option>
-                                                <option value="glm-4">GLM-4</option>
-                                                <option value="glm-4-flash">GLM-4 Flash</option>
                                             </optgroup>
                                         </select>
                                     </div>

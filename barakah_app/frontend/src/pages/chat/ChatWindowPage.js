@@ -300,8 +300,12 @@ const ChatWindowPage = () => {
             {/* Header Chat */}
             <div className="bg-white px-4 py-3 flex items-center gap-4 shadow-sm z-10">
                 <button onClick={() => navigate('/chat')} className="material-icons text-gray-500">arrow_back</button>
-                <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-                    <span className="material-icons text-green-700">person</span>
+                <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center overflow-hidden border border-gray-100">
+                    {session?.consultant_details?.picture ? (
+                        <img src={session.consultant_details.picture} alt=" эксперт" className="w-full h-full object-cover" />
+                    ) : (
+                        <span className="material-icons text-green-700">person</span>
+                    )}
                 </div>
                 <div className="flex-1 min-w-0">
                     <h2 className="font-bold text-gray-800 text-sm truncate">
@@ -388,8 +392,17 @@ const ChatWindowPage = () => {
                     messages.map((msg, index) => {
                         const isMe = msg.sender === currentUser?.id;
                         return (
-                            <div key={msg.id || index} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
-                                <div className={`max-w-[80%] rounded-2xl px-4 py-2 shadow-sm ${isMe
+                            <div key={msg.id || index} className={`flex items-end gap-2 ${isMe ? 'justify-end' : 'justify-start'}`}>
+                                {!isMe && (
+                                    <div className="w-8 h-8 rounded-full bg-gray-100 flex-shrink-0 flex items-center justify-center overflow-hidden border border-white shadow-sm mb-1">
+                                        {msg.sender_picture ? (
+                                            <img src={msg.sender_picture} alt="avatar" className="w-full h-full object-cover" />
+                                        ) : (
+                                            <span className="material-icons text-[16px] text-gray-400">person</span>
+                                        )}
+                                    </div>
+                                )}
+                                <div className={`max-w-[75%] rounded-2xl px-4 py-2 shadow-sm ${isMe
                                     ? 'bg-green-700 text-white rounded-tr-none'
                                     : 'bg-white text-gray-800 rounded-tl-none'
                                     }`}>

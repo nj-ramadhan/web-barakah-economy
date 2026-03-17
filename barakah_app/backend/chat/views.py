@@ -104,8 +104,8 @@ class ChatSessionViewSet(viewsets.ModelViewSet):
             except User.DoesNotExist:
                 return response.Response({"error": "Pakar tidak ditemukan"}, status=status.HTTP_404_NOT_FOUND)
 
-        # Check if session already exists for this pair and category
-        existing_session = ChatSession.objects.filter(user=user, consultant=consultant, category=category).first()
+        # Check if ACTIVE session already exists for this pair and category
+        existing_session = ChatSession.objects.filter(user=user, consultant=consultant, category=category, is_active=True).first()
         
         session = existing_session
         created = False
@@ -113,11 +113,10 @@ class ChatSessionViewSet(viewsets.ModelViewSet):
             session = ChatSession.objects.create(user=user, consultant=consultant, category=category)
             created = True
         
-        # Auto-send welcome message if exists in category AND (is new OR was sent > 24h ago)
+        # Auto-send welcome message if exists in category AND has NEVER been sent for this session
         should_send_welcome = False
         if session.category and session.category.welcome_message:
-            now = timezone.now()
-            if not session.last_welcome_sent_at or session.last_welcome_sent_at < now - timedelta(days=1):
+            if not session.last_welcome_sent_at:
                 should_send_welcome = True
 
         if should_send_welcome:

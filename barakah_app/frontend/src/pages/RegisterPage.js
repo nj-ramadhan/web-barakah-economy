@@ -4,7 +4,7 @@ import authService from '../services/auth';
 import { Helmet } from 'react-helmet';
 import Header from '../components/layout/Header';
 import NavigationButton from '../components/layout/Navigation';
-import { useNavigate, Link } from 'react-router-dom'; // For linking to the Login Page
+import { useNavigate, Link, useLocation } from 'react-router-dom'; // For linking to the Login Page
 import '../styles/Body.css';
 
 const RegisterPage = () => {
@@ -13,13 +13,16 @@ const RegisterPage = () => {
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const navigate = useNavigate();
+    const location = useLocation();
+    const nextPath = new URLSearchParams(location.search).get('next');
 
     const handleRegister = async (e) => {
         e.preventDefault();
         try {
             await authService.register(username, email, password);
             alert('Berhasil Mendaftar!');
-            navigate('/login');
+            const loginUrl = nextPath ? `/login?next=${nextPath}` : '/login';
+            navigate(loginUrl);
         } catch (error) {
             alert('Gagal Mendaftar');
             console.log(error.message);
@@ -31,7 +34,8 @@ const RegisterPage = () => {
             const response = await authService.googleLogin(credentialResponse.credential);
             localStorage.setItem('user', JSON.stringify(response)); // Save user data
             alert('Berhasil Mendaftar dengan akun google!');
-            navigate('/login');
+            const loginUrl = nextPath ? `/login?next=${nextPath}` : '/login';
+            navigate(loginUrl);
         } catch (error) {
             alert('Gagal Mendaftar dengan akun google, coba cara lain');
             console.log(error.message);

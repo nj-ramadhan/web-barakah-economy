@@ -13,4 +13,5 @@ class Review(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"Review by {self.user.username} for {self.product.name}"
+        target = self.product.name if self.product else (self.course.title if self.course else "Unknown")
+        return f"Review by {self.user.username} for {target}"

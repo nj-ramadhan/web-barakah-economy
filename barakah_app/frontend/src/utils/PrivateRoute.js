@@ -1,10 +1,11 @@
-// utils/PrivateRoute.js
 import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import WarningModal from '../components/popup/WarningModal';
 
 const PrivateRoute = ({ children }) => {
     const user = JSON.parse(localStorage.getItem('user'));
     const [showWarning, setShowWarning] = useState(false);
+    const location = useLocation();
 
     useEffect(() => {
         if (!user) {
@@ -17,7 +18,7 @@ const PrivateRoute = ({ children }) => {
         return children; // Allow access if the user is logged in
     }
 
-    return showWarning ? <WarningModal /> : null; // Show modal or nothing
+    return showWarning ? <WarningModal redirectPath={location.pathname} /> : null; // Show modal or nothing
 };
 
 export default PrivateRoute;
