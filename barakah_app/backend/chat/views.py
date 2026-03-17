@@ -37,7 +37,7 @@ class ConsultantProfileViewSet(viewsets.ModelViewSet):
     serializer_class = ConsultantProfileSerializer
     
     def get_queryset(self):
-        queryset = ConsultantProfile.objects.filter(is_available=True)
+        queryset = ConsultantProfile.objects.filter(is_available=True).exclude(user=self.request.user)
         category_id = self.request.query_params.get('category')
         if category_id:
             queryset = queryset.filter(category_id=category_id)
@@ -103,6 +103,9 @@ class ChatSessionViewSet(viewsets.ModelViewSet):
                         return response.Response({"error": "Pakar tidak terdaftar di kategori ini"}, status=status.HTTP_400_BAD_REQUEST)
             except User.DoesNotExist:
                 return response.Response({"error": "Pakar tidak ditemukan"}, status=status.HTTP_404_NOT_FOUND)
+
+        if consultant == user:
+            return response.Response({"error": "Anda tidak dapat berkonsultasi dengan diri sendiri"}, status=status.HTTP_400_BAD_REQUEST)
 
         # Check if ACTIVE session already exists for this pair and category
         existing_session = ChatSession.objects.filter(user=user, consultant=consultant, category=category, is_active=True).first()
