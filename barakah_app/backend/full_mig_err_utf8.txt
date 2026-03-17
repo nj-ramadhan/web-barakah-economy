@@ -1,0 +1,491 @@
+﻿.venv\Scripts\python
+.exe : System check 
+identified some 
+issues:
+At line:1 char:1
++ .venv\Scripts\pyth
+on.exe manage.py 
+migrate > 
+full_mig_err.txt 
+2>&1
++ ~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~
+    + CategoryInfo  
+            : NotS  
+  pecified: (Syst   
+ em check identi    
+fied some issue    
+s::String) [],     
+RemoteException
+    + FullyQualifie 
+   dErrorId : Nati  
+  veCommandError
+ 
+
+WARNINGS:
+?: (ckeditor.W001) 
+django-ckeditor 
+bundles CKEditor 
+4.22.1 which isn't 
+supported anymore 
+and which does have 
+unfixed security 
+issues, see for 
+example https://cked
+itor.com/cke4/releas
+e/CKEditor-4.24.0-LT
+S . You should 
+consider strongly 
+switching to a 
+different editor 
+(maybe CKEditor 5 
+respectively 
+django-ckeditor-5 
+after checking 
+whether the 
+CKEditor 5 license 
+terms work for you) 
+or switch to the 
+non-free CKEditor 4 
+LTS package. See htt
+ps://ckeditor.com/ck
+editor-4-support/ 
+for more on this. 
+(Note! This notice 
+has been added by 
+the django-ckeditor 
+developers and we 
+are not affiliated 
+with CKSource and 
+were not involved 
+in the licensing 
+change, so please 
+refrain from 
+complaining to us. 
+Thanks.)
+Traceback (most 
+recent call last):
+  File "D:\Galang\BA
+E\website\web bae\we
+b-barakah-economy\ba
+rakah_app\backend\.v
+env\Lib\site-package
+s\django\db\backends
+\base\base.py", 
+line 279, in 
+ensure_connection
+    self.connect()
+  File "D:\Galang\BA
+E\website\web bae\we
+b-barakah-economy\ba
+rakah_app\backend\.v
+env\Lib\site-package
+s\django\utils\async
+io.py", line 26, in 
+inner
+    return 
+func(*args, 
+**kwargs)
+           ^^^^^^^^^
+^^^^^^^^^^^^
+  File "D:\Galang\BA
+E\website\web bae\we
+b-barakah-economy\ba
+rakah_app\backend\.v
+env\Lib\site-package
+s\django\db\backends
+\base\base.py", 
+line 256, in connect
+    self.connection 
+= self.get_new_conne
+ction(conn_params)
+                    
+  ^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^
+  File "D:\Galang\BA
+E\website\web bae\we
+b-barakah-economy\ba
+rakah_app\backend\.v
+env\Lib\site-package
+s\django\utils\async
+io.py", line 26, in 
+inner
+    return 
+func(*args, 
+**kwargs)
+           ^^^^^^^^^
+^^^^^^^^^^^^
+  File "D:\Galang\BA
+E\website\web bae\we
+b-barakah-economy\ba
+rakah_app\backend\.v
+env\Lib\site-package
+s\django\db\backends
+\postgresql\base.py"
+, line 332, in 
+get_new_connection
+    connection = sel
+f.Database.connect(*
+*conn_params)
+                 ^^^
+^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^
+  File "D:\Galang\BA
+E\website\web bae\we
+b-barakah-economy\ba
+rakah_app\backend\.v
+env\Lib\site-package
+s\psycopg2\__init__.
+py", line 122, in 
+connect
+    conn = 
+_connect(dsn, connec
+tion_factory=connect
+ion_factory, 
+**kwasync)
+           ^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^
+psycopg2.Operational
+Error: connection 
+to server at 
+"localhost" (::1), 
+port 5432 failed: 
+FATAL:  password 
+authentication 
+failed for user 
+"bae_user"
+
+
+The above exception 
+was the direct 
+cause of the 
+following exception:
+
+Traceback (most 
+recent call last):
+  File "D:\Galang\BA
+E\website\web bae\we
+b-barakah-economy\ba
+rakah_app\backend\ma
+nage.py", line 22, 
+in <module>
+    main()
+  File "D:\Galang\BA
+E\website\web bae\we
+b-barakah-economy\ba
+rakah_app\backend\ma
+nage.py", line 18, 
+in main
+    execute_from_com
+mand_line(sys.argv)
+  File "D:\Galang\BA
+E\website\web bae\we
+b-barakah-economy\ba
+rakah_app\backend\.v
+env\Lib\site-package
+s\django\core\manage
+ment\__init__.py", 
+line 442, in execute
+_from_command_line
+    
+utility.execute()
+  File "D:\Galang\BA
+E\website\web bae\we
+b-barakah-economy\ba
+rakah_app\backend\.v
+env\Lib\site-package
+s\django\core\manage
+ment\__init__.py", 
+line 436, in execute
+    self.fetch_comma
+nd(subcommand).run_f
+rom_argv(self.argv)
+  File "D:\Galang\BA
+E\website\web bae\we
+b-barakah-economy\ba
+rakah_app\backend\.v
+env\Lib\site-package
+s\django\core\manage
+ment\base.py", line 
+413, in 
+run_from_argv
+    
+self.execute(*args, 
+**cmd_options)
+  File "D:\Galang\BA
+E\website\web bae\we
+b-barakah-economy\ba
+rakah_app\backend\.v
+env\Lib\site-package
+s\django\core\manage
+ment\base.py", line 
+459, in execute
+    output = 
+self.handle(*args, 
+**options)
+             ^^^^^^^
+^^^^^^^^^^^^^^^^^^^^
+^^
+  File "D:\Galang\BA
+E\website\web bae\we
+b-barakah-economy\ba
+rakah_app\backend\.v
+env\Lib\site-package
+s\django\core\manage
+ment\base.py", line 
+107, in wrapper
+    res = 
+handle_func(*args, 
+**kwargs)
+          ^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^
+  File "D:\Galang\BA
+E\website\web bae\we
+b-barakah-economy\ba
+rakah_app\backend\.v
+env\Lib\site-package
+s\django\core\manage
+ment\commands\migrat
+e.py", line 118, in 
+handle
+    executor = Migra
+tionExecutor(connect
+ion, self.migration_
+progress_callback)
+               ^^^^^
+^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^
+  File "D:\Galang\BA
+E\website\web bae\we
+b-barakah-economy\ba
+rakah_app\backend\.v
+env\Lib\site-package
+s\django\db\migratio
+ns\executor.py", 
+line 18, in __init__
+    self.loader = Mi
+grationLoader(self.c
+onnection)
+                  ^^
+^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^
+  File "D:\Galang\BA
+E\website\web bae\we
+b-barakah-economy\ba
+rakah_app\backend\.v
+env\Lib\site-package
+s\django\db\migratio
+ns\loader.py", line 
+58, in __init__
+    
+self.build_graph()
+  File "D:\Galang\BA
+E\website\web bae\we
+b-barakah-economy\ba
+rakah_app\backend\.v
+env\Lib\site-package
+s\django\db\migratio
+ns\loader.py", line 
+235, in build_graph
+    self.applied_mig
+rations = recorder.a
+pplied_migrations()
+                    
+          ^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^
+  File "D:\Galang\BA
+E\website\web bae\we
+b-barakah-economy\ba
+rakah_app\backend\.v
+env\Lib\site-package
+s\django\db\migratio
+ns\recorder.py", 
+line 89, in 
+applied_migrations
+    if 
+self.has_table():
+       
+^^^^^^^^^^^^^^^^
+  File "D:\Galang\BA
+E\website\web bae\we
+b-barakah-economy\ba
+rakah_app\backend\.v
+env\Lib\site-package
+s\django\db\migratio
+ns\recorder.py", 
+line 63, in 
+has_table
+    with self.connec
+tion.cursor() as 
+cursor:
+         ^^^^^^^^^^^
+^^^^^^^^^^^^^
+  File "D:\Galang\BA
+E\website\web bae\we
+b-barakah-economy\ba
+rakah_app\backend\.v
+env\Lib\site-package
+s\django\utils\async
+io.py", line 26, in 
+inner
+    return 
+func(*args, 
+**kwargs)
+           ^^^^^^^^^
+^^^^^^^^^^^^
+  File "D:\Galang\BA
+E\website\web bae\we
+b-barakah-economy\ba
+rakah_app\backend\.v
+env\Lib\site-package
+s\django\db\backends
+\base\base.py", 
+line 320, in cursor
+    return 
+self._cursor()
+           
+^^^^^^^^^^^^^^
+  File "D:\Galang\BA
+E\website\web bae\we
+b-barakah-economy\ba
+rakah_app\backend\.v
+env\Lib\site-package
+s\django\db\backends
+\base\base.py", 
+line 296, in _cursor
+    self.ensure_conn
+ection()
+  File "D:\Galang\BA
+E\website\web bae\we
+b-barakah-economy\ba
+rakah_app\backend\.v
+env\Lib\site-package
+s\django\utils\async
+io.py", line 26, in 
+inner
+    return 
+func(*args, 
+**kwargs)
+           ^^^^^^^^^
+^^^^^^^^^^^^
+  File "D:\Galang\BA
+E\website\web bae\we
+b-barakah-economy\ba
+rakah_app\backend\.v
+env\Lib\site-package
+s\django\db\backends
+\base\base.py", 
+line 278, in 
+ensure_connection
+    with self.wrap_d
+atabase_errors:
+  File "D:\Galang\BA
+E\website\web bae\we
+b-barakah-economy\ba
+rakah_app\backend\.v
+env\Lib\site-package
+s\django\db\utils.py
+", line 91, in 
+__exit__
+    raise dj_exc_val
+ue.with_traceback(tr
+aceback) from 
+exc_value
+  File "D:\Galang\BA
+E\website\web bae\we
+b-barakah-economy\ba
+rakah_app\backend\.v
+env\Lib\site-package
+s\django\db\backends
+\base\base.py", 
+line 279, in 
+ensure_connection
+    self.connect()
+  File "D:\Galang\BA
+E\website\web bae\we
+b-barakah-economy\ba
+rakah_app\backend\.v
+env\Lib\site-package
+s\django\utils\async
+io.py", line 26, in 
+inner
+    return 
+func(*args, 
+**kwargs)
+           ^^^^^^^^^
+^^^^^^^^^^^^
+  File "D:\Galang\BA
+E\website\web bae\we
+b-barakah-economy\ba
+rakah_app\backend\.v
+env\Lib\site-package
+s\django\db\backends
+\base\base.py", 
+line 256, in connect
+    self.connection 
+= self.get_new_conne
+ction(conn_params)
+                    
+  ^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^
+  File "D:\Galang\BA
+E\website\web bae\we
+b-barakah-economy\ba
+rakah_app\backend\.v
+env\Lib\site-package
+s\django\utils\async
+io.py", line 26, in 
+inner
+    return 
+func(*args, 
+**kwargs)
+           ^^^^^^^^^
+^^^^^^^^^^^^
+  File "D:\Galang\BA
+E\website\web bae\we
+b-barakah-economy\ba
+rakah_app\backend\.v
+env\Lib\site-package
+s\django\db\backends
+\postgresql\base.py"
+, line 332, in 
+get_new_connection
+    connection = sel
+f.Database.connect(*
+*conn_params)
+                 ^^^
+^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^
+  File "D:\Galang\BA
+E\website\web bae\we
+b-barakah-economy\ba
+rakah_app\backend\.v
+env\Lib\site-package
+s\psycopg2\__init__.
+py", line 122, in 
+connect
+    conn = 
+_connect(dsn, connec
+tion_factory=connect
+ion_factory, 
+**kwasync)
+           ^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^
+django.db.utils.Oper
+ationalError: 
+connection to 
+server at 
+"localhost" (::1), 
+port 5432 failed: 
+FATAL:  password 
+authentication 
+failed for user 
+"bae_user"
+

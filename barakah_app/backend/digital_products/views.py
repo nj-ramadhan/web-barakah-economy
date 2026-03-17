@@ -440,9 +440,9 @@ class WithdrawalViewSet(viewsets.ModelViewSet):
                 payment_status='verified'
             ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
             
-            # Add Course sales
+            # Add Course sales (using the new persistent instructor field)
             total_course_sales = CourseEnrollment.objects.filter(
-                course__instructor=request.user,
+                instructor=request.user,
                 payment_status='verified'
             ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
             
@@ -500,7 +500,7 @@ class WithdrawalViewSet(viewsets.ModelViewSet):
             ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
             
             total_course_sales = CourseEnrollment.objects.filter(
-                course__instructor=request.user,
+                instructor=request.user,
                 payment_status='verified'
             ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
             

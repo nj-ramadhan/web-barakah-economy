@@ -63,7 +63,8 @@ class CourseEnrollment(models.Model):
     ]
 
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='course_enrollments')
-    course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='enrollments')
+    course = models.ForeignKey(Course, on_delete=models.SET_NULL, null=True, blank=True, related_name='enrollments')
+    instructor = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='course_sales')
     order_number = models.CharField(max_length=30, unique=True, blank=True, null=True)
     buyer_name = models.CharField(max_length=100, blank=True, default='')
     buyer_email = models.EmailField(blank=True, default='')

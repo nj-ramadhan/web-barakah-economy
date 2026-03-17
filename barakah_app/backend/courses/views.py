@@ -84,6 +84,7 @@ class CourseEnrollmentViewSet(viewsets.ModelViewSet):
         enrollment = CourseEnrollment.objects.create(
             user=request.user,
             course=course,
+            instructor=course.instructor,  # Save direct link to instructor
             buyer_name=request.data.get('buyer_name', request.user.username),
             buyer_email=request.data.get('buyer_email', request.user.email),
             buyer_phone=request.data.get('buyer_phone', getattr(request.user, 'phone', '')),
@@ -167,7 +168,10 @@ class CoursePaymentConfirmationView(APIView):
         enrollment, created = CourseEnrollment.objects.get_or_create(
             course=course,
             user=request.user,
-            defaults={'payment_status': 'pending'}
+            defaults={
+                'payment_status': 'pending',
+                'instructor': course.instructor  # Persist instructor link
+            }
         )
         # If not created, update status to verified
         if not created:

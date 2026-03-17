@@ -198,14 +198,21 @@ class MessageViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         session_id = self.request.data.get('session')
         session = ChatSession.objects.get(id=session_id)
+        user = self.request.user
         
-        # Update session timestamp for sorting in inbox
+        # If the sender is the expert/consultant, automatically disable AI for this session
+        if session.consultant == user:
+            session.is_ai_active = False
+            
+        # Update session timestamp and AI status
         session.save() 
         
-        serializer.save(sender=self.request.user)
+        serializer.save(sender=user)
 
         # Trigger AI Response if session category has AI enabled AND session AI is active
-        if session.category and session.category.is_ai_enabled and session.is_ai_active:
+        # AND message is from the user (not expert/admin)
+        is_user_message = session.user == user
+        if session.category and session.category.is_ai_enabled and session.is_ai_active and is_user_message:
             ai_reply = AIService.get_response(serializer.data['content'], session_id=session.id)
             
             ai_sender = None
