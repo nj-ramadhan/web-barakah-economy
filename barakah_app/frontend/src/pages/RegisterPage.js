@@ -24,7 +24,15 @@ const RegisterPage = () => {
             const loginUrl = nextPath ? `/login?next=${nextPath}` : '/login';
             navigate(loginUrl);
         } catch (error) {
-            alert('Gagal Mendaftar');
+            let errorMsg = 'Gagal Mendaftar';
+            if (error.response && error.response.data) {
+                // Flatten nested error objects from DRF
+                const data = error.response.data;
+                errorMsg = Object.keys(data)
+                    .map(key => `${key}: ${Array.isArray(data[key]) ? data[key].join(', ') : data[key]}`)
+                    .join('\n');
+            }
+            alert(errorMsg);
             console.log(error.message);
         }
     };

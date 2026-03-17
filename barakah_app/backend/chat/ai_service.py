@@ -23,9 +23,9 @@ class AIService:
         
         # Add category context if available
         if category:
-            # If category has its own AI system prompt, it overrides everything else
+            # Combo Persona: Combine global settings and category-specific instructions
             if category.ai_system_prompt:
-                system_content = category.ai_system_prompt
+                system_content += f"\n\nInstruksi Khusus Kategori {category.name}:\n{category.ai_system_prompt}"
             else:
                 # Otherwise, append category specific context
                 system_content += f"\n\nContext Kategori: {category.name}"
