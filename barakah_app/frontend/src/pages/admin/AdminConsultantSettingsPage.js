@@ -520,7 +520,10 @@ const AdminConsultantSettingsPage = () => {
                                         </div>
                                     </div>
                                     <div className="space-y-1.5">
-                                        <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-1">AI Model Name</label>
+                                        <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-1 flex justify-between items-center w-full">
+                                            <span>AI Model Name</span>
+                                            <span className="text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-md lowercase font-mono">aktive: {aiSettings.model_name}</span>
+                                        </label>
                                         <select
                                             value={aiSettings.model_name}
                                             onChange={(e) => setAiSettings({ ...aiSettings, model_name: e.target.value })}

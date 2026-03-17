@@ -461,19 +461,6 @@ const ChatWindowPage = () => {
                     </div>
                 ) : (
                     <>
-                        {session?.category_welcome_message && messages.length < 5 && !content && (
-                            <div className="flex overflow-x-auto pb-2 mb-2 gap-2 scrollbar-hide">
-                                <button
-                                    onClick={() => handleQuickReply(session.category_welcome_message)}
-                                    className="flex-shrink-0 bg-green-50 text-green-700 px-3 py-1.5 rounded-full text-[10px] font-bold border border-green-100 hover:bg-green-100 transition flex items-center gap-1.5"
-                                >
-                                    <span className="material-icons text-xs">auto_fix_high</span>
-                                    {session.category_welcome_message.length > 30
-                                        ? session.category_welcome_message.substring(0, 30) + '...'
-                                        : session.category_welcome_message}
-                                </button>
-                            </div>
-                        )}
 
                         {/* Command Popup */}
                         {showCommands && (
