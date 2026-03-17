@@ -550,37 +550,36 @@ const AdminConsultantSettingsPage = () => {
                                             <optgroup label="Google (Gemini)">
                                                 <option value="gemini/gemini-3-pro-preview">Gemini 3 Pro Preview</option>
                                                 <option value="gemini/gemini-3-flash-preview">Gemini 3 Flash Preview</option>
-                                                <option value="gemini-3.1-pro">Gemini 3.1 Pro</option>
-                                                <option value="gemini-3-flash">Gemini 3 Flash</option>
+                                                <option value="gemini/gemini-3-flash">Gemini 3 Flash</option>
                                                 <option value="gemini/gemini-2.5-pro">Gemini 2.5 Pro</option>
                                                 <option value="gemini/gemini-2.5-flash">Gemini 2.5 Flash</option>
                                                 <option value="gemini/gemini-2.5-flash-lite">Gemini 2.5 Flash Lite</option>
                                                 <option value="gemini/gemini-2.0-flash">Gemini 2.0 Flash</option>
                                                 <option value="gemini/gemini-2.0-flash-lite">Gemini 2.0 Flash Lite</option>
-                                                <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
-                                                <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
+                                                <option value="gemini/gemini-1.5-pro">Gemini 1.5 Pro</option>
+                                                <option value="gemini/gemini-1.5-flash">Gemini 1.5 Flash</option>
                                             </optgroup>
                                             <optgroup label="Anthropic">
-                                                <option value="claude-haiku-4-5">Claude 4.5 Haiku</option>
-                                                <option value="claude-3-5-sonnet">Claude 3.5 Sonnet</option>
+                                                <option value="claude-4.5-haiku">Claude 4.5 Haiku</option>
+                                                <option value="claude-3.5-sonnet">Claude 3.5 Sonnet</option>
                                                 <option value="claude-3-opus">Claude 3 Opus</option>
                                                 <option value="claude-3-haiku">Claude 3 Haiku</option>
                                             </optgroup>
                                             <optgroup label="DeepSeek / BytePlus">
                                                 <option value="deepseek-r1">DeepSeek R1 (BytePlus)</option>
-                                                <option value="deepseek-v3-2">DeepSeek V3.2 (BytePlus)</option>
+                                                <option value="deepseek-v3.2">DeepSeek V3.2 (BytePlus)</option>
                                                 <option value="deepseek-chat">DeepSeek V3 (Direct)</option>
                                                 <option value="deepseek-reasoner">DeepSeek R1 (Direct)</option>
                                             </optgroup>
                                             <optgroup label="BytePlus (Kimi / Seed / GLM)">
                                                 <option value="kimi-k2">Kimi K2</option>
-                                                <option value="kimi-k2-5-260127">Kimi K2.5</option>
+                                                <option value="kimi-k2.5-260127">Kimi K2.5</option>
                                                 <option value="kimi-k2-thinking">Kimi K2 Thinking</option>
-                                                <option value="glm-4-7">GLM-4.7</option>
-                                                <option value="seed-2-0-mini">Seed 2.0 Mini</option>
-                                                <option value="seed-2-0-mini-free">Seed 2.0 Mini Free</option>
-                                                <option value="seed-2-0-lite-free">Seed 2.0 Lite Free</option>
-                                                <option value="seed-1-8">Seed 1.8</option>
+                                                <option value="glm-4.7">GLM-4.7</option>
+                                                <option value="seed-2.0-mini">Seed 2.0 Mini</option>
+                                                <option value="seed-2.0-mini-free">Seed 2.0 Mini Free</option>
+                                                <option value="seed-2.0-lite-free">Seed 2.0 Lite Free</option>
+                                                <option value="seed-1.8">Seed 1.8</option>
                                             </optgroup>
                                             <optgroup label="Z.ai (GLM)">
                                                 <option value="glm-5">GLM-5</option>

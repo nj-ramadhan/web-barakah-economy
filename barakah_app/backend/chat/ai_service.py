@@ -56,18 +56,23 @@ class AIService:
 
         try:
             base_url = settings.base_url.rstrip('/')
+            print(f"DEBUG AI: Calling model {settings.model_name} at {base_url}")
             response = requests.post(
                 f"{base_url}/chat/completions",
                 headers=headers,
                 json=data,
                 timeout=30
             )
+            
+            if response.status_code != 200:
+                print(f"AI API Error Status: {response.status_code}")
+                print(f"AI API Response: {response.text}")
+                
             response.raise_for_status()
             result = response.json()
             return result['choices'][0]['message']['content']
         except requests.exceptions.HTTPError as e:
-            print(f"AI API HTTP Error: {e.response.status_code} - {e.response.text}")
-            return "Maaf, asisten AI sedang mengalami gangguan koneksi ke provider."
+            return f"Maaf, asisten AI mengalami gangguan (HTTP {e.response.status_code})."
         except Exception as e:
             print(f"AI Service General Error: {e}")
-            return "Maaf, terjadi kesalahan teknis pada sistem AI kami."
+            return f"Maaf, terjadi kesalahan teknis pada sistem AI: {str(e)}"
