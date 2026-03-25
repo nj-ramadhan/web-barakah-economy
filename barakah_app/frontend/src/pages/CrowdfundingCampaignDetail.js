@@ -258,27 +258,27 @@ const CrowdfundingCampaignDetail = () => {
 
       {/* Tab Navigation */}
       <div className="mt-4 px-4 max-w-6xl mx-auto pb-20">
-        <div className="flex justify-start gap-4 md:gap-8 bg-white border-b px-6 overflow-x-auto flex-nowrap scrollbar-hide">
+        <div className="flex justify-start gap-2 md:gap-8 bg-white border-b px-4 md:px-6 flex-wrap">
           <button
-            className={`py-2 px-4 text-sm font-medium whitespace-nowrap ${activeTab === 'description' ? 'text-green-600 border-b-2 border-green-600' : 'text-gray-500'}`}
+            className={`py-2 px-3 md:px-4 text-xs md:text-sm font-medium ${activeTab === 'description' ? 'text-green-600 border-b-2 border-green-600' : 'text-gray-500'}`}
             onClick={() => setActiveTab('description')}
           >
             Keterangan
           </button>
           <button
-            className={`py-2 px-4 text-sm font-medium whitespace-nowrap ${activeTab === 'donations' ? 'text-green-600 border-b-2 border-green-600' : 'text-gray-500'}`}
+            className={`py-2 px-3 md:px-4 text-xs md:text-sm font-medium ${activeTab === 'donations' ? 'text-green-600 border-b-2 border-green-600' : 'text-gray-500'}`}
             onClick={() => setActiveTab('donations')}
           >
             Donatur ({donations.length})
           </button>
           <button
-            className={`py-2 px-4 text-sm font-medium whitespace-nowrap ${activeTab === 'updates' ? 'text-green-600 border-b-2 border-green-600' : 'text-gray-500'}`}
+            className={`py-2 px-3 md:px-4 text-xs md:text-sm font-medium ${activeTab === 'updates' ? 'text-green-600 border-b-2 border-green-600' : 'text-gray-500'}`}
             onClick={() => setActiveTab('updates')}
           >
             Kabar Terbaru ({campaign.updates ? campaign.updates.length : 0})
           </button>
           <button
-            className={`py-2 px-4 text-sm font-medium whitespace-nowrap ${activeTab === 'realization' ? 'text-green-600 border-b-2 border-green-600' : 'text-gray-500'}`}
+            className={`py-2 px-3 md:px-4 text-xs md:text-sm font-medium ${activeTab === 'realization' ? 'text-green-600 border-b-2 border-green-600' : 'text-gray-500'}`}
             onClick={() => setActiveTab('realization')}
           >
             Realisasi
