@@ -33,11 +33,7 @@ class CourseMaterialAdmin(admin.ModelAdmin):
 class CourseEnrollmentAdminForm(forms.ModelForm):
     class Meta:
         model = CourseEnrollment
-        fields = [
-            'user', 'course', 'buyer_name', 'buyer_email', 'buyer_phone',
-            'payment_status', 'proof_file'
-        ]
-        # Temporarily exclude potentially missing fields: 'instructor', 'order_number'
+        fields = '__all__'
 
 class CourseEnrollmentAdmin(admin.ModelAdmin):
     list_display = ('id', 'course', 'user', 'payment_status', 'enrolled_at')

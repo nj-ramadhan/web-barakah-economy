@@ -5,7 +5,7 @@ from django.contrib.auth import get_user_model
 class CourseMaterialSerializer(serializers.ModelSerializer):
     class Meta:
         model = CourseMaterial
-        fields = ['id', 'course', 'title', 'file', 'video_url', 'order']
+        fields = ['id', 'course', 'title', 'description', 'youtube_link', 'pdf_file', 'order', 'created_at']
 
 class UserCourseProgressSerializer(serializers.ModelSerializer):
     class Meta:
@@ -20,7 +20,7 @@ class CertificateSerializer(serializers.ModelSerializer):
 class CertificateRequestSerializer(serializers.ModelSerializer):
     class Meta:
         model = CertificateRequest
-        fields = ['id', 'user', 'course', 'status', 'request_date', 'certificate_file']
+        fields = ['id', 'user', 'course', 'full_name', 'email', 'whatsapp', 'notes', 'status', 'created_at']
         read_only_fields = ['user', 'status']
 
 class CourseEnrollmentSerializer(serializers.ModelSerializer):
@@ -61,7 +61,7 @@ class CourseSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'title', 'slug', 'description', 'instructor', 'instructor_name',
             'thumbnail', 'price', 'is_active', 'is_featured', 'category',
-            'duration', 'created_at', 'updated_at', 'materials', 'student_count', 
+            'duration', 'created_at', 'materials', 'student_count', 
             'material_count', 'students'
         ]
         # Temporarily excluded potentially missing fields: 'has_certificate', 'certificate_info'
