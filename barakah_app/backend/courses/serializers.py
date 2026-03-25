@@ -5,12 +5,12 @@ from django.contrib.auth import get_user_model
 class CourseMaterialSerializer(serializers.ModelSerializer):
     class Meta:
         model = CourseMaterial
-        fields = '__all__'
+        fields = ['id', 'course', 'title', 'file', 'video_url', 'order']
 
 class UserCourseProgressSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserCourseProgress
-        fields = '__all__'
+        fields = ['id', 'user', 'course', 'material', 'is_completed', 'completed_at']
 
 class CertificateSerializer(serializers.ModelSerializer):
     class Meta:
@@ -20,7 +20,7 @@ class CertificateSerializer(serializers.ModelSerializer):
 class CertificateRequestSerializer(serializers.ModelSerializer):
     class Meta:
         model = CertificateRequest
-        fields = '__all__'
+        fields = ['id', 'user', 'course', 'status', 'request_date', 'certificate_file']
         read_only_fields = ['user', 'status']
 
 class CourseEnrollmentSerializer(serializers.ModelSerializer):
@@ -31,7 +31,13 @@ class CourseEnrollmentSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = CourseEnrollment
-        fields = ['id', 'user', 'course', 'course_title', 'course_slug', 'proof_file', 'enrolled_at', 'payment_status', 'student_count', 'material_count']
+        fields = [
+            'id', 'user', 'course', 'course_title', 'course_slug', 
+            'buyer_name', 'buyer_email', 'buyer_phone',
+            'proof_file', 'enrolled_at', 'payment_status', 
+            'student_count', 'material_count'
+        ]
+        # Temporarily excluded potentially missing fields: 'instructor', 'order_number'
 
     def get_student_count(self, obj):
         if not obj.course:
@@ -52,7 +58,13 @@ class CourseSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Course
-        fields = '__all__'
+        fields = [
+            'id', 'title', 'slug', 'description', 'instructor', 'instructor_name',
+            'thumbnail', 'price', 'is_active', 'is_featured', 'category',
+            'duration', 'created_at', 'updated_at', 'materials', 'student_count', 
+            'material_count', 'students'
+        ]
+        # Temporarily excluded potentially missing fields: 'has_certificate', 'certificate_info'
         read_only_fields = ['instructor']
 
     def get_student_count(self, obj):
