@@ -27,6 +27,14 @@ class CourseViewSet(viewsets.ModelViewSet):
             return Course.objects.filter(instructor=self.request.user)
         
         queryset = Course.objects.filter(is_active=True)
+        
+        # Filter by featured status
+        is_featured = self.request.query_params.get('is_featured', None)
+        if is_featured:
+            # Convert string param to boolean
+            is_featured = is_featured.lower() in ['true', '1', 'yes']
+            queryset = queryset.filter(is_featured=is_featured)
+
         search = self.request.query_params.get('search', None)
         if search:
             queryset = queryset.filter(

@@ -12,7 +12,7 @@ const CampaignDetail = () => {
   useEffect(() => {
     const fetchCampaignDetails = async () => {
       try {
-        const response = await axios.get(`http://localhost:8000/api/campaigns/${slug}/`);
+        const response = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/campaigns/${slug}/`);
         setCampaign(response.data);
       } catch (err) {
         console.error('Error fetching campaign details:', err);

@@ -8,7 +8,7 @@ const ShareButton = ({ slug, title, type = 'campaign' }) => {
     // Use the origin if REACT_APP_API_BASE_URL is not set or is relative
     const baseUrl = process.env.REACT_APP_API_BASE_URL && process.env.REACT_APP_API_BASE_URL.startsWith('http')
         ? process.env.REACT_APP_API_BASE_URL
-        : window.location.origin.replace(':3000', ':8000'); // Fallback for local dev
+        : window.location.origin;
 
     // Determine share URL based on type
     let shareUrl = '';

@@ -11,7 +11,7 @@ const CampaignGrid = () => {
   useEffect(() => {
     const fetchCampaigns = async () => {
       try {
-        const response = await axios.get('http://localhost:8000/api/campaigns/');
+        const response = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/campaigns/`);
         setCampaigns(response.data);
         setLoading(false);
       } catch (err) {
