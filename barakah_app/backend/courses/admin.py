@@ -27,13 +27,17 @@ class CourseMaterialAdminForm(forms.ModelForm):
 class CourseMaterialAdmin(admin.ModelAdmin):
     list_display = ('title', 'course', 'order', 'created_at')
     list_filter = ('course',)
-    search_fields = ('title', 'course')
+    search_fields = ('title', 'course__title')
     form = CourseMaterialAdminForm  
 
 class CourseEnrollmentAdminForm(forms.ModelForm):
     class Meta:
         model = CourseEnrollment
-        fields = '__all__'
+        fields = [
+            'id', 'user', 'course', 'buyer_name', 'buyer_email', 'buyer_phone',
+            'payment_status', 'proof_file', 'enrolled_at'
+        ]
+        # Temporarily exclude potentially missing fields: 'instructor', 'order_number'
 
 class CourseEnrollmentAdmin(admin.ModelAdmin):
     list_display = ('id', 'course', 'user', 'payment_status', 'enrolled_at')
@@ -47,7 +51,7 @@ class UserCourseProgressAdmin(admin.ModelAdmin):
     list_filter = ('user', 'course', 'is_completed')
 
 class CertificateAdmin(admin.ModelAdmin):
-    list_display = ('user', 'course', 'certificate_number', 'issued_at')
+    list_display = ('user', 'course', 'certificate_number', 'created_at')
     search_fields = ('certificate_number', 'user__username', 'course__title')
 
 admin.site.register(Course, CourseAdmin)
