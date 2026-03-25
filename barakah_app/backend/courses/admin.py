@@ -34,8 +34,8 @@ class CourseEnrollmentAdminForm(forms.ModelForm):
     class Meta:
         model = CourseEnrollment
         fields = [
-            'id', 'user', 'course', 'buyer_name', 'buyer_email', 'buyer_phone',
-            'payment_status', 'proof_file', 'enrolled_at'
+            'user', 'course', 'buyer_name', 'buyer_email', 'buyer_phone',
+            'payment_status', 'proof_file'
         ]
         # Temporarily exclude potentially missing fields: 'instructor', 'order_number'
 
@@ -51,7 +51,7 @@ class UserCourseProgressAdmin(admin.ModelAdmin):
     list_filter = ('user', 'course', 'is_completed')
 
 class CertificateAdmin(admin.ModelAdmin):
-    list_display = ('user', 'course', 'certificate_number', 'created_at')
+    list_display = ('user', 'course', 'certificate_number', 'issued_at')
     search_fields = ('certificate_number', 'user__username', 'course__title')
 
 admin.site.register(Course, CourseAdmin)
