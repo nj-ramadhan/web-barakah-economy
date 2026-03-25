@@ -34,9 +34,13 @@ class CourseEnrollmentSerializer(serializers.ModelSerializer):
         fields = ['id', 'user', 'course', 'course_title', 'course_slug', 'proof_file', 'enrolled_at', 'payment_status', 'student_count', 'material_count']
 
     def get_student_count(self, obj):
+        if not obj.course:
+            return 0
         return obj.course.enrollments.filter(payment_status__in=['paid', 'verified']).count()
 
     def get_material_count(self, obj):
+        if not obj.course:
+            return 0
         return obj.course.materials.count()
 
 class CourseSerializer(serializers.ModelSerializer):
@@ -58,15 +62,30 @@ class CourseSerializer(serializers.ModelSerializer):
         return obj.materials.count()
 
     def get_students(self, obj):
-        return [
-            {
+        students_list = []
+        enrollments = obj.enrollments.filter(payment_status__in=['paid', 'verified']).select_related("user")
+        
+        for e in enrollments:
+            if not e.user:
+                continue
+                
+            student_data = {
                 "id": e.user.id,
-                "username": getattr(e.user, "username", ""),
-                "email": getattr(e.user, "email", ""),
-                "full_name": getattr(getattr(e.user, "profile", None), "name_full", ""),
+                "username": e.user.username,
+                "email": e.user.email,
+                "full_name": ""
             }
-            for e in obj.enrollments.filter(payment_status__in=['paid', 'verified']).select_related("user")
-            if e.user
-        ]
+            
+            # Safe profile access
+            try:
+                profile = getattr(e.user, 'profile', None)
+                if profile:
+                    student_data["full_name"] = profile.name_full or e.user.username
+            except Exception:
+                pass
+                
+            students_list.append(student_data)
+            
+        return students_list
 
 
