@@ -12,7 +12,7 @@ const formatIDR = (amount) => {
 };
 
 const ASNAF_OPTIONS = [
-    'Fakir', 'Miskin', 'Amil', 'Muallaf', 'Riqab', 'Gharimin', 'Fisabilillah', 'Ibnu Sabil', 'Lainnya'
+    'Fakir', 'Miskin', 'Amil', 'Mualaf', 'Riqab', 'Gharimin', 'Fisabilillah', 'Ibnu Sabil', 'Yatim', 'Operational', 'Bencana Alam', 'Kemanusiaan', 'Kesehatan', 'Pendidikan', 'Lingkungan', 'Pembangunan', 'Sosial', 'Masjid', 'Waqaf', 'Lainnya'
 ];
 
 const DashboardRealizationPage = () => {

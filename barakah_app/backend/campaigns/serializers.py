@@ -25,7 +25,7 @@ class CampaignSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Campaign
-        fields = '__all__'
+        fields = ['id', 'title', 'slug', 'description', 'category', 'thumbnail', 'target_amount', 'current_amount', 'is_featured', 'is_active', 'created_at', 'deadline', 'donations', 'updates', 'has_unlimited_deadline', 'total_realization']
 
     def get_has_unlimited_deadline(self, obj):
         return obj.deadline is None

@@ -16,7 +16,7 @@ class Migration(migrations.Migration):
                 migrations.AddField(
                     model_name='campaignrealization',
                     name='beneficiary_status',
-                    field=models.CharField(choices=[('Fakir', 'Fakir'), ('Miskin', 'Miskin'), ('Amil', 'Amil'), ('Muallaf', 'Muallaf'), ('Riqab', 'Riqab'), ('Gharimin', 'Gharimin'), ('Fisabilillah', 'Fisabilillah'), ('Ibnu Sabil', 'Ibnu Sabil'), ('Lainnya', 'Lainnya')], default='Lainnya', max_length=50),
+                    field=models.CharField(choices=[('Fakir', 'Fakir'), ('Miskin', 'Miskin'), ('Amil', 'Amil'), ('Mualaf', 'Mualaf'), ('Riqab', 'Riqab'), ('Gharimin', 'Gharimin'), ('Fisabilillah', 'Fisabilillah'), ('Ibnu Sabil', 'Ibnu Sabil'), ('Yatim', 'Yatim'), ('Operational', 'Operational'), ('Bencana Alam', 'Bencana Alam'), ('Kemanusiaan', 'Kemanusiaan'), ('Kesehatan', 'Kesehatan'), ('Pendidikan', 'Pendidikan'), ('Lingkungan', 'Lingkungan'), ('Pembangunan', 'Pembangunan'), ('Sosial', 'Sosial'), ('Masjid', 'Masjid'), ('Waqaf', 'Waqaf'), ('Lainnya', 'Lainnya')], default='Lainnya', max_length=50),
                 ),
                 migrations.AlterField(
                     model_name='campaignrealization',

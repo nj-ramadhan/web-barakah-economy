@@ -74,16 +74,32 @@ class Campaign(models.Model):
     def __str__(self):
         return f"{self.title}"   
 
+    @property
+    def total_realization(self):
+        """Calculate total realized amount for this campaign"""
+        return self.realizations.aggregate(total=Sum('nominal'))['total'] or 0
+
 class CampaignRealization(models.Model):
     ASNAF_CHOICES = [
         ('Fakir', 'Fakir'),
         ('Miskin', 'Miskin'),
         ('Amil', 'Amil'),
-        ('Muallaf', 'Muallaf'),
+        ('Mualaf', 'Mualaf'),
         ('Riqab', 'Riqab'),
         ('Gharimin', 'Gharimin'),
         ('Fisabilillah', 'Fisabilillah'),
         ('Ibnu Sabil', 'Ibnu Sabil'),
+        ('Yatim', 'Yatim'),
+        ('Operational', 'Operational'),
+        ('Bencana Alam', 'Bencana Alam'),
+        ('Kemanusiaan', 'Kemanusiaan'),
+        ('Kesehatan', 'Kesehatan'),
+        ('Pendidikan', 'Pendidikan'),
+        ('Lingkungan', 'Lingkungan'),
+        ('Pembangunan', 'Pembangunan'),
+        ('Sosial', 'Sosial'),
+        ('Masjid', 'Masjid'),
+        ('Waqaf', 'Waqaf'),
         ('Lainnya', 'Lainnya'),
     ]
     campaign = models.ForeignKey(Campaign, on_delete=models.CASCADE, related_name='realizations')
@@ -96,6 +112,25 @@ class CampaignRealization(models.Model):
 
     def __str__(self):
         return f"Realization for {self.campaign.title} on {self.date}"
+
+    def clean(self):
+        from django.core.exceptions import ValidationError
+        
+        # Calculate current total realization excluding this instance if it already exists
+        existing_realizations = self.campaign.realizations.all()
+        if self.pk:
+            existing_realizations = existing_realizations.exclude(pk=self.pk)
+            
+        total_existing = existing_realizations.aggregate(total=Sum('nominal'))['total'] or 0
+        
+        if (total_existing + self.nominal) > self.campaign.current_amount:
+            raise ValidationError({
+                'nominal': f"Total realisasi ({total_existing + self.nominal}) melebihi dana yang terkumpul ({self.campaign.current_amount})."
+            })
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
 
 class Update(models.Model):
     campaign = models.ForeignKey(Campaign, on_delete=models.CASCADE, related_name='updates')

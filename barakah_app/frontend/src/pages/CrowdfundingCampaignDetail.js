@@ -189,12 +189,22 @@ const CrowdfundingCampaignDetail = () => {
           <div className="p-6 md:p-10 md:w-1/2 flex flex-col justify-between">
             <div>
               <h1 className="text-2xl md:text-3xl font-bold mb-4 text-gray-900">{campaign.title}</h1>
-              <div className="flex justify-between items-center mb-4">
+              <div className="flex justify-between items-center mb-1">
                 <span className="text-lg font-semibold text-green-700">
                   Terkumpul: {campaign.current_amount ? formatIDR(campaign.current_amount) : 'Rp. 0'}
                 </span>
                 <span className="text-sm text-gray-500">
                   Target: {campaign.target_amount ? formatIDRTarget(campaign.target_amount) : 'Rp. 0'}
+                </span>
+              </div>
+              <div className="flex justify-between items-center mb-4">
+                <span className="text-sm font-medium text-orange-600">
+                  Realisasi: {campaign.total_realization ? formatIDR(campaign.total_realization) : 'Rp. 0'}
+                  {campaign.current_amount > 0 && (
+                    <span className="ml-1 text-xs text-orange-500">
+                      ({Math.round((campaign.total_realization / campaign.current_amount) * 100)}%)
+                    </span>
+                  )}
                 </span>
               </div>
 
@@ -406,42 +416,56 @@ const CrowdfundingCampaignDetail = () => {
                     <Link to="/login" className="text-green-600 font-bold mt-2 inline-block">Login sekarang</Link>
                   )}
                 </div>
-              ) : realizations.length > 0 ? (
-                <div className="space-y-4">
-                  {realizations.map((item) => (
-                    <div key={item.id} className="border-b last:border-0 pb-4 last:pb-0">
-                      <div className="flex justify-between items-start mb-2">
-                        <span className="text-xs font-bold text-green-700 bg-green-50 px-2 py-1 rounded">
-                          {new Date(item.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
-                        </span>
-                        <span className="text-sm font-bold text-gray-900">{formatIDR(item.nominal)}</span>
-                      </div>
-                      <h4 className="font-bold text-gray-800 mb-1">Keterangan:</h4>
-                      <p className="text-sm text-gray-600 mb-2">{item.description}</p>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <h4 className="font-bold text-gray-800 mb-1 text-xs">Penerima Manfaat:</h4>
-                          <p className="text-xs text-gray-600 italic">{item.beneficiaries}</p>
-                        </div>
-                        <div>
-                          <h4 className="font-bold text-gray-800 mb-1 text-xs">Status:</h4>
-                          <span className="text-[10px] bg-orange-50 text-orange-700 px-2 py-0.5 rounded-full font-bold border border-orange-100">
-                            {item.beneficiary_status}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
               ) : (
-                <p className="text-gray-500 text-center py-4">Belum ada data realisasi untuk kampanye ini.</p>
+                <>
+                  <div className="mb-6 p-4 bg-green-50 rounded-xl border border-green-100 flex flex-col md:flex-row justify-between items-center gap-4">
+                    <div className="text-center md:text-left flex-1">
+                      <p className="text-sm text-green-700 font-medium mb-1">Total Terkumpul</p>
+                      <p className="text-xl font-bold text-green-800">{formatIDR(campaign.current_amount)}</p>
+                    </div>
+                    <div className="hidden md:block h-12 w-px bg-green-200"></div>
+                    <div className="text-center md:text-right flex-1">
+                      <p className="text-sm text-green-700 font-medium mb-1">Total Direalisasikan</p>
+                      <p className="text-xl font-bold text-green-800">{formatIDR(campaign.total_realization || 0)}</p>
+                    </div>
+                  </div>
+
+                  {realizations.length > 0 ? (
+                    <div className="space-y-4">
+                      {realizations.map((item) => (
+                        <div key={item.id} className="border-b last:border-0 pb-4 last:pb-0">
+                          <div className="flex justify-between items-start mb-2">
+                            <span className="text-xs font-bold text-green-700 bg-green-50 px-2 py-1 rounded">
+                              {new Date(item.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
+                            </span>
+                            <span className="text-sm font-bold text-gray-900">{formatIDR(item.nominal)}</span>
+                          </div>
+                          <h4 className="font-bold text-gray-800 mb-1">Keterangan:</h4>
+                          <p className="text-sm text-gray-600 mb-2">{item.description}</p>
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <h4 className="font-bold text-gray-800 mb-1 text-xs">Penerima Manfaat:</h4>
+                              <p className="text-xs text-gray-600 italic">{item.beneficiaries}</p>
+                            </div>
+                            <div>
+                              <h4 className="font-bold text-gray-800 mb-1 text-xs">Status:</h4>
+                              <span className="text-[10px] bg-orange-50 text-orange-700 px-2 py-0.5 rounded-full font-bold border border-orange-100">
+                                {item.beneficiary_status}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-gray-500 text-center py-4">Belum ada data realisasi untuk kampanye ini.</p>
+                  )}
+                </>
               )}
             </div>
           )}
         </div>
       </div>
-
-      <NavigationButton />
     </div>
   );
 };
