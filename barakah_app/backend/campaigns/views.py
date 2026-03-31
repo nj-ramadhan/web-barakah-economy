@@ -84,10 +84,12 @@ class CampaignViewSet(viewsets.ModelViewSet):
         """User submits a new campaign for admin approval."""
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
+            status_val = 'approved' if request.user.is_staff else 'pending'
+            is_active = True if request.user.is_staff else False
             serializer.save(
                 created_by=request.user,
-                approval_status='pending',
-                is_active=False  # Not active until approved
+                approval_status=status_val,
+                is_active=is_active
             )
             return Response(
                 {'message': 'Kampanye berhasil diajukan dan menunggu verifikasi admin.', 'data': serializer.data},

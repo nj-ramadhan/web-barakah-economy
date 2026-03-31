@@ -122,9 +122,15 @@ const NavigationButton = () => {
               to={isLoggedIn ? "/profile" : "/login"}
               className={`col-span-3 flex flex-col items-center justify-center transition-colors ${isActive('/profile') || isActive('/login') ? 'text-green-600' : 'text-gray-500'}`}
             >
-              <span className="material-icons text-2xl">
-                {isLoggedIn ? 'account_circle' : 'login'}
-              </span>
+              {isLoggedIn && JSON.parse(localStorage.getItem('user'))?.picture ? (
+                <div className="w-7 h-7 rounded-full overflow-hidden border-2 border-transparent bg-gray-100 flex items-center justify-center">
+                  <img src={JSON.parse(localStorage.getItem('user')).picture} alt="Profile" className="w-full h-full object-cover" />
+                </div>
+              ) : (
+                <span className="material-icons text-2xl">
+                  {isLoggedIn ? 'account_circle' : 'login'}
+                </span>
+              )}
               <span className="text-[11px] font-medium mt-0.5">
                 {isLoggedIn ? 'Profile' : 'Log in'}
               </span>

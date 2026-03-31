@@ -37,6 +37,14 @@ class CustomTokenObtainPairView(TokenObtainPairView):
         response.data['role'] = user.role
         response.data['is_verified_member'] = user.is_verified_member
         response.data['accessible_menus'] = user.get_all_accessible_menus()
+
+        # Inject Profile Picture
+        try:
+            profile = getattr(user, 'profile', None)
+            response.data['picture'] = request.build_absolute_uri(profile.picture.url) if profile and profile.picture else None
+        except Exception:
+            response.data['picture'] = None
+
         return response
     
 class LoginView(CustomTokenObtainPairView):
@@ -91,6 +99,12 @@ class GoogleLoginView(APIView):
             refresh = RefreshToken.for_user(user)
             access = str(refresh.access_token)
 
+            try:
+                profile = getattr(user, 'profile', None)
+                picture_url = request.build_absolute_uri(profile.picture.url) if profile and profile.picture else None
+            except Exception:
+                picture_url = None
+
             return Response({
                 'access': access,
                 'refresh': str(refresh),
@@ -100,6 +114,7 @@ class GoogleLoginView(APIView):
                 'role': user.role,
                 'is_verified_member': user.is_verified_member,
                 'accessible_menus': user.get_all_accessible_menus(),
+                'picture': picture_url,
             }, status=status.HTTP_200_OK)
         except ValueError as e:
             logger.error(f"Token verification failed: {e}")
@@ -208,7 +223,7 @@ class UserViewSet(viewsets.ModelViewSet):
         if ordering in allowed_orderings:
             qs = qs.order_by(ordering)
 
-        return qs.distinct()
+        return qs
 
     @action(detail=False, methods=['get'])
     def export_csv(self, request):

@@ -59,6 +59,7 @@ const googleLogin = (token) => {
         username: response.data.username,
         email: response.data.email,
         role: response.data.role,
+        picture: response.data.picture,
       }));
     }
     return response.data;
@@ -89,6 +90,7 @@ const login = (username, password) => {
         username: response.data.username,
         email: response.data.email,
         role: response.data.role,
+        picture: response.data.picture,
       }));
     }
     return response.data;

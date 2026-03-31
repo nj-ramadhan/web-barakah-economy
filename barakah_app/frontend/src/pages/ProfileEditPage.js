@@ -56,36 +56,74 @@ const ProfileEditPage = () => {
   const [ktpResult, setKtpResult] = useState(null);
   const [showKtpBanner, setShowKtpBanner] = useState(true);
 
+  const [loading, setLoading] = useState(true);
+
+  // Unified fetch for Profile & Completeness check
   useEffect(() => {
-    const fetchProfile = async () => {
+    const init = async () => {
+      setLoading(true);
       try {
         const user = JSON.parse(localStorage.getItem('user'));
         if (user && user.id) {
           const profileData = await authService.getProfile(user.id);
           setProfile(profileData);
+          
+          if (isCompleteMode && user.access) {
+            try {
+              const res = await axios.get(`${API}/api/profiles/check-completeness/`, {
+                 headers: { Authorization: `Bearer ${user.access}` }
+              });
+              setMissingFields(res.data.missing_fields || []);
+            } catch (err) {}
+          }
         } else {
           navigate('/login');
         }
       } catch (error) {
         console.error('Failed to fetch profile:', error);
+      } finally {
+        setLoading(false);
       }
     };
-    fetchProfile();
-  }, [navigate]);
-
-  // Check which fields are missing
-  useEffect(() => {
-    if (isCompleteMode) {
-      const user = JSON.parse(localStorage.getItem('user'));
-      if (user?.access) {
-        axios.get(`${API}/api/profiles/check-completeness/`, {
-          headers: { Authorization: `Bearer ${user.access}` }
-        }).then(res => {
-          setMissingFields(res.data.missing_fields || []);
-        }).catch(() => {});
-      }
-    }
-  }, [isCompleteMode]);
+    init();
+  }, [navigate, isCompleteMode]);
+  
+  const ProfileSkeleton = () => (
+    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden animate-pulse">
+      <div className="p-5">
+        <div className="h-6 bg-gray-200 rounded w-1/3 mb-5"></div>
+        
+        {/* Profile Picture Skeleton */}
+        <div className="flex items-center gap-4 mb-6">
+          <div className="w-20 h-20 rounded-2xl bg-gray-200"></div>
+          <div>
+            <div className="h-8 bg-gray-200 rounded-lg w-28 mb-2"></div>
+            <div className="h-3 bg-gray-100 rounded w-32"></div>
+          </div>
+        </div>
+        
+        {/* Tabs Skeleton */}
+        <div className="flex bg-gray-50 rounded-xl p-1 mb-5 gap-1">
+          <div className="h-10 bg-gray-200 rounded-lg flex-1"></div>
+          <div className="h-10 bg-gray-200 rounded-lg flex-1"></div>
+          <div className="h-10 bg-gray-200 rounded-lg flex-1"></div>
+          <div className="h-10 bg-gray-200 rounded-lg flex-1"></div>
+        </div>
+        
+        {/* Form Fields Skeleton */}
+        <div className="space-y-4">
+          {[1, 2, 3, 4, 5].map(i => (
+            <div key={i}>
+              <div className="h-3 bg-gray-200 rounded w-1/4 mb-2"></div>
+              <div className="h-12 bg-gray-100 rounded-xl w-full"></div>
+            </div>
+          ))}
+        </div>
+        
+        <div className="h-12 bg-gray-200 rounded-xl w-full mt-6"></div>
+      </div>
+    </div>
+  );
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -172,19 +210,37 @@ const ProfileEditPage = () => {
         const formData = new FormData();
         for (const key in profile) {
           if (profile[key] !== null && profile[key] !== undefined) {
-            if ((key === 'picture' || key === 'ktp_image') && profile[key] instanceof File) {
-              formData.append(key, profile[key]);
-            } else if (key === 'work_salary') {
+            // Fix 1: Do not send string paths for file fields, only actual Files
+            if (key === 'picture' || key === 'ktp_image') {
+              if (profile[key] instanceof File) {
+                formData.append(key, profile[key]);
+              }
+            } 
+            // Fix 2: Do not send empty strings for Float fields
+            else if ((key === 'address_latitude' || key === 'address_longitude') && profile[key] === '') {
+              // skip empty float fields
+            } 
+            // Fix 3: Handle salary string cleaning
+            else if (key === 'work_salary') {
               formData.append(key, String(profile[key]).replace(/[^0-9]/g, ''));
-            } else {
+            } 
+            // Default append
+            else {
               formData.append(key, profile[key]);
             }
           }
         }
-        if (!(profile.picture instanceof File)) {
-          formData.delete('picture');
+        const updatedProfile = await authService.updateProfile(user.id, formData);
+        
+        // Update user in localStorage with new picture
+        if (updatedProfile && updatedProfile.picture) {
+           const currentUser = JSON.parse(localStorage.getItem('user'));
+           if (currentUser) {
+               currentUser.picture = updatedProfile.picture;
+               localStorage.setItem('user', JSON.stringify(currentUser));
+           }
         }
-        await authService.updateProfile(user.id, formData);
+
         alert('Data Profile berhasil diperbaharui');
         if (isCompleteMode) {
           navigate('/');
@@ -471,6 +527,9 @@ const ProfileEditPage = () => {
         {/* Top UI banners (removed KTP scan from here, moved to Umum tab) */}
 
         {/* ===== EDIT FORM ===== */}
+        {loading ? (
+          <ProfileSkeleton />
+        ) : (
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
           <div className="p-5">
             <div className="flex items-center gap-2 mb-5">
@@ -480,7 +539,7 @@ const ProfileEditPage = () => {
 
             {/* Profile Picture */}
             <div className="flex items-center gap-4 mb-6">
-              <div className="w-20 h-20 rounded-2xl overflow-hidden border-2 border-gray-200 bg-gray-50">
+              <div className="w-20 h-20 rounded-2xl overflow-hidden border-2 border-gray-200 bg-gray-50 flex items-center justify-center shrink-0">
                 <img
                   src={profile.picture instanceof File ? URL.createObjectURL(profile.picture) : (profile.picture || `${API}/media/profile_images/pas_foto_standard.png`)}
                   alt="Profile"
@@ -511,7 +570,7 @@ const ProfileEditPage = () => {
                     onClick={() => setActiveTab(tab.key)}
                     className={`flex-1 flex items-center justify-center gap-1 py-2.5 rounded-lg text-xs font-bold transition ${
                       activeTab === tab.key
-                        ? 'bg-white text-green-700 shadow-sm'
+                        ? 'bg-white text-green-700 shadow-sm shadow-gray-200'
                         : 'text-gray-500 hover:text-gray-700'
                     }`}
                   >
@@ -527,13 +586,14 @@ const ProfileEditPage = () => {
               </div>
 
               {/* Submit Button */}
-              <button type="submit" className="w-full bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white py-3.5 rounded-xl font-bold flex items-center justify-center mt-6 shadow-lg shadow-green-100 transition">
+              <button type="submit" disabled={loading} className="w-full bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white py-3.5 rounded-xl font-bold flex items-center justify-center mt-6 shadow-lg shadow-green-100 transition disabled:opacity-50">
                 <span className="material-icons mr-2">save</span>
                 Simpan Perubahan
               </button>
             </form>
           </div>
         </div>
+        )}
       </div>
       <NavigationButton />
     </div>

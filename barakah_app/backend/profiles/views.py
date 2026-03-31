@@ -89,6 +89,22 @@ def profile_completeness_check(request):
     segment = profile.segment
     study_level = profile.study_level
 
+    # If segment is required, force the sub-fields to be required based on what segment is chosen
+    if 'segment' in required_fields:
+        if segment in ['karyawan', 'umum', 'pengusaha']:
+            # Job is mandatory
+            required_fields.update({'job', 'work_field', 'work_institution', 'work_position', 'work_salary'})
+            # Study is optional for UMUM but if they fill it, require campus
+            if study_level:
+                required_fields.update({'study_campus'})
+                if study_level not in ['sd', 'smp', 'sma']:
+                    required_fields.update({'study_faculty', 'study_department', 'study_program', 'study_semester'})
+        elif segment in ['mahasiswa', 'pelajar', 'santri']:
+            # Education is mandatory
+            required_fields.update({'study_level', 'study_campus'})
+            if study_level and study_level not in ['sd', 'smp', 'sma']:
+                required_fields.update({'study_faculty', 'study_department', 'study_program', 'study_semester'})
+
     # If segment is Pelajar/Mahasiswa/Santri -> Ignore work fields
     if segment in ['mahasiswa', 'pelajar', 'santri']:
         required_fields = {f for f in required_fields if not f.startswith('work_') and f != 'job'}

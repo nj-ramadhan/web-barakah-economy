@@ -64,6 +64,28 @@ const DashboardAdminCampaignApprovalPage = () => {
         setProcessing(false);
     };
 
+    const CampaignSkeleton = () => (
+        <div className="grid gap-4 animate-pulse">
+            {[1, 2].map(i => (
+                <div key={i} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                    <div className="flex flex-col md:flex-row">
+                        <div className="w-full md:w-48 h-48 bg-gray-200"></div>
+                        <div className="flex-1 p-5">
+                            <div className="h-6 bg-gray-200 rounded w-1/3 mb-2"></div>
+                            <div className="h-3 bg-gray-100 rounded w-1/2 mb-4"></div>
+                            <div className="h-4 bg-gray-100 rounded w-full mb-1"></div>
+                            <div className="h-4 bg-gray-100 rounded w-5/6 mb-4"></div>
+                            <div className="flex gap-3 mt-4 text-sm text-gray-700 font-bold border-t border-gray-50 pt-4">
+                                <div className="h-9 bg-gray-200 rounded-xl w-28"></div>
+                                <div className="h-9 bg-gray-200 rounded-xl w-28"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            ))}
+        </div>
+    );
+
     return (
         <div className="body bg-gray-50 min-h-screen">
             <Helmet><title>Persetujuan Kampanye - Admin</title></Helmet>
@@ -81,7 +103,7 @@ const DashboardAdminCampaignApprovalPage = () => {
                 </div>
 
                 {loading ? (
-                    <div className="flex justify-center py-20"><div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-green-600"></div></div>
+                    <CampaignSkeleton />
                 ) : campaigns.length === 0 ? (
                     <div className="text-center py-20">
                         <span className="material-icons text-6xl text-gray-300">check_circle</span>

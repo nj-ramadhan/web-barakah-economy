@@ -131,9 +131,21 @@ const DashboardArticleEditorPage = () => {
         }
     };
 
-    if (loading) return (
-        <div className="flex justify-center items-center h-screen bg-gray-50">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-600"></div>
+    const ArticleSkeleton = () => (
+        <div className="grid gap-4 animate-pulse">
+            {[1, 2, 3].map(i => (
+                <div key={i} className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 flex flex-col md:flex-row gap-4">
+                    <div className="flex-1">
+                        <div className="flex justify-between items-center mb-2">
+                            <div className="h-6 bg-gray-200 rounded w-1/3"></div>
+                            <div className="h-5 bg-gray-200 rounded-full w-16"></div>
+                        </div>
+                        <div className="h-3 bg-gray-100 rounded w-24 mb-3"></div>
+                        <div className="h-4 bg-gray-100 rounded w-full mb-1"></div>
+                        <div className="h-4 bg-gray-100 rounded w-5/6"></div>
+                    </div>
+                </div>
+            ))}
         </div>
     );
 
@@ -161,7 +173,9 @@ const DashboardArticleEditorPage = () => {
                 {/* ============ ARTICLE LIST ============ */}
                 {!showEditor && (
                     <div>
-                        {articles.length === 0 ? (
+                        {loading ? (
+                            <ArticleSkeleton />
+                        ) : articles.length === 0 ? (
                             <div className="text-center py-20">
                                 <span className="material-icons text-6xl text-gray-300">article</span>
                                 <p className="text-gray-500 mt-4 font-medium">Belum ada artikel</p>
@@ -171,9 +185,9 @@ const DashboardArticleEditorPage = () => {
                                 {articles.map(a => (
                                     <div key={a.id} className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 flex flex-col md:flex-row gap-4 hover:shadow-md transition cursor-pointer" onClick={() => navigate(`/dashboard/articles/${a.slug}`)}>
                                         <div className="flex-1 min-w-0">
-                                            <div className="flex items-center gap-2">
-                                                <h3 className="font-bold text-gray-900 text-lg truncate">{a.title}</h3>
-                                                <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold ${a.status === 1 ? 'bg-green-50 text-green-700' : 'bg-yellow-50 text-yellow-700'}`}>
+                                            <div className="flex items-start sm:items-center justify-between gap-2 overflow-hidden">
+                                                <h3 className="font-bold text-gray-900 text-base sm:text-lg truncate flex-1 min-w-0" title={a.title}>{a.title}</h3>
+                                                <span className={`shrink-0 px-2 py-0.5 rounded-full text-[9px] font-bold ${a.status === 1 ? 'bg-green-50 text-green-700' : 'bg-yellow-50 text-yellow-700'}`}>
                                                     {a.status === 1 ? 'Published' : 'Draft'}
                                                 </span>
                                             </div>

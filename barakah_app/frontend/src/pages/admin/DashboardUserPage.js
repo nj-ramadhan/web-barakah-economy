@@ -183,9 +183,42 @@ const DashboardUserPage = () => {
 
     const setP = (key, val) => setEditFormData(f => ({ ...f, profile: { ...f.profile, [key]: val } }));
 
-    if (loading && users.length === 0) return (
-        <div className="flex justify-center items-center h-screen bg-gray-50">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-600"></div>
+    const UserSkeleton = () => (
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden animate-pulse">
+            <div className="overflow-x-auto">
+                <table className="w-full text-left text-sm">
+                    <thead className="bg-gray-50 border-b border-gray-100">
+                        <tr>
+                            <th className="px-3 py-4 w-10"><div className="w-4 h-4 bg-gray-200 rounded"></div></th>
+                            <th className="px-3 py-4"><div className="h-4 bg-gray-200 rounded w-20"></div></th>
+                            <th className="px-3 py-4"><div className="h-4 bg-gray-200 rounded w-16"></div></th>
+                            <th className="px-3 py-4"><div className="h-4 bg-gray-200 rounded w-12"></div></th>
+                            <th className="px-3 py-4"><div className="h-4 bg-gray-200 rounded w-16"></div></th>
+                            <th className="px-3 py-4"><div className="h-4 bg-gray-200 rounded w-12"></div></th>
+                            <th className="px-3 py-4"><div className="h-4 bg-gray-200 rounded w-24"></div></th>
+                            <th className="px-3 py-4"><div className="h-4 bg-gray-200 rounded w-16"></div></th>
+                            <th className="px-3 py-4"><div className="h-4 bg-gray-200 rounded w-8"></div></th>
+                            <th className="px-3 py-4 text-center"><div className="h-4 bg-gray-200 rounded w-16 mx-auto"></div></th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-50">
+                        {[...Array(5)].map((_, i) => (
+                            <tr key={i}>
+                                <td className="px-3 py-4"><div className="w-4 h-4 bg-gray-100 rounded"></div></td>
+                                <td className="px-3 py-4"><div className="h-4 bg-gray-100 rounded w-24 mb-1"></div><div className="h-2 bg-gray-100 rounded w-16"></div></td>
+                                <td className="px-3 py-4"><div className="h-3 bg-gray-100 rounded w-20"></div></td>
+                                <td className="px-3 py-4"><div className="h-4 bg-gray-100 rounded w-12 rounded-full"></div></td>
+                                <td className="px-3 py-4 gap-1 flex"><div className="w-12 h-4 bg-green-50 rounded-full mt-3"></div></td>
+                                <td className="px-3 py-4"><div className="w-10 h-4 bg-purple-50 rounded-full"></div></td>
+                                <td className="px-3 py-4"><div className="h-4 bg-gray-100 rounded w-28 mb-1"></div><div className="h-2 bg-gray-100 rounded w-6"></div></td>
+                                <td className="px-3 py-4"><div className="h-3 bg-gray-100 rounded w-20"></div></td>
+                                <td className="px-3 py-4 text-center"><div className="w-4 h-4 bg-gray-200 rounded-full mx-auto"></div></td>
+                                <td className="px-3 py-4"><div className="flex justify-center gap-1"><div className="w-7 h-7 bg-gray-100 rounded-lg"></div><div className="w-7 h-7 bg-gray-100 rounded-lg"></div><div className="w-7 h-7 bg-gray-100 rounded-lg"></div></div></td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
         </div>
     );
 
@@ -248,6 +281,9 @@ const DashboardUserPage = () => {
                 </div>
 
                 {/* Table */}
+                {loading && users.length === 0 ? (
+                    <UserSkeleton />
+                ) : (
                 <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
                     <div className="overflow-x-auto">
                         <table className="w-full text-left text-sm">
@@ -314,6 +350,7 @@ const DashboardUserPage = () => {
                         </table>
                     </div>
                 </div>
+                )}
 
                 {/* Pagination */}
                 {totalPages > 1 && (
