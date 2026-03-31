@@ -382,6 +382,14 @@ const DashboardUserPage = () => {
                                     <DI icon="badge" label="Jabatan" value={selectedUser.profile?.work_position || '-'} />
                                 </div>
                             </div>
+                            {selectedUser.profile?.ktp_image && (
+                                <div className="mt-8 pt-6 border-t border-gray-100">
+                                    <h3 className="text-xs font-bold text-blue-700 uppercase tracking-widest mb-4">Dokumen KTP</h3>
+                                    <div className="bg-gray-50 p-2 rounded-2xl border border-gray-200 inline-block">
+                                        <img src={selectedUser.profile.ktp_image.startsWith('http') ? selectedUser.profile.ktp_image : `${API}${selectedUser.profile.ktp_image}`} alt="Foto KTP" className="max-w-md w-full rounded-xl shadow-sm" />
+                                    </div>
+                                </div>
+                            )}
                         </div>
                         <div className="px-8 py-4 bg-gray-50 rounded-b-3xl border-t flex justify-end">
                             <button onClick={() => setShowDetailModal(false)} className="bg-white border border-gray-200 text-gray-600 px-6 py-2.5 rounded-xl text-sm font-bold shadow-sm hover:bg-gray-100 transition">Tutup</button>

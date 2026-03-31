@@ -75,15 +75,28 @@ def profile_completeness_check(request):
         required_fields.update(anggota_role.required_profile_fields or [])
     except Role.DoesNotExist:
         # Fallback if the role doesn't exist
-        required_fields = {'name_full', 'gender', 'birth_place', 'birth_date', 'address', 'address_province'}
+        required_fields = {'name_full', 'nik', 'gender', 'birth_place', 'birth_date', 'address', 'address_province'}
 
     try:
         profile = Profile.objects.get(user=user)
     except Profile.DoesNotExist:
         return Response({
             'requires_completion': True, 'is_complete': False,
-            'missing_fields': list(required_fields), 'has_custom_role': has_custom_role,
+            'missing_fields': list(required_fields)
         })
+
+    # DYNAMIC RULE: Adjust required fields based on segment and study_level
+    segment = profile.segment
+    study_level = profile.study_level
+
+    # If segment is Pelajar/Mahasiswa/Santri -> Ignore work fields
+    if segment in ['mahasiswa', 'pelajar', 'santri']:
+        required_fields = {f for f in required_fields if not f.startswith('work_') and f != 'job'}
+
+    # If study_level is SMA or below -> Ignore higher-ed fields
+    if study_level in ['sd', 'smp', 'sma']:
+        ignored_study_fields = {'study_faculty', 'study_department', 'study_program', 'study_semester'}
+        required_fields = {f for f in required_fields if f not in ignored_study_fields}
 
     missing = []
     for field in required_fields:

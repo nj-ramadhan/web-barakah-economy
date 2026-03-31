@@ -1,139 +1,118 @@
-"""KTP OCR Service - Extract data from Indonesian ID card (KTP) images.
-Uses pytesseract for OCR if available, otherwise provides a manual upload fallback.
-"""
-import re
+"""KTP OCR Service - Extract data from Indonesian ID card (KTP) images using AI Default Settings."""
+import base64
+import json
 import logging
+import requests
 
 logger = logging.getLogger(__name__)
-
-# Province mapping for address extraction
-PROVINCE_MAP = {
-    'aceh': 'aceh', 'sumatera utara': 'sumatera_utara', 'sumatera barat': 'sumatera_barat',
-    'riau': 'riau', 'jambi': 'jambi', 'sumatera selatan': 'sumatera_selatan',
-    'bengkulu': 'bengkulu', 'lampung': 'lampung', 'bangka belitung': 'kepulauan_bangka_belitung',
-    'kepulauan riau': 'kepulauan_riau', 'dki jakarta': 'dki_jakarta', 'jakarta': 'dki_jakarta',
-    'jawa barat': 'jawa_barat', 'jawa tengah': 'jawa_tengah', 'yogyakarta': 'di_yogyakarta',
-    'jawa timur': 'jawa_timur', 'banten': 'banten', 'bali': 'bali',
-    'nusa tenggara barat': 'nusa_tenggara_barat', 'ntb': 'nusa_tenggara_barat',
-    'nusa tenggara timur': 'nusa_tenggara_timur', 'ntt': 'nusa_tenggara_timur',
-    'kalimantan barat': 'kalimantan_barat', 'kalimantan tengah': 'kalimantan_tengah',
-    'kalimantan selatan': 'kalimantan_selatan', 'kalimantan timur': 'kalimantan_timur',
-    'kalimantan utara': 'kalimantan_utara', 'sulawesi utara': 'sulawesi_utara',
-    'sulawesi tengah': 'sulawesi_tengah', 'sulawesi selatan': 'sulawesi_selatan',
-    'sulawesi tenggara': 'sulawesi_tenggara', 'gorontalo': 'gorontalo',
-    'sulawesi barat': 'sulawesi_barat', 'maluku': 'maluku', 'maluku utara': 'maluku_utara',
-    'papua': 'papua', 'papua barat': 'papua_barat',
-}
-
-MARITAL_MAP = {
-    'belum kawin': 'bn', 'kawin': 'n', 'cerai hidup': 'd', 'cerai mati': 'j',
-    'belum nikah': 'bn',
-}
-
-GENDER_MAP = {
-    'laki-laki': 'l', 'laki': 'l', 'perempuan': 'p', 'wanita': 'p',
-}
-
-
-def parse_ktp_text(raw_text):
-    """Parse raw OCR text from a KTP image into structured data."""
-    text = raw_text.upper()
-    lines = [l.strip() for l in text.split('\n') if l.strip()]
-    result = {}
-
-    # Try to find NIK
-    for line in lines:
-        nik_match = re.search(r'\d{16}', line)
-        if nik_match:
-            result['nik'] = nik_match.group()
-            break
-
-    # Try to find Nama
-    for i, line in enumerate(lines):
-        if 'NAMA' in line:
-            parts = line.split(':')
-            if len(parts) > 1:
-                result['name_full'] = parts[-1].strip().title()
-            elif i + 1 < len(lines):
-                result['name_full'] = lines[i + 1].strip().title()
-
-    # Tempat/Tgl Lahir
-    for i, line in enumerate(lines):
-        if 'TEMPAT' in line or 'TGL LAHIR' in line or 'LAHIR' in line:
-            combined = line
-            if ':' in line:
-                combined = line.split(':', 1)[-1].strip()
-            # Format: "KOTA, DD-MM-YYYY"
-            birth_match = re.search(r'([A-Z\s]+),?\s*(\d{2}[-/]\d{2}[-/]\d{4})', combined)
-            if birth_match:
-                result['birth_place'] = birth_match.group(1).strip().title()
-                date_str = birth_match.group(2).replace('/', '-')
-                parts = date_str.split('-')
-                if len(parts) == 3:
-                    result['birth_date'] = f"{parts[2]}-{parts[1]}-{parts[0]}"  # YYYY-MM-DD
-
-    # Jenis Kelamin
-    for line in lines:
-        for key, val in GENDER_MAP.items():
-            if key.upper() in line:
-                result['gender'] = val
-                break
-
-    # Status Perkawinan
-    for line in lines:
-        for key, val in MARITAL_MAP.items():
-            if key.upper() in line:
-                result['marital_status'] = val
-                break
-
-    # Alamat
-    for i, line in enumerate(lines):
-        if 'ALAMAT' in line:
-            parts = line.split(':')
-            if len(parts) > 1:
-                result['address'] = parts[-1].strip().title()
-            elif i + 1 < len(lines):
-                result['address'] = lines[i + 1].strip().title()
-
-    # Provinsi - check header of KTP (usually first line contains province)
-    text_lower = raw_text.lower()
-    for key, val in PROVINCE_MAP.items():
-        if key in text_lower:
-            result['address_province'] = val
-            break
-
-    return result
-
+def encode_image(image_file):
+    """Encodes an image to base64 string safely."""
+    if hasattr(image_file, 'read'):
+        return base64.b64encode(image_file.read()).decode('utf-8')
+    with open(image_file, "rb") as image:
+        return base64.b64encode(image.read()).decode('utf-8')
 
 def extract_ktp_data(image_file):
-    """Extract KTP data from an image file using Tesseract OCR."""
+    """Extract KTP data from an image using the platform's default Generative AI Vision model."""
+    from chat.models import AISettings
+    
+    settings = AISettings.objects.first()
+    if not settings or not settings.is_enabled or not settings.api_key:
+        logger.warning("AI Settings not configured or disabled.")
+        return {'_error': 'Sistem AI belum dikonfigurasi atau tidak aktif di pengaturan admin.', '_method': 'error'}
+        
+    base64_image = encode_image(image_file)
+    
+    # Reset file pointer just in case it's used again later by Django to save the image
+    if hasattr(image_file, 'seek'):
+        image_file.seek(0)
+        
+    mime_type = "image/jpeg"
+    if hasattr(image_file, 'content_type'):
+        mime_type = image_file.content_type
+
+    prompt = """
+Anda adalah asisten data entry akurat (OCR AI) yang bertugas mengekstrak data dari pindaian Kartu Tanda Penduduk (KTP) Indonesia.
+Tolong baca KTP tersebut dan kembalikan data HANYA dalam format JSON murni yang valid, tanpa tambahan teks apapun di luar { }.
+
+Struktur Field Wajib:
+- "nik": (String, tepat 16 digit angka NIK, abaikan jika ada spasi)
+- "name_full": (String, Nama Lengkap menggunakan Title Case)
+- "birth_place": (String, Tempat Lahir menggunakan Title Case, nama kota/kabupaten saja)
+- "birth_date": (String, Tanggal Lahir HANYA dengan format "YYYY-MM-DD", misal "1999-12-05")
+- "gender": (String, "l" jika Laki-Laki, "p" jika Perempuan / Wanita)
+- "address": (String, Jalan / Alamat lengkap dengan Title Case)
+- "address_province": (String, Nama Provinsi sesuaikan dengan slug ini: misal "jawa_barat", "dki_jakarta", "jawa_tengah", "jawa_timur", "banten", "bali", "sumatera_selatan", "sumatera_utara", "nusa_tenggara_barat", dll. Format harus *snake_case*)
+- "marital_status": (String, Gunakan kode ini: "bn" jika Belum Kawin, "n" jika Kawin/Sudah Nikah, "d" jika Cerai Hidup, "j" jika Cerai Mati)
+
+Aturan:
+1. Jika sebuah field sama sekali tidak terbaca/kabur, isikan *value* dengan *string* kosong "".
+2. JANGAN MEMAKAI MARKDOWN BLOCK ```json atau ```. Pastikan jawaban berawal dari { dan berakhir dengan }.
+"""
+
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                {"type": "text", "text": prompt},
+                {
+                    "type": "image_url",
+                    "image_url": {
+                        "url": f"data:{mime_type};base64,{base64_image}"
+                    }
+                }
+            ]
+        }
+    ]
+
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {settings.api_key}"
+    }
+
+    data = {
+        "model": settings.model_name,
+        "messages": messages,
+        "max_tokens": 500,
+        "temperature": 0.0
+    }
+
     try:
-        import pytesseract
-        from PIL import Image
+        base_url = settings.base_url.rstrip('/')
+        logger.info(f"Extracting KTP using AI: {settings.model_name}")
+        response = requests.post(f"{base_url}/chat/completions", headers=headers, json=data, timeout=45)
         
-        img = Image.open(image_file)
-        # Use Indonesian language if available, fallback to English
-        try:
-            raw_text = pytesseract.image_to_string(img, lang='ind')
-        except Exception:
-            raw_text = pytesseract.image_to_string(img)
+        if response.status_code != 200:
+            logger.error(f"AI API Error (KTP): {response.text}")
+            return {'_error': f"AI menolak request (HTTP {response.status_code}). Silakan coba sesaat lagi.", '_method': 'error'}
+            
+        response.raise_for_status()
         
-        logger.info(f"KTP OCR raw text: {raw_text}")
+        result = response.json()
+        ai_reply = result['choices'][0]['message']['content'].strip()
         
-        result = parse_ktp_text(raw_text)
-        result['_raw_text'] = raw_text
-        result['_method'] = 'ocr'
-        return result
+        # Clean up possible markdown code blocks that AI generates despite instruction
+        if ai_reply.startswith('```json'):
+            ai_reply = ai_reply[7:]
+        elif ai_reply.startswith('```'):
+            ai_reply = ai_reply[3:]
+            
+        if ai_reply.endswith('```'):
+            ai_reply = ai_reply[:-3]
+            
+        ai_reply = ai_reply.strip()
         
-    except ImportError:
-        logger.warning("pytesseract not installed. Returning empty result.")
-        return {
-            '_error': 'OCR library (pytesseract) not available on server. Please fill in data manually.',
-            '_method': 'unavailable'
-        }
+        parsed_data = json.loads(ai_reply)
+        parsed_data['_method'] = 'ai_ocr'
+        parsed_data['_raw_text'] = 'AI Vision Extraction'
+        return parsed_data
+        
+    except requests.exceptions.RequestException as e:
+        logger.error(f"AI KTP Vision Exception: {e}")
+        return {'_error': f"Gagal menghubungi server AI: Pastikan layanan AI menyala.", '_method': 'error'}
+    except json.JSONDecodeError as e:
+        logger.error(f"Failed to parse AI KTP JSON: {ai_reply}")
+        return {'_error': "AI mengembalikan format data yang salah, silakan ulangi scan.", '_method': 'error'}
     except Exception as e:
-        logger.error(f"KTP OCR error: {e}")
-        return {
-            '_error': f'Gagal membaca KTP: {str(e)}',
-            '_method': 'error'
-        }
+        logger.error(f"Unexpected Error during KTP AI: {e}")
+        return {'_error': f"Kesalahan Sistem: {str(e)}", '_method': 'error'}

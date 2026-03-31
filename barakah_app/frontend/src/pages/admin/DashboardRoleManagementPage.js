@@ -36,6 +36,8 @@ const MENU_OPTIONS = [
 
 // All profile fields that can be set as required
 const PROFILE_FIELDS = [
+    { key: 'nik', label: 'NIK KTP' },
+    { key: 'ktp_image', label: 'Upload Foto KTP' },
     { key: 'name_full', label: 'Nama Lengkap' },
     { key: 'gender', label: 'Jenis Kelamin' },
     { key: 'birth_place', label: 'Tempat Lahir' },

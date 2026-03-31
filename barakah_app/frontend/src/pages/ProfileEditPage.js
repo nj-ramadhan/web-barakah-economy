@@ -6,6 +6,27 @@ import NavigationButton from '../components/layout/Navigation';
 import authService from '../services/auth';
 import axios from 'axios';
 import '../styles/Body.css';
+import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
+import 'leaflet/dist/leaflet.css';
+import L from 'leaflet';
+import icon from 'leaflet/dist/images/marker-icon.png';
+import iconShadow from 'leaflet/dist/images/marker-shadow.png';
+
+let DefaultIcon = L.icon({
+    iconUrl: icon,
+    shadowUrl: iconShadow,
+    iconAnchor: [12, 41]
+});
+L.Marker.prototype.options.icon = DefaultIcon;
+
+const MapClickHandler = ({ setLocation }) => {
+  useMapEvents({
+    click(e) {
+      setLocation(e.latlng.lat, e.latlng.lng);
+    },
+  });
+  return null;
+};
 
 const API = process.env.REACT_APP_API_BASE_URL;
 
@@ -121,7 +142,7 @@ const ProfileEditPage = () => {
         const fillable = ['nik', 'name_full', 'gender', 'birth_place', 'birth_date', 'marital_status', 'address', 'address_province'];
         let filled = 0;
         setProfile(prev => {
-          const updated = { ...prev };
+          const updated = { ...prev, ktp_image: file };
           fillable.forEach(field => {
             if (data[field] && (!prev[field] || prev[field] === '')) {
               updated[field] = data[field];
@@ -130,7 +151,7 @@ const ProfileEditPage = () => {
           });
           return updated;
         });
-        setKtpResult({ success: true, message: `Berhasil mengisi ${filled} kolom dari KTP. Silakan periksa dan lengkapi data yang kurang.` });
+        setKtpResult({ success: true, message: `Discan dengan ${filled} baris ditemukan. Foto disimpan otomatis.` });
       }
     } catch (err) {
       console.error('KTP scan error:', err);
@@ -151,7 +172,7 @@ const ProfileEditPage = () => {
         const formData = new FormData();
         for (const key in profile) {
           if (profile[key] !== null && profile[key] !== undefined) {
-            if (key === 'picture' && profile[key] instanceof File) {
+            if ((key === 'picture' || key === 'ktp_image') && profile[key] instanceof File) {
               formData.append(key, profile[key]);
             } else if (key === 'work_salary') {
               formData.append(key, String(profile[key]).replace(/[^0-9]/g, ''));
@@ -292,40 +313,79 @@ const ProfileEditPage = () => {
                 )}
               </select>
             </div>
-            <div>
-              <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Latitude</label>
-              <input type="number" name="address_latitude" placeholder="Latitude" value={profile.address_latitude || ''} onChange={handleChange} className="w-full p-3 border border-gray-200 bg-gray-50 rounded-xl text-sm outline-none focus:ring-2 focus:ring-green-500" />
-            </div>
-            <div>
-              <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Longitude</label>
-              <input type="number" name="address_longitude" placeholder="Longitude" value={profile.address_longitude || ''} onChange={handleChange} className="w-full p-3 border border-gray-200 bg-gray-50 rounded-xl text-sm outline-none focus:ring-2 focus:ring-green-500" />
+            
+            <div className="mt-4 border-t border-gray-200 pt-4">
+              <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Pilih Titik Lokasi Peta (Opsional)</label>
+              <div className="h-48 sm:h-64 rounded-xl overflow-hidden border border-gray-200 relative z-0 mb-3">
+                <MapContainer center={[profile.address_latitude || -6.914744, profile.address_longitude || 107.609810]} zoom={13} style={{ height: '100%', width: '100%' }}>
+                  <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution="&copy; OSM" />
+                  <MapClickHandler setLocation={(lat, lng) => setProfile(prev => ({ ...prev, address_latitude: lat, address_longitude: lng }))} />
+                  {(profile.address_latitude && profile.address_longitude) && (
+                    <Marker position={[profile.address_latitude, profile.address_longitude]} />
+                  )}
+                </MapContainer>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Latitude</label>
+                  <input type="number" name="address_latitude" placeholder="Dari Peta" value={profile.address_latitude || ''} onChange={handleChange} className="w-full p-2 border border-gray-200 bg-gray-50 rounded-lg text-xs outline-none focus:ring-2 focus:ring-green-500" />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Longitude</label>
+                  <input type="number" name="address_longitude" placeholder="Dari Peta" value={profile.address_longitude || ''} onChange={handleChange} className="w-full p-2 border border-gray-200 bg-gray-50 rounded-lg text-xs outline-none focus:ring-2 focus:ring-green-500" />
+                </div>
+              </div>
             </div>
           </div>
         );
 
       case 'study':
+        const isBasicSchool = ['sd', 'smp', 'sma'].includes(profile.study_level);
         return (
           <div className="space-y-4">
             <div>
-              <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Tingkat Pendidikan</label>
-              <select name="study_level" value={profile.study_level || ''} onChange={handleChange} className="w-full p-3 border border-gray-200 bg-gray-50 rounded-xl text-sm outline-none focus:ring-2 focus:ring-green-500">
+              <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
+                Tingkat Pendidikan {isFieldMissing('study_level') && <span className="text-red-500">*wajib</span>}
+              </label>
+              <select name="study_level" value={profile.study_level || ''} onChange={handleChange} className={inputCls('study_level')}>
                 <option value="">Pilih</option>
                 <option value="sd">SD/Setara</option><option value="smp">SMP/Setara</option>
                 <option value="sma">SMA/SMK/Setara</option><option value="s1">Sarjana</option>
                 <option value="s2">Magister</option><option value="s3">Doktor</option>
               </select>
             </div>
-            {['study_campus','study_faculty','study_department','study_program'].map(f => (
+            
+            <div>
+              <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
+                {isBasicSchool ? 'Nama Sekolah' : 'Kampus / Universitas'} {isFieldMissing('study_campus') && <span className="text-red-500">*wajib</span>}
+              </label>
+              <input type="text" name="study_campus" placeholder={isBasicSchool ? 'Contoh: SMA Negeri 1' : 'Contoh: Universitas Indonesia'} value={profile.study_campus || ''} onChange={handleChange} className={inputCls('study_campus')} />
+            </div>
+
+            {!isBasicSchool && ['study_faculty','study_department','study_program'].map(f => (
               <div key={f}>
-                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">{f === 'study_campus' ? 'Kampus' : f === 'study_faculty' ? 'Fakultas' : f === 'study_department' ? 'Jurusan' : 'Program Studi'}</label>
-                <input type="text" name={f} placeholder={f.replace('study_','')} value={profile[f] || ''} onChange={handleChange} className="w-full p-3 border border-gray-200 bg-gray-50 rounded-xl text-sm outline-none focus:ring-2 focus:ring-green-500" />
+                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
+                  {f === 'study_faculty' ? 'Fakultas' : f === 'study_department' ? 'Jurusan' : 'Program Studi'} {isFieldMissing(f) && <span className="text-red-500">*wajib</span>}
+                </label>
+                <input type="text" name={f} placeholder={f.replace('study_','')} value={profile[f] || ''} onChange={handleChange} className={inputCls(f)} />
               </div>
             ))}
-            <div className="grid grid-cols-3 gap-3">
-              {['study_semester','study_start_year','study_finish_year'].map(f => (
+
+            <div className="grid grid-cols-2 gap-3 mt-2">
+              {!isBasicSchool && (
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
+                    Semester {isFieldMissing('study_semester') && <span className="text-red-500">*wajib</span>}
+                  </label>
+                  <input type="number" name="study_semester" value={profile.study_semester || ''} onChange={handleChange} className={inputCls('study_semester')} />
+                </div>
+              )}
+              {['study_start_year','study_finish_year'].map(f => (
                 <div key={f}>
-                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">{f === 'study_semester' ? 'Semester' : f === 'study_start_year' ? 'Thn Masuk' : 'Thn Lulus'}</label>
-                  <input type="number" name={f} value={profile[f] || ''} onChange={handleChange} className="w-full p-3 border border-gray-200 bg-gray-50 rounded-xl text-sm outline-none focus:ring-2 focus:ring-green-500" />
+                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
+                    {f === 'study_start_year' ? 'Thn Masuk' : 'Thn Lulus'} {isFieldMissing(f) && <span className="text-red-500">*wajib</span>}
+                  </label>
+                  <input type="number" name={f} value={profile[f] || ''} onChange={handleChange} className={inputCls(f)} />
                 </div>
               ))}
             </div>
@@ -335,9 +395,15 @@ const ProfileEditPage = () => {
       case 'work':
         return (
           <div className="space-y-4">
+            <div className="bg-blue-50 text-blue-800 p-3 rounded-xl shadow-sm text-xs font-medium border border-blue-100 flex items-start gap-2">
+              <span className="material-icons text-blue-500 text-lg">info</span>
+              Apabila segmen Anda Mahasiswa/Pelajar/Santri, formulir Pekerjaan ini hanya bersifat opsional.
+            </div>
             <div>
-              <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Pekerjaan</label>
-              <select name="job" value={profile.job || ''} onChange={handleChange} className="w-full p-3 border border-gray-200 bg-gray-50 rounded-xl text-sm outline-none focus:ring-2 focus:ring-green-500">
+              <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
+                Pekerjaan {isFieldMissing('job') && <span className="text-red-500">*wajib</span>}
+              </label>
+              <select name="job" value={profile.job || ''} onChange={handleChange} className={inputCls('job')}>
                 <option value="">Pilih</option>
                 {[['mahasiswa','Mahasiswa'],['asn','ASN'],['karyawan_swasta','Karyawan Swasta'],['guru','Guru'],['dosen','Dosen'],['dokter','Dokter'],['perawat','Perawat'],['apoteker','Apoteker'],['programmer','Programmer'],['data_scientist','Data Scientist'],['desainer_grafis','Desainer Grafis'],['marketing','Marketing'],['hrd','HRD'],['akuntan','Akuntan'],['konsultan','Konsultan'],['arsitek','Arsitek'],['insinyur','Insinyur'],['peneliti','Peneliti'],['jurnalis','Jurnalis'],['penulis','Penulis'],['penerjemah','Penerjemah'],['pilot','Pilot'],['pramugari','Pramugari'],['chef','Chef'],['pengusaha','Pengusaha'],['petani','Petani'],['nelayan','Nelayan'],['pengrajin','Pengrajin'],['teknisi','Teknisi'],['seniman','Seniman'],['musisi','Musisi'],['atlet','Atlet'],['polisi','Polisi'],['tentara','Tentara'],['pengacara','Pengacara'],['notaris','Notaris'],['psikolog','Psikolog'],['sopir','Sopir'],['kurir','Kurir'],['barista','Barista'],['freelancer','Freelancer']].map(([v,l])=>
                   <option key={v} value={v}>{l}</option>
@@ -345,8 +411,10 @@ const ProfileEditPage = () => {
               </select>
             </div>
             <div>
-              <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Bidang Pekerjaan</label>
-              <select name="work_field" value={profile.work_field || ''} onChange={handleChange} className="w-full p-3 border border-gray-200 bg-gray-50 rounded-xl text-sm outline-none focus:ring-2 focus:ring-green-500">
+              <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
+                Bidang Pekerjaan {isFieldMissing('work_field') && <span className="text-red-500">*wajib</span>}
+              </label>
+              <select name="work_field" value={profile.work_field || ''} onChange={handleChange} className={inputCls('work_field')}>
                 <option value="">Pilih</option>
                 {[['pendidikan','Pendidikan'],['kesehatan','Kesehatan'],['ekobis','Ekonomi Bisnis'],['agrotek','Agrotek'],['herbal','Herbal-Farmasi'],['it','IT'],['manufaktur','Manufaktur'],['energi','Energi-Mineral'],['sains','Sains'],['teknologi','Teknologi'],['polhuk','Politik-Hukum'],['humaniora','Humaniora'],['media','Media-Literasi'],['sejarah','Sejarah']].map(([v,l])=>
                   <option key={v} value={v}>{l}</option>
@@ -355,13 +423,17 @@ const ProfileEditPage = () => {
             </div>
             {['work_institution','work_position'].map(f => (
               <div key={f}>
-                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">{f === 'work_institution' ? 'Instansi' : 'Posisi/Jabatan'}</label>
-                <input type="text" name={f} placeholder={f.replace('work_','')} value={profile[f] || ''} onChange={handleChange} className="w-full p-3 border border-gray-200 bg-gray-50 rounded-xl text-sm outline-none focus:ring-2 focus:ring-green-500" />
+                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
+                  {f === 'work_institution' ? 'Instansi' : 'Posisi/Jabatan'} {isFieldMissing(f) && <span className="text-red-500">*wajib</span>}
+                </label>
+                <input type="text" name={f} placeholder={f.replace('work_','')} value={profile[f] || ''} onChange={handleChange} className={inputCls(f)} />
               </div>
             ))}
             <div>
-              <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Gaji (Rp)</label>
-              <input type="text" name="work_salary" placeholder="0" value={profile.work_salary || ''} onChange={handleChange} className="w-full p-3 border border-gray-200 bg-gray-50 rounded-xl text-sm outline-none focus:ring-2 focus:ring-green-500" />
+              <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
+                Gaji (Rp) {isFieldMissing('work_salary') && <span className="text-red-500">*wajib</span>}
+              </label>
+              <input type="text" name="work_salary" placeholder="0" value={profile.work_salary || ''} onChange={handleChange} className={inputCls('work_salary')} />
             </div>
           </div>
         );

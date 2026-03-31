@@ -134,6 +134,7 @@ class Profile(models.Model):
     id_m = models.CharField(max_length=10, blank=True, null=True)
     nik = models.CharField(max_length=16, blank=True, null=True, help_text='Nomor Induk Kependudukan (NIK) dari KTP')
     picture = models.ImageField(upload_to='profile_images/', blank=True, null=True)
+    ktp_image = models.ImageField(upload_to='ktp_images/', blank=True, null=True)
     name_full = models.CharField(max_length=100, blank=True, null=True)
     gender = models.CharField(max_length=1, choices=GENDER_CHOICES, blank=True, null=True)
     birth_place = models.CharField(max_length=100, blank=True, null=True)
