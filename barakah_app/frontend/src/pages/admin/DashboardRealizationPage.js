@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
 import axios from 'axios';
 import { jsPDF } from 'jspdf';
@@ -34,6 +34,8 @@ const DashboardRealizationPage = () => {
         nominal: ''
     });
 
+    const location = useLocation();
+
     useEffect(() => {
         const user = JSON.parse(localStorage.getItem('user'));
         if (!user || user.username !== 'admin') {
@@ -44,7 +46,18 @@ const DashboardRealizationPage = () => {
         const fetchCampaigns = async () => {
             try {
                 const response = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/campaigns/`);
-                setCampaigns(response.data);
+                const campaignData = response.data.results || response.data;
+                setCampaigns(campaignData);
+                
+                // Check for campaign slug in URL
+                const queryParams = new URLSearchParams(location.search);
+                const campaignSlug = queryParams.get('campaign');
+                if (campaignSlug) {
+                    const campaign = campaignData.find(c => c.slug === campaignSlug);
+                    if (campaign) {
+                        handleSelectCampaign(campaign);
+                    }
+                }
             } catch (err) {
                 console.error(err);
             } finally {
@@ -52,7 +65,7 @@ const DashboardRealizationPage = () => {
             }
         };
         fetchCampaigns();
-    }, [navigate]);
+    }, [navigate, location.search]);
 
     const fetchRealizations = async (slug) => {
         const user = JSON.parse(localStorage.getItem('user'));

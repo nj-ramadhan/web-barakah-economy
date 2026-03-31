@@ -93,7 +93,7 @@ def profile_completeness_check(request):
             missing.append(field)
 
     return Response({
-        'requires_completion': not has_custom_role or len(missing) > 0,
+        'requires_completion': len(missing) > 0,
         'is_complete': len(missing) == 0,
         'missing_fields': missing,
         'has_custom_role': has_custom_role,

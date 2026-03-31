@@ -23,7 +23,7 @@ const DashboardArticleEditorPage = () => {
     const [formData, setFormData] = useState({
         title: '',
         content: '',
-        status: 'draft',
+        status: 2, // 2 = Draft (Not Active), 1 = Published (Active)
         date: new Date().toISOString().split('T')[0],
         floating_url: '',
         floating_label: '',
@@ -49,7 +49,7 @@ const DashboardArticleEditorPage = () => {
                     setFormData({
                         title: res.data.title || '',
                         content: res.data.content || '',
-                        status: res.data.status || 'draft',
+                        status: res.data.status || 2,
                         date: res.data.date || new Date().toISOString().split('T')[0],
                         floating_url: res.data.floating_url || '',
                         floating_label: res.data.floating_label || '',
@@ -106,7 +106,7 @@ const DashboardArticleEditorPage = () => {
                 alert('Artikel berhasil dibuat');
             }
             setShowEditor(false);
-            setFormData({ title: '', content: '', status: 'draft', date: new Date().toISOString().split('T')[0], floating_url: '', floating_label: '', floating_icon: null });
+            setFormData({ title: '', content: '', status: 2, date: new Date().toISOString().split('T')[0], floating_url: '', floating_label: '', floating_icon: null });
             fetchArticles();
         } catch (err) {
             console.error(err);
@@ -173,8 +173,8 @@ const DashboardArticleEditorPage = () => {
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center gap-2">
                                                 <h3 className="font-bold text-gray-900 text-lg truncate">{a.title}</h3>
-                                                <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold ${a.status === 'published' ? 'bg-green-50 text-green-700' : 'bg-yellow-50 text-yellow-700'}`}>
-                                                    {a.status === 'published' ? 'Published' : 'Draft'}
+                                                <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold ${a.status === 1 ? 'bg-green-50 text-green-700' : 'bg-yellow-50 text-yellow-700'}`}>
+                                                    {a.status === 1 ? 'Published' : 'Draft'}
                                                 </span>
                                             </div>
                                             <p className="text-xs text-gray-500 mt-1">{a.date}</p>
@@ -203,10 +203,10 @@ const DashboardArticleEditorPage = () => {
                                 </div>
                                 <div className="space-y-1">
                                     <label className="text-[9px] font-bold text-gray-400 uppercase">Status</label>
-                                    <select value={formData.status} onChange={e => setFormData({...formData, status: e.target.value})}
+                                    <select value={formData.status} onChange={e => setFormData({...formData, status: parseInt(e.target.value)})}
                                         className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-1.5 text-sm outline-none">
-                                        <option value="draft">Draft</option>
-                                        <option value="published">Published</option>
+                                        <option value="2">Draft</option>
+                                        <option value="1">Published</option>
                                     </select>
                                 </div>
                             </div>

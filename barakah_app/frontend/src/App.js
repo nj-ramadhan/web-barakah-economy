@@ -75,6 +75,8 @@ import AdminTransactionHistoryPage from './pages/admin/AdminTransactionHistoryPa
 import DashboardAdminForumPage from './pages/admin/DashboardAdminForumPage';
 import DashboardRoleManagementPage from './pages/admin/DashboardRoleManagementPage';
 import DashboardAdminCampaignApprovalPage from './pages/admin/DashboardAdminCampaignApprovalPage';
+import DashboardAdminArticleManagementPage from './pages/admin/DashboardAdminArticleManagementPage';
+import DashboardAdminCampaignManagementPage from './pages/admin/DashboardAdminCampaignManagementPage';
 import DashboardMyCampaignsPage from './pages/DashboardMyCampaignsPage';
 import DashboardArticleEditorPage from './pages/DashboardArticleEditorPage';
 
@@ -289,6 +291,8 @@ const LayoutWrapper = ({ isDesktop }) => {
         <Route path="/dashboard/admin/forum" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardAdminForumPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/admin/roles" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardRoleManagementPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/admin/campaign-approval" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardAdminCampaignApprovalPage /></ResponsiveLayout></PrivateRoute>} />
+        <Route path="/dashboard/admin/articles" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardAdminArticleManagementPage /></ResponsiveLayout></PrivateRoute>} />
+        <Route path="/dashboard/admin/campaigns" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardAdminCampaignManagementPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/my-campaigns" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardMyCampaignsPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/articles" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardArticleEditorPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/articles/:slug" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardArticleEditorPage /></ResponsiveLayout></PrivateRoute>} />

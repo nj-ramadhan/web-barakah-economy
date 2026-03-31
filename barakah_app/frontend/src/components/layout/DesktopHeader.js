@@ -42,7 +42,11 @@ const DesktopHeader = () => {
                             onClick={() => setShowProfileMenu(!showProfileMenu)}
                             className="flex items-center gap-2 px-4 py-2 bg-green-700 text-white font-semibold rounded-lg shadow hover:bg-green-800 transition"
                         >
-                            <span className="material-icons text-lg">person</span>
+                            {user.picture ? (
+                                <img src={user.picture} alt="Profile" className="w-6 h-6 rounded-full object-cover border border-green-500" />
+                            ) : (
+                                <span className="material-icons text-lg">person</span>
+                            )}
                             {user.username || 'Profile'}
                             <span className="material-icons text-sm">{showProfileMenu ? 'expand_less' : 'expand_more'}</span>
                         </button>

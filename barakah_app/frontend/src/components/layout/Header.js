@@ -13,9 +13,21 @@ const Header = () => {
         <div className="flex items-center gap-2">
           <a
             href={localStorage.getItem('user') ? "/profile" : "/login"}
-            className="w-10 h-10 flex items-center justify-center text-gray-500 bg-gray-50 rounded-full"
+            className="w-10 h-10 flex items-center justify-center text-gray-500 bg-gray-50 rounded-full overflow-hidden border border-gray-200"
           >
-            <span className="material-icons text-xl">{localStorage.getItem('user') ? 'account_circle' : 'login'}</span>
+            {(() => {
+              const userStr = localStorage.getItem('user');
+              if (userStr) {
+                try {
+                  const user = JSON.parse(userStr);
+                  if (user.picture) {
+                    return <img src={user.picture} alt="Profile" className="w-full h-full object-cover" />;
+                  }
+                } catch (e) {}
+                return <span className="material-icons text-xl">account_circle</span>;
+              }
+              return <span className="material-icons text-xl">login</span>;
+            })()}
           </a>
         </div>
       </div>

@@ -170,5 +170,12 @@ class Profile(models.Model):
     shop_header_style = models.CharField(max_length=50, default='theme', blank=True) # Options: 'theme', 'transparent'
     shop_text_color = models.CharField(max_length=50, default='#ffffff', blank=True)
 
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        # Auto-verify member if essential KTP data is provided
+        if self.nik and self.name_full and not self.user.is_verified_member:
+            self.user.is_verified_member = True
+            self.user.save(update_fields=['is_verified_member'])
+
     def __str__(self):
         return f'{self.user.username} Profile'

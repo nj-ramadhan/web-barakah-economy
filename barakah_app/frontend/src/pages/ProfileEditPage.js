@@ -201,12 +201,35 @@ const ProfileEditPage = () => {
               </label>
               <input type="text" name="name_full" placeholder="Nama Lengkap sesuai KTP" value={profile.name_full || ''} onChange={handleChange} className={inputCls('name_full')} />
             </div>
-            <div>
-              <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
-                NIK (No. KTP) <span className="text-gray-400 text-[9px] font-normal">opsional</span>
-              </label>
-              <input type="text" name="nik" placeholder="16 digit NIK" maxLength="16" value={profile.nik || ''} onChange={handleChange} className="w-full p-3 border border-gray-200 bg-gray-50 rounded-xl text-sm outline-none focus:ring-2 focus:ring-green-500 tracking-widest" />
-            </div>
+              {/* Start File Upload KTP inside tab */}
+              <div className="bg-blue-50 rounded-xl p-4 border border-blue-100 flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                <div className="bg-blue-100 text-blue-600 w-12 h-12 rounded-full flex items-center justify-center shrink-0">
+                  <span className="material-icons">badge</span>
+                </div>
+                <div className="flex-1">
+                  <h4 className="text-sm font-bold text-blue-900">Scan KTP Otomatis</h4>
+                  <p className="text-xs text-blue-700 mt-0.5">Isi data lebih cepat dengan mengunggah foto KTP Anda.</p>
+                  
+                  {ktpResult && (
+                    <div className={`mt-2 p-2 rounded-lg text-xs font-medium ${ktpResult.success ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                      {ktpResult.message}
+                    </div>
+                  )}
+                </div>
+                <label className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-bold cursor-pointer transition shadow-sm whitespace-nowrap self-stretch sm:self-auto text-center flex items-center justify-center gap-2">
+                  <span className="material-icons text-sm">photo_camera</span>
+                  {ktpScanning ? 'Memproses...' : 'Scan KTP'}
+                  <input type="file" accept="image/*" capture="environment" onChange={handleKtpScan} className="hidden" disabled={ktpScanning} />
+                </label>
+              </div>
+              {/* End File Upload KTP */}
+
+              <div>
+                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
+                  NIK (No. KTP) <span className="text-gray-400 text-[9px] font-normal">opsional</span>
+                </label>
+                <input type="text" name="nik" placeholder="16 digit NIK" maxLength="16" value={profile.nik || ''} onChange={handleChange} className="w-full p-3 border border-gray-200 bg-gray-50 rounded-xl text-sm outline-none focus:ring-2 focus:ring-green-500 tracking-widest" />
+              </div>
             <div>
               <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
                 Jenis Kelamin {isFieldMissing('gender') && <span className="text-red-500">*wajib</span>}
@@ -373,38 +396,7 @@ const ProfileEditPage = () => {
           </div>
         )}
 
-        {/* ===== KTP SCAN CARD ===== */}
-        {showKtpBanner && (
-          <div className="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl p-5 mb-4 text-white shadow-lg relative">
-            <button onClick={() => setShowKtpBanner(false)} className="absolute top-3 right-3 w-7 h-7 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30 transition">
-              <span className="material-icons text-sm">close</span>
-            </button>
-            <div className="flex items-start gap-3">
-              <span className="material-icons text-3xl">photo_camera</span>
-              <div className="flex-1">
-                <h3 className="font-bold text-lg">Scan KTP Otomatis</h3>
-                <p className="text-sm opacity-90 mt-1">Foto atau upload gambar KTP Anda untuk mengisi data secara otomatis.</p>
-                <div className="mt-3 flex gap-2">
-                  <label className="bg-white text-blue-700 px-4 py-2 rounded-xl text-sm font-bold cursor-pointer hover:bg-blue-50 transition flex items-center gap-2 shadow-sm">
-                    <span className="material-icons text-sm">photo_camera</span>
-                    {ktpScanning ? 'Memproses...' : 'Upload Foto KTP'}
-                    <input type="file" accept="image/*" capture="environment" onChange={handleKtpScan} className="hidden" disabled={ktpScanning} />
-                  </label>
-                </div>
-                {ktpPreview && (
-                  <div className="mt-3">
-                    <img src={ktpPreview} alt="KTP Preview" className="w-full max-w-xs rounded-xl border-2 border-white/30 shadow-md" />
-                  </div>
-                )}
-                {ktpResult && (
-                  <div className={`mt-3 p-3 rounded-xl text-sm ${ktpResult.success ? 'bg-green-500/30 border border-green-300/30' : 'bg-red-500/30 border border-red-300/30'}`}>
-                    {ktpResult.message}
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
+        {/* Top UI banners (removed KTP scan from here, moved to Umum tab) */}
 
         {/* ===== EDIT FORM ===== */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">

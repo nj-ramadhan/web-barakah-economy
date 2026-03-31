@@ -62,6 +62,13 @@ const LoginPage = () => {
         e.preventDefault();
         try {
             const response = await authService.login(username, password);
+            let picture = null;
+            try {
+                const profileData = await authService.getProfile(response.id);
+                picture = profileData.picture || null;
+            } catch (e) {
+                console.error("Failed to fetch profile picture during login", e);
+            }
             const userProfile = {
                 access: response.access,
                 refresh: response.refresh,
@@ -69,6 +76,7 @@ const LoginPage = () => {
                 username: response.username,
                 email: response.email,
                 role: response.role,
+                picture: picture,
             };
             localStorage.setItem('user', JSON.stringify(userProfile));
             setIsLoggedIn(true);
@@ -83,6 +91,13 @@ const LoginPage = () => {
     const handleGoogleLogin = async (credentialResponse) => {
         try {
             const response = await authService.googleLogin(credentialResponse.credential);
+            let picture = null;
+            try {
+                const profileData = await authService.getProfile(response.id);
+                picture = profileData.picture || null;
+            } catch (e) {
+                console.error("Failed to fetch profile picture during google login", e);
+            }
             const userProfile = {
                 access: response.access,
                 refresh: response.refresh,
@@ -90,6 +105,7 @@ const LoginPage = () => {
                 username: response.username,
                 email: response.email,
                 role: response.role,
+                picture: picture,
             };
             localStorage.setItem('user', JSON.stringify(userProfile));
             setIsLoggedIn(true);
