@@ -43,21 +43,6 @@ const LoginPage = () => {
         }
     }, [navigate]);
 
-    const checkProfileAndRedirect = async (accessToken, defaultPath) => {
-        try {
-            const res = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/profiles/check-completeness/`, {
-                headers: { Authorization: `Bearer ${accessToken}` }
-            });
-            if (res.data.requires_completion && !res.data.is_complete) {
-                navigate('/profile/edit?complete=1');
-                return;
-            }
-        } catch (err) {
-            console.error('Profile check failed:', err);
-        }
-        navigate(defaultPath);
-    };
-
     const handleLogin = async (e) => {
         e.preventDefault();
         try {
@@ -81,7 +66,7 @@ const LoginPage = () => {
             localStorage.setItem('user', JSON.stringify(userProfile));
             setIsLoggedIn(true);
             alert('Berhasil Login!');
-            await checkProfileAndRedirect(response.access, nextPath);
+            navigate(nextPath);
         } catch (error) {
             alert('Gagal Login, Isi nama dan password yang benar');
             console.log(error.message);
@@ -110,7 +95,7 @@ const LoginPage = () => {
             localStorage.setItem('user', JSON.stringify(userProfile));
             setIsLoggedIn(true);
             alert('Berhasil Login dengan akun google!');
-            await checkProfileAndRedirect(response.access, nextPath);
+            navigate(nextPath);
         } catch (error) {
             alert('Gagal Login dengan akun google, coba cara lain');
             console.log(error.message);

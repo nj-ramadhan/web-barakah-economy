@@ -15,9 +15,9 @@ router.register(r'profiles', ProfileViewSet, basename='profile')
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('api/', include(router.urls)),
     path('api/auth/', include('accounts.urls')),
     path('api/profiles/', include('profiles.urls')),
+    path('api/', include(router.urls)),
 
     path('api/', include('article.urls')),
 

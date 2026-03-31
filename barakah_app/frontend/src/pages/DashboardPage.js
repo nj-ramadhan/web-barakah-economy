@@ -38,6 +38,10 @@ const DashboardPage = () => {
     const [testimonialForm, setTestimonialForm] = useState({ content: '', rating: 5 });
     const [savingTestimonial, setSavingTestimonial] = useState(false);
 
+    // Profile Completeness Enforcer State
+    const [isProfileIncomplete, setIsProfileIncomplete] = useState(false);
+    const [missingFields, setMissingFields] = useState([]);
+
     useEffect(() => {
         const user = JSON.parse(localStorage.getItem('user'));
         if (!user || !user.access) {
@@ -59,7 +63,21 @@ const DashboardPage = () => {
                     axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/site-content/testimonials/my_testimonial/`, {
                         headers: { Authorization: `Bearer ${user.access}` }
                     }).catch(() => ({ data: {} }))
-                ]);
+                ])
+
+                // Also check profile completeness to enforce dashboard access
+                try {
+                    const completenessRes = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/profiles/check-completeness/`, {
+                        headers: { Authorization: `Bearer ${user.access}` }
+                    });
+                    if (completenessRes.data.requires_completion) {
+                        setIsProfileIncomplete(true);
+                        setMissingFields(completenessRes.data.missing_fields || []);
+                    }
+                } catch (err) {
+                    console.error("Dashboard check-completeness failed:", err);
+                }
+
                 setProductCount(productRes.data.length);
                 setCourseCount(courseRes.data.length);
                 setBalanceData(balanceRes.data);
@@ -171,6 +189,57 @@ const DashboardPage = () => {
                 <Header />
                 <div className="flex justify-center items-center h-screen">
                     <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-green-600"></div>
+                </div>
+                <NavigationButton />
+            </div>
+        );
+    }
+
+    if (isProfileIncomplete) {
+        return (
+            <div className="body bg-gray-50 min-h-screen">
+                <Header />
+                <div className="flex flex-col items-center justify-center p-6 text-center mt-10 max-w-lg mx-auto bg-white rounded-3xl shadow-xl border border-gray-100">
+                    <div className="w-24 h-24 mb-6 relative">
+                        <div className="absolute inset-0 bg-red-100 rounded-full animate-pulse"></div>
+                        <div className="absolute inset-2 bg-red-500 rounded-full flex items-center justify-center">
+                            <span className="material-icons text-white text-4xl">lock_person</span>
+                        </div>
+                    </div>
+                    <h2 className="text-2xl font-black text-gray-800 tracking-tight mb-3">Akses Dashboard Terkunci</h2>
+                    <p className="text-sm text-gray-600 mb-6 leading-relaxed">
+                        Anda harus melengkapi biodata untuk mendapatkan akses penuh ke fitur Dashboard keanggotaan <span className="font-bold text-green-700">Barakah</span>.
+                    </p>
+                    
+                    {missingFields && missingFields.length > 0 && (
+                        <div className="mb-8 p-4 bg-orange-50 rounded-xl border border-orange-100 w-full text-left">
+                            <h4 className="text-[11px] font-bold text-orange-800 uppercase tracking-wider mb-2 flex items-center gap-1">
+                                <span className="material-icons text-[14px]">warning</span> Data yang perlu dilengkapi:
+                            </h4>
+                            <div className="flex flex-wrap gap-2">
+                                {missingFields.map(field => (
+                                    <span key={field} className="text-xs bg-white text-orange-700 px-3 py-1 rounded-full shadow-sm font-medium border border-orange-200">
+                                        {field.replace('_', ' ')}
+                                    </span>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                    
+                    <button
+                        onClick={() => navigate('/profile/edit?complete=1')}
+                        className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold py-4 px-8 rounded-2xl shadow-lg shadow-green-200 transition-all transform hover:-translate-y-1 hover:shadow-xl flex items-center justify-center gap-3"
+                    >
+                        <span>Lengkapi Biodata Sekarang</span>
+                        <span className="material-icons text-lg">arrow_forward</span>
+                    </button>
+                    
+                    <button
+                        onClick={() => navigate('/')}
+                        className="mt-4 text-sm text-gray-500 hover:text-gray-700 font-medium py-2"
+                    >
+                        Kembali ke Halaman Utama
+                    </button>
                 </div>
                 <NavigationButton />
             </div>

@@ -67,15 +67,14 @@ def profile_completeness_check(request):
     if user.role in ('admin', 'staff', 'seller'):
         return Response({'requires_completion': False, 'is_complete': True, 'missing_fields': [], 'has_custom_role': True})
 
-    has_custom_role = user.custom_roles.filter(is_active=True).exists()
-
-    # Gather required fields from custom roles, or use defaults
-    if has_custom_role:
-        required_fields = set()
-        for role in user.custom_roles.filter(is_active=True):
-            required_fields.update(role.required_profile_fields or [])
-    else:
-        # Default mandatory fields for users without custom role
+    # Always check against the required fields for "anggota_bae"
+    from accounts.models import Role
+    required_fields = set()
+    try:
+        anggota_role = Role.objects.get(code='anggota_bae')
+        required_fields.update(anggota_role.required_profile_fields or [])
+    except Role.DoesNotExist:
+        # Fallback if the role doesn't exist
         required_fields = {'name_full', 'gender', 'birth_place', 'birth_date', 'address', 'address_province'}
 
     try:
@@ -96,7 +95,6 @@ def profile_completeness_check(request):
         'requires_completion': len(missing) > 0,
         'is_complete': len(missing) == 0,
         'missing_fields': missing,
-        'has_custom_role': has_custom_role,
     })
 
 
