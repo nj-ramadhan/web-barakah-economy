@@ -54,3 +54,67 @@ def profile_update(request, user_id):
         serializer.save()
         return Response(serializer.data)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def profile_completeness_check(request):
+    """Check if user must complete profile before accessing features.
+    Users with role=user and no custom_role must complete basic KTP fields."""
+    user = request.user
+
+    # Admin/staff/seller bypass
+    if user.role in ('admin', 'staff', 'seller'):
+        return Response({'requires_completion': False, 'is_complete': True, 'missing_fields': [], 'has_custom_role': True})
+
+    has_custom_role = user.custom_roles.filter(is_active=True).exists()
+
+    # Gather required fields from custom roles, or use defaults
+    if has_custom_role:
+        required_fields = set()
+        for role in user.custom_roles.filter(is_active=True):
+            required_fields.update(role.required_profile_fields or [])
+    else:
+        # Default mandatory fields for users without custom role
+        required_fields = {'name_full', 'gender', 'birth_place', 'birth_date', 'address', 'address_province'}
+
+    try:
+        profile = Profile.objects.get(user=user)
+    except Profile.DoesNotExist:
+        return Response({
+            'requires_completion': True, 'is_complete': False,
+            'missing_fields': list(required_fields), 'has_custom_role': has_custom_role,
+        })
+
+    missing = []
+    for field in required_fields:
+        val = getattr(profile, field, None)
+        if not val or (isinstance(val, str) and not val.strip()):
+            missing.append(field)
+
+    return Response({
+        'requires_completion': not has_custom_role or len(missing) > 0,
+        'is_complete': len(missing) == 0,
+        'missing_fields': missing,
+        'has_custom_role': has_custom_role,
+    })
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+@parser_classes([MultiPartParser, FormParser])
+def scan_ktp(request):
+    """Accept a KTP image and return extracted data using OCR."""
+    from .ktp_service import extract_ktp_data
+
+    image = request.FILES.get('ktp_image')
+    if not image:
+        return Response({'error': 'ktp_image file wajib diupload'}, status=status.HTTP_400_BAD_REQUEST)
+
+    # Validate file type
+    allowed_types = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
+    if image.content_type not in allowed_types:
+        return Response({'error': 'Format file harus JPG, PNG, atau WebP'}, status=status.HTTP_400_BAD_REQUEST)
+
+    result = extract_ktp_data(image)
+    return Response(result)

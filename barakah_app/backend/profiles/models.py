@@ -132,6 +132,7 @@ class Profile(models.Model):
 
     user = models.OneToOneField(User, on_delete=models.CASCADE, primary_key=True)
     id_m = models.CharField(max_length=10, blank=True, null=True)
+    nik = models.CharField(max_length=16, blank=True, null=True, help_text='Nomor Induk Kependudukan (NIK) dari KTP')
     picture = models.ImageField(upload_to='profile_images/', blank=True, null=True)
     name_full = models.CharField(max_length=100, blank=True, null=True)
     gender = models.CharField(max_length=1, choices=GENDER_CHOICES, blank=True, null=True)

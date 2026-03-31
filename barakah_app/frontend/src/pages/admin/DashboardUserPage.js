@@ -11,6 +11,14 @@ const getAuth = () => {
     return { headers: { Authorization: `Bearer ${user?.access}` } };
 };
 
+const GENDER_CHOICES = [['l','Laki-laki'],['p','Perempuan']];
+const MARITAL_CHOICES = [['bn','Belum Nikah'],['n','Nikah'],['d','Duda'],['j','Janda']];
+const SEGMENT_CHOICES = [['mahasiswa','Mahasiswa'],['pelajar','Pelajar'],['santri','Santri'],['karyawan','Karyawan'],['umum','Umum']];
+const STUDY_LEVEL_CHOICES = [['sd','SD/Setara'],['smp','SMP/Setara'],['sma','SMA/SMK/Setara'],['s1','Sarjana'],['s2','Magister'],['s3','Doktor']];
+const JOB_CHOICES = [['mahasiswa','Mahasiswa'],['asn','ASN'],['karyawan_swasta','Karyawan Swasta'],['guru','Guru'],['dosen','Dosen'],['dokter','Dokter'],['perawat','Perawat'],['apoteker','Apoteker'],['programmer','Programmer'],['data_scientist','Data Scientist'],['desainer_grafis','Desainer Grafis'],['marketing','Marketing'],['hrd','HRD'],['akuntan','Akuntan'],['konsultan','Konsultan'],['arsitek','Arsitek'],['insinyur','Insinyur'],['peneliti','Peneliti'],['jurnalis','Jurnalis'],['penulis','Penulis'],['penerjemah','Penerjemah'],['pilot','Pilot'],['pramugari','Pramugari'],['chef','Chef'],['pengusaha','Pengusaha'],['petani','Petani'],['nelayan','Nelayan'],['pengrajin','Pengrajin'],['teknisi','Teknisi'],['seniman','Seniman'],['musisi','Musisi'],['atlet','Atlet'],['polisi','Polisi'],['tentara','Tentara'],['pengacara','Pengacara'],['notaris','Notaris'],['psikolog','Psikolog'],['sopir','Sopir'],['kurir','Kurir'],['barista','Barista'],['freelancer','Freelancer']];
+const WORK_FIELD_CHOICES = [['pendidikan','Pendidikan'],['kesehatan','Kesehatan'],['ekobis','Ekonomi Bisnis'],['agrotek','Agrotek'],['herbal','Herbal-Farmasi'],['it','IT'],['manufaktur','Manufaktur'],['energi','Energi-Mineral'],['sains','Sains'],['teknologi','Teknologi'],['polhuk','Politik-Hukum'],['humaniora','Humaniora'],['media','Media-Literasi'],['sejarah','Sejarah']];
+const PROVINCE_CHOICES = [['aceh','Aceh'],['sumatera_utara','Sumatera Utara'],['sumatera_barat','Sumatera Barat'],['riau','Riau'],['jambi','Jambi'],['sumatera_selatan','Sumatera Selatan'],['bengkulu','Bengkulu'],['lampung','Lampung'],['kepulauan_bangka_belitung','Kep. Bangka Belitung'],['kepulauan_riau','Kepulauan Riau'],['dki_jakarta','DKI Jakarta'],['jawa_barat','Jawa Barat'],['jawa_tengah','Jawa Tengah'],['di_yogyakarta','DI Yogyakarta'],['jawa_timur','Jawa Timur'],['banten','Banten'],['bali','Bali'],['nusa_tenggara_barat','NTB'],['nusa_tenggara_timur','NTT'],['kalimantan_barat','Kalimantan Barat'],['kalimantan_tengah','Kalimantan Tengah'],['kalimantan_selatan','Kalimantan Selatan'],['kalimantan_timur','Kalimantan Timur'],['kalimantan_utara','Kalimantan Utara'],['sulawesi_utara','Sulawesi Utara'],['sulawesi_tengah','Sulawesi Tengah'],['sulawesi_selatan','Sulawesi Selatan'],['sulawesi_tenggara','Sulawesi Tenggara'],['gorontalo','Gorontalo'],['sulawesi_barat','Sulawesi Barat'],['maluku','Maluku'],['maluku_utara','Maluku Utara'],['papua','Papua'],['papua_barat','Papua Barat']];
+
 const DashboardUserPage = () => {
     const navigate = useNavigate();
     const [users, setUsers] = useState([]);
@@ -18,33 +26,23 @@ const DashboardUserPage = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
     const [totalCount, setTotalCount] = useState(0);
-
-    // Filters & Search
     const [searchQuery, setSearchQuery] = useState('');
     const [filterRole, setFilterRole] = useState('');
     const [filterLabel, setFilterLabel] = useState('');
     const [filterDateFrom, setFilterDateFrom] = useState('');
     const [filterDateTo, setFilterDateTo] = useState('');
-
-    // Sorting
     const [sortField, setSortField] = useState('');
-    const [sortDir, setSortDir] = useState(''); // '', 'asc', 'desc'
-
-    // Modals
+    const [sortDir, setSortDir] = useState('');
     const [selectedUser, setSelectedUser] = useState(null);
     const [showDetailModal, setShowDetailModal] = useState(false);
     const [editingUser, setEditingUser] = useState(null);
     const [showEditModal, setShowEditModal] = useState(false);
     const [editFormData, setEditFormData] = useState({});
-
-    // WA Blast
     const [selectedUserIds, setSelectedUserIds] = useState([]);
     const [showBlastModal, setShowBlastModal] = useState(false);
     const [blastMessage, setBlastMessage] = useState('');
     const [blasting, setBlasting] = useState(false);
     const [blastResult, setBlastResult] = useState(null);
-
-    // Roles & Labels for dropdowns
     const [allRoles, setAllRoles] = useState([]);
     const [allLabels, setAllLabels] = useState([]);
 
@@ -60,9 +58,6 @@ const DashboardUserPage = () => {
     }, []);
 
     const fetchUsers = useCallback(async (page = 1) => {
-        const user = JSON.parse(localStorage.getItem('user'));
-        if (!user || user.role !== 'admin') { navigate('/dashboard'); return; }
-
         setLoading(true);
         try {
             const params = { page };
@@ -71,15 +66,8 @@ const DashboardUserPage = () => {
             if (filterLabel) params.label = filterLabel;
             if (filterDateFrom) params.date_from = filterDateFrom;
             if (filterDateTo) params.date_to = filterDateTo;
-            if (sortField && sortDir) {
-                params.ordering = sortDir === 'desc' ? `-${sortField}` : sortField;
-            }
-
-            const response = await axios.get(`${API}/api/auth/users/`, {
-                params,
-                headers: { Authorization: `Bearer ${user.access}` }
-            });
-
+            if (sortField && sortDir) params.ordering = sortDir === 'desc' ? `-${sortField}` : sortField;
+            const response = await axios.get(`${API}/api/auth/users/`, { params, ...getAuth() });
             if (response.data.results) {
                 setUsers(response.data.results);
                 setTotalCount(response.data.count);
@@ -89,128 +77,111 @@ const DashboardUserPage = () => {
                 setTotalCount(response.data.length);
                 setTotalPages(1);
             }
-        } catch (err) {
-            console.error(err);
-        } finally {
-            setLoading(false);
-        }
-    }, [navigate, searchQuery, filterRole, filterLabel, filterDateFrom, filterDateTo, sortField, sortDir]);
+        } catch (err) { console.error(err); }
+        setLoading(false);
+    }, [searchQuery, filterRole, filterLabel, filterDateFrom, filterDateTo, sortField, sortDir]);
 
     useEffect(() => {
+        const user = JSON.parse(localStorage.getItem('user'));
+        if (!user || user.role !== 'admin') { navigate('/dashboard'); return; }
         fetchMeta();
-    }, [fetchMeta]);
+    }, [navigate, fetchMeta]);
 
-    useEffect(() => {
-        fetchUsers(currentPage);
-    }, [currentPage, fetchUsers]);
+    useEffect(() => { fetchUsers(currentPage); }, [currentPage, fetchUsers]);
 
-    // Sort handler
     const handleSort = (field) => {
         if (sortField === field) {
             if (sortDir === 'asc') setSortDir('desc');
             else if (sortDir === 'desc') { setSortField(''); setSortDir(''); }
             else setSortDir('asc');
-        } else {
-            setSortField(field);
-            setSortDir('asc');
-        }
+        } else { setSortField(field); setSortDir('asc'); }
         setCurrentPage(1);
     };
-
-    const getSortIcon = (field) => {
-        if (sortField !== field) return 'unfold_more';
-        if (sortDir === 'asc') return 'arrow_upward';
-        return 'arrow_downward';
-    };
-
-    // Select for WA Blast
-    const toggleSelectUser = (id) => {
-        setSelectedUserIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
-    };
-    const toggleSelectAll = () => {
-        if (selectedUserIds.length === users.length) setSelectedUserIds([]);
-        else setSelectedUserIds(users.map(u => u.id));
-    };
+    const getSortIcon = (field) => { if (sortField !== field) return 'unfold_more'; return sortDir === 'asc' ? 'arrow_upward' : 'arrow_downward'; };
+    const toggleSelectUser = (id) => setSelectedUserIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+    const toggleSelectAll = () => { if (selectedUserIds.length === users.length) setSelectedUserIds([]); else setSelectedUserIds(users.map(u => u.id)); };
 
     const handleExportCsv = async () => {
-        const user = JSON.parse(localStorage.getItem('user'));
         try {
-            const response = await axios.get(`${API}/api/auth/users/export_csv/`, {
-                headers: { Authorization: `Bearer ${user.access}` },
-                responseType: 'blob'
-            });
+            const response = await axios.get(`${API}/api/auth/users/export_csv/`, { ...getAuth(), responseType: 'blob' });
             const url = window.URL.createObjectURL(new Blob([response.data]));
-            const link = document.createElement('a');
-            link.href = url;
+            const link = document.createElement('a'); link.href = url;
             link.setAttribute('download', 'users_full_data.csv');
-            document.body.appendChild(link);
-            link.click();
-            link.remove();
+            document.body.appendChild(link); link.click(); link.remove();
         } catch (err) { alert('Gagal export'); }
     };
 
     const openEditModal = (user) => {
         setEditingUser(user);
+        const p = user.profile || {};
         setEditFormData({
-            username: user.username,
-            email: user.email,
-            phone: user.phone || '',
-            role: user.role,
-            is_verified_member: user.is_verified_member,
-            profile: { ...(user.profile || {}) },
+            username: user.username, email: user.email, phone: user.phone || '',
+            role: user.role, is_verified_member: user.is_verified_member,
             custom_role_ids: (user.custom_roles || []).map(r => r.id),
             label_ids: (user.labels || []).map(l => l.id),
+            profile: {
+                name_full: p.name_full || '', nik: p.nik || '', gender: p.gender || '', birth_place: p.birth_place || '',
+                birth_date: p.birth_date || '', registration_date: p.registration_date || '',
+                marital_status: p.marital_status || '', segment: p.segment || '',
+                study_level: p.study_level || '', study_campus: p.study_campus || '',
+                study_faculty: p.study_faculty || '', study_department: p.study_department || '',
+                study_program: p.study_program || '', study_semester: p.study_semester || '',
+                study_start_year: p.study_start_year || '', study_finish_year: p.study_finish_year || '',
+                address: p.address || '', address_province: p.address_province || '',
+                job: p.job || '', work_field: p.work_field || '', work_institution: p.work_institution || '',
+                work_position: p.work_position || '', work_salary: p.work_salary || '',
+            }
         });
         setShowEditModal(true);
     };
 
     const handleUpdate = async (e) => {
         e.preventDefault();
-        const user = JSON.parse(localStorage.getItem('user'));
         try {
-            await axios.put(`${API}/api/auth/users/${editingUser.id}/`, editFormData, {
-                headers: { Authorization: `Bearer ${user.access}` }
+            // Clean profile data: remove empty strings to avoid validation issues
+            const cleanProfile = {};
+            Object.entries(editFormData.profile || {}).forEach(([k, v]) => {
+                if (v !== '' && v !== null && v !== undefined) cleanProfile[k] = v;
             });
+            const payload = {
+                username: editFormData.username,
+                email: editFormData.email,
+                phone: editFormData.phone,
+                role: editFormData.role,
+                is_verified_member: editFormData.is_verified_member,
+                custom_role_ids: editFormData.custom_role_ids || [],
+                label_ids: editFormData.label_ids || [],
+                profile: cleanProfile,
+            };
+            await axios.put(`${API}/api/auth/users/${editingUser.id}/`, payload, getAuth());
             alert('Data user berhasil diperbarui');
             setShowEditModal(false);
             fetchUsers(currentPage);
         } catch (err) {
-            console.error(err);
-            alert('Gagal memperbarui data user');
+            console.error(err.response?.data);
+            alert('Gagal: ' + JSON.stringify(err.response?.data || err.message));
         }
     };
 
     const handleDelete = async (userId) => {
         if (!window.confirm('Apakah Anda yakin ingin menghapus user ini?')) return;
-        const user = JSON.parse(localStorage.getItem('user'));
         try {
-            await axios.delete(`${API}/api/auth/users/${userId}/`, {
-                headers: { Authorization: `Bearer ${user.access}` }
-            });
-            alert('User berhasil dihapus');
-            fetchUsers(currentPage);
+            await axios.delete(`${API}/api/auth/users/${userId}/`, getAuth());
+            alert('User berhasil dihapus'); fetchUsers(currentPage);
         } catch (err) { alert('Gagal menghapus user'); }
     };
 
-    const openDetailModal = (user) => { setSelectedUser(user); setShowDetailModal(true); };
-
-    // WA Blast
     const handleBlast = async () => {
         if (!blastMessage.trim()) { alert('Tulis pesan terlebih dahulu'); return; }
         setBlasting(true);
         try {
-            const user = JSON.parse(localStorage.getItem('user'));
-            const res = await axios.post(`${API}/api/auth/users/blast_whatsapp/`, {
-                user_ids: selectedUserIds,
-                message: blastMessage
-            }, { headers: { Authorization: `Bearer ${user.access}` } });
+            const res = await axios.post(`${API}/api/auth/users/blast_whatsapp/`, { user_ids: selectedUserIds, message: blastMessage }, getAuth());
             setBlastResult(res.data);
-        } catch (err) {
-            alert('Gagal mengirim blast');
-        } finally {
-            setBlasting(false);
-        }
+        } catch (err) { alert('Gagal mengirim blast'); }
+        setBlasting(false);
     };
+
+    const setP = (key, val) => setEditFormData(f => ({ ...f, profile: { ...f.profile, [key]: val } }));
 
     if (loading && users.length === 0) return (
         <div className="flex justify-center items-center h-screen bg-gray-50">
@@ -222,9 +193,7 @@ const DashboardUserPage = () => {
         <div className="body bg-gray-50 min-h-screen">
             <Helmet><title>Manajemen User - Admin</title></Helmet>
             <Header />
-
-            <div className="max-w-6xl mx-auto px-4 py-6 pb-20">
-                {/* Header */}
+            <div className="max-w-7xl mx-auto px-4 py-6 pb-20">
                 <div className="flex items-center justify-between mb-6">
                     <div className="flex items-center gap-3">
                         <button onClick={() => navigate('/dashboard')} className="w-10 h-10 flex items-center justify-center bg-white rounded-xl shadow-sm border border-gray-100 text-gray-500 hover:text-green-700 transition">
@@ -232,15 +201,14 @@ const DashboardUserPage = () => {
                         </button>
                         <div>
                             <h1 className="text-2xl font-bold text-gray-900">Manajemen User</h1>
-                            <p className="text-sm text-gray-500">{totalCount} total pengguna terdaftar</p>
+                            <p className="text-sm text-gray-500">{totalCount} pengguna terdaftar</p>
                         </div>
                     </div>
                     <div className="flex gap-2">
                         {selectedUserIds.length > 0 && (
                             <button onClick={() => { setBlastResult(null); setShowBlastModal(true); }}
                                 className="bg-green-600 text-white px-4 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 shadow-lg hover:bg-green-700 transition">
-                                <span className="material-icons text-sm">chat</span>
-                                Blast WA ({selectedUserIds.length})
+                                <span className="material-icons text-sm">chat</span> Blast WA ({selectedUserIds.length})
                             </button>
                         )}
                         <button onClick={handleExportCsv}
@@ -264,10 +232,8 @@ const DashboardUserPage = () => {
                         <select value={filterRole} onChange={e => { setFilterRole(e.target.value); setCurrentPage(1); }}
                             className="bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none">
                             <option value="">Semua Role</option>
-                            <option value="user">User</option>
-                            <option value="admin">Admin</option>
-                            <option value="seller">Seller</option>
-                            <option value="staff">Staff</option>
+                            <option value="user">User</option><option value="admin">Admin</option>
+                            <option value="seller">Seller</option><option value="staff">Staff</option>
                         </select>
                         <select value={filterLabel} onChange={e => { setFilterLabel(e.target.value); setCurrentPage(1); }}
                             className="bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none">
@@ -275,9 +241,9 @@ const DashboardUserPage = () => {
                             {allLabels.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
                         </select>
                         <input type="date" value={filterDateFrom} onChange={e => { setFilterDateFrom(e.target.value); setCurrentPage(1); }}
-                            className="bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none" placeholder="Dari" />
+                            className="bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none" />
                         <input type="date" value={filterDateTo} onChange={e => { setFilterDateTo(e.target.value); setCurrentPage(1); }}
-                            className="bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none" placeholder="Sampai" />
+                            className="bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none" />
                     </div>
                 </div>
 
@@ -287,61 +253,51 @@ const DashboardUserPage = () => {
                         <table className="w-full text-left text-sm">
                             <thead className="bg-gray-50 border-b border-gray-100">
                                 <tr>
-                                    <th className="px-4 py-4">
-                                        <input type="checkbox" checked={selectedUserIds.length === users.length && users.length > 0}
-                                            onChange={toggleSelectAll} className="w-4 h-4 text-green-600 rounded" />
-                                    </th>
-                                    <SortHeader label="User" field="username" sortField={sortField} sortDir={sortDir} onSort={handleSort} getSortIcon={getSortIcon} />
-                                    <th className="px-4 py-4 text-gray-600 font-bold uppercase tracking-wider text-[11px]">Kontak</th>
-                                    <SortHeader label="Role" field="role" sortField={sortField} sortDir={sortDir} onSort={handleSort} getSortIcon={getSortIcon} />
-                                    <th className="px-4 py-4 text-gray-600 font-bold uppercase tracking-wider text-[11px]">Label</th>
-                                    <SortHeader label="Profile" field="profile__name_full" sortField={sortField} sortDir={sortDir} onSort={handleSort} getSortIcon={getSortIcon} />
-                                    <SortHeader label="Join Date" field="date_joined" sortField={sortField} sortDir={sortDir} onSort={handleSort} getSortIcon={getSortIcon} />
-                                    <th className="px-4 py-4 text-gray-600 font-bold uppercase tracking-wider text-[11px]">Verified</th>
-                                    <th className="px-4 py-4 text-gray-600 font-bold uppercase tracking-wider text-[11px] text-center">Aksi</th>
+                                    <th className="px-3 py-4"><input type="checkbox" checked={selectedUserIds.length === users.length && users.length > 0} onChange={toggleSelectAll} className="w-4 h-4 text-green-600 rounded" /></th>
+                                    <SH label="User" field="username" {...{sortField,sortDir,handleSort,getSortIcon}} />
+                                    <th className="px-3 py-4 text-gray-600 font-bold uppercase tracking-wider text-[11px]">Kontak</th>
+                                    <SH label="Role" field="role" {...{sortField,sortDir,handleSort,getSortIcon}} />
+                                    <th className="px-3 py-4 text-gray-600 font-bold uppercase tracking-wider text-[11px]">Custom Role</th>
+                                    <th className="px-3 py-4 text-gray-600 font-bold uppercase tracking-wider text-[11px]">Label</th>
+                                    <SH label="Nama" field="profile__name_full" {...{sortField,sortDir,handleSort,getSortIcon}} />
+                                    <SH label="Join" field="date_joined" {...{sortField,sortDir,handleSort,getSortIcon}} />
+                                    <th className="px-3 py-4 text-gray-600 font-bold uppercase tracking-wider text-[11px]">V</th>
+                                    <th className="px-3 py-4 text-gray-600 font-bold uppercase tracking-wider text-[11px] text-center">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-50">
                                 {users.map(u => (
-                                    <tr key={u.id} className="hover:bg-green-50/30 transition group">
-                                        <td className="px-4 py-3">
-                                            <input type="checkbox" checked={selectedUserIds.includes(u.id)}
-                                                onChange={() => toggleSelectUser(u.id)} className="w-4 h-4 text-green-600 rounded" />
-                                        </td>
-                                        <td className="px-4 py-3">
+                                    <tr key={u.id} className="hover:bg-green-50/30 transition">
+                                        <td className="px-3 py-3"><input type="checkbox" checked={selectedUserIds.includes(u.id)} onChange={() => toggleSelectUser(u.id)} className="w-4 h-4 text-green-600 rounded" /></td>
+                                        <td className="px-3 py-3">
                                             <div className="font-bold text-gray-900 text-xs">{u.username}</div>
                                             <div className="text-[11px] text-gray-500">{u.email}</div>
                                         </td>
-                                        <td className="px-4 py-3 text-gray-600 text-xs">{u.phone || '-'}</td>
-                                        <td className="px-4 py-3">
-                                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${u.role === 'admin' ? 'bg-red-50 text-red-600 border border-red-100' : 'bg-blue-50 text-blue-600 border border-blue-100'}`}>
-                                                {u.role}
-                                            </span>
-                                            {(u.custom_roles || []).map(r => (
-                                                <span key={r.id} className="ml-1 px-2 py-0.5 rounded-full text-[9px] font-bold bg-green-50 text-green-700 border border-green-100">{r.name}</span>
-                                            ))}
+                                        <td className="px-3 py-3 text-gray-600 text-xs">{u.phone || '-'}</td>
+                                        <td className="px-3 py-3">
+                                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${u.role === 'admin' ? 'bg-red-50 text-red-600' : 'bg-blue-50 text-blue-600'}`}>{u.role}</span>
                                         </td>
-                                        <td className="px-4 py-3">
-                                            {(u.labels || []).map(l => (
-                                                <span key={l.id} className={`inline-block mr-1 px-2 py-0.5 rounded-full text-[9px] font-bold bg-${l.color}-50 text-${l.color}-700 border border-${l.color}-100`}>{l.name}</span>
-                                            ))}
-                                            {(!u.labels || u.labels.length === 0) && <span className="text-gray-400 text-xs">-</span>}
+                                        <td className="px-3 py-3">
+                                            {(u.custom_roles||[]).length > 0
+                                                ? (u.custom_roles||[]).map(r => <span key={r.id} className="inline-block mr-1 mb-0.5 px-2 py-0.5 rounded-full text-[9px] font-bold bg-green-50 text-green-700 border border-green-100">{r.name}</span>)
+                                                : <span className="text-gray-300 text-xs">-</span>}
                                         </td>
-                                        <td className="px-4 py-3">
+                                        <td className="px-3 py-3">
+                                            {(u.labels||[]).length > 0
+                                                ? (u.labels||[]).map(l => <span key={l.id} className="inline-block mr-1 mb-0.5 px-2 py-0.5 rounded-full text-[9px] font-bold bg-purple-50 text-purple-700 border border-purple-100">{l.name}</span>)
+                                                : <span className="text-gray-300 text-xs">-</span>}
+                                        </td>
+                                        <td className="px-3 py-3">
                                             <div className="text-gray-900 font-bold text-xs">{u.profile?.name_full || '-'}</div>
-                                            <div className="text-[11px] text-gray-500">{u.profile?.gender === 'l' ? 'L' : u.profile?.gender === 'p' ? 'P' : '-'}</div>
+                                            <div className="text-[11px] text-gray-500">{u.profile?.gender === 'l' ? 'L' : u.profile?.gender === 'p' ? 'P' : ''}</div>
                                         </td>
-                                        <td className="px-4 py-3 text-gray-500 text-xs">
-                                            {new Date(u.date_joined).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                        <td className="px-3 py-3 text-gray-500 text-xs">{new Date(u.date_joined).toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'})}</td>
+                                        <td className="px-3 py-3 text-center">
+                                            {u.is_verified_member ? <span className="material-icons text-green-600 text-lg">verified</span> : <span className="material-icons text-gray-300 text-lg">cancel</span>}
                                         </td>
-                                        <td className="px-4 py-3 text-center">
-                                            {u.is_verified_member
-                                                ? <span className="material-icons text-green-600 text-lg">verified</span>
-                                                : <span className="material-icons text-gray-300 text-lg">cancel</span>}
-                                        </td>
-                                        <td className="px-4 py-3">
+                                        <td className="px-3 py-3">
                                             <div className="flex items-center justify-center gap-1">
-                                                <button onClick={() => openDetailModal(u)} className="w-7 h-7 bg-white border border-gray-200 rounded-lg text-gray-400 hover:text-green-700 hover:border-green-200 transition flex items-center justify-center" title="Detail">
+                                                <button onClick={() => { setSelectedUser(u); setShowDetailModal(true); }} className="w-7 h-7 bg-white border border-gray-200 rounded-lg text-gray-400 hover:text-green-700 hover:border-green-200 transition flex items-center justify-center" title="Detail">
                                                     <span className="material-icons text-sm">visibility</span>
                                                 </button>
                                                 <button onClick={() => openEditModal(u)} className="w-7 h-7 bg-white border border-gray-200 rounded-lg text-gray-400 hover:text-blue-700 hover:border-blue-200 transition flex items-center justify-center" title="Edit">
@@ -396,31 +352,34 @@ const DashboardUserPage = () => {
                                     <p className="text-gray-500 font-medium">@{selectedUser.username} • {selectedUser.role.toUpperCase()}</p>
                                     <div className="flex flex-wrap gap-1 mt-2">
                                         {(selectedUser.custom_roles||[]).map(r => <span key={r.id} className="px-2 py-0.5 bg-green-50 text-green-700 rounded-full text-[10px] font-bold">{r.name}</span>)}
-                                        {(selectedUser.labels||[]).map(l => <span key={l.id} className={`px-2 py-0.5 bg-${l.color}-50 text-${l.color}-700 rounded-full text-[10px] font-bold`}>{l.name}</span>)}
+                                        {(selectedUser.labels||[]).map(l => <span key={l.id} className="px-2 py-0.5 bg-purple-50 text-purple-700 rounded-full text-[10px] font-bold">{l.name}</span>)}
                                     </div>
                                 </div>
                                 <div className="text-right">
                                     <p className="text-[10px] text-gray-400 uppercase tracking-widest font-bold">Terdaftar</p>
-                                    <p className="text-gray-900 font-bold text-sm">{new Date(selectedUser.date_joined).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+                                    <p className="text-gray-900 font-bold text-sm">{new Date(selectedUser.date_joined).toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'})}</p>
                                     <p className="mt-1">{selectedUser.is_verified_member ? <span className="text-green-600 text-[10px] font-bold flex items-center gap-1 justify-end"><span className="material-icons text-sm">verified</span>Verified</span> : <span className="text-red-400 text-[10px] font-bold">Belum Verified</span>}</p>
                                 </div>
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div className="space-y-4">
-                                    <h3 className="text-xs font-bold text-green-700 uppercase tracking-widest border-b border-green-100 pb-2">Informasi Dasar</h3>
+                                <div className="space-y-3">
+                                    <h3 className="text-xs font-bold text-green-700 uppercase tracking-widest border-b border-green-100 pb-2">Info Dasar</h3>
                                     <DI icon="alternate_email" label="Email" value={selectedUser.email} />
                                     <DI icon="phone" label="No. Telepon" value={selectedUser.phone} />
                                     <DI icon="wc" label="Jenis Kelamin" value={selectedUser.profile?.gender === 'l' ? 'Laki-laki' : selectedUser.profile?.gender === 'p' ? 'Perempuan' : '-'} />
                                     <DI icon="cake" label="TTL" value={`${selectedUser.profile?.birth_place || '-'}, ${selectedUser.profile?.birth_date || '-'}`} />
                                     <DI icon="favorite" label="Status" value={selectedUser.profile?.marital_status || '-'} />
+                                    <DI icon="category" label="Segmen" value={selectedUser.profile?.segment || '-'} />
                                 </div>
-                                <div className="space-y-4">
-                                    <h3 className="text-xs font-bold text-green-700 uppercase tracking-widest border-b border-green-100 pb-2">Domisili & Pekerjaan</h3>
+                                <div className="space-y-3">
+                                    <h3 className="text-xs font-bold text-green-700 uppercase tracking-widest border-b border-green-100 pb-2">Alamat & Pekerjaan</h3>
                                     <DI icon="location_on" label="Alamat" value={selectedUser.profile?.address || '-'} />
                                     <DI icon="map" label="Provinsi" value={selectedUser.profile?.address_province || '-'} />
+                                    <DI icon="school" label="Pendidikan" value={selectedUser.profile?.study_level || '-'} />
+                                    <DI icon="account_balance" label="Kampus" value={selectedUser.profile?.study_campus || '-'} />
                                     <DI icon="work" label="Pekerjaan" value={selectedUser.profile?.job || '-'} />
                                     <DI icon="business" label="Instansi" value={selectedUser.profile?.work_institution || '-'} />
-                                    <DI icon="school" label="Pendidikan" value={selectedUser.profile?.study_level || '-'} />
+                                    <DI icon="badge" label="Jabatan" value={selectedUser.profile?.work_position || '-'} />
                                 </div>
                             </div>
                         </div>
@@ -431,94 +390,87 @@ const DashboardUserPage = () => {
                 </div>
             )}
 
-            {/* ============ EDIT MODAL ============ */}
+            {/* ============ EDIT MODAL (ALL FIELDS) ============ */}
             {showEditModal && editingUser && (
                 <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[110] flex items-center justify-center p-4 overflow-y-auto">
-                    <div className="bg-white w-full max-w-4xl rounded-3xl shadow-2xl my-auto">
+                    <div className="bg-white w-full max-w-5xl rounded-3xl shadow-2xl my-4">
                         <div className="p-6 border-b border-gray-100 flex justify-between items-center">
-                            <h2 className="text-xl font-bold text-gray-900">Edit User & Profile</h2>
+                            <h2 className="text-xl font-bold text-gray-900">Edit User: {editingUser.username}</h2>
                             <button onClick={() => setShowEditModal(false)} className="text-gray-400 hover:text-gray-600"><span className="material-icons">close</span></button>
                         </div>
                         <form onSubmit={handleUpdate}>
-                            <div className="p-6 max-h-[70vh] overflow-y-auto">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    {/* Account */}
-                                    <div className="space-y-4">
-                                        <h3 className="text-sm font-bold text-blue-700 uppercase tracking-widest border-b border-blue-100 pb-2">Data Akun</h3>
-                                        <FI label="Username" value={editFormData.username} onChange={v => setEditFormData({...editFormData, username: v})} />
-                                        <FI label="Email" value={editFormData.email} onChange={v => setEditFormData({...editFormData, email: v})} />
-                                        <FI label="No. Telepon" value={editFormData.phone} onChange={v => setEditFormData({...editFormData, phone: v})} />
-                                        <div className="space-y-1">
-                                            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Role</label>
-                                            <select className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm outline-none" value={editFormData.role} onChange={e => setEditFormData({...editFormData, role: e.target.value})}>
-                                                <option value="user">User</option>
-                                                <option value="admin">Admin</option>
-                                                <option value="seller">Seller</option>
-                                                <option value="staff">Staff</option>
-                                            </select>
+                            <div className="p-6 max-h-[75vh] overflow-y-auto">
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                    {/* Col 1: Account */}
+                                    <div className="space-y-3">
+                                        <h3 className="text-[10px] font-bold text-blue-700 uppercase tracking-widest border-b border-blue-100 pb-2 mb-2">Data Akun</h3>
+                                        <FI label="Username" value={editFormData.username} onChange={v => setEditFormData(f=>({...f, username:v}))} />
+                                        <FI label="Email" value={editFormData.email} onChange={v => setEditFormData(f=>({...f, email:v}))} />
+                                        <FI label="No. Telepon" value={editFormData.phone} onChange={v => setEditFormData(f=>({...f, phone:v}))} />
+                                        <FS label="Role" value={editFormData.role} onChange={v => setEditFormData(f=>({...f, role:v}))} options={[['user','User'],['admin','Admin'],['seller','Seller'],['staff','Staff']]} />
+                                        <div className="flex items-center gap-2 mt-2">
+                                            <input type="checkbox" id="is_v" checked={editFormData.is_verified_member} onChange={e => setEditFormData(f=>({...f, is_verified_member:e.target.checked}))} className="w-4 h-4 text-blue-600 rounded" />
+                                            <label htmlFor="is_v" className="text-sm font-medium text-gray-700">Verified Member</label>
                                         </div>
-                                        <div className="space-y-1">
+                                        <div className="space-y-1 mt-3">
                                             <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Custom Roles</label>
-                                            <div className="flex flex-wrap gap-2">
+                                            <div className="flex flex-wrap gap-1">
                                                 {allRoles.map(r => (
-                                                    <label key={r.id} className={`flex items-center gap-1 px-3 py-1.5 rounded-lg border cursor-pointer text-xs ${
-                                                        (editFormData.custom_role_ids||[]).includes(r.id) ? 'bg-green-50 border-green-200 text-green-800' : 'bg-white border-gray-100 text-gray-500'
-                                                    }`}>
+                                                    <label key={r.id} className={`flex items-center gap-1 px-2 py-1 rounded-lg border cursor-pointer text-xs transition ${(editFormData.custom_role_ids||[]).includes(r.id) ? 'bg-green-50 border-green-200 text-green-800' : 'bg-white border-gray-100 text-gray-500'}`}>
                                                         <input type="checkbox" checked={(editFormData.custom_role_ids||[]).includes(r.id)}
-                                                            onChange={() => {
-                                                                const ids = editFormData.custom_role_ids || [];
-                                                                setEditFormData({...editFormData, custom_role_ids: ids.includes(r.id) ? ids.filter(x=>x!==r.id) : [...ids, r.id]});
-                                                            }} className="w-3 h-3 text-green-600 rounded" />
+                                                            onChange={() => { const ids = editFormData.custom_role_ids||[]; setEditFormData(f=>({...f, custom_role_ids: ids.includes(r.id)?ids.filter(x=>x!==r.id):[...ids,r.id]})); }} className="w-3 h-3 text-green-600 rounded" />
                                                         {r.name}
                                                     </label>
                                                 ))}
                                             </div>
                                         </div>
-                                        <div className="space-y-1">
+                                        <div className="space-y-1 mt-3">
                                             <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Labels</label>
-                                            <div className="flex flex-wrap gap-2">
+                                            <div className="flex flex-wrap gap-1">
                                                 {allLabels.map(l => (
-                                                    <label key={l.id} className={`flex items-center gap-1 px-3 py-1.5 rounded-lg border cursor-pointer text-xs ${
-                                                        (editFormData.label_ids||[]).includes(l.id) ? `bg-${l.color}-50 border-${l.color}-200 text-${l.color}-800` : 'bg-white border-gray-100 text-gray-500'
-                                                    }`}>
+                                                    <label key={l.id} className={`flex items-center gap-1 px-2 py-1 rounded-lg border cursor-pointer text-xs transition ${(editFormData.label_ids||[]).includes(l.id) ? 'bg-purple-50 border-purple-200 text-purple-800' : 'bg-white border-gray-100 text-gray-500'}`}>
                                                         <input type="checkbox" checked={(editFormData.label_ids||[]).includes(l.id)}
-                                                            onChange={() => {
-                                                                const ids = editFormData.label_ids || [];
-                                                                setEditFormData({...editFormData, label_ids: ids.includes(l.id) ? ids.filter(x=>x!==l.id) : [...ids, l.id]});
-                                                            }} className="w-3 h-3 rounded" />
+                                                            onChange={() => { const ids = editFormData.label_ids||[]; setEditFormData(f=>({...f, label_ids: ids.includes(l.id)?ids.filter(x=>x!==l.id):[...ids,l.id]})); }} className="w-3 h-3 rounded" />
                                                         {l.name}
                                                     </label>
                                                 ))}
                                             </div>
                                         </div>
-                                        <div className="flex items-center gap-2 mt-2">
-                                            <input type="checkbox" id="is_verified" checked={editFormData.is_verified_member}
-                                                onChange={e => setEditFormData({...editFormData, is_verified_member: e.target.checked})} className="w-4 h-4 text-blue-600 rounded" />
-                                            <label htmlFor="is_verified" className="text-sm font-medium text-gray-700">Verified Member</label>
-                                        </div>
                                     </div>
 
-                                    {/* Profile */}
-                                    <div className="space-y-4">
-                                        <h3 className="text-sm font-bold text-green-700 uppercase tracking-widest border-b border-green-100 pb-2">Data Diri</h3>
-                                        <FI label="Nama Lengkap" value={editFormData.profile?.name_full} onChange={v => setEditFormData({...editFormData, profile: {...editFormData.profile, name_full: v}})} />
-                                        <div className="space-y-1">
-                                            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Jenis Kelamin</label>
-                                            <select className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm outline-none" value={editFormData.profile?.gender||''} onChange={e => setEditFormData({...editFormData, profile: {...editFormData.profile, gender: e.target.value}})}>
-                                                <option value="">Pilih</option><option value="l">Laki-laki</option><option value="p">Perempuan</option>
-                                            </select>
+                                    {/* Col 2: Personal Info */}
+                                    <div className="space-y-3">
+                                        <h3 className="text-[10px] font-bold text-green-700 uppercase tracking-widest border-b border-green-100 pb-2 mb-2">Data Diri</h3>
+                                        <FI label="Nama Lengkap" value={editFormData.profile?.name_full} onChange={v => setP('name_full',v)} />
+                                        <FI label="NIK (No. KTP)" value={editFormData.profile?.nik} onChange={v => setP('nik',v)} />
+                                        <FS label="Jenis Kelamin" value={editFormData.profile?.gender} onChange={v => setP('gender',v)} options={GENDER_CHOICES} />
+                                        <FI label="Tempat Lahir" value={editFormData.profile?.birth_place} onChange={v => setP('birth_place',v)} />
+                                        <FI label="Tanggal Lahir" value={editFormData.profile?.birth_date} onChange={v => setP('birth_date',v)} type="date" />
+                                        <FI label="Tgl Registrasi" value={editFormData.profile?.registration_date} onChange={v => setP('registration_date',v)} type="date" />
+                                        <FS label="Status Pernikahan" value={editFormData.profile?.marital_status} onChange={v => setP('marital_status',v)} options={MARITAL_CHOICES} />
+                                        <FS label="Segmen" value={editFormData.profile?.segment} onChange={v => setP('segment',v)} options={SEGMENT_CHOICES} />
+                                        <FI label="Alamat" value={editFormData.profile?.address} onChange={v => setP('address',v)} />
+                                        <FS label="Provinsi" value={editFormData.profile?.address_province} onChange={v => setP('address_province',v)} options={PROVINCE_CHOICES} />
+                                    </div>
+
+                                    {/* Col 3: Education & Work */}
+                                    <div className="space-y-3">
+                                        <h3 className="text-[10px] font-bold text-orange-700 uppercase tracking-widest border-b border-orange-100 pb-2 mb-2">Pendidikan & Pekerjaan</h3>
+                                        <FS label="Pendidikan Terakhir" value={editFormData.profile?.study_level} onChange={v => setP('study_level',v)} options={STUDY_LEVEL_CHOICES} />
+                                        <FI label="Kampus / Sekolah" value={editFormData.profile?.study_campus} onChange={v => setP('study_campus',v)} />
+                                        <FI label="Fakultas" value={editFormData.profile?.study_faculty} onChange={v => setP('study_faculty',v)} />
+                                        <FI label="Jurusan" value={editFormData.profile?.study_department} onChange={v => setP('study_department',v)} />
+                                        <FI label="Program Studi" value={editFormData.profile?.study_program} onChange={v => setP('study_program',v)} />
+                                        <div className="grid grid-cols-3 gap-2">
+                                            <FI label="Semester" value={editFormData.profile?.study_semester} onChange={v => setP('study_semester',v)} type="number" />
+                                            <FI label="Thn Masuk" value={editFormData.profile?.study_start_year} onChange={v => setP('study_start_year',v)} type="number" />
+                                            <FI label="Thn Lulus" value={editFormData.profile?.study_finish_year} onChange={v => setP('study_finish_year',v)} type="number" />
                                         </div>
-                                        <div className="grid grid-cols-2 gap-3">
-                                            <FI label="Tempat Lahir" value={editFormData.profile?.birth_place} onChange={v => setEditFormData({...editFormData, profile: {...editFormData.profile, birth_place: v}})} />
-                                            <div className="space-y-1">
-                                                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Tgl Lahir</label>
-                                                <input type="date" className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2 text-sm outline-none" value={editFormData.profile?.birth_date||''} onChange={e => setEditFormData({...editFormData, profile: {...editFormData.profile, birth_date: e.target.value}})} />
-                                            </div>
-                                        </div>
-                                        <FI label="Alamat" value={editFormData.profile?.address} onChange={v => setEditFormData({...editFormData, profile: {...editFormData.profile, address: v}})} />
-                                        <FI label="Pekerjaan" value={editFormData.profile?.job} onChange={v => setEditFormData({...editFormData, profile: {...editFormData.profile, job: v}})} />
-                                        <FI label="Instansi" value={editFormData.profile?.work_institution} onChange={v => setEditFormData({...editFormData, profile: {...editFormData.profile, work_institution: v}})} />
-                                        <FI label="Pendidikan" value={editFormData.profile?.study_level} onChange={v => setEditFormData({...editFormData, profile: {...editFormData.profile, study_level: v}})} />
+                                        <FS label="Pekerjaan" value={editFormData.profile?.job} onChange={v => setP('job',v)} options={JOB_CHOICES} />
+                                        <FS label="Bidang Kerja" value={editFormData.profile?.work_field} onChange={v => setP('work_field',v)} options={WORK_FIELD_CHOICES} />
+                                        <FI label="Instansi" value={editFormData.profile?.work_institution} onChange={v => setP('work_institution',v)} />
+                                        <FI label="Jabatan" value={editFormData.profile?.work_position} onChange={v => setP('work_position',v)} />
+                                        <FI label="Gaji (Rp)" value={editFormData.profile?.work_salary} onChange={v => setP('work_salary',v)} type="number" />
                                     </div>
                                 </div>
                             </div>
@@ -536,20 +488,14 @@ const DashboardUserPage = () => {
                 <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[120] flex items-center justify-center p-4">
                     <div className="bg-white w-full max-w-lg rounded-3xl shadow-2xl">
                         <div className="p-6 border-b border-gray-100 flex justify-between items-center">
-                            <h2 className="text-xl font-bold text-gray-900">
-                                <span className="material-icons text-green-600 align-middle mr-2">chat</span>
-                                Blast WhatsApp
-                            </h2>
+                            <h2 className="text-xl font-bold text-gray-900"><span className="material-icons text-green-600 align-middle mr-2">chat</span>Blast WhatsApp</h2>
                             <button onClick={() => setShowBlastModal(false)} className="text-gray-400 hover:text-gray-600"><span className="material-icons">close</span></button>
                         </div>
                         <div className="p-6 space-y-4">
                             <p className="text-sm text-gray-600">Kirim pesan ke <b>{selectedUserIds.length}</b> user terpilih</p>
-                            <div className="bg-blue-50 border border-blue-100 rounded-xl p-3 text-xs text-blue-700">
-                                <b>Placeholder tersedia:</b> {'{name}'}, {'{username}'}, {'{email}'}, {'{phone}'}
-                            </div>
+                            <div className="bg-blue-50 border border-blue-100 rounded-xl p-3 text-xs text-blue-700"><b>Placeholder:</b> {'{name}'}, {'{username}'}, {'{email}'}, {'{phone}'}</div>
                             <textarea rows="5" value={blastMessage} onChange={e => setBlastMessage(e.target.value)}
-                                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-green-500"
-                                placeholder="Assalamualaikum {name}, ..." />
+                                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-green-500" placeholder="Assalamualaikum {name}, ..." />
                             {blastResult && (
                                 <div className={`p-4 rounded-xl text-sm ${blastResult.failed > 0 ? 'bg-orange-50 border border-orange-100' : 'bg-green-50 border border-green-100'}`}>
                                     <p className="font-bold">Hasil: {blastResult.success} berhasil, {blastResult.failed} gagal dari {blastResult.total} total</p>
@@ -575,8 +521,8 @@ const DashboardUserPage = () => {
 // Helper components
 const DI = ({ icon, label, value }) => (
     <div className="flex gap-3">
-        <div className="w-8 h-8 bg-gray-50 rounded-lg flex items-center justify-center shrink-0">
-            <span className="material-icons text-gray-400 text-base">{icon}</span>
+        <div className="w-7 h-7 bg-gray-50 rounded-lg flex items-center justify-center shrink-0">
+            <span className="material-icons text-gray-400 text-sm">{icon}</span>
         </div>
         <div>
             <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">{label}</p>
@@ -584,20 +530,24 @@ const DI = ({ icon, label, value }) => (
         </div>
     </div>
 );
-
 const FI = ({ label, value, onChange, type = "text" }) => (
     <div className="space-y-1">
         <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{label}</label>
-        <input type={type} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition" value={value || ''} onChange={e => onChange(e.target.value)} />
+        <input type={type} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 transition" value={value || ''} onChange={e => onChange(e.target.value)} />
     </div>
 );
-
-const SortHeader = ({ label, field, sortField, sortDir, onSort, getSortIcon }) => (
-    <th className="px-4 py-4 text-gray-600 font-bold uppercase tracking-wider text-[11px] cursor-pointer hover:text-green-700 transition select-none" onClick={() => onSort(field)}>
-        <div className="flex items-center gap-1">
-            {label}
-            <span className="material-icons text-[14px]">{getSortIcon(field)}</span>
-        </div>
+const FS = ({ label, value, onChange, options }) => (
+    <div className="space-y-1">
+        <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{label}</label>
+        <select className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 transition" value={value || ''} onChange={e => onChange(e.target.value)}>
+            <option value="">Pilih</option>
+            {options.map(([v,l]) => <option key={v} value={v}>{l}</option>)}
+        </select>
+    </div>
+);
+const SH = ({ label, field, sortField, sortDir, handleSort, getSortIcon }) => (
+    <th className="px-3 py-4 text-gray-600 font-bold uppercase tracking-wider text-[11px] cursor-pointer hover:text-green-700 transition select-none" onClick={() => handleSort(field)}>
+        <div className="flex items-center gap-1">{label}<span className="material-icons text-[14px]">{getSortIcon(field)}</span></div>
     </th>
 );
 
