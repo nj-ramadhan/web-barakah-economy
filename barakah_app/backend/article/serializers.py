@@ -18,7 +18,7 @@ class ArticleImageSerializer(serializers.ModelSerializer):
 
 class ArticleSerializer(serializers.ModelSerializer):
     images = ArticleImageSerializer(many=True, read_only=True)
-    date = serializers.DateField(format="%d %B %Y")
+    date = serializers.DateField(format="%d %B %Y", input_formats=['%Y-%m-%d', '%d %B %Y', '%d/%m/%Y'])
 
     # SerializerMethodField untuk memastikan URL Icon lengkap (http://domain/media/...)
     floating_icon_url = serializers.SerializerMethodField()
@@ -27,7 +27,7 @@ class ArticleSerializer(serializers.ModelSerializer):
         model = Article
         fields = [
             'id', 'title', 'slug', 'content', 'status', 'date', 'images',
-            'floating_url', 'floating_label', 'floating_icon_url'  # Field baru
+            'floating_url', 'floating_label', 'floating_icon', 'floating_icon_url'
         ]
 
     def get_floating_icon_url(self, obj):

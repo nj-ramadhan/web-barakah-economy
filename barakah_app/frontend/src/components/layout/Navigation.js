@@ -7,7 +7,7 @@ const LAYANAN_ITEMS = [
   { to: '/chat', icon: 'chat', label: 'Konsultasi', color: 'text-green-600' },
   { to: '/charity', icon: 'volunteer_activism', label: 'Charity', color: 'text-red-500' },
   { to: '/kegiatan', icon: 'event_note', label: 'Kegiatan', color: 'text-green-700' },
-  { to: '/sinergy', icon: 'shopping_bag', label: 'Sinergy', color: 'text-blue-600' },
+  // { to: '/sinergy', icon: 'shopping_bag', label: 'Sinergy', color: 'text-blue-600' }, // Hidden per request
   { to: '/academy/ecourse', icon: 'school', label: 'E-Course', color: 'text-purple-600' },
   { to: '/articles', icon: 'article', label: 'Article', color: 'text-orange-500' },
   { to: '/digital-products', icon: 'storefront', label: 'Produk Digital', color: 'text-emerald-600' },

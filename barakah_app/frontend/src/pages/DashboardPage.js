@@ -309,6 +309,35 @@ const DashboardPage = () => {
                         <span className="material-icons text-gray-400">{myTestimonial ? 'edit' : 'add'}</span>
                     </div>
 
+                    {/* User-accessible menus */}
+                    <Link
+                        to="/dashboard/my-campaigns"
+                        className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-red-50 hover:shadow-md transition"
+                    >
+                        <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center">
+                            <span className="material-icons text-red-700">campaign</span>
+                        </div>
+                        <div className="flex-1">
+                            <h3 className="font-bold text-gray-800 text-sm">Ajukan Kampanye</h3>
+                            <p className="text-[11px] text-gray-500">Buat dan pantau pengajuan kampanye charity Anda</p>
+                        </div>
+                        <span className="material-icons text-gray-400">chevron_right</span>
+                    </Link>
+
+                    <Link
+                        to="/dashboard/articles"
+                        className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-orange-50 hover:shadow-md transition"
+                    >
+                        <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center">
+                            <span className="material-icons text-orange-700">edit_note</span>
+                        </div>
+                        <div className="flex-1">
+                            <h3 className="font-bold text-gray-800 text-sm">Tulis Article</h3>
+                            <p className="text-[11px] text-gray-500">Buat dan kelola artikel dengan editor rich text</p>
+                        </div>
+                        <span className="material-icons text-gray-400">chevron_right</span>
+                    </Link>
+
                     {username === 'admin' && (
                         <>
                             <Link
@@ -457,6 +486,34 @@ const DashboardPage = () => {
                                 <div className="flex-1">
                                     <h3 className="font-bold text-gray-800 text-sm">Manajemen Forum</h3>
                                     <p className="text-[11px] text-gray-500">Moderasi diskusi dan balasan postingan (Admin)</p>
+                                </div>
+                                <span className="material-icons text-gray-400">chevron_right</span>
+                            </Link>
+
+                            <Link
+                                to="/dashboard/admin/roles"
+                                className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-violet-100 hover:shadow-md transition"
+                            >
+                                <div className="w-12 h-12 bg-violet-100 rounded-xl flex items-center justify-center">
+                                    <span className="material-icons text-violet-700">admin_panel_settings</span>
+                                </div>
+                                <div className="flex-1">
+                                    <h3 className="font-bold text-gray-800 text-sm">Manajemen Role & Label</h3>
+                                    <p className="text-[11px] text-gray-500">Kelola role, akses menu, dan label pengguna (Admin)</p>
+                                </div>
+                                <span className="material-icons text-gray-400">chevron_right</span>
+                            </Link>
+
+                            <Link
+                                to="/dashboard/admin/campaign-approval"
+                                className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-amber-100 hover:shadow-md transition"
+                            >
+                                <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center">
+                                    <span className="material-icons text-amber-700">assignment_turned_in</span>
+                                </div>
+                                <div className="flex-1">
+                                    <h3 className="font-bold text-gray-800 text-sm">Persetujuan Kampanye</h3>
+                                    <p className="text-[11px] text-gray-500">Verifikasi pengajuan kampanye dari user (Admin)</p>
                                 </div>
                                 <span className="material-icons text-gray-400">chevron_right</span>
                             </Link>

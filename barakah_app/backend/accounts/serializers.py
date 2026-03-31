@@ -7,15 +7,51 @@ from profiles.serializers import ProfileSerializer
 
 User = get_user_model()
 
+
+class RoleSerializer(serializers.ModelSerializer):
+    class Meta:
+        from .models import Role
+        model = Role
+        fields = '__all__'
+
+
+class UserLabelSerializer(serializers.ModelSerializer):
+    class Meta:
+        from .models import UserLabel
+        model = UserLabel
+        fields = '__all__'
+
+
 class UserAdminSerializer(serializers.ModelSerializer):
     profile = ProfileSerializer(required=False)
+    custom_roles = RoleSerializer(many=True, read_only=True)
+    custom_role_ids = serializers.PrimaryKeyRelatedField(
+        many=True, queryset=None, write_only=True, required=False, source='custom_roles'
+    )
+    labels = UserLabelSerializer(many=True, read_only=True)
+    label_ids = serializers.PrimaryKeyRelatedField(
+        many=True, queryset=None, write_only=True, required=False, source='labels'
+    )
 
     class Meta:
         model = User
-        fields = ('id', 'username', 'email', 'phone', 'role', 'is_verified_member', 'profile', 'date_joined')
+        fields = (
+            'id', 'username', 'email', 'phone', 'role', 'is_verified_member',
+            'profile', 'date_joined',
+            'custom_roles', 'custom_role_ids',
+            'labels', 'label_ids',
+        )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        from .models import Role, UserLabel
+        self.fields['custom_role_ids'].child_relation.queryset = Role.objects.all()
+        self.fields['label_ids'].child_relation.queryset = UserLabel.objects.all()
 
     def update(self, instance, validated_data):
         profile_data = validated_data.pop('profile', None)
+        custom_roles = validated_data.pop('custom_roles', None)
+        labels = validated_data.pop('labels', None)
         
         # Update User fields
         for attr, value in validated_data.items():
@@ -29,8 +65,15 @@ class UserAdminSerializer(serializers.ModelSerializer):
             for attr, value in profile_data.items():
                 setattr(profile, attr, value)
             profile.save()
+
+        # Update M2M relationships
+        if custom_roles is not None:
+            instance.custom_roles.set(custom_roles)
+        if labels is not None:
+            instance.labels.set(labels)
             
         return instance
+
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, validators=[validate_password])

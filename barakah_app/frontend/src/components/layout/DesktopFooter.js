@@ -14,7 +14,7 @@ const DesktopFooter = () => {
                     <ul className="space-y-2 text-sm">
                         <li><Link to="/#about" className="hover:text-white transition">Tentang Kami</Link></li>
                         <li><Link to="/charity" className="hover:text-white transition">Charity</Link></li>
-                        <li><Link to="/sinergy" className="hover:text-white transition">Sinergy</Link></li>
+                        {/* <li><Link to="/sinergy" className="hover:text-white transition">Sinergy</Link></li> */}
                         <li><Link to="/academy" className="hover:text-white transition">Academy</Link></li>
                         <li><Link to="/articles" className="hover:text-white transition">Artikel</Link></li>
                         <li><Link to="/digital-products" className="hover:text-white transition">Produk Digital</Link></li>

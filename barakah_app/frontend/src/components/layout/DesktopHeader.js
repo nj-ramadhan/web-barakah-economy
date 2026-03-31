@@ -30,7 +30,7 @@ const DesktopHeader = () => {
                 <Link to="/#about" className="text-gray-600 hover:text-green-700 font-medium transition">Tentang Kami</Link>
                 <Link to="/chat" className="text-gray-600 hover:text-green-700 font-medium transition">Konsultasi</Link>
                 <Link to="/charity" className="text-gray-600 hover:text-green-700 font-medium transition">Charity</Link>
-                <Link to="/sinergy" className="text-gray-600 hover:text-green-700 font-medium transition">Sinergy</Link>
+                {/* <Link to="/sinergy" className="text-gray-600 hover:text-green-700 font-medium transition">Sinergy</Link> */}
                 <Link to="/academy/ecourse" className="text-gray-600 hover:text-green-700 font-medium transition">E-Course</Link>
                 <Link to="/articles" className="text-gray-600 hover:text-green-700 font-medium transition">Artikel</Link>
                 <Link to="/kegiatan" className="text-gray-600 hover:text-green-700 font-medium transition">Kegiatan Kami</Link>

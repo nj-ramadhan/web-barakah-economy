@@ -7,6 +7,8 @@ from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework.decorators import action
+from rest_framework.parsers import MultiPartParser, FormParser
 from .models import Campaign, CampaignRealization
 from .serializers import CampaignSerializer, CampaignRealizationSerializer
 from donations.models import Donation
@@ -28,7 +30,6 @@ class CampaignRealizationViewSet(viewsets.ModelViewSet):
         
         campaign = get_object_or_404(Campaign, slug=campaign_slug)
         
-        # Check if user is admin or donor
         is_donor = Donation.objects.filter(
             donor=request.user, 
             campaign=campaign, 
@@ -46,9 +47,15 @@ class CampaignViewSet(viewsets.ModelViewSet):
     queryset = Campaign.objects.filter(is_active=True)
     serializer_class = CampaignSerializer
     lookup_field = 'slug'
+    parser_classes = [MultiPartParser, FormParser]
 
     def get_queryset(self):
         queryset = Campaign.objects.filter(is_active=True)
+        
+        # Public users see only approved campaigns
+        if not self.request.user.is_staff:
+            queryset = queryset.filter(approval_status='approved')
+        
         search = self.request.query_params.get('search', None)
         if search:
             queryset = queryset.filter(
@@ -64,46 +71,82 @@ class CampaignViewSet(viewsets.ModelViewSet):
         obj = None
 
         if lookup_value is not None:
-            # 1. Coba cari pakai ID jika inputnya angka
             if lookup_value.isdigit():
                 obj = queryset.filter(id=lookup_value).first()
-            
-            # 2. Jika belum ketemu, cari pakai Slug
             if not obj:
                 obj = get_object_or_404(queryset, slug=lookup_value)
 
         self.check_object_permissions(self.request, obj)
         return obj
 
-# CampaignDetailView removed as CampaignViewSet now handles slugs
+    @action(detail=False, methods=['post'], permission_classes=[IsAuthenticated])
+    def submit(self, request):
+        """User submits a new campaign for admin approval."""
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(
+                created_by=request.user,
+                approval_status='pending',
+                is_active=False  # Not active until approved
+            )
+            return Response(
+                {'message': 'Kampanye berhasil diajukan dan menunggu verifikasi admin.', 'data': serializer.data},
+                status=status.HTTP_201_CREATED
+            )
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
+    def my_campaigns(self, request):
+        """Get campaigns submitted by the current user."""
+        campaigns = Campaign.objects.filter(created_by=request.user).order_by('-created_at')
+        serializer = self.get_serializer(campaigns, many=True)
+        return Response(serializer.data)
+
+    @action(detail=False, methods=['get'], permission_classes=[IsAdminUser])
+    def pending(self, request):
+        """Get all pending campaigns for admin review."""
+        campaigns = Campaign.objects.filter(approval_status='pending').order_by('-created_at')
+        serializer = self.get_serializer(campaigns, many=True)
+        return Response(serializer.data)
+
+    @action(detail=True, methods=['post'], permission_classes=[IsAdminUser])
+    def approve(self, request, slug=None):
+        """Admin approves a campaign."""
+        campaign = self.get_object()
+        campaign.approval_status = 'approved'
+        campaign.is_active = True
+        campaign.save(update_fields=['approval_status', 'is_active'])
+        return Response({'message': 'Kampanye berhasil disetujui.'})
+
+    @action(detail=True, methods=['post'], permission_classes=[IsAdminUser])
+    def reject(self, request, slug=None):
+        """Admin rejects a campaign with a reason."""
+        campaign = self.get_object()
+        reason = request.data.get('reason', '')
+        campaign.approval_status = 'rejected'
+        campaign.rejection_reason = reason
+        campaign.save(update_fields=['approval_status', 'rejection_reason'])
+        return Response({'message': 'Kampanye ditolak.'})
+
 
 class CampaignShareView(APIView):
-    """
-    View for rendering server-side HTML with Open Graph tags for social media sharing.
-    """
     def get(self, request, slug):
         campaign = get_object_or_404(Campaign, slug=slug)
-        # We render a standard Django template here, not a DRF Response
         from django.shortcuts import render
         from django.conf import settings
         
-        # Determine frontend URL based on environment
         if settings.DEBUG:
             frontend_url = 'http://localhost:3000'
         else:
             frontend_url = 'https://barakah-economy.com'
         
-        # Build absolute thumbnail URL
         thumbnail_url = None
         if campaign.thumbnail:
             img_url = campaign.thumbnail.url
             if img_url.startswith('http'):
-                # Already a full URL (e.g. cloud storage)
                 thumbnail_url = img_url
             else:
-                # Force using the frontend domain to avoid localhost/proxy HTTP leaks
                 import urllib.parse
-                # URL encode the path to handle spaces or special characters safely
                 encoded_path = urllib.parse.quote(img_url, safe='/:')
                 if encoded_path.startswith('/'):
                     thumbnail_url = f"{frontend_url}{encoded_path}"

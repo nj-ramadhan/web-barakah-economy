@@ -28,6 +28,12 @@ class Campaign(models.Model):
         ('sosial', 'Bantuan Sosial'),
         ('lainnya', 'Lainnya'),       
     ]
+
+    APPROVAL_STATUS_CHOICES = [
+        ('pending', 'Menunggu Verifikasi'),
+        ('approved', 'Disetujui'),
+        ('rejected', 'Ditolak'),
+    ]
     
     title = models.CharField(max_length=100)
     slug = models.SlugField(max_length=100, unique=True, blank=True)
@@ -39,7 +45,17 @@ class Campaign(models.Model):
     is_featured = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    deadline = models.DateTimeField(null=True, blank=True)  # Make deadline nullable
+    deadline = models.DateTimeField(null=True, blank=True)
+
+    # User submission fields
+    created_by = models.ForeignKey(
+        'accounts.User', on_delete=models.SET_NULL, 
+        null=True, blank=True, related_name='submitted_campaigns'
+    )
+    approval_status = models.CharField(
+        max_length=20, choices=APPROVAL_STATUS_CHOICES, default='approved'
+    )
+    rejection_reason = models.TextField(blank=True)
 
     def save(self, *args, **kwargs):
         if not self.slug:
@@ -64,7 +80,7 @@ class Campaign(models.Model):
     def is_expired(self):
         """Check if the campaign has passed its deadline"""
         if self.deadline is None:
-            return False  # Campaigns with no deadline never expire
+            return False
         return timezone.now() > self.deadline
 
     def has_unlimited_deadline(self):
@@ -116,7 +132,6 @@ class CampaignRealization(models.Model):
     def clean(self):
         from django.core.exceptions import ValidationError
         
-        # Calculate current total realization excluding this instance if it already exists
         existing_realizations = self.campaign.realizations.all()
         if self.pk:
             existing_realizations = existing_realizations.exclude(pk=self.pk)
