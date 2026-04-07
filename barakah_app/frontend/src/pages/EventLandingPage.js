@@ -75,7 +75,7 @@ const EventLandingPage = () => {
                     <div className="text-center py-20 bg-gray-50 rounded-3xl border border-dashed border-gray-200 text-gray-400">
                         <span className="material-icons text-6xl mb-4 opacity-20">event_busy</span>
                         <p className="text-lg font-medium">Belum ada event yang tersedia</p>
-                        <p className="text-sm mt-1">Coba cari dengan kata kunci lain atau ajukan event Anda sendiri</p>
+                        <p className="text-sm mt-1">Coba cari dengan kata kunci lain atau silakan kembali nanti untuk melihat update terbaru</p>
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">

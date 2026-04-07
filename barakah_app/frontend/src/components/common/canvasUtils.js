@@ -86,7 +86,7 @@ export const createImage = (url) =>
     // As a blob
     return new Promise((resolve, reject) => {
       canvas.toBlob((file) => {
-        resolve(URL.createObjectURL(file));
+        resolve(file);
       }, 'image/jpeg');
     });
   }

@@ -24,22 +24,24 @@ class EventViewSet(viewsets.ModelViewSet):
             return [permissions.AllowAny()]
         return [permissions.IsAuthenticated()]
 
-    def _handle_json_fields(self, request):
-        """Helper to parse JSON strings in multipart requests."""
-        form_fields = request.data.get('form_fields')
-        if isinstance(form_fields, str):
+    def _get_parsed_data(self, request):
+        """Returns a mutable copy of request.data with JSON fields parsed."""
+        data = request.data.copy() if hasattr(request.data, 'copy') else dict(request.data)
+        
+        # Parse form_fields if it's a JSON string
+        form_fields = data.get('form_fields')
+        if form_fields and isinstance(form_fields, str):
             try:
-                if hasattr(request.data, '_mutable'):
-                    request.data._mutable = True
-                request.data['form_fields'] = json.loads(form_fields)
-                if hasattr(request.data, '_mutable'):
-                    request.data._mutable = False
-            except:
-                pass
+                if form_fields.startswith('[') or form_fields.startswith('{'):
+                    data['form_fields'] = json.loads(form_fields)
+            except Exception as e:
+                print(f"Error parsing form_fields JSON: {e}")
+        
+        return data
 
     def create(self, request, *args, **kwargs):
-        self._handle_json_fields(request)
-        serializer = self.get_serializer(data=request.data)
+        data = self._get_parsed_data(request)
+        serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
@@ -49,16 +51,16 @@ class EventViewSet(viewsets.ModelViewSet):
         serializer.save(created_by=self.request.user)
 
     def update(self, request, *args, **kwargs):
-        self._handle_json_fields(request)
+        data = self._get_parsed_data(request)
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
         
         # Check if status is changing to trigger email
         old_status = instance.status
-        new_status = request.data.get('status')
-        rejection_reason = request.data.get('rejection_reason')
+        new_status = data.get('status')
+        rejection_reason = data.get('rejection_reason')
         
-        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer = self.get_serializer(instance, data=data, partial=partial)
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
 
@@ -195,7 +197,22 @@ class EventRegistrationViewSet(viewsets.ModelViewSet):
         registration.status = 'approved'
         registration.save()
         
-        # Optional: Send email confirmation to registrant
+        # Send email confirmation to registrant
+        try:
+            recipient_email = registration.guest_email if not registration.user else registration.user.email
+            recipient_name = registration.guest_name if not registration.user else (registration.user.profile.name_full if hasattr(registration.user, 'profile') else registration.user.username)
+            
+            if recipient_email:
+                send_status_update_email(
+                    registration.user or recipient_email, # Can pass User object or email string if utility handles it
+                    registration.event.title,
+                    'approved',
+                    None,
+                    is_registration=True # New flag to differentiate from Event submission
+                )
+        except Exception as e:
+            print(f"Failed to send approval email: {e}")
+
         return Response({"message": "Pendaftaran disetujui."})
 
     @action(detail=True, methods=['post'])
@@ -206,4 +223,19 @@ class EventRegistrationViewSet(viewsets.ModelViewSet):
             
         registration.status = 'rejected'
         registration.save()
+
+        # Send email notification to registrant
+        try:
+            recipient_email = registration.guest_email if not registration.user else registration.user.email
+            if recipient_email:
+                send_status_update_email(
+                    registration.user or recipient_email,
+                    registration.event.title,
+                    'rejected',
+                    request.data.get('rejection_reason'),
+                    is_registration=True
+                )
+        except Exception as e:
+            print(f"Failed to send rejection email: {e}")
+
         return Response({"message": "Pendaftaran ditolak."})

@@ -402,22 +402,24 @@ const EventSubmissionPage = () => {
                         <div className="space-y-4 pt-4">
                             <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
                                 <span className="w-6 h-6 bg-green-100 text-green-700 rounded-lg flex items-center justify-center text-xs">4</span>
-                                Form Pendaftaran (Opsional)
+                                Form Pendaftaran (Wajib Diisi)
                             </h3>
-                            <p className="text-xs text-gray-500 bg-orange-50 p-3 rounded-xl border border-orange-100">
-                                Abaikan bagian ini jika event Anda tidak memerlukan pendaftaran atau menggunakan form eksternal.
+                            <p className="text-xs text-gray-500 bg-green-50 p-3 rounded-xl border border-green-100 italic">
+                                Tentukan data apa saja yang wajib diisi oleh calon pendaftar event Anda (Minimal: Nama Lengkap).
                             </p>
 
                             <div className="space-y-4">
                                 {formFields.map((field, index) => (
                                     <div key={index} className="p-4 bg-gray-50 rounded-2xl border border-gray-100 relative group">
-                                        <button 
-                                            type="button" 
-                                            onClick={() => removeFormField(index)}
-                                            className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 transition"
-                                        >
-                                            <span className="material-icons text-xs">close</span>
-                                        </button>
+                                        {formFields.length > 1 && (
+                                            <button 
+                                                type="button" 
+                                                onClick={() => removeFormField(index)}
+                                                className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 transition"
+                                            >
+                                                <span className="material-icons text-xs">close</span>
+                                            </button>
+                                        )}
 
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                             <div className="space-y-1">

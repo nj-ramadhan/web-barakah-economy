@@ -184,7 +184,7 @@ const DashboardAboutUsPage = () => {
                                 <div className="border-2 border-dashed border-gray-200 rounded-3xl p-4 text-center hover:border-green-400 transition group relative overflow-hidden h-48 flex flex-col items-center justify-center">
                                     {(formData.hero_image || (aboutData && aboutData.hero_image)) ? (
                                         <img 
-                                            src={formData.hero_image ? URL.createObjectURL(formData.hero_image) : (API + aboutData.hero_image)} 
+                                            src={formData.hero_image instanceof Blob ? URL.createObjectURL(formData.hero_image) : (aboutData?.hero_image ? (API + aboutData.hero_image) : '')} 
                                             alt="Hero" 
                                             className="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:opacity-60 transition"
                                         />
@@ -202,7 +202,7 @@ const DashboardAboutUsPage = () => {
                                 <div className="border-2 border-dashed border-gray-200 rounded-3xl p-4 text-center hover:border-green-400 transition group relative overflow-hidden h-48 flex flex-col items-center justify-center">
                                     {(formData.organization_structure_image || (aboutData && aboutData.organization_structure_image)) ? (
                                         <img 
-                                            src={formData.organization_structure_image ? URL.createObjectURL(formData.organization_structure_image) : (API + aboutData.organization_structure_image)} 
+                                            src={formData.organization_structure_image instanceof Blob ? URL.createObjectURL(formData.organization_structure_image) : (aboutData?.organization_structure_image ? (API + aboutData.organization_structure_image) : '')} 
                                             alt="Structure" 
                                             className="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:opacity-60 transition"
                                         />
@@ -234,18 +234,21 @@ const DashboardAboutUsPage = () => {
                 </form>
             </div>
 
-            <ImageCropperModal
-                show={cropper.show}
-                image={cropper.image}
-                onClose={() => setCropper({ show: false, image: null, target: null })}
-                onCropComplete={(croppedFile) => {
-                    setFormData({ ...formData, [cropper.target]: croppedFile });
-                    setCropper({ show: false, image: null, target: null });
-                }}
-                aspectRatio={cropper.aspect}
-                title="Crop Gambar Profil"
-            />
             <NavigationButton />
+            
+            {cropper.show && (
+                <ImageCropperModal
+                    show={cropper.show}
+                    image={cropper.image}
+                    onClose={() => setCropper({ ...cropper, show: false })}
+                    onCropComplete={(croppedFile) => {
+                        setFormData({ ...formData, [cropper.target]: croppedFile });
+                        setCropper({ ...cropper, show: false });
+                    }}
+                    aspectRatio={cropper.aspect}
+                    title="Crop Gambar Profil"
+                />
+            )}
         </div>
     );
 };

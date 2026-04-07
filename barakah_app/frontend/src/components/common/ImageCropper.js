@@ -7,7 +7,10 @@ const ImageCropperModal = ({ show = true, image, aspect = 16 / 9, onCropComplete
   const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
 
-  const handleCancel = onCancel || onClose;
+  const handleCancel = () => {
+    if (onCancel) onCancel();
+    else if (onClose) onClose();
+  };
 
   const onCropChange = (crop) => setCrop(crop);
   const onZoomChange = (zoom) => setZoom(zoom);
@@ -25,14 +28,14 @@ const ImageCropperModal = ({ show = true, image, aspect = 16 / 9, onCropComplete
     }
   };
 
-  if (!show) return null;
+  if (!show || !image) return null;
 
   return (
     <div className="fixed inset-0 bg-black/80 z-[1000] flex flex-col items-center justify-center p-4 backdrop-blur-sm">
       <div className="w-full max-w-2xl bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col animate-slide-up">
         <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
           <h3 className="font-bold text-gray-800">{title}</h3>
-          <button onClick={handleCancel} className="text-gray-400 hover:text-gray-600 transition">
+          <button type="button" onClick={handleCancel} className="w-10 h-10 flex items-center justify-center text-gray-400 hover:text-gray-600 transition hover:bg-gray-100 rounded-full">
             <span className="material-icons">close</span>
           </button>
         </div>

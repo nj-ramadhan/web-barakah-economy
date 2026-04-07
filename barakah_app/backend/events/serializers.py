@@ -39,10 +39,11 @@ class EventSerializer(serializers.ModelSerializer):
         
         # Update fields if provided
         if fields_data is not None:
-            # Simple approach: delete old fields and re-create
-            # Real-world might need tracking IDs to avoid deleting everything
+            # Delete old fields
             instance.form_fields.all().delete()
+            # Re-create fields (ignore IDs from frontend to avoid conflicts)
             for field in fields_data:
+                field.pop('id', None) # Remove ID if present
                 EventFormField.objects.create(event=instance, **field)
         
         return instance
