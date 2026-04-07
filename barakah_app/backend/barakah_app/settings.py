@@ -104,6 +104,7 @@ INSTALLED_APPS = [
     'digital_products.apps.DigitalProductsConfig',
     'chat',
     'forum',
+    'django_filters',
 ]
 
 MIDDLEWARE = [
