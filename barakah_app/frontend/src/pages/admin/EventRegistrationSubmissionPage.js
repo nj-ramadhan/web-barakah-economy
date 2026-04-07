@@ -57,6 +57,24 @@ const EventRegistrationSubmissionPage = () => {
         }
     };
 
+    const handleBlast = async () => {
+        if (!blastMessage.trim() || isBlasting) return;
+        
+        if (!window.confirm('Kirim pesan WhatsApp ke semua peserta yang terdaftar?')) return;
+        
+        setIsBlasting(true);
+        try {
+            const res = await blastEventWhatsapp(slug, blastMessage);
+            alert(`Berhasil! ${res.data.message}`);
+            setShowBlastModal(false);
+        } catch (err) {
+            console.error(err);
+            alert('Gagal mengirim blast: ' + (err.response?.data?.error || err.message));
+        } finally {
+            setIsBlasting(false);
+        }
+    };
+
     if (loading) return <div className="body flex items-center justify-center min-h-screen text-green-700">Memuat data pendaftaran...</div>;
 
     return (
