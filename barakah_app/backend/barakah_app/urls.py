@@ -3,14 +3,14 @@ from django.urls import path, include
 from ckeditor_uploader import views as ckeditor_views
 from django.conf import settings
 from django.conf.urls.static import static
-from rest_framework.routers import DefaultRouter
+from rest_framework.routers import SimpleRouter
 from campaigns.views import CampaignViewSet
 from donations.views import DonationViewSet
 from products.views import ProductViewSet
 from courses.views import CourseViewSet
 from profiles.views import ProfileViewSet
 
-router = DefaultRouter()
+router = SimpleRouter()
 router.register(r'profiles', ProfileViewSet, basename='profile')
 
 urlpatterns = [
