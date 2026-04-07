@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
 import Header from '../../components/layout/Header';
 import NavigationButton from '../../components/layout/Navigation';
-import { getEventRegistrations, approveRegistration, rejectRegistration, getEventDetail } from '../../services/eventApi';
+import { getEventRegistrations, getEventDetail, exportRegistrationsCsv, blastEventWhatsapp } from '../../services/eventApi';
 import '../../styles/Body.css';
 
 const EventRegistrationSubmissionPage = () => {
@@ -12,7 +12,10 @@ const EventRegistrationSubmissionPage = () => {
     const [registrations, setRegistrations] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [filterStatus, setFilterStatus] = useState('all');
+    const [isExporting, setIsExporting] = useState(false);
+    const [showBlastModal, setShowBlastModal] = useState(false);
+    const [blastMessage, setBlastMessage] = useState('Halo {name}, mau mengingatkan untuk event {event} besok ya. Sampai jumpa!');
+    const [isBlasting, setIsBlasting] = useState(false);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -34,19 +37,25 @@ const EventRegistrationSubmissionPage = () => {
         fetchData();
     }, [slug]);
 
-    const handleAction = async (id, action) => {
+    const handleExportCsv = async () => {
+        if (isExporting) return;
+        setIsExporting(true);
         try {
-            if (action === 'approve') await approveRegistration(id);
-            else if (action === 'reject') await rejectRegistration(id);
-            
-            // Toggle local state
-            setRegistrations(prev => prev.map(r => r.id === id ? { ...r, status: action === 'approve' ? 'approved' : 'rejected' } : r));
+            const res = await exportRegistrationsCsv(slug);
+            const url = window.URL.createObjectURL(new Blob([res.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `peserta_${slug}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
         } catch (err) {
-            alert('Gagal memperbarui status pendaftaran.');
+            console.error(err);
+            alert('Gagal mengekspor data.');
+        } finally {
+            setIsExporting(false);
         }
     };
-
-    const filteredRegistrations = registrations.filter(r => filterStatus === 'all' || r.status === filterStatus);
 
     if (loading) return <div className="body flex items-center justify-center min-h-screen text-green-700">Memuat data pendaftaran...</div>;
 
@@ -60,23 +69,11 @@ const EventRegistrationSubmissionPage = () => {
             <div className="max-w-6xl mx-auto px-4 py-8 pb-32">
                 <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
                     <div>
-                        <Link to="/dashboard/event" className="text-xs font-bold text-green-700 flex items-center gap-1 mb-2 hover:underline">
+                        <Link to="/dashboard/my-events" className="text-xs font-bold text-green-700 flex items-center gap-1 mb-2 hover:underline">
                             <span className="material-icons text-sm">arrow_back</span> Kembali ke Dashboard
                         </Link>
                         <h1 className="text-2xl font-black text-gray-900 tracking-tight">Data Pendaftar Event</h1>
                         <p className="text-sm text-gray-500 font-medium italic">{event?.title}</p>
-                    </div>
-                    
-                    <div className="flex bg-white p-1 rounded-xl shadow-sm border border-gray-100 h-fit">
-                        {['all', 'pending', 'approved', 'rejected'].map(s => (
-                            <button 
-                                key={s}
-                                onClick={() => setFilterStatus(s)}
-                                className={`px-4 py-2 rounded-lg text-xs font-bold capitalize transition ${filterStatus === s ? 'bg-green-700 text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'}`}
-                            >
-                                {s}
-                            </button>
-                        ))}
                     </div>
                 </div>
 
@@ -90,19 +87,18 @@ const EventRegistrationSubmissionPage = () => {
                                     {event?.form_fields?.map(field => (
                                         <th key={field.id} className="p-5 text-[10px] font-black text-gray-400 uppercase tracking-widest min-w-[150px]">{field.label}</th>
                                     ))}
-                                    <th className="p-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Status</th>
-                                    <th className="p-5 text-[10px] font-black text-gray-400 uppercase tracking-widest text-right">Aksi</th>
+                                    <th className="p-5 text-[10px] font-black text-gray-400 uppercase tracking-widest text-right">Status</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-50">
-                                {filteredRegistrations.length === 0 ? (
+                                {registrations.length === 0 ? (
                                     <tr>
-                                        <td colSpan={4 + (event?.form_fields?.length || 0)} className="p-12 text-center text-gray-400 italic text-sm">
-                                            Belum ada data pendaftar yang sesuai.
+                                        <td colSpan={3 + (event?.form_fields?.length || 0)} className="p-12 text-center text-gray-400 italic text-sm">
+                                            Belum ada data pendaftar.
                                         </td>
                                     </tr>
                                 ) : (
-                                    filteredRegistrations.map((reg) => (
+                                    registrations.map((reg) => (
                                         <tr key={reg.id} className="hover:bg-gray-50/50 transition-colors">
                                             <td className="p-5 text-xs text-gray-500">
                                                 {new Date(reg.created_at).toLocaleDateString('id-ID')}
@@ -111,7 +107,7 @@ const EventRegistrationSubmissionPage = () => {
                                             </td>
                                             <td className="p-5">
                                                 <div className="font-bold text-gray-900 text-sm whitespace-nowrap">
-                                                    {reg.guest_name || reg.user_details?.username}
+                                                    {reg.guest_name || reg.user_details?.profile?.name_full || reg.user_details?.username || "Peserta"}
                                                 </div>
                                                 <div className="text-[10px] text-gray-500 font-medium">
                                                     {reg.guest_email || reg.user_details?.email}
@@ -137,7 +133,7 @@ const EventRegistrationSubmissionPage = () => {
                                                     </td>
                                                 );
                                             })}
-                                            <td className="p-5">
+                                            <td className="p-5 text-right">
                                                 <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
                                                     reg.status === 'approved' ? 'bg-green-100 text-green-700' :
                                                     reg.status === 'rejected' ? 'bg-red-100 text-red-700' :
@@ -145,29 +141,6 @@ const EventRegistrationSubmissionPage = () => {
                                                 }`}>
                                                     {reg.status}
                                                 </span>
-                                            </td>
-                                            <td className="p-5 text-right whitespace-nowrap">
-                                                {reg.status === 'pending' && (
-                                                    <div className="flex items-center justify-end gap-2">
-                                                        <button 
-                                                            onClick={() => handleAction(reg.id, 'approve')}
-                                                            title="Setujui"
-                                                            className="w-8 h-8 rounded-xl bg-green-50 text-green-600 hover:bg-green-600 hover:text-white transition flex items-center justify-center shadow-sm"
-                                                        >
-                                                            <span className="material-icons text-sm">check</span>
-                                                        </button>
-                                                        <button 
-                                                            onClick={() => handleAction(reg.id, 'reject')}
-                                                            title="Tolak"
-                                                            className="w-8 h-8 rounded-xl bg-red-50 text-red-600 hover:bg-red-600 hover:text-white transition flex items-center justify-center shadow-sm"
-                                                        >
-                                                            <span className="material-icons text-sm">close</span>
-                                                        </button>
-                                                    </div>
-                                                )}
-                                                {reg.status !== 'pending' && (
-                                                    <span className="text-[10px] font-bold text-gray-300 italic uppercase">Sudah Diproses</span>
-                                                )}
                                             </td>
                                         </tr>
                                     ))
@@ -177,16 +150,88 @@ const EventRegistrationSubmissionPage = () => {
                     </div>
                 </div>
                 
-                <div className="mt-8 flex justify-center">
+                <div className="mt-8 flex flex-wrap justify-center gap-4">
+                    <button 
+                        onClick={handleExportCsv}
+                        disabled={isExporting}
+                        className="flex items-center justify-center gap-2 bg-white text-green-700 border-2 border-green-700 px-6 py-3 rounded-2xl text-xs font-bold shadow-sm hover:bg-green-50 transition disabled:opacity-50"
+                    >
+                        <span className="material-icons text-sm">{isExporting ? 'hourglass_top' : 'download'}</span>
+                        {isExporting ? 'MENGEKSPOR...' : 'EKSPOR DATA (CSV)'}
+                    </button>
+                    
+                    <button 
+                        onClick={() => setShowBlastModal(true)}
+                        className="flex items-center justify-center gap-2 bg-green-700 text-white px-6 py-3 rounded-2xl text-xs font-bold shadow-xl hover:bg-green-800 transition"
+                    >
+                        <span className="material-icons text-sm">campaign</span>
+                        BLAST PENGINGAT (WA)
+                    </button>
+
                     <button 
                         onClick={() => window.print()}
-                        className="flex items-center gap-2 bg-gray-900 text-white px-6 py-3 rounded-2xl text-xs font-bold shadow-xl hover:bg-gray-800 transition"
+                        className="flex items-center justify-center gap-2 bg-gray-900 text-white px-6 py-3 rounded-2xl text-xs font-bold shadow-xl hover:bg-gray-800 transition"
                     >
                         <span className="material-icons text-sm">print</span>
-                        CETAK LAPORAN PENDAFTAR
+                        CETAK LAPORAN
                     </button>
                 </div>
             </div>
+
+            {/* Blast Modal */}
+            {showBlastModal && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
+                    <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden transform animate-in zoom-in-95 duration-200">
+                        <div className="p-6 border-b border-gray-100 flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <span className="material-icons text-green-700">campaign</span>
+                                <h3 className="font-black text-gray-900 uppercase tracking-tight">Blast WhatsApp</h3>
+                            </div>
+                            <button onClick={() => setShowBlastModal(false)} className="text-gray-400 hover:text-gray-600 transition">
+                                <span className="material-icons">close</span>
+                            </button>
+                        </div>
+                        <div className="p-6">
+                            <p className="text-xs text-gray-500 font-medium mb-4 italic">
+                                Pesan akan dikirim ke semua peserta yang statusnya <span className="text-green-600 font-bold">approved</span>.
+                            </p>
+                            
+                            <div className="mb-4">
+                                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Isi Pesan</label>
+                                <textarea 
+                                    className="w-full h-32 p-4 bg-gray-50 border border-gray-100 rounded-2xl text-sm focus:ring-2 focus:ring-green-500 outline-none transition"
+                                    value={blastMessage}
+                                    onChange={(e) => setBlastMessage(e.target.value)}
+                                    placeholder="Tulis pesan pengingat..."
+                                />
+                                <div className="mt-2 flex flex-wrap gap-2">
+                                    <span className="text-[9px] text-gray-400">Gunakan tag: </span>
+                                    <code className="text-[9px] bg-indigo-50 text-indigo-700 px-1 py-0.5 rounded font-bold">{'{name}'}</code>
+                                    <code className="text-[9px] bg-indigo-50 text-indigo-700 px-1 py-0.5 rounded font-bold">{'{event}'}</code>
+                                </div>
+                            </div>
+                            
+                            <button 
+                                onClick={handleBlast}
+                                disabled={isBlasting || !blastMessage.trim()}
+                                className="w-full bg-green-700 text-white font-black py-4 rounded-2xl shadow-xl shadow-green-700/20 hover:bg-green-800 transition disabled:opacity-50 flex items-center justify-center gap-2"
+                            >
+                                {isBlasting ? (
+                                    <>
+                                        <span className="material-icons animate-spin">sync</span>
+                                        SEDANG MENGIRIM...
+                                    </>
+                                ) : (
+                                    <>
+                                        <span className="material-icons">send</span>
+                                        KIRIM SEKARANG
+                                    </>
+                                )}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             <NavigationButton />
         </div>

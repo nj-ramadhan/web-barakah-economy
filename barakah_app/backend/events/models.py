@@ -92,7 +92,7 @@ class EventRegistration(models.Model):
     guest_email = models.EmailField(blank=True, null=True)
     
     responses = models.JSONField(default=dict, help_text="JSON object mapping field IDs to values")
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='approved')
     
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

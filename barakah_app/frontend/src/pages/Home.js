@@ -709,10 +709,10 @@ const Home = () => {
                 <Link to={`/event/${event.slug || event.id}`} className="block bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100">
                   <div className="relative h-40">
                     <img
-                      src={event.image || '/placeholder-image.jpg'}
+                      src={getMediaUrl(event.thumbnail || event.header_image) || '/placeholder-image.jpg'}
                       alt={event.title}
                       className="w-full h-full object-cover"
-                      onError={(e) => { e.target.src = '/placeholder-image.jpg'; }}
+                      onError={(e) => { e.target.src = 'https://placehold.co/600x400?text=Barakah+Event'; }}
                     />
                     <div className="absolute top-2 left-2 bg-indigo-600 text-white px-2 py-0.5 rounded-full text-[10px] font-bold">
                       EVENT
@@ -1283,10 +1283,10 @@ const Home = () => {
             >
               <div className="w-20 h-20 mx-auto rounded-full overflow-hidden border-2 border-green-500 p-0.5 mb-2">
                 <img
-                  src={getMediaUrl(seller.picture || seller.shop_thumbnail) || '/images/pas_foto_standard.png'}
+                  src={getMediaUrl(seller.picture || seller.shop_thumbnail) || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(seller.name) + '&background=0D8ABC&color=fff'}
                   alt={seller.name}
                   className="w-full h-full object-cover rounded-full"
-                  onError={(e) => { e.target.src = '/images/pas_foto_standard.png'; }}
+                  onError={(e) => { e.target.src = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(seller.name) + '&background=0D8ABC&color=fff'; }}
                 />
               </div>
               <p className="text-xs font-bold text-gray-800 line-clamp-1">@{seller.username}</p>

@@ -82,3 +82,16 @@ export const rejectRegistration = (id) => {
         headers: getAuthHeaders()
     });
 };
+
+export const exportRegistrationsCsv = (slug) => {
+    return axios.get(`${API_BASE_URL}/api/events/${slug}/export_registrations/`, {
+        headers: getAuthHeaders(),
+        responseType: 'blob'
+    });
+};
+
+export const blastEventWhatsapp = (slug, message) => {
+    return axios.post(`${API_BASE_URL}/api/events/${slug}/blast_whatsapp/`, { message }, {
+        headers: getAuthHeaders()
+    });
+};

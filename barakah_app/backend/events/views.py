@@ -3,12 +3,14 @@ from rest_framework.response import Response
 from rest_framework.decorators import action
 from django.core.mail import send_mail
 from django.conf import settings
-from django.shortcuts import get_object_or_404
+from django.http import HttpResponse
+import csv
 from .models import Event, EventFormField, EventRegistration, EventRegistrationFile
 from .serializers import EventSerializer, EventRegistrationSerializer
 from django_filters.rest_framework import DjangoFilterBackend
 from barakah_app.utils import send_status_update_email
 import json
+from accounts import whatsapp_service
 
 class EventViewSet(viewsets.ModelViewSet):
     queryset = Event.objects.all().order_by('-start_date')
@@ -145,7 +147,142 @@ class EventViewSet(viewsets.ModelViewSet):
                     file=request.FILES[str(field.id)]
                 )
         
-        return Response({"message": "Pendaftaran berhasil dikirim! Menunggu tinjauan.", "id": registration.id}, status=status.HTTP_201_CREATED)
+        # 4. Automated Notifications (Email & WhatsApp)
+        try:
+            self._send_registration_notifications(registration)
+        except Exception as e:
+            # Don't fail the registration if notifications fail
+            import logging
+            logging.getLogger(__name__).error(f"Failed to send notifications for registration {registration.id}: {e}")
+        
+        return Response({"message": "Pendaftaran berhasil dikirim!", "id": registration.id}, status=status.HTTP_201_CREATED)
+
+    def _send_registration_notifications(self, registration):
+        """Helper to send Email and WhatsApp notifications on registration."""
+        responses = registration.responses
+        form_fields = registration.event.form_fields.all()
+        
+        email = registration.guest_email
+        phone = None
+        
+        # If user is authenticated, use their data as fallback
+        if registration.user:
+            if not email:
+                email = registration.user.email
+            if hasattr(registration.user, 'phone'):
+                phone = registration.user.phone
+
+        # Scan dynamic form fields for contact info (overrides account data if present in form)
+        for field in form_fields:
+            field_id = str(field.id)
+            value = responses.get(field_id)
+            if not value or not isinstance(value, str):
+                continue
+            
+            label = field.label.lower()
+            if 'email' in label:
+                email = value
+            if any(kw in label for kw in ['wa', 'whatsapp', 'hp', 'telepon', 'phone', 'handphone']):
+                phone = value
+
+        # Send WhatsApp
+        if phone:
+            formatted_phone = self._format_phone_number(phone)
+            wa_message = (
+                f"Halo! Terma kasih telah mendaftar di event: *{registration.event.title}*.\n\n"
+                f"Pendaftaran Anda telah berhasil dikonfirmasi secara otomatis.\n"
+                f"Sampai jumpa di lokasi acara!\n\n"
+                f"Salam,\nBarakah Economy"
+            )
+            whatsapp_service.send_message(formatted_phone, wa_message)
+
+        # Send Email
+        if email:
+            subject = f"Konfirmasi Pendaftaran Event: {registration.event.title}"
+            message = (
+                f"Assalamu'alaikum,\n\n"
+                f"Terima kasih telah mendaftar di event '{registration.event.title}'.\n"
+                f"Pendaftaran Anda telah berhasil dikonfirmasi secara otomatis.\n\n"
+                f"Detail Event:\n"
+                f"- Judul: {registration.event.title}\n"
+                f"- Lokasi: {registration.event.location}\n"
+                f"- Waktu: {registration.event.start_date.strftime('%d %b %Y %H:%M')}\n\n"
+                f"Terima kasih,\nTim Barakah Economy"
+            )
+            send_mail(
+                subject,
+                message,
+                settings.DEFAULT_FROM_EMAIL,
+                [email],
+                fail_silently=True
+            )
+
+    def _format_phone_number(self, phone):
+        if not phone: return None
+        phone = ''.join(filter(str.isdigit, str(phone)))
+        if phone.startswith('0'): phone = '62' + phone[1:]
+        elif phone.startswith('8'): phone = '62' + phone
+        elif phone.startswith('+'): phone = phone[1:]
+        return phone
+
+    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
+    def blast_whatsapp(self, request, slug=None):
+        """Blast WhatsApp messages to all participants of an event."""
+        event = self.get_object()
+        
+        # Check if user is the organizer or admin
+        if not (request.user.is_staff or event.created_by == request.user):
+            return Response({"error": "Hanya admin atau penyelenggara yang bisa mengirim blast."}, status=status.HTTP_403_FORBIDDEN)
+            
+        custom_message = request.data.get('message')
+        if not custom_message:
+            return Response({"error": "Pesan tidak boleh kosong."}, status=status.HTTP_400_BAD_REQUEST)
+            
+        registrations = EventRegistration.objects.filter(event=event, status='approved')
+        
+        phone_list = []
+        placeholder_data = []
+        
+        for reg in registrations:
+            # Search for phone in responses
+            _, phone = self._detect_contact_info_standalone(reg)
+            if phone:
+                formatted_phone = self._format_phone_number(phone)
+                if formatted_phone:
+                    phone_list.append(formatted_phone)
+                    name = reg.guest_name or (reg.user.profile.name_full if reg.user and hasattr(reg.user, 'profile') else reg.user.username if reg.user else "Peserta")
+                    placeholder_data.append({'name': name, 'event': event.title})
+        
+        if not phone_list:
+            return Response({"error": "Tidak ada nomor WhatsApp peserta yang terdeteksi."}, status=status.HTTP_404_NOT_FOUND)
+            
+        # Use blast_messages from whatsapp_service
+        # Message template can use {name} and {event}
+        result = whatsapp_service.blast_messages(phone_list, custom_message, placeholder_data)
+        
+        return Response({
+            "message": f"Blast selesai dikirim ke {result['success']} peserta.",
+            "details": result
+        })
+
+    def _detect_contact_info_standalone(self, registration):
+        """Standalone helper for detecting contact info from a registration."""
+        responses = registration.responses
+        form_fields = registration.event.form_fields.all()
+        email = registration.guest_email
+        phone = None
+        if registration.user:
+            if not email: email = registration.user.email
+            if hasattr(registration.user, 'phone'): phone = registration.user.phone
+        for field in form_fields:
+            field_id = str(field.id)
+            value = responses.get(field_id)
+            if not value or not isinstance(value, str): continue
+            label = field.label.lower()
+            if 'email' in label: email = value
+            if any(kw in label for kw in ['wa', 'whatsapp', 'hp', 'telepon', 'phone', 'handphone']):
+                phone = value
+        return email, phone
 
     @action(detail=True, methods=['get'], permission_classes=[permissions.AllowAny])
     def participants(self, request, slug=None):
@@ -174,6 +311,62 @@ class EventViewSet(viewsets.ModelViewSet):
             data.append(item)
             
         return Response(data)
+
+    @action(detail=True, methods=['get'], permission_classes=[permissions.IsAuthenticated])
+    def export_registrations(self, request, slug=None):
+        """Export all registrations for this event as a CSV file."""
+        event = self.get_object()
+        
+        # Verify ownership
+        if not request.user.is_staff and event.created_by != request.user:
+            return Response({"error": "Unauthorized"}, status=status.HTTP_403_FORBIDDEN)
+            
+        registrations = EventRegistration.objects.filter(event=event).select_related('user', 'user__profile')
+        form_fields = event.form_fields.all()
+        
+        # Create the HttpResponse object with the appropriate CSV header.
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = f'attachment; filename="participants_{event.slug}.csv"'
+        
+        writer = csv.writer(response)
+        
+        # CSV Header
+        header = ['Waktu Daftar', 'Nama', 'Email', 'Status']
+        for field in form_fields:
+            header.append(field.label)
+        writer.writerow(header)
+        
+        # CSV Data
+        for reg in registrations:
+            row = []
+            # Registration Time
+            row.append(reg.created_at.strftime('%Y-%m-%d %H:%M:%S'))
+            
+            # Name
+            name = reg.guest_name
+            if reg.user:
+                if hasattr(reg.user, 'profile') and reg.user.profile.name_full:
+                    name = reg.user.profile.name_full
+                else:
+                    name = reg.user.username
+            row.append(name or "Guest")
+            
+            # Email
+            row.append(reg.guest_email or (reg.user.email if reg.user else "-"))
+            
+            # Status
+            row.append(reg.status)
+            
+            # Custom Fields
+            for field in form_fields:
+                value = reg.responses.get(str(field.id), "")
+                if isinstance(value, list):
+                    value = ", ".join(map(str, value))
+                row.append(value)
+                
+            writer.writerow(row)
+            
+        return response
 
 class EventRegistrationViewSet(viewsets.ModelViewSet):
     queryset = EventRegistration.objects.all()
