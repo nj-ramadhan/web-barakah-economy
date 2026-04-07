@@ -3,8 +3,14 @@ from ckeditor.fields import RichTextField
 from accounts.models import User
 
 class Partner(models.Model):
+    TYPE_CHOICES = [
+        ('partner', 'Partner'),
+        ('mitra', 'Mitra'),
+    ]
     name = models.CharField(max_length=100)
     logo = models.ImageField(upload_to='partners/')
+    description = models.TextField(blank=True, null=True)
+    type = models.CharField(max_length=20, choices=TYPE_CHOICES, default='partner')
     order = models.PositiveIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -13,6 +19,20 @@ class Partner(models.Model):
 
     def __str__(self):
         return self.name
+
+class AboutUs(models.Model):
+    title = models.CharField(max_length=255, default='Tentang Kami')
+    hero_image = models.ImageField(upload_to='site/', blank=True, null=True)
+    description = models.TextField(blank=True, null=True)
+    vision = models.TextField(blank=True, null=True)
+    mission = models.TextField(blank=True, null=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name_plural = "About Us"
+
+    def __str__(self):
+        return self.title
 
 class Testimonial(models.Model):
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='testimonials')

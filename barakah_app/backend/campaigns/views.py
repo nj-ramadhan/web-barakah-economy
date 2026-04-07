@@ -118,6 +118,7 @@ class CampaignViewSet(viewsets.ModelViewSet):
         campaign.approval_status = 'approved'
         campaign.is_active = True
         campaign.save(update_fields=['approval_status', 'is_active'])
+        self.send_status_notification(campaign, 'approved')
         return Response({'message': 'Kampanye berhasil disetujui.'})
 
     @action(detail=True, methods=['post'], permission_classes=[IsAdminUser])
@@ -128,7 +129,38 @@ class CampaignViewSet(viewsets.ModelViewSet):
         campaign.approval_status = 'rejected'
         campaign.rejection_reason = reason
         campaign.save(update_fields=['approval_status', 'rejection_reason'])
+        self.send_status_notification(campaign, 'rejected', reason)
         return Response({'message': 'Kampanye ditolak.'})
+
+    def send_status_notification(self, campaign, status, reason=''):
+        """Send email notification to campaign creator."""
+        from django.core.mail import send_mail
+        from django.conf import settings
+        
+        subject = f"Update Status Pengajuan Kampanye: {campaign.title}"
+        message = f"Halo {campaign.created_by.username},\n\n"
+        message += f"Status pengajuan kampanye Anda '{campaign.title}' telah diperbarui menjadi: {status.upper()}.\n\n"
+        
+        if status == 'approved':
+            message += "Selamat! Kampanye Anda telah disetujui dan sekarang sudah aktif untuk menerima donasi.\n"
+        elif status == 'rejected':
+            message += f"Mohon maaf, pengajuan kampanye Anda belum dapat kami setujui.\n"
+            if reason:
+                message += f"Alasan: {reason}\n"
+        
+        message += "\nSilakan cek dashboard Anda untuk informasi lebih lanjut.\n"
+        message += "\nTerima kasih,\nTim Barakah Economy"
+        
+        try:
+            send_mail(
+                subject,
+                message,
+                settings.DEFAULT_FROM_EMAIL,
+                [campaign.created_by.email],
+                fail_silently=True,
+            )
+        except Exception as e:
+            print(f"Error sending email: {e}")
 
 
 class CampaignShareView(APIView):

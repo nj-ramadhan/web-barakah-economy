@@ -1,5 +1,10 @@
 from rest_framework import serializers
-from .models import Partner, Testimonial, Activity
+from .models import Partner, Testimonial, Activity, AboutUs
+
+class AboutUsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AboutUs
+        fields = '__all__'
 
 class PartnerSerializer(serializers.ModelSerializer):
     class Meta:

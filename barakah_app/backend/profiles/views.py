@@ -41,9 +41,14 @@ def profile_view(request, user_id):
     except Profile.DoesNotExist:
         return Response({'error': 'Profile not found'}, status=404)
 
-@api_view(['PUT'])
-@parser_classes([MultiPartParser, FormParser])  # Add parsers for file uploads
+@api_view(['PUT', 'PATCH'])
+@permission_classes([IsAuthenticated])
+@parser_classes([MultiPartParser, FormParser])
 def profile_update(request, user_id):
+    # Ensure user can only update their own profile unless admin
+    if str(request.user.id) != str(user_id) and request.user.role != 'admin':
+        return Response({'error': 'Forbidden'}, status=status.HTTP_403_FORBIDDEN)
+
     try:
         profile = Profile.objects.get(user_id=user_id)
     except Profile.DoesNotExist:

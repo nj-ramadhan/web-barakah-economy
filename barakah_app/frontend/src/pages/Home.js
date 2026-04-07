@@ -100,6 +100,8 @@ const Home = () => {
   const [showTestimonialModal, setShowTestimonialModal] = useState(false);
   const [testimonialForm, setTestimonialForm] = useState({ content: '', rating: 5 });
   const [myTestimonial, setMyTestimonial] = useState(null);
+  const [aboutUs, setAboutUs] = useState(null);
+  const [selectedPartner, setSelectedPartner] = useState(null);
 
   useEffect(() => {
     const fetchFeaturedProducts = async () => {
@@ -163,11 +165,18 @@ const Home = () => {
         const [testimonialsRes, partnersRes, activitiesRes] = await Promise.all([
           axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/site-content/testimonials/`),
           axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/site-content/partners/`),
-          axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/site-content/activities/`)
+          axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/site-content/activities/`),
+          axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/site-content/about-us/`)
         ]);
         setTestimonials((testimonialsRes.data.results || testimonialsRes.data).filter(t => t.is_approved));
         setPartners(partnersRes.data.results || partnersRes.data);
         setActivities((activitiesRes.data.results || activitiesRes.data).slice(0, 3));
+        const aboutData = aboutUsRes.data.results || aboutUsRes.data;
+        if (Array.isArray(aboutData) && aboutData.length > 0) {
+          setAboutUs(aboutData[0]);
+        } else if (aboutData && !Array.isArray(aboutData)) {
+          setAboutUs(aboutData);
+        }
 
         const user = JSON.parse(localStorage.getItem('user'));
         if (user?.access) {
@@ -448,6 +457,9 @@ const Home = () => {
   const sortedCourses = [...courses].sort((a, b) => {
     return (b.price || 0) - (a.price || 0);
   });
+
+  const onlyPartners = partners.filter(p => !p.type || p.type === 'partner');
+  const onlyMitra = partners.filter(p => p.type === 'mitra');
 
   return (
     <div className="body">
@@ -1223,8 +1235,8 @@ const Home = () => {
       </div>
 
       {/* Partner Section */}
-      {partners.length > 0 && (
-        <div className="mb-12">
+      {onlyPartners.length > 0 && (
+        <div className="mb-12 px-4 shadow-sm py-8 bg-white rounded-3xl border border-gray-50">
           <h2 className="text-xl font-bold mb-6 text-center text-gray-800">Our Partners</h2>
           <Swiper
             modules={[Navigation, Pagination, Autoplay]}
@@ -1236,11 +1248,43 @@ const Home = () => {
               1024: { slidesPerView: 5 },
             }}
           >
-            {partners.map(partner => (
+            {onlyPartners.map(partner => (
               <SwiperSlide key={partner.id}>
-                <div className="flex flex-col items-center justify-center p-4 grayscale hover:grayscale-0 transition duration-300">
+                <div 
+                  onClick={() => setSelectedPartner(partner)}
+                  className="flex flex-col items-center justify-center p-4 grayscale hover:grayscale-0 transition duration-300 cursor-pointer"
+                >
                   <img src={getMediaUrl(partner.logo)} alt={partner.name} className="h-12 object-contain mb-2" />
                   <span className="text-[10px] font-bold text-gray-400">{partner.name}</span>
+                </div>
+              </SwiperSlide>
+            ))}
+          </Swiper>
+        </div>
+      )}
+
+      {/* Mitra Section */}
+      {onlyMitra.length > 0 && (
+        <div className="mb-12 px-4 shadow-sm py-8 bg-white rounded-3xl border border-gray-50">
+          <h2 className="text-xl font-bold mb-6 text-center text-gray-800">Our Mitra</h2>
+          <Swiper
+            modules={[Navigation, Pagination, Autoplay]}
+            spaceBetween={20}
+            slidesPerView={2}
+            autoplay={{ delay: 3500 }}
+            breakpoints={{
+              640: { slidesPerView: 3 },
+              1024: { slidesPerView: 5 },
+            }}
+          >
+            {onlyMitra.map(mitra => (
+              <SwiperSlide key={mitra.id}>
+                <div 
+                  onClick={() => setSelectedPartner(mitra)}
+                  className="flex flex-col items-center justify-center p-4 grayscale hover:grayscale-0 transition duration-300 cursor-pointer"
+                >
+                  <img src={getMediaUrl(mitra.logo)} alt={mitra.name} className="h-12 object-contain mb-2" />
+                  <span className="text-[10px] font-bold text-gray-400">{mitra.name}</span>
                 </div>
               </SwiperSlide>
             ))}
@@ -1344,6 +1388,46 @@ const Home = () => {
         </div>
       )}
 
+      {/* Partner/Mitra Detail Modal */}
+      {selectedPartner && (
+        <div className="fixed inset-0 bg-black/60 z-[110] flex items-center justify-center p-4 backdrop-blur-sm">
+          <div className="bg-white w-full max-w-lg rounded-3xl overflow-hidden shadow-2xl animate-fade-in">
+            <div className="relative h-48 bg-gray-50 flex items-center justify-center">
+              <button 
+                onClick={() => setSelectedPartner(null)}
+                className="absolute top-4 right-4 w-8 h-8 bg-white/80 rounded-full flex items-center justify-center text-gray-600 hover:bg-white transition z-10"
+              >
+                <span className="material-icons">close</span>
+              </button>
+              <img 
+                src={getMediaUrl(selectedPartner.logo)} 
+                alt={selectedPartner.name} 
+                className="max-h-32 max-w-[80%] object-contain"
+              />
+            </div>
+            <div className="p-8">
+              <div className="flex items-center gap-2 mb-4">
+                <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                  selectedPartner.type === 'mitra' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'
+                }`}>
+                  {selectedPartner.type || 'Partner'}
+                </span>
+                <h3 className="text-2xl font-bold text-gray-900">{selectedPartner.name}</h3>
+              </div>
+              <div className="text-gray-600 leading-relaxed text-sm whitespace-pre-line">
+                {selectedPartner.description || 'Belum ada deskripsi untuk partner ini.'}
+              </div>
+              <button
+                onClick={() => setSelectedPartner(null)}
+                className="w-full mt-8 py-3 bg-gray-900 text-white rounded-xl text-sm font-bold hover:bg-gray-800 transition"
+              >
+                Tutup
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Kegiatan Komunitas */}
       {activities.length > 0 && (
         <div className="hidden md:block bg-gray-50 py-10 px-4">
@@ -1395,33 +1479,54 @@ const Home = () => {
 
       {/* Tentang Kami Section */}
       <section id="about" className="py-20 px-8 lg:px-24 bg-white">
-        <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-start gap-12">
-          <div className="flex-1 space-y-6">
-            <h2 className="text-3xl font-bold text-gray-900">Tentang Kami</h2>
-            <div className="w-20 h-1 bg-green-600 rounded-full"></div>
-            <p className="text-gray-600 leading-relaxed">
-              BAE Community berdiri pada tanggal 29 Februari 2024 di Jalan Tubagus Ismail Dalam No.19C dan bertempat di Dago, Kota Bandung, Jawa Barat. Tujuan BAE Community adalah meningkatkan kestabilan finansial masyarakat melalui pengembangan ekosistem ekonomi yang berlandaskan syariah Islam dengan memberdayakan pemuda dan mahasiswa sebagai pionir perubahan.
-            </p>
-            <p className="text-gray-600 leading-relaxed">
-              BAE Community memiliki tugas pokok menyelenggarakan kegiatan yang bersifat pemberdayaan, pendidikan, kolaborasi, pengembangan serta sosial baik ke dalam yaitu internal komunitas maupun keluar yaitu lingkungan masyarakat.
-            </p>
-          </div>
-          <div className="flex-1 space-y-6">
-            <div className="bg-green-50 p-6 rounded-2xl border border-green-100">
-              <h3 className="text-lg font-bold text-green-800 mb-3">🎯 Visi</h3>
-              <p className="text-gray-700 text-sm leading-relaxed">
-                Menjadi komunitas yang unggul dalam mengembangkan perekonomian berbasis syariah yang berkeadilan dan berkelanjutan, serta berkontribusi secara aktif dalam kesejahteraan umat.
-              </p>
+        <div className="max-w-6xl mx-auto">
+          {aboutUs?.hero_image && (
+            <div className="w-full h-64 md:h-96 rounded-3xl overflow-hidden mb-12 shadow-lg">
+              <img src={getMediaUrl(aboutUs.hero_image)} alt="Barakah Economy" className="w-full h-full object-cover" />
             </div>
-            <div className="bg-green-50 p-6 rounded-2xl border border-green-100">
-              <h3 className="text-lg font-bold text-green-800 mb-3">🚀 Misi</h3>
-              <ul className="space-y-1.5 text-sm text-gray-700">
-                <li className="flex items-start gap-2"><span className="text-green-600 mt-1">•</span> Mendorong Pemberdayaan Ekonomi</li>
-                <li className="flex items-start gap-2"><span className="text-green-600 mt-1">•</span> Pendidikan dan Literasi Keuangan Syariah</li>
-                <li className="flex items-start gap-2"><span className="text-green-600 mt-1">•</span> Kolaborasi dan Sinergi Antar Komunitas</li>
-                <li className="flex items-start gap-2"><span className="text-green-600 mt-1">•</span> Pengembangan Usaha Berbasis Syariah</li>
-                <li className="flex items-start gap-2"><span className="text-green-600 mt-1">•</span> Kepedulian Sosial dan Amal</li>
-              </ul>
+          )}
+          <div className="flex flex-col md:flex-row items-start gap-12">
+            <div className="flex-1 space-y-6">
+              <h2 className="text-3xl font-bold text-gray-900">{aboutUs?.title || 'Tentang Kami'}</h2>
+              <div className="w-20 h-1 bg-green-600 rounded-full"></div>
+              {aboutUs?.description ? (
+                <div className="text-gray-600 leading-relaxed whitespace-pre-line text-sm">
+                  {aboutUs.description}
+                </div>
+              ) : (
+                <>
+                  <p className="text-gray-600 leading-relaxed text-sm">
+                    BAE Community berdiri pada tanggal 29 Februari 2024 di Jalan Tubagus Ismail Dalam No.19C dan bertempat di Dago, Kota Bandung, Jawa Barat. Tujuan BAE Community adalah meningkatkan kestabilan finansial masyarakat melalui pengembangan ekosistem ekonomi yang berlandaskan syariah Islam dengan memberdayakan pemuda dan mahasiswa sebagai pionir perubahan.
+                  </p>
+                  <p className="text-gray-600 leading-relaxed text-sm">
+                    BAE Community memiliki tugas pokok menyelenggarakan kegiatan yang bersifat pemberdayaan, pendidikan, kolaborasi, pengembangan serta sosial baik ke dalam yaitu internal komunitas maupun keluar yaitu lingkungan masyarakat.
+                  </p>
+                </>
+              )}
+            </div>
+            <div className="flex-1 space-y-6">
+              <div className="bg-green-50 p-6 rounded-2xl border border-green-100">
+                <h3 className="text-lg font-bold text-green-800 mb-3">🎯 Visi</h3>
+                <p className="text-gray-700 text-sm leading-relaxed whitespace-pre-line">
+                  {aboutUs?.vision || 'Menjadi komunitas yang unggul dalam mengembangkan perekonomian berbasis syariah yang berkeadilan dan berkelanjutan, serta berkontribusi secara aktif dalam kesejahteraan umat.'}
+                </p>
+              </div>
+              <div className="bg-green-50 p-6 rounded-2xl border border-green-100">
+                <h3 className="text-lg font-bold text-green-800 mb-3">🚀 Misi</h3>
+                {aboutUs?.mission ? (
+                   <p className="text-gray-700 text-sm leading-relaxed whitespace-pre-line">
+                    {aboutUs.mission}
+                   </p>
+                ) : (
+                  <ul className="space-y-1.5 text-sm text-gray-700">
+                    <li className="flex items-start gap-2"><span className="text-green-600 mt-1">•</span> Mendorong Pemberdayaan Ekonomi</li>
+                    <li className="flex items-start gap-2"><span className="text-green-600 mt-1">•</span> Pendidikan dan Literasi Keuangan Syariah</li>
+                    <li className="flex items-start gap-2"><span className="text-green-600 mt-1">•</span> Kolaborasi dan Sinergi Antar Komunitas</li>
+                    <li className="flex items-start gap-2"><span className="text-green-600 mt-1">•</span> Pengembangan Usaha Berbasis Syariah</li>
+                    <li className="flex items-start gap-2"><span className="text-green-600 mt-1">•</span> Kepedulian Sosial dan Amal</li>
+                  </ul>
+                )}
+              </div>
             </div>
           </div>
         </div>

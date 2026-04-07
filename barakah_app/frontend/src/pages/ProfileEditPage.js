@@ -39,7 +39,6 @@ const ProfileEditPage = () => {
   const location = useLocation();
   const isCompleteMode = new URLSearchParams(location.search).get('complete') === '1';
   const [missingFields, setMissingFields] = useState([]);
-
   const [profile, setProfile] = useState({
     name_full: '', nik: '', gender: '', birth_date: '', birth_place: '',
     marital_status: '', segment: '', study_level: '', study_campus: '',
@@ -47,7 +46,7 @@ const ProfileEditPage = () => {
     study_semester: '', study_start_year: '', study_finish_year: '',
     address: '', job: '', work_field: '', work_institution: '',
     work_position: '', work_salary: '', address_latitude: '',
-    address_province: '', picture: null,
+    address_longitude: '', address_province: '', picture: null, ktp_image: null,
   });
 
   const [activeTab, setActiveTab] = useState('general');
@@ -230,6 +229,10 @@ const ProfileEditPage = () => {
             }
           }
         }
+        
+        // Debug: Log FormData keys
+        // for (let pair of formData.entries()) { console.log(pair[0] + ': ' + pair[1]); }
+
         const updatedProfile = await authService.updateProfile(user.id, formData);
         
         // Update user in localStorage with new picture

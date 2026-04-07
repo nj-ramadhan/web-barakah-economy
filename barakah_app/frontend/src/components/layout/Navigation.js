@@ -11,6 +11,7 @@ const LAYANAN_ITEMS = [
   { to: '/academy/ecourse', icon: 'school', label: 'E-Course', color: 'text-purple-600' },
   { to: '/articles', icon: 'article', label: 'Article', color: 'text-orange-500' },
   { to: '/digital-products', icon: 'storefront', label: 'Produk Digital', color: 'text-emerald-600' },
+  { to: '/event', icon: 'celebration', label: 'Event', color: 'text-indigo-600' },
   { to: '/forum', icon: 'forum', label: 'Forum', color: 'text-blue-500' },
   { to: '/about', icon: 'info', label: 'About', color: 'text-teal-600' },
   { to: '/profile', icon: 'person', label: 'Profile', color: 'text-gray-600' },

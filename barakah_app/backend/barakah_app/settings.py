@@ -100,6 +100,7 @@ INSTALLED_APPS = [
     'courses',  
     'article',
     'site_content',
+    'events',
     'digital_products.apps.DigitalProductsConfig',
     'chat',
     'forum',

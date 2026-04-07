@@ -48,6 +48,11 @@ import AcademyMain from './pages/AcademyMain';
 import ActivityListPage from './pages/ActivityListPage';
 import ActivityDetailPage from './pages/ActivityDetailPage';
 import DashboardUserPage from './pages/admin/DashboardUserPage';
+import DashboardEventPage from './pages/admin/DashboardEventPage';
+import EventLandingPage from './pages/EventLandingPage';
+import EventSubmissionPage from './pages/EventSubmissionPage';
+import EventDetailPage from './pages/EventDetailPage';
+import EventRegistrationSubmissionPage from './pages/admin/EventRegistrationSubmissionPage';
 
 import DigitalProductListPage from './pages/DigitalProductListPage';
 import DigitalProductDetailPage from './pages/DigitalProductDetailPage';
@@ -249,6 +254,12 @@ const LayoutWrapper = ({ isDesktop }) => {
         <Route path="/kegiatan" element={<ResponsiveLayout isDesktop={isDesktop}><ActivityListPage /></ResponsiveLayout>} />
         <Route path="/kegiatan/:id" element={<ResponsiveLayout isDesktop={isDesktop}><ActivityDetailPage /></ResponsiveLayout>} />
 
+        {/* Event Routes */}
+        <Route path="/event" element={<ResponsiveLayout isDesktop={isDesktop}><EventLandingPage /></ResponsiveLayout>} />
+        <Route path="/event/ajukan" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><EventSubmissionPage /></ResponsiveLayout></PrivateRoute>} />
+        <Route path="/event/edit/:slug" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><EventSubmissionPage /></ResponsiveLayout></PrivateRoute>} />
+        <Route path="/event/:slug" element={<ResponsiveLayout isDesktop={isDesktop}><EventDetailPage /></ResponsiveLayout>} />
+
         {/* Chat Routes */}
         <Route path="/chat" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><ChatListPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/chat/:sessionId" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop} hideFooter={true}><ChatWindowPage /></ResponsiveLayout></PrivateRoute>} />
@@ -283,6 +294,9 @@ const LayoutWrapper = ({ isDesktop }) => {
         <Route path="/dashboard/admin/partners" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardPartnersPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/admin/testimonials" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardTestimonialsPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/admin/activities" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardActivitiesPage /></ResponsiveLayout></PrivateRoute>} />
+        <Route path="/dashboard/admin/events" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardEventPage /></ResponsiveLayout></PrivateRoute>} />
+        <Route path="/dashboard/event" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardEventPage /></ResponsiveLayout></PrivateRoute>} />
+        <Route path="/dashboard/event/submissions/:slug" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><EventRegistrationSubmissionPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/admin/users" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardUserPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/admin/all-products" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><AdminAllProductsPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/admin/all-courses" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><AdminAllCoursesPage /></ResponsiveLayout></PrivateRoute>} />
