@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
 import Header from '../components/layout/Header';
 import NavigationButton from '../components/layout/Navigation';
+import ImageCropperModal from '../components/common/ImageCropper';
 import { createEvent, getEventDetail, updateEvent } from '../services/eventApi';
 import CKEditorComponent from '../components/common/CKEditor';
 
@@ -29,6 +30,7 @@ const EventSubmissionPage = () => {
         header_image: null,
         thumbnail: null,
     });
+    const [cropper, setCropper] = useState({ active: false, image: null, type: null });
 
     useEffect(() => {
         const user = JSON.parse(localStorage.getItem('user'));
@@ -73,9 +75,24 @@ const EventSubmissionPage = () => {
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
-    const handleFileChange = (e) => {
-        const { name } = e.target;
-        setFiles(prev => ({ ...prev, [name]: e.target.files[0] }));
+    const handleFileSelect = (e, type) => {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = () => {
+                setCropper({ active: true, image: reader.result, type });
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    const handleCropComplete = async (croppedImageUrl) => {
+        const response = await fetch(croppedImageUrl);
+        const blob = await response.blob();
+        const file = new File([blob], `${cropper.type}.jpg`, { type: 'image/jpeg' });
+        
+        setFiles(prev => ({ ...prev, [cropper.type]: file }));
+        setCropper({ active: false, image: null, type: null });
     };
 
     const handleDescriptionChange = (content) => {
@@ -284,23 +301,47 @@ const EventSubmissionPage = () => {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-1.5">
                                     <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Gambar Header (16:9)</label>
-                                    <input 
-                                        type="file" 
-                                        name="header_image"
-                                        onChange={handleFileChange}
-                                        accept="image/*"
-                                        className="w-full px-5 py-3 bg-gray-50 border-none rounded-2xl text-sm file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-green-50 file:text-green-700 hover:file:bg-green-100 cursor-pointer"
-                                    />
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-16 h-10 bg-gray-100 rounded-lg overflow-hidden border border-gray-200">
+                                            {files.header_image ? (
+                                                <img 
+                                                    src={files.header_image instanceof File ? URL.createObjectURL(files.header_image) : files.header_image} 
+                                                    className="w-full h-full object-cover" 
+                                                    alt="Header Preview"
+                                                />
+                                            ) : <span className="material-icons text-gray-300 flex items-center justify-center h-full">image</span>}
+                                        </div>
+                                        <input 
+                                            type="file" 
+                                            accept="image/*"
+                                            className="hidden"
+                                            id="header-upload"
+                                            onChange={(e) => handleFileSelect(e, 'header_image')}
+                                        />
+                                        <label htmlFor="header-upload" className="flex-1 text-center py-2 bg-green-50 text-green-700 rounded-xl text-xs font-bold cursor-pointer">Pilih & Potong</label>
+                                    </div>
                                 </div>
                                 <div className="space-y-1.5">
                                     <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Thumbnail (1:1)</label>
-                                    <input 
-                                        type="file" 
-                                        name="thumbnail"
-                                        onChange={handleFileChange}
-                                        accept="image/*"
-                                        className="w-full px-5 py-3 bg-gray-50 border-none rounded-2xl text-sm file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-green-50 file:text-green-700 hover:file:bg-green-100 cursor-pointer"
-                                    />
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 bg-gray-100 rounded-lg overflow-hidden border border-gray-200">
+                                            {files.thumbnail ? (
+                                                <img 
+                                                    src={files.thumbnail instanceof File ? URL.createObjectURL(files.thumbnail) : files.thumbnail} 
+                                                    className="w-full h-full object-cover" 
+                                                    alt="Thumbnail Preview"
+                                                />
+                                            ) : <span className="material-icons text-gray-300 flex items-center justify-center h-full">image</span>}
+                                        </div>
+                                        <input 
+                                            type="file" 
+                                            accept="image/*"
+                                            className="hidden"
+                                            id="thumb-upload"
+                                            onChange={(e) => handleFileSelect(e, 'thumbnail')}
+                                        />
+                                        <label htmlFor="thumb-upload" className="flex-1 text-center py-2 bg-green-50 text-green-700 rounded-xl text-xs font-bold cursor-pointer">Pilih & Potong</label>
+                                    </div>
                                 </div>
                                 <div className="space-y-1.5">
                                     <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Nama Penyelenggara *</label>
@@ -442,6 +483,14 @@ const EventSubmissionPage = () => {
                     </form>
                 </div>
             </div>
+            {cropper.active && (
+                <ImageCropperModal 
+                    image={cropper.image}
+                    aspect={cropper.type === 'header_image' ? 16 / 9 : 1}
+                    onCropComplete={handleCropComplete}
+                    onCancel={() => setCropper({ active: false, image: null, type: null })}
+                />
+            )}
             <NavigationButton />
         </div>
     );

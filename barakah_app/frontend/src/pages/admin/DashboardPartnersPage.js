@@ -107,61 +107,103 @@ const DashboardPartnersPage = () => {
                                     type="text" 
                                     placeholder="Nama Partner" 
                                     required 
-                                    className="w-full p-3 bg-gray-50 rounded-xl text-sm" 
+                                    className="w-full p-3 bg-gray-50 border-none rounded-xl text-sm" 
                                     value={formData.name}
                                     onChange={(e) => setFormData({ ...formData, name: e.target.value })} 
                                 />
-                                <select 
-                                    className="w-full p-3 bg-gray-50 rounded-xl text-sm"
-                                    value={formData.type || 'partner'}
-                                    onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                                >
-                                    <option value="partner">Partner</option>
-                                    <option value="mitra">Mitra</option>
-                                </select>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <select 
+                                        className="w-full p-3 bg-gray-50 border-none rounded-xl text-sm appearance-none"
+                                        value={formData.type || 'partner'}
+                                        onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+                                    >
+                                        <option value="partner">Partner Kami</option>
+                                        <option value="mitra">Mitra Kami</option>
+                                    </select>
+                                    <input 
+                                        type="number" 
+                                        placeholder="Order" 
+                                        className="w-full p-3 bg-gray-50 border-none rounded-xl text-sm" 
+                                        value={formData.order}
+                                        onChange={(e) => setFormData({ ...formData, order: e.target.value })} 
+                                    />
+                                </div>
                                 <textarea 
-                                    placeholder="Deskripsi Partner" 
-                                    className="w-full p-3 bg-gray-50 rounded-xl text-sm" 
+                                    placeholder="Deskripsi Partner (untuk modal)" 
+                                    className="w-full p-3 bg-gray-50 border-none rounded-xl text-sm" 
                                     rows="3"
                                     value={formData.description || ''}
                                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                                 ></textarea>
-                                <input 
-                                    type="number" 
-                                    placeholder="Order" 
-                                    className="w-full p-3 bg-gray-50 rounded-xl text-sm" 
-                                    value={formData.order}
-                                    onChange={(e) => setFormData({ ...formData, order: e.target.value })} 
-                                />
+                                
                                 <div className="space-y-1">
-                                    <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Logo Partner</label>
-                                    <input
-                                        type="file"
-                                        accept="image/*"
-                                        required={!formData.id}
-                                        className="w-full text-xs p-2 bg-gray-50 rounded-xl"
-                                        onChange={(e) => {
-                                            const file = e.target.files[0];
-                                            if (file && file.size > 5 * 1024 * 1024) {
-                                                alert("Ukuran logo terlalu besar. Maksimal 5MB.");
-                                                e.target.value = null;
-                                                return;
-                                            }
-                                            setFormData({ ...formData, logo: file });
-                                        }}
-                                    />
-                                    <p className="text-[10px] text-gray-400 italic ml-1">Maks. 5MB</p>
+                                    <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Logo Partner (1:1 Recommended)</label>
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center overflow-hidden border border-gray-200">
+                                            {formData.logo ? (
+                                                <img 
+                                                    src={formData.logo instanceof File ? URL.createObjectURL(formData.logo) : getMediaUrl(formData.logo)} 
+                                                    alt="Preview" 
+                                                    className="w-full h-full object-contain" 
+                                                />
+                                            ) : <span className="material-icons text-gray-300 text-lg">image</span>}
+                                        </div>
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            className="hidden"
+                                            id="partner-logo-upload"
+                                            onChange={(e) => {
+                                                const file = e.target.files[0];
+                                                if (file) {
+                                                    const reader = new FileReader();
+                                                    reader.onload = () => {
+                                                        setCropper({ active: true, image: reader.result });
+                                                    };
+                                                    reader.readAsDataURL(file);
+                                                }
+                                            }}
+                                        />
+                                        <label 
+                                            htmlFor="partner-logo-upload"
+                                            className="flex-1 py-2 text-center bg-green-50 text-green-700 rounded-xl text-xs font-bold cursor-pointer hover:bg-green-100 transition"
+                                        >
+                                            Pilih & Potong Logo
+                                        </label>
+                                    </div>
                                 </div>
+
                                 <div className="flex gap-2 pt-2">
                                     <button type="submit" className="flex-1 py-3 bg-green-700 text-white rounded-xl font-bold shadow-lg shadow-green-100 hover:bg-green-800 transition">
                                         {formData.id ? 'Simpan' : 'Tambah'}
                                     </button>
-                                    <button type="button" onClick={() => { setShowModal(false); setFormData({ name: '', logo: null, order: 0, description: '', type: 'partner' }); }} className="flex-1 py-3 bg-gray-100 text-gray-600 rounded-xl font-bold hover:bg-gray-200 transition">Batal</button>
+                                    <button 
+                                        type="button" 
+                                        onClick={() => { setShowModal(false); setFormData({ name: '', logo: null, order: 0, description: '', type: 'partner' }); }} 
+                                        className="flex-1 py-3 bg-gray-100 text-gray-600 rounded-xl font-bold hover:bg-gray-200 transition"
+                                    >
+                                        Batal
+                                    </button>
                                 </div>
                             </div>
                         </form>
                     </div>
                 </div>
+            )}
+
+            {cropper.active && (
+                <ImageCropperModal 
+                    image={cropper.image}
+                    aspect={1}
+                    onCropComplete={async (croppedImageUrl) => {
+                        const response = await fetch(croppedImageUrl);
+                        const blob = await response.blob();
+                        const file = new File([blob], 'partner_logo.jpg', { type: 'image/jpeg' });
+                        setFormData({ ...formData, logo: file });
+                        setCropper({ active: false, image: null });
+                    }}
+                    onCancel={() => setCropper({ active: false, image: null })}
+                />
             )}
             <NavigationButton />
         </div>

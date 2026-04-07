@@ -200,6 +200,8 @@ const LayoutWrapper = ({ isDesktop }) => {
         <Route path="/" element={isDesktop ? <DesktopLandingPage /> : <MobileContainer><Home /></MobileContainer>} />
 
         {/* Account Routes */}
+        <Route path="/admin/about-us" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardAboutUsPage /></ResponsiveLayout></PrivateRoute>} />
+        <Route path="/admin/role-management" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardRoleManagementPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/login" element={<MobileContainer><LoginPage /></MobileContainer>} />
         <Route path="/register" element={<MobileContainer><RegisterPage /></MobileContainer>} />
         <Route path="/lupa-password" element={<MobileContainer><ForgotPasswordPage /></MobileContainer>} />

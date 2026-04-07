@@ -11,6 +11,7 @@ import {
     deleteMyDigitalProduct,
 } from '../services/digitalProductApi';
 import BackButton from '../components/global/BackButton';
+import ImageCropperModal from '../components/common/ImageCropper';
 import '../styles/Body.css';
 
 const formatIDR = (amount) => {
@@ -55,6 +56,7 @@ const DashboardDigitalProductsPage = () => {
     const [thumbnail, setThumbnail] = useState(null);
     const [thumbnailPreview, setThumbnailPreview] = useState(null);
     const [visibility, setVisibility] = useState('global');
+    const [cropper, setCropper] = useState({ active: false, image: null });
 
     const fetchDashboardData = useCallback(async () => {
         try {
@@ -172,9 +174,22 @@ const DashboardDigitalProductsPage = () => {
                 alert('Ukuran gambar terlalu besar. Maksimal 5MB.');
                 return;
             }
-            setThumbnail(file);
-            setThumbnailPreview(URL.createObjectURL(file));
+            const reader = new FileReader();
+            reader.onload = () => {
+                setCropper({ active: true, image: reader.result });
+            };
+            reader.readAsDataURL(file);
         }
+    };
+
+    const handleCropComplete = async (croppedImageUrl) => {
+        const response = await fetch(croppedImageUrl);
+        const blob = await response.blob();
+        const file = new File([blob], 'product_thumb.jpg', { type: 'image/jpeg' });
+        
+        setThumbnail(file);
+        setThumbnailPreview(croppedImageUrl);
+        setCropper({ active: false, image: null });
     };
 
     return (
@@ -395,6 +410,15 @@ const DashboardDigitalProductsPage = () => {
                     </div>
                 )}
             </div>
+
+            {cropper.active && (
+                <ImageCropperModal 
+                    image={cropper.image}
+                    aspect={1}
+                    onCropComplete={handleCropComplete}
+                    onCancel={() => setCropper({ active: false, image: null })}
+                />
+            )}
 
             <NavigationButton />
         </div>

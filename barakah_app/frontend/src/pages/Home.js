@@ -1301,8 +1301,13 @@ const Home = () => {
 
       {/* Partner Section */}
       {onlyPartners.length > 0 && (
-        <div className="mb-12 px-4 shadow-sm py-8 bg-white rounded-3xl border border-gray-50">
-          <h2 className="text-xl font-bold mb-6 text-center text-gray-800">Our Partners</h2>
+        <div className="mb-12 px-4 shadow-sm py-12 bg-white rounded-[2rem] border border-gray-50 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-green-50 rounded-full blur-3xl opacity-30 -mr-32 -mt-32"></div>
+          <h2 className="text-2xl font-extrabold mb-8 text-center text-gray-900 flex items-center justify-center gap-3">
+            <span className="w-8 h-1 bg-green-600 rounded-full"></span>
+            Partner Kami
+            <span className="w-8 h-1 bg-green-600 rounded-full"></span>
+          </h2>
           <Swiper
             modules={[Navigation, Pagination, Autoplay]}
             spaceBetween={20}
@@ -1330,8 +1335,13 @@ const Home = () => {
 
       {/* Mitra Section */}
       {onlyMitra.length > 0 && (
-        <div className="mb-12 px-4 shadow-sm py-8 bg-white rounded-3xl border border-gray-50">
-          <h2 className="text-xl font-bold mb-6 text-center text-gray-800">Our Mitra</h2>
+        <div className="mb-12 px-4 shadow-sm py-12 bg-white rounded-[2rem] border border-gray-50 relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-64 h-64 bg-green-50 rounded-full blur-3xl opacity-30 -ml-32 -mt-32"></div>
+          <h2 className="text-2xl font-extrabold mb-8 text-center text-gray-900 flex items-center justify-center gap-3">
+            <span className="w-8 h-1 bg-green-600 rounded-full"></span>
+            Mitra Kami
+            <span className="w-8 h-1 bg-green-600 rounded-full"></span>
+          </h2>
           <Swiper
             modules={[Navigation, Pagination, Autoplay]}
             spaceBetween={20}
@@ -1594,6 +1604,21 @@ const Home = () => {
               </div>
             </div>
           </div>
+
+          {/* Organization Structure Image */}
+          {aboutUs?.organization_structure_image && (
+            <div className="mt-20">
+              <h2 className="text-2xl font-bold text-gray-900 mb-8 text-center">Struktur Organisasi</h2>
+              <div className="rounded-[2.5rem] overflow-hidden shadow-2xl border-8 border-white bg-white">
+                <img 
+                  src={getMediaUrl(aboutUs.organization_structure_image)} 
+                  alt="Struktur Organisasi Barakah Economy" 
+                  className="w-full h-auto cursor-zoom-in"
+                  onClick={() => window.open(getMediaUrl(aboutUs.organization_structure_image), '_blank')}
+                />
+              </div>
+            </div>
+          )}
         </div>
       </section>
 

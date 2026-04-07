@@ -153,12 +153,15 @@ const EventDetailPage = () => {
                         </div>
 
                         {/* Description */}
-                        <div>
+                        <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
                             <h2 className="text-xl font-extrabold text-gray-900 mb-4 flex items-center gap-2">
                                 <span className="w-1.5 h-6 bg-green-600 rounded-full"></span>
                                 Tentang Event
                             </h2>
-                            <div className="prose prose-sm max-w-none text-gray-600" dangerouslySetInnerHTML={{ __html: event.description }}></div>
+                            <div 
+                                className="prose prose-sm max-w-none text-gray-600 overflow-hidden" 
+                                dangerouslySetInnerHTML={{ __html: event.description || '' }}
+                            ></div>
                         </div>
 
                         {/* Organizer */}

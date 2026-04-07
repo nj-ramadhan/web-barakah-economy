@@ -43,6 +43,7 @@ class UserAdminSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         profile_data = validated_data.pop('profile', None)
+        # PrimaryKeyRelatedField(source='custom_roles') resolves to validated_data['custom_roles']
         custom_roles = validated_data.pop('custom_roles', None)
         labels = validated_data.pop('labels', None)
         
@@ -59,12 +60,13 @@ class UserAdminSerializer(serializers.ModelSerializer):
                 setattr(profile, attr, value)
             profile.save()
 
-        # Update M2M relationships
+        # Update M2M relationships explicitly
         if custom_roles is not None:
             instance.custom_roles.set(custom_roles)
         if labels is not None:
             instance.labels.set(labels)
             
+        instance.save() # Ensure everything is synced
         return instance
 
 

@@ -1,11 +1,14 @@
 // pages/admin/NewCampaign.js
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import ImageCropperModal from '../../components/common/ImageCropper';
 
 const NewCampaign = () => {
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [previewImage, setPreviewImage] = useState(null);
+  const [cropper, setCropper] = useState({ active: false, image: null });
+  const fileInputRef = useRef(null);
   const [formData, setFormData] = useState({
     title: '',
     category: '',
@@ -37,15 +40,11 @@ const NewCampaign = () => {
           e.target.value = ''; // Reset input
           return;
         }
-        setFormData(prev => ({
-          ...prev,
-          [name]: files[0]
-        }));
         
-        // Create preview
+        // Open Cropper instead of direct preview
         const reader = new FileReader();
         reader.onload = (e) => {
-          setPreviewImage(e.target.result);
+          setCropper({ active: true, image: e.target.result });
         };
         reader.readAsDataURL(files[0]);
       }
@@ -312,6 +311,26 @@ const NewCampaign = () => {
           </form>
         </div>
       </div>
+
+      {cropper.active && (
+        <ImageCropperModal 
+          image={cropper.image}
+          aspect={16 / 9}
+          onCropComplete={async (croppedImageUrl) => {
+            const response = await fetch(croppedImageUrl);
+            const blob = await response.blob();
+            const file = new File([blob], 'campaign_thumb.jpg', { type: 'image/jpeg' });
+            
+            setFormData(prev => ({ ...prev, thumbnail: file }));
+            setPreviewImage(croppedImageUrl);
+            setCropper({ active: false, image: null });
+          }}
+          onCancel={() => {
+            setCropper({ active: false, image: null });
+            if (fileInputRef.current) fileInputRef.current.value = '';
+          }}
+        />
+      )}
     </div>
   );
 };

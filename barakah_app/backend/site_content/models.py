@@ -23,6 +23,7 @@ class Partner(models.Model):
 class AboutUs(models.Model):
     title = models.CharField(max_length=255, default='Tentang Kami')
     hero_image = models.ImageField(upload_to='site/', blank=True, null=True)
+    organization_structure_image = models.ImageField(upload_to='site/', blank=True, null=True)
     description = models.TextField(blank=True, null=True)
     vision = models.TextField(blank=True, null=True)
     mission = models.TextField(blank=True, null=True)
