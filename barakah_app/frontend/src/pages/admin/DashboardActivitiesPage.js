@@ -3,6 +3,7 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import Header from '../../components/layout/Header';
 import NavigationButton from '../../components/layout/Navigation';
+import ImageCropperModal from '../../components/common/ImageCropper';
 
 const getMediaUrl = (url) => {
     if (!url) return '';
@@ -22,6 +23,7 @@ const DashboardActivitiesPage = () => {
         content: '',
         date: new Date().toISOString().split('T')[0]
     });
+    const [cropper, setCropper] = useState({ show: false, image: null });
 
     const fetchActivities = async () => {
         try {
@@ -40,12 +42,16 @@ const DashboardActivitiesPage = () => {
 
     const handleFileChange = (e) => {
         const file = e.target.files[0];
-        if (file && file.size > 5 * 1024 * 1024) {
-            alert("Ukuran gambar terlalu besar. Maksimal 5MB.");
-            e.target.value = null;
-            return;
+        if (file) {
+            if (file.size > 5 * 1024 * 1024) {
+                alert("Ukuran gambar terlalu besar. Maksimal 5MB.");
+                e.target.value = null;
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = () => setCropper({ show: true, image: reader.result });
+            reader.readAsDataURL(file);
         }
-        setFormData({ ...formData, header_image: file });
     };
 
     const handleSubmit = async (e) => {
@@ -268,6 +274,17 @@ const DashboardActivitiesPage = () => {
                     </div>
                 </div>
             )}
+            <ImageCropperModal
+                show={cropper.show}
+                image={cropper.image}
+                onClose={() => setCropper({ show: false, image: null })}
+                onCropComplete={(croppedFile) => {
+                    setFormData({ ...formData, header_image: croppedFile });
+                    setCropper({ show: false, image: null });
+                }}
+                aspectRatio={16/9}
+                title="Crop Gambar Kegiatan"
+            />
             <NavigationButton />
         </div>
     );

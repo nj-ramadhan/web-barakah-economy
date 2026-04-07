@@ -58,6 +58,10 @@ export const registerForEvent = (slug, formData) => {
     });
 };
 
+export const getEventParticipants = (slug) => {
+    return axios.get(`${API_BASE_URL}/api/events/${slug}/participants/`);
+};
+
 // Submissions (Management)
 export const getEventRegistrations = (params = {}) => {
     return axios.get(`${API_BASE_URL}/api/events/registrations/`, {

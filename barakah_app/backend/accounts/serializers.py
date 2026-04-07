@@ -66,7 +66,8 @@ class UserAdminSerializer(serializers.ModelSerializer):
         if labels is not None:
             instance.labels.set(labels)
             
-        instance.save() # Ensure everything is synced
+        instance.save() 
+        instance.refresh_from_db() # Ensure M2M and other changes are fully loaded for response
         return instance
 
 

@@ -681,6 +681,19 @@ const DashboardPage = () => {
                                 </div>
                                 <span className="material-icons text-gray-400">chevron_right</span>
                             </Link>
+                            <Link
+                                to="/dashboard/admin/about-us"
+                                className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-pink-100 hover:shadow-md transition"
+                            >
+                                <div className="w-12 h-12 bg-pink-100 rounded-xl flex items-center justify-center">
+                                    <span className="material-icons text-pink-700">info</span>
+                                </div>
+                                <div className="flex-1">
+                                    <h3 className="font-bold text-gray-800 text-sm">Manajemen Tentang Kami</h3>
+                                    <p className="text-[11px] text-gray-500">Kelola konten profil dan visi misi komunitas (Admin)</p>
+                                </div>
+                                <span className="material-icons text-gray-400">chevron_right</span>
+                            </Link>
                         </>
                     )}
                 </div>

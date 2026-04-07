@@ -1,241 +1,246 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import Header from '../../components/layout/Header';
+import NavigationButton from '../../components/layout/Navigation';
 import ImageCropperModal from '../../components/common/ImageCropper';
-import CKEditor from '../../components/common/CKEditor';
+
+const API = process.env.REACT_APP_API_BASE_URL;
 
 const DashboardAboutUsPage = () => {
-    const [aboutUs, setAboutUs] = useState({
-        title: '',
+    const [loading, setLoading] = useState(true);
+    const [saving, setSaving] = useState(false);
+    const [aboutData, setAboutData] = useState(null);
+    const [formData, setFormData] = useState({
+        title: 'Tentang Kami',
         description: '',
         vision: '',
         mission: '',
         hero_image: null,
         organization_structure_image: null
     });
-    const [loading, setLoading] = useState(true);
-    const [submitting, setSubmitting] = useState(false);
-    const [cropper, setCropper] = useState({ active: false, image: null, type: null });
+    const [cropper, setCropper] = useState({ show: false, image: null, target: null, aspect: 16/9 });
 
-    useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const res = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/site-content/about-us/`);
-                const data = res.data.results || res.data;
-                if (data && data.length > 0) {
-                    setAboutUs(data[0]);
-                } else if (data && !Array.isArray(data)) {
-                    setAboutUs(data);
-                }
-            } catch (err) {
-                console.error("Error fetching About Us:", err);
-            } finally {
-                setLoading(false);
+    const fetchAboutUs = async () => {
+        try {
+            const res = await axios.get(`${API}/api/site-content/about-us/`);
+            if (res.data && res.data.length > 0) {
+                const data = res.data[0];
+                setAboutData(data);
+                setFormData({
+                    title: data.title || 'Tentang Kami',
+                    description: data.description || '',
+                    vision: data.vision || '',
+                    mission: data.mission || '',
+                    hero_image: null,
+                    organization_structure_image: null
+                });
             }
-        };
-        fetchData();
-    }, []);
-
-    const handleChange = (e) => {
-        const { name, value } = e.target;
-        setAboutUs(prev => ({ ...prev, [name]: value }));
+        } catch (err) {
+            console.error('Error fetching About Us:', err);
+        } finally {
+            setLoading(false);
+        }
     };
 
-    const handleFileSelect = (e, type) => {
+    useEffect(() => {
+        fetchAboutUs();
+    }, []);
+
+    const handleFileChange = (e, target, aspect) => {
         const file = e.target.files[0];
         if (file) {
             const reader = new FileReader();
-            reader.onload = () => {
-                setCropper({ active: true, image: reader.result, type });
-            };
+            reader.onload = () => setCropper({ show: true, image: reader.result, target, aspect });
             reader.readAsDataURL(file);
         }
     };
 
-    const handleCropComplete = async (croppedImageUrl) => {
-        const response = await fetch(croppedImageUrl);
-        const blob = await response.blob();
-        const file = new File([blob], `${cropper.type}.jpg`, { type: 'image/jpeg' });
-        
-        setAboutUs(prev => ({ ...prev, [cropper.type]: file }));
-        setCropper({ active: false, image: null, type: null });
-    };
-
-    const handleSubmit = async (e) => {
+    const handleSave = async (e) => {
         e.preventDefault();
-        setSubmitting(true);
+        setSaving(true);
         const user = JSON.parse(localStorage.getItem('user'));
-        const formData = new FormData();
+        const token = user?.access;
+
+        const fd = new FormData();
+        fd.append('title', formData.title);
+        fd.append('description', formData.description);
+        fd.append('vision', formData.vision);
+        fd.append('mission', formData.mission);
         
-        formData.append('title', aboutUs.title);
-        formData.append('description', aboutUs.description);
-        formData.append('vision', aboutUs.vision);
-        formData.append('mission', aboutUs.mission);
-        
-        if (aboutUs.hero_image instanceof File) {
-            formData.append('hero_image', aboutUs.hero_image);
+        if (formData.hero_image instanceof File) {
+            fd.append('hero_image', formData.hero_image);
         }
-        if (aboutUs.organization_structure_image instanceof File) {
-            formData.append('organization_structure_image', aboutUs.organization_structure_image);
+        if (formData.organization_structure_image instanceof File) {
+            fd.append('organization_structure_image', formData.organization_structure_image);
         }
 
         try {
-            const method = aboutUs.id ? 'patch' : 'post';
-            const url = aboutUs.id 
-                ? `${process.env.REACT_APP_API_BASE_URL}/api/site-content/about-us/${aboutUs.id}/`
-                : `${process.env.REACT_APP_API_BASE_URL}/api/site-content/about-us/`;
-            
-            await axios({
-                method,
-                url,
-                data: formData,
-                headers: { 
-                    'Content-Type': 'multipart/form-data',
-                    Authorization: `Bearer ${user.access}`
-                }
-            });
-            alert('Konten Tentang Kami berhasil diperbarui!');
+            if (aboutData) {
+                await axios.patch(`${API}/api/site-content/about-us/${aboutData.id}/`, fd, {
+                    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' }
+                });
+            } else {
+                await axios.post(`${API}/api/site-content/about-us/`, fd, {
+                    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' }
+                });
+            }
+            alert('Data Tentang Kami berhasil disimpan');
+            fetchAboutUs();
         } catch (err) {
-            console.error(err);
-            alert('Gagal memperbarui konten.');
+            console.error('Error saving About Us:', err);
+            alert('Gagal menyimpan data');
         } finally {
-            setSubmitting(false);
+            setSaving(false);
         }
     };
 
-    if (loading) return <div className="p-8 text-center">Loading...</div>;
-
-    return (
-        <div className="bg-gray-50 min-h-screen pb-20">
-            <Header />
-            <div className="max-w-4xl mx-auto px-4 pt-10">
-                <div className="bg-white rounded-[2rem] shadow-xl overflow-hidden">
-                    <div className="bg-green-700 p-8 text-white">
-                        <h1 className="text-2xl font-bold">Manajemen Tentang Kami</h1>
-                        <p className="text-green-100 text-sm mt-1">Kelola visi, misi, dan struktur organisasi</p>
-                    </div>
-
-                    <form onSubmit={handleSubmit} className="p-8 space-y-8">
-                        {/* Hero Image */}
-                        <div className="space-y-4">
-                            <label className="block text-sm font-bold text-gray-700 uppercase tracking-wider">Hero Image (Banner)</label>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
-                                <div className="h-40 bg-gray-100 rounded-2xl overflow-hidden border-2 border-dashed border-gray-200 flex items-center justify-center">
-                                    {aboutUs.hero_image ? (
-                                        <img 
-                                            src={aboutUs.hero_image instanceof File ? URL.createObjectURL(aboutUs.hero_image) : aboutUs.hero_image} 
-                                            className="w-full h-full object-cover" 
-                                            alt="Preview"
-                                        />
-                                    ) : (
-                                        <span className="material-icons text-gray-300 text-4xl">image</span>
-                                    )}
-                                </div>
-                                <input 
-                                    type="file" 
-                                    accept="image/*"
-                                    onChange={(e) => handleFileSelect(e, 'hero_image')}
-                                    className="text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100"
-                                />
-                            </div>
-                        </div>
-
-                        {/* Title */}
-                        <div className="space-y-2">
-                            <label className="block text-sm font-bold text-gray-700 uppercase">Judul Halaman</label>
-                            <input 
-                                type="text"
-                                name="title"
-                                value={aboutUs.title}
-                                onChange={handleChange}
-                                className="w-full px-4 py-3 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-green-500 transition"
-                            />
-                        </div>
-
-                        {/* Vision & Mission */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div className="space-y-2">
-                                <label className="block text-sm font-bold text-gray-700 uppercase">Visi</label>
-                                <textarea 
-                                    name="vision"
-                                    rows="4"
-                                    value={aboutUs.vision}
-                                    onChange={handleChange}
-                                    className="w-full px-4 py-3 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-green-500 transition text-sm"
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <label className="block text-sm font-bold text-gray-700 uppercase">Misi</label>
-                                <textarea 
-                                    name="mission"
-                                    rows="4"
-                                    value={aboutUs.mission}
-                                    onChange={handleChange}
-                                    className="w-full px-4 py-3 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-green-500 transition text-sm"
-                                />
-                            </div>
-                        </div>
-
-                        {/* Description */}
-                        <div className="space-y-2">
-                            <label className="block text-sm font-bold text-gray-700 uppercase">Deskripsi Lengkap</label>
-                            <textarea 
-                                name="description"
-                                rows="8"
-                                value={aboutUs.description}
-                                onChange={handleChange}
-                                className="w-full px-4 py-3 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-green-500 transition text-sm"
-                            />
-                        </div>
-
-                        {/* Organization Structure */}
-                        <div className="space-y-4 pt-4 border-t border-gray-100">
-                            <label className="block text-sm font-bold text-gray-700 uppercase tracking-wider text-green-700">Struktur Organisasi (Hero Image 2)</label>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
-                                <div className="h-64 bg-gray-100 rounded-2xl overflow-hidden border-2 border-dashed border-green-200 flex items-center justify-center">
-                                    {aboutUs.organization_structure_image ? (
-                                        <img 
-                                            src={aboutUs.organization_structure_image instanceof File ? URL.createObjectURL(aboutUs.organization_structure_image) : aboutUs.organization_structure_image} 
-                                            className="w-full h-full object-contain" 
-                                            alt="Structure Preview"
-                                        />
-                                    ) : (
-                                        <div className="text-center text-gray-300">
-                                            <span className="material-icons text-5xl">account_tree</span>
-                                            <p className="text-[10px] mt-1 font-bold">BELUM ADA GAMBAR</p>
-                                        </div>
-                                    )}
-                                </div>
-                                <div className="space-y-3">
-                                    <p className="text-xs text-gray-500">Upload bagan struktur organisasi dalam format gambar yang jelas (Rekomendasi: Landscape/Horizontal)</p>
-                                    <input 
-                                        type="file" 
-                                        accept="image/*"
-                                        onChange={(e) => handleFileSelect(e, 'organization_structure_image')}
-                                        className="text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100"
-                                    />
-                                </div>
-                            </div>
-                        </div>
-
-                        <button 
-                            disabled={submitting}
-                            className={`w-full py-4 bg-green-700 text-white rounded-2xl font-bold shadow-xl shadow-green-100 transition active:scale-[0.98] ${submitting ? 'opacity-70 cursor-not-allowed' : 'hover:bg-green-800'}`}
-                        >
-                            {submitting ? 'MENYIMPAN...' : 'SIMPAN SEMUA PERUBAHAN'}
-                        </button>
-                    </form>
+    if (loading) {
+        return (
+            <div className="min-h-screen bg-gray-50">
+                <Header />
+                <div className="flex justify-center items-center h-[60vh]">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-700"></div>
                 </div>
             </div>
+        );
+    }
 
-            {cropper.active && (
-                <ImageCropperModal 
-                    image={cropper.image}
-                    aspect={cropper.type === 'organization_structure_image' ? 4/3 : 16/9}
-                    onCropComplete={handleCropComplete}
-                    onCancel={() => setCropper({ active: false, image: null, type: null })}
-                />
-            )}
+    return (
+        <div className="body bg-gray-50 min-h-screen">
+            <Header />
+            <div className="max-w-4xl mx-auto px-4 py-8 pb-24">
+                <div className="mb-8">
+                    <h1 className="text-2xl font-bold text-gray-900">Manajemen Tentang Kami</h1>
+                    <p className="text-gray-500 text-sm">Kelola informasi profil organisasi Barakah Economy</p>
+                </div>
+
+                <form onSubmit={handleSave} className="space-y-6">
+                    {/* Basic Info */}
+                    <div className="bg-white rounded-[2.5rem] p-8 shadow-sm border border-gray-100 space-y-6">
+                        <div className="space-y-2">
+                            <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Judul Halaman</label>
+                            <input
+                                type="text"
+                                className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl text-sm focus:ring-2 focus:ring-green-500 transition"
+                                value={formData.title}
+                                onChange={e => setFormData({ ...formData, title: e.target.value })}
+                            />
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Deskripsi Utama</label>
+                            <textarea
+                                rows="6"
+                                className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl text-sm focus:ring-2 focus:ring-green-500 transition"
+                                value={formData.description}
+                                onChange={e => setFormData({ ...formData, description: e.target.value })}
+                                placeholder="Jelaskan tentang Barakah Economy..."
+                            />
+                        </div>
+                    </div>
+
+                    {/* Vision & Mission */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="bg-white rounded-[2.5rem] p-8 shadow-sm border border-gray-100 space-y-4">
+                            <div className="flex items-center gap-2 mb-2">
+                                <span className="material-icons text-green-600 text-lg">visibility</span>
+                                <label className="text-sm font-bold text-gray-700">Visi</label>
+                            </div>
+                            <textarea
+                                rows="4"
+                                className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl text-sm focus:ring-2 focus:ring-green-500 transition"
+                                value={formData.vision}
+                                onChange={e => setFormData({ ...formData, vision: e.target.value })}
+                                placeholder="Visi organisasi..."
+                            />
+                        </div>
+                        <div className="bg-white rounded-[2.5rem] p-8 shadow-sm border border-gray-100 space-y-4">
+                            <div className="flex items-center gap-2 mb-2">
+                                <span className="material-icons text-green-600 text-lg">outlined_flag</span>
+                                <label className="text-sm font-bold text-gray-700">Misi</label>
+                            </div>
+                            <textarea
+                                rows="4"
+                                className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl text-sm focus:ring-2 focus:ring-green-500 transition"
+                                value={formData.mission}
+                                onChange={e => setFormData({ ...formData, mission: e.target.value })}
+                                placeholder="Misi organisasi (gunakan baris baru untuk tiap poin)..."
+                            />
+                        </div>
+                    </div>
+
+                    {/* Media */}
+                    <div className="bg-white rounded-[2.5rem] p-8 shadow-sm border border-gray-100 space-y-6">
+                        <h3 className="text-sm font-bold text-gray-900 border-b pb-4 border-gray-50 mb-4">Media & Gambar</h3>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <div className="space-y-3">
+                                <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Gambar Hero (16:9)</label>
+                                <div className="border-2 border-dashed border-gray-200 rounded-3xl p-4 text-center hover:border-green-400 transition group relative overflow-hidden h-48 flex flex-col items-center justify-center">
+                                    {(formData.hero_image || (aboutData && aboutData.hero_image)) ? (
+                                        <img 
+                                            src={formData.hero_image ? URL.createObjectURL(formData.hero_image) : (API + aboutData.hero_image)} 
+                                            alt="Hero" 
+                                            className="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:opacity-60 transition"
+                                        />
+                                    ) : null}
+                                    <input type="file" id="hero_image" className="hidden" accept="image/*" onChange={e => handleFileChange(e, 'hero_image', 16/9)} />
+                                    <label htmlFor="hero_image" className="relative z-10 flex flex-col items-center cursor-pointer">
+                                        <span className="material-icons text-green-600 text-3xl mb-2">add_photo_alternate</span>
+                                        <span className="text-xs font-bold text-gray-600">Pilih Gambar Hero</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div className="space-y-3">
+                                <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Struktur Organisasi (A4/Portrait)</label>
+                                <div className="border-2 border-dashed border-gray-200 rounded-3xl p-4 text-center hover:border-green-400 transition group relative overflow-hidden h-48 flex flex-col items-center justify-center">
+                                    {(formData.organization_structure_image || (aboutData && aboutData.organization_structure_image)) ? (
+                                        <img 
+                                            src={formData.organization_structure_image ? URL.createObjectURL(formData.organization_structure_image) : (API + aboutData.organization_structure_image)} 
+                                            alt="Structure" 
+                                            className="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:opacity-60 transition"
+                                        />
+                                    ) : null}
+                                    <input type="file" id="org_image" className="hidden" accept="image/*" onChange={e => handleFileChange(e, 'organization_structure_image', 3/4)} />
+                                    <label htmlFor="org_image" className="relative z-10 flex flex-col items-center cursor-pointer">
+                                        <span className="material-icons text-blue-600 text-3xl mb-2">account_tree</span>
+                                        <span className="text-xs font-bold text-gray-600">Pilih Struktur Organisasi</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="flex gap-4">
+                        <button
+                            type="submit"
+                            disabled={saving}
+                            className="flex-1 py-5 bg-green-700 text-white rounded-[2rem] font-extrabold shadow-xl shadow-green-100 hover:bg-green-800 transition transform active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-3"
+                        >
+                            {saving ? (
+                                <div className="h-5 w-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                            ) : (
+                                <span className="material-icons">save</span>
+                            )}
+                            {saving ? 'Menyimpan...' : 'Simpan Perubahan'}
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <ImageCropperModal
+                show={cropper.show}
+                image={cropper.image}
+                onClose={() => setCropper({ show: false, image: null, target: null })}
+                onCropComplete={(croppedFile) => {
+                    setFormData({ ...formData, [cropper.target]: croppedFile });
+                    setCropper({ show: false, image: null, target: null });
+                }}
+                aspectRatio={cropper.aspect}
+                title="Crop Gambar Profil"
+            />
+            <NavigationButton />
         </div>
     );
 };

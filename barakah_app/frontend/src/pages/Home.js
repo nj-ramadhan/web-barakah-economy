@@ -1301,7 +1301,7 @@ const Home = () => {
 
       {/* Partner Section */}
       {onlyPartners.length > 0 && (
-        <div className="mb-12 px-4 shadow-sm py-12 bg-white rounded-[2rem] border border-gray-50 relative overflow-hidden">
+        <div className="mb-16 px-4 py-12 bg-white rounded-[3rem] border border-gray-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] relative overflow-hidden">
           <div className="absolute top-0 right-0 w-64 h-64 bg-green-50 rounded-full blur-3xl opacity-30 -mr-32 -mt-32"></div>
           <h2 className="text-2xl font-extrabold mb-8 text-center text-gray-900 flex items-center justify-center gap-3">
             <span className="w-8 h-1 bg-green-600 rounded-full"></span>
@@ -1335,7 +1335,7 @@ const Home = () => {
 
       {/* Mitra Section */}
       {onlyMitra.length > 0 && (
-        <div className="mb-12 px-4 shadow-sm py-12 bg-white rounded-[2rem] border border-gray-50 relative overflow-hidden">
+        <div className="mb-16 px-4 py-12 bg-gray-50 rounded-[3rem] border border-gray-100 shadow-inner relative overflow-hidden">
           <div className="absolute top-0 left-0 w-64 h-64 bg-green-50 rounded-full blur-3xl opacity-30 -ml-32 -mt-32"></div>
           <h2 className="text-2xl font-extrabold mb-8 text-center text-gray-900 flex items-center justify-center gap-3">
             <span className="w-8 h-1 bg-green-600 rounded-full"></span>

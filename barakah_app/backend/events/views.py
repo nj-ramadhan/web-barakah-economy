@@ -153,6 +153,34 @@ class EventViewSet(viewsets.ModelViewSet):
         
         return Response({"message": "Pendaftaran berhasil dikirim! Menunggu tinjauan.", "id": registration.id}, status=status.HTTP_201_CREATED)
 
+    @action(detail=True, methods=['get'], permission_classes=[permissions.AllowAny])
+    def participants(self, request, slug=None):
+        """Public list of approved participants for this event."""
+        event = self.get_object()
+        registrations = EventRegistration.objects.filter(event=event, status='approved').select_related('user', 'user__profile')
+        
+        data = []
+        for reg in registrations:
+            item = {
+                "id": reg.id,
+                "created_at": reg.created_at,
+            }
+            if reg.user:
+                item["name"] = reg.user.profile.name_full if hasattr(reg.user, 'profile') and reg.user.profile.name_full else reg.user.username
+                item["username"] = reg.user.username
+                item["avatar"] = request.build_absolute_uri(reg.user.profile.avatar.url) if hasattr(reg.user, 'profile') and reg.user.profile.avatar else None
+            else:
+                # Mask email for guests
+                email = reg.guest_email or ""
+                masked_email = email[:2] + "***" + email[email.find('@'):] if '@' in email else "***"
+                item["name"] = reg.guest_name or "Guest"
+                item["email_masked"] = masked_email
+                item["avatar"] = None
+            
+            data.append(item)
+            
+        return Response(data)
+
 class EventRegistrationViewSet(viewsets.ModelViewSet):
     queryset = EventRegistration.objects.all()
     serializer_class = EventRegistrationSerializer

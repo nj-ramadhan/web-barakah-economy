@@ -4,6 +4,7 @@ import { Helmet } from 'react-helmet';
 import axios from 'axios';
 import Header from '../components/layout/Header';
 import NavigationButton from '../components/layout/Navigation';
+import ImageCropperModal from '../components/common/ImageCropper';
 
 const API = process.env.REACT_APP_API_BASE_URL;
 const getAuth = () => {
@@ -29,6 +30,7 @@ const DashboardArticleEditorPage = () => {
         floating_label: '',
         floating_icon: null,
     });
+    const [cropper, setCropper] = useState({ show: false, image: null });
 
     const fetchArticles = useCallback(async () => {
         try {
@@ -302,8 +304,21 @@ const DashboardArticleEditorPage = () => {
                                 </div>
                                 <div className="space-y-1">
                                     <label className="text-[9px] font-bold text-gray-400 uppercase">Icon</label>
-                                    <input type="file" accept="image/*" onChange={e => setFormData({...formData, floating_icon: e.target.files[0]})}
-                                        className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2 text-sm" />
+                                    <div className="relative">
+                                        <input type="file" accept="image/*" id="floating_icon" className="hidden" 
+                                            onChange={e => {
+                                                const file = e.target.files[0];
+                                                if (file) {
+                                                    const reader = new FileReader();
+                                                    reader.onload = () => setCropper({ show: true, image: reader.result });
+                                                    reader.readAsDataURL(file);
+                                                }
+                                            }} />
+                                        <label htmlFor="floating_icon" className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2 text-sm flex items-center gap-2 cursor-pointer hover:bg-gray-100 transition truncate">
+                                            <span className="material-icons text-green-700 text-sm">image</span>
+                                            {formData.floating_icon ? (formData.floating_icon.name || 'Ganti Icon') : 'Unggah Icon...'}
+                                        </label>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -318,6 +333,17 @@ const DashboardArticleEditorPage = () => {
                     </form>
                 )}
             </div>
+            <ImageCropperModal
+                show={cropper.show}
+                image={cropper.image}
+                onClose={() => setCropper({ show: false, image: null })}
+                onCropComplete={(croppedFile) => {
+                    setFormData({ ...formData, floating_icon: croppedFile });
+                    setCropper({ show: false, image: null });
+                }}
+                aspectRatio={1}
+                title="Crop Icon Floating"
+            />
             <NavigationButton />
         </div>
     );
