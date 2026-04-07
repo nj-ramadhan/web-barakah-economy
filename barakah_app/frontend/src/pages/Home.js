@@ -162,7 +162,7 @@ const Home = () => {
 
     const fetchSiteContent = async () => {
       try {
-        const [testimonialsRes, partnersRes, activitiesRes] = await Promise.all([
+        const [testimonialsRes, partnersRes, activitiesRes, aboutUsRes] = await Promise.all([
           axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/site-content/testimonials/`),
           axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/site-content/partners/`),
           axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/site-content/activities/`),

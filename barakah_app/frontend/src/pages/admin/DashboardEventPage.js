@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
-import axios from 'axios';
 import Header from '../../components/layout/Header';
 import NavigationButton from '../../components/layout/Navigation';
 import { getEvents, updateEvent, deleteEvent } from '../../services/eventApi';
