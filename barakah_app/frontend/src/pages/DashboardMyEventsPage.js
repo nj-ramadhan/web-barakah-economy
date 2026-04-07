@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import Header from '../components/layout/Header';
-import Footer from '../components/layout/Footer';
 import NavigationButton from '../components/layout/Navigation';
 import { Helmet } from 'react-helmet';
 
@@ -177,7 +176,6 @@ const DashboardMyEventsPage = () => {
             </main>
 
             <NavigationButton />
-            <Footer />
         </div>
     );
 };
