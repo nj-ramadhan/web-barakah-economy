@@ -84,6 +84,7 @@ import DashboardAdminCampaignApprovalPage from './pages/admin/DashboardAdminCamp
 import DashboardAdminArticleManagementPage from './pages/admin/DashboardAdminArticleManagementPage';
 import DashboardAdminCampaignManagementPage from './pages/admin/DashboardAdminCampaignManagementPage';
 import DashboardMyCampaignsPage from './pages/DashboardMyCampaignsPage';
+import DashboardMyEventsPage from './pages/DashboardMyEventsPage';
 import DashboardArticleEditorPage from './pages/DashboardArticleEditorPage';
 
 import ForumMainPage from './pages/ForumMainPage';
@@ -311,6 +312,7 @@ const LayoutWrapper = ({ isDesktop }) => {
         <Route path="/dashboard/admin/campaign-approval" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardAdminCampaignApprovalPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/admin/articles" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardAdminArticleManagementPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/admin/campaigns" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardAdminCampaignManagementPage /></ResponsiveLayout></PrivateRoute>} />
+        <Route path="/dashboard/my-events" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardMyEventsPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/my-campaigns" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardMyCampaignsPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/articles" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardArticleEditorPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/articles/:slug" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardArticleEditorPage /></ResponsiveLayout></PrivateRoute>} />

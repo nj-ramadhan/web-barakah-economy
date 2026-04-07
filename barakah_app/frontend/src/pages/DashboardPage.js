@@ -447,7 +447,7 @@ const DashboardPage = () => {
                     </Link>
 
                     <Link
-                        to="/event/ajukan"
+                        to="/dashboard/my-events"
                         className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-indigo-50 hover:shadow-md transition"
                     >
                         <div className="w-12 h-12 bg-indigo-100 rounded-xl flex items-center justify-center">
@@ -455,7 +455,7 @@ const DashboardPage = () => {
                         </div>
                         <div className="flex-1">
                             <h3 className="font-bold text-gray-800 text-sm">Event Barakah</h3>
-                            <p className="text-[11px] text-gray-500">Ajukan dan kelola event komunitas Anda</p>
+                            <p className="text-[11px] text-gray-500">Kelola pendaftaran dan pengajuan event Anda</p>
                         </div>
                         <span className="material-icons text-gray-400">chevron_right</span>
                     </Link>

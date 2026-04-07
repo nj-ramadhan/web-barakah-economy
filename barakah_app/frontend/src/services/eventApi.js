@@ -29,10 +29,11 @@ export const createEvent = (formData) => {
 };
 
 export const updateEvent = (slug, formData) => {
+    const isFormData = formData instanceof FormData;
     return axios.patch(`${API_BASE_URL}/api/events/${slug}/`, formData, {
         headers: {
             ...getAuthHeaders(),
-            'Content-Type': 'multipart/form-data',
+            'Content-Type': isFormData ? 'multipart/form-data' : 'application/json',
         }
     });
 };

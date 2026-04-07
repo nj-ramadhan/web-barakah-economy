@@ -25,15 +25,23 @@ class EventViewSet(viewsets.ModelViewSet):
         return [permissions.IsAuthenticated()]
 
     def _get_parsed_data(self, request):
-        """Returns a mutable copy of request.data with JSON fields parsed."""
-        data = request.data.copy() if hasattr(request.data, 'copy') else dict(request.data)
+        """Returns a dict from request.data with JSON fields correctly parsed."""
+        # Start with a shallow copy of request.data
+        # If it's a QueryDict (multipart), .dict() gives us a mutable dict
+        if hasattr(request.data, 'dict'):
+            data = request.data.dict()
+        else:
+            # For JSON requests, it's already a dict
+            data = request.data.copy() if hasattr(request.data, 'copy') else dict(request.data)
         
         # Parse form_fields if it's a JSON string
         form_fields = data.get('form_fields')
         if form_fields and isinstance(form_fields, str):
             try:
-                if form_fields.startswith('[') or form_fields.startswith('{'):
-                    data['form_fields'] = json.loads(form_fields)
+                # Basic check if it looks like JSON
+                stripped = form_fields.strip()
+                if stripped.startswith('[') or stripped.startswith('{'):
+                    data['form_fields'] = json.loads(stripped)
             except Exception as e:
                 print(f"Error parsing form_fields JSON: {e}")
         

@@ -106,14 +106,15 @@ const EventSubmissionPage = () => {
         }
     };
 
-    const handleCropComplete = async (croppedImageUrl) => {
-        const response = await fetch(croppedImageUrl);
-        const blob = await response.blob();
-        const file = new File([blob], `${cropper.type}.jpg`, { type: 'image/jpeg' });
+    const handleCropComplete = useCallback(async (croppedImageBlob) => {
+        // croppedImageBlob is already a Blob from canvasUtils.js
+        if (!croppedImageBlob) return;
+        
+        const file = new File([croppedImageBlob], `${cropper.type}.jpg`, { type: 'image/jpeg' });
         
         setFiles(prev => ({ ...prev, [cropper.type]: file }));
         setCropper({ active: false, image: null, type: null });
-    };
+    }, [cropper.type]);
 
     const handleDescriptionChange = (content) => {
         setFormData(prev => ({ ...prev, description: content }));
@@ -172,7 +173,9 @@ const EventSubmissionPage = () => {
                 await createEvent(data);
             }
             setSuccess(true);
-            setTimeout(() => navigate('/event'), 3000);
+            setTimeout(() => {
+                navigate('/dashboard/my-events');
+            }, 2000);
         } catch (err) {
             console.error(err);
             setError(err.response?.data?.message || `Gagal ${isEdit ? 'memperbarui' : 'mengajukan'} event. Mohon cek kembali data Anda.`);

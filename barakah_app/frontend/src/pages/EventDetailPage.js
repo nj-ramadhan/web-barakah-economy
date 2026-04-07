@@ -520,9 +520,15 @@ const EventDetailPage = () => {
                                                         className="w-full px-5 py-3.5 bg-gray-50 border border-transparent rounded-2xl text-sm outline-none focus:bg-white focus:border-green-500 focus:ring-4 focus:ring-green-500/10 transition shadow-inner appearance-none pr-10"
                                                     >
                                                         <option value="">Pilih Opsi</option>
-                                                        {(field.options || []).map(opt => (
-                                                            <option key={opt} value={opt}>{opt}</option>
-                                                        ))}
+                                                        {(() => {
+                                                            let opts = field.options || [];
+                                                            if (typeof opts === 'string') {
+                                                                try { opts = JSON.parse(opts); } catch (e) { opts = []; }
+                                                            }
+                                                            return Array.isArray(opts) ? opts.map(opt => (
+                                                                <option key={opt} value={opt}>{opt}</option>
+                                                            )) : null;
+                                                        })()}
                                                     </select>
                                                     <span className="material-icons absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">expand_more</span>
                                                 </div>
