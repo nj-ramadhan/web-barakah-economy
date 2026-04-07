@@ -101,61 +101,65 @@ const DashboardPartnersPage = () => {
                 <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4">
                     <div className="bg-white w-full max-w-md rounded-2xl p-6 shadow-2xl animate-slide-up">
                         <h3 className="text-lg font-bold mb-4">Tambah Partner Baru</h3>
-                            <input 
-                                type="text" 
-                                placeholder="Nama Partner" 
-                                required 
-                                className="w-full p-3 bg-gray-50 rounded-xl text-sm" 
-                                value={formData.name}
-                                onChange={(e) => setFormData({ ...formData, name: e.target.value })} 
-                            />
-                            <select 
-                                className="w-full p-3 bg-gray-50 rounded-xl text-sm"
-                                value={formData.type || 'partner'}
-                                onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                            >
-                                <option value="partner">Partner</option>
-                                <option value="mitra">Mitra</option>
-                            </select>
-                            <textarea 
-                                placeholder="Deskripsi Partner" 
-                                className="w-full p-3 bg-gray-50 rounded-xl text-sm" 
-                                rows="3"
-                                value={formData.description || ''}
-                                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                            ></textarea>
-                            <input 
-                                type="number" 
-                                placeholder="Order" 
-                                className="w-full p-3 bg-gray-50 rounded-xl text-sm" 
-                                value={formData.order}
-                                onChange={(e) => setFormData({ ...formData, order: e.target.value })} 
-                            />
-                            <div className="space-y-1">
-                                <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Logo Partner</label>
-                                <input
-                                    type="file"
-                                    accept="image/*"
-                                    required={!formData.id}
-                                    className="w-full text-xs p-2 bg-gray-50 rounded-xl"
-                                    onChange={(e) => {
-                                        const file = e.target.files[0];
-                                        if (file && file.size > 5 * 1024 * 1024) {
-                                            alert("Ukuran logo terlalu besar. Maksimal 5MB.");
-                                            e.target.value = null;
-                                            return;
-                                        }
-                                        setFormData({ ...formData, logo: file });
-                                    }}
+                        <form onSubmit={handleSubmit}>
+                            <div className="space-y-4">
+                                <input 
+                                    type="text" 
+                                    placeholder="Nama Partner" 
+                                    required 
+                                    className="w-full p-3 bg-gray-50 rounded-xl text-sm" 
+                                    value={formData.name}
+                                    onChange={(e) => setFormData({ ...formData, name: e.target.value })} 
                                 />
-                                <p className="text-[10px] text-gray-400 italic ml-1">Maks. 5MB</p>
+                                <select 
+                                    className="w-full p-3 bg-gray-50 rounded-xl text-sm"
+                                    value={formData.type || 'partner'}
+                                    onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+                                >
+                                    <option value="partner">Partner</option>
+                                    <option value="mitra">Mitra</option>
+                                </select>
+                                <textarea 
+                                    placeholder="Deskripsi Partner" 
+                                    className="w-full p-3 bg-gray-50 rounded-xl text-sm" 
+                                    rows="3"
+                                    value={formData.description || ''}
+                                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                                ></textarea>
+                                <input 
+                                    type="number" 
+                                    placeholder="Order" 
+                                    className="w-full p-3 bg-gray-50 rounded-xl text-sm" 
+                                    value={formData.order}
+                                    onChange={(e) => setFormData({ ...formData, order: e.target.value })} 
+                                />
+                                <div className="space-y-1">
+                                    <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Logo Partner</label>
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        required={!formData.id}
+                                        className="w-full text-xs p-2 bg-gray-50 rounded-xl"
+                                        onChange={(e) => {
+                                            const file = e.target.files[0];
+                                            if (file && file.size > 5 * 1024 * 1024) {
+                                                alert("Ukuran logo terlalu besar. Maksimal 5MB.");
+                                                e.target.value = null;
+                                                return;
+                                            }
+                                            setFormData({ ...formData, logo: file });
+                                        }}
+                                    />
+                                    <p className="text-[10px] text-gray-400 italic ml-1">Maks. 5MB</p>
+                                </div>
+                                <div className="flex gap-2 pt-2">
+                                    <button type="submit" className="flex-1 py-3 bg-green-700 text-white rounded-xl font-bold shadow-lg shadow-green-100 hover:bg-green-800 transition">
+                                        {formData.id ? 'Simpan' : 'Tambah'}
+                                    </button>
+                                    <button type="button" onClick={() => { setShowModal(false); setFormData({ name: '', logo: null, order: 0, description: '', type: 'partner' }); }} className="flex-1 py-3 bg-gray-100 text-gray-600 rounded-xl font-bold hover:bg-gray-200 transition">Batal</button>
+                                </div>
                             </div>
-                            <div className="flex gap-2 pt-2">
-                                <button type="submit" className="flex-1 py-3 bg-green-700 text-white rounded-xl font-bold shadow-lg shadow-green-100 hover:bg-green-800 transition">
-                                    {formData.id ? 'Simpan' : 'Tambah'}
-                                </button>
-                                <button type="button" onClick={() => { setShowModal(false); setFormData({ name: '', logo: null, order: 0, description: '', type: 'partner' }); }} className="flex-1 py-3 bg-gray-100 text-gray-600 rounded-xl font-bold hover:bg-gray-200 transition">Batal</button>
-                            </div>
+                        </form>
                     </div>
                 </div>
             )}

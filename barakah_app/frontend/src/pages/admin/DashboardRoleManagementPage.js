@@ -27,11 +27,13 @@ const MENU_OPTIONS = [
     { key: 'all_courses', label: 'Semua Course (Admin)' },
     { key: 'consultants', label: 'Pengaturan Konsultasi' },
     { key: 'transactions', label: 'Riwayat Transaksi' },
-    { key: 'forum', label: 'Manajemen Forum' },
-    { key: 'withdrawals', label: 'Manajemen Penarikan' },
-    { key: 'campaign_submit', label: 'Ajukan Kampanye' },
-    { key: 'campaign_approval', label: 'Persetujuan Kampanye' },
-    { key: 'articles', label: 'Tulis Article' },
+    {key: 'forum', label: 'Manajemen Forum'},
+    {key: 'withdrawals', label: 'Manajemen Penarikan'},
+    {key: 'campaign_submit', label: 'Ajukan Kampanye'},
+    {key: 'campaign_approval', label: 'Persetujuan Kampanye'},
+    {key: 'articles', label: 'Tulis Article'},
+    {key: 'event', label: 'Event'},
+    {key: 'admin_events', label: 'Manajemen Event'},
 ];
 
 // All profile fields that can be set as required

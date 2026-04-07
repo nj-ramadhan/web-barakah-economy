@@ -447,7 +447,7 @@ const DashboardPage = () => {
                     </Link>
 
                     <Link
-                        to="/dashboard/event"
+                        to="/event/ajukan"
                         className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-indigo-50 hover:shadow-md transition"
                     >
                         <div className="w-12 h-12 bg-indigo-100 rounded-xl flex items-center justify-center">

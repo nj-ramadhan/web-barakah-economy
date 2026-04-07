@@ -117,6 +117,37 @@ def profile_update(request, user_id):
     serializer = ProfileSerializer(profile, data=request.data, partial=True)
     if serializer.is_valid():
         serializer.save()
+        
+        # Auto-role assignment check
+        user = profile.user
+        if user.role == 'user':
+            # Check completeness using the existing logic (simplified here or call method)
+            from accounts.models import Role
+            required_fields = set()
+            try:
+                anggota_role = Role.objects.get(code='anggota_bae')
+                required_fields.update(anggota_role.required_profile_fields or [])
+            except Role.DoesNotExist:
+                required_fields = {'name_full', 'nik', 'gender', 'birth_place', 'birth_date', 'address', 'address_province'}
+            
+            missing = []
+            for field in required_fields:
+                val = getattr(profile, field, None)
+                if not val or (isinstance(val, str) and not val.strip()):
+                    missing.append(field)
+            
+            if not missing:
+                user.is_verified_member = True
+                user.role = 'seller'  # Upgrade to seller role upon completion
+                user.save()
+                
+                # Assign anggota_bae role if it exists
+                try:
+                    role_obj = Role.objects.get(code='anggota_bae')
+                    user.custom_roles.add(role_obj)
+                except Role.DoesNotExist:
+                    pass
+                    
         return Response(serializer.data)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 

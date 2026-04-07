@@ -256,6 +256,7 @@ const LayoutWrapper = ({ isDesktop }) => {
 
         {/* Event Routes */}
         <Route path="/event" element={<ResponsiveLayout isDesktop={isDesktop}><EventLandingPage /></ResponsiveLayout>} />
+        <Route path="/events" element={<ResponsiveLayout isDesktop={isDesktop}><EventLandingPage /></ResponsiveLayout>} />
         <Route path="/event/ajukan" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><EventSubmissionPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/event/edit/:slug" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><EventSubmissionPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/event/:slug" element={<ResponsiveLayout isDesktop={isDesktop}><EventDetailPage /></ResponsiveLayout>} />
