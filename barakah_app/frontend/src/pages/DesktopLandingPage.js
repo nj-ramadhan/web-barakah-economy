@@ -662,27 +662,57 @@ const DesktopLandingPage = () => {
                     </div>
                 </section>
 
-                {/* ============ OUR PARTNERS ============ */}
-                {partners.length > 0 && (
+                {/* ============ OUR PARTNERS & MITRA ============ */}
+                {(partners.some(p => p.type === 'partner') || partners.some(p => p.type === 'mitra')) && (
                     <section className="py-16 px-8 lg:px-24 bg-white border-t border-gray-100">
-                        <div className="max-w-6xl mx-auto">
-                            <div className="text-center mb-10">
-                                <h2 className="text-3xl font-bold text-gray-900 mb-2">Partner Kami</h2>
-                                <p className="text-gray-500 text-sm">Kolaborasi bersama mitra terpercaya</p>
-                            </div>
-                            <div className="flex flex-wrap justify-center items-center gap-8 md:gap-12">
-                                {partners.map((partner) => (
-                                    <div key={partner.id} className="w-24 h-24 md:w-28 md:h-28 bg-white rounded-2xl shadow-sm border border-gray-100 p-3 flex items-center justify-center hover:shadow-md transition group">
-                                        <img
-                                            src={getMediaUrl(partner.logo)}
-                                            alt={partner.name}
-                                            className="max-w-full max-h-full object-contain grayscale group-hover:grayscale-0 transition-all duration-300"
-                                            title={partner.name}
-                                            onError={(e) => { e.target.src = '/placeholder-image.jpg'; }}
-                                        />
+                        <div className="max-w-6xl mx-auto space-y-16">
+                            {/* Partners */}
+                            {partners.some(p => p.type === 'partner') && (
+                                <div>
+                                    <div className="text-center mb-10">
+                                        <h2 className="text-3xl font-bold text-gray-900 mb-2">Partner Kami</h2>
+                                        <div className="w-16 h-1 bg-green-600 mx-auto rounded-full mb-4"></div>
+                                        <p className="text-gray-500 text-sm">Kolaborasi strategis untuk kemajuan ekonomi syariah</p>
                                     </div>
-                                ))}
-                            </div>
+                                    <div className="flex flex-wrap justify-center items-center gap-8 md:gap-12">
+                                        {partners.filter(p => p.type === 'partner').map((partner) => (
+                                            <div key={partner.id} className="w-24 h-24 md:w-28 md:h-28 bg-white rounded-2xl shadow-sm border border-gray-100 p-3 flex items-center justify-center hover:shadow-md hover:border-green-200 transition-all group">
+                                                <img
+                                                    src={getMediaUrl(partner.logo)}
+                                                    alt={partner.name}
+                                                    className="max-w-full max-h-full object-contain grayscale group-hover:grayscale-0 transition-all duration-300"
+                                                    title={partner.name}
+                                                    onError={(e) => { e.target.src = '/placeholder-image.jpg'; }}
+                                                />
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Mitra */}
+                            {partners.some(p => p.type === 'mitra') && (
+                                <div>
+                                    <div className="text-center mb-10">
+                                        <h2 className="text-2xl font-bold text-gray-800 mb-2">Mitra Kami</h2>
+                                        <div className="w-12 h-1 bg-blue-500 mx-auto rounded-full mb-4"></div>
+                                        <p className="text-gray-500 text-sm">Bertumbuh bersama ekosistem Barakah Economy</p>
+                                    </div>
+                                    <div className="flex flex-wrap justify-center items-center gap-6 md:gap-10">
+                                        {partners.filter(p => p.type === 'mitra').map((partner) => (
+                                            <div key={partner.id} className="w-20 h-20 md:w-24 md:h-24 bg-white rounded-2xl shadow-sm border border-gray-50 p-2.5 flex items-center justify-center hover:shadow-md hover:border-blue-100 transition-all group">
+                                                <img
+                                                    src={getMediaUrl(partner.logo)}
+                                                    alt={partner.name}
+                                                    className="max-w-full max-h-full object-contain grayscale group-hover:grayscale-0 transition-all duration-300"
+                                                    title={partner.name}
+                                                    onError={(e) => { e.target.src = '/placeholder-image.jpg'; }}
+                                                />
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </section>
                 )}

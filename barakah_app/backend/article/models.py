@@ -5,16 +5,21 @@ from ckeditor_uploader.fields import RichTextUploadingField
 
 class Article(models.Model):
     STATUS_CHOICES = (
-        (1, 'Active'),
-        (2, 'Not Active'),
+        ('pending', 'Pending Review'),
+        ('approved', 'Approved'),
+        ('rejected', 'Rejected'),
+        ('draft', 'Draft'),
     )
 
     title = models.TextField()
-
-    # 1. SLUG (Untuk URL Artikel yang cantik)
     slug = models.SlugField(unique=True, blank=True, null=True, max_length=255)
-
     content = RichTextUploadingField()
+
+    # Author/Creator
+    created_by = models.ForeignKey(
+        'accounts.User', on_delete=models.SET_NULL, 
+        null=True, blank=True, related_name='articles'
+    )
 
     # 2. CUSTOM FLOATING BUBBLE FIELDS
     floating_url = models.URLField(
@@ -30,7 +35,8 @@ class Article(models.Model):
         help_text="Icon kecil di tombol bubble. Jika kosong, pakai icon default."
     )
 
-    status = models.IntegerField(choices=STATUS_CHOICES, default=1)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    rejection_reason = models.TextField(blank=True, null=True)
     date = models.DateField()
 
     class Meta:

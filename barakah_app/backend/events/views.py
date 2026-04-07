@@ -7,6 +7,7 @@ from django.shortcuts import get_object_or_404
 from .models import Event, EventFormField, EventRegistration, EventRegistrationFile
 from .serializers import EventSerializer, EventRegistrationSerializer
 from django_filters.rest_framework import DjangoFilterBackend
+from barakah_app.utils import send_status_update_email
 import json
 
 class EventViewSet(viewsets.ModelViewSet):
@@ -23,73 +24,56 @@ class EventViewSet(viewsets.ModelViewSet):
             return [permissions.AllowAny()]
         return [permissions.IsAuthenticated()]
 
-    def perform_create(self, serializer):
-        # Handle form_fields if sent as JSON string (from FormData)
-        form_fields = self.request.data.get('form_fields')
+    def _handle_json_fields(self, request):
+        """Helper to parse JSON strings in multipart requests."""
+        form_fields = request.data.get('form_fields')
         if isinstance(form_fields, str):
             try:
-                self.request.data._mutable = True
-                self.request.data['form_fields'] = json.loads(form_fields)
-                self.request.data._mutable = False
+                if hasattr(request.data, '_mutable'):
+                    request.data._mutable = True
+                request.data['form_fields'] = json.loads(form_fields)
+                if hasattr(request.data, '_mutable'):
+                    request.data._mutable = False
             except:
                 pass
+
+    def create(self, request, *args, **kwargs):
+        self._handle_json_fields(request)
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
+    def perform_create(self, serializer):
         serializer.save(created_by=self.request.user)
 
-    def perform_update(self, serializer):
-        # Handle form_fields if sent as JSON string
-        form_fields = self.request.data.get('form_fields')
-        if isinstance(form_fields, str):
-            try:
-                # For non-QueryDict or mutable QueryDict
-                if hasattr(self.request.data, '_mutable'):
-                    self.request.data._mutable = True
-                self.request.data['form_fields'] = json.loads(form_fields)
-                if hasattr(self.request.data, '_mutable'):
-                    self.request.data._mutable = False
-            except:
-                pass
-        serializer.save()
-
     def update(self, request, *args, **kwargs):
+        self._handle_json_fields(request)
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
         
         # Check if status is changing to trigger email
         old_status = instance.status
         new_status = request.data.get('status')
+        rejection_reason = request.data.get('rejection_reason')
         
         serializer = self.get_serializer(instance, data=request.data, partial=partial)
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
 
         if new_status and old_status != new_status:
-            self.send_status_notification(instance, new_status)
+            send_status_update_email(
+                instance.created_by, 
+                instance.title, 
+                new_status, 
+                rejection_reason
+            )
 
         return Response(serializer.data)
 
-    def send_status_notification(self, event, new_status):
-        """Send email notification to event creator when status changes."""
-        subject = f"Update Status Pengajuan Event: {event.title}"
-        message = f"Halo {event.created_by.username},\n\n"
-        message += f"Status pengajuan event Anda '{event.title}' telah diperbarui menjadi: {new_status.upper()}.\n\n"
-        
-        if new_status == 'approved':
-            message += "Selamat! Event Anda telah disetujui dan sekarang tampil di halaman landing.\n"
-        elif new_status == 'rejected':
-            message += "Mohon maaf, pengajuan event Anda belum dapat kami setujui saat ini.\n"
-        
-        message += "\nTerima kasih,\nTim Barakah Economy"
-        
-        try:
-            send_mail(
-                subject,
-                message,
-                settings.DEFAULT_FROM_EMAIL,
-                [event.created_by.email],
-                fail_silently=True,
-            )
-        except Exception as e:
-            print(f"Error sending email: {e}")
+    def perform_update(self, serializer):
+        serializer.save()
 
     @action(detail=False, methods=['get'], permission_classes=[permissions.AllowAny])
     def landing(self, request):

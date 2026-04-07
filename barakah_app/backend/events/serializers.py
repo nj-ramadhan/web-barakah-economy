@@ -12,6 +12,11 @@ class EventSerializer(serializers.ModelSerializer):
     form_fields = EventFormFieldSerializer(many=True, required=False)
     registration_count = serializers.IntegerField(source='registrations.count', read_only=True)
     
+    def validate_form_fields(self, value):
+        if not value or len(value) == 0:
+            raise serializers.ValidationError("Minimal harus ada 1 field pendaftaran (misal: Nama, No HP, dll).")
+        return value
+    
     class Meta:
         model = Event
         fields = '__all__'

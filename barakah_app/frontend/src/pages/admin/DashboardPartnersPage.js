@@ -76,26 +76,67 @@ const DashboardPartnersPage = () => {
         <div className="body">
             <Header />
             <div className="max-w-4xl mx-auto px-4 py-8 pb-24">
-                <div className="flex justify-between items-center mb-6">
-                    <h1 className="text-xl font-bold">Manajemen Partner</h1>
-                    <button onClick={() => setShowModal(true)} className="bg-green-700 text-white px-4 py-2 rounded-xl text-xs font-bold shadow-lg">
-                        + Tambah Partner
+                <div className="flex items-center gap-4 mb-6">
+                    <button onClick={() => window.history.back()} className="w-10 h-10 flex items-center justify-center bg-gray-100 rounded-xl text-gray-500 hover:bg-gray-200 transition">
+                        <span className="material-icons">arrow_back</span>
+                    </button>
+                    <div className="flex-1">
+                        <h1 className="text-xl font-bold">Manajemen Partner & Mitra</h1>
+                        <p className="text-[11px] text-gray-500">Kelola logo kolaborasi di landing page</p>
+                    </div>
+                    <button onClick={() => setShowModal(true)} className="bg-green-700 text-white px-5 py-2.5 rounded-xl text-xs font-bold shadow-lg shadow-green-100 hover:bg-green-800 transition transform active:scale-95">
+                        + Tambah Baru
                     </button>
                 </div>
 
-                <div className="space-y-4">
-                    {partners.map(p => (
-                        <div key={p.id} className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between">
-                            <div className="flex items-center gap-4">
-                                <img src={getMediaUrl(p.logo)} alt={p.name} className="h-10 w-16 object-contain" />
-                                <div>
-                                    <p className="font-bold text-sm text-gray-800">{p.name}</p>
-                                    <p className="text-[10px] text-gray-400">Order: {p.order}</p>
+                {/* Partner Section */}
+                <div className="mb-10">
+                    <h2 className="text-xs font-black text-gray-400 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
+                        <span className="w-8 h-[1px] bg-gray-200"></span> Partner Kami
+                    </h2>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        {partners.filter(p => p.type === 'partner').map(p => (
+                            <div key={p.id} className="bg-white p-5 rounded-[2rem] border border-gray-100 shadow-sm flex items-center justify-between group hover:border-green-300 transition-all">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-16 h-12 bg-gray-50 rounded-xl flex items-center justify-center p-2 overflow-hidden">
+                                        <img src={getMediaUrl(p.logo)} alt={p.name} className="max-w-full max-h-full object-contain" />
+                                    </div>
+                                    <div>
+                                        <p className="font-bold text-sm text-gray-800">{p.name}</p>
+                                        <p className="text-[10px] text-gray-400">Order: {p.order}</p>
+                                    </div>
                                 </div>
+                                <button onClick={() => handleDelete(p.id)} className="w-8 h-8 flex items-center justify-center bg-red-50 text-red-500 rounded-lg opacity-0 group-hover:opacity-100 transition hover:bg-red-500 hover:text-white">
+                                    <span className="material-icons text-sm">delete</span>
+                                </button>
                             </div>
-                            <button onClick={() => handleDelete(p.id)} className="material-icons text-red-400">delete</button>
-                        </div>
-                    ))}
+                        ))}
+                    </div>
+                </div>
+
+                {/* Mitra Section */}
+                <div>
+                    <h2 className="text-xs font-black text-gray-400 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
+                        <span className="w-8 h-[1px] bg-gray-200"></span> Mitra Kami
+                    </h2>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        {partners.filter(p => p.type === 'mitra').map(p => (
+                            <div key={p.id} className="bg-white p-5 rounded-[2rem] border border-gray-100 shadow-sm flex items-center justify-between group hover:border-blue-300 transition-all">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-16 h-12 bg-gray-50 rounded-xl flex items-center justify-center p-2 overflow-hidden">
+                                        <img src={getMediaUrl(p.logo)} alt={p.name} className="max-w-full max-h-full object-contain" />
+                                    </div>
+                                    <div>
+                                        <p className="font-bold text-sm text-gray-800">{p.name}</p>
+                                        <p className="text-[10px] text-gray-400">Order: {p.order}</p>
+                                    </div>
+                                </div>
+                                <button onClick={() => handleDelete(p.id)} className="w-8 h-8 flex items-center justify-center bg-red-50 text-red-500 rounded-lg opacity-0 group-hover:opacity-100 transition hover:bg-red-500 hover:text-white">
+                                    <span className="material-icons text-sm">delete</span>
+                                </button>
+                            </div>
+                        ))}
+                    </div>
                 </div>
             </div>
 

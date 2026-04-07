@@ -33,6 +33,7 @@ class Event(models.Model):
     is_featured = models.BooleanField(default=False)
     
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='created_events')
+    rejection_reason = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

@@ -109,9 +109,14 @@ const DashboardAboutUsPage = () => {
         <div className="body bg-gray-50 min-h-screen">
             <Header />
             <div className="max-w-4xl mx-auto px-4 py-8 pb-24">
-                <div className="mb-8">
-                    <h1 className="text-2xl font-bold text-gray-900">Manajemen Tentang Kami</h1>
-                    <p className="text-gray-500 text-sm">Kelola informasi profil organisasi Barakah Economy</p>
+                <div className="flex items-center gap-4 mb-8">
+                    <button onClick={() => window.history.back()} className="w-10 h-10 flex items-center justify-center bg-gray-100 rounded-xl text-gray-500 hover:bg-gray-200 transition">
+                        <span className="material-icons">arrow_back</span>
+                    </button>
+                    <div className="flex-1">
+                        <h1 className="text-2xl font-bold text-gray-900">Manajemen Tentang Kami</h1>
+                        <p className="text-gray-500 text-sm">Kelola informasi profil organisasi Barakah Economy</p>
+                    </div>
                 </div>
 
                 <form onSubmit={handleSave} className="space-y-6">

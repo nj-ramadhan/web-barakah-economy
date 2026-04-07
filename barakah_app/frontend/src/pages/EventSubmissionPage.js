@@ -59,14 +59,34 @@ const EventSubmissionPage = () => {
                     });
                     
                     // Populate form fields
-                    if (d.form_fields) {
+                    if (d.form_fields && d.form_fields.length > 0) {
                         setFormFields(d.form_fields);
+                    } else {
+                        // Default if empty
+                        setFormFields([{
+                            label: 'Nama Lengkap',
+                            field_type: 'text',
+                            required: true,
+                            options: [],
+                            order: 0
+                        }]);
                     }
                 } catch (err) {
                     setError('Gagal memuat detail event untuk diedit.');
                 }
             };
             fetchDetail();
+        } else {
+            // New event initialization
+            if (formFields.length === 0) {
+                setFormFields([{
+                    label: 'Nama Lengkap',
+                    field_type: 'text',
+                    required: true,
+                    options: [],
+                    order: 0
+                }]);
+            }
         }
     }, [navigate, slug, isEdit]);
 
@@ -122,6 +142,14 @@ const EventSubmissionPage = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        
+        // Final validation for form fields
+        if (formFields.length === 0) {
+            setError('Minimal harus ada 1 field pendaftaran (misal: Nama, No HP, dll).');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            return;
+        }
+
         setLoading(true);
         setError(null);
 

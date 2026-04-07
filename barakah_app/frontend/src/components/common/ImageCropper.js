@@ -2,10 +2,12 @@ import React, { useState, useCallback } from 'react';
 import Cropper from 'react-easy-crop';
 import { getCroppedImg } from './canvasUtils';
 
-const ImageCropperModal = ({ image, aspect = 16 / 9, onCropComplete, onCancel }) => {
+const ImageCropperModal = ({ show = true, image, aspect = 16 / 9, onCropComplete, onCancel, onClose, title = "Potong Gambar" }) => {
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
+
+  const handleCancel = onCancel || onClose;
 
   const onCropChange = (crop) => setCrop(crop);
   const onZoomChange = (zoom) => setZoom(zoom);
@@ -23,44 +25,72 @@ const ImageCropperModal = ({ image, aspect = 16 / 9, onCropComplete, onCancel })
     }
   };
 
+  if (!show) return null;
+
   return (
-    <div className="fixed inset-0 bg-black/80 z-[1000] flex flex-col items-center justify-center p-4">
-      <div className="relative w-full max-w-2xl h-[60vh] bg-gray-900 rounded-t-2xl overflow-hidden">
-        <Cropper
-          image={image}
-          crop={crop}
-          zoom={zoom}
-          aspect={aspect}
-          onCropChange={onCropChange}
-          onCropComplete={onCropCompleteInternal}
-          onZoomChange={onZoomChange}
-        />
-      </div>
-      <div className="w-full max-w-2xl bg-white p-6 rounded-b-2xl shadow-xl">
-        <div className="flex flex-col gap-4">
-          <div className="flex items-center gap-4">
-            <span className="material-icons text-gray-400">zoom_in</span>
-            <input
-              type="range"
-              value={zoom}
-              min={1}
-              max={3}
-              step={0.1}
-              aria-labelledby="Zoom"
-              onChange={(e) => setZoom(e.target.value)}
-              className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-green-600"
+    <div className="fixed inset-0 bg-black/80 z-[1000] flex flex-col items-center justify-center p-4 backdrop-blur-sm">
+      <div className="w-full max-w-2xl bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col animate-slide-up">
+        <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+          <h3 className="font-bold text-gray-800">{title}</h3>
+          <button onClick={handleCancel} className="text-gray-400 hover:text-gray-600 transition">
+            <span className="material-icons">close</span>
+          </button>
+        </div>
+        
+        <div className="relative w-full h-[50vh] bg-gray-900 overflow-hidden">
+          {image ? (
+            <Cropper
+              image={image}
+              crop={crop}
+              zoom={zoom}
+              aspect={aspect}
+              onCropChange={onCropChange}
+              onCropComplete={onCropCompleteInternal}
+              onZoomChange={onZoomChange}
             />
+          ) : (
+            <div className="w-full h-full flex flex-col items-center justify-center text-gray-500 gap-2">
+              <span className="material-icons text-4xl">image_not_supported</span>
+              <p className="text-xs">Tidak ada gambar untuk dipotong</p>
+            </div>
+          )}
+        </div>
+
+        <div className="p-6 space-y-6">
+          <div className="flex flex-col gap-2">
+            <div className="flex justify-between items-center text-[10px] font-bold text-gray-400 uppercase tracking-wider px-1">
+              <span>Zoom</span>
+              <span>{(zoom * 100).toFixed(0)}%</span>
+            </div>
+            <div className="flex items-center gap-4">
+              <span className="material-icons text-gray-400 text-lg">zoom_out</span>
+              <input
+                type="range"
+                value={zoom}
+                min={1}
+                max={3}
+                step={0.1}
+                aria-labelledby="Zoom"
+                onChange={(e) => setZoom(parseFloat(e.target.value))}
+                className="flex-1 h-1.5 bg-gray-100 rounded-lg appearance-none cursor-pointer accent-green-600"
+              />
+              <span className="material-icons text-gray-400 text-lg">zoom_in</span>
+            </div>
           </div>
-          <div className="flex justify-end gap-3">
+
+          <div className="flex justify-end gap-3 border-t border-gray-100 pt-5">
             <button
-              onClick={onCancel}
+              onClick={handleCancel}
+              type="button"
               className="px-6 py-2.5 rounded-xl text-sm font-bold text-gray-500 hover:bg-gray-100 transition"
             >
               Batal
             </button>
             <button
               onClick={handleDone}
-              className="bg-green-600 text-white px-8 py-2.5 rounded-xl text-sm font-bold shadow-lg hover:bg-green-700 transition"
+              type="button"
+              disabled={!image}
+              className="bg-green-700 text-white px-8 py-2.5 rounded-xl text-sm font-bold shadow-lg shadow-green-100 hover:bg-green-800 transition transform active:scale-95 disabled:opacity-50"
             >
               Potong & Simpan
             </button>

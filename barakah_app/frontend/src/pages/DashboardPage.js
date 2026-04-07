@@ -460,8 +460,12 @@ const DashboardPage = () => {
                         <span className="material-icons text-gray-400">chevron_right</span>
                     </Link>
 
-                    {username === 'admin' && (
-                        <>
+                    {(() => {
+                        const userRes = JSON.parse(localStorage.getItem('user'));
+                        const isAdmin = userRes?.username === 'admin' || userRes?.role === 'admin';
+                        if (!isAdmin) return null;
+                        return (
+                            <>
                             <Link
                                 to="/dashboard/admin/withdrawals"
                                 className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-orange-100 hover:shadow-md transition"
@@ -694,8 +698,9 @@ const DashboardPage = () => {
                                 </div>
                                 <span className="material-icons text-gray-400">chevron_right</span>
                             </Link>
-                        </>
-                    )}
+                            </>
+                        );
+                    })()}
                 </div>
             </div>
 

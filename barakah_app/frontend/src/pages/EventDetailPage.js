@@ -4,6 +4,7 @@ import { Helmet } from 'react-helmet';
 import Header from '../components/layout/Header';
 import NavigationButton from '../components/layout/Navigation';
 import { getEventDetail, registerForEvent, getEventParticipants } from '../services/eventApi';
+import authService from '../services/auth';
 import Footer from '../components/layout/Footer';
 import '../styles/Body.css';
 
@@ -57,6 +58,44 @@ const EventDetailPage = () => {
             fetchParticipants();
         }
     }, [activeTab, fetchParticipants]);
+
+    const [hasAutoFilled, setHasAutoFilled] = useState(false);
+
+    useEffect(() => {
+        if (!showRegisterModal) {
+            setHasAutoFilled(false);
+            return;
+        }
+
+        const autoFillForm = async () => {
+            const user = JSON.parse(localStorage.getItem('user'));
+            if (showRegisterModal && user && event?.form_fields && !hasAutoFilled) {
+                try {
+                    const profile = await authService.getProfile(user.id);
+                    setResponses(prev => {
+                        const newResponses = { ...prev };
+                        event.form_fields.forEach(field => {
+                            const label = field.label.toLowerCase();
+                            if ((label.includes('nama') || label.includes('lengkap')) && !newResponses[field.id]) {
+                                newResponses[field.id] = profile.name_full || user.username;
+                            } else if (label.includes('email') && !newResponses[field.id]) {
+                                newResponses[field.id] = profile.email || user.email;
+                            } else if ((label.includes('wa') || label.includes('phone') || label.includes('hp') || label.includes('telp') || label.includes('kontak')) && !newResponses[field.id]) {
+                                newResponses[field.id] = profile.phone || '';
+                            } else if ((label.includes('alamat') || label.includes('domisili')) && !newResponses[field.id]) {
+                                newResponses[field.id] = profile.address || '';
+                            }
+                        });
+                        return newResponses;
+                    });
+                    setHasAutoFilled(true);
+                } catch (err) {
+                    console.error("Failed to auto-fill profile:", err);
+                }
+            }
+        };
+        autoFillForm();
+    }, [showRegisterModal, event, hasAutoFilled]);
 
     const handleResponseChange = (fieldId, value) => {
         setResponses(prev => ({ ...prev, [fieldId]: value }));
@@ -414,6 +453,7 @@ const EventDetailPage = () => {
                                                 <input 
                                                     required={field.required}
                                                     type="text" 
+                                                    value={responses[field.id] || ''}
                                                     placeholder={field.placeholder}
                                                     onChange={(e) => handleResponseChange(field.id, e.target.value)}
                                                     className="w-full px-5 py-3.5 bg-gray-50 border border-transparent rounded-2xl text-sm outline-none focus:bg-white focus:border-green-500 focus:ring-4 focus:ring-green-500/10 transition shadow-inner"
@@ -423,6 +463,7 @@ const EventDetailPage = () => {
                                             {field.field_type === 'textarea' && (
                                                 <textarea 
                                                     required={field.required}
+                                                    value={responses[field.id] || ''}
                                                     placeholder={field.placeholder}
                                                     onChange={(e) => handleResponseChange(field.id, e.target.value)}
                                                     rows="4"
@@ -434,6 +475,7 @@ const EventDetailPage = () => {
                                                 <input 
                                                     required={field.required}
                                                     type="number" 
+                                                    value={responses[field.id] || ''}
                                                     onChange={(e) => handleResponseChange(field.id, e.target.value)}
                                                     className="w-full px-5 py-3.5 bg-gray-50 border border-transparent rounded-2xl text-sm outline-none focus:bg-white focus:border-green-500 focus:ring-4 focus:ring-green-500/10 transition shadow-inner"
                                                 />
@@ -443,6 +485,7 @@ const EventDetailPage = () => {
                                                 <input 
                                                     required={field.required}
                                                     type="email" 
+                                                    value={responses[field.id] || ''}
                                                     onChange={(e) => handleResponseChange(field.id, e.target.value)}
                                                     className="w-full px-5 py-3.5 bg-gray-50 border border-transparent rounded-2xl text-sm outline-none focus:bg-white focus:border-green-500 focus:ring-4 focus:ring-green-500/10 transition shadow-inner"
                                                 />
@@ -452,6 +495,7 @@ const EventDetailPage = () => {
                                                 <input 
                                                     required={field.required}
                                                     type="tel" 
+                                                    value={responses[field.id] || ''}
                                                     onChange={(e) => handleResponseChange(field.id, e.target.value)}
                                                     className="w-full px-5 py-3.5 bg-gray-50 border border-transparent rounded-2xl text-sm outline-none focus:bg-white focus:border-green-500 focus:ring-4 focus:ring-green-500/10 transition shadow-inner"
                                                 />
@@ -461,6 +505,7 @@ const EventDetailPage = () => {
                                                 <input 
                                                     required={field.required}
                                                     type="date" 
+                                                    value={responses[field.id] || ''}
                                                     onChange={(e) => handleResponseChange(field.id, e.target.value)}
                                                     className="w-full px-5 py-3.5 bg-gray-50 border border-transparent rounded-2xl text-sm outline-none focus:bg-white focus:border-green-500 focus:ring-4 focus:ring-green-500/10 transition shadow-inner"
                                                 />
@@ -470,6 +515,7 @@ const EventDetailPage = () => {
                                                 <div className="relative">
                                                     <select 
                                                         required={field.required}
+                                                        value={responses[field.id] || ''}
                                                         onChange={(e) => handleResponseChange(field.id, e.target.value)}
                                                         className="w-full px-5 py-3.5 bg-gray-50 border border-transparent rounded-2xl text-sm outline-none focus:bg-white focus:border-green-500 focus:ring-4 focus:ring-green-500/10 transition shadow-inner appearance-none pr-10"
                                                     >

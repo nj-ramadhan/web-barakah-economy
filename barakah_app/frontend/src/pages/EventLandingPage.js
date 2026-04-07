@@ -69,12 +69,6 @@ const EventLandingPage = () => {
                         <h1 className="text-3xl font-bold text-gray-900 mb-1">Event Seru</h1>
                         <p className="text-gray-500 text-sm">Ikuti berbagai kegiatan positif untuk bekal akhirat</p>
                     </div>
-                    <Link 
-                        to="/event/ajukan" 
-                        className="bg-green-700 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-lg shadow-green-100 hover:bg-green-800 transition"
-                    >
-                        + AJUKAN EVENT
-                    </Link>
                 </div>
 
                 {filteredEvents.length === 0 ? (

@@ -7,12 +7,27 @@ from django.shortcuts import get_object_or_404, render
 from django.conf import settings
 from .models import Article, ArticleImage
 from .serializers import ArticleSerializer, ArticleImageSerializer, ArticleImageUploadSerializer
+from barakah_app.utils import send_status_update_email
 
 class ArticleViewSet(viewsets.ModelViewSet):
     queryset = Article.objects.all().order_by('-id')
     serializer_class = ArticleSerializer
     lookup_field = 'slug'
     parser_classes = [MultiPartParser, FormParser, JSONParser]
+    def perform_update(self, serializer):
+        instance = self.get_object()
+        old_status = instance.status
+        updated_instance = serializer.save()
+        
+        # Trigger email if status changed to approved or rejected
+        if old_status != updated_instance.status and updated_instance.status in ['approved', 'rejected']:
+            if updated_instance.created_by:
+                send_status_update_email(
+                    updated_instance.created_by,
+                    updated_instance.title,
+                    updated_instance.status,
+                    updated_instance.rejection_reason
+                )
 
     def get_permissions(self):
         if self.action in ['list', 'retrieve']:
