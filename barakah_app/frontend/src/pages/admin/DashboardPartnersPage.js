@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import Header from '../../components/layout/Header';
 import NavigationButton from '../../components/layout/Navigation';
+import ImageCropperModal from '../../components/common/ImageCropper';
 
 const getMediaUrl = (url) => {
     if (!url) return '';
@@ -14,6 +15,7 @@ const DashboardPartnersPage = () => {
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
     const [formData, setFormData] = useState({ name: '', logo: null, order: 0 });
+    const [cropper, setCropper] = useState({ active: false, image: null });
 
     const fetchPartners = async () => {
         try {

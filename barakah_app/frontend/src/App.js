@@ -49,6 +49,7 @@ import ActivityListPage from './pages/ActivityListPage';
 import ActivityDetailPage from './pages/ActivityDetailPage';
 import DashboardUserPage from './pages/admin/DashboardUserPage';
 import DashboardEventPage from './pages/admin/DashboardEventPage';
+import DashboardAboutUsPage from './pages/admin/DashboardAboutUsPage';
 import EventLandingPage from './pages/EventLandingPage';
 import EventSubmissionPage from './pages/EventSubmissionPage';
 import EventDetailPage from './pages/EventDetailPage';
