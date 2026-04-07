@@ -13,6 +13,66 @@ class ProfileViewSet(viewsets.ModelViewSet):
     queryset = Profile.objects.all()
     serializer_class = ProfileSerializer
 
+    @action(detail=False, methods=['get'], url_path='check-completeness')
+    def check_completeness(self, request):
+        user = request.user
+        if user.role in ('admin', 'staff', 'seller'):
+            return Response({'requires_completion': False, 'is_complete': True, 'missing_fields': [], 'has_custom_role': True})
+
+        from accounts.models import Role
+        required_fields = set()
+        try:
+            anggota_role = Role.objects.get(code='anggota_bae')
+            required_fields.update(anggota_role.required_profile_fields or [])
+        except Role.DoesNotExist:
+            required_fields = {'name_full', 'nik', 'gender', 'birth_place', 'birth_date', 'address', 'address_province'}
+
+        try:
+            profile = Profile.objects.get(user=user)
+        except Profile.DoesNotExist:
+            return Response({'requires_completion': True, 'is_complete': False, 'missing_fields': list(required_fields)})
+
+        segment = profile.segment
+        study_level = profile.study_level
+
+        if 'segment' in required_fields:
+            if segment in ['karyawan', 'umum', 'pengusaha']:
+                required_fields.update({'job', 'work_field', 'work_institution', 'work_position', 'work_salary'})
+                if study_level:
+                    required_fields.update({'study_campus'})
+                    if study_level not in ['sd', 'smp', 'sma']:
+                        required_fields.update({'study_faculty', 'study_department', 'study_program', 'study_semester'})
+            elif segment in ['mahasiswa', 'pelajar', 'santri']:
+                required_fields.update({'study_level', 'study_campus'})
+                if study_level and study_level not in ['sd', 'smp', 'sma']:
+                    required_fields.update({'study_faculty', 'study_department', 'study_program', 'study_semester'})
+
+        if segment in ['mahasiswa', 'pelajar', 'santri']:
+            required_fields = {f for f in required_fields if not f.startswith('work_') and f != 'job'}
+
+        if study_level in ['sd', 'smp', 'sma']:
+            ignored_study_fields = {'study_faculty', 'study_department', 'study_program', 'study_semester'}
+            required_fields = {f for f in required_fields if f not in ignored_study_fields}
+
+        missing = []
+        for field in required_fields:
+            val = getattr(profile, field, None)
+            if not val or (isinstance(val, str) and not val.strip()):
+                missing.append(field)
+
+        return Response({'requires_completion': len(missing) > 0, 'is_complete': len(missing) == 0, 'missing_fields': missing})
+
+    @action(detail=False, methods=['post'], url_path='scan-ktp', parser_classes=[MultiPartParser, FormParser])
+    def scan_ktp(self, request):
+        from .ktp_service import extract_ktp_data
+        image = request.FILES.get('ktp_image')
+        if not image:
+            return Response({'error': 'ktp_image file wajib diupload'}, status=status.HTTP_400_BAD_REQUEST)
+        allowed_types = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
+        if image.content_type not in allowed_types:
+            return Response({'error': 'Format file harus JPG, PNG, atau WebP'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(extract_ktp_data(image))
+
     @action(detail=False, methods=['get'])
     def search(self, request):
         query = request.query_params.get('q', '')

@@ -102,6 +102,7 @@ const Home = () => {
   const [myTestimonial, setMyTestimonial] = useState(null);
   const [aboutUs, setAboutUs] = useState(null);
   const [selectedPartner, setSelectedPartner] = useState(null);
+  const [events, setEvents] = useState([]);
 
   useEffect(() => {
     const fetchFeaturedProducts = async () => {
@@ -194,6 +195,16 @@ const Home = () => {
       }
     };
     fetchSiteContent();
+
+    const fetchEvents = async () => {
+      try {
+        const response = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/events/`);
+        setEvents(response.data.results || response.data);
+      } catch (err) {
+        console.error('Error fetching events:', err);
+      }
+    };
+    fetchEvents();
   }, []);
 
   const handleTestimonialSubmit = async (e) => {
@@ -673,6 +684,60 @@ const Home = () => {
           </div>
         )}
       </div>
+
+      {/* Barakah Events Carousel */}
+      {events.length > 0 && (
+        <div className="px-4 pt-4">
+          <div className="flex justify-between items-center mb-2">
+            <div>
+              <h1 className="text-lg font-medium line-clamp-2">Barakah Event</h1>
+              <h2 className="text-sm font-medium text-gray-500">Ikuti berbagai kegiatan seru dari BAE</h2>
+            </div>
+            <Link to="/event" className="text-green-700 text-xs font-semibold hover:underline whitespace-nowrap">
+              Lihat Semua →
+            </Link>
+          </div>
+          <Swiper
+            spaceBetween={12}
+            slidesPerView={1.2}
+            navigation
+            modules={[Navigation, Autoplay]}
+            autoplay={{ delay: 5000, disableOnInteraction: false }}
+          >
+            {events.slice(0, 5).map((event) => (
+              <SwiperSlide key={event.id}>
+                <Link to={`/event/${event.slug || event.id}`} className="block bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100">
+                  <div className="relative h-40">
+                    <img
+                      src={event.image || '/placeholder-image.jpg'}
+                      alt={event.title}
+                      className="w-full h-full object-cover"
+                      onError={(e) => { e.target.src = '/placeholder-image.jpg'; }}
+                    />
+                    <div className="absolute top-2 left-2 bg-indigo-600 text-white px-2 py-0.5 rounded-full text-[10px] font-bold">
+                      EVENT
+                    </div>
+                  </div>
+                  <div className="p-3">
+                    <h3 className="font-bold text-sm text-gray-900 line-clamp-2 mb-1">{event.title}</h3>
+                    <div className="flex items-center gap-1 text-gray-500 text-[10px]">
+                      <span className="material-icons text-[12px]">calendar_today</span>
+                      {new Date(event.start_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
+                      {event.location && (
+                        <span className="flex items-center gap-1">
+                          <span className="mx-1">•</span>
+                          <span className="material-icons text-[12px]">location_on</span>
+                          <span className="line-clamp-1">{event.location}</span>
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </Link>
+              </SwiperSlide>
+            ))}
+          </Swiper>
+        </div>
+      )}
 
       {/* Activities Carousel */}
       {activities.length > 0 && (

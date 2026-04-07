@@ -446,6 +446,20 @@ const DashboardPage = () => {
                         <span className="material-icons text-gray-400">chevron_right</span>
                     </Link>
 
+                    <Link
+                        to="/dashboard/event"
+                        className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-indigo-50 hover:shadow-md transition"
+                    >
+                        <div className="w-12 h-12 bg-indigo-100 rounded-xl flex items-center justify-center">
+                            <span className="material-icons text-indigo-700">celebration</span>
+                        </div>
+                        <div className="flex-1">
+                            <h3 className="font-bold text-gray-800 text-sm">Event Barakah</h3>
+                            <p className="text-[11px] text-gray-500">Ajukan dan kelola event komunitas Anda</p>
+                        </div>
+                        <span className="material-icons text-gray-400">chevron_right</span>
+                    </Link>
+
                     {username === 'admin' && (
                         <>
                             <Link
@@ -642,7 +656,7 @@ const DashboardPage = () => {
 
                             <Link
                                 to="/dashboard/admin/campaigns"
-                                className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-red-100 hover:shadow-md transition"
+                                className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-red-100 hover:shadow-xl transition"
                             >
                                 <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center">
                                     <span className="material-icons text-red-700">campaign</span>
@@ -650,6 +664,20 @@ const DashboardPage = () => {
                                 <div className="flex-1">
                                     <h3 className="font-bold text-gray-800 text-sm">Manajemen Kampanye</h3>
                                     <p className="text-[11px] text-gray-500">Kelola semua kampanye yang aktif (Admin)</p>
+                                </div>
+                                <span className="material-icons text-gray-400">chevron_right</span>
+                            </Link>
+
+                            <Link
+                                to="/dashboard/admin/events"
+                                className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-teal-100 hover:shadow-xl transition"
+                            >
+                                <div className="w-12 h-12 bg-teal-100 rounded-xl flex items-center justify-center">
+                                    <span className="material-icons text-teal-700">event</span>
+                                </div>
+                                <div className="flex-1">
+                                    <h3 className="font-bold text-gray-800 text-sm">Manajemen Event</h3>
+                                    <p className="text-[11px] text-gray-500">Kelola pendaftaran dan detail event (Admin)</p>
                                 </div>
                                 <span className="material-icons text-gray-400">chevron_right</span>
                             </Link>

@@ -34,6 +34,7 @@ const DesktopHeader = () => {
                 <Link to="/academy/ecourse" className="text-gray-600 hover:text-green-700 font-medium transition">E-Course</Link>
                 <Link to="/articles" className="text-gray-600 hover:text-green-700 font-medium transition">Artikel</Link>
                 <Link to="/kegiatan" className="text-gray-600 hover:text-green-700 font-medium transition">Kegiatan Kami</Link>
+                <Link to="/events" className="text-gray-600 hover:text-green-700 font-medium transition">Event</Link>
                 <Link to="/digital-products" className="text-gray-600 hover:text-green-700 font-medium transition">Produk Digital</Link>
                 <Link to="/forum" className="text-gray-600 hover:text-green-700 font-medium transition">Forum</Link>
                 {user ? (

@@ -121,6 +121,7 @@ const DesktopLandingPage = () => {
                                         {/* Dynamic Carousel Items Picker */}
                                         {[
                                             activities[0] && { type: 'Kegiatan', title: activities[0].title, img: activities[0].header_image, link: '/kegiatan' },
+                                            { type: 'Event', title: 'Barakah Event', img: '/images/event-banner.jpg', link: '/events' },
                                             articles[0] && { type: 'Artikel', title: articles[0].title, img: articles[0].images?.[0]?.path, link: `/articles/${articles[0].id}` },
                                             campaigns[0] && { type: 'Charity', title: campaigns[0].title, img: campaigns[0].thumbnail, link: `/kampanye/${campaigns[0].slug || campaigns[0].id}` },
                                             courses[0] && { type: 'Academy', title: courses[0].title, img: courses[0].thumbnail, link: `/kelas/${courses[0].slug || courses[0].id}` },
@@ -213,6 +214,15 @@ const DesktopLandingPage = () => {
                             <h3 className="text-xl font-bold text-gray-900 mb-3">Relawan BAE</h3>
                             <p className="text-gray-600 mb-4 text-sm">Jadilah bagian dari perubahan positif. Bergabunglah sebagai relawan Barakah Economy.</p>
                             <Link className="text-red-700 font-semibold hover:underline text-sm" to="#">Daftar Relawan →</Link>
+                        </div>
+                        {/* Barakah Event */}
+                        <div className="p-8 rounded-2xl bg-white border border-gray-100 hover:border-teal-300 hover:shadow-xl transition group">
+                            <div className="w-16 h-16 bg-teal-100 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-teal-600 transition">
+                                <span className="material-icons text-3xl text-teal-700 group-hover:text-white">event</span>
+                            </div>
+                            <h3 className="text-xl font-bold text-gray-900 mb-3">Barakah Event</h3>
+                            <p className="text-gray-600 mb-4 text-sm">Ikuti berbagai event menarik, seminar, dan workshop yang diselenggarakan oleh Barakah Economy.</p>
+                            <Link className="text-teal-700 font-semibold hover:underline text-sm" to="/events">Lihat Event →</Link>
                         </div>
                         {/* Forum Tanya Jawab */}
                         <div className="p-8 rounded-2xl bg-white border border-gray-100 hover:border-indigo-300 hover:shadow-xl transition group">
