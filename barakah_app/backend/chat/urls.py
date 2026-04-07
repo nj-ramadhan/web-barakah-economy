@@ -1,12 +1,12 @@
 from django.urls import path, include
-from rest_framework.routers import DefaultRouter
+from rest_framework.routers import SimpleRouter
 from .views import (
     ConsultantCategoryViewSet, ConsultantProfileViewSet, ChatSessionViewSet,
     MessageViewSet, AISettingsViewSet, ChatCommandViewSet, ConsultationReviewViewSet,
     GeneralFeedbackViewSet
 )
 
-router = DefaultRouter()
+router = SimpleRouter()
 router.register(r'categories', ConsultantCategoryViewSet, basename='consultant-category')
 router.register(r'consultants', ConsultantProfileViewSet)
 router.register(r'sessions', ChatSessionViewSet, basename='chat-session')

@@ -1,8 +1,8 @@
 from django.urls import path, include
-from rest_framework.routers import DefaultRouter
+from rest_framework.routers import SimpleRouter
 from .views import ArticleViewSet, ArticleImageViewSet, ArticleShareView
 
-router = DefaultRouter()
+router = SimpleRouter()
 router.register(r'articles', ArticleViewSet, basename='articles')
 router.register(r'article-images', ArticleImageViewSet, basename='article-images')
 

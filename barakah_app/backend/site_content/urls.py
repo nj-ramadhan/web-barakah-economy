@@ -1,8 +1,8 @@
 from django.urls import path, include
-from rest_framework.routers import DefaultRouter
+from rest_framework.routers import SimpleRouter
 from .views import PartnerViewSet, TestimonialViewSet, ActivityViewSet, ActivityShareView, AboutUsViewSet
 
-router = DefaultRouter()
+router = SimpleRouter()
 router.register(r'about-us', AboutUsViewSet)
 router.register(r'partners', PartnerViewSet)
 router.register(r'testimonials', TestimonialViewSet)

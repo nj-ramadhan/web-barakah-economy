@@ -1,12 +1,12 @@
 from django.urls import path, include
-from rest_framework.routers import DefaultRouter
+from rest_framework.routers import SimpleRouter
 from .views import (
     RegisterView, LoginView, LogoutView, GoogleLoginView,
     PasswordResetRequestView, PasswordResetConfirmView,
     UserViewSet, RoleViewSet, UserLabelViewSet
 )
 
-router = DefaultRouter()
+router = SimpleRouter()
 router.register(r'users', UserViewSet, basename='user')
 router.register(r'roles', RoleViewSet, basename='role')
 router.register(r'labels', UserLabelViewSet, basename='label')
