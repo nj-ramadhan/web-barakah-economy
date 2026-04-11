@@ -245,7 +245,8 @@ const DashboardAboutUsPage = () => {
                         setFormData({ ...formData, [cropper.target]: croppedFile });
                         setCropper({ ...cropper, show: false });
                     }}
-                    aspectRatio={cropper.aspect}
+                    aspect={cropper.aspect}
+                    maxWidth={1280}
                     title="Crop Gambar Profil"
                 />
             )}

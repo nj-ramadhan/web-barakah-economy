@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import Header from '../components/layout/Header';
 import BackButton from '../components/global/BackButton';
 import NavigationButton from '../components/layout/Navigation';
+import ImageCropperModal from '../components/common/ImageCropper';
 import authService from '../services/auth';
 import axios from 'axios';
 import '../styles/Body.css';
@@ -48,6 +49,8 @@ const ProfileEditPage = () => {
     work_position: '', work_salary: '', address_latitude: '',
     address_longitude: '', address_province: '', picture: null, ktp_image: null,
   });
+
+  const [cropper, setCropper] = useState({ active: false, image: null });
 
   const [activeTab, setActiveTab] = useState('general');
   const [ktpScanning, setKtpScanning] = useState(false);
@@ -139,8 +142,18 @@ const ProfileEditPage = () => {
         alert('Ukuran foto terlalu besar. Maksimal 5MB.');
         return;
       }
-      setProfile((prev) => ({ ...prev, picture: file }));
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        setCropper({ active: true, image: ev.target.result });
+      };
+      reader.readAsDataURL(file);
     }
+  };
+
+  const handleCropComplete = (croppedBlob) => {
+    const file = new File([croppedBlob], 'profile_picture.jpg', { type: 'image/jpeg' });
+    setProfile((prev) => ({ ...prev, picture: file }));
+    setCropper({ active: false, image: null });
   };
 
   const handleKtpScan = async (e) => {
@@ -599,6 +612,17 @@ const ProfileEditPage = () => {
         )}
       </div>
       <NavigationButton />
+      {cropper.active && (
+        <ImageCropperModal
+          image={cropper.image}
+          aspect={1}
+          maxWidth={512}
+          maxHeight={512}
+          onCropComplete={handleCropComplete}
+          onCancel={() => setCropper({ active: false, image: null })}
+          title="Potong Foto Profil"
+        />
+      )}
     </div>
   );
 };

@@ -4,6 +4,7 @@ import { Helmet } from 'react-helmet';
 import Header from '../components/layout/Header';
 import BackButton from '../components/global/BackButton';
 import NavigationButton from '../components/layout/Navigation';
+import ImageCropperModal from '../components/common/ImageCropper';
 import ShopDecoration from '../components/profile/ShopDecoration';
 import StoreTemplates from '../components/profile/StoreTemplates';
 import authService from '../services/auth';
@@ -31,6 +32,7 @@ const DashboardShopSettingsPage = () => {
     });
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    const [cropper, setCropper] = useState({ active: false, image: null });
 
     useEffect(() => {
         const fetchProfile = async () => {
@@ -166,7 +168,11 @@ const DashboardShopSettingsPage = () => {
                                                     alert('Ukuran gambar maksimal 5MB');
                                                     return;
                                                 }
-                                                setProfile(prev => ({ ...prev, shop_thumbnail: file }));
+                                                const reader = new FileReader();
+                                                reader.onload = (ev) => {
+                                                    setCropper({ active: true, image: ev.target.result });
+                                                };
+                                                reader.readAsDataURL(file);
                                             }
                                         }}
                                         className="w-full px-4 py-3 bg-gray-50 border-none rounded-xl text-sm focus:ring-2 focus:ring-green-500"
@@ -415,10 +421,25 @@ const DashboardShopSettingsPage = () => {
 
                     </form>
                 </div>
-            </div >
+            </div>
 
             <NavigationButton />
-        </div >
+            {cropper.active && (
+                <ImageCropperModal
+                    image={cropper.image}
+                    aspect={16 / 9}
+                    maxWidth={1280}
+                    maxHeight={720}
+                    onCropComplete={(croppedBlob) => {
+                        const file = new File([croppedBlob], 'shop_thumbnail.jpg', { type: 'image/jpeg' });
+                        setProfile(prev => ({ ...prev, shop_thumbnail: file }));
+                        setCropper({ active: false, image: null });
+                    }}
+                    onCancel={() => setCropper({ active: false, image: null })}
+                    title="Potong Thumbnail Toko"
+                />
+            )}
+        </div>
     );
 };
 

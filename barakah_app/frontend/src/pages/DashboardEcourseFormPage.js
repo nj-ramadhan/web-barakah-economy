@@ -5,13 +5,17 @@ import { Helmet } from 'react-helmet';
 import Header from '../components/layout/Header';
 import NavigationButton from '../components/layout/Navigation';
 import { createCourse, updateCourse, getCourseDetail } from '../services/ecourseApi';
+import ImageCropperModal from '../components/common/ImageCropper';
 import '../styles/Body.css';
 
 const CATEGORY_CHOICES = [
+    { value: 'islam', label: 'Agama Islam' },
     { value: 'it', label: 'Programming & Development' },
+    { value: 'teknik', label: 'Engineering' },
     { value: 'bisnis', label: 'Business & Entrepreneurship' },
     { value: 'kreatif', label: 'Design & Creativity' },
     { value: 'personal', label: 'Personal Development' },
+    { value: 'kesehatan', label: 'Health & Lifestyle' },
     { value: 'akademik', label: 'Academics & Test Prep' },
 ];
 
@@ -36,6 +40,10 @@ const DashboardEcourseFormPage = () => {
     const [certificateInfo, setCertificateInfo] = useState('');
     const [thumbnail, setThumbnail] = useState(null);
     const [thumbnailPreview, setThumbnailPreview] = useState(null);
+
+    // Cropper state
+    const [showCropper, setShowCropper] = useState(false);
+    const [tempImage, setTempImage] = useState(null);
 
     useEffect(() => {
         if (isEdit) {
@@ -68,13 +76,25 @@ const DashboardEcourseFormPage = () => {
     const handleThumbnailChange = (e) => {
         const file = e.target.files[0];
         if (file) {
-            if (file.size > 5 * 1024 * 1024) {
-                alert('Ukuran gambar terlalu besar. Maksimal 5MB.');
-                return;
-            }
-            setThumbnail(file);
-            setThumbnailPreview(URL.createObjectURL(file));
+            const reader = new FileReader();
+            reader.onload = () => {
+                setTempImage(reader.result);
+                setShowCropper(true);
+            };
+            reader.readAsDataURL(file);
         }
+    };
+
+    const handleCropComplete = (croppedImageBlob) => {
+        setThumbnail(croppedImageBlob);
+        setThumbnailPreview(URL.createObjectURL(croppedImageBlob));
+        setShowCropper(false);
+        setTempImage(null);
+    };
+
+    const handleCropCancel = () => {
+        setShowCropper(false);
+        setTempImage(null);
     };
 
     const handleSubmit = async (e) => {
@@ -86,14 +106,15 @@ const DashboardEcourseFormPage = () => {
         formData.append('title', title);
         formData.append('description', description);
         formData.append('category', category);
-        formData.append('price', price);
-        formData.append('discount', discount);
-        formData.append('is_active', isActive);
-        formData.append('is_featured', isFeatured);
-        formData.append('has_certificate', hasCertificate);
-        formData.append('certificate_info', certificateInfo);
+        formData.append('price', price || '0');
+        formData.append('discount', discount || '0');
+        formData.append('is_active', isActive ? 'true' : 'false');
+        formData.append('is_featured', isFeatured ? 'true' : 'false');
+        formData.append('has_certificate', hasCertificate ? 'true' : 'false');
+        formData.append('certificate_info', certificateInfo || '');
+
         if (thumbnail) {
-            formData.append('thumbnail', thumbnail);
+            formData.append('thumbnail', thumbnail, 'thumbnail.jpg');
         }
 
         try {
@@ -307,6 +328,17 @@ const DashboardEcourseFormPage = () => {
                     </div>
                 </form>
             </div>
+
+            <ImageCropperModal
+                show={showCropper}
+                image={tempImage}
+                onCropComplete={handleCropComplete}
+                onCancel={handleCropCancel}
+                aspect={16 / 9}
+                maxWidth={1280}
+                maxHeight={720}
+                title="Potong Thumbnail Kursus"
+            />
 
             <NavigationButton />
         </div>

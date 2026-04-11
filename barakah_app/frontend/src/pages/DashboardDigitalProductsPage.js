@@ -182,13 +182,11 @@ const DashboardDigitalProductsPage = () => {
         }
     };
 
-    const handleCropComplete = async (croppedImageUrl) => {
-        const response = await fetch(croppedImageUrl);
-        const blob = await response.blob();
-        const file = new File([blob], 'product_thumb.jpg', { type: 'image/jpeg' });
+    const handleCropComplete = (croppedBlob) => {
+        const file = new File([croppedBlob], 'product_thumb.jpg', { type: 'image/jpeg' });
         
         setThumbnail(file);
-        setThumbnailPreview(croppedImageUrl);
+        setThumbnailPreview(URL.createObjectURL(croppedBlob));
         setCropper({ active: false, image: null });
     };
 
@@ -415,6 +413,8 @@ const DashboardDigitalProductsPage = () => {
                 <ImageCropperModal 
                     image={cropper.image}
                     aspect={1}
+                    maxWidth={1024}
+                    maxHeight={1024}
                     onCropComplete={handleCropComplete}
                     onCancel={() => setCropper({ active: false, image: null })}
                 />

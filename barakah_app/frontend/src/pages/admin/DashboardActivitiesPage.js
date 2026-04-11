@@ -282,7 +282,9 @@ const DashboardActivitiesPage = () => {
                     setFormData({ ...formData, header_image: croppedFile });
                     setCropper({ show: false, image: null });
                 }}
-                aspectRatio={16/9}
+                aspect={16/9}
+                maxWidth={1280}
+                maxHeight={720}
                 title="Crop Gambar Kegiatan"
             />
             <NavigationButton />

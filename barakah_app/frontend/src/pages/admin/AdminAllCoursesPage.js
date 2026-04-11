@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import Header from '../../components/layout/Header';
 import NavigationButton from '../../components/layout/Navigation';
 import { getAdminAllCourses, deleteAdminCourse } from '../../services/ecourseApi';
@@ -102,10 +103,16 @@ const AdminAllCoursesPage = () => {
                                         </button>
                                         <button
                                             onClick={() => handleDelete(course.id)}
-                                            className="px-3 bg-red-50 text-red-600 py-1.5 rounded-lg text-[10px] font-bold hover:bg-red-100 transition"
+                                            className="px-2 bg-red-50 text-red-600 py-1.5 rounded-lg text-[10px] font-bold hover:bg-red-100 transition"
                                         >
                                             Hapus
                                         </button>
+                                        <Link
+                                            to={`/dashboard/ecourses/${course.id}/edit`}
+                                            className="px-2 bg-blue-50 text-blue-600 py-1.5 rounded-lg text-[10px] font-bold hover:bg-blue-100 transition flex items-center justify-center"
+                                        >
+                                            Edit
+                                        </Link>
                                     </div>
                                 </div>
                             </div>

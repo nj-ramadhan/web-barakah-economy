@@ -60,11 +60,10 @@ class CourseSerializer(serializers.ModelSerializer):
         model = Course
         fields = [
             'id', 'title', 'slug', 'description', 'instructor', 'instructor_name',
-            'thumbnail', 'price', 'is_active', 'is_featured', 'category',
-            'duration', 'created_at', 'materials', 'student_count', 
-            'material_count', 'students'
+            'thumbnail', 'price', 'discount', 'is_active', 'is_featured', 'category',
+            'duration', 'has_certificate', 'certificate_info', 'created_at', 
+            'materials', 'student_count', 'material_count', 'students'
         ]
-        # Temporarily excluded potentially missing fields: 'has_certificate', 'certificate_info'
         read_only_fields = ['instructor']
 
     def get_student_count(self, obj):

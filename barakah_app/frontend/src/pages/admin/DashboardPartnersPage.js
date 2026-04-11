@@ -238,10 +238,10 @@ const DashboardPartnersPage = () => {
                 <ImageCropperModal 
                     image={cropper.image}
                     aspect={1}
-                    onCropComplete={async (croppedImageUrl) => {
-                        const response = await fetch(croppedImageUrl);
-                        const blob = await response.blob();
-                        const file = new File([blob], 'partner_logo.jpg', { type: 'image/jpeg' });
+                    maxWidth={512}
+                    maxHeight={512}
+                    onCropComplete={(croppedBlob) => {
+                        const file = new File([croppedBlob], 'partner_logo.jpg', { type: 'image/jpeg' });
                         setFormData({ ...formData, logo: file });
                         setCropper({ active: false, image: null });
                     }}

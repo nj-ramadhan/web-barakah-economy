@@ -2,10 +2,23 @@ import React, { useState, useCallback } from 'react';
 import Cropper from 'react-easy-crop';
 import { getCroppedImg } from './canvasUtils';
 
-const ImageCropperModal = ({ show = true, image, aspect = 16 / 9, onCropComplete, onCancel, onClose, title = "Potong Gambar" }) => {
+const ImageCropperModal = ({ 
+  show = true, 
+  image, 
+  aspect = 16 / 9, 
+  aspectRatio, // Alternative name used in some pages
+  onCropComplete, 
+  onCancel, 
+  onClose, 
+  title = "Potong Gambar",
+  maxWidth = 1920,
+  maxHeight = 1080 
+}) => {
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
+
+  const effectiveAspect = aspectRatio || aspect;
 
   const handleCancel = () => {
     if (onCancel) onCancel();
@@ -21,7 +34,16 @@ const ImageCropperModal = ({ show = true, image, aspect = 16 / 9, onCropComplete
 
   const handleDone = async () => {
     try {
-      const croppedImage = await getCroppedImg(image, croppedAreaPixels);
+      // Pass resizing and quality options to getCroppedImg
+      const croppedImage = await getCroppedImg(
+        image, 
+        croppedAreaPixels, 
+        0, 
+        { horizontal: false, vertical: false }, 
+        maxWidth, 
+        maxHeight,
+        0.8 // Quality 80%
+      );
       onCropComplete(croppedImage);
     } catch (e) {
       console.error(e);
@@ -46,7 +68,7 @@ const ImageCropperModal = ({ show = true, image, aspect = 16 / 9, onCropComplete
               image={image}
               crop={crop}
               zoom={zoom}
-              aspect={aspect}
+              aspect={effectiveAspect}
               onCropChange={onCropChange}
               onCropComplete={onCropCompleteInternal}
               onZoomChange={onZoomChange}

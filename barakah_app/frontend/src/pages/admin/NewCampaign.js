@@ -316,13 +316,13 @@ const NewCampaign = () => {
         <ImageCropperModal 
           image={cropper.image}
           aspect={16 / 9}
-          onCropComplete={async (croppedImageUrl) => {
-            const response = await fetch(croppedImageUrl);
-            const blob = await response.blob();
-            const file = new File([blob], 'campaign_thumb.jpg', { type: 'image/jpeg' });
+          maxWidth={1280}
+          maxHeight={720}
+          onCropComplete={(croppedBlob) => {
+            const file = new File([croppedBlob], 'campaign_thumb.jpg', { type: 'image/jpeg' });
             
             setFormData(prev => ({ ...prev, thumbnail: file }));
-            setPreviewImage(croppedImageUrl);
+            setPreviewImage(URL.createObjectURL(croppedBlob));
             setCropper({ active: false, image: null });
           }}
           onCancel={() => {

@@ -32,7 +32,10 @@ export const createImage = (url) =>
     imageSrc,
     pixelCrop,
     rotation = 0,
-    flip = { horizontal: false, vertical: false }
+    flip = { horizontal: false, vertical: false },
+    maxWidth = 1920, // Default max width
+    maxHeight = 1080, // Default max height
+    quality = 0.8 // Default JPEG quality
   ) {
     const image = await createImage(imageSrc);
     const canvas = document.createElement('canvas');
@@ -73,20 +76,39 @@ export const createImage = (url) =>
       pixelCrop.height
     );
   
-    // set canvas width to final desired crop size - this will clear existing context
-    canvas.width = pixelCrop.width;
-    canvas.height = pixelCrop.height;
+    // Determine new dimensions if resizing is needed
+    let targetWidth = pixelCrop.width;
+    let targetHeight = pixelCrop.height;
   
-    // paste generated rotate image with correct offsets for x,y crop values.
-    ctx.putImageData(data, 0, 0);
+    if (maxWidth && targetWidth > maxWidth) {
+      targetHeight = (maxWidth / targetWidth) * targetHeight;
+      targetWidth = maxWidth;
+    }
+    if (maxHeight && targetHeight > maxHeight) {
+      targetWidth = (maxHeight / targetHeight) * targetWidth;
+      targetHeight = maxHeight;
+    }
   
-    // As Base64 string
-    // return canvas.toDataURL('image/jpeg');
+    // Use a secondary canvas for high-quality resizing
+    const targetCanvas = document.createElement('canvas');
+    const targetCtx = targetCanvas.getContext('2d');
+    targetCanvas.width = targetWidth;
+    targetCanvas.height = targetHeight;
+  
+    // To resize with good quality, we first draw the cropped data to a temp canvas at original size
+    // Then we draw from that temp canvas to the target canvas with scaling
+    const tempCanvas = document.createElement('canvas');
+    const tempCtx = tempCanvas.getContext('2d');
+    tempCanvas.width = pixelCrop.width;
+    tempCanvas.height = pixelCrop.height;
+    tempCtx.putImageData(data, 0, 0);
+  
+    targetCtx.drawImage(tempCanvas, 0, 0, targetWidth, targetHeight);
   
     // As a blob
-    return new Promise((resolve, reject) => {
-      canvas.toBlob((file) => {
+    return new Promise((resolve) => {
+      targetCanvas.toBlob((file) => {
         resolve(file);
-      }, 'image/jpeg');
+      }, 'image/jpeg', quality);
     });
   }

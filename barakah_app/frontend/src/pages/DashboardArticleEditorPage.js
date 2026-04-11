@@ -67,6 +67,11 @@ const DashboardArticleEditorPage = () => {
     const handleContentImageUpload = async (e) => {
         const file = e.target.files[0];
         if (!file) return;
+        if (file.size > 5 * 1024 * 1024) {
+            alert('Ukuran gambar terlalu besar. Maksimal 5MB.');
+            e.target.value = '';
+            return;
+        }
         try {
             const fd = new FormData();
             fd.append('image', file);
@@ -341,7 +346,9 @@ const DashboardArticleEditorPage = () => {
                     setFormData({ ...formData, floating_icon: croppedFile });
                     setCropper({ show: false, image: null });
                 }}
-                aspectRatio={1}
+                aspect={1}
+                maxWidth={256}
+                maxHeight={256}
                 title="Crop Icon Floating"
             />
             <NavigationButton />
