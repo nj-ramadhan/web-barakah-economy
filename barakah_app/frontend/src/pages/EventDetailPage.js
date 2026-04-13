@@ -24,6 +24,8 @@ const EventDetailPage = () => {
     const [paymentAmount, setPaymentAmount] = useState('');
     const [paymentProof, setPaymentProof] = useState(null);
     const [isRegistered, setIsRegistered] = useState(false); // To check if user already registered
+    const [activeTab, setActiveTab] = useState('about');
+    const [showRegisterModal, setShowRegisterModal] = useState(false);
 
     const API = process.env.REACT_APP_API_BASE_URL;
 
