@@ -17,9 +17,23 @@ class EventSerializer(serializers.ModelSerializer):
     form_fields = EventFormFieldSerializer(many=True, required=False)
     documentation_images = EventDocumentationImageSerializer(many=True, read_only=True)
     registration_count = serializers.SerializerMethodField()
+    user_registration = serializers.SerializerMethodField()
 
     def get_registration_count(self, obj):
         return obj.registrations.filter(status='approved').count()
+
+    def get_user_registration(self, obj):
+        request = self.context.get('request')
+        if not request or not request.user or not request.user.is_authenticated:
+            return None
+        
+        reg = obj.registrations.filter(user=request.user).first()
+        if reg:
+            return {
+                "id": reg.id,
+                "status": reg.status
+            }
+        return None
     
     def validate_form_fields(self, value):
         if not value or len(value) == 0:

@@ -1,13 +1,28 @@
 import React from 'react';
+import { CKEditor } from '@ckeditor/ckeditor5-react';
+import ClassicEditor from '@ckeditor/ckeditor5-build-classic';
 
 const CKEditorComponent = ({ content, onChange, placeholder }) => {
     return (
-        <textarea
-            value={content}
-            onChange={(e) => onChange(e.target.value)}
-            placeholder={placeholder || "Tulis deskripsi lengkap di sini..."}
-            className="w-full px-5 py-4 bg-gray-50 border-none rounded-2xl text-sm focus:ring-2 focus:ring-green-500 transition min-h-[300px] resize-y"
-        />
+        <div className="ck-editor-wrapper">
+            <CKEditor
+                editor={ ClassicEditor }
+                data={ content }
+                config={{
+                    placeholder: placeholder || "Tulis deskripsi lengkap di sini...",
+                    toolbar: [
+                        'heading', '|',
+                        'bold', 'italic', 'link', 'bulletedList', 'numberedList', '|',
+                        'outdent', 'indent', '|',
+                        'blockQuote', 'insertTable', 'mediaEmbed', 'undo', 'redo'
+                    ]
+                }}
+                onChange={ ( event, editor ) => {
+                    const data = editor.getData();
+                    onChange(data);
+                }}
+            />
+        </div>
     );
 };
 

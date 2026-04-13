@@ -305,22 +305,11 @@ const EventDetailPage = () => {
                                             <p className="text-gray-500 max-w-xs text-sm">Jadilah yang pertama mengikuti event seru ini!</p>
                                         </div>
                                     ) : (
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                                             {participants.map((p) => (
-                                                <div key={p.id} className="bg-gray-50 p-4 rounded-3xl border border-gray-100 flex items-center gap-4 hover:bg-white hover:shadow-lg transition group cursor-default">
-                                                    <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center shadow-sm overflow-hidden shrink-0 border border-gray-200">
-                                                        {p.avatar ? (
-                                                            <img src={p.avatar} alt={p.name} className="w-full h-full object-cover" />
-                                                        ) : (
-                                                            <span className="material-icons text-gray-300 text-3xl group-hover:text-blue-500 transition">person</span>
-                                                        )}
-                                                    </div>
-                                                    <div className="overflow-hidden">
-                                                        <p className="font-extrabold text-gray-900 truncate">{p.name}</p>
-                                                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">
-                                                            {p.username ? `@${p.username}` : (p.email_masked || 'Guest Registrant')}
-                                                        </p>
-                                                    </div>
+                                                <div key={p.id} className="bg-gray-50 px-5 py-3 rounded-2xl border border-gray-100 flex items-center gap-3 hover:border-blue-200 transition">
+                                                    <span className="w-2 h-2 rounded-full bg-blue-500 shrink-0"></span>
+                                                    <p className="font-bold text-gray-700 truncate">{p.name}</p>
                                                 </div>
                                             ))}
                                         </div>
@@ -339,7 +328,7 @@ const EventDetailPage = () => {
                                         {/* Link Download - Private */}
                                         {event.documentation_link && (
                                             <div className="shrink-0">
-                                                {JSON.parse(localStorage.getItem('user')) && participants.some(p => p.username === JSON.parse(localStorage.getItem('user')).username) ? (
+                                                {event.user_registration && event.user_registration.status === 'approved' ? (
                                                     <a 
                                                         href={event.documentation_link} 
                                                         target="_blank" 
