@@ -101,16 +101,16 @@ class EventViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(events, many=True)
         return Response(serializer.data)
 
-    @action(detail=True, methods=['post'], permission_classes=[permissions.AllowAny])
+    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
     def register(self, request, slug=None):
-        """Standard/Guest registration for an event."""
+        """Authenticated registration for an event."""
         event = self.get_object()
+        user = request.user
         
-        # Extract guest info or user
-        user = request.user if request.user.is_authenticated else None
-        guest_name = request.data.get('guest_name')
-        guest_email = request.data.get('guest_email')
-        
+        # Check if already registered
+        if EventRegistration.objects.filter(event=event, user=user).exists():
+            return Response({"error": "Anda sudah terdaftar di event ini."}, status=status.HTTP_400_BAD_REQUEST)
+
         # Extract responses (JSON string if from FormData)
         responses_raw = request.data.get('responses', '{}')
         try:
@@ -129,16 +129,24 @@ class EventViewSet(viewsets.ModelViewSet):
         if errors:
             return Response({"errors": errors}, status=status.HTTP_400_BAD_REQUEST)
             
-        # 2. Create registration
+        # 2. Payment Handling
+        payment_proof = request.FILES.get('payment_proof')
+        payment_amount = request.data.get('payment_amount', 0)
+        
+        if event.price_type != 'free' and not payment_proof:
+            return Response({"error": "Bukti pembayaran wajib diunggah untuk event berbayar."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # 3. Create registration
+        # Status defaults to 'pending' as defined in model
         registration = EventRegistration.objects.create(
             event=event,
             user=user,
-            guest_name=guest_name,
-            guest_email=guest_email,
-            responses=responses
+            responses=responses,
+            payment_proof=payment_proof,
+            payment_amount=payment_amount
         )
         
-        # 3. Handle File Uploads
+        # 4. Handle File Uploads for dynamic fields
         for field in form_fields:
             if field.field_type == 'file' and str(field.id) in request.FILES:
                 EventRegistrationFile.objects.create(
@@ -147,15 +155,14 @@ class EventViewSet(viewsets.ModelViewSet):
                     file=request.FILES[str(field.id)]
                 )
         
-        # 4. Automated Notifications (Email & WhatsApp)
+        # 5. Automated Notifications
         try:
             self._send_registration_notifications(registration)
         except Exception as e:
-            # Don't fail the registration if notifications fail
             import logging
             logging.getLogger(__name__).error(f"Failed to send notifications for registration {registration.id}: {e}")
         
-        return Response({"message": "Pendaftaran berhasil dikirim!", "id": registration.id}, status=status.HTTP_201_CREATED)
+        return Response({"message": "Pendaftaran berhasil dikirim! Silakan tunggu verifikasi admin.", "id": registration.id}, status=status.HTTP_201_CREATED)
 
     def _send_registration_notifications(self, registration):
         """Helper to send Email and WhatsApp notifications on registration."""
@@ -283,6 +290,39 @@ class EventViewSet(viewsets.ModelViewSet):
             if any(kw in label for kw in ['wa', 'whatsapp', 'hp', 'telepon', 'phone', 'handphone']):
                 phone = value
         return email, phone
+
+    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
+    def add_documentation_images(self, request, slug=None):
+        """Upload post-event documentation images."""
+        event = self.get_object()
+        if not request.user.is_staff and event.created_by != request.user:
+            return Response({"error": "Unauthorized"}, status=status.HTTP_403_FORBIDDEN)
+            
+        images = request.FILES.getlist('images')
+        if not images:
+            return Response({"error": "No images provided"}, status=status.HTTP_400_BAD_REQUEST)
+            
+        from .models import EventDocumentationImage
+        for img in images:
+            EventDocumentationImage.objects.create(event=event, image=img)
+            
+        return Response({"message": f"Successfully uploaded {len(images)} images."})
+
+    @action(detail=True, methods=['delete'], permission_classes=[permissions.IsAuthenticated])
+    def delete_documentation_image(self, request, slug=None):
+        """Delete a documentation image."""
+        event = self.get_object()
+        if not request.user.is_staff and event.created_by != request.user:
+            return Response({"error": "Unauthorized"}, status=status.HTTP_403_FORBIDDEN)
+            
+        image_id = request.data.get('image_id')
+        from .models import EventDocumentationImage
+        try:
+            img = EventDocumentationImage.objects.get(id=image_id, event=event)
+            img.delete()
+            return Response({"message": "Image deleted."})
+        except EventDocumentationImage.DoesNotExist:
+            return Response({"error": "Image not found"}, status=status.HTTP_404_NOT_FOUND)
 
     @action(detail=True, methods=['get'], permission_classes=[permissions.AllowAny])
     def participants(self, request, slug=None):

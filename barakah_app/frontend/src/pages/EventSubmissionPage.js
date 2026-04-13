@@ -24,12 +24,17 @@ const EventSubmissionPage = () => {
         location_url: '',
         organizer_name: '',
         organizer_contact: '',
+        price_type: 'free',
+        price_fixed: 0,
+        documentation_link: '',
     });
     const [formFields, setFormFields] = useState([]);
     const [files, setFiles] = useState({
         header_image: null,
         thumbnail: null,
+        documentation_images: [], // New images to upload
     });
+    const [existingDocImages, setExistingDocImages] = useState([]); // Images already on server
     const [cropper, setCropper] = useState({ active: false, image: null, type: null });
 
     useEffect(() => {
@@ -56,6 +61,9 @@ const EventSubmissionPage = () => {
                         location_url: d.location_url || '',
                         organizer_name: d.organizer_name || '',
                         organizer_contact: d.organizer_contact || '',
+                        price_type: d.price_type || 'free',
+                        price_fixed: d.price_fixed || 0,
+                        documentation_link: d.documentation_link || '',
                     });
                     
                     // Populate form fields
@@ -70,6 +78,11 @@ const EventSubmissionPage = () => {
                             options: [],
                             order: 0
                         }]);
+                    }
+
+                    // Populate existing documentation images
+                    if (d.documentation_images) {
+                        setExistingDocImages(d.documentation_images);
                     }
                 } catch (err) {
                     setError('Gagal memuat detail event untuk diedit.');
@@ -141,6 +154,32 @@ const EventSubmissionPage = () => {
         setFormFields(newFields);
     };
 
+    const handleDocImageUpload = (e) => {
+        const uploadedFiles = Array.from(e.target.files);
+        setFiles(prev => ({ 
+            ...prev, 
+            documentation_images: [...prev.documentation_images, ...uploadedFiles] 
+        }));
+    };
+
+    const removeDocImage = (index, isExisting = false, imageId = null) => {
+        if (isExisting) {
+            // If it's an existing image, we might want to delete it from server immediately 
+            // or mark it for deletion. For simplicity, let's just use the API if we have imageId.
+            if (window.confirm('Hapus foto dokumentasi ini?')) {
+                const { deleteDocumentationImage } = require('../services/eventApi');
+                deleteDocumentationImage(slug, imageId).then(() => {
+                    setExistingDocImages(prev => prev.filter(img => img.id !== imageId));
+                });
+            }
+        } else {
+            setFiles(prev => ({
+                ...prev,
+                documentation_images: prev.documentation_images.filter((_, i) => i !== index)
+            }));
+        }
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         
@@ -164,6 +203,13 @@ const EventSubmissionPage = () => {
         // Append form fields as JSON string (backend will handle)
         if (formFields.length > 0) {
             data.append('form_fields', JSON.stringify(formFields));
+        }
+
+        // Append documentation images if any
+        if (files.documentation_images.length > 0) {
+            files.documentation_images.forEach(img => {
+                data.append('documentation_images_upload', img);
+            });
         }
 
         try {
@@ -400,11 +446,114 @@ const EventSubmissionPage = () => {
                                 </div>
                             </div>
                         </div>
-
-                        {/* PHASE 4: FORM PENDAFTARAN */}
+                        
                         <div className="space-y-4 pt-4">
                             <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
                                 <span className="w-6 h-6 bg-green-100 text-green-700 rounded-lg flex items-center justify-center text-xs">4</span>
+                                Pengaturan Biaya (HTM)
+                            </h3>
+                            
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="space-y-1.5 md:col-span-2">
+                                    <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Jenis Biaya *</label>
+                                    <select 
+                                        name="price_type"
+                                        value={formData.price_type}
+                                        onChange={handleChange}
+                                        className="w-full px-5 py-3.5 bg-gray-50 border-none rounded-2xl text-sm focus:ring-2 focus:ring-green-500 transition"
+                                    >
+                                        <option value="free">Gratis</option>
+                                        <option value="fixed">Berbayar (Fix)</option>
+                                        <option value="voluntary">Sukarela (Seikhlasnya)</option>
+                                        <option value="hybrid_1">Hybrid 1 (Min Fix + Topup)</option>
+                                        <option value="hybrid_2">Hybrid 2 (Pilihan Fix/Sukarela)</option>
+                                    </select>
+                                </div>
+                                
+                                {['fixed', 'hybrid_1', 'hybrid_2'].includes(formData.price_type) && (
+                                    <div className="space-y-1.5 md:col-span-2">
+                                        <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Nominal Fix / Minimal (IDR) *</label>
+                                        <input 
+                                            type="number" 
+                                            name="price_fixed"
+                                            value={formData.price_fixed}
+                                            onChange={handleChange}
+                                            placeholder="Contoh: 20000"
+                                            className="w-full px-5 py-3.5 bg-gray-50 border-none rounded-2xl text-sm focus:ring-2 focus:ring-green-500 transition font-bold"
+                                        />
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* PHASE 5: DOKUMENTASI (POST-EVENT) */}
+                        {isEdit && (
+                            <div className="space-y-4 pt-4">
+                                <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                                    <span className="w-6 h-6 bg-purple-100 text-purple-700 rounded-lg flex items-center justify-center text-xs">5</span>
+                                    Dokumentasi (Pasca-Event)
+                                </h3>
+                                
+                                <div className="space-y-4">
+                                    <div className="space-y-1.5">
+                                        <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Link Download Dokumentasi</label>
+                                        <input 
+                                            type="url" 
+                                            name="documentation_link"
+                                            value={formData.documentation_link}
+                                            onChange={handleChange}
+                                            placeholder="https://drive.google.com/..."
+                                            className="w-full px-5 py-3.5 bg-gray-50 border-none rounded-2xl text-sm focus:ring-2 focus:ring-green-500 transition"
+                                        />
+                                        <p className="text-[10px] text-gray-400 ml-1 italic">Link ini hanya akan tampil bagi peserta yang sudah login dan terdaftar.</p>
+                                    </div>
+                                    
+                                    <div className="space-y-2">
+                                        <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Foto Dokumentasi (Max 3x3 Grid)</label>
+                                        <div className="grid grid-cols-3 gap-3">
+                                            {/* Existing Images */}
+                                            {existingDocImages.map((img) => (
+                                                <div key={img.id} className="relative aspect-square rounded-xl overflow-hidden border border-gray-100 shadow-sm group">
+                                                    <img src={img.image} className="w-full h-full object-cover" alt="Doc" />
+                                                    <button 
+                                                        type="button" 
+                                                        onClick={() => removeDocImage(null, true, img.id)}
+                                                        className="absolute inset-0 bg-red-600/60 text-white opacity-0 group-hover:opacity-100 transition flex items-center justify-center"
+                                                    >
+                                                        <span className="material-icons">delete</span>
+                                                    </button>
+                                                </div>
+                                            ))}
+                                            
+                                            {/* New Uploads */}
+                                            {files.documentation_images.map((img, idx) => (
+                                                <div key={idx} className="relative aspect-square rounded-xl overflow-hidden border border-green-100 shadow-sm group">
+                                                    <img src={URL.createObjectURL(img)} className="w-full h-full object-cover" alt="New Doc" />
+                                                    <button 
+                                                        type="button" 
+                                                        onClick={() => removeDocImage(idx, false)}
+                                                        className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 shadow-lg"
+                                                    >
+                                                        <span className="material-icons text-xs">close</span>
+                                                    </button>
+                                                </div>
+                                            ))}
+                                            
+                                            <label className="aspect-square rounded-xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center cursor-pointer hover:border-green-500 hover:bg-green-50 text-gray-400 hover:text-green-600 transition-all">
+                                                <span className="material-icons text-2xl">add_a_photo</span>
+                                                <span className="text-[10px] font-bold mt-1 uppercase tracking-tighter">Tambah</span>
+                                                <input type="file" accept="image/*" className="hidden" onChange={handleDocImageUpload} multiple />
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* PHASE 6: FORM PENDAFTARAN */}
+                        <div className="space-y-4 pt-4">
+                            <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                                <span className="w-6 h-6 bg-green-100 text-green-700 rounded-lg flex items-center justify-center text-xs">{isEdit ? '6' : '5'}</span>
                                 Form Pendaftaran (Wajib Diisi)
                             </h3>
                             <p className="text-xs text-gray-500 bg-green-50 p-3 rounded-xl border border-green-100 italic">

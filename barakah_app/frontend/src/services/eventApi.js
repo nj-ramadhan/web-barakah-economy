@@ -54,6 +54,7 @@ export const getMyEvents = () => {
 export const registerForEvent = (slug, formData) => {
     return axios.post(`${API_BASE_URL}/api/events/${slug}/register/`, formData, {
         headers: {
+            ...getAuthHeaders(),
             'Content-Type': 'multipart/form-data',
         }
     });
@@ -92,6 +93,22 @@ export const exportRegistrationsCsv = (slug) => {
 
 export const blastEventWhatsapp = (slug, message) => {
     return axios.post(`${API_BASE_URL}/api/events/${slug}/blast_whatsapp/`, { message }, {
+        headers: getAuthHeaders()
+    });
+};
+
+export const addDocumentationImages = (slug, formData) => {
+    return axios.post(`${API_BASE_URL}/api/events/${slug}/add_documentation_images/`, formData, {
+        headers: {
+            ...getAuthHeaders(),
+            'Content-Type': 'multipart/form-data',
+        }
+    });
+};
+
+export const deleteDocumentationImage = (slug, imageId) => {
+    return axios.delete(`${API_BASE_URL}/api/events/${slug}/delete_documentation_image/`, {
+        data: { image_id: imageId },
         headers: getAuthHeaders()
     });
 };

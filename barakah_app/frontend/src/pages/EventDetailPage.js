@@ -18,10 +18,12 @@ const EventDetailPage = () => {
     const [responses, setResponses] = useState({});
     const [guestInfo, setGuestInfo] = useState({ name: '', email: '' });
     const [files, setFiles] = useState({});
-    const [activeTab, setActiveTab] = useState('about'); // 'about' or 'participants'
-    const [showRegisterModal, setShowRegisterModal] = useState(false);
     const [participants, setParticipants] = useState([]);
     const [loadingParticipants, setLoadingParticipants] = useState(false);
+    const [selectedImage, setSelectedImage] = useState(null); // For documentation image popup
+    const [paymentAmount, setPaymentAmount] = useState('');
+    const [paymentProof, setPaymentProof] = useState(null);
+    const [isRegistered, setIsRegistered] = useState(false); // To check if user already registered
 
     const API = process.env.REACT_APP_API_BASE_URL;
 
@@ -131,6 +133,11 @@ const EventDetailPage = () => {
         Object.keys(files).forEach(fieldId => {
             if (files[fieldId]) data.append(fieldId, files[fieldId]);
         });
+        
+        if (paymentProof) {
+            data.append('payment_proof', paymentProof);
+            data.append('payment_amount', paymentAmount || 0);
+        }
 
         try {
             await registerForEvent(slug, data);
@@ -224,6 +231,13 @@ const EventDetailPage = () => {
                                     {event.registration_count || 0}
                                 </span>
                             </button>
+                            <button 
+                                onClick={() => setActiveTab('documentation')}
+                                className={`flex-1 py-4 px-6 rounded-[2rem] text-sm font-bold transition flex items-center justify-center gap-2 ${activeTab === 'documentation' ? 'bg-gray-900 text-white shadow-lg' : 'bg-transparent text-gray-500 hover:bg-gray-50'}`}
+                            >
+                                <span className="material-icons text-lg">collections</span>
+                                Dokumentasi
+                            </button>
                         </div>
 
                         {/* Tab Content */}
@@ -266,7 +280,7 @@ const EventDetailPage = () => {
                                     ></div>
                                 </div>
                             </div>
-                        ) : (
+                        ) : activeTab === 'participants' ? (
                             <div className="animate-fade-in space-y-6">
                                 <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-100 min-h-[500px]">
                                     <div className="flex items-center justify-between mb-8">
@@ -304,6 +318,67 @@ const EventDetailPage = () => {
                                                         <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">
                                                             {p.username ? `@${p.username}` : (p.email_masked || 'Guest Registrant')}
                                                         </p>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="animate-fade-in space-y-6">
+                                <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-100 min-h-[500px]">
+                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+                                        <h2 className="text-2xl font-extrabold text-gray-900 flex items-center gap-3">
+                                            <span className="w-2 h-8 bg-purple-600 rounded-full"></span>
+                                            Dokumentasi Event
+                                        </h2>
+                                        
+                                        {/* Link Download - Private */}
+                                        {event.documentation_link && (
+                                            <div className="shrink-0">
+                                                {JSON.parse(localStorage.getItem('user')) && participants.some(p => p.username === JSON.parse(localStorage.getItem('user')).username) ? (
+                                                    <a 
+                                                        href={event.documentation_link} 
+                                                        target="_blank" 
+                                                        rel="noreferrer"
+                                                        className="bg-purple-100 text-purple-700 px-5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 hover:bg-purple-200 transition"
+                                                    >
+                                                        <span className="material-icons text-sm">download</span>
+                                                        Download Materi & Sertifikat
+                                                    </a>
+                                                ) : (
+                                                    <div className="bg-gray-50 text-gray-400 px-5 py-2.5 rounded-xl text-[10px] font-bold flex items-center gap-2 italic">
+                                                        <span className="material-icons text-sm">lock</span>
+                                                        Link tersedia bagi peserta terdaftar
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Photo Grid 3x3 */}
+                                    {!event.documentation_images || event.documentation_images.length === 0 ? (
+                                        <div className="flex flex-col items-center justify-center py-20 text-center">
+                                            <span className="material-icons text-8xl text-gray-100 mb-4">photo_library</span>
+                                            <h3 className="text-xl font-bold text-gray-900 mb-2">Dokumentasi Belum Tersedia</h3>
+                                            <p className="text-gray-500 max-w-xs text-sm">Foto kegiatan akan segera diunggah oleh panitia setelah event selesai.</p>
+                                        </div>
+                                    ) : (
+                                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                                            {event.documentation_images.map((img) => (
+                                                <div 
+                                                    key={img.id} 
+                                                    onClick={() => setSelectedImage(img.image)}
+                                                    className="aspect-square bg-gray-100 rounded-xl overflow-hidden cursor-pointer hover:opacity-90 transition relative group"
+                                                >
+                                                    <img 
+                                                        src={img.image} 
+                                                        alt="Documentation" 
+                                                        className="w-full h-full object-cover"
+                                                    />
+                                                    <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
+                                                        <span className="material-icons text-white">zoom_in</span>
                                                     </div>
                                                 </div>
                                             ))}
@@ -398,195 +473,288 @@ const EventDetailPage = () => {
 
                         {/* Modal Body */}
                         <div className="p-8 max-h-[65vh] overflow-y-auto custom-scrollbar">
-                            {error && (
-                                <div className="mb-6 bg-red-50 text-red-600 p-4 rounded-2xl text-xs font-bold border border-red-100 flex items-center gap-3">
-                                    <span className="material-icons text-lg">error_outline</span>
-                                    {error}
+                            {!JSON.parse(localStorage.getItem('user')) ? (
+                                <div className="text-center py-10 space-y-6">
+                                    <div className="w-20 h-20 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center mx-auto shadow-inner">
+                                        <span className="material-icons text-4xl">lock</span>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <h3 className="text-xl font-extrabold text-gray-900">Login Diperlukan</h3>
+                                        <p className="text-gray-500 text-sm">Anda harus masuk ke akun Barakah Economy terlebih dahulu untuk mendaftar event ini.</p>
+                                    </div>
+                                    <Link 
+                                        to={`/login?redirect=/event/${slug}`}
+                                        className="w-full block py-4 bg-gray-900 text-white rounded-2xl text-sm font-bold shadow-xl hover:bg-gray-800 transition"
+                                    >
+                                        LOGIN SEKARANG
+                                    </Link>
+                                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Belum punya akun? <Link to="/register" className="text-green-600 underline">Daftar</Link></p>
                                 </div>
-                            )}
-
-                            {event.form_fields?.length > 0 ? (
-                                <form onSubmit={handleSubmit} className="space-y-6">
-                                    {/* Personal Info if Guest */}
-                                    {!JSON.parse(localStorage.getItem('user')) && (
-                                        <div className="p-6 bg-orange-50/50 rounded-3xl border border-orange-100 space-y-4 mb-8">
-                                            <div className="flex items-center gap-2 mb-2">
-                                                <span className="material-icons text-orange-500 text-lg">info</span>
-                                                <p className="text-[10px] font-bold text-orange-600 uppercase tracking-widest">Informasi Dasar (Guest)</p>
-                                            </div>
-                                            <div className="space-y-1">
-                                                <label className="text-[10px] font-bold text-gray-600 uppercase">Nama Lengkap *</label>
-                                                <input 
-                                                    required
-                                                    type="text" 
-                                                    value={guestInfo.name}
-                                                    onChange={(e) => setGuestInfo({ ...guestInfo, name: e.target.value })}
-                                                    placeholder="Nama Anda"
-                                                    className="w-full px-5 py-3.5 bg-white border border-gray-200 rounded-2xl text-sm outline-none focus:ring-2 focus:ring-orange-500 transition shadow-sm"
-                                                />
-                                            </div>
-                                            <div className="space-y-1">
-                                                <label className="text-[10px] font-bold text-gray-600 uppercase">Email *</label>
-                                                <input 
-                                                    required
-                                                    type="email" 
-                                                    value={guestInfo.email}
-                                                    onChange={(e) => setGuestInfo({ ...guestInfo, email: e.target.value })}
-                                                    placeholder="email@example.com"
-                                                    className="w-full px-5 py-3.5 bg-white border border-gray-200 rounded-2xl text-sm outline-none focus:ring-2 focus:ring-orange-500 transition shadow-sm"
-                                                />
-                                            </div>
+                            ) : (
+                                <>
+                                    {error && (
+                                        <div className="mb-6 bg-red-50 text-red-600 p-4 rounded-2xl text-xs font-bold border border-red-100 flex items-center gap-3">
+                                            <span className="material-icons text-lg">error_outline</span>
+                                            {error}
                                         </div>
                                     )}
 
-                                    {/* Dynamic Fields */}
-                                    {event.form_fields.map((field) => (
-                                        <div key={field.id} className="space-y-2">
-                                            <div className="flex justify-between items-center px-1">
-                                                <label className="text-[11px] font-bold text-gray-700 uppercase tracking-wider">
-                                                    {field.label} {field.required && <span className="text-red-500">*</span>}
-                                                </label>
-                                                <span className="text-[9px] font-bold text-gray-300 uppercase">{field.field_type}</span>
-                                            </div>
-                                            
-                                            {field.field_type === 'text' && (
-                                                <input 
-                                                    required={field.required}
-                                                    type="text" 
-                                                    value={responses[field.id] || ''}
-                                                    placeholder={field.placeholder}
-                                                    onChange={(e) => handleResponseChange(field.id, e.target.value)}
-                                                    className="w-full px-5 py-3.5 bg-gray-50 border border-transparent rounded-2xl text-sm outline-none focus:bg-white focus:border-green-500 focus:ring-4 focus:ring-green-500/10 transition shadow-inner"
-                                                />
-                                            )}
-
-                                            {field.field_type === 'textarea' && (
-                                                <textarea 
-                                                    required={field.required}
-                                                    value={responses[field.id] || ''}
-                                                    placeholder={field.placeholder}
-                                                    onChange={(e) => handleResponseChange(field.id, e.target.value)}
-                                                    rows="4"
-                                                    className="w-full px-5 py-3.5 bg-gray-50 border border-transparent rounded-2xl text-sm outline-none focus:bg-white focus:border-green-500 focus:ring-4 focus:ring-green-500/10 transition shadow-inner resize-none"
-                                                ></textarea>
-                                            )}
-
-                                            {field.field_type === 'number' && (
-                                                <input 
-                                                    required={field.required}
-                                                    type="number" 
-                                                    value={responses[field.id] || ''}
-                                                    onChange={(e) => handleResponseChange(field.id, e.target.value)}
-                                                    className="w-full px-5 py-3.5 bg-gray-50 border border-transparent rounded-2xl text-sm outline-none focus:bg-white focus:border-green-500 focus:ring-4 focus:ring-green-500/10 transition shadow-inner"
-                                                />
-                                            )}
-
-                                            {field.field_type === 'email' && (
-                                                <input 
-                                                    required={field.required}
-                                                    type="email" 
-                                                    value={responses[field.id] || ''}
-                                                    onChange={(e) => handleResponseChange(field.id, e.target.value)}
-                                                    className="w-full px-5 py-3.5 bg-gray-50 border border-transparent rounded-2xl text-sm outline-none focus:bg-white focus:border-green-500 focus:ring-4 focus:ring-green-500/10 transition shadow-inner"
-                                                />
-                                            )}
-
-                                            {field.field_type === 'phone' && (
-                                                <input 
-                                                    required={field.required}
-                                                    type="tel" 
-                                                    value={responses[field.id] || ''}
-                                                    onChange={(e) => handleResponseChange(field.id, e.target.value)}
-                                                    className="w-full px-5 py-3.5 bg-gray-50 border border-transparent rounded-2xl text-sm outline-none focus:bg-white focus:border-green-500 focus:ring-4 focus:ring-green-500/10 transition shadow-inner"
-                                                />
-                                            )}
-
-                                            {field.field_type === 'date' && (
-                                                <input 
-                                                    required={field.required}
-                                                    type="date" 
-                                                    value={responses[field.id] || ''}
-                                                    onChange={(e) => handleResponseChange(field.id, e.target.value)}
-                                                    className="w-full px-5 py-3.5 bg-gray-50 border border-transparent rounded-2xl text-sm outline-none focus:bg-white focus:border-green-500 focus:ring-4 focus:ring-green-500/10 transition shadow-inner"
-                                                />
-                                            )}
-
-                                            {(field.field_type === 'select' || field.field_type === 'radio') && (
-                                                <div className="relative">
-                                                    <select 
-                                                        required={field.required}
-                                                        value={responses[field.id] || ''}
-                                                        onChange={(e) => handleResponseChange(field.id, e.target.value)}
-                                                        className="w-full px-5 py-3.5 bg-gray-50 border border-transparent rounded-2xl text-sm outline-none focus:bg-white focus:border-green-500 focus:ring-4 focus:ring-green-500/10 transition shadow-inner appearance-none pr-10"
-                                                    >
-                                                        <option value="">Pilih Opsi</option>
-                                                        {(() => {
-                                                            let opts = field.options || [];
-                                                            if (typeof opts === 'string') {
-                                                                try { opts = JSON.parse(opts); } catch (e) { opts = []; }
-                                                            }
-                                                            return Array.isArray(opts) ? opts.map(opt => (
-                                                                <option key={opt} value={opt}>{opt}</option>
-                                                            )) : null;
-                                                        })()}
-                                                    </select>
-                                                    <span className="material-icons absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">expand_more</span>
+                                    <form onSubmit={handleSubmit} className="space-y-8">
+                                        {/* HTM / Payment Section */}
+                                        {event.price_type !== 'free' && (
+                                            <div className="p-6 bg-gray-50 rounded-[2rem] border border-gray-200 space-y-6">
+                                                <div className="flex items-center justify-between">
+                                                    <h3 className="text-sm font-bold text-gray-900 flex items-center gap-2">
+                                                        <span className="material-icons text-green-600">payments</span>
+                                                        Informasi Pembayaran
+                                                    </h3>
+                                                    <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-[10px] font-black uppercase">{event.price_type}</span>
                                                 </div>
-                                            )}
 
-                                            {field.field_type === 'checkbox' && (
-                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
-                                                    {(field.options || []).map(opt => (
-                                                        <label key={opt} className={`flex items-center gap-3 px-4 py-3 rounded-2xl border cursor-pointer transition ${(responses[field.id] || []).includes(opt) ? 'bg-green-50 border-green-200 text-green-700' : 'bg-white border-gray-100 text-gray-500 hover:border-gray-200'}`}>
-                                                            <input 
-                                                                type="checkbox" 
-                                                                onChange={(e) => handleCheckboxChange(field.id, opt, e.target.checked)}
-                                                                className="w-4 h-4 text-green-600 rounded"
-                                                            />
-                                                            <span className="text-xs font-bold truncate">{opt}</span>
-                                                        </label>
-                                                    ))}
+                                                <div className="flex flex-col sm:flex-row items-center gap-6 bg-white p-4 rounded-2xl border border-gray-100">
+                                                    <div className="w-32 h-32 bg-gray-100 rounded-xl overflow-hidden shrink-0 border border-gray-200">
+                                                        <img src="/images/qris-bae2.png" alt="QRIS BAE" className="w-full h-full object-contain" />
+                                                    </div>
+                                                    <div className="text-center sm:text-left">
+                                                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Pindai QRIS BAE</p>
+                                                        <p className="text-lg font-black text-gray-900 mt-1">Barakah App Economy</p>
+                                                        <p className="text-xs text-gray-500 mt-2 leading-relaxed">Silakan bayar melalui QRIS di atas dan unggah bukti transfernya di bawah ini.</p>
+                                                    </div>
                                                 </div>
-                                            )}
 
-                                            {field.field_type === 'file' && (
-                                                <div className="flex items-center justify-center w-full">
-                                                    <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-100 border-dashed rounded-3xl cursor-pointer bg-gray-50 hover:bg-white hover:border-green-300 transition-all">
+                                                {/* Price Inputs based on price_type */}
+                                                <div className="space-y-4">
+                                                    {(event.price_type === 'fixed' || event.price_type === 'hybrid_1') && (
+                                                        <div className="flex items-center justify-between bg-white px-5 py-4 rounded-2xl border border-gray-100">
+                                                            <span className="text-xs font-bold text-gray-500 uppercase">HTM {event.price_type === 'hybrid_1' ? 'Minimal' : ''}</span>
+                                                            <span className="text-lg font-black text-green-700">Rp {Number(event.price_fixed).toLocaleString('id-ID')}</span>
+                                                        </div>
+                                                    )}
+
+                                                    {(event.price_type === 'voluntary' || event.price_type === 'hybrid_1' || event.price_type === 'hybrid_2') && (
+                                                        <div className="space-y-2">
+                                                            <label className="text-[10px] font-bold text-gray-600 uppercase ml-1">
+                                                                {event.price_type === 'hybrid_1' ? 'Tambah Infaq (Opsional)' : 
+                                                                 event.price_type === 'hybrid_2' ? 'Pilih Nominal Bayar (Min. Rp 0)' : 
+                                                                 'Nominal Sukarela *'}
+                                                            </label>
+                                                            <div className="relative">
+                                                                <span className="absolute left-5 top-1/2 -translate-y-1/2 font-bold text-gray-400 text-sm">Rp</span>
+                                                                <input 
+                                                                    type="number"
+                                                                    required={event.price_type === 'voluntary'}
+                                                                    value={paymentAmount}
+                                                                    onChange={(e) => setPaymentAmount(e.target.value)}
+                                                                    placeholder="Masukkan nominal..."
+                                                                    className="w-full pl-12 pr-5 py-3.5 bg-white border border-gray-200 rounded-2xl text-sm font-bold outline-none focus:ring-2 focus:ring-green-500 shadow-sm"
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                                <div className="space-y-2">
+                                                    <label className="text-[10px] font-bold text-gray-600 uppercase ml-1">Upload Bukti Transfer *</label>
+                                                    <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-200 border-dashed rounded-3xl cursor-pointer bg-white hover:bg-gray-50 transition-all">
                                                         <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                                                            <span className="material-icons text-gray-400 mb-2">cloud_upload</span>
-                                                            <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Click to upload file</p>
-                                                            {files[field.id] && <p className="mt-1 text-xs text-green-600 font-bold max-w-[200px] truncate">{files[field.id].name}</p>}
+                                                            <span className="material-icons text-gray-400 mb-2">add_a_photo</span>
+                                                            <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Pilih Foto Bukti</p>
+                                                            {paymentProof && <p className="mt-1 text-xs text-green-600 font-bold">{paymentProof.name}</p>}
                                                         </div>
                                                         <input 
-                                                            required={field.required}
                                                             type="file" 
-                                                            onChange={(e) => handleFileChange(field.id, e.target.files[0])}
+                                                            required
+                                                            accept="image/*"
+                                                            onChange={(e) => setPaymentProof(e.target.files[0])}
                                                             className="hidden" 
                                                         />
                                                     </label>
                                                 </div>
-                                            )}
-                                        </div>
-                                    ))}
+                                            </div>
+                                        )}
 
-                                    <div className="pt-4">
-                                        <button 
-                                            type="submit"
-                                            disabled={submitting}
-                                            className={`w-full py-5 bg-green-600 text-white rounded-[2rem] text-sm font-extrabold uppercase tracking-widest shadow-2xl shadow-green-100 transition active:scale-[0.98] ${submitting ? 'opacity-70 cursor-not-allowed' : 'hover:bg-green-700'}`}
-                                        >
-                                            {submitting ? 'SEDANG MENGIRIM...' : 'KIRIM PENDAFTARAN'}
-                                        </button>
-                                        <p className="text-center text-[10px] text-gray-400 font-bold mt-4 uppercase tracking-[0.2em]">Pendaftaran akan ditinjau oleh tim BAE</p>
-                                    </div>
-                                </form>
-                            ) : (
-                                <div className="text-center py-10">
-                                    <span className="material-icons text-6xl text-gray-200 mb-4">settings_suggest</span>
-                                    <h3 className="text-lg font-bold text-gray-900 mb-2">Formulir Belum Siap</h3>
-                                    <p className="text-sm text-gray-500">Penyelenggara belum menyiapkan formulir pendaftaran digital. Silakan hubungi kontak penyelenggara.</p>
-                                </div>
+                                        {event.form_fields?.length > 0 && (
+                                            <div className="space-y-6">
+                                                <h3 className="text-sm font-bold text-gray-900 border-l-4 border-green-600 pl-4 py-1">Data Pendaftaran</h3>
+                                                {event.form_fields.map((field) => (
+                                                    <div key={field.id} className="space-y-2">
+                                                        <div className="flex justify-between items-center px-1">
+                                                            <label className="text-[11px] font-bold text-gray-700 uppercase tracking-wider">
+                                                                {field.label} {field.required && <span className="text-red-500">*</span>}
+                                                            </label>
+                                                            <span className="text-[9px] font-bold text-gray-300 uppercase">{field.field_type}</span>
+                                                        </div>
+                                                        
+                                                        {field.field_type === 'text' && (
+                                                            <input 
+                                                                required={field.required}
+                                                                type="text" 
+                                                                value={responses[field.id] || ''}
+                                                                placeholder={field.placeholder}
+                                                                onChange={(e) => handleResponseChange(field.id, e.target.value)}
+                                                                className="w-full px-5 py-3.5 bg-gray-50 border border-transparent rounded-2xl text-sm outline-none focus:bg-white focus:border-green-500 focus:ring-4 focus:ring-green-500/10 transition shadow-inner"
+                                                            />
+                                                        )}
+
+                                                        {field.field_type === 'textarea' && (
+                                                            <textarea 
+                                                                required={field.required}
+                                                                value={responses[field.id] || ''}
+                                                                placeholder={field.placeholder}
+                                                                onChange={(e) => handleResponseChange(field.id, e.target.value)}
+                                                                rows="4"
+                                                                className="w-full px-5 py-3.5 bg-gray-50 border border-transparent rounded-2xl text-sm outline-none focus:bg-white focus:border-green-500 focus:ring-4 focus:ring-green-500/10 transition shadow-inner resize-none"
+                                                            ></textarea>
+                                                        )}
+
+                                                        {field.field_type === 'number' && (
+                                                            <input 
+                                                                required={field.required}
+                                                                type="number" 
+                                                                value={responses[field.id] || ''}
+                                                                onChange={(e) => handleResponseChange(field.id, e.target.value)}
+                                                                className="w-full px-5 py-3.5 bg-gray-50 border border-transparent rounded-2xl text-sm outline-none focus:bg-white focus:border-green-500 focus:ring-4 focus:ring-green-500/10 transition shadow-inner"
+                                                            />
+                                                        )}
+
+                                                        {field.field_type === 'email' && (
+                                                            <input 
+                                                                required={field.required}
+                                                                type="email" 
+                                                                value={responses[field.id] || ''}
+                                                                onChange={(e) => handleResponseChange(field.id, e.target.value)}
+                                                                className="w-full px-5 py-3.5 bg-gray-50 border border-transparent rounded-2xl text-sm outline-none focus:bg-white focus:border-green-500 focus:ring-4 focus:ring-green-500/10 transition shadow-inner"
+                                                            />
+                                                        )}
+
+                                                        {field.field_type === 'phone' && (
+                                                            <input 
+                                                                required={field.required}
+                                                                type="tel" 
+                                                                value={responses[field.id] || ''}
+                                                                onChange={(e) => handleResponseChange(field.id, e.target.value)}
+                                                                className="w-full px-5 py-3.5 bg-gray-50 border border-transparent rounded-2xl text-sm outline-none focus:bg-white focus:border-green-500 focus:ring-4 focus:ring-green-500/10 transition shadow-inner"
+                                                            />
+                                                        )}
+
+                                                        {field.field_type === 'date' && (
+                                                            <input 
+                                                                required={field.required}
+                                                                type="date" 
+                                                                value={responses[field.id] || ''}
+                                                                onChange={(e) => handleResponseChange(field.id, e.target.value)}
+                                                                className="w-full px-5 py-3.5 bg-gray-50 border border-transparent rounded-2xl text-sm outline-none focus:bg-white focus:border-green-500 focus:ring-4 focus:ring-green-500/10 transition shadow-inner"
+                                                            />
+                                                        )}
+
+                                                        {(field.field_type === 'select' || field.field_type === 'radio') && (
+                                                            <div className="relative">
+                                                                <select 
+                                                                    required={field.required}
+                                                                    value={responses[field.id] || ''}
+                                                                    onChange={(e) => handleResponseChange(field.id, e.target.value)}
+                                                                    className="w-full px-5 py-3.5 bg-gray-50 border border-transparent rounded-2xl text-sm outline-none focus:bg-white focus:border-green-500 focus:ring-4 focus:ring-green-500/10 transition shadow-inner appearance-none pr-10"
+                                                                >
+                                                                    <option value="">Pilih Opsi</option>
+                                                                    {(() => {
+                                                                        let opts = field.options || [];
+                                                                        if (typeof opts === 'string') {
+                                                                            try { opts = JSON.parse(opts); } catch (e) { opts = []; }
+                                                                        }
+                                                                        return Array.isArray(opts) ? opts.map(opt => (
+                                                                            <option key={opt} value={opt}>{opt}</option>
+                                                                        )) : null;
+                                                                    })()}
+                                                                </select>
+                                                                <span className="material-icons absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">expand_more</span>
+                                                            </div>
+                                                        )}
+
+                                                        {field.field_type === 'checkbox' && (
+                                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
+                                                                {(field.options || []).map(opt => (
+                                                                    <label key={opt} className={`flex items-center gap-3 px-4 py-3 rounded-2xl border cursor-pointer transition ${(responses[field.id] || []).includes(opt) ? 'bg-green-50 border-green-200 text-green-700' : 'bg-white border-gray-100 text-gray-500 hover:border-gray-200'}`}>
+                                                                        <input 
+                                                                            type="checkbox" 
+                                                                            onChange={(e) => handleCheckboxChange(field.id, opt, e.target.checked)}
+                                                                            className="w-4 h-4 text-green-600 rounded"
+                                                                        />
+                                                                        <span className="text-xs font-bold truncate">{opt}</span>
+                                                                    </label>
+                                                                ))}
+                                                            </div>
+                                                        )}
+
+                                                        {field.field_type === 'file' && (
+                                                            <div className="flex items-center justify-center w-full">
+                                                                <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-100 border-dashed rounded-3xl cursor-pointer bg-gray-50 hover:bg-white hover:border-green-300 transition-all">
+                                                                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                                                                        <span className="material-icons text-gray-400 mb-2">cloud_upload</span>
+                                                                        <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Click to upload file</p>
+                                                                        {files[field.id] && <p className="mt-1 text-xs text-green-600 font-bold max-w-[200px] truncate">{files[field.id].name}</p>}
+                                                                    </div>
+                                                                    <input 
+                                                                        required={field.required}
+                                                                        type="file" 
+                                                                        onChange={(e) => handleFileChange(field.id, e.target.files[0])}
+                                                                        className="hidden" 
+                                                                    />
+                                                                </label>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+
+                                        <div className="pt-4 border-t border-gray-100 flex flex-col gap-4">
+                                            <button 
+                                                type="submit"
+                                                disabled={submitting}
+                                                className={`w-full py-5 bg-green-600 text-white rounded-[2rem] text-sm font-extrabold uppercase tracking-widest shadow-2xl shadow-green-100 transition active:scale-[0.98] ${submitting ? 'opacity-70 cursor-not-allowed' : 'hover:bg-green-700'}`}
+                                            >
+                                                {submitting ? 'SEDANG MENGIRIM...' : 'KIRIM PENDAFTARAN'}
+                                            </button>
+                                            <p className="text-center text-[10px] text-gray-400 font-bold uppercase tracking-[0.2em] px-8">Pendaftaran akan ditinjau oleh tim BAE. Mohon persiapkan bukti transfer jika event berbayar.</p>
+                                        </div>
+                                    </form>
+                                </>
                             )}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Image Full-size Popup */}
+            {selectedImage && (
+                <div className="fixed inset-0 z-[200] bg-black/90 backdrop-blur-lg flex items-center justify-center p-4 animate-fade-in">
+                    <button 
+                        onClick={() => setSelectedImage(null)}
+                        className="absolute top-6 right-6 w-12 h-12 bg-white/10 text-white rounded-full flex items-center justify-center hover:bg-white/20 transition"
+                    >
+                        <span className="material-icons">close</span>
+                    </button>
+                    <div className="max-w-5xl w-full flex flex-col items-center gap-6">
+                        <div className="relative group w-full flex justify-center">
+                            <img src={selectedImage} alt="Documentation Full" className="max-w-full max-h-[80vh] rounded-2xl shadow-2xl object-contain animate-scale-up" />
+                        </div>
+                        <div className="flex gap-4">
+                            <a 
+                                href={selectedImage} 
+                                download 
+                                target="_blank"
+                                rel="noreferrer"
+                                className="bg-white text-gray-900 px-8 py-3 rounded-full text-sm font-black uppercase flex items-center gap-2 hover:bg-gray-100 transition shadow-xl"
+                            >
+                                <span className="material-icons">download</span>
+                                Simpan Gambar
+                            </a>
+                            <button 
+                                onClick={() => setSelectedImage(null)}
+                                className="bg-white/10 text-white border border-white/20 px-8 py-3 rounded-full text-sm font-bold uppercase hover:bg-white/20 transition"
+                            >
+                                Tutup
+                            </button>
                         </div>
                     </div>
                 </div>

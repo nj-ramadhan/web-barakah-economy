@@ -31,6 +31,20 @@ class Event(models.Model):
     
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
     is_featured = models.BooleanField(default=False)
+
+    # Documentation
+    documentation_link = models.URLField(blank=True, null=True)
+
+    # HTM / Payment Settings
+    PRICE_TYPE_CHOICES = [
+        ('free', 'Gratis'),
+        ('fixed', 'Berbayar (Fix)'),
+        ('voluntary', 'Sukarela (Seikhlasnya)'),
+        ('hybrid_1', 'Hybrid 1 (Min Fix + Topup)'),
+        ('hybrid_2', 'Hybrid 2 (Pilihan Fix/Sukarela)'),
+    ]
+    price_type = models.CharField(max_length=20, choices=PRICE_TYPE_CHOICES, default='free')
+    price_fixed = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='created_events')
     rejection_reason = models.TextField(blank=True, null=True)
@@ -48,6 +62,14 @@ class Event(models.Model):
             from django.utils.text import slugify
             self.slug = slugify(self.title)
         super().save(*args, **kwargs)
+
+class EventDocumentationImage(models.Model):
+    event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name='documentation_images')
+    image = models.ImageField(upload_to='events/documentation/')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Documentation for {self.event.title}"
 
 class EventFormField(models.Model):
     FIELD_TYPES = [
@@ -92,7 +114,12 @@ class EventRegistration(models.Model):
     guest_email = models.EmailField(blank=True, null=True)
     
     responses = models.JSONField(default=dict, help_text="JSON object mapping field IDs to values")
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='approved')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    
+    # Payment info
+    payment_proof = models.ImageField(upload_to='events/payments/', blank=True, null=True)
+    payment_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    payment_status = models.CharField(max_length=20, choices=[('pending', 'Pending'), ('verified', 'Verified'), ('rejected', 'Rejected')], default='pending')
     
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
