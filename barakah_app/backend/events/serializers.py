@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Event, EventFormField, EventRegistration, EventRegistrationFile
+from .models import Event, EventFormField, EventRegistration, EventRegistrationFile, EventDocumentationImage
 from accounts.serializers import UserAdminSerializer
 
 class EventFormFieldSerializer(serializers.ModelSerializer):
