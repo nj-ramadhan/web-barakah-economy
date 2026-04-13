@@ -153,7 +153,7 @@ WSGI_APPLICATION = 'barakah_app.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
-DEBUG = True
+DEBUG = False
 if DEBUG:
     DATABASES = {
         'default': {
