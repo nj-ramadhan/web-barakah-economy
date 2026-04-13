@@ -112,3 +112,44 @@ export const createImage = (url) =>
       }, 'image/jpeg', quality);
     });
   }
+  
+  export async function compressImage(file, maxWidth = 1280, maxHeight = 1280, quality = 0.8) {
+    const imageSrc = await new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = (e) => resolve(e.target.result);
+        reader.readAsDataURL(file);
+    });
+
+    const image = await createImage(imageSrc);
+    const canvas = document.createElement('canvas');
+    let width = image.width;
+    let height = image.height;
+
+    // Resize logic
+    if (width > height) {
+        if (width > maxWidth) {
+            height = (maxWidth / width) * height;
+            width = maxWidth;
+        }
+    } else {
+        if (height > maxHeight) {
+            width = (maxHeight / height) * width;
+            height = maxHeight;
+        }
+    }
+
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(image, 0, 0, width, height);
+
+    return new Promise((resolve) => {
+        canvas.toBlob((blob) => {
+            const compressedFile = new File([blob], file.name, {
+                type: 'image/jpeg',
+                lastModified: Date.now(),
+            });
+            resolve(compressedFile);
+        }, 'image/jpeg', quality);
+    });
+  }

@@ -4,6 +4,7 @@ import { Helmet } from 'react-helmet';
 import Header from '../components/layout/Header';
 import NavigationButton from '../components/layout/Navigation';
 import ImageCropperModal from '../components/common/ImageCropper';
+import { compressImage } from '../components/common/canvasUtils';
 import { createEvent, getEventDetail, updateEvent } from '../services/eventApi';
 import CKEditorComponent from '../components/common/CKEditor';
 
@@ -154,12 +155,23 @@ const EventSubmissionPage = () => {
         setFormFields(newFields);
     };
 
-    const handleDocImageUpload = (e) => {
+    const handleDocImageUpload = async (e) => {
         const uploadedFiles = Array.from(e.target.files);
-        setFiles(prev => ({ 
-            ...prev, 
-            documentation_images: [...prev.documentation_images, ...uploadedFiles] 
-        }));
+        setLoading(true);
+        try {
+            const compressedFiles = await Promise.all(
+                uploadedFiles.map(file => compressImage(file))
+            );
+            setFiles(prev => ({ 
+                ...prev, 
+                documentation_images: [...prev.documentation_images, ...compressedFiles] 
+            }));
+        } catch (err) {
+            console.error("Compression failed:", err);
+            setError("Gagal memproses beberapa gambar. Pastikan formatnya benar.");
+        } finally {
+            setLoading(false);
+        }
     };
 
     const removeDocImage = (index, isExisting = false, imageId = null) => {

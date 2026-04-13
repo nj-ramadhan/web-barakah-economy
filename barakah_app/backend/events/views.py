@@ -69,8 +69,12 @@ class EventViewSet(viewsets.ModelViewSet):
         old_status = instance.status
         new_status = data.get('status')
         rejection_reason = data.get('rejection_reason')
-        
         serializer = self.get_serializer(instance, data=data, partial=partial)
+        
+        # If event is already approved, editing it should not revert to pending
+        if old_status == 'approved' and not request.user.is_staff:
+            data['status'] = 'approved'
+            
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
 

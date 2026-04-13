@@ -521,6 +521,14 @@ const EventDetailPage = () => {
                                                         <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Pindai QRIS BAE</p>
                                                         <p className="text-lg font-black text-gray-900 mt-1">Barakah App Economy</p>
                                                         <p className="text-xs text-gray-500 mt-2 leading-relaxed">Silakan bayar melalui QRIS di atas dan unggah bukti transfernya di bawah ini.</p>
+                                                        <a 
+                                                            href="/images/qris-bae2.png" 
+                                                            download="QRIS-BAE.png"
+                                                            className="mt-3 inline-flex items-center gap-2 text-[10px] font-bold text-green-700 hover:text-green-800 transition bg-green-50 px-3 py-1.5 rounded-lg border border-green-100"
+                                                        >
+                                                            <span className="material-icons text-sm">download</span>
+                                                            UNDUH QRIS
+                                                        </a>
                                                     </div>
                                                 </div>
 
