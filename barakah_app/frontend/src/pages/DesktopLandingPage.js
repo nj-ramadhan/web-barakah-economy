@@ -38,13 +38,14 @@ const DesktopLandingPage = () => {
     const [testimonials, setTestimonials] = useState([]);
     const [activities, setActivities] = useState([]);
     const [partners, setPartners] = useState([]);
+    const [events, setEvents] = useState([]);
 
     useEffect(() => {
         // Fetch data
 
         const fetchData = async () => {
             try {
-                const [campRes, prodRes, courseRes, articleRes, digiRes, sellerRes, testRes, actRes, partnerRes] = await Promise.all([
+                const [campRes, prodRes, courseRes, articleRes, digiRes, sellerRes, testRes, actRes, partnerRes, eventRes] = await Promise.all([
                     axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/campaigns/`),
                     axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/products/`),
                     axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/courses/`),
@@ -53,7 +54,8 @@ const DesktopLandingPage = () => {
                     axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/digital-products/products/popular-sellers/`).catch(() => ({ data: [] })),
                     axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/site-content/testimonials/`).catch(() => ({ data: [] })),
                     axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/site-content/activities/`).catch(() => ({ data: [] })),
-                    axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/site-content/partners/`).catch(() => ({ data: [] }))
+                    axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/site-content/partners/`).catch(() => ({ data: [] })),
+                    axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/events/landing/`).catch(() => ({ data: [] }))
                 ]);
                 setCampaigns(campRes.data.slice(0, 8));
                 setProducts(prodRes.data.results ? prodRes.data.results.slice(0, 8) : prodRes.data.slice(0, 8));
@@ -64,6 +66,7 @@ const DesktopLandingPage = () => {
                 setTestimonials(Array.isArray(testRes.data) ? testRes.data.filter(t => t.is_approved) : []);
                 setActivities(Array.isArray(actRes.data) ? actRes.data.slice(0, 3) : []);
                 setPartners(Array.isArray(partnerRes.data) ? partnerRes.data : []);
+                setEvents(Array.isArray(eventRes.data) ? eventRes.data : []);
             } catch (err) {
                 console.error('Error fetching landing page data:', err);
             }
@@ -121,7 +124,7 @@ const DesktopLandingPage = () => {
                                         {/* Dynamic Carousel Items Picker */}
                                         {[
                                             activities[0] && { type: 'Kegiatan', title: activities[0].title, img: activities[0].header_image, link: '/kegiatan' },
-                                            { type: 'Event', title: 'Barakah Event', img: '/images/poster.jpg', link: '/events' },
+                                            events[0] && { type: 'Event', title: events[0].title, img: events[0].header_image || events[0].thumbnail, link: `/event/${events[0].slug}` },
                                             articles[0] && { type: 'Artikel', title: articles[0].title, img: articles[0].images?.[0]?.path, link: `/articles/${articles[0].id}` },
                                             campaigns[0] && { type: 'Charity', title: campaigns[0].title, img: campaigns[0].thumbnail, link: `/kampanye/${campaigns[0].slug || campaigns[0].id}` },
                                             courses[0] && { type: 'Academy', title: courses[0].title, img: courses[0].thumbnail, link: `/kelas/${courses[0].slug || courses[0].id}` },

@@ -338,23 +338,21 @@ class EventViewSet(viewsets.ModelViewSet):
         
         data = []
         for reg in registrations:
-            name = "Guest"
+            name = ""
             if reg.user:
-                # Safely get profile name or username
-                try:
-                    profile = getattr(reg.user, 'profile', None)
-                    if profile and profile.name_full:
-                        name = profile.name_full
-                    else:
-                        name = reg.user.username
-                except:
+                # Try to get full name first
+                profile = getattr(reg.user, 'profile', None)
+                if profile and profile.name_full:
+                    name = profile.name_full
+                else:
                     name = reg.user.username
             else:
-                name = reg.guest_name or "Guest"
+                name = reg.guest_name or "Tamu"
                 
             data.append({
                 "id": reg.id,
                 "name": name,
+                "status": reg.status,
                 "created_at": reg.created_at,
             })
             

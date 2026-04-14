@@ -198,13 +198,20 @@ const EventDetailPage = () => {
                             <h1 className="text-2xl sm:text-5xl font-extrabold leading-tight drop-shadow-lg">{event.title}</h1>
                         </div>
                         <div className="shrink-0 pb-2">
-                            <button 
-                                onClick={() => setShowRegisterModal(true)}
-                                className="bg-green-600 hover:bg-green-700 text-white px-8 py-4 rounded-2xl font-extrabold text-sm uppercase tracking-wider shadow-xl shadow-green-900/30 transition active:scale-[0.97] flex items-center gap-3 w-full sm:w-auto justify-center"
-                            >
-                                <span className="material-icons text-xl">person_add</span>
-                                Ikuti Event Ini
-                            </button>
+                            {event.user_registration ? (
+                                <div className="bg-white/20 backdrop-blur-md border border-white/30 text-white px-8 py-4 rounded-2xl font-extrabold text-sm uppercase tracking-wider flex items-center gap-3 w-full sm:w-auto justify-center cursor-default shadow-lg">
+                                    <span className="material-icons text-xl text-green-400">check_circle</span>
+                                    Anda Sudah Terdaftar
+                                </div>
+                            ) : (
+                                <button 
+                                    onClick={() => setShowRegisterModal(true)}
+                                    className="bg-green-600 hover:bg-green-700 text-white px-8 py-4 rounded-2xl font-extrabold text-sm uppercase tracking-wider shadow-xl shadow-green-900/30 transition active:scale-[0.97] flex items-center gap-3 w-full sm:w-auto justify-center"
+                                >
+                                    <span className="material-icons text-xl">person_add</span>
+                                    Ikuti Event Ini
+                                </button>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -298,7 +305,7 @@ const EventDetailPage = () => {
                                             <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
                                             <p className="text-gray-500 font-bold text-sm">Memuat daftar peserta...</p>
                                         </div>
-                                    ) : participants.length === 0 ? (
+                                    ) : (!participants || (Array.isArray(participants) && participants.length === 0)) ? (
                                         <div className="flex flex-col items-center justify-center py-20 text-center">
                                             <span className="material-icons text-8xl text-gray-100 mb-4">group_off</span>
                                             <h3 className="text-xl font-bold text-gray-900 mb-2">Belum Ada Peserta</h3>
@@ -306,10 +313,10 @@ const EventDetailPage = () => {
                                         </div>
                                     ) : (
                                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                                            {participants.map((p) => (
+                                            {(Array.isArray(participants) ? participants : []).map((p) => (
                                                 <div key={p.id} className="bg-gray-50 px-5 py-3 rounded-2xl border border-gray-100 flex items-center gap-3 hover:border-blue-200 transition">
                                                     <span className="w-2 h-2 rounded-full bg-blue-500 shrink-0"></span>
-                                                    <p className="font-bold text-gray-700 truncate">{p.name}</p>
+                                                    <p className="font-bold text-gray-700 truncate">{p.name || 'Peserta'}</p>
                                                 </div>
                                             ))}
                                         </div>
@@ -411,12 +418,18 @@ const EventDetailPage = () => {
                             <div className="absolute top-0 right-0 w-32 h-32 bg-green-500/10 rounded-full -mr-16 -mt-16 blur-2xl group-hover:bg-green-500/20 transition-all duration-700"></div>
                             <h3 className="text-lg font-bold mb-4 relative z-10">Ingin Mengikuti?</h3>
                             <p className="text-gray-400 text-xs leading-relaxed mb-6 relative z-10">Segera daftarkan diri Anda sebelum kuota penuh atau waktu pendaftaran berakhir.</p>
-                            <button 
-                                onClick={() => setShowRegisterModal(true)}
-                                className="w-full bg-white text-gray-900 py-4 rounded-2xl text-xs font-extrabold uppercase tracking-widest hover:bg-green-50 transition shadow-xl relative z-10"
-                            >
-                                Daftar Sekarang
-                            </button>
+                            {event.user_registration ? (
+                                <div className="w-full bg-white/10 text-white py-4 rounded-2xl text-[10px] font-extrabold uppercase tracking-[0.2em] relative z-10 border border-white/20 text-center">
+                                    SUDAH DAFTAR
+                                </div>
+                            ) : (
+                                <button
+                                    onClick={() => setShowRegisterModal(true)}
+                                    className="w-full bg-white text-gray-900 py-4 rounded-2xl text-xs font-extrabold uppercase tracking-widest hover:bg-green-50 transition shadow-xl relative z-10"
+                                >
+                                    Daftar Sekarang
+                                </button>
+                            )}
                         </div>
                     </div>
                 </div>
