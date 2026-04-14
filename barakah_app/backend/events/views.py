@@ -10,6 +10,7 @@ from .serializers import EventSerializer, EventRegistrationSerializer
 from django_filters.rest_framework import DjangoFilterBackend
 from barakah_app.utils import send_status_update_email
 import json
+from django.utils import timezone
 from accounts import whatsapp_service
 
 class EventViewSet(viewsets.ModelViewSet):
@@ -21,10 +22,32 @@ class EventViewSet(viewsets.ModelViewSet):
     search_fields = ['title', 'description', 'location', 'organizer_name']
     ordering_fields = ['start_date', 'created_at']
 
+    def _auto_complete_expired_events(self):
+        """
+        Check for approved/ongoing events that have passed their end_date 
+        and update them to 'completed'.
+        """
+        now = timezone.now()
+        expired_events = Event.objects.filter(
+            status__in=['approved', 'ongoing'],
+            end_date__lt=now
+        )
+        for event in expired_events:
+            event.status = 'completed'
+            event.save() # This triggers the documentation signal
+
     def get_permissions(self):
         if self.action in ['list', 'retrieve', 'landing', 'register', 'participants']:
             return [permissions.AllowAny()]
         return [permissions.IsAuthenticated()]
+
+    def list(self, request, *args, **kwargs):
+        self._auto_complete_expired_events()
+        return super().list(request, *args, **kwargs)
+
+    def retrieve(self, request, *args, **kwargs):
+        self._auto_complete_expired_events()
+        return super().retrieve(request, *args, **kwargs)
 
     def _get_parsed_data(self, request):
         """Returns a dict from request.data with JSON fields correctly parsed."""
@@ -94,6 +117,7 @@ class EventViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'], permission_classes=[permissions.AllowAny])
     def landing(self, request):
         """Public list for landing page (only approved)."""
+        self._auto_complete_expired_events()
         events = self.queryset.filter(status='approved')
         serializer = self.get_serializer(events, many=True)
         return Response(serializer.data)

@@ -63,6 +63,11 @@ class Event(models.Model):
         if not self.slug:
             from django.utils.text import slugify
             self.slug = slugify(self.title)
+        
+        # If header_image is empty but thumbnail is present, use thumbnail
+        if not self.header_image and self.thumbnail:
+            self.header_image = self.thumbnail
+            
         super().save(*args, **kwargs)
 
 class EventDocumentationImage(models.Model):

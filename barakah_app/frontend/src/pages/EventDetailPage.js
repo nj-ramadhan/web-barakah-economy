@@ -189,10 +189,10 @@ const EventDetailPage = () => {
             {/* Header / Hero Section */}
             <div className="relative h-72 sm:h-[450px] w-full overflow-hidden">
                 <img 
-                    src={event.header_image || '/images/event-header-default.jpg'} 
+                    src={event.header_image || event.thumbnail || '/images/event-header-default.jpg'} 
                     alt={event.title} 
                     className="w-full h-full object-cover cursor-pointer"
-                    onClick={() => window.open(event.header_image_full || event.header_image || '/images/event-header-default.jpg', '_blank')}
+                    onClick={() => window.open(event.header_image_full || event.header_image || event.thumbnail_full || event.thumbnail || '/images/event-header-default.jpg', '_blank')}
                     title="Klik untuk lihat gambar asli"
                     onError={(e) => { e.target.onerror = null; e.target.src = '/images/event-header-default.jpg'; }}
                 />

@@ -31,8 +31,6 @@ const EventSubmissionPage = () => {
     });
     const [formFields, setFormFields] = useState([]);
     const [files, setFiles] = useState({
-        header_image: null,
-        header_image_full: null,
         thumbnail: null,
         thumbnail_full: null,
         documentation_images: [], // New images to upload
@@ -238,8 +236,6 @@ const EventSubmissionPage = () => {
         Object.keys(formData).forEach(key => {
             if (formData[key]) data.append(key, formData[key]);
         });
-        if (files.header_image) data.append('header_image', files.header_image);
-        if (files.header_image_full) data.append('header_image_full', files.header_image_full);
         if (files.thumbnail) data.append('thumbnail', files.thumbnail);
         if (files.thumbnail_full) data.append('thumbnail_full', files.thumbnail_full);
         
@@ -419,47 +415,26 @@ const EventSubmissionPage = () => {
                             </h3>
                             
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div className="space-y-1.5">
-                                    <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Gambar Header (16:9)</label>
-                                    <div className="flex items-center gap-3">
+                                <div className="space-y-1.5 md:col-span-2">
+                                    <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Gambar Poster / Thumbnail (16:9) *</label>
+                                    <div className="flex flex-col gap-3">
                                         <div 
-                                            className={`w-16 h-10 bg-gray-100 rounded-lg overflow-hidden border border-gray-200 ${files.header_image ? 'cursor-pointer' : ''}`}
-                                            onClick={() => (files.header_image || formData.header_image) && openPreview(files.header_image || formData.header_image, 'header_image')}
-                                            title={files.header_image ? 'Klik untuk lihat detail' : ''}
-                                        >
-                                            {files.header_image ? (
-                                                <img 
-                                                    src={files.header_image instanceof File ? URL.createObjectURL(files.header_image) : files.header_image} 
-                                                    className="w-full h-full object-cover" 
-                                                    alt="Header Preview"
-                                                />
-                                            ) : <span className="material-icons text-gray-300 flex items-center justify-center h-full">image</span>}
-                                        </div>
-                                        <input 
-                                            type="file" 
-                                            accept="image/*"
-                                            className="hidden"
-                                            id="header-upload"
-                                            onChange={(e) => handleFileSelect(e, 'header_image')}
-                                        />
-                                        <label htmlFor="header-upload" className="flex-1 text-center py-2 bg-green-50 text-green-700 rounded-xl text-xs font-bold cursor-pointer">Pilih & Potong</label>
-                                    </div>
-                                </div>
-                                <div className="space-y-1.5">
-                                    <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Thumbnail (1:1)</label>
-                                    <div className="flex items-center gap-3">
-                                        <div 
-                                            className={`w-10 h-10 bg-gray-100 rounded-lg overflow-hidden border border-gray-200 ${files.thumbnail ? 'cursor-pointer' : ''}`}
+                                            className={`w-full aspect-video bg-gray-100 rounded-2xl overflow-hidden border border-gray-200 ${files.thumbnail ? 'cursor-pointer' : ''}`}
                                             onClick={() => (files.thumbnail || formData.thumbnail) && openPreview(files.thumbnail || formData.thumbnail, 'thumbnail')}
                                             title={files.thumbnail ? 'Klik untuk lihat detail' : ''}
                                         >
-                                            {files.thumbnail ? (
+                                            {files.thumbnail || formData.thumbnail ? (
                                                 <img 
-                                                    src={files.thumbnail instanceof File ? URL.createObjectURL(files.thumbnail) : files.thumbnail} 
+                                                    src={files.thumbnail instanceof File ? URL.createObjectURL(files.thumbnail) : formData.thumbnail} 
                                                     className="w-full h-full object-cover" 
                                                     alt="Thumbnail Preview"
                                                 />
-                                            ) : <span className="material-icons text-gray-300 flex items-center justify-center h-full">image</span>}
+                                            ) : (
+                                                <div className="flex flex-col items-center justify-center h-full text-gray-400 gap-2">
+                                                    <span className="material-icons text-4xl">image</span>
+                                                    <p className="text-[10px] font-bold">BELUM ADA GAMBAR</p>
+                                                </div>
+                                            )}
                                         </div>
                                         <input 
                                             type="file" 
@@ -468,7 +443,7 @@ const EventSubmissionPage = () => {
                                             id="thumb-upload"
                                             onChange={(e) => handleFileSelect(e, 'thumbnail')}
                                         />
-                                        <label htmlFor="thumb-upload" className="flex-1 text-center py-2 bg-green-50 text-green-700 rounded-xl text-xs font-bold cursor-pointer">Pilih & Potong</label>
+                                        <label htmlFor="thumb-upload" className="w-full text-center py-4 bg-green-50 text-green-700 rounded-2xl text-xs font-black cursor-pointer hover:bg-green-100 transition shadow-sm border border-green-100 uppercase tracking-widest">PILIH & POTONG FOTO POSTER</label>
                                     </div>
                                 </div>
                                 <div className="space-y-1.5">
@@ -729,8 +704,8 @@ const EventSubmissionPage = () => {
             {cropper.active && (
                 <ImageCropperModal 
                     image={cropper.image}
-                    aspect={cropper.type === 'header_image' ? 16 / 9 : 1}
-                    maxWidth={cropper.type === 'header_image' ? 1024 : 512}
+                    aspect={16 / 9}
+                    maxWidth={1024}
                     onCropComplete={handleCropComplete}
                     onCancel={() => setCropper({ active: false, image: null, type: null })}
                 />
