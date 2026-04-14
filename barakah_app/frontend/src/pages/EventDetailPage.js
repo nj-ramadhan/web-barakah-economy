@@ -236,30 +236,30 @@ const EventDetailPage = () => {
                     {/* Left Column (8 cols) */}
                     <div className="lg:col-span-8 space-y-8 min-w-0">
                         {/* Tabs Navigation */}
-                        <div className="bg-white p-2 rounded-2xl sm:rounded-[2.5rem] shadow-xl border border-gray-100 flex gap-2 overflow-x-auto no-scrollbar scroll-smooth">
+                        <div className="bg-white p-1 sm:p-2 rounded-2xl sm:rounded-[2.5rem] shadow-xl border border-gray-100 flex gap-1 sm:gap-2">
                             <button 
                                 onClick={() => setActiveTab('about')}
-                                className={`flex-1 py-3 sm:py-4 px-4 sm:px-6 rounded-xl sm:rounded-[2rem] text-xs sm:text-sm font-bold transition flex items-center justify-center gap-2 whitespace-nowrap ${activeTab === 'about' ? 'bg-gray-900 text-white shadow-lg' : 'bg-transparent text-gray-500 hover:bg-gray-50'}`}
+                                className={`flex-1 py-3 sm:py-4 px-1 sm:px-6 rounded-xl sm:rounded-[2rem] text-[10px] sm:text-sm font-bold transition flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 ${activeTab === 'about' ? 'bg-gray-900 text-white shadow-lg' : 'bg-transparent text-gray-500 hover:bg-gray-50'}`}
                             >
-                                <span className="material-icons text-base sm:text-lg">description</span>
-                                Tentang Event
+                                <span className="material-icons text-sm sm:text-lg">description</span>
+                                <span className="text-center">Tentang</span>
                             </button>
                             <button 
                                 onClick={() => setActiveTab('participants')}
-                                className={`flex-1 py-3 sm:py-4 px-4 sm:px-6 rounded-xl sm:rounded-[2rem] text-xs sm:text-sm font-bold transition flex items-center justify-center gap-2 whitespace-nowrap ${activeTab === 'participants' ? 'bg-gray-900 text-white shadow-lg' : 'bg-transparent text-gray-500 hover:bg-gray-50'}`}
+                                className={`flex-1 py-3 sm:py-4 px-1 sm:px-6 rounded-xl sm:rounded-[2rem] text-[10px] sm:text-sm font-bold transition flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 ${activeTab === 'participants' ? 'bg-gray-900 text-white shadow-lg' : 'bg-transparent text-gray-500 hover:bg-gray-50'}`}
                             >
-                                <span className="material-icons text-base sm:text-lg">group</span>
-                                Daftar Peserta
-                                <span className={`ml-1 px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] ${activeTab === 'participants' ? 'bg-white/20' : 'bg-gray-100'}`}>
+                                <span className="material-icons text-sm sm:text-lg">group</span>
+                                <span className="text-center">Peserta</span>
+                                <span className={`px-1.5 py-0.5 rounded-full text-[8px] sm:text-[10px] ${activeTab === 'participants' ? 'bg-white/20' : 'bg-gray-100'}`}>
                                     {event.registration_count || 0}
                                 </span>
                             </button>
                             <button 
                                 onClick={() => setActiveTab('documentation')}
-                                className={`flex-1 py-3 sm:py-4 px-4 sm:px-6 rounded-xl sm:rounded-[2rem] text-xs sm:text-sm font-bold transition flex items-center justify-center gap-2 whitespace-nowrap ${activeTab === 'documentation' ? 'bg-gray-900 text-white shadow-lg' : 'bg-transparent text-gray-500 hover:bg-gray-50'}`}
+                                className={`flex-1 py-3 sm:py-4 px-1 sm:px-6 rounded-xl sm:rounded-[2rem] text-[10px] sm:text-sm font-bold transition flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 ${activeTab === 'documentation' ? 'bg-gray-900 text-white shadow-lg' : 'bg-transparent text-gray-500 hover:bg-gray-50'}`}
                             >
-                                <span className="material-icons text-base sm:text-lg">collections</span>
-                                Dokumentasi
+                                <span className="material-icons text-sm sm:text-lg">collections</span>
+                                <span className="text-center">Dokumen</span>
                             </button>
                         </div>
 
