@@ -48,7 +48,7 @@ class Testimonial(models.Model):
 
 class Activity(models.Model):
     title = models.CharField(max_length=255)
-    header_image = models.ImageField(upload_to='activities/')
+    header_image = models.ImageField(upload_to='activities/', null=True, blank=True)
     content = RichTextField()
     date = models.DateField()
     created_at = models.DateTimeField(auto_now_add=True)

@@ -34,6 +34,8 @@ class UserAdminSerializer(serializers.ModelSerializer):
     accessible_menus = serializers.SerializerMethodField()
 
     def get_accessible_menus(self, obj):
+        if not obj:
+            return []
         return obj.get_all_accessible_menus()
 
     class Meta:
@@ -43,6 +45,7 @@ class UserAdminSerializer(serializers.ModelSerializer):
             'profile', 'date_joined',
             'custom_roles', 'custom_role_ids',
             'labels', 'label_ids',
+            'accessible_menus',
         )
 
     def update(self, instance, validated_data):
