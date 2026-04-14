@@ -33,9 +33,9 @@ export const createImage = (url) =>
     pixelCrop,
     rotation = 0,
     flip = { horizontal: false, vertical: false },
-    maxWidth = 1920, // Default max width
-    maxHeight = 1080, // Default max height
-    quality = 0.8 // Default JPEG quality
+    maxWidth = 1024, // Optimized max width
+    maxHeight = 1024, // Optimized max height
+    quality = 0.6 // Optimized JPEG quality (reduces file size ~50-70%)
   ) {
     const image = await createImage(imageSrc);
     const canvas = document.createElement('canvas');
@@ -113,7 +113,7 @@ export const createImage = (url) =>
     });
   }
   
-  export async function compressImage(file, maxWidth = 1280, maxHeight = 1280, quality = 0.8) {
+  export async function compressImage(file, maxWidth = 1024, maxHeight = 1024, quality = 0.6) {
     const imageSrc = await new Promise((resolve) => {
         const reader = new FileReader();
         reader.onload = (e) => resolve(e.target.result);

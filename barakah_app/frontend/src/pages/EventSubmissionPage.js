@@ -705,7 +705,7 @@ const EventSubmissionPage = () => {
                 <ImageCropperModal 
                     image={cropper.image}
                     aspect={cropper.type === 'header_image' ? 16 / 9 : 1}
-                    maxWidth={1280}
+                    maxWidth={cropper.type === 'header_image' ? 1024 : 512}
                     onCropComplete={handleCropComplete}
                     onCancel={() => setCropper({ active: false, image: null, type: null })}
                 />
