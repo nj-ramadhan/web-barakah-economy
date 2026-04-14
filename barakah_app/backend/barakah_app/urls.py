@@ -13,6 +13,8 @@ from profiles.views import ProfileViewSet
 router = SimpleRouter()
 router.register(r'profiles', ProfileViewSet, basename='profile')
 
+from events.views import event_detail_seo
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/auth/', include('accounts.urls')),
@@ -39,6 +41,7 @@ urlpatterns = [
     path('api/digital-products/', include('digital_products.urls')),
     path('api/forum/', include('forum.urls')),
     path('api/events/', include('events.urls')),
+    path('event/<slug>/', event_detail_seo, name='event_detail_seo'),
     path('ckeditor/', include('ckeditor_uploader.urls')),
     path('ckeditor/upload/', ckeditor_views.upload, name='ckeditor_upload'),
     

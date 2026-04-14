@@ -164,6 +164,13 @@ const EventDetailPage = () => {
         }
     };
 
+    const getAbsoluteUrl = (url) => {
+        if (!url) return window.location.origin + '/logo192.png';
+        if (url.startsWith('http')) return url;
+        // Handle relative paths from backend
+        return window.location.origin + (url.startsWith('/') ? url : '/' + url);
+    };
+
     const handleShare = async () => {
         const shareTitle = event?.title || 'Event Barakah Economy';
         const rawDescription = event?.description || '';
@@ -219,7 +226,7 @@ const EventDetailPage = () => {
                 <meta property="og:url" content={window.location.href} />
                 <meta property="og:title" content={event.title} />
                 <meta property="og:description" content={event.description?.replace(/<[^>]*>/g, '').substring(0, 160)} />
-                <meta property="og:image" content={event.thumbnail || event.header_image || (window.location.origin + '/logo192.png')} />
+                <meta property="og:image" content={getAbsoluteUrl(event.thumbnail || event.header_image)} />
                 <meta property="og:image:alt" content={event.title} />
                 <meta property="og:site_name" content="Barakah Economy" />
 
@@ -228,7 +235,7 @@ const EventDetailPage = () => {
                 <meta property="twitter:url" content={window.location.href} />
                 <meta property="twitter:title" content={event.title} />
                 <meta property="twitter:description" content={event.description?.replace(/<[^>]*>/g, '').substring(0, 160)} />
-                <meta property="twitter:image" content={event.thumbnail || event.header_image || (window.location.origin + '/logo192.png')} />
+                <meta property="twitter:image" content={getAbsoluteUrl(event.thumbnail || event.header_image)} />
             </Helmet>
             <Header />
 

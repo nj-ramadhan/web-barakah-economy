@@ -12,6 +12,8 @@ from barakah_app.utils import send_status_update_email
 import json
 from django.utils import timezone
 from accounts import whatsapp_service
+import os
+import re
 
 class EventViewSet(viewsets.ModelViewSet):
     queryset = Event.objects.all().order_by('-start_date')
@@ -526,3 +528,72 @@ class EventRegistrationViewSet(viewsets.ModelViewSet):
             print(f"Failed to send rejection email: {e}")
 
         return Response({"message": "Pendaftaran ditolak."})
+
+def event_detail_seo(request, slug):
+    """
+    Serves the React index.html with dynamically injected SEO meta tags 
+    for social media crawlers (WhatsApp, Facebook, etc.).
+    """
+    try:
+        event = Event.objects.get(slug=slug)
+        title = f"{event.title} | Barakah Economy"
+        # Strip HTML tags and truncate for meta description
+        description = re.sub(r'<[^>]*>', '', event.description or "")[:160]
+        
+        # Build absolute image URL
+        site_url = request.build_absolute_uri('/')[:-1]
+        image_url = ""
+        if event.thumbnail:
+            image_url = event.thumbnail.url
+        elif event.header_image:
+            image_url = event.header_image.url
+        else:
+            image_url = '/images/web-thumbnail.jpg'
+            
+        if not image_url.startswith('http'):
+            image_url = f"{site_url}{image_url}"
+            
+        current_url = request.build_absolute_uri()
+        
+        # Path to the frontend index.html
+        # Check build folder (production) then public folder (dev)
+        index_path = os.path.join(settings.BASE_DIR, '..', 'frontend', 'build', 'index.html')
+        if not os.path.exists(index_path):
+            index_path = os.path.join(settings.BASE_DIR, '..', 'frontend', 'public', 'index.html')
+
+        if not os.path.exists(index_path):
+            return HttpResponse("Frontend index.html not found.", status=500)
+
+        with open(index_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+            
+        # Meta tags to inject
+        meta_tags = f'''
+    <title>{title}</title>
+    <meta name="description" content="{description}">
+    <meta property="og:title" content="{title}">
+    <meta property="og:description" content="{description}">
+    <meta property="og:image" content="{image_url}">
+    <meta property="og:url" content="{current_url}">
+    <meta property="og:type" content="article">
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:title" content="{title}">
+    <meta property="twitter:description" content="{description}">
+    <meta property="twitter:image" content="{image_url}">'''
+
+        # Remove existing title tag and inject new tags into <head>
+        content = re.sub(r'<title>.*?</title>', '', content)
+        content = content.replace('</head>', f'{meta_tags}\n</head>')
+        
+        return HttpResponse(content)
+        
+    except (Event.DoesNotExist, Exception) as e:
+        # Fallback: Serve normal index.html for SPA to handle
+        try:
+            index_path = os.path.join(settings.BASE_DIR, '..', 'frontend', 'build', 'index.html')
+            if not os.path.exists(index_path):
+                index_path = os.path.join(settings.BASE_DIR, '..', 'frontend', 'public', 'index.html')
+            with open(index_path, 'r', encoding='utf-8') as f:
+                return HttpResponse(f.read())
+        except:
+            return HttpResponse("Not Found", status=404)
