@@ -71,52 +71,73 @@ const AdminAllCoursesPage = () => {
                         <p className="text-gray-500">Tidak ada course ditemukan.</p>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {filteredCourses.map((course) => (
-                            <div key={course.id} className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex gap-4">
-                                <div className="w-20 h-20 bg-gray-100 rounded-xl overflow-hidden flex-shrink-0">
-                                    {course.thumbnail ? (
-                                        <img src={course.thumbnail} alt={course.title} className="w-full h-full object-cover" />
-                                    ) : (
-                                        <div className="w-full h-full flex items-center justify-center text-gray-300">
-                                            <span className="material-icons">image</span>
-                                        </div>
-                                    )}
-                                </div>
-                                <div className="flex-1 min-w-0 flex flex-col">
-                                    <h3 className="font-bold text-gray-800 text-sm truncate">{course.title}</h3>
-                                    <p className="text-[10px] text-blue-600 font-bold mb-1">
-                                        {course.price === 0 ? 'Gratis' : `Rp ${course.price.toLocaleString()}`}
-                                    </p>
-                                    <div className="flex items-center gap-1.5 mb-2">
-                                        <div className="w-4 h-4 bg-gray-100 rounded-full flex items-center justify-center">
-                                            <span className="material-icons text-[10px] text-gray-400">school</span>
-                                        </div>
-                                        <span className="text-[10px] text-gray-500 truncate">Instruktur: <span className="font-bold">{course.instructor_name}</span></span>
-                                    </div>
-                                    <div className="mt-auto flex gap-2">
-                                        <button
-                                            onClick={() => window.open(`/kelas/${course.slug}`, '_blank')}
-                                            className="flex-1 bg-gray-50 text-gray-600 py-1.5 rounded-lg text-[10px] font-bold hover:bg-gray-100 transition"
-                                        >
-                                            Lihat detail
-                                        </button>
-                                        <button
-                                            onClick={() => handleDelete(course.id)}
-                                            className="px-2 bg-red-50 text-red-600 py-1.5 rounded-lg text-[10px] font-bold hover:bg-red-100 transition"
-                                        >
-                                            Hapus
-                                        </button>
-                                        <Link
-                                            to={`/dashboard/ecourses/${course.id}/edit`}
-                                            className="px-2 bg-blue-50 text-blue-600 py-1.5 rounded-lg text-[10px] font-bold hover:bg-blue-100 transition flex items-center justify-center"
-                                        >
-                                            Edit
-                                        </Link>
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
+                    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-left text-sm">
+                                <thead className="bg-gray-50 border-b border-gray-100">
+                                    <tr>
+                                        <th className="p-4 text-[11px] font-black text-gray-400 uppercase tracking-widest">Course</th>
+                                        <th className="p-4 text-[11px] font-black text-gray-400 uppercase tracking-widest">Instruktur</th>
+                                        <th className="p-4 text-[11px] font-black text-gray-400 uppercase tracking-widest">Harga</th>
+                                        <th className="p-4 text-[11px] font-black text-gray-400 uppercase tracking-widest text-center">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-50">
+                                    {filteredCourses.map((course) => (
+                                        <tr key={course.id} className="hover:bg-blue-50/30 transition">
+                                            <td className="p-4">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-10 h-10 bg-gray-100 rounded-lg overflow-hidden shrink-0">
+                                                        {course.thumbnail ? (
+                                                            <img src={course.thumbnail} alt={course.title} className="w-full h-full object-cover" />
+                                                        ) : (
+                                                            <div className="w-full h-full flex items-center justify-center text-gray-300">
+                                                                <span className="material-icons text-sm">image</span>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    <div>
+                                                        <p className="font-bold text-gray-900 text-xs line-clamp-1">{course.title}</p>
+                                                        <p className="text-[10px] text-gray-400">ID: {course.id}</p>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td className="p-4 text-xs font-medium text-gray-700">
+                                                {course.instructor_name}
+                                            </td>
+                                            <td className="p-4 text-xs font-black text-blue-600">
+                                                {course.price === 0 ? 'GRATIS' : `Rp ${course.price.toLocaleString('id-ID')}`}
+                                            </td>
+                                            <td className="p-4">
+                                                <div className="flex items-center justify-center gap-2">
+                                                    <button
+                                                        onClick={() => window.open(`/kelas/${course.slug}`, '_blank')}
+                                                        className="w-8 h-8 flex items-center justify-center bg-gray-50 text-gray-500 rounded-lg hover:bg-gray-200 transition"
+                                                        title="Lihat"
+                                                    >
+                                                        <span className="material-icons text-[14px]">visibility</span>
+                                                    </button>
+                                                    <Link
+                                                        to={`/dashboard/ecourses/${course.id}/edit`}
+                                                        className="w-8 h-8 flex items-center justify-center bg-blue-50 text-blue-500 rounded-lg hover:bg-blue-600 hover:text-white transition"
+                                                        title="Edit"
+                                                    >
+                                                        <span className="material-icons text-[14px]">edit</span>
+                                                    </Link>
+                                                    <button
+                                                        onClick={() => handleDelete(course.id)}
+                                                        className="w-8 h-8 flex items-center justify-center bg-red-50 text-red-500 rounded-lg hover:bg-red-600 hover:text-white transition"
+                                                        title="Hapus"
+                                                    >
+                                                        <span className="material-icons text-[14px]">delete</span>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 )}
             </div>

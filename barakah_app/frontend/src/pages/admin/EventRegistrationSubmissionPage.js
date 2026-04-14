@@ -101,6 +101,7 @@ const EventRegistrationSubmissionPage = () => {
                             <thead>
                                 <tr className="bg-gray-50 border-b border-gray-100">
                                     <th className="p-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Waktu</th>
+                                    <th className="p-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">ID Peserta</th>
                                     <th className="p-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Identitas</th>
                                     {event?.form_fields?.map(field => (
                                         <th key={field.id} className="p-5 text-[10px] font-black text-gray-400 uppercase tracking-widest min-w-[150px]">{field.label}</th>
@@ -111,7 +112,7 @@ const EventRegistrationSubmissionPage = () => {
                             <tbody className="divide-y divide-gray-50">
                                 {registrations.length === 0 ? (
                                     <tr>
-                                        <td colSpan={3 + (event?.form_fields?.length || 0)} className="p-12 text-center text-gray-400 italic text-sm">
+                                        <td colSpan={4 + (event?.form_fields?.length || 0)} className="p-12 text-center text-gray-400 italic text-sm">
                                             Belum ada data pendaftar.
                                         </td>
                                     </tr>
@@ -122,6 +123,11 @@ const EventRegistrationSubmissionPage = () => {
                                                 {new Date(reg.created_at).toLocaleDateString('id-ID')}
                                                 <br/>
                                                 {new Date(reg.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
+                                            </td>
+                                            <td className="p-5">
+                                                <div className="bg-gray-100 text-gray-600 px-2 py-1 rounded text-[10px] font-black inline-block">
+                                                    {reg.user_details?.id || '-'}
+                                                </div>
                                             </td>
                                             <td className="p-5">
                                                 <div className="font-bold text-gray-900 text-sm whitespace-nowrap">

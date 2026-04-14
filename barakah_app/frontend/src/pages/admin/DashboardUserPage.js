@@ -238,6 +238,10 @@ const DashboardUserPage = () => {
                         </div>
                     </div>
                     <div className="flex gap-2">
+                        <button onClick={() => { setEditingUser(null); setEditFormData({ username: '', email: '', phone: '', role: 'user', is_verified_member: false, profile: {} }); setShowEditModal(true); }}
+                            className="bg-gray-900 text-white px-5 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 shadow-lg hover:bg-gray-800 transition">
+                            <span className="material-icons text-sm">person_add</span> Tambah User
+                        </button>
                         {selectedUserIds.length > 0 && (
                             <button onClick={() => { setBlastResult(null); setShowBlastModal(true); }}
                                 className="bg-green-600 text-white px-4 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 shadow-lg hover:bg-green-700 transition">
@@ -306,41 +310,52 @@ const DashboardUserPage = () => {
                                     <tr key={u.id} className="hover:bg-green-50/30 transition">
                                         <td className="px-3 py-3"><input type="checkbox" checked={selectedUserIds.includes(u.id)} onChange={() => toggleSelectUser(u.id)} className="w-4 h-4 text-green-600 rounded" /></td>
                                         <td className="px-3 py-3">
-                                            <div className="font-bold text-gray-900 text-xs">{u.username}</div>
-                                            <div className="text-[11px] text-gray-500">{u.email}</div>
+                                            <div className="bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded font-black text-[9px] inline-block mb-1">ID: {u.id}</div>
+                                            <div className="font-bold text-gray-900 text-[11px] leading-tight">{u.username}</div>
+                                            <div className="text-[10px] text-gray-400 truncate max-w-[120px]">{u.email}</div>
                                         </td>
-                                        <td className="px-3 py-3 text-gray-600 text-xs">{u.phone || '-'}</td>
-                                        <td className="px-3 py-3">
-                                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${u.role === 'admin' ? 'bg-red-50 text-red-600' : 'bg-blue-50 text-blue-600'}`}>{u.role}</span>
-                                        </td>
-                                        <td className="px-3 py-3">
-                                            {(u.custom_roles||[]).length > 0
-                                                ? (u.custom_roles||[]).map(r => <span key={r.id} className="inline-block mr-1 mb-0.5 px-2 py-0.5 rounded-full text-[9px] font-bold bg-green-50 text-green-700 border border-green-100">{r.name}</span>)
-                                                : <span className="text-gray-300 text-xs">-</span>}
+                                        <td className="px-3 py-3 text-gray-600 text-[11px] whitespace-nowrap">
+                                            {u.phone || <span className="text-gray-300 italic">None</span>}
                                         </td>
                                         <td className="px-3 py-3">
-                                            {(u.labels||[]).length > 0
-                                                ? (u.labels||[]).map(l => <span key={l.id} className="inline-block mr-1 mb-0.5 px-2 py-0.5 rounded-full text-[9px] font-bold bg-purple-50 text-purple-700 border border-purple-100">{l.name}</span>)
-                                                : <span className="text-gray-300 text-xs">-</span>}
+                                            <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase ${u.role === 'admin' ? 'bg-red-50 text-red-600' : u.role === 'seller' ? 'bg-orange-50 text-orange-600' : 'bg-blue-50 text-blue-600'}`}>{u.role}</span>
                                         </td>
                                         <td className="px-3 py-3">
-                                            <div className="text-gray-900 font-bold text-xs">{u.profile?.name_full || '-'}</div>
-                                            <div className="text-[11px] text-gray-500">{u.profile?.gender === 'l' ? 'L' : u.profile?.gender === 'p' ? 'P' : ''}</div>
+                                            <div className="max-w-[150px] flex flex-wrap gap-0.5">
+                                                {(u.custom_roles||[]).length > 0
+                                                    ? (u.custom_roles||[]).map(r => <span key={r.id} className="px-1.5 py-0.5 rounded bg-green-50 text-green-700 border border-green-100 text-[9px] font-bold">{r.name}</span>)
+                                                    : <span className="text-gray-300 text-[10px]">-</span>}
+                                            </div>
                                         </td>
-                                        <td className="px-3 py-3 text-gray-500 text-xs">{new Date(u.date_joined).toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'})}</td>
+                                        <td className="px-3 py-3">
+                                            <div className="max-w-[150px] flex flex-wrap gap-0.5">
+                                                {(u.labels||[]).length > 0
+                                                    ? (u.labels||[]).map(l => <span key={l.id} className="px-1.5 py-0.5 rounded bg-purple-50 text-purple-700 border border-purple-100 text-[9px] font-bold">{l.name}</span>)
+                                                    : <span className="text-gray-300 text-[10px]">-</span>}
+                                            </div>
+                                        </td>
+                                        <td className="px-3 py-3">
+                                            <div className="text-gray-900 font-bold text-[11px] line-clamp-1">{u.profile?.name_full || '-'}</div>
+                                            <div className="text-[10px] text-gray-400 mt-0.5">
+                                                {PROVINCE_CHOICES.find(p => p[0] === u.profile?.address_province)?.[1] || '-'}
+                                            </div>
+                                        </td>
+                                        <td className="px-3 py-3 text-gray-500 text-[10px] whitespace-nowrap">
+                                            {new Date(u.date_joined).toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'})}
+                                        </td>
                                         <td className="px-3 py-3 text-center">
-                                            {u.is_verified_member ? <span className="material-icons text-green-600 text-lg">verified</span> : <span className="material-icons text-gray-300 text-lg">cancel</span>}
+                                            {u.is_verified_member ? <span className="material-icons text-green-600 text-sm">verified</span> : <span className="material-icons text-gray-200 text-sm">cancel</span>}
                                         </td>
                                         <td className="px-3 py-3">
                                             <div className="flex items-center justify-center gap-1">
-                                                <button onClick={() => { setSelectedUser(u); setShowDetailModal(true); }} className="w-7 h-7 bg-white border border-gray-200 rounded-lg text-gray-400 hover:text-green-700 hover:border-green-200 transition flex items-center justify-center" title="Detail">
-                                                    <span className="material-icons text-sm">visibility</span>
+                                                <button onClick={() => { setSelectedUser(u); setShowDetailModal(true); }} className="w-6 h-6 bg-white border border-gray-100 rounded text-gray-400 hover:text-green-700 hover:bg-green-50 transition flex items-center justify-center" title="Detail">
+                                                    <span className="material-icons text-[14px]">visibility</span>
                                                 </button>
-                                                <button onClick={() => openEditModal(u)} className="w-7 h-7 bg-white border border-gray-200 rounded-lg text-gray-400 hover:text-blue-700 hover:border-blue-200 transition flex items-center justify-center" title="Edit">
-                                                    <span className="material-icons text-sm">edit</span>
+                                                <button onClick={() => openEditModal(u)} className="w-6 h-6 bg-white border border-gray-100 rounded text-gray-400 hover:text-blue-700 hover:bg-blue-50 transition flex items-center justify-center" title="Edit">
+                                                    <span className="material-icons text-[14px]">edit</span>
                                                 </button>
-                                                <button onClick={() => handleDelete(u.id)} className="w-7 h-7 bg-white border border-gray-200 rounded-lg text-gray-400 hover:text-red-700 hover:border-red-200 transition flex items-center justify-center" title="Hapus">
-                                                    <span className="material-icons text-sm">delete</span>
+                                                <button onClick={() => handleDelete(u.id)} className="w-6 h-6 bg-white border border-gray-100 rounded text-gray-400 hover:text-red-700 hover:bg-red-50 transition flex items-center justify-center" title="Hapus">
+                                                    <span className="material-icons text-[14px]">delete</span>
                                                 </button>
                                             </div>
                                         </td>

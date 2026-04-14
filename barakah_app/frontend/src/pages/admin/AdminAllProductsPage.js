@@ -77,44 +77,70 @@ const AdminAllProductsPage = () => {
                         <p className="text-gray-500">Tidak ada produk ditemukan.</p>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {filteredProducts.map((product) => (
-                            <div key={product.id} className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex gap-4">
-                                <div className="w-20 h-20 bg-gray-100 rounded-xl overflow-hidden flex-shrink-0">
-                                    {product.thumbnail ? (
-                                        <img src={getMediaUrl(product.thumbnail)} alt={product.title} className="w-full h-full object-cover" />
-                                    ) : (
-                                        <div className="w-full h-full flex items-center justify-center text-gray-300">
-                                            <span className="material-icons">image</span>
-                                        </div>
-                                    )}
-                                </div>
-                                <div className="flex-1 min-w-0 flex flex-col">
-                                    <h3 className="font-bold text-gray-800 text-sm truncate">{product.title}</h3>
-                                    <p className="text-[10px] text-emerald-600 font-bold mb-1">Rp {product.price.toLocaleString()}</p>
-                                    <div className="flex items-center gap-1.5 mb-2">
-                                        <div className="w-4 h-4 bg-gray-100 rounded-full flex items-center justify-center">
-                                            <span className="material-icons text-[10px] text-gray-400">person</span>
-                                        </div>
-                                        <span className="text-[10px] text-gray-500 truncate">Penjual: <span className="font-bold">{product.seller_name}</span></span>
-                                    </div>
-                                    <div className="mt-auto flex gap-2">
-                                        <button
-                                            onClick={() => window.open(`/digital-products/${product.slug}`, '_blank')}
-                                            className="flex-1 bg-gray-50 text-gray-600 py-1.5 rounded-lg text-[10px] font-bold hover:bg-gray-100 transition"
-                                        >
-                                            Lihat detail
-                                        </button>
-                                        <button
-                                            onClick={() => handleDelete(product.id)}
-                                            className="px-3 bg-red-50 text-red-600 py-1.5 rounded-lg text-[10px] font-bold hover:bg-red-100 transition"
-                                        >
-                                            Hapus
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
+                    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-left text-sm">
+                                <thead className="bg-gray-50 border-b border-gray-100">
+                                    <tr>
+                                        <th className="p-4 text-[11px] font-black text-gray-400 uppercase tracking-widest">Produk</th>
+                                        <th className="p-4 text-[11px] font-black text-gray-400 uppercase tracking-widest">Penjual</th>
+                                        <th className="p-4 text-[11px] font-black text-gray-400 uppercase tracking-widest">Harga</th>
+                                        <th className="p-4 text-[11px] font-black text-gray-400 uppercase tracking-widest">Tipe</th>
+                                        <th className="p-4 text-[11px] font-black text-gray-400 uppercase tracking-widest text-center">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-50">
+                                    {filteredProducts.map((product) => (
+                                        <tr key={product.id} className="hover:bg-emerald-50/30 transition">
+                                            <td className="p-4">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-10 h-10 bg-gray-100 rounded-lg overflow-hidden shrink-0">
+                                                        {product.thumbnail ? (
+                                                            <img src={getMediaUrl(product.thumbnail)} alt={product.title} className="w-full h-full object-cover" />
+                                                        ) : (
+                                                            <div className="w-full h-full flex items-center justify-center text-gray-300">
+                                                                <span className="material-icons text-sm">image</span>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    <div>
+                                                        <p className="font-bold text-gray-900 text-xs line-clamp-1">{product.title}</p>
+                                                        <p className="text-[10px] text-gray-400">ID: {product.id}</p>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td className="p-4 text-xs font-medium text-gray-700">
+                                                {product.seller_name}
+                                            </td>
+                                            <td className="p-4 text-xs font-black text-emerald-600">
+                                                Rp {product.price.toLocaleString('id-ID')}
+                                            </td>
+                                            <td className="p-4 text-[10px] font-bold text-gray-400 uppercase">
+                                                {product.category_name || 'DIGITAL'}
+                                            </td>
+                                            <td className="p-4">
+                                                <div className="flex items-center justify-center gap-2">
+                                                    <button
+                                                        onClick={() => window.open(`/digital-products/${product.slug}`, '_blank')}
+                                                        className="w-8 h-8 flex items-center justify-center bg-gray-50 text-gray-500 rounded-lg hover:bg-gray-200 transition"
+                                                        title="Lihat"
+                                                    >
+                                                        <span className="material-icons text-[14px]">visibility</span>
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleDelete(product.id)}
+                                                        className="w-8 h-8 flex items-center justify-center bg-red-50 text-red-500 rounded-lg hover:bg-red-600 hover:text-white transition"
+                                                        title="Hapus"
+                                                    >
+                                                        <span className="material-icons text-[14px]">delete</span>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 )}
             </div>

@@ -78,6 +78,13 @@ const DashboardEventPage = () => {
                         <h1 className="text-2xl font-bold text-gray-900">Management Event</h1>
                         <p className="text-sm text-gray-500">Tinjau dan kelola pengajuan event</p>
                     </div>
+                    <Link 
+                        to="/event/ajukan"
+                        className="bg-gray-900 text-white px-6 py-3 rounded-2xl text-sm font-black flex items-center gap-2 shadow-xl hover:bg-gray-800 transition active:scale-95"
+                    >
+                        <span className="material-icons text-sm">add_circle</span>
+                        BUAT EVENT BARU
+                    </Link>
                 </div>
 
                 {/* Filters */}
@@ -112,6 +119,8 @@ const DashboardEventPage = () => {
                                 <tr>
                                     <th className="px-4 py-4 font-bold text-gray-600 uppercase tracking-wider text-[11px]">Event</th>
                                     <th className="px-4 py-4 font-bold text-gray-600 uppercase tracking-wider text-[11px]">Penyelenggara</th>
+                                    <th className="px-4 py-4 font-bold text-gray-600 uppercase tracking-wider text-[11px]">Pembuat</th>
+                                    <th className="px-4 py-4 font-bold text-gray-600 uppercase tracking-wider text-[11px]">Biaya</th>
                                     <th className="px-4 py-4 font-bold text-gray-600 uppercase tracking-wider text-[11px]">Waktu & Tempat</th>
                                     <th className="px-4 py-4 font-bold text-gray-600 uppercase tracking-wider text-[11px]">Pendaftar</th>
                                     <th className="px-4 py-4 font-bold text-gray-600 uppercase tracking-wider text-[11px]">Status</th>
@@ -137,24 +146,33 @@ const DashboardEventPage = () => {
                                             </div>
                                         </td>
                                         <td className="px-4 py-4 text-xs">
-                                            <p className="text-gray-900">{ev.organizer_name}</p>
-                                            <p className="text-gray-400 mt-0.5">{ev.organizer_contact || 'No contact'}</p>
+                                            <p className="text-gray-900 font-bold">{ev.organizer_name}</p>
+                                            <p className="text-gray-400 mt-0.5">{ev.organizer_contact || '-'}</p>
+                                        </td>
+                                        <td className="px-4 py-4 text-[10px]">
+                                            <p className="text-gray-600 font-bold">@{ev.created_by_details?.username || '-'}</p>
+                                            <p className="text-gray-400">{ev.created_by_details?.email || '-'}</p>
+                                        </td>
+                                        <td className="px-4 py-4 text-xs font-black">
+                                            <span className={`px-2 py-0.5 rounded text-[9px] ${ev.price_type === 'free' ? 'bg-green-50 text-green-700' : 'bg-orange-50 text-orange-700'}`}>
+                                                {ev.price_type === 'free' ? 'GRATIS' : `Rp ${Number(ev.price_fixed || 0).toLocaleString('id-ID')}`}
+                                            </span>
                                         </td>
                                         <td className="px-4 py-4 text-xs whitespace-nowrap">
                                             <p className="text-gray-900">{new Date(ev.start_date).toLocaleDateString('id-ID')}</p>
-                                            <p className="text-gray-500 mt-0.5 line-clamp-1 max-w-[150px]">{ev.location}</p>
+                                            <p className="text-gray-500 mt-0.5 line-clamp-1 max-w-[120px]">{ev.location}</p>
                                         </td>
                                         <td className="px-4 py-4">
                                             <Link 
                                                 to={`/dashboard/event/submissions/${ev.slug}`}
-                                                className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-700 rounded-xl text-[10px] font-bold hover:bg-blue-600 hover:text-white transition shadow-sm border border-blue-100"
+                                                className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-700 rounded-xl text-[10px] font-black hover:bg-blue-600 hover:text-white transition shadow-sm border border-blue-100"
                                             >
                                                 <span className="material-icons text-xs">people</span>
                                                 {ev.registration_count || 0} DATA
                                             </Link>
                                         </td>
                                         <td className="px-4 py-4">
-                                            <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                                            <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
                                                 ev.status === 'approved' ? 'bg-green-100 text-green-700' :
                                                 ev.status === 'pending' ? 'bg-orange-100 text-orange-700' :
                                                 ev.status === 'rejected' ? 'bg-red-100 text-red-700' :
