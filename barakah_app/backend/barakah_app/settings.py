@@ -286,7 +286,8 @@ else:
     MEDIA_ROOT = '/var/www/barakah-economy/barakah_app/backend/media/'
 
 # File upload settings
-FILE_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024  # 10MB limit
+FILE_UPLOAD_MAX_MEMORY_SIZE = 100 * 1024 * 1024  # 100MB limit
+DATA_UPLOAD_MAX_MEMORY_SIZE = 100 * 1024 * 1024  # 100MB limit
 
 CKEDITOR_UPLOAD_PATH = "uploads/"
 CKEDITOR_IMAGE_BACKEND = "pillow"

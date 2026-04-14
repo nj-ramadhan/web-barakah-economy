@@ -93,13 +93,13 @@ const EventSubmissionPage = () => {
         } else {
             // New event initialization
             if (formFields.length === 0) {
-                setFormFields([{
-                    label: 'Nama Lengkap',
-                    field_type: 'text',
-                    required: true,
-                    options: [],
-                    order: 0
-                }]);
+                setFormFields([
+                    { label: 'Nama', field_type: 'text', required: true, options: [], order: 0 },
+                    { label: 'Email', field_type: 'email', required: true, options: [], order: 1 },
+                    { label: 'No HP', field_type: 'phone', required: true, options: [], order: 2 },
+                    { label: 'Asal Instansi', field_type: 'text', required: true, options: [], order: 3 },
+                    { label: 'Jenis Kelamin', field_type: 'radio', required: true, options: ['Laki-laki', 'Perempuan'], order: 4 },
+                ]);
             }
         }
     }, [navigate, slug, isEdit]);
@@ -107,6 +107,12 @@ const EventSubmissionPage = () => {
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
+    };
+
+    const openPreview = (fileOrUrl) => {
+        if (!fileOrUrl) return;
+        const url = fileOrUrl instanceof File ? URL.createObjectURL(fileOrUrl) : fileOrUrl;
+        window.open(url, '_blank');
     };
 
     const handleFileSelect = (e, type) => {
@@ -391,7 +397,11 @@ const EventSubmissionPage = () => {
                                 <div className="space-y-1.5">
                                     <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Gambar Header (16:9)</label>
                                     <div className="flex items-center gap-3">
-                                        <div className="w-16 h-10 bg-gray-100 rounded-lg overflow-hidden border border-gray-200">
+                                        <div 
+                                            className={`w-16 h-10 bg-gray-100 rounded-lg overflow-hidden border border-gray-200 ${files.header_image ? 'cursor-pointer' : ''}`}
+                                            onClick={() => files.header_image && openPreview(files.header_image)}
+                                            title={files.header_image ? 'Klik untuk lihat detail' : ''}
+                                        >
                                             {files.header_image ? (
                                                 <img 
                                                     src={files.header_image instanceof File ? URL.createObjectURL(files.header_image) : files.header_image} 
@@ -413,7 +423,11 @@ const EventSubmissionPage = () => {
                                 <div className="space-y-1.5">
                                     <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Thumbnail (1:1)</label>
                                     <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 bg-gray-100 rounded-lg overflow-hidden border border-gray-200">
+                                        <div 
+                                            className={`w-10 h-10 bg-gray-100 rounded-lg overflow-hidden border border-gray-200 ${files.thumbnail ? 'cursor-pointer' : ''}`}
+                                            onClick={() => files.thumbnail && openPreview(files.thumbnail)}
+                                            title={files.thumbnail ? 'Klik untuk lihat detail' : ''}
+                                        >
                                             {files.thumbnail ? (
                                                 <img 
                                                     src={files.thumbnail instanceof File ? URL.createObjectURL(files.thumbnail) : files.thumbnail} 
@@ -526,13 +540,18 @@ const EventSubmissionPage = () => {
                                             {/* Existing Images */}
                                             {existingDocImages.map((img) => (
                                                 <div key={img.id} className="relative aspect-square rounded-xl overflow-hidden border border-gray-100 shadow-sm group">
-                                                    <img src={img.image} className="w-full h-full object-cover" alt="Doc" />
+                                                    <img 
+                                                        src={img.image} 
+                                                        className="w-full h-full object-cover cursor-pointer" 
+                                                        alt="Doc" 
+                                                        onClick={() => openPreview(img.image)}
+                                                    />
                                                     <button 
                                                         type="button" 
-                                                        onClick={() => removeDocImage(null, true, img.id)}
-                                                        className="absolute inset-0 bg-red-600/60 text-white opacity-0 group-hover:opacity-100 transition flex items-center justify-center"
+                                                        onClick={(e) => { e.stopPropagation(); removeDocImage(null, true, img.id); }}
+                                                        className="absolute top-1 right-1 w-6 h-6 bg-red-600/80 text-white rounded-full opacity-0 group-hover:opacity-100 transition flex items-center justify-center shadow-lg"
                                                     >
-                                                        <span className="material-icons">delete</span>
+                                                        <span className="material-icons text-xs">delete</span>
                                                     </button>
                                                 </div>
                                             ))}
@@ -540,11 +559,16 @@ const EventSubmissionPage = () => {
                                             {/* New Uploads */}
                                             {files.documentation_images.map((img, idx) => (
                                                 <div key={idx} className="relative aspect-square rounded-xl overflow-hidden border border-green-100 shadow-sm group">
-                                                    <img src={URL.createObjectURL(img)} className="w-full h-full object-cover" alt="New Doc" />
+                                                    <img 
+                                                        src={URL.createObjectURL(img)} 
+                                                        className="w-full h-full object-cover cursor-pointer" 
+                                                        alt="New Doc" 
+                                                        onClick={() => openPreview(img)}
+                                                    />
                                                     <button 
                                                         type="button" 
-                                                        onClick={() => removeDocImage(idx, false)}
-                                                        className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 shadow-lg"
+                                                        onClick={(e) => { e.stopPropagation(); removeDocImage(idx, false); }}
+                                                        className="absolute top-1 right-1 bg-red-500/80 text-white rounded-full w-6 h-6 shadow-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition"
                                                     >
                                                         <span className="material-icons text-xs">close</span>
                                                     </button>

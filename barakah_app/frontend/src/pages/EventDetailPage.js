@@ -88,6 +88,11 @@ const EventDetailPage = () => {
                                 newResponses[field.id] = profile.phone || '';
                             } else if ((label.includes('alamat') || label.includes('domisili')) && !newResponses[field.id]) {
                                 newResponses[field.id] = profile.address || '';
+                            } else if ((label.includes('instansi') || label.includes('organisasi') || label.includes('kampus') || label.includes('sekolah') || label.includes('kantor')) && !newResponses[field.id]) {
+                                newResponses[field.id] = profile.work_institution || profile.study_campus || '';
+                            } else if ((label.includes('kelamin') || label.includes('gender') || label.includes('sex')) && !newResponses[field.id]) {
+                                if (profile.gender === 'l') newResponses[field.id] = 'Laki-laki';
+                                else if (profile.gender === 'p') newResponses[field.id] = 'Perempuan';
                             }
                         });
                         return newResponses;
@@ -149,9 +154,10 @@ const EventDetailPage = () => {
             if (activeTab === 'participants') fetchParticipants();
         } catch (err) {
             console.error(err);
-            setError(err.response?.data?.errors 
+            const msg = err.response?.data?.errors 
                 ? Object.values(err.response.data.errors).join(', ') 
-                : 'Gagal mengirim pendaftaran. Mohon cek kembali data Anda.');
+                : (err.response?.data?.error || 'Gagal mengirim pendaftaran. Mohon cek kembali data Anda.');
+            setError(msg);
         } finally {
             setSubmitting(false);
         }

@@ -136,7 +136,11 @@ const DashboardEventPage = () => {
                                     <tr key={ev.id} className="hover:bg-gray-50/50 transition">
                                         <td className="px-4 py-4">
                                             <div className="flex items-center gap-3">
-                                                <div className="w-10 h-10 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
+                                                <div 
+                                                    className="w-10 h-10 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0 cursor-pointer"
+                                                    onClick={() => window.open(ev.thumbnail || '/placeholder-image.jpg', '_blank')}
+                                                    title="Klik untuk lihat detail"
+                                                >
                                                     <img src={ev.thumbnail || '/placeholder-image.jpg'} alt="" className="w-full h-full object-cover" />
                                                 </div>
                                                 <div>
