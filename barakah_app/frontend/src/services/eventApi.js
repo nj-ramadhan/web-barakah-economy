@@ -16,7 +16,9 @@ export const getLandingEvents = () => {
 };
 
 export const getEventDetail = (slug) => {
-    return axios.get(`${API_BASE_URL}/api/events/${slug}/`);
+    return axios.get(`${API_BASE_URL}/api/events/${slug}/`, {
+        headers: getAuthHeaders()
+    });
 };
 
 export const createEvent = (formData) => {
@@ -61,7 +63,9 @@ export const registerForEvent = (slug, formData) => {
 };
 
 export const getEventParticipants = (slug) => {
-    return axios.get(`${API_BASE_URL}/api/events/${slug}/participants/`);
+    return axios.get(`${API_BASE_URL}/api/events/${slug}/participants/`, {
+        headers: getAuthHeaders()
+    });
 };
 
 // Submissions (Management)

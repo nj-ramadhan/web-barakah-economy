@@ -370,21 +370,7 @@ const EventDetailPage = () => {
                                     </div>
 
                                     {/* Photo Grid 3x3 */}
-                                    {!event.user_registration || event.user_registration.status !== 'approved' ? (
-                                        <div className="bg-gray-50/50 border-2 border-dashed border-gray-200 rounded-[2rem] p-12 text-center animate-fade-in">
-                                            <div className="w-20 h-20 bg-white rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-sm">
-                                                <span className="material-icons text-4xl text-gray-300">lock</span>
-                                            </div>
-                                            <h3 className="text-xl font-extrabold text-gray-900 mb-2">Dokumentasi Terkunci</h3>
-                                            <p className="text-gray-500 text-sm max-w-xs mx-auto mb-8 font-medium">Selesaikan pendaftaran dan dapatkan persetujuan admin untuk mengakses dokumentasi event ini.</p>
-                                            <button 
-                                                onClick={() => !event.user_registration && setShowRegisterModal(true)}
-                                                className={`px-8 py-3 rounded-2xl text-xs font-black uppercase tracking-widest transition shadow-lg ${!event.user_registration ? 'bg-green-600 text-white hover:bg-green-700' : 'bg-gray-200 text-gray-500 cursor-default'}`}
-                                            >
-                                                {event.user_registration ? 'Menunggu Persetujuan' : 'Daftar Sekarang'}
-                                            </button>
-                                        </div>
-                                    ) : !event.documentation_images || event.documentation_images.length === 0 ? (
+                                    {!event.documentation_images || event.documentation_images.length === 0 ? (
                                         <div className="flex flex-col items-center justify-center py-20 text-center">
                                             <span className="material-icons text-8xl text-gray-100 mb-4">photo_library</span>
                                             <h3 className="text-xl font-bold text-gray-900 mb-2">Dokumentasi Belum Tersedia</h3>

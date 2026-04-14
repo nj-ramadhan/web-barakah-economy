@@ -204,73 +204,91 @@ const EventRegistrationSubmissionPage = () => {
 
             {/* PRINT COMPONENT (Hidden in Browser) */}
             <div className="print-only hidden">
-                <div className="mb-8 border-b-2 border-gray-900 pb-6 text-center">
-                    <h1 className="text-2xl font-black uppercase tracking-tighter">Daftar Hadir Event</h1>
-                    <h2 className="text-xl font-bold text-gray-700 mt-2">{event?.title}</h2>
-                    <p className="text-sm mt-1">{new Date(event?.start_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })} | {event?.location}</p>
+                <style>{`
+                    @media print {
+                        .no-print, header, footer, .navigation-button, .sidebar, .mobile-nav { display: none !important; }
+                        .print-only { display: block !important; padding: 0; margin: 0; }
+                        body { background: white !important; font-family: 'Inter', sans-serif; color: black !important; }
+                        
+                        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+                        th, td { border: 2px solid black !important; padding: 8px !important; color: black !important; }
+                        th { background-color: white !important; font-weight: 900 !important; }
+                        
+                        .print-header { text-align: center; margin-bottom: 20px; border-bottom: 3px solid black; padding-bottom: 10px; }
+                        .print-title { font-size: 20pt; font-weight: 900; text-transform: uppercase; margin-bottom: 4px; }
+                        .print-subtitle { font-size: 14pt; font-weight: 700; margin-bottom: 2px; }
+                        .print-info { font-size: 10pt; font-weight: 500; }
+                        
+                        .sign-area { display: flex; justify-content: space-between; margin-top: 50px; padding: 0 40px; }
+                        .sign-box { text-align: center; width: 200px; }
+                        .sign-line { border-bottom: 2px solid black; margin-top: 60px; }
+                        
+                        @page { margin: 1cm; size: A4; }
+                    }
+                `}</style>
+
+                <div className="print-header">
+                    <div className="print-title">DAFTAR HADIR EVENT</div>
+                    <div className="print-subtitle">{event?.title}</div>
+                    <div className="print-info">
+                        {new Date(event?.start_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })} | {event?.location}
+                    </div>
                 </div>
                 
-                <table className="w-full border-collapse">
+                <table>
                     <thead>
-                        <tr className="bg-gray-100 border-2 border-gray-900">
-                            <th className="p-2 text-[10px] font-black uppercase border border-gray-900 w-8">No</th>
-                            <th className="p-2 text-[10px] font-black uppercase border border-gray-900">Nama Lengkap</th>
-                            <th className="p-2 text-[10px] font-black uppercase border border-gray-900">Identitas / Instansi</th>
-                            <th className="p-2 text-[10px] font-black uppercase border border-gray-900 w-32">Paraf / Tanda Tangan</th>
-                            <th className="p-2 text-[10px] font-black uppercase border border-gray-900">Keterangan</th>
+                        <tr>
+                            <th style={{width: '40px'}}>NO</th>
+                            <th>NAMA LENGKAP</th>
+                            <th>IDENTITAS / INSTANSI</th>
+                            <th style={{width: '180px'}}>PARAF / TANDA TANGAN</th>
+                            <th style={{width: '150px'}}>KETERANGAN</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {registrations.map((reg, idx) => (
-                            <tr key={reg.id} className="border border-gray-900">
-                                <td className="p-2 text-[10px] text-center border border-gray-900">{idx + 1}</td>
-                                <td className="p-2 text-[10px] border border-gray-900 font-bold">
-                                    {reg.guest_name || reg.user_details?.profile?.name_full || reg.user_details?.username}
-                                </td>
-                                <td className="p-2 text-[10px] border border-gray-900">
-                                    {reg.guest_email || reg.user_details?.email}
-                                    {Object.keys(reg.responses).map(key => {
-                                        const field = event?.form_fields?.find(f => f.id.toString() === key);
-                                        if (field && (field.label.toLowerCase().includes('instansi') || field.label.toLowerCase().includes('asal'))) {
-                                            return ` - ${reg.responses[key]}`;
-                                        }
-                                        return null;
-                                    })}
-                                </td>
-                                <td className="p-2 border border-gray-900 h-10"></td>
-                                <td className="p-2 border border-gray-900"></td>
-                            </tr>
-                        ))}
+                        {registrations.map((reg, idx) => {
+                            const instansi = Object.keys(reg.responses).map(key => {
+                                const field = event?.form_fields?.find(f => f.id.toString() === key);
+                                if (field && (field.label.toLowerCase().includes('instansi') || field.label.toLowerCase().includes('asal'))) {
+                                    return reg.responses[key];
+                                }
+                                return null;
+                            }).filter(v => v).join(', ');
+
+                            return (
+                                <tr key={reg.id} style={{height: '50px'}}>
+                                    <td style={{textAlign: 'center'}}>{idx + 1}</td>
+                                    <td style={{fontWeight: 'bold'}}>
+                                        {reg.guest_name || reg.user_details?.profile?.name_full || reg.user_details?.username}
+                                    </td>
+                                    <td>
+                                        <div>{reg.guest_email || reg.user_details?.email}</div>
+                                        {instansi && <div style={{fontSize: '9px', fontStyle: 'italic'}}>{instansi}</div>}
+                                    </td>
+                                    <td></td>
+                                    <td></td>
+                                </tr>
+                            );
+                        })}
                     </tbody>
                 </table>
                 
-                <div className="mt-12 flex justify-between px-10">
-                    <div className="text-center">
-                        <p className="text-[10px] mb-12">Panitia Pelaksana,</p>
-                        <div className="w-32 border-b border-gray-900 mx-auto"></div>
+                <div className="sign-area">
+                    <div className="sign-box">
+                        <p style={{fontSize: '10pt'}}>Panitia Pelaksana,</p>
+                        <div className="sign-line"></div>
                     </div>
-                    <div className="text-center">
-                        <p className="text-[10px] mb-12">Ketua Penyelenggara,</p>
-                        <div className="w-32 border-b border-gray-900 mx-auto"></div>
+                    <div className="sign-box">
+                        <p style={{fontSize: '10pt'}}>Ketua Penyelenggara,</p>
+                        <div className="sign-line"></div>
                     </div>
                 </div>
 
-                <div className="mt-8 text-[8px] text-gray-400 italic text-center">
+                <div style={{marginTop: '40px', fontSize: '8pt', textAlign: 'center', fontStyle: 'italic', color: '#666'}}>
                     Dicetak secara otomatis melalui Barakah Economy System pada {new Date().toLocaleString('id-ID')}
                 </div>
             </div>
 
-            <style>{`
-                @media print {
-                    .no-print, header, footer, .navigation-button { display: none !important; }
-                    .print-only { display: block !important; }
-                    body { background: white !important; }
-                    .body { padding: 0 !important; margin: 0 !important; }
-                    table { border-spacing: 0; }
-                    th, td { border: 1px solid #000 !important; }
-                    @page { margin: 1.5cm; }
-                }
-            `}</style>
 
             {/* Blast Modal */}
             {showBlastModal && (
