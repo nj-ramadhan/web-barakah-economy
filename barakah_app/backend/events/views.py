@@ -118,7 +118,8 @@ class EventViewSet(viewsets.ModelViewSet):
     def landing(self, request):
         """Public list for landing page (only approved)."""
         self._auto_complete_expired_events()
-        events = self.queryset.filter(status='approved')
+        # Include both approved and completed events in the public list
+        events = self.queryset.filter(status__in=['approved', 'completed'])
         serializer = self.get_serializer(events, many=True)
         return Response(serializer.data)
 
