@@ -26,6 +26,7 @@ const EventDetailPage = () => {
     const [isRegistered, setIsRegistered] = useState(false); // To check if user already registered
     const [activeTab, setActiveTab] = useState('about');
     const [showRegisterModal, setShowRegisterModal] = useState(false);
+    const [isSharing, setIsSharing] = useState(false);
 
     const API = process.env.REACT_APP_API_BASE_URL;
 
@@ -163,6 +164,34 @@ const EventDetailPage = () => {
         }
     };
 
+    const handleShare = async () => {
+        const shareTitle = event?.title || 'Event Barakah Economy';
+        const rawDescription = event?.description || '';
+        const shareText = rawDescription.replace(/<[^>]*>/g, '').substring(0, 150) + '...';
+        const shareUrl = window.location.href;
+
+        if (navigator.share) {
+            try {
+                setIsSharing(true);
+                await navigator.share({
+                    title: shareTitle,
+                    text: shareText,
+                    url: shareUrl,
+                });
+            } catch (err) {
+                if (err.name !== 'AbortError') {
+                    console.error('Error sharing:', err);
+                }
+            } finally {
+                setIsSharing(false);
+            }
+        } else {
+            // Fallback: WhatsApp share link
+            const waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(`${shareTitle}\n\n${shareText}\n\nCek selengkapnya di: ${shareUrl}`)}`;
+            window.open(waUrl, '_blank');
+        }
+    };
+
     if (loading) return <div className="body flex items-center justify-center min-h-screen text-green-700">Loading detail event...</div>;
 
     if (error && !event) return (
@@ -183,6 +212,23 @@ const EventDetailPage = () => {
         <div className="body bg-gray-50 min-h-screen overflow-x-hidden">
             <Helmet>
                 <title>{event.title} - Barakah Economy</title>
+                <meta name="description" content={event.description?.replace(/<[^>]*>/g, '').substring(0, 160)} />
+                
+                {/* Open Graph / Facebook / WhatsApp */}
+                <meta property="og:type" content="website" />
+                <meta property="og:url" content={window.location.href} />
+                <meta property="og:title" content={event.title} />
+                <meta property="og:description" content={event.description?.replace(/<[^>]*>/g, '').substring(0, 160)} />
+                <meta property="og:image" content={event.thumbnail || event.header_image || (window.location.origin + '/logo192.png')} />
+                <meta property="og:image:alt" content={event.title} />
+                <meta property="og:site_name" content="Barakah Economy" />
+
+                {/* Twitter */}
+                <meta property="twitter:card" content="summary_large_image" />
+                <meta property="twitter:url" content={window.location.href} />
+                <meta property="twitter:title" content={event.title} />
+                <meta property="twitter:description" content={event.description?.replace(/<[^>]*>/g, '').substring(0, 160)} />
+                <meta property="twitter:image" content={event.thumbnail || event.header_image || (window.location.origin + '/logo192.png')} />
             </Helmet>
             <Header />
 
@@ -226,6 +272,16 @@ const EventDetailPage = () => {
                                     Ikuti Event Ini
                                 </button>
                             )}
+
+                            {/* Share Button */}
+                            <button 
+                                onClick={handleShare}
+                                className="mt-3 sm:mt-0 sm:ml-3 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/30 text-white px-6 py-4 rounded-2xl font-extrabold text-sm uppercase tracking-wider transition active:scale-[0.97] flex items-center gap-3 w-full sm:w-auto justify-center group"
+                                title="Bagikan Event"
+                            >
+                                <span className={`material-icons text-xl transition-transform group-hover:rotate-12 ${isSharing ? 'animate-pulse' : ''}`}>share</span>
+                                {isSharing ? 'Berbagi...' : 'Bagikan'}
+                            </button>
                         </div>
                     </div>
                 </div>
