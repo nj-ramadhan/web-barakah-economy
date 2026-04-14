@@ -180,7 +180,7 @@ const EventDetailPage = () => {
     const isCompleted = event?.end_date ? new Date() > new Date(event.end_date) : false;
 
     return (
-        <div className="body bg-gray-50 min-h-screen">
+        <div className="body bg-gray-50 min-h-screen overflow-x-hidden">
             <Helmet>
                 <title>{event.title} - Barakah Economy</title>
             </Helmet>
@@ -234,31 +234,31 @@ const EventDetailPage = () => {
             <div className="max-w-6xl mx-auto px-4 -mt-10 relative z-10 pb-20">
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
                     {/* Left Column (8 cols) */}
-                    <div className="lg:col-span-8 space-y-8">
+                    <div className="lg:col-span-8 space-y-8 min-w-0">
                         {/* Tabs Navigation */}
-                        <div className="bg-white p-2 rounded-[2.5rem] shadow-xl border border-gray-100 flex gap-2">
+                        <div className="bg-white p-2 rounded-2xl sm:rounded-[2.5rem] shadow-xl border border-gray-100 flex gap-2 overflow-x-auto no-scrollbar scroll-smooth">
                             <button 
                                 onClick={() => setActiveTab('about')}
-                                className={`flex-1 py-4 px-6 rounded-[2rem] text-sm font-bold transition flex items-center justify-center gap-2 ${activeTab === 'about' ? 'bg-gray-900 text-white shadow-lg' : 'bg-transparent text-gray-500 hover:bg-gray-50'}`}
+                                className={`flex-1 py-3 sm:py-4 px-4 sm:px-6 rounded-xl sm:rounded-[2rem] text-xs sm:text-sm font-bold transition flex items-center justify-center gap-2 whitespace-nowrap ${activeTab === 'about' ? 'bg-gray-900 text-white shadow-lg' : 'bg-transparent text-gray-500 hover:bg-gray-50'}`}
                             >
-                                <span className="material-icons text-lg">description</span>
+                                <span className="material-icons text-base sm:text-lg">description</span>
                                 Tentang Event
                             </button>
                             <button 
                                 onClick={() => setActiveTab('participants')}
-                                className={`flex-1 py-4 px-6 rounded-[2rem] text-sm font-bold transition flex items-center justify-center gap-2 ${activeTab === 'participants' ? 'bg-gray-900 text-white shadow-lg' : 'bg-transparent text-gray-500 hover:bg-gray-50'}`}
+                                className={`flex-1 py-3 sm:py-4 px-4 sm:px-6 rounded-xl sm:rounded-[2rem] text-xs sm:text-sm font-bold transition flex items-center justify-center gap-2 whitespace-nowrap ${activeTab === 'participants' ? 'bg-gray-900 text-white shadow-lg' : 'bg-transparent text-gray-500 hover:bg-gray-50'}`}
                             >
-                                <span className="material-icons text-lg">group</span>
+                                <span className="material-icons text-base sm:text-lg">group</span>
                                 Daftar Peserta
-                                <span className={`ml-1 px-2 py-0.5 rounded-full text-[10px] ${activeTab === 'participants' ? 'bg-white/20' : 'bg-gray-100'}`}>
+                                <span className={`ml-1 px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] ${activeTab === 'participants' ? 'bg-white/20' : 'bg-gray-100'}`}>
                                     {event.registration_count || 0}
                                 </span>
                             </button>
                             <button 
                                 onClick={() => setActiveTab('documentation')}
-                                className={`flex-1 py-4 px-6 rounded-[2rem] text-sm font-bold transition flex items-center justify-center gap-2 ${activeTab === 'documentation' ? 'bg-gray-900 text-white shadow-lg' : 'bg-transparent text-gray-500 hover:bg-gray-50'}`}
+                                className={`flex-1 py-3 sm:py-4 px-4 sm:px-6 rounded-xl sm:rounded-[2rem] text-xs sm:text-sm font-bold transition flex items-center justify-center gap-2 whitespace-nowrap ${activeTab === 'documentation' ? 'bg-gray-900 text-white shadow-lg' : 'bg-transparent text-gray-500 hover:bg-gray-50'}`}
                             >
-                                <span className="material-icons text-lg">collections</span>
+                                <span className="material-icons text-base sm:text-lg">collections</span>
                                 Dokumentasi
                             </button>
                         </div>
