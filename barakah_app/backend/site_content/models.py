@@ -52,6 +52,16 @@ class Activity(models.Model):
     content = RichTextField()
     date = models.DateField()
     created_at = models.DateTimeField(auto_now_add=True)
+    
+    # Link to event for automatic documentation
+    event = models.OneToOneField(
+        'events.Event', 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True, 
+        related_name='activity_documentation',
+        help_text="The event this documentation refers to"
+    )
 
     class Meta:
         ordering = ['-date', '-created_at']
