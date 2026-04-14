@@ -2,17 +2,17 @@ import React, { useState, useCallback } from 'react';
 import Cropper from 'react-easy-crop';
 import { getCroppedImg } from './canvasUtils';
 
-const ImageCropperModal = ({ 
-  show = true, 
-  image, 
-  aspect = 16 / 9, 
+const ImageCropperModal = ({
+  show = true,
+  image,
+  aspect = 16 / 9,
   aspectRatio, // Alternative name used in some pages
-  onCropComplete, 
-  onCancel, 
-  onClose, 
+  onCropComplete,
+  onCancel,
+  onClose,
   title = "Potong Gambar",
   maxWidth = 1920,
-  maxHeight = 1080 
+  maxHeight = 1080
 }) => {
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
@@ -35,11 +35,11 @@ const ImageCropperModal = ({
     try {
       // Pass resizing and quality options to getCroppedImg
       const croppedImage = await getCroppedImg(
-        image, 
-        croppedAreaPixels, 
-        0, 
-        { horizontal: false, vertical: false }, 
-        maxWidth, 
+        image,
+        croppedAreaPixels,
+        0,
+        { horizontal: false, vertical: false },
+        maxWidth,
         maxHeight,
         0.8 // Quality 80%
       );
@@ -60,7 +60,7 @@ const ImageCropperModal = ({
             <span className="material-icons">close</span>
           </button>
         </div>
-        
+
         <div className="relative w-full h-[50vh] bg-gray-900 overflow-hidden">
           {image ? (
             <Cropper
@@ -110,19 +110,18 @@ const ImageCropperModal = ({
             <div className="flex flex-wrap gap-2">
               {[
                 { label: 'Square (1:1)', value: 1, icon: 'crop_square' },
-                { label: 'Portrait (3:4)', value: 3/4, icon: 'stay_current_portrait' },
-                { label: 'Landscape (16:9)', value: 16/9, icon: 'crop_16_9' },
-                { label: 'Standard (4:3)', value: 4/3, icon: 'crop_3_2' },
+                { label: 'Portrait (4:5)', value: 4 / 5, icon: 'stay_current_portrait' },
+                { label: 'Landscape (16:9)', value: 16 / 9, icon: 'crop_16_9' },
+                { label: 'Standard (4:3)', value: 4 / 3, icon: 'crop_3_2' },
               ].map((ratio) => (
                 <button
                   key={ratio.label}
                   type="button"
                   onClick={() => setSelectedAspect(ratio.value)}
-                  className={`flex-1 flex flex-col items-center gap-1.5 py-4 px-2 rounded-2xl border-2 transition-all duration-300 ${
-                    Math.abs(selectedAspect - ratio.value) < 0.01 
-                      ? 'bg-green-50 border-green-500 text-green-700 shadow-sm' 
+                  className={`flex-1 flex flex-col items-center gap-1.5 py-4 px-2 rounded-2xl border-2 transition-all duration-300 ${Math.abs(selectedAspect - ratio.value) < 0.01
+                      ? 'bg-green-50 border-green-500 text-green-700 shadow-sm'
                       : 'bg-white border-gray-100 text-gray-400 hover:border-gray-200 hover:bg-gray-50'
-                  }`}
+                    }`}
                 >
                   <span className="material-icons text-xl">{ratio.icon}</span>
                   <span className="text-[10px] font-black uppercase tracking-tight">{ratio.label.split(' ')[0]}</span>
@@ -131,22 +130,36 @@ const ImageCropperModal = ({
             </div>
           </div>
 
-          <div className="flex justify-end gap-3 border-t border-gray-100 pt-5">
+          <div className="flex justify-between items-center border-t border-gray-100 pt-5">
             <button
               onClick={handleCancel}
               type="button"
-              className="px-6 py-2.5 rounded-xl text-sm font-bold text-gray-500 hover:bg-gray-100 transition"
+              className="px-6 py-2.5 rounded-xl text-sm font-bold text-gray-400 hover:text-gray-600 hover:bg-gray-50 transition"
             >
               Batal
             </button>
-            <button
-              onClick={handleDone}
-              type="button"
-              disabled={!image}
-              className="bg-green-700 text-white px-8 py-2.5 rounded-xl text-sm font-bold shadow-lg shadow-green-100 hover:bg-green-800 transition transform active:scale-95 disabled:opacity-50"
-            >
-              Potong & Simpan
-            </button>
+            <div className="flex gap-3">
+              <button
+                onClick={async () => {
+                  // Get the original image as blob/file
+                  const response = await fetch(image);
+                  const blob = await response.blob();
+                  onCropComplete(blob);
+                }}
+                type="button"
+                className="px-6 py-2.5 rounded-xl text-sm font-bold text-green-700 bg-green-50 hover:bg-green-100 transition"
+              >
+                Gunakan Asli
+              </button>
+              <button
+                onClick={handleDone}
+                type="button"
+                disabled={!image}
+                className="bg-green-700 text-white px-8 py-2.5 rounded-xl text-sm font-bold shadow-lg shadow-green-100 hover:bg-green-800 transition transform active:scale-95 disabled:opacity-50"
+              >
+                Potong & Simpan
+              </button>
+            </div>
           </div>
         </div>
       </div>

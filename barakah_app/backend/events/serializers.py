@@ -20,7 +20,8 @@ class EventSerializer(serializers.ModelSerializer):
     user_registration = serializers.SerializerMethodField()
 
     def get_registration_count(self, obj):
-        return obj.registrations.filter(status='approved').count()
+        # Count all registrations as they are now auto-approved
+        return obj.registrations.count()
 
     def get_user_registration(self, obj):
         request = self.context.get('request')

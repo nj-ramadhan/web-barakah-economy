@@ -147,7 +147,8 @@ class EventViewSet(viewsets.ModelViewSet):
             user=user,
             responses=responses,
             payment_proof=payment_proof,
-            payment_amount=payment_amount
+            payment_amount=payment_amount,
+            status='approved' # Force auto-approve
         )
         
         # 4. Handle File Uploads for dynamic fields
@@ -332,7 +333,8 @@ class EventViewSet(viewsets.ModelViewSet):
     def participants(self, request, slug=None):
         """Public list of approved participants for this event."""
         event = self.get_object()
-        registrations = EventRegistration.objects.filter(event=event, status='approved')
+        # Remove status='approved' filter to show everyone who registered
+        registrations = EventRegistration.objects.filter(event=event)
         
         data = []
         for reg in registrations:

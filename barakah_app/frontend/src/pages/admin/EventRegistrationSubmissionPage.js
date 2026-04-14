@@ -217,7 +217,7 @@ const EventRegistrationSubmissionPage = () => {
                         </div>
                         <div className="p-6">
                             <p className="text-xs text-gray-500 font-medium mb-4 italic">
-                                Pesan akan dikirim ke semua peserta yang statusnya <span className="text-green-600 font-bold">approved</span>.
+                                Pesan akan dikirim ke semua peserta yang <span className="text-green-600 font-bold">terdaftar</span>.
                             </p>
                             
                             <div className="mb-4">

@@ -121,7 +121,7 @@ const DesktopLandingPage = () => {
                                         {/* Dynamic Carousel Items Picker */}
                                         {[
                                             activities[0] && { type: 'Kegiatan', title: activities[0].title, img: activities[0].header_image, link: '/kegiatan' },
-                                            { type: 'Event', title: 'Barakah Event', img: '/images/event-banner.jpg', link: '/events' },
+                                            { type: 'Event', title: 'Barakah Event', img: '/images/poster.jpg', link: '/events' },
                                             articles[0] && { type: 'Artikel', title: articles[0].title, img: articles[0].images?.[0]?.path, link: `/articles/${articles[0].id}` },
                                             campaigns[0] && { type: 'Charity', title: campaigns[0].title, img: campaigns[0].thumbnail, link: `/kampanye/${campaigns[0].slug || campaigns[0].id}` },
                                             courses[0] && { type: 'Academy', title: courses[0].title, img: courses[0].thumbnail, link: `/kelas/${courses[0].slug || courses[0].id}` },

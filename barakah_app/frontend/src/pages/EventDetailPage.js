@@ -290,7 +290,7 @@ const EventDetailPage = () => {
                                             <span className="w-2 h-8 bg-blue-600 rounded-full"></span>
                                             Daftar Peserta
                                         </h2>
-                                        <p className="text-sm text-gray-500 font-bold uppercase tracking-wider bg-gray-50 px-4 py-2 rounded-xl">{participants.length} Disetujui</p>
+                                        <p className="text-sm text-gray-500 font-bold uppercase tracking-wider bg-gray-50 px-4 py-2 rounded-xl">{participants.length} Peserta Terdaftar</p>
                                     </div>
 
                                     {loadingParticipants ? (
@@ -430,7 +430,7 @@ const EventDetailPage = () => {
                             <span className="material-icons text-5xl">check_circle</span>
                         </div>
                         <h3 className="text-3xl font-extrabold text-gray-900 mb-4">Pendaftaran Berhasil!</h3>
-                        <p className="text-gray-500 mb-10 leading-relaxed font-medium">Terima kasih telah mendaftar. Pendaftaran Anda sedang ditinjau oleh admin. Cek dashboard Anda secara berkala.</p>
+                        <p className="text-gray-500 mb-10 leading-relaxed font-medium">Terima kasih telah mendaftar. Pendaftaran Anda telah dikonfirmasi secara otomatis. Nama Anda kini muncul di daftar peserta.</p>
                         <div className="flex flex-col gap-4">
                             <button 
                                 onClick={() => setSuccess(false)}
