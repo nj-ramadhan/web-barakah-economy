@@ -32,7 +32,9 @@ const EventSubmissionPage = () => {
     const [formFields, setFormFields] = useState([]);
     const [files, setFiles] = useState({
         header_image: null,
+        header_image_full: null,
         thumbnail: null,
+        thumbnail_full: null,
         documentation_images: [], // New images to upload
     });
     const [existingDocImages, setExistingDocImages] = useState([]); // Images already on server
@@ -65,6 +67,10 @@ const EventSubmissionPage = () => {
                         price_type: d.price_type || 'free',
                         price_fixed: d.price_fixed || 0,
                         documentation_link: d.documentation_link || '',
+                        header_image: d.header_image,
+                        header_image_full: d.header_image_full,
+                        thumbnail: d.thumbnail,
+                        thumbnail_full: d.thumbnail_full,
                     });
                     
                     // Populate form fields
@@ -109,8 +115,22 @@ const EventSubmissionPage = () => {
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
-    const openPreview = (fileOrUrl) => {
+    const openPreview = (fileOrUrl, type) => {
         if (!fileOrUrl) return;
+
+        // If we have a full version available in state, use it
+        if (type && files[`${type}_full`]) {
+            const fullUrl = URL.createObjectURL(files[`${type}_full`]);
+            window.open(fullUrl, '_blank');
+            return;
+        }
+
+        // Check if we are editing and have a full version from backend
+        const eventData = formData; // Actually we might need the original event object
+        // For simplicity, let's just check if the URL contains 'headers/' or 'thumbnails/' 
+        // and try to guess the 'full' URL if possible, or just use what's passed.
+        // Actually, better to pass the specific field.
+        
         const url = fileOrUrl instanceof File ? URL.createObjectURL(fileOrUrl) : fileOrUrl;
         window.open(url, '_blank');
     };
@@ -118,6 +138,9 @@ const EventSubmissionPage = () => {
     const handleFileSelect = (e, type) => {
         const file = e.target.files[0];
         if (file) {
+            // Store original file immediately
+            setFiles(prev => ({ ...prev, [`${type}_full`]: file }));
+            
             const reader = new FileReader();
             reader.onload = () => {
                 setCropper({ active: true, image: reader.result, type });
@@ -216,7 +239,9 @@ const EventSubmissionPage = () => {
             if (formData[key]) data.append(key, formData[key]);
         });
         if (files.header_image) data.append('header_image', files.header_image);
+        if (files.header_image_full) data.append('header_image_full', files.header_image_full);
         if (files.thumbnail) data.append('thumbnail', files.thumbnail);
+        if (files.thumbnail_full) data.append('thumbnail_full', files.thumbnail_full);
         
         // Append form fields as JSON string (backend will handle)
         if (formFields.length > 0) {
@@ -399,7 +424,7 @@ const EventSubmissionPage = () => {
                                     <div className="flex items-center gap-3">
                                         <div 
                                             className={`w-16 h-10 bg-gray-100 rounded-lg overflow-hidden border border-gray-200 ${files.header_image ? 'cursor-pointer' : ''}`}
-                                            onClick={() => files.header_image && openPreview(files.header_image)}
+                                            onClick={() => (files.header_image || formData.header_image) && openPreview(files.header_image || formData.header_image, 'header_image')}
                                             title={files.header_image ? 'Klik untuk lihat detail' : ''}
                                         >
                                             {files.header_image ? (
@@ -425,7 +450,7 @@ const EventSubmissionPage = () => {
                                     <div className="flex items-center gap-3">
                                         <div 
                                             className={`w-10 h-10 bg-gray-100 rounded-lg overflow-hidden border border-gray-200 ${files.thumbnail ? 'cursor-pointer' : ''}`}
-                                            onClick={() => files.thumbnail && openPreview(files.thumbnail)}
+                                            onClick={() => (files.thumbnail || formData.thumbnail) && openPreview(files.thumbnail || formData.thumbnail, 'thumbnail')}
                                             title={files.thumbnail ? 'Klik untuk lihat detail' : ''}
                                         >
                                             {files.thumbnail ? (

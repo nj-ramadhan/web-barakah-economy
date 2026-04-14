@@ -174,7 +174,7 @@ const EventRegistrationSubmissionPage = () => {
                     </div>
                 </div>
                 
-                <div className="mt-8 flex flex-wrap justify-center gap-4">
+                <div className="mt-8 flex flex-wrap justify-center gap-4 no-print">
                     <button 
                         onClick={handleExportCsv}
                         disabled={isExporting}
@@ -201,6 +201,76 @@ const EventRegistrationSubmissionPage = () => {
                     </button>
                 </div>
             </div>
+
+            {/* PRINT COMPONENT (Hidden in Browser) */}
+            <div className="print-only hidden">
+                <div className="mb-8 border-b-2 border-gray-900 pb-6 text-center">
+                    <h1 className="text-2xl font-black uppercase tracking-tighter">Daftar Hadir Event</h1>
+                    <h2 className="text-xl font-bold text-gray-700 mt-2">{event?.title}</h2>
+                    <p className="text-sm mt-1">{new Date(event?.start_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })} | {event?.location}</p>
+                </div>
+                
+                <table className="w-full border-collapse">
+                    <thead>
+                        <tr className="bg-gray-100 border-2 border-gray-900">
+                            <th className="p-2 text-[10px] font-black uppercase border border-gray-900 w-8">No</th>
+                            <th className="p-2 text-[10px] font-black uppercase border border-gray-900">Nama Lengkap</th>
+                            <th className="p-2 text-[10px] font-black uppercase border border-gray-900">Identitas / Instansi</th>
+                            <th className="p-2 text-[10px] font-black uppercase border border-gray-900 w-32">Paraf / Tanda Tangan</th>
+                            <th className="p-2 text-[10px] font-black uppercase border border-gray-900">Keterangan</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {registrations.map((reg, idx) => (
+                            <tr key={reg.id} className="border border-gray-900">
+                                <td className="p-2 text-[10px] text-center border border-gray-900">{idx + 1}</td>
+                                <td className="p-2 text-[10px] border border-gray-900 font-bold">
+                                    {reg.guest_name || reg.user_details?.profile?.name_full || reg.user_details?.username}
+                                </td>
+                                <td className="p-2 text-[10px] border border-gray-900">
+                                    {reg.guest_email || reg.user_details?.email}
+                                    {Object.keys(reg.responses).map(key => {
+                                        const field = event?.form_fields?.find(f => f.id.toString() === key);
+                                        if (field && (field.label.toLowerCase().includes('instansi') || field.label.toLowerCase().includes('asal'))) {
+                                            return ` - ${reg.responses[key]}`;
+                                        }
+                                        return null;
+                                    })}
+                                </td>
+                                <td className="p-2 border border-gray-900 h-10"></td>
+                                <td className="p-2 border border-gray-900"></td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+                
+                <div className="mt-12 flex justify-between px-10">
+                    <div className="text-center">
+                        <p className="text-[10px] mb-12">Panitia Pelaksana,</p>
+                        <div className="w-32 border-b border-gray-900 mx-auto"></div>
+                    </div>
+                    <div className="text-center">
+                        <p className="text-[10px] mb-12">Ketua Penyelenggara,</p>
+                        <div className="w-32 border-b border-gray-900 mx-auto"></div>
+                    </div>
+                </div>
+
+                <div className="mt-8 text-[8px] text-gray-400 italic text-center">
+                    Dicetak secara otomatis melalui Barakah Economy System pada {new Date().toLocaleString('id-ID')}
+                </div>
+            </div>
+
+            <style>{`
+                @media print {
+                    .no-print, header, footer, .navigation-button { display: none !important; }
+                    .print-only { display: block !important; }
+                    body { background: white !important; }
+                    .body { padding: 0 !important; margin: 0 !important; }
+                    table { border-spacing: 0; }
+                    th, td { border: 1px solid #000 !important; }
+                    @page { margin: 1.5cm; }
+                }
+            `}</style>
 
             {/* Blast Modal */}
             {showBlastModal && (

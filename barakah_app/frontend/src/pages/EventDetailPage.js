@@ -177,6 +177,7 @@ const EventDetailPage = () => {
             <NavigationButton />
         </div>
     );
+    const isCompleted = event?.end_date ? new Date() > new Date(event.end_date) : false;
 
     return (
         <div className="body bg-gray-50 min-h-screen">
@@ -190,7 +191,9 @@ const EventDetailPage = () => {
                 <img 
                     src={event.header_image || '/images/event-header-default.jpg'} 
                     alt={event.title} 
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-cover cursor-pointer"
+                    onClick={() => window.open(event.header_image_full || event.header_image || '/images/event-header-default.jpg', '_blank')}
+                    title="Klik untuk lihat gambar asli"
                     onError={(e) => { e.target.onerror = null; e.target.src = '/images/event-header-default.jpg'; }}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
@@ -207,7 +210,12 @@ const EventDetailPage = () => {
                             {event.user_registration ? (
                                 <div className="bg-white/20 backdrop-blur-md border border-white/30 text-white px-8 py-4 rounded-2xl font-extrabold text-sm uppercase tracking-wider flex items-center gap-3 w-full sm:w-auto justify-center cursor-default shadow-lg">
                                     <span className="material-icons text-xl text-green-400">check_circle</span>
-                                    Anda Sudah Terdaftar
+                                    Sudah Daftar
+                                </div>
+                            ) : isCompleted ? (
+                                <div className="bg-white/10 backdrop-blur-md border border-white/20 text-gray-300 px-8 py-4 rounded-2xl font-extrabold text-sm uppercase tracking-wider flex items-center gap-3 w-full sm:w-auto justify-center cursor-not-allowed shadow-lg">
+                                    <span className="material-icons text-xl">event_busy</span>
+                                    Event Selesai
                                 </div>
                             ) : (
                                 <button 
@@ -362,7 +370,21 @@ const EventDetailPage = () => {
                                     </div>
 
                                     {/* Photo Grid 3x3 */}
-                                    {!event.documentation_images || event.documentation_images.length === 0 ? (
+                                    {!event.user_registration || event.user_registration.status !== 'approved' ? (
+                                        <div className="bg-gray-50/50 border-2 border-dashed border-gray-200 rounded-[2rem] p-12 text-center animate-fade-in">
+                                            <div className="w-20 h-20 bg-white rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-sm">
+                                                <span className="material-icons text-4xl text-gray-300">lock</span>
+                                            </div>
+                                            <h3 className="text-xl font-extrabold text-gray-900 mb-2">Dokumentasi Terkunci</h3>
+                                            <p className="text-gray-500 text-sm max-w-xs mx-auto mb-8 font-medium">Selesaikan pendaftaran dan dapatkan persetujuan admin untuk mengakses dokumentasi event ini.</p>
+                                            <button 
+                                                onClick={() => !event.user_registration && setShowRegisterModal(true)}
+                                                className={`px-8 py-3 rounded-2xl text-xs font-black uppercase tracking-widest transition shadow-lg ${!event.user_registration ? 'bg-green-600 text-white hover:bg-green-700' : 'bg-gray-200 text-gray-500 cursor-default'}`}
+                                            >
+                                                {event.user_registration ? 'Menunggu Persetujuan' : 'Daftar Sekarang'}
+                                            </button>
+                                        </div>
+                                    ) : !event.documentation_images || event.documentation_images.length === 0 ? (
                                         <div className="flex flex-col items-center justify-center py-20 text-center">
                                             <span className="material-icons text-8xl text-gray-100 mb-4">photo_library</span>
                                             <h3 className="text-xl font-bold text-gray-900 mb-2">Dokumentasi Belum Tersedia</h3>
@@ -427,6 +449,10 @@ const EventDetailPage = () => {
                             {event.user_registration ? (
                                 <div className="w-full bg-white/10 text-white py-4 rounded-2xl text-[10px] font-extrabold uppercase tracking-[0.2em] relative z-10 border border-white/20 text-center">
                                     SUDAH DAFTAR
+                                </div>
+                            ) : isCompleted ? (
+                                <div className="w-full bg-white/5 text-gray-500 py-4 rounded-2xl text-[10px] font-extrabold uppercase tracking-[0.2em] relative z-10 border border-white/10 text-center">
+                                    EVENT SELESAI
                                 </div>
                             ) : (
                                 <button

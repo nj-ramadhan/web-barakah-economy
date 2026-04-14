@@ -19,7 +19,9 @@ class Event(models.Model):
     short_description = models.TextField(blank=True, max_length=500)
     
     header_image = models.ImageField(upload_to='events/headers/', blank=True, null=True)
+    header_image_full = models.ImageField(upload_to='events/headers/full/', blank=True, null=True)
     thumbnail = models.ImageField(upload_to='events/thumbnails/', blank=True, null=True)
+    thumbnail_full = models.ImageField(upload_to='events/thumbnails/full/', blank=True, null=True)
     
     start_date = models.DateTimeField()
     end_date = models.DateTimeField(blank=True, null=True)

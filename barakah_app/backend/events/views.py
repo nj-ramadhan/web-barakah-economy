@@ -377,7 +377,7 @@ class EventViewSet(viewsets.ModelViewSet):
         writer = csv.writer(response)
         
         # CSV Header
-        header = ['Waktu Daftar', 'Nama', 'Email', 'Status']
+        header = ['Waktu Daftar', 'ID Peserta', 'Nama', 'Email', 'Status']
         for field in form_fields:
             header.append(field.label)
         writer.writerow(header)
@@ -387,6 +387,9 @@ class EventViewSet(viewsets.ModelViewSet):
             row = []
             # Registration Time
             row.append(reg.created_at.strftime('%Y-%m-%d %H:%M:%S'))
+
+            # ID Peserta
+            row.append(reg.user.id if reg.user else "-")
             
             # Name
             name = reg.guest_name
