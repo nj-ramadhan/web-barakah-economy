@@ -22,7 +22,7 @@ class EventViewSet(viewsets.ModelViewSet):
     ordering_fields = ['start_date', 'created_at']
 
     def get_permissions(self):
-        if self.action in ['list', 'retrieve', 'landing', 'register']:
+        if self.action in ['list', 'retrieve', 'landing', 'register', 'participants']:
             return [permissions.AllowAny()]
         return [permissions.IsAuthenticated()]
 
