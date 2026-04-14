@@ -23,7 +23,7 @@ const EventRegistrationSubmissionPage = () => {
                 // Get event detail to know the fields
                 const eventRes = await getEventDetail(slug);
                 setEvent(eventRes.data);
-                
+
                 // Get registrations for this event
                 const regRes = await getEventRegistrations({ event: eventRes.data.id });
                 setRegistrations(regRes.data);
@@ -59,9 +59,9 @@ const EventRegistrationSubmissionPage = () => {
 
     const handleBlast = async () => {
         if (!blastMessage.trim() || isBlasting) return;
-        
+
         if (!window.confirm('Kirim pesan WhatsApp ke semua peserta yang terdaftar?')) return;
-        
+
         setIsBlasting(true);
         try {
             const res = await blastEventWhatsapp(slug, blastMessage);
@@ -121,7 +121,7 @@ const EventRegistrationSubmissionPage = () => {
                                         <tr key={reg.id} className="hover:bg-gray-50/50 transition-colors">
                                             <td className="p-5 text-xs text-gray-500">
                                                 {new Date(reg.created_at).toLocaleDateString('id-ID')}
-                                                <br/>
+                                                <br />
                                                 {new Date(reg.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
                                             </td>
                                             <td className="p-5">
@@ -140,7 +140,7 @@ const EventRegistrationSubmissionPage = () => {
                                             {event?.form_fields?.map(field => {
                                                 const value = reg.responses[field.id];
                                                 const file = reg.uploaded_files?.find(f => f.field === field.id);
-                                                
+
                                                 return (
                                                     <td key={field.id} className="p-5 text-sm text-gray-600">
                                                         {field.field_type === 'file' && file ? (
@@ -158,11 +158,10 @@ const EventRegistrationSubmissionPage = () => {
                                                 );
                                             })}
                                             <td className="p-5 text-right">
-                                                <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
-                                                    reg.status === 'approved' ? 'bg-green-100 text-green-700' :
-                                                    reg.status === 'rejected' ? 'bg-red-100 text-red-700' :
-                                                    'bg-orange-100 text-orange-700'
-                                                }`}>
+                                                <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${reg.status === 'approved' ? 'bg-green-100 text-green-700' :
+                                                        reg.status === 'rejected' ? 'bg-red-100 text-red-700' :
+                                                            'bg-orange-100 text-orange-700'
+                                                    }`}>
                                                     {reg.status}
                                                 </span>
                                             </td>
@@ -173,9 +172,9 @@ const EventRegistrationSubmissionPage = () => {
                         </table>
                     </div>
                 </div>
-                
+
                 <div className="mt-8 flex flex-wrap justify-center gap-4 no-print">
-                    <button 
+                    <button
                         onClick={handleExportCsv}
                         disabled={isExporting}
                         className="flex items-center justify-center gap-2 bg-white text-green-700 border-2 border-green-700 px-6 py-3 rounded-2xl text-xs font-bold shadow-sm hover:bg-green-50 transition disabled:opacity-50"
@@ -183,8 +182,8 @@ const EventRegistrationSubmissionPage = () => {
                         <span className="material-icons text-sm">{isExporting ? 'hourglass_top' : 'download'}</span>
                         {isExporting ? 'MENGEKSPOR...' : 'EKSPOR DATA (CSV)'}
                     </button>
-                    
-                    <button 
+
+                    <button
                         onClick={() => setShowBlastModal(true)}
                         className="flex items-center justify-center gap-2 bg-green-700 text-white px-6 py-3 rounded-2xl text-xs font-bold shadow-xl hover:bg-green-800 transition"
                     >
@@ -192,13 +191,6 @@ const EventRegistrationSubmissionPage = () => {
                         BLAST PENGINGAT (WA)
                     </button>
 
-                    <button 
-                        onClick={() => window.print()}
-                        className="flex items-center justify-center gap-2 bg-gray-900 text-white px-6 py-3 rounded-2xl text-xs font-bold shadow-xl hover:bg-gray-800 transition"
-                    >
-                        <span className="material-icons text-sm">print</span>
-                        CETAK LAPORAN
-                    </button>
                 </div>
             </div>
 
@@ -234,15 +226,15 @@ const EventRegistrationSubmissionPage = () => {
                         {new Date(event?.start_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })} | {event?.location}
                     </div>
                 </div>
-                
+
                 <table>
                     <thead>
                         <tr>
-                            <th style={{width: '40px'}}>NO</th>
+                            <th style={{ width: '40px' }}>NO</th>
                             <th>NAMA LENGKAP</th>
                             <th>IDENTITAS / INSTANSI</th>
-                            <th style={{width: '180px'}}>PARAF / TANDA TANGAN</th>
-                            <th style={{width: '150px'}}>KETERANGAN</th>
+                            <th style={{ width: '180px' }}>PARAF / TANDA TANGAN</th>
+                            <th style={{ width: '150px' }}>KETERANGAN</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -256,14 +248,14 @@ const EventRegistrationSubmissionPage = () => {
                             }).filter(v => v).join(', ');
 
                             return (
-                                <tr key={reg.id} style={{height: '50px'}}>
-                                    <td style={{textAlign: 'center'}}>{idx + 1}</td>
-                                    <td style={{fontWeight: 'bold'}}>
+                                <tr key={reg.id} style={{ height: '50px' }}>
+                                    <td style={{ textAlign: 'center' }}>{idx + 1}</td>
+                                    <td style={{ fontWeight: 'bold' }}>
                                         {reg.guest_name || reg.user_details?.profile?.name_full || reg.user_details?.username}
                                     </td>
                                     <td>
                                         <div>{reg.guest_email || reg.user_details?.email}</div>
-                                        {instansi && <div style={{fontSize: '9px', fontStyle: 'italic'}}>{instansi}</div>}
+                                        {instansi && <div style={{ fontSize: '9px', fontStyle: 'italic' }}>{instansi}</div>}
                                     </td>
                                     <td></td>
                                     <td></td>
@@ -272,19 +264,19 @@ const EventRegistrationSubmissionPage = () => {
                         })}
                     </tbody>
                 </table>
-                
+
                 <div className="sign-area">
                     <div className="sign-box">
-                        <p style={{fontSize: '10pt'}}>Panitia Pelaksana,</p>
+                        <p style={{ fontSize: '10pt' }}>Panitia Pelaksana,</p>
                         <div className="sign-line"></div>
                     </div>
                     <div className="sign-box">
-                        <p style={{fontSize: '10pt'}}>Ketua Penyelenggara,</p>
+                        <p style={{ fontSize: '10pt' }}>Ketua Penyelenggara,</p>
                         <div className="sign-line"></div>
                     </div>
                 </div>
 
-                <div style={{marginTop: '40px', fontSize: '8pt', textAlign: 'center', fontStyle: 'italic', color: '#666'}}>
+                <div style={{ marginTop: '40px', fontSize: '8pt', textAlign: 'center', fontStyle: 'italic', color: '#666' }}>
                     Dicetak secara otomatis melalui Barakah Economy System pada {new Date().toLocaleString('id-ID')}
                 </div>
             </div>
@@ -307,10 +299,10 @@ const EventRegistrationSubmissionPage = () => {
                             <p className="text-xs text-gray-500 font-medium mb-4 italic">
                                 Pesan akan dikirim ke semua peserta yang <span className="text-green-600 font-bold">terdaftar</span>.
                             </p>
-                            
+
                             <div className="mb-4">
                                 <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Isi Pesan</label>
-                                <textarea 
+                                <textarea
                                     className="w-full h-32 p-4 bg-gray-50 border border-gray-100 rounded-2xl text-sm focus:ring-2 focus:ring-green-500 outline-none transition"
                                     value={blastMessage}
                                     onChange={(e) => setBlastMessage(e.target.value)}
@@ -322,8 +314,8 @@ const EventRegistrationSubmissionPage = () => {
                                     <code className="text-[9px] bg-indigo-50 text-indigo-700 px-1 py-0.5 rounded font-bold">{'{event}'}</code>
                                 </div>
                             </div>
-                            
-                            <button 
+
+                            <button
                                 onClick={handleBlast}
                                 disabled={isBlasting || !blastMessage.trim()}
                                 className="w-full bg-green-700 text-white font-black py-4 rounded-2xl shadow-xl shadow-green-700/20 hover:bg-green-800 transition disabled:opacity-50 flex items-center justify-center gap-2"
