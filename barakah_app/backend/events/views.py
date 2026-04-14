@@ -37,9 +37,21 @@ class EventViewSet(viewsets.ModelViewSet):
             event.save() # This triggers the documentation signal
 
     def get_permissions(self):
+        # Public actions
         if self.action in ['list', 'retrieve', 'landing', 'register', 'participants']:
             return [permissions.AllowAny()]
-        return [permissions.IsAuthenticated()]
+        
+        # CRUD / Management actions
+        # User must be authenticated
+        if not self.request.user or not self.request.user.is_authenticated:
+            return [permissions.IsAuthenticated()]
+            
+        # Check for menu access 'admin_events' or role 'admin'
+        if self.request.user.has_menu_access('admin_events'):
+            return [permissions.IsAuthenticated()]
+            
+        # Deny others
+        return [permissions.IsAdminUser()]
 
     def list(self, request, *args, **kwargs):
         self._auto_complete_expired_events()

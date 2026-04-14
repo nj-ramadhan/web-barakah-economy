@@ -234,10 +234,22 @@ const EventSubmissionPage = () => {
 
         const data = new FormData();
         Object.keys(formData).forEach(key => {
-            if (formData[key]) data.append(key, formData[key]);
+            // Only append non-file fields that are not null/empty
+            // Skip thumbnail and header_image if they are just strings (URLs)
+            if (key !== 'thumbnail' && key !== 'header_image' && key !== 'thumbnail_full' && key !== 'header_image_full') {
+                if (formData[key] !== null && formData[key] !== undefined) {
+                    data.append(key, formData[key]);
+                }
+            }
         });
-        if (files.thumbnail) data.append('thumbnail', files.thumbnail);
-        if (files.thumbnail_full) data.append('thumbnail_full', files.thumbnail_full);
+        
+        // Only append files if they are actual File objects (newly selected/cropped)
+        if (files.thumbnail instanceof File) {
+            data.append('thumbnail', files.thumbnail);
+        }
+        if (files.thumbnail_full instanceof File) {
+            data.append('thumbnail_full', files.thumbnail_full);
+        }
         
         // Append form fields as JSON string (backend will handle)
         if (formFields.length > 0) {

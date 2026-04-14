@@ -119,8 +119,8 @@ const ImageCropperModal = ({
                   type="button"
                   onClick={() => setSelectedAspect(ratio.value)}
                   className={`flex-1 flex flex-col items-center gap-1.5 py-4 px-2 rounded-2xl border-2 transition-all duration-300 ${Math.abs(selectedAspect - ratio.value) < 0.01
-                      ? 'bg-green-50 border-green-500 text-green-700 shadow-sm'
-                      : 'bg-white border-gray-100 text-gray-400 hover:border-gray-200 hover:bg-gray-50'
+                    ? 'bg-green-50 border-green-500 text-green-700 shadow-sm'
+                    : 'bg-white border-gray-100 text-gray-400 hover:border-gray-200 hover:bg-gray-50'
                     }`}
                 >
                   <span className="material-icons text-xl">{ratio.icon}</span>
@@ -139,18 +139,6 @@ const ImageCropperModal = ({
               Batal
             </button>
             <div className="flex gap-3">
-              <button
-                onClick={async () => {
-                  // Get the original image as blob/file
-                  const response = await fetch(image);
-                  const blob = await response.blob();
-                  onCropComplete(blob);
-                }}
-                type="button"
-                className="px-6 py-2.5 rounded-xl text-sm font-bold text-green-700 bg-green-50 hover:bg-green-100 transition"
-              >
-                Gunakan Asli
-              </button>
               <button
                 onClick={handleDone}
                 type="button"

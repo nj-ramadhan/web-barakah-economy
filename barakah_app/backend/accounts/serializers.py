@@ -31,6 +31,10 @@ class UserAdminSerializer(serializers.ModelSerializer):
     label_ids = serializers.PrimaryKeyRelatedField(
         many=True, queryset=UserLabel.objects.all(), write_only=True, required=False, source='labels'
     )
+    accessible_menus = serializers.SerializerMethodField()
+
+    def get_accessible_menus(self, obj):
+        return obj.get_all_accessible_menus()
 
     class Meta:
         model = User
