@@ -240,56 +240,107 @@ const EventDetailPage = () => {
             <Header />
 
             {/* Header / Hero Section */}
-            <div className="relative h-72 sm:h-[450px] w-full overflow-hidden">
-                <img 
-                    src={event.header_image || event.thumbnail || '/images/event-header-default.jpg'} 
-                    alt={event.title} 
-                    className="w-full h-full object-cover cursor-pointer"
-                    onClick={() => window.open(event.header_image_full || event.header_image || event.thumbnail_full || event.thumbnail || '/images/event-header-default.jpg', '_blank')}
-                    title="Klik untuk lihat gambar asli"
-                    onError={(e) => { e.target.onerror = null; e.target.src = '/images/event-header-default.jpg'; }}
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
-                <div className="absolute bottom-0 left-0 w-full p-6 sm:p-12 text-white">
-                    <div className="max-w-6xl mx-auto flex flex-col sm:flex-row sm:items-end justify-between gap-6">
-                        <div className="max-w-3xl">
-                            <div className="flex items-center gap-2 mb-4">
-                                <span className="px-3 py-1 bg-green-600 rounded-full text-[10px] font-bold uppercase tracking-widest inline-block shadow-lg shadow-green-900/40">Event</span>
-                                <span className="px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-[10px] font-bold uppercase tracking-widest inline-block">{event.status}</span>
+            <div className="relative w-full">
+                {/* Image Container */}
+                <div className="relative h-auto sm:h-[450px] w-full overflow-hidden bg-gray-100 flex items-center justify-center">
+                    <img 
+                        src={event.header_image || event.thumbnail || '/images/event-header-default.jpg'} 
+                        alt={event.title} 
+                        className="w-full h-auto sm:h-full sm:object-cover"
+                        onError={(e) => { e.target.onerror = null; e.target.src = '/images/event-header-default.jpg'; }}
+                    />
+                    {/* Desktop Overlay Gradient */}
+                    <div className="hidden sm:block absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
+                    
+                    {/* Desktop Info Overlay */}
+                    <div className="hidden sm:block absolute bottom-0 left-0 w-full p-12 text-white">
+                        <div className="max-w-6xl mx-auto flex sm:items-end justify-between gap-6">
+                            <div className="max-w-3xl">
+                                <div className="flex items-center gap-2 mb-4">
+                                    <span className="px-3 py-1 bg-green-600 rounded-full text-[10px] font-bold uppercase tracking-widest inline-block shadow-lg shadow-green-900/40">Event</span>
+                                    <span className="px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-[10px] font-bold uppercase tracking-widest inline-block">{event.status}</span>
+                                </div>
+                                <h1 className="text-2xl sm:text-5xl font-extrabold leading-tight drop-shadow-lg">{event.title}</h1>
                             </div>
-                            <h1 className="text-2xl sm:text-5xl font-extrabold leading-tight drop-shadow-lg">{event.title}</h1>
-                        </div>
-                        <div className="shrink-0 pb-2">
-                            {event.user_registration ? (
-                                <div className="bg-white/20 backdrop-blur-md border border-white/30 text-white px-8 py-4 rounded-2xl font-extrabold text-sm uppercase tracking-wider flex items-center gap-3 w-full sm:w-auto justify-center cursor-default shadow-lg">
-                                    <span className="material-icons text-xl text-green-400">check_circle</span>
-                                    Sudah Daftar
-                                </div>
-                            ) : isCompleted ? (
-                                <div className="bg-white/10 backdrop-blur-md border border-white/20 text-gray-300 px-8 py-4 rounded-2xl font-extrabold text-sm uppercase tracking-wider flex items-center gap-3 w-full sm:w-auto justify-center cursor-not-allowed shadow-lg">
-                                    <span className="material-icons text-xl">event_busy</span>
-                                    Event Selesai
-                                </div>
-                            ) : (
-                                <button 
-                                    onClick={() => setShowRegisterModal(true)}
-                                    className="bg-green-600 hover:bg-green-700 text-white px-8 py-4 rounded-2xl font-extrabold text-sm uppercase tracking-wider shadow-xl shadow-green-900/30 transition active:scale-[0.97] flex items-center gap-3 w-full sm:w-auto justify-center"
-                                >
-                                    <span className="material-icons text-xl">person_add</span>
-                                    Ikuti Event Ini
-                                </button>
-                            )}
+                            <div className="shrink-0 pb-2 flex items-center gap-3">
+                                {event.user_registration ? (
+                                    <div className="bg-white/20 backdrop-blur-md border border-white/30 text-white px-8 py-4 rounded-2xl font-extrabold text-sm uppercase tracking-wider flex items-center gap-3 justify-center cursor-default shadow-lg">
+                                        <span className="material-icons text-xl text-green-400">check_circle</span>
+                                        Sudah Daftar
+                                    </div>
+                                ) : isCompleted ? (
+                                    <div className="bg-white/10 backdrop-blur-md border border-white/20 text-gray-300 px-8 py-4 rounded-2xl font-extrabold text-sm uppercase tracking-wider flex items-center gap-3 justify-center cursor-not-allowed shadow-lg">
+                                        <span className="material-icons text-xl">event_busy</span>
+                                        Event Selesai
+                                    </div>
+                                ) : (
+                                    <button 
+                                        onClick={() => setShowRegisterModal(true)}
+                                        className="bg-green-600 hover:bg-green-700 text-white px-8 py-4 rounded-2xl font-extrabold text-sm uppercase tracking-wider shadow-xl shadow-green-900/30 transition active:scale-[0.97] flex items-center gap-3 justify-center"
+                                    >
+                                        <span className="material-icons text-xl">person_add</span>
+                                        Ikuti Event Ini
+                                    </button>
+                                )}
 
-                            {/* Share Button */}
-                            <button 
-                                onClick={handleShare}
-                                className="mt-3 sm:mt-0 sm:ml-3 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/30 text-white px-6 py-4 rounded-2xl font-extrabold text-sm uppercase tracking-wider transition active:scale-[0.97] flex items-center gap-3 w-full sm:w-auto justify-center group"
-                                title="Bagikan Event"
-                            >
-                                <span className={`material-icons text-xl transition-transform group-hover:rotate-12 ${isSharing ? 'animate-pulse' : ''}`}>share</span>
-                                {isSharing ? 'Berbagi...' : 'Bagikan'}
-                            </button>
+                                <button 
+                                    onClick={handleShare}
+                                    className="bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/30 text-white px-6 py-4 rounded-2xl font-extrabold text-sm uppercase tracking-wider transition active:scale-[0.97] flex items-center gap-3 justify-center group"
+                                    title="Bagikan Event"
+                                >
+                                    <span className={`material-icons text-xl transition-transform group-hover:rotate-12 ${isSharing ? 'animate-pulse' : ''}`}>share</span>
+                                    {isSharing ? 'Berbagi...' : 'Bagikan'}
+                                </button>
+                            </div>
                         </div>
+                    </div>
+
+                    {/* View Full Image Button - Visible on Desktop */}
+                    <button 
+                        onClick={() => window.open(event.header_image_full || event.header_image || event.thumbnail_full || event.thumbnail || '/images/event-header-default.jpg', '_blank')}
+                        className="hidden sm:flex absolute top-10 right-10 bg-black/40 hover:bg-black/60 backdrop-blur-md text-white px-6 py-3 rounded-2xl border border-white/20 items-center gap-3 text-xs font-bold transition-all shadow-2xl group"
+                    >
+                        <span className="material-icons text-lg group-hover:scale-110 transition-transform">zoom_out_map</span>
+                        Lihat Gambar Full
+                    </button>
+                </div>
+
+                {/* Mobile Info & Actions */}
+                <div className="sm:hidden p-6 bg-white border-b border-gray-100 shadow-sm relative z-10">
+                    <div className="flex items-center gap-2 mb-3">
+                        <span className="px-3 py-1 bg-green-600 rounded-full text-[8px] font-bold uppercase tracking-widest text-white">Event</span>
+                        <span className="px-3 py-1 bg-gray-100 rounded-full text-[8px] font-bold uppercase tracking-widest text-gray-500">{event.status}</span>
+                    </div>
+                    <h1 className="text-2xl font-extrabold text-gray-900 leading-tight mb-6">{event.title}</h1>
+                    
+                    <div className="flex flex-col gap-3">
+                        {event.user_registration ? (
+                            <div className="w-full bg-green-50 text-green-700 py-3.5 rounded-xl font-bold text-xs uppercase tracking-widest flex items-center gap-3 justify-center border border-green-100">
+                                <span className="material-icons text-lg">check_circle</span>
+                                Sudah Terdaftar
+                            </div>
+                        ) : isCompleted ? (
+                            <div className="w-full bg-gray-50 text-gray-400 py-3.5 rounded-xl font-bold text-xs uppercase tracking-widest flex items-center gap-3 justify-center border border-gray-100">
+                                <span className="material-icons text-lg">event_busy</span>
+                                Event Telah Selesai
+                            </div>
+                        ) : (
+                            <button 
+                                onClick={() => setShowRegisterModal(true)}
+                                className="w-full bg-green-700 text-white py-3.5 rounded-xl font-bold text-xs uppercase tracking-widest shadow-lg shadow-green-100 flex items-center gap-3 justify-center active:scale-[0.98] transition"
+                            >
+                                <span className="material-icons text-lg">person_add</span>
+                                Ikuti Event Ini
+                            </button>
+                        )}
+                        
+                        <button 
+                            onClick={handleShare}
+                            className="w-full bg-white text-gray-700 py-3.5 rounded-xl font-bold text-xs uppercase tracking-widest border border-gray-200 flex items-center gap-3 justify-center active:scale-[0.98] transition"
+                        >
+                            <span className="material-icons text-lg">share</span>
+                            Bagikan Event
+                        </button>
                     </div>
                 </div>
             </div>

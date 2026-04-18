@@ -1321,11 +1321,19 @@ const Home = () => {
             {onlyPartners.map(partner => (
               <SwiperSlide key={partner.id}>
                 <div 
-                  onClick={() => setSelectedPartner(partner)}
-                  className="flex flex-col items-center justify-center p-4 grayscale hover:grayscale-0 transition duration-300 cursor-pointer"
+                  onClick={() => {
+                    if (partner.link) {
+                      window.open(partner.link, '_blank');
+                    } else {
+                      setSelectedPartner(partner);
+                    }
+                  }}
+                  className="flex flex-col items-center justify-center p-4 grayscale hover:grayscale-0 transition duration-300 cursor-pointer group"
                 >
-                  <img src={getMediaUrl(partner.logo)} alt={partner.name} className="h-12 object-contain mb-2" />
-                  <span className="text-[10px] font-bold text-gray-400">{partner.name}</span>
+                  <div className="h-16 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
+                    <img src={getMediaUrl(partner.logo)} alt={partner.name} className="h-full object-contain" title={partner.link ? 'Klik untuk buka link' : 'Klik untuk lihat detail'} />
+                  </div>
+                  <span className="text-[10px] font-bold text-gray-400 group-hover:text-green-600 transition-colors uppercase tracking-widest">{partner.name}</span>
                 </div>
               </SwiperSlide>
             ))}
@@ -1355,11 +1363,19 @@ const Home = () => {
             {onlyMitra.map(mitra => (
               <SwiperSlide key={mitra.id}>
                 <div 
-                  onClick={() => setSelectedPartner(mitra)}
-                  className="flex flex-col items-center justify-center p-4 grayscale hover:grayscale-0 transition duration-300 cursor-pointer"
+                  onClick={() => {
+                    if (mitra.link) {
+                      window.open(mitra.link, '_blank');
+                    } else {
+                      setSelectedPartner(mitra);
+                    }
+                  }}
+                  className="flex flex-col items-center justify-center p-4 grayscale hover:grayscale-0 transition duration-300 cursor-pointer group"
                 >
-                  <img src={getMediaUrl(mitra.logo)} alt={mitra.name} className="h-12 object-contain mb-2" />
-                  <span className="text-[10px] font-bold text-gray-400">{mitra.name}</span>
+                  <div className="h-16 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
+                    <img src={getMediaUrl(mitra.logo)} alt={mitra.name} className="h-full object-contain" title={mitra.link ? 'Klik untuk buka link' : 'Klik untuk lihat detail'} />
+                  </div>
+                  <span className="text-[10px] font-bold text-gray-400 group-hover:text-green-600 transition-colors uppercase tracking-widest">{mitra.name}</span>
                 </div>
               </SwiperSlide>
             ))}
@@ -1489,12 +1505,23 @@ const Home = () => {
                 </span>
                 <h3 className="text-2xl font-bold text-gray-900">{selectedPartner.name}</h3>
               </div>
-              <div className="text-gray-600 leading-relaxed text-sm whitespace-pre-line">
+              <div className="text-gray-600 leading-relaxed text-sm whitespace-pre-line mb-6">
                 {selectedPartner.description || 'Belum ada deskripsi untuk partner ini.'}
               </div>
+              {selectedPartner.link && (
+                <a 
+                  href={selectedPartner.link} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="w-full flex items-center justify-center gap-2 py-4 bg-green-700 text-white rounded-2xl text-sm font-bold shadow-lg shadow-green-100 hover:bg-green-800 transition mb-3"
+                >
+                  <span className="material-icons text-lg">public</span>
+                  Kunjungi Website
+                </a>
+              )}
               <button
                 onClick={() => setSelectedPartner(null)}
-                className="w-full mt-8 py-3 bg-gray-900 text-white rounded-xl text-sm font-bold hover:bg-gray-800 transition"
+                className="w-full py-3 bg-gray-100 text-gray-600 rounded-2xl text-sm font-bold hover:bg-gray-200 transition"
               >
                 Tutup
               </button>

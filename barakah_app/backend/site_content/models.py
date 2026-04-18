@@ -12,6 +12,7 @@ class Partner(models.Model):
     description = models.TextField(blank=True, null=True)
     type = models.CharField(max_length=20, choices=TYPE_CHOICES, default='partner')
     order = models.PositiveIntegerField(default=0)
+    link = models.URLField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -34,6 +35,15 @@ class AboutUs(models.Model):
 
     def __str__(self):
         return self.title
+
+class AboutUsLegalDocument(models.Model):
+    about_us = models.ForeignKey(AboutUs, on_delete=models.CASCADE, related_name='legal_documents')
+    title = models.CharField(max_length=255)
+    image = models.ImageField(upload_to='site/legal/')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.title} - {self.about_us.title}"
 
 class Testimonial(models.Model):
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='testimonials')

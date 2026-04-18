@@ -1,7 +1,13 @@
 from rest_framework import serializers
-from .models import Partner, Testimonial, Activity, AboutUs
+from .models import Partner, Testimonial, Activity, AboutUs, AboutUsLegalDocument
+
+class AboutUsLegalDocumentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AboutUsLegalDocument
+        fields = '__all__'
 
 class AboutUsSerializer(serializers.ModelSerializer):
+    legal_documents = AboutUsLegalDocumentSerializer(many=True, read_only=True)
     class Meta:
         model = AboutUs
         fields = '__all__'
