@@ -192,7 +192,13 @@ const CrowdfundingMainPage = () => {
                       }}
                     />
                     <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-6 lg:p-10">
-                      <h2 className="text-white font-bold text-lg lg:text-3xl mb-2">{campaign.title}</h2>
+                      <div className="flex justify-between items-end mb-2">
+                        <h2 className="text-white font-bold text-lg lg:text-3xl">{campaign.title}</h2>
+                        <div className="flex items-center gap-1 text-white/70 text-xs bg-black/20 backdrop-blur-sm px-2 py-1 rounded-full">
+                          <span className="material-icons text-[14px]">visibility</span>
+                          <span>{campaign.view_count || 0}</span>
+                        </div>
+                      </div>
 
                       {/* Donate Button */}
                       <div className="flex gap-2 items-center w-full">
@@ -275,9 +281,15 @@ const CrowdfundingMainPage = () => {
                     {isExpired ? (
                       <p className="text-xs text-red-500">Waktu habis</p>
                     ) : (
-                      <p className="text-xs text-gray-500">
-                        Batas waktu: {deadlineText}
-                      </p>
+                      <div className="flex justify-between items-center">
+                        <p className="text-xs text-gray-500">
+                          Batas waktu: {deadlineText}
+                        </p>
+                        <div className="flex items-center gap-1 opacity-40">
+                          <span className="material-icons text-[14px]">visibility</span>
+                          <span className="text-[10px] font-bold">{campaign.view_count || 0}</span>
+                        </div>
+                      </div>
                     )}
                     {/* Progress bar */}
                     <div className="mt-1 mb-1">

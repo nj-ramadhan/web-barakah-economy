@@ -3,7 +3,7 @@ from rest_framework import viewsets
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from django.db.models import Q
+from django.db.models import Q, F
 from django.shortcuts import get_object_or_404
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework_simplejwt.authentication import JWTAuthentication
@@ -78,6 +78,15 @@ class CampaignViewSet(viewsets.ModelViewSet):
 
         self.check_object_permissions(self.request, obj)
         return obj
+
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        # Atomic increment using F expression
+        Campaign.objects.filter(pk=instance.pk).update(view_count=F('view_count') + 1)
+        # Refresh from DB to get the updated count for serialization
+        instance.refresh_from_db()
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data)
 
     @action(detail=False, methods=['post'], permission_classes=[IsAuthenticated])
     def submit(self, request):

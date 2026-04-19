@@ -228,9 +228,15 @@ const CrowdfundingCampaignDetail = () => {
               </div>
 
               {/* Deadline */}
-              <div className="flex items-center gap-2 text-gray-600 text-sm mb-6">
-                <span className="material-icons text-sm">schedule</span>
-                Batas waktu: {deadlineText}
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-2 text-gray-600 text-sm">
+                  <span className="material-icons text-sm">schedule</span>
+                  Batas waktu: {deadlineText}
+                </div>
+                <div className="flex items-center gap-1.5 text-gray-400 text-sm">
+                  <span className="material-icons text-[18px]">visibility</span>
+                  <span>{campaign.view_count || 0} orang telah melihat</span>
+                </div>
               </div>
 
               {/* Expired Message */}

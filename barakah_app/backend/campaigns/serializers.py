@@ -30,7 +30,7 @@ class CampaignSerializer(serializers.ModelSerializer):
             'id', 'title', 'slug', 'description', 'category', 'thumbnail',
             'target_amount', 'current_amount', 'is_featured', 'is_active',
             'created_at', 'deadline', 'donations', 'updates',
-            'has_unlimited_deadline', 'total_realization',
+            'has_unlimited_deadline', 'total_realization', 'view_count',
             'created_by', 'created_by_username', 'approval_status', 'rejection_reason'
         ]
         read_only_fields = ['created_by', 'approval_status', 'rejection_reason']

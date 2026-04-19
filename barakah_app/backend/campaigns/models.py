@@ -46,6 +46,7 @@ class Campaign(models.Model):
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     deadline = models.DateTimeField(null=True, blank=True)
+    view_count = models.PositiveIntegerField(default=0)
 
     # User submission fields
     created_by = models.ForeignKey(
