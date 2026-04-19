@@ -23,10 +23,23 @@ class CourseViewSet(viewsets.ModelViewSet):
         return [permissions.IsAuthenticated()]
 
     def get_queryset(self):
-        if self.action == 'my_courses':
-            return Course.objects.filter(instructor=self.request.user)
+        user = self.request.user
         
-        queryset = Course.objects.filter(is_active=True)
+        # For instructors managing their own courses
+        if self.action == 'my_courses':
+            return Course.objects.filter(instructor=user)
+        
+        # Default visibility logic
+        if self.action in ['list', 'retrieve']:
+            queryset = Course.objects.filter(is_active=True)
+        else:
+            # For update/partial_update/destroy/etc.
+            if user.is_authenticated and user.is_staff:
+                queryset = Course.objects.all()
+            elif user.is_authenticated:
+                queryset = Course.objects.filter(instructor=user)
+            else:
+                queryset = Course.objects.filter(is_active=True)
         
         # Filter by featured status
         is_featured = self.request.query_params.get('is_featured', None)
@@ -47,8 +60,12 @@ class CourseViewSet(viewsets.ModelViewSet):
         serializer.save(instructor=self.request.user)
 
     def perform_update(self, serializer):
-        # Ensure instructor doesn't change during update
-        serializer.save(instructor=self.request.user)
+        # If admin is editing, preserve the original instructor
+        if self.request.user.is_staff:
+            serializer.save()
+        else:
+            # Ensure instructor doesn't change during regular update
+            serializer.save(instructor=self.request.user)
 
     @action(detail=False, methods=['get'])
     def my_courses(self, request):

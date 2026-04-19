@@ -57,27 +57,45 @@ const EventRegistrationSubmissionPage = () => {
         let name = "";
         let email = "";
         let phone = "";
+        let isProfileComplete = false;
 
-        // Fallback to profile
-        name = reg.guest_name || reg.user_details?.profile?.name_full || reg.user_details?.username || "Peserta";
-        email = reg.guest_email || reg.user_details?.email || "-";
-        phone = reg.user_details?.phone || "-";
+        // Start with User Details (Profile)
+        if (reg.user_details) {
+            name = reg.user_details.profile?.name_full || reg.user_details.username || "";
+            if (reg.user_details.profile?.name_full) isProfileComplete = true;
+            
+            email = reg.user_details.email || "";
+            phone = reg.user_details.phone || "";
+            if (phone) isProfileComplete = true;
+        }
 
-        // Try to detect better info from form responses (Marketing priority)
+        // Fallback to Guest Info
+        if (!name) name = reg.guest_name || "Peserta";
+        if (!email) email = reg.guest_email || "-";
+        if (!phone) phone = "-";
+
+        // Hybrid enrichment from form responses
         if (eventFields && reg.responses) {
             eventFields.forEach(field => {
                 const label = (field.label || '').toLowerCase();
                 const value = reg.responses[field.id];
                 if (!value) return;
 
-                if (label.includes('nama lengkap') || (label.includes('nama') && !name)) {
-                    name = value;
-                }
+                // Priority: Form contact info for specific event context
                 if (label.includes('email')) {
                     email = value;
                 }
                 if (label.includes('wa') || label.includes('hp') || label.includes('telepon') || label.includes('phone') || label.includes('handphone')) {
                     phone = value;
+                }
+
+                // Name: Only override profile if profile is incomplete or form field is specifically 'Nama Lengkap'
+                if (label.includes('nama lengkap') || (label.includes('nama pendaftar'))) {
+                    if (!isProfileComplete || label.includes('lengkap')) {
+                        name = value;
+                    }
+                } else if (!name && label.includes('nama')) {
+                    name = value;
                 }
             });
         }

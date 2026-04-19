@@ -24,7 +24,10 @@ const stripHtml = (html) => {
 const getMediaUrl = (url) => {
     if (!url) return '';
     if (url.startsWith('http')) return url;
-    return `${process.env.REACT_APP_API_BASE_URL}${url}`;
+    const base = process.env.REACT_APP_API_BASE_URL || '';
+    const cleanBase = base.endsWith('/') ? base.slice(0, -1) : base;
+    const cleanUrl = url.startsWith('/') ? url : '/' + url;
+    return `${cleanBase}${cleanUrl}`;
 };
 
 const DesktopLandingPage = () => {
@@ -124,27 +127,27 @@ const DesktopLandingPage = () => {
                                     >
                                         {/* Dynamic Carousel Items Picker */}
                                         {[
-                                            activities[0] && { type: 'Kegiatan', title: activities[0].title, img: activities[0].header_image, link: '/kegiatan' },
+                                            activities[0] && { type: 'Kegiatan', title: activities[0].title, img: activities[0].header_image, link: `/kegiatan/${activities[0].id}` },
                                             events[0] && { type: 'Event', title: events[0].title, img: events[0].header_image || events[0].thumbnail, link: `/event/${events[0].slug}` },
                                             articles[0] && { type: 'Artikel', title: articles[0].title, img: articles[0].images?.[0]?.path, link: `/articles/${articles[0].id}` },
                                             campaigns[0] && { type: 'Charity', title: campaigns[0].title, img: campaigns[0].thumbnail, link: `/kampanye/${campaigns[0].slug || campaigns[0].id}` },
                                             courses[0] && { type: 'Academy', title: courses[0].title, img: courses[0].thumbnail, link: `/kelas/${courses[0].slug || courses[0].id}` },
                                             products[0] && { type: 'Sinergy', title: products[0].title, img: products[0].thumbnail, link: `/produk/${products[0].slug || products[0].id}` },
                                             digitalProducts[0] && { type: 'Digital', title: digitalProducts[0].title, img: digitalProducts[0].thumbnail, link: `/digital-products/${digitalProducts[0].slug}` }
-                                        ].filter(Boolean).map((item, idx) => (
+                                        ].filter(Boolean).slice(0, 5).map((item, idx) => (
                                             <SwiperSlide key={idx}>
-                                                <div className="relative h-[380px] group/slide">
+                                                <div className="relative h-[420px] group/slide cursor-pointer" onClick={() => navigate(item.link)}>
                                                     <img
                                                         src={getMediaUrl(item.img)}
                                                         alt={item.title}
-                                                        className="w-full h-full object-cover"
+                                                        className="w-full h-full object-cover transition-transform duration-[3s] group-hover/slide:scale-110"
                                                     />
-                                                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
-                                                    <div className="absolute bottom-0 left-0 p-8 w-full text-white">
-                                                        <span className="inline-block bg-white/20 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-bold uppercase mb-3 border border-white/30">
+                                                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent"></div>
+                                                    <div className="absolute bottom-0 left-0 p-10 w-full text-white">
+                                                        <span className="inline-block bg-white/20 backdrop-blur-md px-4 py-1.5 rounded-full text-[10px] font-black uppercase mb-4 border border-white/30 tracking-widest">
                                                             {item.type} Terbaru
                                                         </span>
-                                                        <h3 className="text-xl font-bold leading-snug line-clamp-2 cursor-pointer hover:text-green-300 transition" onClick={() => navigate(item.link)}>
+                                                        <h3 className="text-2xl font-black leading-tight line-clamp-2 hover:text-green-300 transition-colors">
                                                             {item.title}
                                                         </h3>
                                                     </div>

@@ -21,6 +21,13 @@ const DashboardAboutUsPage = () => {
     const [newLegalDoc, setNewLegalDoc] = useState({ title: '', image: null });
     const [uploadingDoc, setUploadingDoc] = useState(false);
     const [cropper, setCropper] = useState({ show: false, image: null, target: null, aspect: 16/9 });
+    
+    const getMediaUrl = (path, file) => {
+        if (file instanceof Blob) return URL.createObjectURL(file);
+        if (!path) return '';
+        if (path.startsWith('http')) return path;
+        return API + path;
+    };
 
     const fetchAboutUs = async () => {
         try {
@@ -232,7 +239,7 @@ const DashboardAboutUsPage = () => {
                                 <div className="border-2 border-dashed border-gray-200 rounded-3xl p-4 text-center hover:border-green-400 transition group relative overflow-hidden h-48 flex flex-col items-center justify-center">
                                     {(formData.hero_image || (aboutData && aboutData.hero_image)) ? (
                                         <img 
-                                            src={formData.hero_image instanceof Blob ? URL.createObjectURL(formData.hero_image) : (aboutData?.hero_image ? (API + aboutData.hero_image) : '')} 
+                                            src={getMediaUrl(aboutData?.hero_image, formData.hero_image)} 
                                             alt="Hero" 
                                             className="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:opacity-60 transition"
                                         />
@@ -250,7 +257,7 @@ const DashboardAboutUsPage = () => {
                                 <div className="border-2 border-dashed border-gray-200 rounded-3xl p-4 text-center hover:border-green-400 transition group relative overflow-hidden h-48 flex flex-col items-center justify-center">
                                     {(formData.organization_structure_image || (aboutData && aboutData.organization_structure_image)) ? (
                                         <img 
-                                            src={formData.organization_structure_image instanceof Blob ? URL.createObjectURL(formData.organization_structure_image) : (aboutData?.organization_structure_image ? (API + aboutData.organization_structure_image) : '')} 
+                                            src={getMediaUrl(aboutData?.organization_structure_image, formData.organization_structure_image)} 
                                             alt="Structure" 
                                             className="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:opacity-60 transition"
                                         />
@@ -289,7 +296,7 @@ const DashboardAboutUsPage = () => {
                                 {aboutData.legal_documents?.map(doc => (
                                     <div key={doc.id} className="relative group rounded-2xl overflow-hidden border border-gray-100 aspect-[3/4]">
                                         <img 
-                                            src={API + doc.image} 
+                                            src={getMediaUrl(doc.image)} 
                                             alt={doc.title} 
                                             className="w-full h-full object-cover"
                                         />
@@ -331,7 +338,7 @@ const DashboardAboutUsPage = () => {
                                     />
                                     {newLegalDoc.image ? (
                                         <div className="relative w-full aspect-[3/4] mb-2">
-                                            <img src={URL.createObjectURL(newLegalDoc.image)} className="w-full h-full object-cover rounded-xl" alt="Preview"/>
+                                            <img src={getMediaUrl(null, newLegalDoc.image)} className="w-full h-full object-cover rounded-xl" alt="Preview"/>
                                             <button 
                                                 type="button"
                                                 onClick={() => setNewLegalDoc({ ...newLegalDoc, image: null })}
@@ -387,12 +394,16 @@ const DashboardAboutUsPage = () => {
                     image={cropper.image}
                     onClose={() => setCropper({ ...cropper, show: false })}
                     onCropComplete={(croppedFile) => {
-                        setFormData({ ...formData, [cropper.target]: croppedFile });
+                        if (cropper.target === 'legal_doc') {
+                            setNewLegalDoc({ ...newLegalDoc, image: croppedFile });
+                        } else {
+                            setFormData({ ...formData, [cropper.target]: croppedFile });
+                        }
                         setCropper({ ...cropper, show: false });
                     }}
                     aspect={cropper.aspect}
                     maxWidth={1280}
-                    title="Crop Gambar Profil"
+                    title={cropper.target === 'legal_doc' ? "Crop Dokumen Legalitas" : "Crop Gambar Utama"}
                 />
             )}
         </div>

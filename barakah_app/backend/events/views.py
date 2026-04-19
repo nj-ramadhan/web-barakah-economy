@@ -272,17 +272,17 @@ class EventViewSet(viewsets.ModelViewSet):
         if not phone: return None
         # Convert to string and strip spaces
         phone = str(phone).strip()
-        # Remove non-digits but keep leading + if present
-        has_plus = phone.startswith('+')
-        phone = ''.join(filter(str.isdigit, phone))
         
-        if phone.startswith('0'): 
-            phone = '62' + phone[1:]
-        elif phone.startswith('8'): 
-            phone = '62' + phone
+        # Remove any non-digits (including +)
+        digits = ''.join(filter(str.isdigit, phone))
         
-        # User requested +62 format
-        return f"+{phone}" if not phone.startswith('+') else phone
+        if digits.startswith('0'): 
+            digits = '62' + digits[1:]
+        elif digits.startswith('8'): 
+            digits = '62' + digits
+        
+        # Return with + prefix as requested
+        return f"+{digits}"
 
     @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
     def blast_whatsapp(self, request, slug=None):
@@ -307,7 +307,7 @@ class EventViewSet(viewsets.ModelViewSet):
         placeholder_data = []
         
         for reg in registrations:
-            # Search for contact info (marketing-first approach)
+            # Search for contact info
             _, phone, detected_name = self._detect_contact_info_standalone(reg)
             if phone:
                 formatted_phone = self._format_phone_number(phone)
@@ -319,7 +319,6 @@ class EventViewSet(viewsets.ModelViewSet):
             return Response({"error": "Tidak ada nomor WhatsApp peserta yang terdeteksi."}, status=status.HTTP_404_NOT_FOUND)
             
         # Use blast_messages from whatsapp_service
-        # Message template can use {name} and {event}
         result = whatsapp_service.blast_messages(phone_list, custom_message, placeholder_data)
         
         return Response({
@@ -337,33 +336,46 @@ class EventViewSet(viewsets.ModelViewSet):
         phone = None
         name = registration.guest_name
         
+        is_profile_complete = False
+        
         if registration.user:
             if not email: email = registration.user.email
-            if not name:
-                profile = getattr(registration.user, 'profile', None)
-                name = profile.name_full if profile and profile.name_full else registration.user.username
-            if hasattr(registration.user, 'phone'): phone = registration.user.phone
+            profile = getattr(registration.user, 'profile', None)
+            if profile and profile.name_full:
+                name = profile.name_full
+                is_profile_complete = True
+            elif not name:
+                name = registration.user.username
+            
+            if hasattr(registration.user, 'phone'): 
+                phone = registration.user.phone
+                if phone: is_profile_complete = True
 
-        # High-priority detection from form fields (marketing data)
+        # Scan form fields for marketing data
+        # If profile is already comprehensive, we only override if form data is likely more specific
         for field in form_fields:
             field_id = str(field.id)
             value = responses.get(field_id)
             if not value or not isinstance(value, (str, int)): continue
             
             label = field.label.lower()
-            # Name detection
-            if any(kw in label for kw in ['nama lengkap', 'nama pendaftar', 'fullName']):
-                name = str(value)
-            elif not name and 'nama' in label:
-                name = str(value)
-                
+            
             # Email detection
             if 'email' in label: 
+                # Always take from form if provided explicitly
                 email = str(value)
             
             # Phone detection
             if any(kw in label for kw in ['wa', 'whatsapp', 'nomor hp', 'telepon', 'phone', 'telepon', 'handphone']):
+                # Priority for form phone for specific event contact
                 phone = str(value)
+            
+            # Name detection - only override if profile is not "lengkap" or if it matches "Nama Lengkap" keyword
+            if any(kw in label for kw in ['nama lengkap', 'nama pendaftar', 'fullName']):
+                if not is_profile_complete or 'lengkap' in label:
+                    name = str(value)
+            elif not name and 'nama' in label:
+                name = str(value)
                 
         return email, phone, name
 

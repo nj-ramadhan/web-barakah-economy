@@ -54,7 +54,7 @@ const AboutUs = () => {
 
       <Header />
 
-      <div className="max-w-4xl mx-auto px-4 pt-6 pb-20">
+      <div className="max-w-6xl mx-auto px-4 pt-6 pb-24">
         <div className="flex items-center gap-4 mb-8">
           <Link to="/" className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm text-gray-400 hover:text-green-600 transition">
             <span className="material-icons text-xl">arrow_back</span>
@@ -64,8 +64,8 @@ const AboutUs = () => {
 
         {/* Hero Image */}
         {aboutUs?.hero_image && (
-          <div className="w-full h-56 md:h-80 rounded-[2.5rem] overflow-hidden mb-8 shadow-xl border-4 border-white bg-white">
-            <img src={getMediaUrl(aboutUs.hero_image)} alt="Barakah Economy" className="w-full h-full object-cover" />
+          <div className="w-full h-64 md:h-[450px] rounded-[3rem] overflow-hidden mb-12 shadow-2xl border-8 border-white bg-white group ring-1 ring-gray-100">
+            <img src={getMediaUrl(aboutUs.hero_image)} alt="Barakah Economy" className="w-full h-full object-cover group-hover:scale-105 transition duration-[2s]" />
           </div>
         )}
 
@@ -98,29 +98,33 @@ const AboutUs = () => {
         <div className="space-y-6">
           {activeTab === 'about' && (
             <div className="animate-fade-in space-y-6">
-              <div className="bg-white rounded-[2rem] shadow-sm p-8 border border-gray-100">
-                <h2 className="text-xl font-extrabold text-gray-900 mb-6 flex items-center gap-3">
-                  <span className="w-2 h-6 bg-green-600 rounded-full"></span>
+              <div className="bg-white rounded-[2.5rem] shadow-xl shadow-gray-200/50 p-10 md:p-12 border border-gray-100 relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-green-50 rounded-full -mr-16 -mt-16 opacity-50"></div>
+                <h2 className="text-2xl font-black text-gray-900 mb-8 flex items-center gap-4">
+                  <span className="w-2.5 h-8 bg-green-600 rounded-full shadow-lg shadow-green-100"></span>
                   {aboutUs?.title || 'Profil BAE Community'}
                 </h2>
-                <div className="text-sm text-gray-600 leading-relaxed whitespace-pre-line space-y-4">
+                <div className="text-base text-gray-600 leading-relaxed whitespace-pre-line space-y-4">
                   {aboutUs?.description || `BAE Community berdiri pada tanggal 29 Februari 2024 di Jalan Tubagus Ismail Dalam No.19C dan bertempat di Dago, Kota Bandung, Jawa Barat. Tujuan BAE Community adalah meningkatkan kestabilan finansial masyarakat melalui pengembangan ekosistem ekonomi yang berlandaskan syariah islam dengan memberdayakan pemuda dan mahasiswa sebagai pionir perubahan.`}
                 </div>
               </div>
 
               {aboutUs?.organization_structure_image && (
-                <div className="bg-white rounded-[2rem] shadow-sm p-8 border border-gray-100">
-                  <h2 className="text-xl font-extrabold text-gray-900 mb-6 flex items-center gap-3">
-                    <span className="w-2 h-6 bg-blue-600 rounded-full"></span>
+                <div className="bg-white rounded-[2.5rem] shadow-xl shadow-gray-200/50 p-10 md:p-12 border border-gray-100">
+                  <h2 className="text-2xl font-black text-gray-900 mb-8 flex items-center gap-4">
+                    <span className="w-2.5 h-8 bg-blue-600 rounded-full shadow-lg shadow-blue-100"></span>
                     Struktur Organisasi
                   </h2>
-                  <div className="rounded-2xl overflow-hidden border border-gray-100 shadow-inner bg-gray-50">
+                  <div className="rounded-3xl overflow-hidden border border-gray-100 shadow-inner bg-gray-50 group relative">
                     <img 
                       src={getMediaUrl(aboutUs.organization_structure_image)} 
                       alt="Struktur Organisasi" 
-                      className="w-full h-auto cursor-zoom-in"
+                      className="w-full h-auto cursor-zoom-in transition duration-500"
                       onClick={() => window.open(getMediaUrl(aboutUs.organization_structure_image), '_blank')}
                     />
+                    <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition flex items-center justify-center pointer-events-none">
+                      <span className="bg-white/90 backdrop-blur px-4 py-2 rounded-full text-xs font-bold text-gray-800 shadow-lg">Klik untuk Perbesar</span>
+                    </div>
                   </div>
                 </div>
               )}
@@ -129,30 +133,33 @@ const AboutUs = () => {
 
           {activeTab === 'vision' && (
             <div className="animate-fade-in space-y-6">
-              <div className="bg-white rounded-[2rem] shadow-sm p-8 border border-gray-100">
-                <div className="flex items-center gap-4 mb-6">
-                  <div className="w-12 h-12 bg-green-50 rounded-2xl flex items-center justify-center text-green-700">
-                    <span className="material-icons">visibility</span>
+              <div className="bg-white rounded-[2.5rem] shadow-xl shadow-gray-200/50 p-10 md:p-12 border border-gray-100">
+                <div className="flex items-center gap-5 mb-8">
+                  <div className="w-14 h-14 bg-green-100 rounded-[1.25rem] flex items-center justify-center text-green-700 shadow-inner">
+                    <span className="material-icons text-3xl">visibility</span>
                   </div>
-                  <h2 className="text-xl font-extrabold text-gray-900">Visi Kami</h2>
+                  <h2 className="text-2xl font-black text-gray-900">Visi Kami</h2>
                 </div>
-                <div className="text-sm text-gray-600 leading-relaxed bg-gray-50 p-6 rounded-2xl border border-gray-100 italic">
-                  "{aboutUs?.vision || `Menjadi komunitas yang unggul dalam mengembangkan perekonomian berbasis syariah yang berkeadilan dan berkelanjutan, serta berkontribusi secara aktif dalam kesejahteraan umat`}"
+                <div className="relative text-lg text-gray-700 leading-relaxed bg-gradient-to-br from-green-50/50 to-white p-10 rounded-[2.5rem] border border-green-100/50 italic shadow-inner overflow-hidden">
+                  <span className="material-icons absolute -top-4 -left-2 text-green-200 text-6xl opacity-30">format_quote</span>
+                  <p className="relative z-10">
+                    "{aboutUs?.vision || `Menjadi komunitas yang unggul dalam mengembangkan perekonomian berbasis syariah yang berkeadilan dan berkelanjutan, serta berkontribusi secara aktif dalam kesejahteraan umat`}"
+                  </p>
                 </div>
               </div>
 
-              <div className="bg-white rounded-[2rem] shadow-sm p-8 border border-gray-100">
-                <div className="flex items-center gap-4 mb-6">
-                  <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-700">
-                    <span className="material-icons">rocket_launch</span>
+              <div className="bg-white rounded-[2.5rem] shadow-xl shadow-gray-200/50 p-10 md:p-12 border border-gray-100">
+                <div className="flex items-center gap-5 mb-8">
+                  <div className="w-14 h-14 bg-blue-100 rounded-[1.25rem] flex items-center justify-center text-blue-700 shadow-inner">
+                    <span className="material-icons text-3xl">rocket_launch</span>
                   </div>
-                  <h2 className="text-xl font-extrabold text-gray-900">Misi Kami</h2>
+                  <h2 className="text-2xl font-black text-gray-900">Misi Kami</h2>
                 </div>
-                <div className="text-sm text-gray-600 leading-relaxed space-y-4">
+                <div className="text-base text-gray-600 leading-relaxed">
                   {aboutUs?.mission ? (
-                    <div className="whitespace-pre-line">{aboutUs.mission}</div>
+                    <div className="whitespace-pre-line space-y-4">{aboutUs.mission}</div>
                   ) : (
-                    <ul className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {[
                         'Mendorong Pemberdayaan Ekonomi',
                         'Pendidikan dan Literasi Keuangan Syariah',
@@ -160,12 +167,12 @@ const AboutUs = () => {
                         'Pengembangan Usaha Berbasis Syariah',
                         'Kepedulian Sosial dan Amal'
                       ].map((item, index) => (
-                        <li key={index} className="flex items-center gap-3 p-4 bg-white border border-gray-100 rounded-xl shadow-sm">
-                          <span className="w-6 h-6 bg-green-100 text-green-700 rounded-full flex items-center justify-center text-[10px] font-bold">{index + 1}</span>
-                          <span className="font-bold text-gray-700">{item}</span>
-                        </li>
+                        <div key={index} className="flex items-center gap-5 p-6 bg-white border border-gray-100 rounded-[1.5rem] shadow-sm hover:shadow-md hover:border-green-200 transition-all group">
+                          <span className="shrink-0 w-8 h-8 bg-green-100 text-green-700 rounded-full flex items-center justify-center text-sm font-black group-hover:bg-green-600 group-hover:text-white transition-colors">{index + 1}</span>
+                          <span className="font-bold text-gray-800 text-sm">{item}</span>
+                        </div>
                       ))}
-                    </ul>
+                    </div>
                   )}
                 </div>
               </div>
