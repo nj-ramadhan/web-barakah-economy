@@ -702,6 +702,24 @@ const EventDetailPage = () => {
                                                         </div>
                                                     )}
                                                 </div>
+                                                
+                                                {/* Total Display */}
+                                                <div className="flex flex-col gap-1 p-5 bg-green-50 rounded-2xl border-2 border-green-200 shadow-inner">
+                                                    <p className="text-[10px] font-black text-green-600 uppercase tracking-[0.2em] text-center">Total yang Harus Ditransfer</p>
+                                                    <p className="text-2xl font-black text-green-800 text-center">
+                                                        Rp {(() => {
+                                                            const fixed = Number(event?.price_fixed) || 0;
+                                                            const extra = Number(paymentAmount) || 0;
+                                                            let total = 0;
+                                                            
+                                                            if (event?.price_type === 'fixed') total = fixed;
+                                                            else if (event?.price_type === 'hybrid_1') total = fixed + extra;
+                                                            else total = extra; // voluntary or hybrid_2
+                                                            
+                                                            return total.toLocaleString('id-ID');
+                                                        })()}
+                                                    </p>
+                                                </div>
 
                                                 <div className="space-y-2">
                                                     <label className="text-[10px] font-bold text-gray-600 uppercase ml-1">Upload Bukti Transfer *</label>

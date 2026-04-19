@@ -85,6 +85,15 @@ const EventRegistrationSubmissionPage = () => {
         return { name, email, phone };
     };
 
+    const getImageUrl = (path) => {
+        if (!path) return '';
+        if (path.startsWith('http')) return path;
+        const baseUrl = process.env.REACT_APP_API_BASE_URL || '';
+        const cleanBaseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+        const cleanPath = path.startsWith('/') ? path : `/${path}`;
+        return `${cleanBaseUrl}${cleanPath}`;
+    };
+
     const handleExportCsv = async () => {
         if (isExporting) return;
         setIsExporting(true);
@@ -222,7 +231,7 @@ const EventRegistrationSubmissionPage = () => {
                                                 return (
                                                     <td key={field.id} className="p-5 text-sm text-gray-600">
                                                         {field.field_type === 'file' && file ? (
-                                                            <a href={`${process.env.REACT_APP_API_BASE_URL}${file.file}`} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-green-700 font-bold hover:underline">
+                                                            <a href={getImageUrl(file.file)} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-green-700 font-bold hover:underline">
                                                                 <span className="material-icons text-sm">download</span> Lihat File
                                                             </a>
                                                         ) : Array.isArray(value) ? (
@@ -468,7 +477,7 @@ const EventRegistrationSubmissionPage = () => {
                         </div>
                         <div className="p-8 bg-gray-50 flex-1 overflow-auto flex items-center justify-center min-h-0">
                             <img 
-                                src={`${process.env.REACT_APP_API_BASE_URL}${selectedPaymentProof}`} 
+                                src={getImageUrl(selectedPaymentProof)} 
                                 alt="Bukti Transfer" 
                                 className="max-w-full max-h-full object-contain rounded-xl shadow-lg border border-gray-200"
                             />
