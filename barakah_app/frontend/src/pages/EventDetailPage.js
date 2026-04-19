@@ -910,7 +910,6 @@ const EventDetailPage = () => {
                 </div>
             )}
 
-            <Footer />
             <NavigationButton />
         </div>
     );
