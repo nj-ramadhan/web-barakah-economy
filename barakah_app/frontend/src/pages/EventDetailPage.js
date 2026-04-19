@@ -520,13 +520,13 @@ const EventDetailPage = () => {
                         {/* Organizer Card */}
                         <div className="bg-white p-8 rounded-[2.5rem] shadow-xl border border-gray-100">
                             <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-6">Penyelenggara</h3>
-                            <div className="flex items-center gap-5 border-b border-gray-100 pb-6 mb-6">
-                                <div className="w-16 h-16 bg-gradient-to-br from-green-600 to-green-800 rounded-3xl flex items-center justify-center font-bold text-2xl text-white uppercase italic shadow-lg shadow-green-100">
+                            <div className="flex items-start gap-5 border-b border-gray-100 pb-6 mb-6">
+                                <div className="w-16 h-16 shrink-0 bg-gradient-to-br from-green-600 to-green-800 rounded-3xl flex items-center justify-center font-bold text-2xl text-white uppercase italic shadow-lg shadow-green-100">
                                     {event.organizer_name?.charAt(0)}
                                 </div>
-                                <div className="overflow-hidden">
-                                    <p className="font-extrabold text-xl text-gray-900 leading-tight truncate">{event.organizer_name}</p>
-                                    <p className="text-green-600 font-bold text-xs mt-1 decoration-dotted underline underline-offset-4">{event.organizer_contact}</p>
+                                <div className="min-w-0">
+                                    <p className="font-extrabold text-xl text-gray-900 leading-tight break-words">{event.organizer_name}</p>
+                                    <p className="text-green-600 font-bold text-xs mt-1 decoration-dotted underline underline-offset-4 break-words">{event.organizer_contact}</p>
                                 </div>
                             </div>
                             <div className="space-y-4">
