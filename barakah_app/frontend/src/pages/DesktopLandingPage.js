@@ -30,6 +30,29 @@ const getMediaUrl = (url) => {
     return `${cleanBase}${cleanUrl}`;
 };
 
+const SellerAvatar = ({ seller, getMediaUrl }) => {
+    const [imgError, setImgError] = useState(false);
+    const imageUrl = !imgError ? (seller.shop_thumbnail || seller.picture) : null;
+    const initial = (seller.name || seller.username || '?').charAt(0).toUpperCase();
+
+    return (
+        <div className="w-24 h-24 mx-auto rounded-full overflow-hidden border-4 border-white shadow-md group-hover:border-green-500 transition-all duration-300 p-1 mb-4 flex items-center justify-center bg-gray-50">
+            {imageUrl ? (
+                <img
+                    src={getMediaUrl(imageUrl)}
+                    alt={seller.name}
+                    className="w-full h-full object-cover rounded-full"
+                    onError={() => setImgError(true)}
+                />
+            ) : (
+                <div className="w-full h-full flex items-center justify-center bg-green-100 text-green-700 font-bold text-2xl rounded-full">
+                    {initial}
+                </div>
+            )}
+        </div>
+    );
+};
+
 const DesktopLandingPage = () => {
     const navigate = useNavigate();
     const [campaigns, setCampaigns] = useState([]);
@@ -526,14 +549,7 @@ const DesktopLandingPage = () => {
                                         to={`/digital-produk/${seller.username}`}
                                         className="flex-shrink-0 w-32 text-center group"
                                     >
-                                        <div className="w-24 h-24 mx-auto rounded-full overflow-hidden border-4 border-white shadow-md group-hover:border-green-500 transition-all duration-300 p-1 mb-4">
-                                            <img
-                                                src={getMediaUrl(seller.shop_thumbnail) || '/images/pas_foto_standard.png'}
-                                                alt={seller.name}
-                                                className="w-full h-full object-cover rounded-full"
-                                                onError={(e) => { e.target.src = '/images/pas_foto_standard.png'; }}
-                                            />
-                                        </div>
+                                        <SellerAvatar seller={seller} getMediaUrl={getMediaUrl} />
                                         <p className="font-bold text-gray-900 text-sm group-hover:text-green-700 transition-colors">@{seller.username}</p>
                                         <p className="text-[10px] text-gray-500 py-1">{seller.name}</p>
                                     </Link>
