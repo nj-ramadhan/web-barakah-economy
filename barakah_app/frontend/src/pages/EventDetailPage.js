@@ -239,7 +239,13 @@ const EventDetailPage = () => {
             </Helmet>
             <Header />
 
-            {/* Header / Hero Section */}
+            {/* Back Navigation Bar */}
+            <div className="max-w-6xl mx-auto px-4 pt-6 flex items-center justify-between relative z-20">
+                <Link to="/event" className="flex items-center gap-2 text-gray-500 hover:text-green-600 transition font-bold text-xs uppercase tracking-widest group bg-white/50 backdrop-blur-sm px-4 py-2 rounded-xl border border-gray-100 shadow-sm">
+                    <span className="material-icons text-xl group-hover:-translate-x-1 transition-transform">arrow_back</span>
+                    Kembali
+                </Link>
+            </div>
             <div className="relative w-full">
                 {/* Image Container */}
                 <div className="relative h-auto sm:h-[450px] w-full overflow-hidden bg-gray-100 flex items-center justify-center">
@@ -904,6 +910,7 @@ const EventDetailPage = () => {
                 </div>
             )}
 
+            <Footer />
             <NavigationButton />
         </div>
     );
