@@ -269,7 +269,8 @@ const EventRegistrationSubmissionPage = () => {
                                                 </span>
                                             </td>
                                         </tr>
-                                    ))
+                                        );
+                                    })
                                 )}
                             </tbody>
                         </table>
