@@ -95,8 +95,11 @@ export const exportRegistrationsCsv = (slug) => {
     });
 };
 
-export const blastEventWhatsapp = (slug, message) => {
-    return axios.post(`${API_BASE_URL}/api/events/${slug}/blast_whatsapp/`, { message }, {
+export const blastEventWhatsapp = (slug, message, registrationIds = null) => {
+    return axios.post(`${API_BASE_URL}/api/events/${slug}/blast_whatsapp/`, { 
+        message,
+        registration_ids: registrationIds 
+    }, {
         headers: getAuthHeaders()
     });
 };

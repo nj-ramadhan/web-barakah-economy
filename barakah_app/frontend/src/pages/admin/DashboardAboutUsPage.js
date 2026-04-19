@@ -18,6 +18,8 @@ const DashboardAboutUsPage = () => {
         hero_image: null,
         organization_structure_image: null
     });
+    const [newLegalDoc, setNewLegalDoc] = useState({ title: '', image: null });
+    const [uploadingDoc, setUploadingDoc] = useState(false);
     const [cropper, setCropper] = useState({ show: false, image: null, target: null, aspect: 16/9 });
 
     const fetchAboutUs = async () => {
@@ -91,6 +93,52 @@ const DashboardAboutUsPage = () => {
             alert('Gagal menyimpan data');
         } finally {
             setSaving(false);
+        }
+    };
+
+    const handleUploadLegalDoc = async () => {
+        if (!newLegalDoc.title || !newLegalDoc.image || !aboutData) {
+            alert('Judul dan gambar wajib diisi');
+            return;
+        }
+
+        setUploadingDoc(true);
+        const user = JSON.parse(localStorage.getItem('user'));
+        const token = user?.access;
+
+        const fd = new FormData();
+        fd.append('about_us', aboutData.id);
+        fd.append('title', newLegalDoc.title);
+        fd.append('image', newLegalDoc.image);
+
+        try {
+            await axios.post(`${API}/api/site-content/about-us-legal-docs/`, fd, {
+                headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' }
+            });
+            setNewLegalDoc({ title: '', image: null });
+            fetchAboutUs();
+        } catch (err) {
+            console.error('Error uploading document:', err);
+            alert('Gagal mengunggah dokumen');
+        } finally {
+            setUploadingDoc(false);
+        }
+    };
+
+    const handleDeleteLegalDoc = async (docId) => {
+        if (!window.confirm('Hapus dokumen ini?')) return;
+
+        const user = JSON.parse(localStorage.getItem('user'));
+        const token = user?.access;
+
+        try {
+            await axios.delete(`${API}/api/site-content/about-us-legal-docs/${docId}/`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            fetchAboutUs();
+        } catch (err) {
+            console.error('Error deleting document:', err);
+            alert('Gagal menghapus dokumen');
         }
     };
 
@@ -216,6 +264,92 @@ const DashboardAboutUsPage = () => {
                             </div>
                         </div>
                     </div>
+
+                    {/* Bukti Legalitas */}
+                    {aboutData && (
+                        <div className="bg-white rounded-[2.5rem] p-8 shadow-sm border border-gray-100 space-y-6">
+                            <h3 className="text-sm font-bold text-gray-900 border-b pb-4 border-gray-50 flex items-center gap-2">
+                                <span className="material-icons text-green-600">verified</span>
+                                Bukti Legalitas
+                            </h3>
+
+                            {/* Existing Docs */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                                {aboutData.legal_documents?.map(doc => (
+                                    <div key={doc.id} className="relative group rounded-2xl overflow-hidden border border-gray-100 aspect-[3/4]">
+                                        <img 
+                                            src={API + doc.image} 
+                                            alt={doc.title} 
+                                            className="w-full h-full object-cover"
+                                        />
+                                        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 p-3">
+                                            <p className="text-white text-[10px] font-bold truncate">{doc.title}</p>
+                                        </div>
+                                        <button 
+                                            type="button"
+                                            onClick={() => handleDeleteLegalDoc(doc.id)}
+                                            className="absolute top-2 right-2 w-8 h-8 bg-red-600 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition shadow-lg"
+                                        >
+                                            <span className="material-icons text-sm">delete</span>
+                                        </button>
+                                    </div>
+                                ))}
+                                
+                                {/* Add New Form Inline-ish */}
+                                <div className="border-2 border-dashed border-gray-200 rounded-2xl p-4 flex flex-col items-center justify-center hover:border-green-300 transition gap-2 bg-gray-50/50 min-h-[160px]">
+                                    <input 
+                                        type="text" 
+                                        placeholder="Judul Dokumen" 
+                                        className="w-full text-[10px] p-2 bg-white border border-gray-100 rounded-lg text-center"
+                                        value={newLegalDoc.title}
+                                        onChange={e => setNewLegalDoc({ ...newLegalDoc, title: e.target.value })}
+                                    />
+                                    <input 
+                                        type="file" 
+                                        id="legal_doc_file" 
+                                        className="hidden" 
+                                        accept="image/*"
+                                        onChange={e => {
+                                            const file = e.target.files[0];
+                                            if (file) {
+                                                const reader = new FileReader();
+                                                reader.onload = () => setCropper({ show: true, image: reader.result, target: 'legal_doc', aspect: 3/4 });
+                                                reader.readAsDataURL(file);
+                                            }
+                                        }}
+                                    />
+                                    {newLegalDoc.image ? (
+                                        <div className="relative w-full aspect-[3/4] mb-2">
+                                            <img src={URL.createObjectURL(newLegalDoc.image)} className="w-full h-full object-cover rounded-xl" alt="Preview"/>
+                                            <button 
+                                                type="button"
+                                                onClick={() => setNewLegalDoc({ ...newLegalDoc, image: null })}
+                                                className="absolute top-1 right-1 bg-black/50 text-white rounded-full p-1"
+                                            >
+                                                <span className="material-icons text-xs">close</span>
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <label htmlFor="legal_doc_file" className="cursor-pointer flex flex-col items-center">
+                                            <span className="material-icons text-gray-400 text-2xl">add_a_photo</span>
+                                            <span className="text-[10px] text-gray-400 font-bold mt-1 text-center">Pilih Dokumen</span>
+                                        </label>
+                                    )}
+                                    
+                                    {newLegalDoc.image && (
+                                        <button 
+                                            type="button"
+                                            disabled={uploadingDoc}
+                                            onClick={handleUploadLegalDoc}
+                                            className="w-full py-2 bg-green-700 text-white rounded-xl text-[10px] font-bold hover:bg-green-800 transition"
+                                        >
+                                            {uploadingDoc ? 'Uploading...' : 'Upload Dokumen'}
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    )}
 
                     <div className="flex gap-4">
                         <button

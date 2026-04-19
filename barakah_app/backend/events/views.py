@@ -240,7 +240,7 @@ class EventViewSet(viewsets.ModelViewSet):
         if phone:
             formatted_phone = self._format_phone_number(phone)
             wa_message = (
-                f"Halo! Terma kasih telah mendaftar di event: *{registration.event.title}*.\n\n"
+                f"Halo! Terima kasih telah mendaftar di event: *{registration.event.title}*.\n\n"
                 f"Pendaftaran Anda telah berhasil dikonfirmasi secara otomatis.\n"
                 f"Sampai jumpa di lokasi acara!\n\n"
                 f"Salam,\nBarakah Economy"
@@ -270,11 +270,19 @@ class EventViewSet(viewsets.ModelViewSet):
 
     def _format_phone_number(self, phone):
         if not phone: return None
-        phone = ''.join(filter(str.isdigit, str(phone)))
-        if phone.startswith('0'): phone = '62' + phone[1:]
-        elif phone.startswith('8'): phone = '62' + phone
-        elif phone.startswith('+'): phone = phone[1:]
-        return phone
+        # Convert to string and strip spaces
+        phone = str(phone).strip()
+        # Remove non-digits but keep leading + if present
+        has_plus = phone.startswith('+')
+        phone = ''.join(filter(str.isdigit, phone))
+        
+        if phone.startswith('0'): 
+            phone = '62' + phone[1:]
+        elif phone.startswith('8'): 
+            phone = '62' + phone
+        
+        # User requested +62 format
+        return f"+{phone}" if not phone.startswith('+') else phone
 
     @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
     def blast_whatsapp(self, request, slug=None):
@@ -289,20 +297,23 @@ class EventViewSet(viewsets.ModelViewSet):
         if not custom_message:
             return Response({"error": "Pesan tidak boleh kosong."}, status=status.HTTP_400_BAD_REQUEST)
             
-        registrations = EventRegistration.objects.filter(event=event, status='approved')
+        registrations_ids = request.data.get('registration_ids')
+        if registrations_ids:
+            registrations = EventRegistration.objects.filter(id__in=registrations_ids, event=event)
+        else:
+            registrations = EventRegistration.objects.filter(event=event, status='approved')
         
         phone_list = []
         placeholder_data = []
         
         for reg in registrations:
-            # Search for phone in responses
-            _, phone = self._detect_contact_info_standalone(reg)
+            # Search for contact info (marketing-first approach)
+            _, phone, detected_name = self._detect_contact_info_standalone(reg)
             if phone:
                 formatted_phone = self._format_phone_number(phone)
                 if formatted_phone:
                     phone_list.append(formatted_phone)
-                    name = reg.guest_name or (reg.user.profile.name_full if reg.user and hasattr(reg.user, 'profile') else reg.user.username if reg.user else "Peserta")
-                    placeholder_data.append({'name': name, 'event': event.title})
+                    placeholder_data.append({'name': detected_name, 'event': event.title})
         
         if not phone_list:
             return Response({"error": "Tidak ada nomor WhatsApp peserta yang terdeteksi."}, status=status.HTTP_404_NOT_FOUND)
@@ -320,20 +331,41 @@ class EventViewSet(viewsets.ModelViewSet):
         """Standalone helper for detecting contact info from a registration."""
         responses = registration.responses
         form_fields = registration.event.form_fields.all()
+        
+        # Initial fallbacks
         email = registration.guest_email
         phone = None
+        name = registration.guest_name
+        
         if registration.user:
             if not email: email = registration.user.email
+            if not name:
+                profile = getattr(registration.user, 'profile', None)
+                name = profile.name_full if profile and profile.name_full else registration.user.username
             if hasattr(registration.user, 'phone'): phone = registration.user.phone
+
+        # High-priority detection from form fields (marketing data)
         for field in form_fields:
             field_id = str(field.id)
             value = responses.get(field_id)
-            if not value or not isinstance(value, str): continue
+            if not value or not isinstance(value, (str, int)): continue
+            
             label = field.label.lower()
-            if 'email' in label: email = value
-            if any(kw in label for kw in ['wa', 'whatsapp', 'hp', 'telepon', 'phone', 'handphone']):
-                phone = value
-        return email, phone
+            # Name detection
+            if any(kw in label for kw in ['nama lengkap', 'nama pendaftar', 'fullName']):
+                name = str(value)
+            elif not name and 'nama' in label:
+                name = str(value)
+                
+            # Email detection
+            if 'email' in label: 
+                email = str(value)
+            
+            # Phone detection
+            if any(kw in label for kw in ['wa', 'whatsapp', 'nomor hp', 'telepon', 'phone', 'telepon', 'handphone']):
+                phone = str(value)
+                
+        return email, phone, name
 
     @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
     def add_documentation_images(self, request, slug=None):

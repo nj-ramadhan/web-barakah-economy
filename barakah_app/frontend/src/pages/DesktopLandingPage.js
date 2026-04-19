@@ -39,6 +39,7 @@ const DesktopLandingPage = () => {
     const [activities, setActivities] = useState([]);
     const [partners, setPartners] = useState([]);
     const [events, setEvents] = useState([]);
+    const [selectedPartner, setSelectedPartner] = useState(null);
 
     useEffect(() => {
         // Fetch data
@@ -631,8 +632,7 @@ const DesktopLandingPage = () => {
                                                         {(t.user_full_name || t.name || 'U').charAt(0)}
                                                     </div>
                                                     <div>
-                                                        <p className="font-bold text-gray-900 text-sm">{t.user_full_name || t.name || 'User'}</p>
-                                                        <p className="text-[10px] text-gray-400">Pengguna Terverifikasi</p>
+                                                        <p className="font-bold text-gray-900 text-sm leading-tight">{t.user_full_name || t.name || 'User'}</p>
                                                     </div>
                                                 </div>
                                             </div>
@@ -652,8 +652,7 @@ const DesktopLandingPage = () => {
                                                 <div className="flex items-center gap-4 pt-4 border-t border-gray-50">
                                                     <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center text-gray-400 font-bold text-sm">U</div>
                                                     <div>
-                                                        <p className="font-bold text-gray-900 text-sm">User {i}</p>
-                                                        <p className="text-[10px] text-gray-400">Pengguna</p>
+                                                        <p className="font-bold text-gray-900 text-sm leading-tight">User {i}</p>
                                                     </div>
                                                 </div>
                                             </div>
@@ -679,7 +678,17 @@ const DesktopLandingPage = () => {
                                     </div>
                                     <div className="flex flex-wrap justify-center items-center gap-8 md:gap-12">
                                         {partners.filter(p => p.type === 'partner').map((partner) => (
-                                            <div key={partner.id} className="w-24 h-24 md:w-28 md:h-28 bg-white rounded-2xl shadow-sm border border-gray-100 p-3 flex items-center justify-center hover:shadow-md hover:border-green-200 transition-all group">
+                                            <div 
+                                                key={partner.id} 
+                                                onClick={() => {
+                                                    if (partner.link) {
+                                                        window.open(partner.link, '_blank');
+                                                    } else {
+                                                        setSelectedPartner(partner);
+                                                    }
+                                                }}
+                                                className="w-24 h-24 md:w-28 md:h-28 bg-white rounded-2xl shadow-sm border border-gray-100 p-3 flex items-center justify-center hover:shadow-md hover:border-green-200 transition-all group cursor-pointer"
+                                            >
                                                 <img
                                                     src={getMediaUrl(partner.logo)}
                                                     alt={partner.name}
@@ -703,7 +712,17 @@ const DesktopLandingPage = () => {
                                     </div>
                                     <div className="flex flex-wrap justify-center items-center gap-6 md:gap-10">
                                         {partners.filter(p => p.type === 'mitra').map((partner) => (
-                                            <div key={partner.id} className="w-20 h-20 md:w-24 md:h-24 bg-white rounded-2xl shadow-sm border border-gray-50 p-2.5 flex items-center justify-center hover:shadow-md hover:border-blue-100 transition-all group">
+                                            <div 
+                                                key={partner.id} 
+                                                onClick={() => {
+                                                    if (partner.link) {
+                                                        window.open(partner.link, '_blank');
+                                                    } else {
+                                                        setSelectedPartner(partner);
+                                                    }
+                                                }}
+                                                className="w-20 h-20 md:w-24 md:h-24 bg-white rounded-2xl shadow-sm border border-gray-100 p-2.5 flex items-center justify-center hover:shadow-md hover:border-blue-100 transition-all group cursor-pointer"
+                                            >
                                                 <img
                                                     src={getMediaUrl(partner.logo)}
                                                     alt={partner.name}
@@ -790,6 +809,57 @@ const DesktopLandingPage = () => {
                     &copy; {new Date().getFullYear()} Barakah Economy. All rights reserved.
                 </div>
             </footer>
+
+            {/* Partner Detail Modal */}
+            {selectedPartner && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm animate-fade-in">
+                    <div className="bg-white rounded-[2.5rem] shadow-2xl max-w-lg w-full overflow-hidden animate-scale-up border border-white">
+                        <div className="relative h-48 bg-gradient-to-br from-green-600 to-green-800 flex items-center justify-center p-8">
+                            <button 
+                                onClick={() => setSelectedPartner(null)}
+                                className="absolute top-6 right-6 w-10 h-10 bg-white/20 hover:bg-white/30 text-white rounded-full flex items-center justify-center backdrop-blur-md transition"
+                            >
+                                <span className="material-icons">close</span>
+                            </button>
+                            <img 
+                                src={getMediaUrl(selectedPartner.logo)} 
+                                alt={selectedPartner.name} 
+                                className="max-w-full max-h-full object-contain filter brightness-0 invert"
+                            />
+                        </div>
+                        <div className="p-10 space-y-6">
+                            <div>
+                                <span className="inline-block bg-green-50 text-green-700 text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full mb-3">
+                                    {selectedPartner.type === 'partner' ? 'Strategic Partner' : 'Official Mitra'}
+                                </span>
+                                <h3 className="text-3xl font-extrabold text-gray-900">{selectedPartner.name}</h3>
+                            </div>
+                            <div className="space-y-4 text-gray-600 leading-relaxed text-sm">
+                                <p>{selectedPartner.description || 'Barakah Economy terus berkolaborasi bersama mitra strategis untuk memperkuat ekosistem ekonomi syariah di Indonesia.'}</p>
+                            </div>
+                            <div className="pt-4 flex flex-col gap-3">
+                                {selectedPartner.link && (
+                                    <a 
+                                        href={selectedPartner.link} 
+                                        target="_blank" 
+                                        rel="noreferrer"
+                                        className="w-full bg-green-700 text-white py-4 rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-green-800 transition shadow-lg shadow-green-100"
+                                    >
+                                        <span className="material-icons text-sm">public</span>
+                                        Kunjungi Website
+                                    </a>
+                                )}
+                                <button 
+                                    onClick={() => setSelectedPartner(null)}
+                                    className="w-full py-4 text-gray-500 font-bold hover:bg-gray-50 rounded-2xl transition"
+                                >
+                                    Tutup
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

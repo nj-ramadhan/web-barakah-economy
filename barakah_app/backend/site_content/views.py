@@ -1,12 +1,22 @@
 from rest_framework import viewsets, permissions, status, response
 from rest_framework.decorators import action
 from rest_framework_simplejwt.authentication import JWTAuthentication
-from .models import Partner, Testimonial, Activity, AboutUs
-from .serializers import PartnerSerializer, TestimonialSerializer, ActivitySerializer, AboutUsSerializer
+from .models import Partner, Testimonial, Activity, AboutUs, AboutUsLegalDocument
+from .serializers import PartnerSerializer, TestimonialSerializer, ActivitySerializer, AboutUsSerializer, AboutUsLegalDocumentSerializer
 
 class AboutUsViewSet(viewsets.ModelViewSet):
     queryset = AboutUs.objects.all()
     serializer_class = AboutUsSerializer
+    authentication_classes = [JWTAuthentication]
+
+    def get_permissions(self):
+        if self.action in ['list', 'retrieve']:
+            return [permissions.AllowAny()]
+        return [permissions.IsAdminUser()]
+
+class AboutUsLegalDocumentViewSet(viewsets.ModelViewSet):
+    queryset = AboutUsLegalDocument.objects.all()
+    serializer_class = AboutUsLegalDocumentSerializer
     authentication_classes = [JWTAuthentication]
 
     def get_permissions(self):
