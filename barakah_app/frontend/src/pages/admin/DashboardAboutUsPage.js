@@ -273,6 +273,17 @@ const DashboardAboutUsPage = () => {
                                 Bukti Legalitas
                             </h3>
 
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Deskripsi Legalitas (Teks)</label>
+                                <textarea 
+                                    className="w-full p-4 bg-gray-50 border-none rounded-2xl text-sm min-h-[120px]" 
+                                    placeholder="Jelaskan dasar hukum organisasi, nomor akta pendirian, domisili, dll..."
+                                    value={aboutData?.legal_description || ''}
+                                    onChange={(e) => setAboutData({ ...aboutData, legal_description: e.target.value })}
+                                ></textarea>
+                                <p className="text-[10px] text-gray-400 ml-1 italic">* Teks ini akan muncul di halaman Tentang Kami bagian Bukti Legalitas.</p>
+                            </div>
+
                             {/* Existing Docs */}
                             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                                 {aboutData.legal_documents?.map(doc => (

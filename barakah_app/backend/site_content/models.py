@@ -28,6 +28,7 @@ class AboutUs(models.Model):
     description = models.TextField(blank=True, null=True)
     vision = models.TextField(blank=True, null=True)
     mission = models.TextField(blank=True, null=True)
+    legal_description = models.TextField(blank=True, null=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:

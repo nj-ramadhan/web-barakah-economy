@@ -14,7 +14,7 @@ const DashboardPartnersPage = () => {
     const [partners, setPartners] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
-    const [formData, setFormData] = useState({ name: '', logo: null, order: 0 });
+    const [formData, setFormData] = useState({ id: null, name: '', logo: null, order: 0, link: '', description: '', type: 'partner' });
     const [cropper, setCropper] = useState({ active: false, image: null });
 
     const fetchPartners = async () => {
@@ -41,21 +41,38 @@ const DashboardPartnersPage = () => {
         data.append('order', formData.order);
         data.append('description', formData.description || '');
         data.append('type', formData.type || 'partner');
-        if (formData.logo) data.append('logo', formData.logo);
+        data.append('link', formData.link || '');
+        if (formData.logo instanceof File) data.append('logo', formData.logo);
 
         try {
-            await axios.post(`${process.env.REACT_APP_API_BASE_URL}/api/site-content/partners/`, data, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                    'Content-Type': 'multipart/form-data'
-                }
-            });
+            if (formData.id) {
+                await axios.patch(`${process.env.REACT_APP_API_BASE_URL}/api/site-content/partners/${formData.id}/`, data, {
+                    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' }
+                });
+            } else {
+                await axios.post(`${process.env.REACT_APP_API_BASE_URL}/api/site-content/partners/`, data, {
+                    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' }
+                });
+            }
             setShowModal(false);
-            setFormData({ name: '', logo: null, order: 0 });
+            setFormData({ id: null, name: '', logo: null, order: 0, link: '', description: '', type: 'partner' });
             fetchPartners();
         } catch (err) {
-            alert("Gagal menambah partner");
+            alert(`Gagal ${formData.id ? 'mengupdate' : 'menambah'} partner`);
         }
+    };
+
+    const handleEdit = (partner) => {
+        setFormData({
+            id: partner.id,
+            name: partner.name,
+            logo: partner.logo,
+            order: partner.order,
+            link: partner.link || '',
+            description: partner.description || '',
+            type: partner.type || 'partner'
+        });
+        setShowModal(true);
     };
 
     const handleDelete = async (id) => {
@@ -103,12 +120,24 @@ const DashboardPartnersPage = () => {
                                     </div>
                                     <div>
                                         <p className="font-bold text-sm text-gray-800">{p.name}</p>
-                                        <p className="text-[10px] text-gray-400">Order: {p.order}</p>
+                                        <div className="flex items-center gap-2 mt-1">
+                                            <p className="text-[10px] text-gray-400">Order: {p.order}</p>
+                                            {p.link && (
+                                                <a href={p.link} target="_blank" rel="noreferrer" className="text-[10px] text-blue-500 hover:underline flex items-center gap-1">
+                                                    <span className="material-icons text-[10px]">link</span> Website
+                                                </a>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
-                                <button onClick={() => handleDelete(p.id)} className="w-8 h-8 flex items-center justify-center bg-red-50 text-red-500 rounded-lg opacity-0 group-hover:opacity-100 transition hover:bg-red-500 hover:text-white">
-                                    <span className="material-icons text-sm">delete</span>
-                                </button>
+                                <div className="flex items-center gap-2">
+                                    <button onClick={() => handleEdit(p)} className="w-8 h-8 flex items-center justify-center bg-blue-50 text-blue-500 rounded-lg opacity-0 group-hover:opacity-100 transition hover:bg-blue-500 hover:text-white">
+                                        <span className="material-icons text-sm">edit</span>
+                                    </button>
+                                    <button onClick={() => handleDelete(p.id)} className="w-8 h-8 flex items-center justify-center bg-red-50 text-red-500 rounded-lg opacity-0 group-hover:opacity-100 transition hover:bg-red-500 hover:text-white">
+                                        <span className="material-icons text-sm">delete</span>
+                                    </button>
+                                </div>
                             </div>
                         ))}
                     </div>
@@ -128,12 +157,24 @@ const DashboardPartnersPage = () => {
                                     </div>
                                     <div>
                                         <p className="font-bold text-sm text-gray-800">{p.name}</p>
-                                        <p className="text-[10px] text-gray-400">Order: {p.order}</p>
+                                        <div className="flex items-center gap-2 mt-1">
+                                            <p className="text-[10px] text-gray-400">Order: {p.order}</p>
+                                            {p.link && (
+                                                <a href={p.link} target="_blank" rel="noreferrer" className="text-[10px] text-blue-500 hover:underline flex items-center gap-1">
+                                                    <span className="material-icons text-[10px]">link</span> Website
+                                                </a>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
-                                <button onClick={() => handleDelete(p.id)} className="w-8 h-8 flex items-center justify-center bg-red-50 text-red-500 rounded-lg opacity-0 group-hover:opacity-100 transition hover:bg-red-500 hover:text-white">
-                                    <span className="material-icons text-sm">delete</span>
-                                </button>
+                                <div className="flex items-center gap-2">
+                                    <button onClick={() => handleEdit(p)} className="w-8 h-8 flex items-center justify-center bg-blue-50 text-blue-500 rounded-lg opacity-0 group-hover:opacity-100 transition hover:bg-blue-500 hover:text-white">
+                                        <span className="material-icons text-sm">edit</span>
+                                    </button>
+                                    <button onClick={() => handleDelete(p.id)} className="w-8 h-8 flex items-center justify-center bg-red-50 text-red-500 rounded-lg opacity-0 group-hover:opacity-100 transition hover:bg-red-500 hover:text-white">
+                                        <span className="material-icons text-sm">delete</span>
+                                    </button>
+                                </div>
                             </div>
                         ))}
                     </div>
@@ -143,7 +184,7 @@ const DashboardPartnersPage = () => {
             {showModal && (
                 <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4">
                     <div className="bg-white w-full max-w-md rounded-2xl p-6 shadow-2xl animate-slide-up">
-                        <h3 className="text-lg font-bold mb-4">Tambah Partner Baru</h3>
+                        <h3 className="text-lg font-bold mb-4">{formData.id ? 'Edit Partner' : 'Tambah Partner Baru'}</h3>
                         <form onSubmit={handleSubmit}>
                             <div className="space-y-4">
                                 <input 
@@ -178,6 +219,13 @@ const DashboardPartnersPage = () => {
                                     value={formData.description || ''}
                                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                                 ></textarea>
+                                <input 
+                                    type="url" 
+                                    placeholder="Link Website Partner (https://...)" 
+                                    className="w-full p-3 bg-gray-50 border-none rounded-xl text-sm" 
+                                    value={formData.link || ''}
+                                    onChange={(e) => setFormData({ ...formData, link: e.target.value })} 
+                                />
                                 
                                 <div className="space-y-1">
                                     <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Logo Partner (1:1 Recommended)</label>

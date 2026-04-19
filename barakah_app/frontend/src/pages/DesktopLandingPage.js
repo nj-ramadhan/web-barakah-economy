@@ -824,7 +824,7 @@ const DesktopLandingPage = () => {
                             <img 
                                 src={getMediaUrl(selectedPartner.logo)} 
                                 alt={selectedPartner.name} 
-                                className="max-w-full max-h-full object-contain filter brightness-0 invert"
+                                className="max-w-full max-h-full object-contain"
                             />
                         </div>
                         <div className="p-10 space-y-6">

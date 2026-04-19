@@ -180,7 +180,14 @@ const AboutUs = () => {
                   Bukti Legalitas & Dokumen
                 </h2>
                 {aboutUs?.legal_documents?.length > 0 ? (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    {aboutUs?.legal_description && (
+                      <div className="col-span-full bg-green-50/50 p-6 rounded-3xl border border-green-100 mb-4">
+                        <p className="text-gray-700 text-sm leading-relaxed whitespace-pre-line">
+                          {aboutUs.legal_description}
+                        </p>
+                      </div>
+                    )}
                     {aboutUs.legal_documents.map((doc) => (
                       <div key={doc.id} className="group bg-gray-50 rounded-2xl overflow-hidden border border-gray-100 hover:border-purple-200 transition-all shadow-sm">
                         <div className="relative h-48 overflow-hidden bg-white">
