@@ -143,8 +143,16 @@ const EventDetailPage = () => {
         });
         
         if (paymentProof) {
+            const fixed = Number(event?.price_fixed) || 0;
+            const extra = Number(paymentAmount) || 0;
+            let totalToSave = 0;
+            
+            if (event?.price_type === 'fixed') totalToSave = fixed;
+            else if (event?.price_type === 'hybrid_1') totalToSave = fixed + extra;
+            else totalToSave = extra; 
+
             data.append('payment_proof', paymentProof);
-            data.append('payment_amount', paymentAmount || 0);
+            data.append('payment_amount', totalToSave);
         }
 
         try {
@@ -692,11 +700,17 @@ const EventDetailPage = () => {
                                                                 <span className="absolute left-5 top-1/2 -translate-y-1/2 font-bold text-gray-400 text-sm">Rp</span>
                                                                 <input 
                                                                     type="number"
+                                                                    min="0"
                                                                     required={event.price_type === 'voluntary'}
                                                                     value={paymentAmount}
-                                                                    onChange={(e) => setPaymentAmount(e.target.value)}
+                                                                    onChange={(e) => {
+                                                                        const val = e.target.value;
+                                                                        if (val === '' || Number(val) >= 0) {
+                                                                            setPaymentAmount(val);
+                                                                        }
+                                                                    }}
                                                                     placeholder="Masukkan nominal..."
-                                                                    className="w-full pl-12 pr-5 py-3.5 bg-white border border-gray-200 rounded-2xl text-sm font-bold outline-none focus:ring-2 focus:ring-green-500 shadow-sm"
+                                                                    className="w-full pl-12 pr-5 py-3.5 bg-white border border-gray-200 rounded-2xl text-sm font-bold outline-none focus:ring-2 focus:ring-green-500 shadow-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                                                 />
                                                             </div>
                                                         </div>
