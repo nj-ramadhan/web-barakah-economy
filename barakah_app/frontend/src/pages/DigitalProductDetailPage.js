@@ -104,10 +104,16 @@ const DigitalProductDetailPage = () => {
                         <div>
                             <span className="inline-block text-xs font-semibold bg-green-100 text-green-700 px-3 py-1 rounded-full mb-4">{product.category}</span>
                             <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">{product.title}</h1>
-                            <p className="text-sm text-gray-400 mb-6 flex items-center gap-1">
-                                <span className="material-icons text-sm">person</span>
-                                oleh <Link to={`/digital_produk/${product.seller_name}`} className="text-green-700 font-medium hover:underline">@{product.seller_name}</Link>
-                            </p>
+                            <div className="flex items-center justify-between mb-6">
+                                <p className="text-sm text-gray-400 flex items-center gap-1">
+                                    <span className="material-icons text-sm">person</span>
+                                    oleh <Link to={`/digital_produk/${product.seller_name}`} className="text-green-700 font-medium hover:underline">@{product.seller_name}</Link>
+                                </p>
+                                <p className="text-sm text-gray-400 flex items-center gap-1 opacity-60">
+                                    <span className="material-icons text-sm">visibility</span>
+                                    {product.view_count || 0} orang telah melihat
+                                </p>
+                            </div>
 
                             <div className="flex items-center gap-4 mb-4">
                                 <p className="text-3xl font-bold text-green-700">{formatIDR(product.price)}</p>

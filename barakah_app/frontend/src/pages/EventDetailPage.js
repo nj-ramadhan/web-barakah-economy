@@ -273,6 +273,10 @@ const EventDetailPage = () => {
                                 <div className="flex items-center gap-2 mb-4">
                                     <span className="px-3 py-1 bg-green-600 rounded-full text-[10px] font-bold uppercase tracking-widest inline-block shadow-lg shadow-green-900/40">Event</span>
                                     <span className="px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-[10px] font-bold uppercase tracking-widest inline-block">{event.status}</span>
+                                    <span className="flex items-center gap-1 px-3 py-1 bg-white/10 backdrop-blur-md rounded-full text-[10px] font-bold uppercase tracking-widest inline-block ml-2">
+                                        <span className="material-icons text-[12px]">visibility</span>
+                                        {event.view_count || 0} Kali Dilihat
+                                    </span>
                                 </div>
                                 <h1 className="text-2xl sm:text-5xl font-extrabold leading-tight drop-shadow-lg">{event.title}</h1>
                             </div>

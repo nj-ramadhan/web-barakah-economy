@@ -61,7 +61,13 @@ class EventViewSet(viewsets.ModelViewSet):
 
     def retrieve(self, request, *args, **kwargs):
         self._auto_complete_expired_events()
-        return super().retrieve(request, *args, **kwargs)
+        instance = self.get_object()
+        from django.db.models import F
+        instance.view_count = F('view_count') + 1
+        instance.save(update_fields=['view_count'])
+        instance.refresh_from_db()
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data)
 
     def _get_parsed_data(self, request):
         """Returns a dict from request.data with JSON fields correctly parsed."""

@@ -37,6 +37,7 @@ class Article(models.Model):
 
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
     rejection_reason = models.TextField(blank=True, null=True)
+    view_count = models.PositiveIntegerField(default=0)
     date = models.DateField()
 
     class Meta:

@@ -108,9 +108,15 @@ const EventLandingPage = () => {
                                     <h3 className="font-bold text-gray-900 text-xl group-hover:text-green-700 transition-colors line-clamp-2 mb-3">
                                         {ev.title}
                                     </h3>
-                                    <p className="text-gray-500 text-sm line-clamp-2 mb-4 flex-1">
-                                        {ev.short_description || ev.description?.replace(/<[^>]*>?/gm, '').substring(0, 100)}...
-                                    </p>
+                                    <div className="flex items-center justify-between mb-4 flex-1">
+                                        <p className="text-gray-500 text-sm line-clamp-2">
+                                            {ev.short_description || ev.description?.replace(/<[^>]*>?/gm, '').substring(0, 100)}...
+                                        </p>
+                                        <div className="flex items-center gap-1 opacity-40 ml-2">
+                                            <span className="material-icons text-[14px]">visibility</span>
+                                            <span className="text-[10px] font-bold">{ev.view_count || 0}</span>
+                                        </div>
+                                    </div>
                                     <div className="flex items-center justify-between mt-auto pt-4 border-t border-gray-50">
                                         <div className="flex items-center gap-2 text-xs font-bold text-gray-700">
                                             <div className="w-8 h-8 bg-green-50 rounded-full flex items-center justify-center text-green-700">

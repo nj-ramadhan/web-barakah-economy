@@ -77,6 +77,15 @@ class CourseViewSet(viewsets.ModelViewSet):
             # Ensure instructor doesn't change during regular update
             serializer.save(instructor=self.request.user)
 
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        from django.db.models import F
+        instance.view_count = F('view_count') + 1
+        instance.save(update_fields=['view_count'])
+        instance.refresh_from_db()
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data)
+
     @action(detail=False, methods=['get'])
     def my_courses(self, request):
         courses = self.get_queryset()
@@ -86,6 +95,10 @@ class CourseViewSet(viewsets.ModelViewSet):
 class CourseDetailViewSet(APIView):
     def get(self, request, slug):
         course = get_object_or_404(Course, slug=slug)
+        from django.db.models import F
+        course.view_count = F('view_count') + 1
+        course.save(update_fields=['view_count'])
+        course.refresh_from_db()
         serializer = CourseSerializer(course)
         return Response(serializer.data, status=status.HTTP_200_OK)
         

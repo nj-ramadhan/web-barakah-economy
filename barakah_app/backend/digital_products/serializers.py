@@ -11,7 +11,7 @@ class DigitalProductSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'user', 'seller_name', 'title', 'slug', 'description',
             'category', 'visibility', 'thumbnail', 'price', 'digital_link',
-            'is_active', 'created_at', 'updated_at',
+            'is_active', 'view_count', 'created_at', 'updated_at',
         ]
         read_only_fields = ['id', 'slug', 'user', 'created_at', 'updated_at']
 
@@ -25,7 +25,7 @@ class DigitalProductPublicSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'seller_name', 'title', 'slug', 'description',
             'category', 'visibility', 'thumbnail', 'price',
-            'is_active', 'created_at',
+            'is_active', 'view_count', 'created_at',
         ]
 
 

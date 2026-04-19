@@ -83,9 +83,15 @@ const ActivityListPage = () => {
                                     />
                                 </div>
                                 <div className="p-5">
-                                    <div className="flex items-center gap-2 text-xs text-gray-400 mb-2">
-                                        <span className="material-icons text-sm">calendar_today</span>
-                                        {new Date(act.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
+                                    <div className="flex items-center justify-between mb-2">
+                                        <div className="flex items-center gap-2 text-xs text-gray-400">
+                                            <span className="material-icons text-sm">calendar_today</span>
+                                            {new Date(act.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
+                                        </div>
+                                        <div className="flex items-center gap-1 opacity-40">
+                                            <span className="material-icons text-[14px]">visibility</span>
+                                            <span className="text-[10px] font-bold">{act.view_count || 0}</span>
+                                        </div>
                                     </div>
                                     <h3 className="font-bold text-gray-900 text-lg group-hover:text-green-700 transition-colors line-clamp-2">
                                         {act.title}

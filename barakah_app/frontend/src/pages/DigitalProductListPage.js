@@ -97,10 +97,16 @@ const DigitalProductListPage = () => {
                                         <h3 className="text-sm font-semibold text-gray-800 line-clamp-2 mb-1">{product.title}</h3>
                                         <span className="inline-block text-[10px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full mb-1">{product.category}</span>
                                         <p className="text-green-700 font-bold text-sm">{formatIDR(product.price)}</p>
-                                        <p className="text-gray-400 text-[10px] mt-1 flex items-center gap-1">
-                                            <span className="material-icons text-[10px]">person</span>
-                                            @{product.seller_name}
-                                        </p>
+                                        <div className="flex justify-between items-center mt-1">
+                                            <p className="text-gray-400 text-[10px] flex items-center gap-1">
+                                                <span className="material-icons text-[10px]">person</span>
+                                                @{product.seller_name}
+                                            </p>
+                                            <p className="text-gray-400 text-[10px] flex items-center gap-1">
+                                                <span className="material-icons text-[10px]">visibility</span>
+                                                {product.view_count || 0}
+                                            </p>
+                                        </div>
                                     </div>
                                 </div>
                             </Link>

@@ -207,11 +207,17 @@ const EcourseCourseDetail = () => {
                 <ShareButton slug={course.slug} title={course.title} type="course" />
               </div>
             </div>
-            <div className="flex items-center gap-2 mb-4">
-              <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center">
-                <span className="material-icons text-green-700 text-[14px]">person</span>
+            <div className="flex items-center gap-4 mb-4">
+              <div className="flex items-center gap-1.5">
+                <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center">
+                  <span className="material-icons text-green-700 text-[14px]">person</span>
+                </div>
+                <span className="text-xs font-bold text-gray-600">@{course.instructor_name}</span>
               </div>
-              <span className="text-xs font-bold text-gray-600">@{course.instructor_name}</span>
+              <div className="flex items-center gap-1.5 opacity-60">
+                <span className="material-icons text-[16px]">visibility</span>
+                <span className="text-xs font-medium">{course.view_count || 0} orang telah melihat</span>
+              </div>
             </div>
             <div className="flex justify-between items-center mb-4">
               <span className="text-lg font-black text-green-700">

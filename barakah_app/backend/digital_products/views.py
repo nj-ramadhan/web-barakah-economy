@@ -146,6 +146,15 @@ class DigitalProductViewSet(viewsets.ModelViewSet):
         # Other actions (like retrieve/detail): all active products
         return DigitalProduct.objects.filter(is_active=True)
 
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        from django.db.models import F
+        instance.view_count = F('view_count') + 1
+        instance.save(update_fields=['view_count'])
+        instance.refresh_from_db()
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data)
+
     def get_permissions(self):
         if self.action in ['list', 'retrieve', 'popular_sellers', 'public_profile']:
             return [permissions.AllowAny()]

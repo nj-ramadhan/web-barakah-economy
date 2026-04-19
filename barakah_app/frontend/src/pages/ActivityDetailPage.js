@@ -79,9 +79,15 @@ const ActivityDetailPage = () => {
 
                 {/* Title and date */}
                 <div className="mb-6">
-                    <div className="flex items-center gap-2 text-xs text-gray-400 mb-2">
-                        <span className="material-icons text-sm">calendar_today</span>
-                        {new Date(activity.date).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+                    <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2 text-xs text-gray-400">
+                            <span className="material-icons text-sm">calendar_today</span>
+                            {new Date(activity.date).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+                        </div>
+                        <div className="flex items-center gap-1.5 opacity-60">
+                            <span className="material-icons text-[16px]">visibility</span>
+                            <span className="text-xs font-medium">{activity.view_count || 0} kali dilihat</span>
+                        </div>
                     </div>
                     <div className="flex justify-between items-start gap-4">
                         <h1 className="text-2xl md:text-3xl font-bold text-gray-900">{activity.title}</h1>

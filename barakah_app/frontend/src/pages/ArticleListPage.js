@@ -70,7 +70,13 @@ const ArticleListPage = () => {
                         {stripHtml(a.content).substring(0, 100)}...
                       </p>
                     </div>
-                    <span className="text-gray-400 text-[10px] mt-2">{a.date}</span>
+                    <div className="flex justify-between items-center mt-2">
+                      <span className="text-gray-400 text-[10px]">{a.date}</span>
+                      <div className="flex items-center gap-1 opacity-40">
+                        <span className="material-icons text-[12px]">visibility</span>
+                        <span className="text-[10px]">{a.view_count || 0}</span>
+                      </div>
+                    </div>
                   </div>
                 </Link>
                 <div className="flex items-center flex-shrink-0">

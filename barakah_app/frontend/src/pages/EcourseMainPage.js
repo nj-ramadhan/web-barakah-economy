@@ -201,9 +201,15 @@ const EcourseMainPage = () => {
                   </Link>
                   <div className="p-2">
                     <h3 className="text-sm font-medium mb-1 line-clamp-2 min-h-[40px] leading-tight">{course.title}</h3>
-                    <div className="flex items-center gap-1 mb-2 opacity-60">
-                      <span className="material-icons text-[10px]">person</span>
-                      <span className="text-[10px] font-bold">@{course.instructor_name}</span>
+                    <div className="flex items-center justify-between mb-2 opacity-60">
+                      <div className="flex items-center gap-1">
+                        <span className="material-icons text-[10px]">person</span>
+                        <span className="text-[10px] font-bold">@{course.instructor_name}</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <span className="material-icons text-[10px]">visibility</span>
+                        <span className="text-[10px]">{course.view_count || 0}</span>
+                      </div>
                     </div>
                     <p className="text-xs font-black text-green-700 line-clamp-1 mb-2">{formatIDR(course.price)}</p>
                     <div className="flex gap-2 items-center w-full mt-2">

@@ -50,6 +50,7 @@ class Event(models.Model):
     
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='created_events')
     rejection_reason = models.TextField(blank=True, null=True)
+    view_count = models.PositiveIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

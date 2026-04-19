@@ -45,6 +45,7 @@ class Course(models.Model):
     is_active = models.BooleanField(default=True)
     has_certificate = models.BooleanField(default=False)
     certificate_info = models.TextField(blank=True, null=True, help_text="Instructions for students regarding the certificate (e.g., 'Sent in 1x24 hours')")
+    view_count = models.PositiveIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def save(self, *args, **kwargs):

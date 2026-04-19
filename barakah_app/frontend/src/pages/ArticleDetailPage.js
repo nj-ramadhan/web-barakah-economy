@@ -70,9 +70,15 @@ const ArticleDetailPage = () => {
             <ShareButton slug={article.slug || id} title={article.title} type="article" />
           </div>
         </div>
-        <p className="text-gray-500 text-sm mb-6 pb-4 border-b border-gray-100">
-          {article.date}
-        </p>
+        <div className="flex justify-between items-center mb-6 pb-4 border-b border-gray-100">
+          <p className="text-gray-500 text-sm">
+            {article.date}
+          </p>
+          <div className="flex items-center gap-1.5 opacity-60">
+            <span className="material-icons text-[18px]">visibility</span>
+            <span className="text-sm font-medium">{article.view_count || 0} kali dilihat</span>
+          </div>
+        </div>
 
         {/* Gambar Utama (Featured Image) */}
         {article.images && article.images.length > 0 && (

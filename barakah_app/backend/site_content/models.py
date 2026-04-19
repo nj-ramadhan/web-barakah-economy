@@ -62,6 +62,7 @@ class Activity(models.Model):
     header_image = models.ImageField(upload_to='activities/', null=True, blank=True)
     content = RichTextField()
     date = models.DateField()
+    view_count = models.PositiveIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
     
     # Link to event for automatic documentation

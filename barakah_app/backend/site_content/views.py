@@ -91,6 +91,15 @@ class ActivityViewSet(viewsets.ModelViewSet):
             return [permissions.AllowAny()]
         return [permissions.IsAdminUser()]
 
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        from django.db.models import F
+        instance.view_count = F('view_count') + 1
+        instance.save(update_fields=['view_count'])
+        instance.refresh_from_db()
+        serializer = self.get_serializer(instance)
+        return response.Response(serializer.data)
+
 class ActivityShareView(viewsets.ViewSet):
     """
     View for rendering server-side HTML with Open Graph tags for activity sharing.

@@ -61,7 +61,7 @@ class CourseSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'title', 'slug', 'description', 'instructor', 'instructor_name',
             'thumbnail', 'price', 'discount', 'is_active', 'is_featured', 'category',
-            'duration', 'has_certificate', 'certificate_info', 'created_at', 
+            'duration', 'has_certificate', 'certificate_info', 'view_count', 'created_at', 
             'materials', 'student_count', 'material_count', 'students'
         ]
         read_only_fields = ['instructor']

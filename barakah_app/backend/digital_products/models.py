@@ -56,6 +56,7 @@ class DigitalProduct(models.Model):
     price = models.DecimalField(max_digits=12, decimal_places=2)
     digital_link = models.URLField(max_length=500, help_text="Link produk digital (e.g., lynk.id, Google Drive, dll)")
     is_active = models.BooleanField(default=True)
+    view_count = models.PositiveIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
