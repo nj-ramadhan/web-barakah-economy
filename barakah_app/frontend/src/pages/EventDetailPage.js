@@ -254,9 +254,9 @@ const EventDetailPage = () => {
                     Kembali
                 </Link>
             </div>
-            <div className="relative w-full">
+            <div className="relative w-full max-w-6xl mx-auto sm:px-4">
                 {/* Image Container */}
-                <div className="relative h-auto sm:h-[450px] w-full overflow-hidden bg-gray-100 flex items-center justify-center">
+                <div className="relative h-auto sm:h-[500px] w-full overflow-hidden bg-gray-100 flex items-center justify-center sm:rounded-[3rem] shadow-2xl border border-gray-100">
                     <img 
                         src={event.header_image || event.thumbnail || '/images/event-header-default.jpg'} 
                         alt={event.title} 
@@ -264,11 +264,11 @@ const EventDetailPage = () => {
                         onError={(e) => { e.target.onerror = null; e.target.src = '/images/event-header-default.jpg'; }}
                     />
                     {/* Desktop Overlay Gradient */}
-                    <div className="hidden sm:block absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
+                    <div className="hidden sm:block absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent"></div>
                     
                     {/* Desktop Info Overlay */}
                     <div className="hidden sm:block absolute bottom-0 left-0 w-full p-12 text-white">
-                        <div className="max-w-6xl mx-auto flex sm:items-end justify-between gap-6">
+                        <div className="flex sm:items-end justify-between gap-6">
                             <div className="max-w-3xl">
                                 <div className="flex items-center gap-2 mb-4">
                                     <span className="px-3 py-1 bg-green-600 rounded-full text-[10px] font-bold uppercase tracking-widest inline-block shadow-lg shadow-green-900/40">Event</span>
@@ -296,7 +296,7 @@ const EventDetailPage = () => {
                                         Ikuti Event Ini
                                     </button>
                                 )}
-
+ 
                                 <button 
                                     onClick={handleShare}
                                     className="bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/30 text-white px-6 py-4 rounded-2xl font-extrabold text-sm uppercase tracking-wider transition active:scale-[0.97] flex items-center gap-3 justify-center group"
@@ -308,7 +308,7 @@ const EventDetailPage = () => {
                             </div>
                         </div>
                     </div>
-
+ 
                     {/* View Full Image Button - Visible on Desktop */}
                     <button 
                         onClick={() => window.open(event.header_image_full || event.header_image || event.thumbnail_full || event.thumbnail || '/images/event-header-default.jpg', '_blank')}
