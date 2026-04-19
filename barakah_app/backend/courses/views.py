@@ -30,8 +30,18 @@ class CourseViewSet(viewsets.ModelViewSet):
             return Course.objects.filter(instructor=user)
         
         # Default visibility logic
-        if self.action in ['list', 'retrieve']:
+        if self.action == 'list':
+            # Public listing only shows active courses
             queryset = Course.objects.filter(is_active=True)
+        elif self.action == 'retrieve':
+            # Retrieve allows admins or instructors to see inactive courses
+            if user.is_authenticated:
+                if user.is_staff:
+                    queryset = Course.objects.all()
+                else:
+                    queryset = Course.objects.filter(Q(is_active=True) | Q(instructor=user))
+            else:
+                queryset = Course.objects.filter(is_active=True)
         else:
             # For update/partial_update/destroy/etc.
             if user.is_authenticated and user.is_staff:
