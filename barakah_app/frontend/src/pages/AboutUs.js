@@ -187,7 +187,7 @@ const AboutUs = () => {
                   Bukti Legalitas & Dokumen
                 </h2>
                 {aboutUs?.legal_documents?.length > 0 ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                  <div className="grid grid-cols-2 gap-4 md:gap-8">
                     {aboutUs?.legal_description && (
                       <div className="col-span-full bg-green-50/50 p-6 rounded-3xl border border-green-100 mb-4">
                         <p className="text-gray-700 text-sm leading-relaxed whitespace-pre-line">
@@ -196,24 +196,25 @@ const AboutUs = () => {
                       </div>
                     )}
                     {aboutUs.legal_documents.map((doc) => (
-                      <div key={doc.id} className="group bg-gray-50 rounded-2xl overflow-hidden border border-gray-100 hover:border-purple-200 transition-all shadow-sm">
-                        <div className="relative h-48 overflow-hidden bg-white">
-                          <img 
-                            src={getMediaUrl(doc.image)} 
-                            alt={doc.title} 
-                            className="w-full h-full object-contain p-4 group-hover:scale-110 transition-transform cursor-pointer"
-                            onClick={() => window.open(getMediaUrl(doc.image), '_blank')}
-                          />
-                          <div 
-                            className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer"
-                            onClick={() => window.open(getMediaUrl(doc.image), '_blank')}
-                          >
-                            <span className="material-icons text-white bg-purple-600 p-2 rounded-full shadow-lg">visibility</span>
+                      <div 
+                        key={doc.id} 
+                        className="group relative aspect-[4/5] bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-500 hover:-translate-y-1"
+                      >
+                        <img 
+                          src={getMediaUrl(doc.image)} 
+                          alt={doc.title} 
+                          className="w-full h-full object-cover transition duration-700 group-hover:scale-110"
+                        />
+                        {/* Overlay with info revealed on hover */}
+                        <div 
+                          className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-4 cursor-pointer"
+                          onClick={() => window.open(getMediaUrl(doc.image), '_blank')}
+                        >
+                          <p className="text-[10px] font-black text-white uppercase tracking-wider mb-1 drop-shadow-md">{doc.title}</p>
+                          <div className="flex items-center gap-1 text-white/80 text-[8px] font-bold">
+                            <span className="material-icons text-[10px]">visibility</span>
+                            KLIK UNTUK LIHAT PENUH
                           </div>
-                        </div>
-                        <div className="p-4 bg-white border-t border-gray-50">
-                          <p className="text-xs font-bold text-gray-800 uppercase tracking-wider">{doc.title}</p>
-                          <p className="text-[10px] text-gray-400 mt-1">Unggahan: {new Date(doc.created_at).toLocaleDateString('id-ID')}</p>
                         </div>
                       </div>
                     ))}
