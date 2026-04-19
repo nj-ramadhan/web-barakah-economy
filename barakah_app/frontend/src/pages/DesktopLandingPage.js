@@ -42,6 +42,7 @@ const DesktopLandingPage = () => {
     const [activities, setActivities] = useState([]);
     const [partners, setPartners] = useState([]);
     const [events, setEvents] = useState([]);
+    const [aboutUs, setAboutUs] = useState(null);
     const [selectedPartner, setSelectedPartner] = useState(null);
 
     useEffect(() => {
@@ -71,6 +72,11 @@ const DesktopLandingPage = () => {
                 setActivities(Array.isArray(actRes.data) ? actRes.data.slice(0, 3) : []);
                 setPartners(Array.isArray(partnerRes.data) ? partnerRes.data : []);
                 setEvents(Array.isArray(eventRes.data) ? eventRes.data : []);
+                
+                // Fetch About Us explicitly if not in previous results
+                const aboutDataRes = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/site_content/about-us/`).catch(() => ({ data: [] }));
+                const items = Array.isArray(aboutDataRes.data) ? aboutDataRes.data : [aboutDataRes.data];
+                if (items.length > 0) setAboutUs(items[0]);
             } catch (err) {
                 console.error('Error fetching landing page data:', err);
             }
@@ -743,38 +749,49 @@ const DesktopLandingPage = () => {
                 )}
 
                 {/* ============ ABOUT US (paling bawah) ============ */}
-                <section id="about" className="py-20 px-8 lg:px-24 bg-gray-50">
-                    <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-start gap-12">
-                        <div className="flex-1 space-y-6">
-                            <h2 className="text-3xl font-bold text-gray-900">Tentang Kami</h2>
-                            <div className="w-20 h-1 bg-green-600 rounded-full"></div>
-                            <p className="text-gray-600 leading-relaxed">
-                                BAE Community berdiri pada tanggal 29 Februari 2024 di Jalan Tubagus Ismail Dalam No.19C dan bertempat di Dago, Kota Bandung, Jawa Barat.
-                                Tujuan BAE Community adalah meningkatkan kestabilan finansial masyarakat melalui pengembangan ekosistem ekonomi yang berlandaskan syariah Islam
-                                dengan memberdayakan pemuda dan mahasiswa sebagai pionir perubahan.
-                            </p>
-                            <p className="text-gray-600 leading-relaxed">
-                                BAE Community memiliki tugas pokok menyelenggarakan kegiatan yang bersifat pemberdayaan, pendidikan, kolaborasi, pengembangan serta sosial
-                                baik ke dalam yaitu internal komunitas maupun keluar yaitu lingkungan masyarakat.
-                            </p>
-                        </div>
-                        <div className="flex-1 space-y-6">
-                            <div className="bg-green-50 p-6 rounded-2xl border border-green-100">
-                                <h3 className="text-lg font-bold text-green-800 mb-3">🎯 Visi</h3>
-                                <p className="text-gray-700 text-sm leading-relaxed">
-                                    Menjadi komunitas yang unggul dalam mengembangkan perekonomian berbasis syariah yang berkeadilan dan berkelanjutan,
-                                    serta berkontribusi secara aktif dalam kesejahteraan umat.
-                                </p>
+                <section id="about" className="py-20 px-8 lg:px-24 bg-white border-t border-gray-100">
+                    <div className="max-w-6xl mx-auto">
+                        <div 
+                            onClick={() => navigate('/about')}
+                            className="bg-gray-50 rounded-[3rem] p-10 md:p-16 flex flex-col md:flex-row items-center gap-12 cursor-pointer hover:shadow-2xl hover:-translate-y-1 transition duration-500 group relative overflow-hidden"
+                        >
+                            <div className="absolute top-0 right-0 w-64 h-64 bg-green-100/50 rounded-full -mr-32 -mt-32 blur-3xl group-hover:bg-green-200/50 transition duration-500"></div>
+                            
+                            <div className="md:w-1/2 space-y-8 relative z-10">
+                                <div>
+                                    <h2 className="text-4xl font-black text-gray-900 mb-6 flex items-center gap-4">
+                                        <span className="w-2 h-10 bg-green-600 rounded-full"></span>
+                                        Tentang Kami
+                                    </h2>
+                                    <p className="text-lg text-gray-600 leading-relaxed line-clamp-4">
+                                        {aboutUs?.description || `BAE Community berdiri pada tanggal 29 Februari 2024 di Bandung. Tujuan BAE Community adalah meningkatkan kestabilan finansial masyarakat melalui pengembangan ekosistem ekonomi yang berlandaskan syariah Islam.`}
+                                    </p>
+                                </div>
+                                <div className="flex flex-wrap gap-4">
+                                    <div className="px-6 py-3 bg-white rounded-2xl shadow-sm border border-gray-100 flex items-center gap-3 group-hover:border-green-300 transition">
+                                        <span className="material-icons text-green-600">visibility</span>
+                                        <span className="font-bold text-gray-800 text-sm">Visi & Misi</span>
+                                    </div>
+                                    <div className="px-6 py-3 bg-white rounded-2xl shadow-sm border border-gray-100 flex items-center gap-3 group-hover:border-blue-300 transition">
+                                        <span className="material-icons text-blue-600">gavel</span>
+                                        <span className="font-bold text-gray-800 text-sm">Legalitas</span>
+                                    </div>
+                                </div>
+                                <button className="inline-flex items-center gap-2 text-green-700 font-black text-lg group-hover:gap-4 transition-all">
+                                    Selengkapnya 
+                                    <span className="material-icons">arrow_forward</span>
+                                </button>
                             </div>
-                            <div className="bg-green-50 p-6 rounded-2xl border border-green-100">
-                                <h3 className="text-lg font-bold text-green-800 mb-3">🚀 Misi</h3>
-                                <ul className="space-y-1.5 text-sm text-gray-700">
-                                    <li className="flex items-start gap-2"><span className="text-green-600 mt-1">•</span> Mendorong Pemberdayaan Ekonomi</li>
-                                    <li className="flex items-start gap-2"><span className="text-green-600 mt-1">•</span> Pendidikan dan Literasi Keuangan Syariah</li>
-                                    <li className="flex items-start gap-2"><span className="text-green-600 mt-1">•</span> Kolaborasi dan Sinergi Antar Komunitas</li>
-                                    <li className="flex items-start gap-2"><span className="text-green-600 mt-1">•</span> Pengembangan Usaha Berbasis Syariah</li>
-                                    <li className="flex items-start gap-2"><span className="text-green-600 mt-1">•</span> Kepedulian Sosial dan Amal</li>
-                                </ul>
+
+                            <div className="md:w-1/2 w-full relative">
+                                <div className="aspect-[4/3] rounded-[2.5rem] overflow-hidden shadow-2xl border-8 border-white group-hover:scale-[1.02] transition duration-700 relative z-20">
+                                    <img 
+                                        src={aboutUs?.hero_image ? getMediaUrl(aboutUs.hero_image) : '/icon-512x512.png'} 
+                                        alt="Tentang Kami" 
+                                        className="w-full h-full object-cover"
+                                    />
+                                </div>
+                                <div className="absolute -bottom-6 -right-6 w-32 h-32 bg-green-600/10 rounded-full blur-xl"></div>
                             </div>
                         </div>
                     </div>
@@ -791,7 +808,7 @@ const DesktopLandingPage = () => {
                     <div>
                         <h4 className="text-lg font-semibold text-white mb-4">Tautan</h4>
                         <ul className="space-y-2 text-sm">
-                            <li><a href="#about" className="hover:text-white transition">Tentang Kami</a></li>
+                            <li><Link to="/about" className="hover:text-white transition">Tentang Kami</Link></li>
                             <li><Link to="/charity" className="hover:text-white transition">Charity</Link></li>
                             <li><Link to="/sinergy" className="hover:text-white transition">Sinergy</Link></li>
                             <li><Link to="/academy" className="hover:text-white transition">Academy</Link></li>
