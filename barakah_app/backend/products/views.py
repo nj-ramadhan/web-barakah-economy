@@ -68,6 +68,15 @@ class ProductViewSet(viewsets.ModelViewSet):
         return queryset.filter(status='approved', is_active=True)
 
 
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        from django.db.models import F
+        instance.views_count = F('views_count') + 1
+        instance.save(update_fields=['views_count'])
+        instance.refresh_from_db()
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data)
+
     def perform_create(self, serializer):
         product = serializer.save(seller=self.request.user, status='pending')
         self._save_variations(product)
@@ -104,6 +113,10 @@ class ProductViewSet(viewsets.ModelViewSet):
 class ProductDetailView(APIView):
     def get(self, request, slug):
         product = get_object_or_404(Product, slug=slug)
+        from django.db.models import F
+        product.views_count = F('views_count') + 1
+        product.save(update_fields=['views_count'])
+        product.refresh_from_db()
         serializer = ProductSerializer(product)
         return Response(serializer.data, status=status.HTTP_200_OK)
 

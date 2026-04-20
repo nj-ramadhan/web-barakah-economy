@@ -388,23 +388,18 @@ const ProfileEditPage = () => {
         
         for (const key in profile) {
           if (profile[key] !== null && profile[key] !== undefined) {
-            // Fix 1: Handle Files correctly (only send if it's a new File object)
+            // Fix 1: Handle Files correctly
             const imageFields = ['picture', 'ktp_image', 'shop_thumbnail'];
             if (imageFields.includes(key)) {
               if (profile[key] instanceof File) {
                 formData.append(key, profile[key]);
               }
             } 
-            // Fix 2: Do not send empty strings for numeric fields
+            // Fix 2: Skip empty strings for numeric fields, but allow '0'
             else if (numericFields.includes(key) && profile[key] === '') {
-              // Skip empty numeric fields
-            } 
-            // Fix 3: Handle salary string cleaning properly
-            else if (key === 'work_salary') {
-                const val = String(profile[key]).replace(/[^0-9]/g, '');
-                if (val) formData.append(key, val);
-            } 
-            // Default append for other fields provided they aren't empty strings for mandatory choices
+              // Skip
+            }
+            // Fix 3: Handle all other fields, ensuring even strings of numbers are sent
             else if (profile[key] !== '') {
               formData.append(key, profile[key]);
             }

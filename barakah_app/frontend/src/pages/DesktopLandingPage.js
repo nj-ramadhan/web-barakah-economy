@@ -382,9 +382,17 @@ const DesktopLandingPage = () => {
                                                 />
                                             </Link>
                                             <div className="p-4">
-                                                <h3 className="font-semibold text-gray-900 text-sm mb-1 line-clamp-2">{product.title}</h3>
-                                                <p className="text-green-700 font-bold text-sm">{formatIDR(product.price)}</p>
-                                                <p className="text-xs text-gray-400 mt-1">Stok: {product.stock > 0 ? product.stock : 'Habis'}</p>
+                                                <div className="flex justify-between items-start mb-1">
+                                                    <h3 className="font-semibold text-gray-900 text-sm line-clamp-2 min-h-[40px]">{product.title}</h3>
+                                                </div>
+                                                <div className="flex justify-between items-center mt-2">
+                                                    <p className="text-green-700 font-bold text-sm">{formatIDR(product.price)}</p>
+                                                    <div className="flex items-center text-gray-400 text-[10px] gap-1">
+                                                        <span className="material-icons text-[12px]">visibility</span>
+                                                        {product.views_count || 0}
+                                                    </div>
+                                                </div>
+                                                <p className="text-xs text-gray-400 mt-2">Stok: {product.stock > 0 ? product.stock : 'Habis'}</p>
                                             </div>
                                         </div>
                                     </SwiperSlide>

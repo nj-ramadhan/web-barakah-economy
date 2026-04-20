@@ -291,41 +291,51 @@ const EcommerceMainPage = () => {
                       }}
                     />
                   </Link>
-                  <div className="p-2">
-                    <h3 className="text-sm font-medium mb-2 line-clamp-2">{product.title}</h3>
-                    <div className="flex justify-between">
-                      <p className="text-gray-600 text-xs mb-2">{formatIDR(product.price)} / {product.unit}</p>
-                      <p className="text-gray-600 text-xs mb-2">stok{' '} {product.stock > 0 ? product.stock : 'habis'}</p>
+                  <div className="p-3">
+                    <h3 className="text-sm font-semibold mb-2 line-clamp-2 min-h-[40px]">{product.title}</h3>
+                    <div className="flex justify-between items-center mb-1">
+                      <p className="text-green-700 font-bold text-sm">{formatIDR(product.price)}</p>
+                      <p className="text-gray-500 text-[10px]">stok: {product.stock > 0 ? product.stock : 'habis'}</p>
                     </div>
+                    
+                    <div className="flex items-center gap-2 mb-3">
+                      <div className="flex items-center text-gray-400 text-[10px] gap-1">
+                        <span className="material-icons text-[12px]">visibility</span>
+                        {product.views_count || 0}
+                      </div>
+                    </div>
+
                     {product.stock <= 0 ? (
-                      <div className="flex space-x-2">
+                      <div className="flex gap-2">
                         <button
                           onClick={() => addToWishlist(product.id)}
-                          className="w-full block text-center bg-red-600 text-white py-2 rounded-md text-sm hover:bg-red-600 flex items-center justify-center"
+                          className="flex-1 bg-gray-50 text-red-500 py-2.5 rounded-xl border border-gray-100 hover:bg-red-50 transition flex items-center justify-center shadow-sm"
                         >
-                          <span className="material-icons text-sm">favorite</span>
+                          <span className="material-icons text-lg">favorite_border</span>
                         </button>
                         <button
-                          onClick={() => addToCart(product.id)}
-                          className="w-full block text-center bg-gray-400 text-white py-2 rounded-md text-sm hover:bg-gray-500 flex items-center justify-center"
+                          className="flex-[2] bg-gray-100 text-gray-400 py-2.5 rounded-xl flex items-center justify-center gap-2 cursor-not-allowed text-xs font-bold"
                           disabled
                         >
-                          <span className="material-icons text-sm">add_shopping_cart</span>
+                          <span className="material-icons text-lg">remove_shopping_cart</span>
+                          Habis
                         </button>
                       </div>
                     ) : (
-                      <div className="flex space-x-2">
+                      <div className="flex gap-2">
                         <button
                           onClick={() => addToWishlist(product.id)}
-                          className="w-full block text-center bg-red-600 text-white py-2 rounded-md text-sm hover:bg-red-600 flex items-center justify-center"
+                          className="flex-1 bg-white text-red-500 py-2.5 rounded-xl border border-red-100 hover:bg-red-50 transition flex items-center justify-center shadow-sm"
+                          title="Tambah ke Incaran"
                         >
-                          <span className="material-icons text-sm">favorite</span>
+                          <span className="material-icons text-lg">favorite_border</span>
                         </button>
                         <button
                           onClick={() => addToCart(product.id)}
-                          className="w-full block text-center bg-green-800 text-white py-2 rounded-md text-sm hover:bg-green-900 flex items-center justify-center"
+                          className="flex-[2] bg-green-700 hover:bg-green-800 text-white py-2.5 rounded-xl flex items-center justify-center gap-2 transition shadow-md shadow-green-100 text-xs font-bold"
                         >
-                          <span className="material-icons text-sm">add_shopping_cart</span>
+                          <span className="material-icons text-lg">add_shopping_cart</span>
+                          + Keranjang
                         </button>
                       </div>
                     )}
