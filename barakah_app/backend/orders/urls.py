@@ -1,4 +1,6 @@
+from django.urls import path
 from .views import CreateOrderView, OrderListView, OrderDetailView, SellerOrderViewSet
+
 from rest_framework.routers import DefaultRouter
 
 router = DefaultRouter()
