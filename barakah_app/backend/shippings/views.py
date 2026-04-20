@@ -1,8 +1,8 @@
-# shippings/views.py
-from rest_framework import generics, status
-from rest_framework.views import APIView
 from rest_framework.response import Response
+import os
+from django.conf import settings
 from .models import ShippingAddress
+
 from .serializers import ShippingAddressSerializer
 from .utils import get_shipping_cost, get_provinces, get_cities, get_districts, RAJAONGKIR_API_KEY
 import requests
@@ -60,9 +60,13 @@ class TestPingAPIView(APIView):
         diag = {
             "api_key_loaded": bool(RAJAONGKIR_API_KEY),
             "api_key_length": len(RAJAONGKIR_API_KEY) if RAJAONGKIR_API_KEY else 0,
+            "base_dir": str(settings.BASE_DIR),
+            "env_file_path": str(settings.BASE_DIR / '.env'),
+            "env_file_exists": os.path.exists(settings.BASE_DIR / '.env'),
             "ping_google": "Checking...",
             "ping_komerce": "Checking...",
         }
+
         
         # Test Google
         try:
