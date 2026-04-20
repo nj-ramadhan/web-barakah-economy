@@ -97,6 +97,7 @@ class ProductVariation(models.Model):
     sku = models.CharField(max_length=50, unique=True, blank=True)
     name = models.CharField(max_length=100) # e.g. "Merah - XL"
     additional_price = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    discount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     stock = models.IntegerField(default=0)
     is_active = models.BooleanField(default=True)
 

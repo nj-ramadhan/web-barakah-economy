@@ -14,7 +14,7 @@ class ProductImageSerializer(serializers.ModelSerializer):
 class ProductVariationSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProductVariation
-        fields = ['id', 'sku', 'name', 'additional_price', 'stock', 'is_active']
+        fields = ['id', 'sku', 'name', 'additional_price', 'discount', 'stock', 'is_active']
 
 class ProductSerializer(serializers.ModelSerializer):
     testimonies = TestimoniSerializer(many=True, read_only=True)
