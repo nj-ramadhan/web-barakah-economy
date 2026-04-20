@@ -28,9 +28,14 @@ class ProductSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
     def get_seller_city_id(self, obj):
-        if obj.seller and hasattr(obj.seller, 'profile'):
-            return obj.seller.profile.address_city_id or '153' # Default to 153 if empty
-        return '153' # Default (Jakarta Selatan) if no profile
+        try:
+            if obj.seller and hasattr(obj.seller, 'profile'):
+                profile = obj.seller.profile
+                if profile:
+                    return profile.address_city_id or '153'
+            return '153' # Default (Jakarta Selatan)
+        except Exception:
+            return '153'
 
 class ShopVoucherSerializer(serializers.ModelSerializer):
     class Meta:

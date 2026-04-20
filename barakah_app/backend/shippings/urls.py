@@ -1,7 +1,7 @@
 from django.urls import path
 from .views import (
     ShippingAddressListView, ShippingAddressDetailView, 
-    ProvinceListView, CityListView, DistrictListView, VillageListView, ShippingCostAPIView
+    ProvinceListView, CityListView, DistrictListView, VillageListView, ShippingCostAPIView, ExpeditionDiagnosticView
 )
 
 urlpatterns = [
@@ -12,4 +12,5 @@ urlpatterns = [
     path('districts/', DistrictListView.as_view(), name='shipping-districts'),
     path('villages/', VillageListView.as_view(), name='shipping-villages'),
     path('costs/', ShippingCostAPIView.as_view(), name='shipping-costs'),
+    path('test-expedition/', ExpeditionDiagnosticView.as_view(), name='expedition-diagnostic'),
 ]

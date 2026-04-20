@@ -72,22 +72,30 @@ const DesktopLandingPage = () => {
         // Fetch data
 
         const fetchData = async () => {
+            const getSafe = (promise) => promise.catch(err => {
+                console.error("API Call failed:", err);
+                return { data: [] };
+            });
+
             try {
-                const [campRes, prodRes, courseRes, articleRes, digiRes, sellerRes, testRes, actRes, partnerRes, eventRes] = await Promise.all([
-                    axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/campaigns/`),
-                    axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/products/`),
-                    axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/courses/`),
-                    axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/articles/`),
-                    axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/digital-products/products/`).catch(() => ({ data: [] })),
-                    axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/digital-products/products/popular-sellers/`).catch(() => ({ data: [] })),
-                    axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/site-content/testimonials/`).catch(() => ({ data: [] })),
-                    axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/site-content/activities/`).catch(() => ({ data: [] })),
-                    axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/site-content/partners/`).catch(() => ({ data: [] })),
-                    axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/events/landing/`).catch(() => ({ data: [] }))
+                const results = await Promise.all([
+                    getSafe(axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/campaigns/`)),
+                    getSafe(axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/products/`)),
+                    getSafe(axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/courses/`)),
+                    getSafe(axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/articles/`)),
+                    getSafe(axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/digital-products/products/`)),
+                    getSafe(axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/digital-products/products/popular-sellers/`)),
+                    getSafe(axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/site-content/testimonials/`)),
+                    getSafe(axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/site-content/activities/`)),
+                    getSafe(axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/site-content/partners/`)),
+                    getSafe(axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/events/landing/`))
                 ]);
-                setCampaigns(campRes.data.slice(0, 8));
+
+                const [campRes, prodRes, courseRes, articleRes, digiRes, sellerRes, testRes, actRes, partnerRes, eventRes] = results;
+
+                setCampaigns(campRes.data.results ? campRes.data.results.slice(0, 8) : campRes.data.slice(0, 8));
                 setProducts(prodRes.data.results ? prodRes.data.results.slice(0, 8) : prodRes.data.slice(0, 8));
-                setCourses(courseRes.data.slice(0, 8));
+                setCourses(courseRes.data.results ? courseRes.data.results.slice(0, 8) : courseRes.data.slice(0, 8));
                 setArticles(articleRes.data.results ? articleRes.data.results.slice(0, 8) : articleRes.data.slice(0, 8));
                 setDigitalProducts(Array.isArray(digiRes.data) ? digiRes.data.slice(0, 8) : []);
                 setPopularSellers(Array.isArray(sellerRes.data) ? sellerRes.data : []);
@@ -96,12 +104,12 @@ const DesktopLandingPage = () => {
                 setPartners(Array.isArray(partnerRes.data) ? partnerRes.data : []);
                 setEvents(Array.isArray(eventRes.data) ? eventRes.data : []);
                 
-                // Fetch About Us explicitly if not in previous results
+                // Fetch About Us explicitly
                 const aboutDataRes = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/site-content/about-us/`).catch(() => ({ data: [] }));
                 const items = Array.isArray(aboutDataRes.data) ? aboutDataRes.data : [aboutDataRes.data];
-                if (items.length > 0) setAboutUs(items[0]);
+                if (items.length > 0 && items[0]) setAboutUs(items[0]);
             } catch (err) {
-                console.error('Error fetching landing page data:', err);
+                console.error('Critical error fetching landing page data:', err);
             }
         };
         fetchData();

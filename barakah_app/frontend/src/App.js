@@ -93,6 +93,7 @@ import ForumThreadDetail from './pages/ForumThreadDetail';
 import DashboardSinergySellersPage from './pages/DashboardSinergySellersPage';
 import DashboardSinergySellerOrdersPage from './pages/DashboardSinergySellerOrdersPage';
 import DashboardSinergyAdminPage from './pages/admin/DashboardSinergyAdminPage';
+import ExpeditionTestPage from './pages/admin/ExpeditionTestPage';
 import FloatingCartModal from './components/layout/FloatingCartModal';
 
 import { ResponsiveLayout, MobileContainer } from './components/layout/ResponsiveLayout';
@@ -324,6 +325,7 @@ const LayoutWrapper = ({ isDesktop }) => {
         <Route path="/dashboard/sinergy/seller" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardSinergySellersPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/sinergy/seller/orders" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardSinergySellerOrdersPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/admin/sinergy" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardSinergyAdminPage /></ResponsiveLayout></PrivateRoute>} />
+        <Route path="/admin/test-expedition" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><ExpeditionTestPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/digital-products" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardDigitalProductsPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/ecourses" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardEcourseListPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/ecourses/new" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardEcourseFormPage /></ResponsiveLayout></PrivateRoute>} />

@@ -55,3 +55,29 @@ class ShippingCostAPIView(APIView):
 
         cost_data = get_shipping_cost(origin_id, destination_id, weight, courier)
         return Response(cost_data)
+
+class ExpeditionDiagnosticView(APIView):
+    """
+    Diagnostic view to test connectivity with the Indonesia Expedition API (API.co.id).
+    Returns basic province list and raw response for debugging.
+    """
+    def get(self, request):
+        from .utils import get_provinces, EXPEDITION_API_KEY, REGIONAL_BASE_URL
+        
+        results = {
+            "api_configured": bool(EXPEDITION_API_KEY),
+            "base_url": REGIONAL_BASE_URL,
+            "provinces": [],
+            "error": None
+        }
+        
+        try:
+            provinces = get_provinces()
+            results["provinces"] = provinces
+            results["count"] = len(provinces)
+            if not provinces and EXPEDITION_API_KEY:
+                results["error"] = "No provinces returned. Check API Key or connectivity."
+        except Exception as e:
+            results["error"] = str(e)
+            
+        return Response(results)
