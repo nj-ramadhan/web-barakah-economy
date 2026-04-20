@@ -122,3 +122,24 @@ class ActivityShareView(viewsets.ViewSet):
             'activity': activity,
             'frontend_url': frontend_url
         })
+
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from products.models import Product
+from campaigns.models import Campaign
+from digital_products.models import WithdrawalRequest
+from events.models import Event
+
+class ManagementStatsView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        # We only count items that need attention from admin/staff
+        stats = {
+            'admin_sinergy': Product.objects.filter(status='pending').count(),
+            'campaign_approval': Campaign.objects.filter(approval_status='pending').count(),
+            'withdrawals': WithdrawalRequest.objects.filter(status='pending').count(),
+            'testimonials': Testimonial.objects.filter(is_approved=False).count(),
+            'admin_events': Event.objects.filter(status='pending').count(),
+        }
+        return Response(stats)

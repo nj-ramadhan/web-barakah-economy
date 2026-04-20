@@ -1,6 +1,9 @@
 from django.urls import path, include
 from rest_framework.routers import SimpleRouter
-from .views import PartnerViewSet, TestimonialViewSet, ActivityViewSet, ActivityShareView, AboutUsViewSet, AboutUsLegalDocumentViewSet
+from .views import (
+    PartnerViewSet, TestimonialViewSet, ActivityViewSet, ActivityShareView, 
+    AboutUsViewSet, AboutUsLegalDocumentViewSet, ManagementStatsView
+)
 
 router = SimpleRouter()
 router.register(r'about-us', AboutUsViewSet)
@@ -11,5 +14,6 @@ router.register(r'activities', ActivityViewSet)
 
 urlpatterns = [
     path('activities/share/<int:pk>/', ActivityShareView.as_view({'get': 'retrieve'}), name='activity-share'),
+    path('management-stats/', ManagementStatsView.as_view(), name='management-stats'),
     path('', include(router.urls)),
 ]

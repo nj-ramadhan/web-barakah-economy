@@ -99,8 +99,19 @@ class CreateOrderView(APIView):
         # Clear selected cart items
         cart_items.delete()
 
+        # Send Notifications for each created order
+        from .utils import send_order_invoice_to_buyer, send_order_notification_to_seller
+        for order in created_orders:
+            try:
+                send_order_invoice_to_buyer(order)
+                send_order_notification_to_seller(order)
+            except Exception as e:
+                import logging
+                logging.getLogger('accounts').error(f"Failed to send order notifications: {e}")
+
         serializer = OrderSerializer(created_orders, many=True)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
 
     def delete(self, request):
         user = request.user
@@ -120,4 +131,32 @@ class OrderDetailView(generics.RetrieveAPIView):
 
     def get_queryset(self):
         return Order.objects.filter(user=self.request.user)
+
+from rest_framework import viewsets
+
+class SellerOrderViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated]
+    serializer_class = OrderSerializer
+    http_method_names = ['get', 'patch', 'head', 'options']
+
+    def get_queryset(self):
+        return Order.objects.filter(seller=self.request.user).order_by('-created_at')
+
+    def partial_update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        old_status = instance.status
+        old_resi = instance.resi_number
+        
+        response = super().partial_update(request, *args, **kwargs)
+        
+        instance.refresh_from_db()
+        if instance.status != old_status or instance.resi_number != old_resi:
+            from .utils import send_status_update_notification
+            try:
+                send_status_update_notification(instance)
+            except Exception as e:
+                import logging
+                logging.getLogger('accounts').error(f"Failed to send status update notification: {e}")
+                
+        return response
 

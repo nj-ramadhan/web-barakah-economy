@@ -39,6 +39,9 @@ const DashboardPage = () => {
     const [testimonialForm, setTestimonialForm] = useState({ content: '', rating: 5 });
     const [savingTestimonial, setSavingTestimonial] = useState(false);
 
+    // Management Stats State
+    const [managementStats, setManagementStats] = useState({});
+    
     // Profile Completeness Enforcer State
     const [isProfileIncomplete, setIsProfileIncomplete] = useState(false);
     const [missingFields, setMissingFields] = useState([]);
@@ -55,13 +58,16 @@ const DashboardPage = () => {
         const fetchStats = async () => {
             try {
                 const user = JSON.parse(localStorage.getItem('user'));
-                const [productRes, courseRes, balanceRes, historyRes, profileRes, testimonialRes] = await Promise.all([
+                const [productRes, courseRes, balanceRes, historyRes, profileRes, testimonialRes, statsRes] = await Promise.all([
                     getMyDigitalProducts(),
                     getMyCourses(),
                     getDigitalBalance().catch(() => ({ data: { available_balance: 0, total_sales: 0 } })),
                     getWithdrawalHistory().catch(() => ({ data: [] })),
                     authService.getProfile(user.id).catch(() => ({ username: '' })),
                     axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/site-content/testimonials/my_testimonial/`, {
+                        headers: { Authorization: `Bearer ${user.access}` }
+                    }).catch(() => ({ data: {} })),
+                    axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/site-content/management-stats/`, {
                         headers: { Authorization: `Bearer ${user.access}` }
                     }).catch(() => ({ data: {} }))
                 ])
@@ -88,6 +94,9 @@ const DashboardPage = () => {
                 if (testimonialRes.data.id) {
                     setMyTestimonial(testimonialRes.data);
                     setTestimonialForm({ content: testimonialRes.data.content, rating: testimonialRes.data.rating });
+                }
+                if (statsRes && statsRes.data) {
+                    setManagementStats(statsRes.data);
                 }
             } catch (err) {
                 console.error(err);
@@ -498,8 +507,13 @@ const DashboardPage = () => {
                             {hasAccess('admin_sinergy') && (
                                 <Link
                                     to="/dashboard/admin/sinergy"
-                                    className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-emerald-100 hover:shadow-md transition"
+                                    className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-emerald-100 hover:shadow-md transition relative"
                                 >
+                                    {managementStats.admin_sinergy > 0 && (
+                                        <div className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center border-2 border-white shadow-sm z-10 animate-bounce">
+                                            {managementStats.admin_sinergy}
+                                        </div>
+                                    )}
                                     <div className="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center">
                                         <span className="material-icons text-emerald-700">storefront</span>
                                     </div>
@@ -513,8 +527,13 @@ const DashboardPage = () => {
                             {hasAccess('withdrawals') && (
                                 <Link
                                     to="/dashboard/admin/withdrawals"
-                                    className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-orange-100 hover:shadow-md transition"
+                                    className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-orange-100 hover:shadow-md transition relative"
                                 >
+                                    {managementStats.withdrawals > 0 && (
+                                        <div className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center border-2 border-white shadow-sm z-10 animate-bounce">
+                                            {managementStats.withdrawals}
+                                        </div>
+                                    )}
                                     <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center">
                                         <span className="material-icons text-orange-700">payments</span>
                                     </div>
@@ -558,8 +577,13 @@ const DashboardPage = () => {
                             {hasAccess('testimonials') && (
                                 <Link
                                     to="/dashboard/admin/testimonials"
-                                    className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-orange-100 hover:shadow-md transition"
+                                    className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-orange-100 hover:shadow-md transition relative"
                                 >
+                                    {managementStats.testimonials > 0 && (
+                                        <div className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center border-2 border-white shadow-sm z-10 animate-bounce">
+                                            {managementStats.testimonials}
+                                        </div>
+                                    )}
                                     <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center">
                                         <span className="material-icons text-orange-700">rate_review</span>
                                     </div>
@@ -701,8 +725,13 @@ const DashboardPage = () => {
                             {hasAccess('campaign_approval') && (
                                 <Link
                                     to="/dashboard/admin/campaign-approval"
-                                    className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-amber-100 hover:shadow-md transition"
+                                    className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-amber-100 hover:shadow-md transition relative"
                                 >
+                                    {managementStats.campaign_approval > 0 && (
+                                        <div className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center border-2 border-white shadow-sm z-10 animate-bounce">
+                                            {managementStats.campaign_approval}
+                                        </div>
+                                    )}
                                     <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center">
                                         <span className="material-icons text-amber-700">assignment_turned_in</span>
                                     </div>
@@ -749,8 +778,13 @@ const DashboardPage = () => {
                             {(hasAccess('admin_events') || hasAccess('event')) && (
                                 <Link
                                     to="/dashboard/admin/events"
-                                    className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-teal-100 hover:shadow-xl transition"
+                                    className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-teal-100 hover:shadow-xl transition relative"
                                 >
+                                    {managementStats.admin_events > 0 && (
+                                        <div className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center border-2 border-white shadow-sm z-10 animate-bounce">
+                                            {managementStats.admin_events}
+                                        </div>
+                                    )}
                                     <div className="w-12 h-12 bg-teal-100 rounded-xl flex items-center justify-center">
                                         <span className="material-icons text-teal-700">event</span>
                                     </div>

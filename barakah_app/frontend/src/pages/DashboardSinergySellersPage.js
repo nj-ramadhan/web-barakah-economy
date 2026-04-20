@@ -126,6 +126,9 @@ const DashboardSinergySellersPage = () => {
             <div className="flex justify-between items-center mb-6">
                 <h2 className="text-xl font-bold text-gray-800">Produk Saya</h2>
                 <div className="flex gap-2">
+                    <Link to="/dashboard/sinergy/seller/orders" className="bg-blue-100 hover:bg-blue-200 text-blue-700 px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 transition-all">
+                        <span className="material-icons text-sm">shopping_basket</span> Pesanan Masuk
+                    </Link>
                     <button onClick={() => setActiveTab('voucher')} className="bg-orange-100 hover:bg-orange-200 text-orange-700 px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 transition-all">
                         <span className="material-icons text-sm">local_activity</span> Buat Voucher
                     </button>
