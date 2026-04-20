@@ -46,13 +46,14 @@ const ProfileEditPage = () => {
     study_faculty: '', study_department: '', study_program: '',
     study_semester: '', study_start_year: '', study_finish_year: '',
     address: '', job: '', work_field: '', work_institution: '',
-    work_position: '', work_salary: '', address_latitude: '',
     address_longitude: '', address_province: '', address_province_id: '',
+    address_city_id: '', address_city_name: '',
     shop_thumbnail: null,
     address_subdistrict_id: '',
     address_subdistrict_name: '',
     address_village_id: '',
     address_village_name: '',
+    username: '',
     shop_supported_couriers: 'jne,pos,tiki,jnt',
   });
 
@@ -178,6 +179,7 @@ const ProfileEditPage = () => {
       setLoadingVillages(true);
       try {
         const res = await axios.get(`${API}/api/shippings/villages/?district=${profile.address_subdistrict_id}`);
+        console.log(`DEBUG: Fetched ${res.data.length} villages for subdistrict ${profile.address_subdistrict_id}`);
         if (Array.isArray(res.data)) {
           setVillages(res.data);
         }
@@ -692,8 +694,8 @@ const ProfileEditPage = () => {
               </div>
             </div>
             
-            <div className="flex justify-center mt-4">
-                 <button type="button" onClick={() => navigate(`/shop/${profile.user}`)} className="flex items-center gap-2 px-6 py-3 bg-emerald-50 text-emerald-700 rounded-xl text-sm font-bold hover:bg-emerald-100 transition border border-emerald-200">
+            <div className="flex justify-center mt-4 text-center">
+                 <button type="button" onClick={() => navigate(`/digital-produk/${profile.username}`)} className="flex items-center gap-2 px-6 py-3 bg-emerald-50 text-emerald-700 rounded-xl text-sm font-bold hover:bg-emerald-100 transition border border-emerald-200">
                     <span className="material-icons">storefront</span>
                     Lihat Toko Saya
                  </button>

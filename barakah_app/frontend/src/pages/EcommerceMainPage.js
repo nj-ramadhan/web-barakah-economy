@@ -306,36 +306,45 @@ const EcommerceMainPage = () => {
                     </div>
 
                     {product.stock <= 0 ? (
-                      <div className="flex gap-2">
+                      <div className="flex flex-col gap-2">
                         <button
-                          onClick={() => addToWishlist(product.id)}
-                          className="flex-1 bg-gray-50 text-red-500 py-2.5 rounded-xl border border-gray-100 hover:bg-red-50 transition flex items-center justify-center shadow-sm"
-                        >
-                          <span className="material-icons text-lg">favorite_border</span>
-                        </button>
-                        <button
-                          className="flex-[2] bg-gray-100 text-gray-400 py-2.5 rounded-xl flex items-center justify-center gap-2 cursor-not-allowed text-xs font-bold"
+                          className="w-full bg-gray-100 text-gray-400 py-3 rounded-xl flex items-center justify-center gap-2 cursor-not-allowed text-xs font-bold"
                           disabled
                         >
                           <span className="material-icons text-lg">remove_shopping_cart</span>
-                          Habis
+                          Stok Habis
                         </button>
                       </div>
                     ) : (
-                      <div className="flex gap-2">
+                      <div className="flex flex-col gap-2">
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => addToCart(product.id)}
+                            className="flex-1 bg-green-600 hover:bg-green-700 text-white py-2.5 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-green-100 transition-all transform hover:-translate-y-1 text-[10px]"
+                          >
+                            <span className="material-icons text-sm">shopping_cart</span>
+                            Keranjang
+                          </button>
+                          <button
+                            onClick={() => addToWishlist(product.id)}
+                            className="px-3 py-2.5 border-2 border-green-600 text-green-700 font-bold rounded-xl flex items-center justify-center gap-2 hover:bg-green-50 transition-all"
+                            title="Tambah ke Incaran"
+                          >
+                            <span className="material-icons text-sm">favorite_border</span>
+                          </button>
+                        </div>
                         <button
-                          onClick={() => addToWishlist(product.id)}
-                          className="flex-1 bg-white text-red-500 py-2.5 rounded-xl border border-red-100 hover:bg-red-50 transition flex items-center justify-center shadow-sm"
-                          title="Tambah ke Incaran"
+                          onClick={() => {
+                            addToCart(product.id);
+                            setTimeout(() => {
+                              const bubble = document.getElementById('cart-floating-bubble');
+                              if (bubble) bubble.click();
+                            }, 500);
+                          }}
+                          className="w-full bg-emerald-500 hover:bg-emerald-600 text-white py-2.5 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-emerald-100 transition-all transform hover:-translate-y-1 text-[10px]"
                         >
-                          <span className="material-icons text-lg">favorite_border</span>
-                        </button>
-                        <button
-                          onClick={() => addToCart(product.id)}
-                          className="flex-[2] bg-green-700 hover:bg-green-800 text-white py-2.5 rounded-xl flex items-center justify-center gap-2 transition shadow-md shadow-green-100 text-xs font-bold"
-                        >
-                          <span className="material-icons text-lg">add_shopping_cart</span>
-                          + Keranjang
+                          <span className="material-icons text-sm">shopping_bag</span>
+                          Beli Langsung
                         </button>
                       </div>
                     )}

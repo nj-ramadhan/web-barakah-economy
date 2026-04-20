@@ -150,34 +150,51 @@ const EcommerceWishlistPage = () => {
                                         </div>    
                                     </span>
                                         {item.product.stock <= 0 ? (
-                                        <div className="flex flex-col items-center">
+                                        <div className="flex flex-col items-center gap-2">
                                             <button
-                                                onClick={() => addToCart(item.product.id)}
-                                                className="bg-gray-400 material-icons text-sm text-white px-4 py-2 rounded-lg hover:bg-gray-500 mb-2"
+                                                className="bg-gray-100 text-gray-400 p-2.5 rounded-xl cursor-not-allowed"
                                                 disabled
                                             >
-                                                add_shopping_cart
+                                                <span className="material-icons text-lg">remove_shopping_cart</span>
                                             </button>
                                             <button
                                                 onClick={() => removeFromWishlist(item.product.id)}
-                                                className="bg-red-600 material-icons text-sm text-white px-4 py-2 rounded-lg hover:bg-red-700"
+                                                className="bg-red-50 text-red-500 p-2.5 rounded-xl hover:bg-red-100 transition"
+                                                title="Hapus"
                                             >
-                                                delete
+                                                <span className="material-icons text-lg">delete</span>
                                             </button>
                                         </div>
                                         ) : (
-                                        <div className="flex flex-col items-center">
+                                        <div className="flex flex-col gap-2 min-w-[120px]">
+                                            <div className="flex gap-2">
+                                                <button
+                                                    onClick={() => addToCart(item.product.id)}
+                                                    className="flex-1 bg-green-600 hover:bg-green-700 text-white p-2.5 rounded-xl flex items-center justify-center transition shadow-lg shadow-green-100"
+                                                    title="Keranjang"
+                                                >
+                                                    <span className="material-icons text-lg">shopping_cart</span>
+                                                </button>
+                                                <button
+                                                    onClick={() => removeFromWishlist(item.product.id)}
+                                                    className="bg-red-50 text-red-500 p-2.5 rounded-xl hover:bg-red-100 transition"
+                                                    title="Hapus"
+                                                >
+                                                    <span className="material-icons text-lg">delete</span>
+                                                </button>
+                                            </div>
                                             <button
-                                                onClick={() => addToCart(item.product.id)}
-                                                className="bg-green-800 material-icons text-sm text-white px-4 py-2 rounded-lg hover:bg-green-900 mb-2"
+                                                onClick={() => {
+                                                    addToCart(item.product.id);
+                                                    setTimeout(() => {
+                                                    const bubble = document.getElementById('cart-floating-bubble');
+                                                    if (bubble) bubble.click();
+                                                    }, 500);
+                                                }}
+                                                className="w-full bg-emerald-500 hover:bg-emerald-600 text-white py-2 rounded-xl flex items-center justify-center gap-1 text-[10px] font-bold shadow-lg shadow-emerald-100"
                                             >
-                                                add_shopping_cart
-                                            </button>
-                                            <button
-                                                onClick={() => removeFromWishlist(item.product.id)}
-                                                className="bg-red-600 material-icons text-sm text-white px-4 py-2 rounded-lg hover:bg-red-700"
-                                            >
-                                                delete
+                                                <span className="material-icons text-sm">shopping_bag</span>
+                                                Beli
                                             </button>
                                         </div>
                                         )}

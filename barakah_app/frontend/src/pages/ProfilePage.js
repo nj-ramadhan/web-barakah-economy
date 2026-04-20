@@ -257,29 +257,42 @@ const CoursesTab = () => {
 
 const PurchasesTab = () => {
     const [purchases, setPurchases] = useState([]);
+    const [physicalOrders, setPhysicalOrders] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [historyType, setHistoryType] = useState('digital'); // 'digital' or 'sinergy'
 
     useEffect(() => {
-        const fetchPurchases = async () => {
+        const fetchAllHistory = async () => {
             const user = JSON.parse(localStorage.getItem('user'));
             if (!user) return;
+            setLoading(true);
             try {
-                const res = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/digital-products/orders/my-purchases/`, {
+                // Fetch Digital
+                const resDigital = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/digital-products/orders/my-purchases/`, {
                     headers: { Authorization: `Bearer ${user.access}` }
                 });
-                setPurchases(res.data);
+                setPurchases(resDigital.data);
+
+                // Fetch Sinergy (Physical)
+                const resSinergy = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/orders/`, {
+                    headers: { Authorization: `Bearer ${user.access}` }
+                });
+                setPhysicalOrders(resSinergy.data);
             } catch (err) {
-                console.error('Error fetching purchases:', err);
+                console.error('Error fetching purchase history:', err);
             } finally {
                 setLoading(false);
             }
         };
-        fetchPurchases();
+        fetchAllHistory();
     }, []);
 
     const PurchaseSkeleton = () => (
         <div className="space-y-4 animate-pulse">
-            <h2 className="font-bold text-gray-800 w-48 h-5 bg-gray-200 rounded mb-3"></h2>
+            <div className="flex gap-2 mb-4">
+                <div className="h-8 bg-gray-200 rounded-lg w-24"></div>
+                <div className="h-8 bg-gray-200 rounded-lg w-24"></div>
+            </div>
             <div className="space-y-3">
                 {[1, 2].map(i => (
                     <div key={i} className="bg-white p-3 rounded-xl border shadow-sm">
@@ -303,33 +316,90 @@ const PurchasesTab = () => {
     if (loading) return <PurchaseSkeleton />;
 
     return (
-        <div className="space-y-4">
-            <h2 className="font-bold text-gray-800">Riwayat Pembelian Digital</h2>
-            {purchases.length === 0 ? (
-                <div className="text-center py-8 text-gray-400 bg-gray-50 rounded-xl border border-dashed">
-                    <p className="text-sm">Belum ada riwayat pembelian</p>
+        <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
+            <div className="flex items-center justify-between">
+                <h2 className="font-bold text-gray-800">Riwayat Transaksi</h2>
+                <div className="flex bg-gray-100 p-1 rounded-lg gap-1">
+                    <button 
+                        onClick={() => setHistoryType('digital')}
+                        className={`px-3 py-1 rounded text-[10px] font-black uppercase transition-all ${historyType === 'digital' ? 'bg-white text-green-700 shadow-sm' : 'text-gray-400'}`}
+                    >
+                        Digital
+                    </button>
+                    <button 
+                        onClick={() => setHistoryType('sinergy')}
+                        className={`px-3 py-1 rounded text-[10px] font-black uppercase transition-all ${historyType === 'sinergy' ? 'bg-white text-green-700 shadow-sm' : 'text-gray-400'}`}
+                    >
+                        Sinergy
+                    </button>
                 </div>
+            </div>
+
+            {historyType === 'digital' ? (
+                purchases.length === 0 ? (
+                    <div className="text-center py-8 text-gray-400 bg-gray-50 rounded-xl border border-dashed text-xs">
+                        Belum ada riwayat pembelian produk digital
+                    </div>
+                ) : (
+                    <div className="space-y-3">
+                        {purchases.map(order => (
+                            <div key={order.id} className="bg-white p-3 rounded-xl border shadow-sm">
+                                <div className="flex justify-between items-start mb-2">
+                                    <h3 className="text-sm font-bold text-gray-800">{order.product_title}</h3>
+                                    <span className="text-[10px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full font-bold">Terverifikasi</span>
+                                </div>
+                                <div className="flex justify-between items-center text-[10px] text-gray-400">
+                                    <span>#{order.order_number}</span>
+                                    <span>{formatDate(order.created_at)}</span>
+                                </div>
+                                <div className="mt-3 pt-2 border-t flex justify-between items-center">
+                                    <span className="text-xs font-black text-gray-900">Rp {formatIDR(order.price)}</span>
+                                    <Link to={`/digital-products/${order.product_slug}`} className="text-[10px] text-green-600 font-bold hover:underline">Detail Produk</Link>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )
             ) : (
-                <div className="space-y-3">
-                    {purchases.map(order => (
-                        <div key={order.id} className="bg-white p-3 rounded-xl border shadow-sm">
-                            <div className="flex justify-between items-start mb-2">
-                                <h3 className="text-sm font-bold text-gray-800">{order.product_title}</h3>
-                                <span className="text-[10px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full font-bold">Verified</span>
+                physicalOrders.length === 0 ? (
+                    <div className="text-center py-8 text-gray-400 bg-gray-50 rounded-xl border border-dashed text-xs">
+                        Belum ada riwayat belanja produk Sinergy
+                    </div>
+                ) : (
+                    <div className="space-y-3">
+                        {physicalOrders.map(order => (
+                            <div key={order.id} className="bg-white p-3 rounded-xl border shadow-sm">
+                                <div className="flex justify-between items-start mb-2">
+                                    <h3 className="text-sm font-bold text-gray-800">Order #{order.order_number}</h3>
+                                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
+                                        order.status?.toLowerCase().includes('selesai') || order.status?.toLowerCase().includes('complete') || order.status?.toLowerCase().includes('verified')
+                                        ? 'bg-green-50 text-green-600' 
+                                        : 'bg-orange-50 text-orange-600'
+                                    }`}>
+                                        {order.status || 'Pending'}
+                                    </span>
+                                </div>
+                                <div className="space-y-1 my-2">
+                                    {order.items?.map((item, idx) => (
+                                        <div key={idx} className="text-[11px] text-gray-600 flex justify-between">
+                                            <span>{item.product_name} x {item.quantity}</span>
+                                            <span className="font-medium text-gray-400">Rp {formatIDR(item.price)}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                                <div className="flex justify-between items-center text-[10px] text-gray-400 mt-2">
+                                    <span>{formatDate(order.created_at)}</span>
+                                    <span className="text-xs font-black text-gray-900">Total Rp {formatIDR(order.total_price)}</span>
+                                </div>
+                                <div className="mt-3 pt-2 border-t flex justify-end">
+                                    <Link to="/riwayat-belanja" className="text-[10px] text-blue-600 font-bold hover:underline flex items-center gap-1">
+                                        Lacak Pesanan <span className="material-icons text-[12px]">local_shipping</span>
+                                    </Link>
+                                </div>
                             </div>
-                            <div className="flex justify-between items-center text-[10px] text-gray-400">
-                                <span>Order: {order.order_number}</span>
-                                <span>Rp. {formatIDR(order.amount)}</span>
-                            </div>
-                            <div className="mt-3 pt-2 border-t flex justify-end">
-                                <button className="text-green-600 text-xs font-bold flex items-center gap-1">
-                                    <span className="material-icons text-xs">download</span>
-                                    Akses Produk
-                                </button>
-                            </div>
-                        </div>
-                    ))}
-                </div>
+                        ))}
+                    </div>
+                )
             )}
         </div>
     );
@@ -362,6 +432,8 @@ const ProfilePage = () => {
         address_longitude: '',
         address_province: '',
         picture: '', // Profile picture URL
+        username: '',
+        email: '',
     });
 
     const [activeTab, setActiveTab] = useState('general'); // State to manage active tab
@@ -646,7 +718,7 @@ const ProfilePage = () => {
                         </div>
 
                         {/* Navigation Tabs */}
-                        <div className="flex overflow-x-auto pb-2 scrollbar-hide gap-1 mb-6 bg-gray-50 p-1.5 rounded-2xl">
+                        <div className="flex flex-wrap justify-center md:justify-start gap-1 mb-6 bg-gray-50 p-1.5 rounded-2xl">
                             {[
                                 { id: 'general', icon: 'person', label: 'Data Diri' },
                                 { id: 'address', icon: 'location_on', label: 'Alamat' },
@@ -735,7 +807,7 @@ const ProfilePage = () => {
                                 <div className="space-y-4">
                                     <div className="flex justify-between items-center px-1">
                                         <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest">Pengaturan Toko Digital</h4>
-                                        <Link to={`/shop/${profile.username || ''}`} className="text-[10px] font-black text-purple-600 uppercase flex items-center gap-1 hover:underline">
+                                        <Link to={`/digital-produk/${profile.username || ''}`} className="text-[10px] font-black text-purple-600 uppercase flex items-center gap-1 hover:underline">
                                             Kunjungi Toko <span className="material-icons text-xs">open_in_new</span>
                                         </Link>
                                     </div>
