@@ -140,8 +140,11 @@ const EcommerceCheckoutPage = () => {
   };
 
   const totalItemsPrice = cartItems.reduce((total, item) => {
+      // Variation price replaces product price if set
       let base = item.product.price;
-      if(item.variation?.additional_price) base += parseFloat(item.variation.additional_price);
+      if(item.variation?.additional_price && item.variation.additional_price > 0) {
+          base = parseFloat(item.variation.additional_price);
+      }
       return total + (base * item.quantity);
   }, 0);
   

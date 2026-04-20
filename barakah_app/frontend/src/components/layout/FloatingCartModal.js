@@ -23,6 +23,22 @@ const FloatingCartModal = () => {
         }
     };
 
+    const handleUpdateQty = async (cartItemId, newQty) => {
+        const user = JSON.parse(localStorage.getItem('user'));
+        if (!user || !user.access) return;
+        try {
+            await axios.patch(`${process.env.REACT_APP_API_BASE_URL}/api/carts/cart/`, {
+                cart_item_id: cartItemId,
+                quantity: newQty
+            }, {
+                headers: { Authorization: `Bearer ${user.access}` }
+            });
+            window.dispatchEvent(new Event('cartUpdated'));
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
     const handleDeleteCart = async (cartItemId) => {
         const user = JSON.parse(localStorage.getItem('user'));
         if (!user || !user.access) return;
@@ -136,9 +152,20 @@ const FloatingCartModal = () => {
                                                 {item.variation && <span className="text-[10px] bg-green-50 text-green-700 px-2 py-0.5 rounded-full w-fit mt-1">{item.variation.name}</span>}
                                                 <div className="mt-auto flex justify-between items-end">
                                                     <span className="font-bold text-green-700 text-sm">Rp {item.total_price}</span>
-                                                    <div className="flex items-center gap-2">
-                                                        <span className="text-xs text-gray-500">Qty: {item.quantity}</span>
-                                                        <button onClick={() => handleDeleteCart(item.id)} className="material-icons text-red-400 text-sm hover:bg-red-50 rounded p-1">delete</button>
+                                                    <div className="flex items-center gap-2 bg-gray-50 rounded-lg px-2 py-1">
+                                                        <button 
+                                                            onClick={() => handleUpdateQty(item.id, item.quantity - 1)}
+                                                            className="w-6 h-6 flex items-center justify-center text-gray-500 hover:text-red-500 transition"
+                                                        >
+                                                            <span className="material-icons text-sm">{item.quantity > 1 ? 'remove' : 'delete'}</span>
+                                                        </button>
+                                                        <span className="text-xs font-bold text-gray-700 w-4 text-center">{item.quantity}</span>
+                                                        <button 
+                                                            onClick={() => handleUpdateQty(item.id, item.quantity + 1)}
+                                                            className="w-6 h-6 flex items-center justify-center text-gray-500 hover:text-green-600 transition"
+                                                        >
+                                                            <span className="material-icons text-sm">add</span>
+                                                        </button>
                                                     </div>
                                                 </div>
                                             </div>

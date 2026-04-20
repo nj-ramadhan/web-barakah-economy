@@ -84,46 +84,38 @@ const EcommerceCartPage = () => {
         }
     };
 
-    const handleIncrement = (productId, stock) => {
-        setQuantities((prevQuantities) => {
-            const newQuantity = Math.min(prevQuantities[productId] + 1, stock);
-            const updatedQuantities = { ...prevQuantities, [productId]: newQuantity };
+    const handleUpdateQty = async (cartItemId, newQty) => {
+        try {
+            const user = JSON.parse(localStorage.getItem('user'));
+            if (!user || !user.access) return;
 
-            // Update cartItems with the new quantity
-            const updatedCartItems = cartItems.map((item) =>
-                item.product.id === productId
-                    ? { ...item, quantity: updatedQuantities[productId] }
-                    : item
-            );
-            setCartItems(updatedCartItems);
-
-            return updatedQuantities;
-        });
+            await axios.patch(`${process.env.REACT_APP_API_BASE_URL}/api/carts/cart/`, {
+                cart_item_id: cartItemId,
+                quantity: newQty
+            }, {
+                headers: { Authorization: `Bearer ${user.access}`, 'X-CSRFToken': getCsrfToken() }
+            });
+            
+            fetchCartItems(); // Refresh full cart
+            window.dispatchEvent(new Event('cartUpdated')); // Sync floating modal
+        } catch (error) {
+            console.error('Error updating quantity:', error);
+            alert('Gagal update jumlah. Silakan coba lagi.');
+        }
     };
 
-    const handleDecrement = (productId) => {
-        setQuantities((prevQuantities) => {
-            const newQuantity = Math.max(prevQuantities[productId] - 1, 0);
-            const updatedQuantities = { ...prevQuantities, [productId]: newQuantity };
+    const handleIncrement = (item) => {
+        const newQty = (item.quantity || 0) + 1;
+        if (newQty > item.product.stock) {
+            alert('Stok tidak mencukupi');
+            return;
+        }
+        handleUpdateQty(item.id, newQty);
+    };
 
-            // Update cartItems with the new quantity
-            const updatedCartItems = cartItems.map((item) =>
-                item.product.id === productId
-                    ? { ...item, quantity: updatedQuantities[productId] }
-                    : item
-            );
-            setCartItems(updatedCartItems);
-
-            // If quantity is zero, confirm removal
-            if (newQuantity === 0) {
-                const confirmDelete = window.confirm('Quantity is zero. Do you want to remove this item from the cart?');
-                if (confirmDelete) {
-                    removeFromCart(productId);
-                }
-            }
-
-            return updatedQuantities;
-        });
+    const handleDecrement = (item) => {
+        const newQty = (item.quantity || 0) - 1;
+        handleUpdateQty(item.id, newQty);
     };
 
     const handleCheckout = () => {
@@ -165,34 +157,34 @@ const EcommerceCartPage = () => {
                                             />
                                             <div className="justify-left">
                                                 <h3 className="text-sm font-semibold">{item.product.title}</h3>
+                                                {item.variation && <p className="text-[10px] text-green-600 font-bold">Varian: {item.variation.name}</p>}
                                                 <p className="text-gray-600 text-xs">stok{' '} {item.product.stock > 0 ? item.product.stock : 'habis'}</p>
                                                 <p className="text-gray-600 text-xs">{formatIDR(item.product.price)} / {item.product.unit}</p>
-                                                <p className="text-xs text-gray-600">Total {formatIDR(item.product.price * quantities[item.product.id])}</p>
+                                                <p className="text-xs text-gray-600">Total {formatIDR(item.total_price)}</p>
                                             </div>    
                                         </span>
                                         <div className="flex flex-col items-center">
                                             <div className="flex items-center mb-2">
                                                 <button
-                                                    onClick={() => handleDecrement(item.product.id)}
+                                                    onClick={() => handleDecrement(item)}
                                                     className="bg-gray-300 material-icons text-sm text-gray-700 px-2 py-1 rounded-lg hover:bg-gray-400"
-                                                    disabled={quantities[item.product.id] === 0}
                                                 >
-                                                    remove
+                                                    {item.quantity > 1 ? 'remove' : 'delete'}
                                                 </button>
-                                                <span className="mx-2">{quantities[item.product.id]}</span>
+                                                <span className="mx-2 font-bold">{item.quantity}</span>
                                                 <button
-                                                    onClick={() => handleIncrement(item.product.id, item.product.stock)}
+                                                    onClick={() => handleIncrement(item)}
                                                     className="bg-gray-300 material-icons text-sm text-gray-700 px-2 py-1 rounded-lg hover:bg-gray-400"
-                                                    disabled={quantities[item.product.id] >= item.product.stock}
+                                                    disabled={item.quantity >= item.product.stock}
                                                 >
                                                     add
                                                 </button>
                                             </div>
                                             <button
                                                 onClick={() => removeFromCart(item.product.id)}
-                                                className="bg-red-600 material-icons text-sm text-white px-4 py-2 rounded-lg hover:bg-red-700"
+                                                className="text-red-500 text-xs font-bold hover:underline"
                                             >
-                                                delete
+                                                Hapus
                                             </button>
                                         </div>
                                     </div>

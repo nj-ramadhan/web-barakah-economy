@@ -25,6 +25,11 @@ class CartView(APIView):
         product = get_object_or_404(Product, id=product_id)
         
         from products.models import ProductVariation
+        
+        # Check if product has variations and one wasn't selected
+        if product.variations.exists() and not variation_id:
+            return Response({'error': 'Silakan pilih variasi terlebih dahulu.'}, status=status.HTTP_400_BAD_REQUEST)
+
         variation = None
         if variation_id:
             variation = get_object_or_404(ProductVariation, id=variation_id, product=product)
@@ -39,6 +44,26 @@ class CartView(APIView):
 
         serializer = CartSerializer(cart_item)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    def patch(self, request):
+        """Update quantity of a cart item. If 0, delete it."""
+        user = request.user
+        cart_item_id = request.data.get('cart_item_id')
+        new_quantity = request.data.get('quantity')
+        
+        if new_quantity is None:
+            return Response({'error': 'Quantity required'}, status=status.HTTP_400_BAD_REQUEST)
+            
+        cart_item = get_object_or_404(Cart, user=user, id=cart_item_id)
+        
+        if int(new_quantity) <= 0:
+            cart_item.delete()
+            return Response({'message': 'Item dihapus dari keranjang'}, status=status.HTTP_200_OK)
+        
+        cart_item.quantity = int(new_quantity)
+        cart_item.save()
+        serializer = CartSerializer(cart_item)
+        return Response(serializer.data)
 
     def delete(self, request):
         user = request.user

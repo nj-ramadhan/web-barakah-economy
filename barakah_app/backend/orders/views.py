@@ -76,9 +76,10 @@ class CreateOrderView(APIView):
 
             total_price = 0
             for cart_item in items:
+                # Variation price replaces product price if set
                 base_price = cart_item.product.price
-                if cart_item.variation and cart_item.variation.additional_price:
-                    base_price += cart_item.variation.additional_price
+                if cart_item.variation and cart_item.variation.additional_price and cart_item.variation.additional_price > 0:
+                    base_price = cart_item.variation.additional_price
                 
                 price_for_item = base_price * cart_item.quantity
 

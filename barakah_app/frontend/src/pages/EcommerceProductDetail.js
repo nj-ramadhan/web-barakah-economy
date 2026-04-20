@@ -78,6 +78,12 @@ const EcommerceProductDetail = () => {
   }, [slug]);
 
   const addToCart = async () => {
+    // Check if variations exist but top one wasn't selected
+    if (product.variations && product.variations.length > 0 && !selectedVariation) {
+        alert('Silakan pilih variasi terlebih dahulu (misal: Warna/Ukuran)');
+        return;
+    }
+
     const csrfToken = getCsrfToken();
     try {
       const user = JSON.parse(localStorage.getItem('user'));
@@ -101,7 +107,8 @@ const EcommerceProductDetail = () => {
       window.dispatchEvent(new Event('cartUpdated'));
     } catch (error) {
       console.error('Error adding product to cart:', error);
-      alert('Gagal menambahkan produk ke keranjang');
+      const msg = error.response?.data?.error || 'Gagal menambahkan produk ke keranjang';
+      alert(msg);
     }
   };
 
@@ -222,7 +229,7 @@ const EcommerceProductDetail = () => {
             <div>
               <h1 className="text-2xl md:text-3xl font-bold mb-4 text-gray-900">{product.title}</h1>
               <div className="flex justify-between items-center mb-6">
-                <p className="text-2xl font-bold text-green-700">{formatIDR(selectedVariation ? product.price + selectedVariation.additional_price : product.price)}</p>
+                <p className="text-2xl font-bold text-green-700">{formatIDR(selectedVariation && selectedVariation.additional_price > 0 ? selectedVariation.additional_price : product.price)}</p>
                 <p className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">Stok: {product.stock}</p>
               </div>
 
@@ -236,7 +243,7 @@ const EcommerceProductDetail = () => {
                         onClick={() => setSelectedVariation(variant)}
                         className={`px-4 py-2 border rounded-xl font-medium text-sm transition ${selectedVariation?.id === variant.id ? 'border-green-600 bg-green-50 text-green-700' : 'border-gray-200 hover:border-green-500 hover:text-green-700'}`}
                       >
-                        {variant.name} {variant.additional_price > 0 && `(+${formatIDR(variant.additional_price)})`}
+                        {variant.name} {variant.additional_price > 0 && `(${formatIDR(variant.additional_price)})`}
                       </button>
                     ))}
                   </div>

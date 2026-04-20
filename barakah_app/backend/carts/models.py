@@ -16,8 +16,10 @@ class Cart(models.Model):
         var_text = f" ({self.variation.name})" if self.variation else ""
         return f"{self.user.username}'s cart - {self.product.title}{var_text}"
 
+    @property
     def total_price(self):
-        base_price = self.product.price
-        if self.variation and self.variation.additional_price:
-            base_price += self.variation.additional_price
-        return base_price * self.quantity
+        # Variation price replaces product price if set
+        item_price = self.product.price
+        if self.variation and self.variation.additional_price and self.variation.additional_price > 0:
+            item_price = self.variation.additional_price
+        return item_price * self.quantity

@@ -288,7 +288,7 @@ const DashboardSinergySellersPage = () => {
                         {variants.map((v, i) => (
                             <div key={i} className="flex gap-2">
                                 <input type="text" placeholder="Nama Varian (mis: Hitam XL)" value={v.name} onChange={(e) => updateVariant(i, 'name', e.target.value)} className="flex-[2] px-3 py-2 text-sm border border-gray-200 rounded-lg outline-none" />
-                                <input type="number" placeholder="Tambahan Harga (Rp)" value={v.additional_price || ''} onChange={(e) => updateVariant(i, 'additional_price', e.target.value)} className="flex-1 px-3 py-2 text-sm border border-gray-200 rounded-lg outline-none" />
+                                <input type="number" placeholder="Harga Varian (Rp)" value={v.additional_price || ''} onChange={(e) => updateVariant(i, 'additional_price', e.target.value)} className="flex-1 px-3 py-2 text-sm border border-gray-200 rounded-lg outline-none" />
                                 <input type="number" placeholder="Stok" value={v.stock || ''} onChange={(e) => updateVariant(i, 'stock', e.target.value)} className="w-20 px-2 py-2 text-sm border border-gray-200 rounded-lg outline-none" />
                                 {variants.length > 1 && (
                                     <button type="button" onClick={() => removeVariant(i)} className="w-10 flex items-center justify-center text-red-500 bg-red-50 rounded-lg hover:bg-red-100"><span className="material-icons text-sm">close</span></button>

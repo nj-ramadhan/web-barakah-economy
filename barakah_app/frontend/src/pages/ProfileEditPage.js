@@ -220,24 +220,27 @@ const ProfileEditPage = () => {
       const user = JSON.parse(localStorage.getItem('user'));
       if (user && user.id) {
         const formData = new FormData();
+        const numericFields = ['study_semester', 'study_start_year', 'study_finish_year', 'address_latitude', 'address_longitude'];
+        
         for (const key in profile) {
           if (profile[key] !== null && profile[key] !== undefined) {
-            // Fix 1: Do not send string paths for file fields, only actual Files
+            // Fix 1: Handle Files correctly
             if (key === 'picture' || key === 'ktp_image') {
               if (profile[key] instanceof File) {
                 formData.append(key, profile[key]);
               }
             } 
-            // Fix 2: Do not send empty strings for Float fields
-            else if ((key === 'address_latitude' || key === 'address_longitude') && profile[key] === '') {
-              // skip empty float fields
+            // Fix 2: Do not send empty strings for numeric fields
+            else if (numericFields.includes(key) && profile[key] === '') {
+              // Skip empty numeric fields
             } 
-            // Fix 3: Handle salary string cleaning
+            // Fix 3: Handle salary string cleaning properly
             else if (key === 'work_salary') {
-              formData.append(key, String(profile[key]).replace(/[^0-9]/g, ''));
+                const val = String(profile[key]).replace(/[^0-9]/g, '');
+                if (val) formData.append(key, val);
             } 
-            // Default append
-            else {
+            // Default append for other fields provided they aren't empty strings for mandatory choices
+            else if (profile[key] !== '') {
               formData.append(key, profile[key]);
             }
           }
@@ -378,28 +381,14 @@ const ProfileEditPage = () => {
               <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
                 Provinsi {isFieldMissing('address_province') && <span className="text-red-500">*wajib</span>}
               </label>
-              <select name="address_province" value={profile.address_province || ''} onChange={(e) => {
-                  handleChange(e);
-                  // Find ID to trigger city fetch if we stored it
-                }} className={inputCls('address_province')}>
-                <option value="">Pilih Provinsi</option>
-                <option value="Jawa Barat">Jawa Barat (Dummy RajaOngkir Name)</option>
-              </select>
+              <input type="text" name="address_province" placeholder="Masukkan Provinsi" value={profile.address_province || ''} onChange={handleChange} className={inputCls('address_province')} />
             </div>
             <div>
               <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
-                Kota / Kabupaten Sinergy {isFieldMissing('address_city_id') && <span className="text-red-500">*wajib</span>}
+                Kota / Kabupaten {isFieldMissing('address_city_name') && <span className="text-red-500">*wajib</span>}
               </label>
-              <select name="address_city_id" value={profile.address_city_id || ''} onChange={(e) => {
-                  handleChange(e);
-                  const cityName = e.target.options[e.target.selectedIndex].text;
-                  setProfile(prev => ({...prev, address_city_name: cityName}));
-              }} className={inputCls('address_city_id')}>
-                <option value="">Pilih Kota (Simulasi RajaOngkir)</option>
-                <option value="22">Bandung</option>
-                <option value="153">Jakarta Selatan</option>
-              </select>
-              <p className="text-[10px] text-gray-400 mt-1">*Diperlukan untuk cek ongkir fisik Sinergy via RajaOngkir</p>
+              <input type="text" name="address_city_name" placeholder="Masukkan Nama Kota/Kabupaten" value={profile.address_city_name || ''} onChange={handleChange} className={inputCls('address_city_name')} />
+              <p className="text-[10px] text-gray-400 mt-1">*Masukkan nama kota untuk identitas alamat Anda</p>
             </div>
             
             <div className="mt-4 border-t border-gray-200 pt-4">
