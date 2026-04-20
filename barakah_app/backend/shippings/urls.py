@@ -2,8 +2,9 @@
 from django.urls import path
 from .views import (
     ShippingAddressListView, ShippingAddressDetailView, 
-    ProvinceListView, CityListView, DistrictListView, ShippingCostAPIView
+    ProvinceListView, CityListView, DistrictListView, ShippingCostAPIView, TestPingAPIView
 )
+
 
 
 urlpatterns = [
@@ -13,5 +14,7 @@ urlpatterns = [
     path('cities/', CityListView.as_view(), name='rajaongkir-cities'),
     path('districts/', DistrictListView.as_view(), name='rajaongkir-districts'),
     path('costs/', ShippingCostAPIView.as_view(), name='rajaongkir-costs'),
+    path('test-ping/', TestPingAPIView.as_view(), name='rajaongkir-test-ping'),
+
 
 ]
