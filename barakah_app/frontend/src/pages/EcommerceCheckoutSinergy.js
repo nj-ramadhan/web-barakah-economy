@@ -95,14 +95,15 @@ const EcommerceCheckoutSinergy = () => {
             });
 
             const orders = res.data;
-            const qrisOrder = orders.find(o => o.qris_payload);
+            const qrisOrder = orders.find(o => o.payment_method === 'qris');
             
             if (qrisOrder) {
-                setQrisData({ payload: qrisOrder.qris_payload, amount: qrisOrder.grand_total, orderNumber: qrisOrder.order_number });
+                setQrisData({ amount: qrisOrder.grand_total, orderNumber: qrisOrder.order_number });
                 setShowQrisModal(true);
             } else {
                 navigate('/riwayat-belanja');
             }
+
         } catch (err) {
             alert('Gagal memproses Checkout. Silakan coba lagi.');
         }
@@ -232,11 +233,18 @@ const EcommerceCheckoutSinergy = () => {
                             </div>
                             <div className="p-8 flex flex-col items-center">
                                 <div className="bg-white p-4 border-2 border-gray-100 rounded-2xl mb-6 shadow-Inner">
-                                    <img 
-                                        src={`https://chart.googleapis.com/chart?chs=300x300&cht=qr&chl=${encodeURIComponent(qrisData.payload)}&choe=UTF-8`} 
-                                        alt="QRIS Code" 
-                                        className="w-48 h-48"
-                                    />
+                                    {/* Placeholder for Static QRIS Image */}
+                                    <div className="w-48 h-48 bg-gray-100 flex items-center justify-center rounded-xl overflow-hidden">
+                                        <img 
+                                            src="/media/payment_methods/qris_static.png" 
+                                            alt="QRIS Statis" 
+                                            className="w-full h-full object-contain"
+                                            onError={(e) => {
+                                                e.target.onerror = null;
+                                                e.target.src = "https://via.placeholder.com/300?text=Scan+QRIS";
+                                            }}
+                                        />
+                                    </div>
                                 </div>
                                 <div className="text-center mb-6">
                                     <p className="text-xs text-gray-500 font-bold uppercase tracking-widest mb-1">Total Bayar</p>
@@ -249,7 +257,7 @@ const EcommerceCheckoutSinergy = () => {
                                 >
                                     Selesai, Cek Status Pesanan
                                 </button>
-                                <p className="text-[10px] text-gray-400 mt-4 text-center">Silakan simpan/screenshot QR ini. Pesanan Anda akan diproses otomatis setelah pembayaran terverifikasi.</p>
+                                <p className="text-[10px] text-gray-400 mt-4 text-center">Silakan scan kode QR di atas. Pastikan nominal transfer sesuai. <b>Simpan bukti transfer</b> untuk diunggah di halaman Riwayat Belanja.</p>
                             </div>
                         </div>
                     </div>

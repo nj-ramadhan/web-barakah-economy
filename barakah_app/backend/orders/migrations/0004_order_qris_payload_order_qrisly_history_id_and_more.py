@@ -22,7 +22,7 @@ class Migration(migrations.Migration):
         ),
         migrations.AddField(
             model_name='order',
-            name='resi_number',
-            field=models.CharField(blank=True, max_length=100, null=True),
+            name='payment_method',
+            field=models.CharField(default='manual', max_length=50),
         ),
     ]
