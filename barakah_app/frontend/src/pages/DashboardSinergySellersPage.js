@@ -17,10 +17,11 @@ const DashboardSinergySellersPage = () => {
         const user = JSON.parse(localStorage.getItem('user'));
         if (!user) return;
         try {
-            const productRes = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/products/`, {
+            const productRes = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/products/?manage=true`, {
                 headers: { Authorization: `Bearer ${user.access}` }
             });
             setProducts(productRes.data);
+
 
             const voucherRes = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/products/vouchers/`, {
                 headers: { Authorization: `Bearer ${user.access}` }

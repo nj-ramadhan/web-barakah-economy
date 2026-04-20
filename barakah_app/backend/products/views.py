@@ -38,8 +38,12 @@ class VoucherValidateView(APIView):
         except ShopVoucher.DoesNotExist:
             return Response({'error': 'Voucher tidak valid atau tidak ditemukan'}, status=status.HTTP_404_NOT_FOUND)
 
+from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
+from .permissions import IsOwnerOrAdmin
+
 class ProductViewSet(viewsets.ModelViewSet):
     serializer_class = ProductSerializer
+    permission_classes = [IsAuthenticatedOrReadOnly, IsOwnerOrAdmin]
     
     def get_queryset(self):
         user = self.request.user
@@ -52,16 +56,17 @@ class ProductViewSet(viewsets.ModelViewSet):
                 Q(description__icontains=search)
             )
 
-        # For unauthenticated or standard users, only show approved & active
-        if not user.is_authenticated:
-            return queryset.filter(status='approved', is_active=True)
+        # Dashboard Management View
+        if self.request.query_params.get('manage') == 'true':
+            if not user.is_authenticated:
+                return queryset.none()
+            if user.role == 'admin':
+                return queryset
+            return queryset.filter(seller=user)
 
-        # If admin, can see all or filter by a specific query
-        if user.role == 'admin':
-            return queryset
+        # Public Marketplace View - Only show approved & active products
+        return queryset.filter(status='approved', is_active=True)
 
-        # Standard users see approved products globally, plus their own products
-        return queryset.filter(Q(status='approved', is_active=True) | Q(seller=user))
 
     def perform_create(self, serializer):
         product = serializer.save(seller=self.request.user, status='pending')

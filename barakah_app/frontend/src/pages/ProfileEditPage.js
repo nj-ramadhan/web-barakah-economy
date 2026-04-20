@@ -47,8 +47,15 @@ const ProfileEditPage = () => {
     study_semester: '', study_start_year: '', study_finish_year: '',
     address: '', job: '', work_field: '', work_institution: '',
     work_position: '', work_salary: '', address_latitude: '',
-    address_longitude: '', address_province: '', picture: null, ktp_image: null,
+    address_longitude: '', address_province: '', address_province_id: '',
+    address_city_id: '', address_city_name: '', picture: null, ktp_image: null,
+    shop_thumbnail: null,
   });
+
+  const [provinces, setProvinces] = useState([]);
+  const [cities, setCities] = useState([]);
+  const [loadingCities, setLoadingCities] = useState(false);
+
 
   const [cropper, setCropper] = useState({ active: false, image: null });
 
@@ -89,6 +96,43 @@ const ProfileEditPage = () => {
     };
     init();
   }, [navigate, isCompleteMode]);
+
+  // RajaOngkir Fetchers
+  useEffect(() => {
+    const fetchProvinces = async () => {
+      try {
+        const res = await axios.get(`${API}/api/shippings/provinces/`);
+        if (res.data.rajaongkir && res.data.rajaongkir.results) {
+          setProvinces(res.data.rajaongkir.results);
+        }
+      } catch (err) {
+        console.error("Failed to fetch provinces", err);
+      }
+    };
+    fetchProvinces();
+  }, []);
+
+  useEffect(() => {
+    const fetchCities = async () => {
+      if (!profile.address_province_id) {
+        setCities([]);
+        return;
+      }
+      setLoadingCities(true);
+      try {
+        const res = await axios.get(`${API}/api/shippings/cities/?province=${profile.address_province_id}`);
+        if (res.data.rajaongkir && res.data.rajaongkir.results) {
+          setCities(res.data.rajaongkir.results);
+        }
+      } catch (err) {
+        console.error("Failed to fetch cities", err);
+      } finally {
+        setLoadingCities(false);
+      }
+    };
+    fetchCities();
+  }, [profile.address_province_id]);
+
   
   const ProfileSkeleton = () => (
     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden animate-pulse">
@@ -224,8 +268,9 @@ const ProfileEditPage = () => {
         
         for (const key in profile) {
           if (profile[key] !== null && profile[key] !== undefined) {
-            // Fix 1: Handle Files correctly
-            if (key === 'picture' || key === 'ktp_image') {
+            // Fix 1: Handle Files correctly (only send if it's a new File object)
+            const imageFields = ['picture', 'ktp_image', 'shop_thumbnail'];
+            if (imageFields.includes(key)) {
               if (profile[key] instanceof File) {
                 formData.append(key, profile[key]);
               }
@@ -244,6 +289,7 @@ const ProfileEditPage = () => {
               formData.append(key, profile[key]);
             }
           }
+
         }
         
         // Debug: Log FormData keys
@@ -381,15 +427,53 @@ const ProfileEditPage = () => {
               <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
                 Provinsi {isFieldMissing('address_province') && <span className="text-red-500">*wajib</span>}
               </label>
-              <input type="text" name="address_province" placeholder="Masukkan Provinsi" value={profile.address_province || ''} onChange={handleChange} className={inputCls('address_province')} />
+              <select 
+                name="address_province_id" 
+                value={profile.address_province_id || ''} 
+                onChange={(e) => {
+                  const selected = provinces.find(p => p.province_id === e.target.value);
+                  setProfile(prev => ({
+                    ...prev,
+                    address_province_id: e.target.value,
+                    address_province: selected ? selected.province : '',
+                    address_city_id: '',
+                    address_city_name: ''
+                  }));
+                }} 
+                className={inputCls('address_province')}
+              >
+                <option value="">Pilih Provinsi</option>
+                {provinces.map(p => (
+                  <option key={p.province_id} value={p.province_id}>{p.province}</option>
+                ))}
+              </select>
             </div>
             <div>
               <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
                 Kota / Kabupaten {isFieldMissing('address_city_name') && <span className="text-red-500">*wajib</span>}
               </label>
-              <input type="text" name="address_city_name" placeholder="Masukkan Nama Kota/Kabupaten" value={profile.address_city_name || ''} onChange={handleChange} className={inputCls('address_city_name')} />
-              <p className="text-[10px] text-gray-400 mt-1">*Masukkan nama kota untuk identitas alamat Anda</p>
+              <select 
+                name="address_city_id" 
+                value={profile.address_city_id || ''} 
+                onChange={(e) => {
+                  const selected = cities.find(c => c.city_id === e.target.value);
+                  setProfile(prev => ({
+                    ...prev,
+                    address_city_id: e.target.value,
+                    address_city_name: selected ? (selected.type + ' ' + selected.city_name) : ''
+                  }));
+                }} 
+                disabled={!profile.address_province_id || loadingCities}
+                className={inputCls('address_city_name')}
+              >
+                <option value="">{loadingCities ? 'Memuat Kota...' : 'Pilih Kota'}</option>
+                {cities.map(c => (
+                  <option key={c.city_id} value={c.city_id}>{c.type} {c.city_name}</option>
+                ))}
+              </select>
+              <p className="text-[10px] text-gray-400 mt-1">*Pilih kota sesuai lokasi pengiriman/penerimaan</p>
             </div>
+
             
             <div className="mt-4 border-t border-gray-200 pt-4">
               <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Pilih Titik Lokasi Peta (Opsional)</label>
