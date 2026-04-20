@@ -21,10 +21,16 @@ class ProductSerializer(serializers.ModelSerializer):
     images = ProductImageSerializer(many=True, read_only=True)
     variations = ProductVariationSerializer(many=True, read_only=True)
     seller_name = serializers.CharField(source='seller.username', read_only=True)
+    seller_city_id = serializers.SerializerMethodField()
 
     class Meta:
         model = Product
         fields = '__all__'
+
+    def get_seller_city_id(self, obj):
+        if obj.seller and hasattr(obj.seller, 'profile'):
+            return obj.seller.profile.address_city_id or '153' # Default to 153 if empty
+        return '153' # Default (Jakarta Selatan) if no profile
 
 class ShopVoucherSerializer(serializers.ModelSerializer):
     class Meta:

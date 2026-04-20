@@ -25,6 +25,19 @@ const EcommerceCheckoutPage = () => {
   const location = useLocation();
   const { cartItems } = location.state || { cartItems: [] };
   const [selectedBank, setSelectedBank] = useState('');
+  const [profile, setProfile] = useState(null);
+  
+  // Checkout States
+  const [courier, setCourier] = useState('');
+  const [shippingOptions, setShippingOptions] = useState([]);
+  const [selectedShipping, setSelectedShipping] = useState(0);
+  const [isFetchingShipping, setIsFetchingShipping] = useState(false);
+  
+  // Voucher States
+  const [voucherCode, setVoucherCode] = useState('');
+  const [voucherDiscount, setVoucherDiscount] = useState(0);
+  const [voucherStatus, setVoucherStatus] = useState(null);
+
   const [formData, setFormData] = useState({
     fullName: '',
     phone: '',
@@ -38,200 +51,162 @@ const EcommerceCheckoutPage = () => {
       const script = document.createElement('script');
       script.src = 'https://app.sandbox.midtrans.com/snap/snap.js';
       script.dataset.clientKey = 'SB-Mid-client-wm4shJTARC2PTcY6';
-      script.onload = () => {
-        console.log('Snap.js loaded successfully.');
-      };
-      script.onerror = () => {
-        console.error('Failed to load Snap.js.');
-      };
+      script.onload = () => {};
       document.body.appendChild(script);
-
-      // Cleanup on unmount
-      return () => {
-        document.body.removeChild(script);
-      };
+      return () => { document.body.removeChild(script); };
     }
   }, []);
 
+  useEffect(() => {
+    const checkProfile = async () => {
+        const user = JSON.parse(localStorage.getItem('user'));
+        if (!user) { navigate('/login'); return; }
+        
+        try {
+            const res = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/profiles/me/`, {
+                headers: { Authorization: `Bearer ${user.access}` }
+            });
+            const p = res.data;
+            if (!p.address_city_id || !p.address) {
+                alert('Tolong lengkapi alamat dan kota Anda terlebih dahulu untuk pengiriman barang (Sinergy).');
+                navigate('/profile/edit?complete=address');
+                return;
+            }
+            setProfile(p);
+            setFormData(prev => ({ ...prev, fullName: p.name_full || user.username, phone: p.phone_number || '' }));
+        } catch (error) {
+            console.error(error);
+        }
+    };
+    checkProfile();
+  }, [navigate]);
+
   const banks = [
-    {
-      id: 'bsi',
-      name: 'Bank BSI',
-      logo: '/images/bsi-logo.png'
-    },
-    {
-      id: 'qris',
-      name: 'QRIS',
-      logo: '/images/qris-bae2.png'
-    },
-    {
-      id: 'midtrans',
-      name: 'Midtrans (Gopay, OVO, etc)',
-      logo: '/images/gopay-logo.png',
-    },
+    { id: 'bsi', name: 'Bank BSI', logo: '/images/bsi-logo.png' },
+    { id: 'qris', name: 'QRIS', logo: '/images/qris-bae2.png' },
+    { id: 'midtrans', name: 'Midtrans (Gopay, OVO, dll)', logo: '/images/gopay-logo.png' }
   ];
+
+  const checkOngkir = async (selectedCourier) => {
+      setCourier(selectedCourier);
+      if (!selectedCourier) {
+          setShippingOptions([]);
+          setSelectedShipping(0);
+          return;
+      }
+      
+      setIsFetchingShipping(true);
+      try {
+          // Determine origin based on first item seller
+          const originCity = cartItems[0]?.product?.seller_city_id || '153';
+          const destCity = profile.address_city_id;
+          const totalWeight = cartItems.reduce((acc, item) => acc + ((item.product.weight || 1000) * item.quantity), 0);
+          
+          const res = await axios.post(`${process.env.REACT_APP_API_BASE_URL}/api/shippings/costs/`, {
+              origin: originCity,
+              destination: destCity,
+              weight: totalWeight,
+              courier: selectedCourier
+          });
+
+          // Extract costs from RajaOngkir response array
+          const costs = res.data?.rajaongkir?.results?.[0]?.costs || [];
+          if(costs.length > 0) {
+              setShippingOptions(costs);
+              // Auto-select first option
+              setSelectedShipping(costs[0].cost[0].value);
+          } else {
+              setShippingOptions([]);
+              setSelectedShipping(0);
+              alert('Layanan kurir tidak tersedia untuk rute Anda.');
+          }
+      } catch (e) {
+          console.error(e);
+          alert('Gagal mengecek ongkir.');
+      } finally {
+          setIsFetchingShipping(false);
+      }
+  };
+
+  const handleApplyVoucher = async () => {
+      if(!voucherCode) return;
+      try {
+          const res = await axios.post(`${process.env.REACT_APP_API_BASE_URL}/api/products/vouchers/validate/`, { code: voucherCode });
+          const nominal = parseFloat(res.data.nominal);
+          setVoucherDiscount(nominal);
+          setVoucherStatus('Voucher berhasil diaplikasikan (Diskon Rp ' + nominal + ')');
+      } catch (err) {
+          setVoucherDiscount(0);
+          setVoucherStatus(err.response?.data?.error || 'Voucher tidak valid');
+      }
+  };
+
+  const totalItemsPrice = cartItems.reduce((total, item) => {
+      let base = item.product.price;
+      if(item.variation?.additional_price) base += parseFloat(item.variation.additional_price);
+      return total + (base * item.quantity);
+  }, 0);
+  
+  const grandTotal = Math.max(0, totalItemsPrice + selectedShipping - voucherDiscount);
 
   const handlePayment = async (token) => {
     if (typeof window.snap !== 'undefined') {
       window.snap.pay(token, {
         onSuccess: async (result) => {
-          console.log('Payment success:', result);
-
-          // Notify the backend about the successful payment
           try {
-            const response = await axios.post(
-              `${process.env.REACT_APP_API_BASE_URL}/api/payments/update-payment-status/`,
-              {
-                transactionId: result.transaction_id, // Midtrans transaction ID
-                // status: 'success', // Payment status
-                status: 'verified', // Payment status
-                amount: result.gross_amount, // Payment amount
-                paymentMethod: result.payment_type, // Payment method (e.g., gopay, bank transfer)
-              },
-              {
-                headers: {
-                  'Content-Type': 'application/json',
-                  'X-CSRFToken': getCsrfToken(), // Include CSRF token if needed
-                },
-              }
+            await axios.post(`${process.env.REACT_APP_API_BASE_URL}/api/payments/update-payment-status/`,
+              { transactionId: result.transaction_id, status: 'verified', amount: result.gross_amount, paymentMethod: result.payment_type },
+              { headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrfToken() } }
             );
-
-            if (response.status === 200) {
-              console.log('Payment status updated successfully.');
-              await clearCart(); // Clear the cart after successful payment
-              navigate('/success', {
-                state: {
-                  transactionId: result.transaction_id,
-                  amount: result.gross_amount,
-                  paymentMethod: result.payment_type,
-                },
-              });
-            } else {
-              console.error('Failed to update payment status:', response.data);
-              alert('Payment successful, but failed to update status. Please contact support.');
-            }
-          } catch (error) {
-            console.error('Error updating payment status:', error);
-            alert('Payment successful, but failed to update status. Please contact support.');
-          }
+            await clearCart();
+            navigate('/success', { state: { transactionId: result.transaction_id, amount: result.gross_amount, paymentMethod: result.payment_type } });
+          } catch (e) { alert('Berhasil dibayar, hubungi support bila status gagal diperbarui.'); }
         },
-        onPending: async (result) => {
-          console.log('Payment pending:', result);
-
-          // Notify the backend about the pending payment
-          try {
-            const response = await axios.post(
-              `${process.env.REACT_APP_API_BASE_URL}/api/payments/update-payment-status/`,
-              {
-                transactionId: result.transaction_id, // Midtrans transaction ID
-                status: 'pending', // Payment status
-                amount: result.gross_amount, // Payment amount
-                paymentMethod: result.payment_type, // Payment method (e.g., gopay, bank transfer)
-              },
-              {
-                headers: {
-                  'Content-Type': 'application/json',
-                  'X-CSRFToken': getCsrfToken(), // Include CSRF token if needed
-                },
-              }
-            );
-
-            if (response.status === 200) {
-              console.log('Payment status updated successfully.');
-              alert('Payment is pending. Please complete the payment.');
-            } else {
-              console.error('Failed to update payment status:', response.data);
-              alert('Payment pending, but failed to update status. Please contact support.');
-            }
-          } catch (error) {
-            console.error('Error updating payment status:', error);
-            alert('Payment pending, but failed to update status. Please contact support.');
-          }
-        },
-        onError: (error) => {
-          console.error('Payment error:', error);
-          alert('Payment failed. Please try again.');
-        },
-        onClose: () => {
-          console.log('Payment popup closed');
-          alert('Payment canceled. Please complete the payment to proceed.');
-        },
+        onPending: async (result) => { alert('Pembayaran tertunda.'); },
+        onError: () => { alert('Pembayaran Gagal'); },
+        onClose: () => { alert('Popup ditutup, tidak ada pembayaran'); }
       });
-    } else {
-      console.error('Snap.js is not loaded.');
-      alert('Payment gateway is not available. Please try again later.');
     }
   };
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value
-    }));
+    setFormData(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    const csrfToken = getCsrfToken();
-    // const authToken = localStorage.getItem('authToken');
-
-    if (!selectedBank) {
-      alert('Silakan pilih metode pembayaran');
-      return;
-    }
-
-    const totalAmount = cartItems.reduce((total, item) => total + (item.product.price * item.quantity), 0);
-    const customerName = formData.fullName;
-    const customerPhone = formData.phone;
+    if (!selectedBank) { alert('pilih metode pembayaran'); return; }
+    if (!courier || selectedShipping === 0) { alert('Pilih kurir dan ongkir terlebih dahulu'); return; }
 
     const paymentData = {
-      amount: totalAmount,
-      customerName: customerName,
-      customerPhone: customerPhone,
-      cartItems: cartItems.map((item) => ({
-        product_id: item.product.id,
-        quantity: item.quantity,
-      })), // Include cart items if required by the backend
+      amount: grandTotal,
+      customerName: formData.fullName,
+      customerPhone: formData.phone,
+      cartItems: cartItems.map((item) => ({ product_id: item.product.id, quantity: item.quantity })),
+      shipping_cost: selectedShipping,
+      courier_service: courier,
+      voucher_discount: voucherDiscount
     };
 
-    // If Midtrans is selected, handle payment via Midtrans
     if (selectedBank === 'midtrans') {
       try {
-        const response = await axios.post(
-          `${process.env.REACT_APP_API_BASE_URL}/api/payments/generate-order-midtrans-token/`,
-          paymentData,
-          {
-            headers: {
-              'Content-Type': 'application/json',
-              'X-CSRFToken': csrfToken,
-            },
-          }
-        );
-
-        const { token } = response.data;
-
-        if (token) {
-          handlePayment(token); // Trigger the payment popup
-        } else {
-          throw new Error('Failed to retrieve payment token.');
-        }
-      } catch (error) {
-        console.error('Error generating Midtrans token:', error);
-        alert('Terjadi kesalahan saat memproses pembayaran.');
-      }
+        const response = await axios.post(`${process.env.REACT_APP_API_BASE_URL}/api/payments/generate-order-midtrans-token/`, paymentData, {
+          headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrfToken() }
+        });
+        if (response.data.token) handlePayment(response.data.token);
+      } catch (e) { alert('Terjadi kesalahan memproses Token Midtrans.'); }
     } else {
-      // Navigate to payment confirmation with data
       navigate('/konfirmasi-pembayaran-belanja', {
-        state: {
-          amount: totalAmount,
-          bank: selectedBank,
-          customerName: customerName,
-          customerPhone: customerPhone,
-          email: formData.email,
-          message: formData.message,
-          cartItems: cartItems,
+        state: { 
+            amount: grandTotal, 
+            bank: selectedBank, 
+            customerName: formData.fullName, 
+            customerPhone: formData.phone, 
+            email: formData.email, 
+            message: formData.message, 
+            cartItems: cartItems,
+            shippingCost: selectedShipping
         }
       });
     }
@@ -239,145 +214,120 @@ const EcommerceCheckoutPage = () => {
 
   const clearCart = async () => {
     try {
-      const user = JSON.parse(localStorage.getItem('user')); // Retrieve the user object from localStorage
-      if (!user || !user.access) {
-        console.error('User is not logged in or access token is missing.');
-        return;
-      }
-
-      await axios.delete(`${process.env.REACT_APP_API_BASE_URL}/api/cart/clear/`, {
-        headers: {
-          Authorization: `Bearer ${user.access}`, // Use the access token from the user object
-          'X-CSRFToken': getCsrfToken(), // Include CSRF token if needed
-        },
-      });
-      console.log('Cart cleared successfully.');
-    } catch (error) {
-      console.error('Error clearing cart:', error);
-    }
+      const user = JSON.parse(localStorage.getItem('user'));
+      if(!user) return;
+      await axios.delete(`${process.env.REACT_APP_API_BASE_URL}/api/cart/clear/`, { headers: { Authorization: `Bearer ${user.access}` } });
+    } catch (error) {}
   };
 
   return (
-    <div className="body">
+    <div className="body bg-gray-50 min-h-screen">
       <Header />
+      <div className="container mx-auto px-4 py-6 max-w-2xl pb-24">
+        <h2 className="text-2xl font-bold mb-6 text-gray-800 text-center">Checkout Sinergy</h2>
 
-      <div className="container mx-auto px-4 py-6 max-w-md">
-        <h2 className="text-lg font-semibold mb-6 text-center">Pembayaran</h2>
+        {/* Alamat Penerima */}
+        {profile && (
+            <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 mb-6">
+                <div className="flex justify-between items-center mb-3">
+                    <h2 className="font-bold text-sm text-gray-800 flex items-center gap-2"><span className="material-icons text-emerald-600 text-[18px]">location_on</span> Alamat Pengiriman (Tujuan)</h2>
+                    <button type="button" onClick={() => navigate('/profile/edit')} className="text-xs text-blue-600 font-bold bg-blue-50 px-3 py-1 rounded-full">Ubah</button>
+                </div>
+                <div>
+                    <p className="font-bold text-sm text-gray-800">{profile.name_full || formData.fullName}</p>
+                    <p className="text-xs text-gray-500 mt-1">{profile.address}</p>
+                    <p className="text-xs text-gray-500">{profile.address_city_name}, {profile.address_province}</p>
+                </div>
+            </div>
+        )}
 
-        {/* List of Products */}
-        <div className="mb-6">
-          <h3 className="text-lg font-semibold mb-3">Produk dalam Keranjang</h3>
+        {/* Daftar Barang */}
+        <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-200 mb-6">
+          <h3 className="text-sm font-bold mb-4 text-gray-800 border-b pb-2">Produk dalam Keranjang</h3>
           <ul className="space-y-4">
             {cartItems.map((item) => (
-              <li key={item.id} className="bg-white border border-transparent hover:bg-green-50/50 p-4 rounded-lg shadow-sm">
-                <div className="flex justify-between items-center">
-                  <span className="flex justify-left items-center">
-                    <img
-                      src={item.product.thumbnail || '/images/produk.jpg'}
-                      alt={item.product.title}
-                      className="w-16 h-16 object-cover mr-4"
-                      onError={(e) => {
-                        e.target.src = '/images/produk.jpg';
-                      }}
-                    />
-                    <div className="justify-left">
-                      <h3 className="text-sm font-semibold">{item.product.title}</h3>
-                      <p className="text-xs text-gray-600">Jumlah Barang: {item.quantity}</p>
-                      <p className="text-xs text-gray-600">Harga satuan: {formatIDR(item.product.price)}</p>
-                      <p className="text-xs text-gray-600">Total: {formatIDR(item.product.price * item.quantity)}</p>
-                    </div>
-                  </span>
+              <li key={item.id} className="flex items-start gap-4">
+                <img src={item.product.thumbnail || '/images/produk.jpg'} alt={item.product.title} className="w-16 h-16 object-cover rounded-xl border border-gray-100" />
+                <div className="flex-1">
+                  <h3 className="text-sm font-semibold">{item.product.title}</h3>
+                  {item.variation && <p className="text-[10px] text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full w-fit mt-1">{item.variation.name}</p>}
+                  <p className="text-xs text-gray-500 mt-1">{formatIDR(item.product.price + (item.variation?.additional_price ? parseFloat(item.variation.additional_price) : 0))} x {item.quantity}</p>
+                </div>
+                <div className="font-bold text-sm text-emerald-700">
+                    {formatIDR((item.product.price + (item.variation?.additional_price ? parseFloat(item.variation.additional_price) : 0)) * item.quantity)}
                 </div>
               </li>
             ))}
           </ul>
         </div>
 
-        {/* Total Price */}
-        <h3 className="font-semibold">Total Biaya yang harus dibayar</h3>
-        <div className="bg-white border border-transparent hover:bg-green-50/50 p-4 rounded-lg shadow-sm mb-6">
-          <p className="text-lg font-semibold">{formatIDR(cartItems.reduce((total, item) => total + (item.product.price * item.quantity), 0))}</p>
+        {/* Pengiriman & Voucher */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <div className="bg-orange-50 p-4 rounded-2xl border border-orange-100">
+                <label className="block text-xs font-bold text-orange-800 mb-2">Pilih Kurir (RajaOngkir)</label>
+                <select value={courier} onChange={(e) => checkOngkir(e.target.value)} disabled={!profile} className="w-full text-sm bg-white border-none rounded-xl p-3 focus:ring-2 focus:ring-orange-500 outline-none">
+                    <option value="">- Pilih Jasa Ekspedisi -</option>
+                    <option value="jne">JNE</option>
+                    <option value="pos">POS Indonesia</option>
+                    <option value="tiki">TIKI</option>
+                </select>
+                {isFetchingShipping && <p className="text-xs text-orange-600 mt-2 animate-pulse">Menghitung Biaya...</p>}
+                
+                {shippingOptions.length > 0 && (
+                    <div className="mt-3">
+                        <label className="block text-xs font-bold text-orange-800 mb-2">Layanan yang Tersedia:</label>
+                        <select value={selectedShipping} onChange={(e) => setSelectedShipping(parseFloat(e.target.value))} className="w-full text-sm bg-white border-none rounded-xl p-3 outline-none">
+                            {shippingOptions.map((opt, i) => (
+                                <option key={i} value={opt.cost[0].value}>{opt.service} - {opt.description} ({formatIDR(opt.cost[0].value)})</option>
+                            ))}
+                        </select>
+                    </div>
+                )}
+            </div>
+
+            <div className="bg-blue-50 p-4 rounded-2xl border border-blue-100">
+                <label className="block text-xs font-bold text-blue-800 mb-2">Kode Voucher Toko</label>
+                <div className="flex gap-2">
+                    <input type="text" value={voucherCode} onChange={e => setVoucherCode(e.target.value)} placeholder="Mis: PROMO2025" className="flex-1 text-sm bg-white border-none rounded-xl p-3 outline-none uppercase" />
+                    <button type="button" onClick={handleApplyVoucher} className="bg-blue-600 text-white font-bold text-xs px-4 rounded-xl hover:bg-blue-700">TERAPKAN</button>
+                </div>
+                {voucherStatus && <p className={`text-[10px] mt-2 font-bold ${voucherDiscount > 0 ? 'text-emerald-600' : 'text-red-500'}`}>{voucherStatus}</p>}
+            </div>
         </div>
 
-        {/* Payment Method */}
-        <h3 className="font-semibold mb-3">Metode Bayar</h3>
-        <div className="space-y-3 mb-6">
+        {/* Ringkasan Belanja */}
+        <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-200 mb-6 space-y-2">
+            <div className="flex justify-between text-sm text-gray-600"><p>Subtotal Produk</p><p>{formatIDR(totalItemsPrice)}</p></div>
+            <div className="flex justify-between text-sm text-gray-600"><p>Ongkos Kirim {courier && `(${courier.toUpperCase()})`}</p><p>+{formatIDR(selectedShipping)}</p></div>
+            {voucherDiscount > 0 && <div className="flex justify-between text-sm text-emerald-600 font-bold"><p>Diskon Voucher</p><p>-{formatIDR(voucherDiscount)}</p></div>}
+            <div className="pt-3 mt-3 border-t flex justify-between text-lg font-black text-gray-800">
+                <p>TOTAL PEMBAYARAN</p>
+                <p className="text-emerald-700">{formatIDR(grandTotal)}</p>
+            </div>
+        </div>
+
+        {/* Metode Pembayaran */}
+        <h3 className="font-bold text-gray-800 mb-3">Metode Bayar</h3>
+        <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-200 mb-6 space-y-3">
           {banks.map((bank) => (
-            <label
-              key={bank.id}
-              className={`flex items-center p-3 rounded-lg cursor-pointer transition-colors ${selectedBank === bank.id
-                ? 'bg-green-50 border border-green-500'
-                : 'bg-white border border-transparent hover:bg-green-50/50'
-                }`}
-            >
-              <input
-                type="radio"
-                name="bank"
-                value={bank.id}
-                checked={selectedBank === bank.id}
-                onChange={(e) => setSelectedBank(e.target.value)}
-                className="mr-3 accent-green-600"
-              />
-              <img src={bank.logo} alt={bank.name} className="h-6 mr-2" />
-              <span>{bank.name}</span>
+            <label key={bank.id} className={`flex items-center p-4 rounded-xl cursor-pointer transition-all border-2 ${selectedBank === bank.id ? 'bg-green-50 border-green-500' : 'bg-gray-50 border-transparent hover:bg-gray-100'}`}>
+              <input type="radio" name="bank" value={bank.id} checked={selectedBank === bank.id} onChange={(e) => setSelectedBank(e.target.value)} className="mr-3 accent-green-600" />
+              <img src={bank.logo} alt={bank.name} className="h-6 mr-3 mix-blend-multiply" />
+              <span className="font-semibold text-sm text-gray-700">{bank.name}</span>
             </label>
           ))}
         </div>
 
-        {/* Personal Data Form */}
-        <h3 className="font-semibold mb-3">Data Anda</h3>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <input
-              type="text"
-              name="fullName"
-              placeholder="Nama Lengkap Anda (wajib diisi)"
-              className="w-full p-3 rounded-lg border border-gray-200 focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none"
-              value={formData.fullName}
-              onChange={handleInputChange}
-              required
-            />
-          </div>
-
-          <div>
-            <input
-              type="tel"
-              name="phone"
-              placeholder="No Whatsapp atau Handphone (wajib diisi)"
-              className="w-full p-3 rounded-lg border border-gray-200 focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none"
-              value={formData.phone}
-              onChange={handleInputChange}
-              required
-            />
-          </div>
-
-          <div>
-            <input
-              type="email"
-              name="email"
-              placeholder="Email Anda (opsional)"
-              className="w-full p-3 rounded-lg border border-gray-200 focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none"
-              value={formData.email}
-              onChange={handleInputChange}
-            />
-          </div>
-
-          <div>
-            <textarea
-              name="message"
-              placeholder="Catatan atau Pesanan khusus (opsional)"
-              className="w-full p-3 rounded-lg border border-gray-200 focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none"
-              rows="3"
-              value={formData.message}
-              onChange={handleInputChange}
-            />
-          </div>
-
-          <button
-            type="submit"
-            className="w-full bg-green-600 text-white py-3 rounded-lg font-medium hover:bg-green-700 transition-colors"
-          >
-            Lanjutkan Pembayaran
+        {/* Form Pembeli & Tombol Checkout */}
+        <h3 className="font-bold text-gray-800 mb-3">Konfirmasi Kontak</h3>
+        <form onSubmit={handleSubmit} className="bg-white rounded-2xl p-5 shadow-sm border border-gray-200 space-y-4">
+          <input type="text" name="fullName" placeholder="Nama Lengkap (wajib)" className="w-full p-3 rounded-xl bg-gray-50 text-sm outline-none" value={formData.fullName} onChange={handleInputChange} required />
+          <input type="tel" name="phone" placeholder="No Whatsapp (wajib)" className="w-full p-3 rounded-xl bg-gray-50 text-sm outline-none" value={formData.phone} onChange={handleInputChange} required />
+          <input type="email" name="email" placeholder="Email Anda (opsional)" className="w-full p-3 rounded-xl bg-gray-50 text-sm outline-none" value={formData.email} onChange={handleInputChange} />
+          <textarea name="message" placeholder="Catatan ke penjual (opsional)" className="w-full p-3 rounded-xl bg-gray-50 text-sm outline-none h-20" value={formData.message} onChange={handleInputChange} />
+          
+          <button type="submit" disabled={!selectedBank || selectedShipping === 0} className="w-full mt-4 bg-gradient-to-r from-emerald-600 to-teal-700 text-white font-bold py-4 rounded-xl hover:shadow-lg hover:shadow-emerald-200 hover:scale-[1.01] transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+            BAYAR {formatIDR(grandTotal)}
           </button>
         </form>
       </div>

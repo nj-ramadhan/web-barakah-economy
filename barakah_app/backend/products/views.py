@@ -5,9 +5,39 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
-from .models import Product
-from .serializers import ProductSerializer
-    
+from .models import Product, ShopVoucher
+from .serializers import ProductSerializer, ShopVoucherSerializer
+from rest_framework.permissions import IsAuthenticated
+
+class ShopVoucherViewSet(viewsets.ModelViewSet):
+    serializer_class = ShopVoucherSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        if getattr(user, 'role', '') == 'admin':
+            return ShopVoucher.objects.all()
+        return ShopVoucher.objects.filter(seller=user)
+
+    def perform_create(self, serializer):
+        serializer.save(seller=self.request.user)
+
+class VoucherValidateView(APIView):
+    def post(self, request):
+        code = request.data.get('code')
+        if not code:
+            return Response({'error': 'Kode voucher diperlukan'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            voucher = ShopVoucher.objects.get(code__iexact=code, is_active=True)
+            if voucher.quantity == 0:
+                return Response({'error': 'Kuota voucher sudah habis'}, status=status.HTTP_400_BAD_REQUEST)
+            
+            serializer = ShopVoucherSerializer(voucher)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except ShopVoucher.DoesNotExist:
+            return Response({'error': 'Voucher tidak valid atau tidak ditemukan'}, status=status.HTTP_404_NOT_FOUND)
+
 class ProductViewSet(viewsets.ModelViewSet):
     serializer_class = ProductSerializer
     

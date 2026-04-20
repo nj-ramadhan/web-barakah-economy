@@ -7,28 +7,34 @@ import { Link } from 'react-router-dom';
 
 const DashboardSinergySellersPage = () => {
     const [products, setProducts] = useState([]);
+    const [vouchers, setVouchers] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [activeTab, setActiveTab] = useState('list'); // 'list' | 'add' | 'edit'
+    const [activeTab, setActiveTab] = useState('list'); // 'list' | 'add' | 'edit' | 'voucher'
     const [editingProduct, setEditingProduct] = useState(null);
     const [variants, setVariants] = useState([{name: '', additional_price: 0, stock: 0}]);
 
-    const fetchProducts = async () => {
+    const fetchDashboardData = async () => {
         const user = JSON.parse(localStorage.getItem('user'));
         if (!user) return;
         try {
-            const res = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/products/`, {
+            const productRes = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/products/`, {
                 headers: { Authorization: `Bearer ${user.access}` }
             });
-            setProducts(res.data);
+            setProducts(productRes.data);
+
+            const voucherRes = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/products/vouchers/`, {
+                headers: { Authorization: `Bearer ${user.access}` }
+            });
+            setVouchers(voucherRes.data);
         } catch (error) {
-            console.error("Failed fetching Sinergy products", error);
+            console.error("Failed fetching Sinergy dashboard data", error);
         } finally {
             setLoading(false);
         }
     };
 
     useEffect(() => {
-        fetchProducts();
+        fetchDashboardData();
     }, []);
 
     const handleEdit = (product) => {
@@ -76,11 +82,41 @@ const DashboardSinergySellersPage = () => {
                 });
                 alert('Produk berhasil ditambahkan');
             }
-            fetchProducts();
+            fetchDashboardData();
             setActiveTab('list');
         } catch (error) {
             console.error(error);
             alert('Gagal menyimpan produk');
+        }
+    };
+
+    const handleSaveVoucher = async (e) => {
+        e.preventDefault();
+        const user = JSON.parse(localStorage.getItem('user'));
+        try {
+            await axios.post(`${process.env.REACT_APP_API_BASE_URL}/api/products/vouchers/`, {
+                code: e.target.code.value,
+                nominal: e.target.nominal.value,
+                quantity: e.target.quantity.value,
+                is_active: true
+            }, { headers: { Authorization: `Bearer ${user.access}` } });
+            alert('Voucher berhasil ditambahkan');
+            e.target.reset();
+            fetchDashboardData();
+        } catch(error) {
+            alert('Gagal membuat voucher. Pastikan kode unik.');
+        }
+    };
+
+    const handleDeleteVoucher = async (id) => {
+        const user = JSON.parse(localStorage.getItem('user'));
+        try {
+            await axios.delete(`${process.env.REACT_APP_API_BASE_URL}/api/products/vouchers/${id}/`, {
+                headers: { Authorization: `Bearer ${user.access}` }
+            });
+            fetchDashboardData();
+        } catch(error) {
+            alert('Gagal menghapus voucher');
         }
     };
 
@@ -89,7 +125,7 @@ const DashboardSinergySellersPage = () => {
             <div className="flex justify-between items-center mb-6">
                 <h2 className="text-xl font-bold text-gray-800">Produk Saya</h2>
                 <div className="flex gap-2">
-                    <button className="bg-orange-100 hover:bg-orange-200 text-orange-700 px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 transition-all">
+                    <button onClick={() => setActiveTab('voucher')} className="bg-orange-100 hover:bg-orange-200 text-orange-700 px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 transition-all">
                         <span className="material-icons text-sm">local_activity</span> Buat Voucher
                     </button>
                     <button onClick={() => { setActiveTab('add'); setEditingProduct(null); setVariants([{name: '', additional_price: 0, stock: 0}]); }} className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 shadow-sm transition-all shadow-emerald-200">
@@ -134,6 +170,55 @@ const DashboardSinergySellersPage = () => {
                     ))}
                 </div>
             )}
+        </div>
+    );
+
+    const renderVouchers = () => (
+        <div className="bg-white rounded-3xl p-6 shadow-xl border border-gray-100 animate-slide-up">
+            <div className="flex items-center gap-3 mb-6 pb-4 border-b border-gray-100">
+                <button type="button" onClick={() => setActiveTab('list')} className="w-8 h-8 flex items-center justify-center bg-gray-50 hover:bg-gray-100 rounded-full text-gray-500 transition"><span className="material-icons">arrow_back</span></button>
+                <h2 className="text-xl font-bold text-gray-800">Manajemen Kupon / Voucher</h2>
+            </div>
+
+            <form className="bg-orange-50 p-4 rounded-2xl mb-8 border border-orange-100 space-y-4" onSubmit={handleSaveVoucher}>
+                <h3 className="font-bold text-orange-800 text-sm">Buat Voucher Baru</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label className="block text-[11px] font-bold text-gray-600 mb-1">KODE (Huruf/Angka)</label>
+                        <input type="text" name="code" required placeholder="Cth: BAE2025" className="w-full px-3 py-2 text-sm border-none rounded-xl outline-none focus:ring-2 focus:ring-orange-400" />
+                    </div>
+                    <div>
+                        <label className="block text-[11px] font-bold text-gray-600 mb-1">Nominal Diskon (Rp)</label>
+                        <input type="number" name="nominal" required placeholder="10000" className="w-full px-3 py-2 text-sm border-none rounded-xl outline-none focus:ring-2 focus:ring-orange-400" />
+                    </div>
+                    <div>
+                        <label className="block text-[11px] font-bold text-gray-600 mb-1">Batas Kuota Pemakaian</label>
+                        <input type="number" name="quantity" required placeholder="50" className="w-full px-3 py-2 text-sm border-none rounded-xl outline-none focus:ring-2 focus:ring-orange-400" />
+                    </div>
+                </div>
+                <button type="submit" className="bg-orange-600 text-white font-bold text-xs px-6 py-2 rounded-full hover:bg-orange-700 transition">Buat Voucher</button>
+            </form>
+
+            <div>
+                <h3 className="font-bold text-gray-800 text-sm mb-4">Voucher Aktif Anda</h3>
+                {vouchers.length === 0 ? (
+                    <p className="text-xs text-gray-400">Belum ada voucher yang dibuat.</p>
+                ) : (
+                    <div className="space-y-3">
+                        {vouchers.map(v => (
+                            <div key={v.id} className="flex justify-between items-center bg-gray-50 p-4 rounded-xl border border-gray-100">
+                                <div>
+                                    <h4 className="font-bold text-emerald-700 text-lg uppercase">{v.code}</h4>
+                                    <p className="text-xs text-gray-500">Potongan Rp {v.nominal} • Sisa Kuota: {v.quantity}</p>
+                                </div>
+                                <button onClick={() => handleDeleteVoucher(v.id)} className="text-red-500 bg-red-50 p-2 rounded-lg hover:bg-red-100">
+                                    <span className="material-icons text-[18px]">delete</span>
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </div>
         </div>
     );
 
@@ -226,7 +311,7 @@ const DashboardSinergySellersPage = () => {
             <Helmet><title>Pembuatan Sinergy - Barakah Economy</title></Helmet>
             <Header />
             <div className="max-w-4xl mx-auto px-4 py-6 pb-24">
-                {activeTab === 'list' ? renderList() : renderForm()}
+                {activeTab === 'list' ? renderList() : activeTab === 'voucher' ? renderVouchers() : renderForm()}
             </div>
             <NavigationButton />
         </div>
