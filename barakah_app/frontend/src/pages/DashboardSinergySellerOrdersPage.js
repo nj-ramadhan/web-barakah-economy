@@ -241,7 +241,6 @@ const DashboardSinergySellerOrdersPage = () => {
                                         </div>
                                     </div>
                                 </div>
-                            </div>
                         ))}
                     </div>
                 )}
