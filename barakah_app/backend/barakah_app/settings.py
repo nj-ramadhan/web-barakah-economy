@@ -35,7 +35,7 @@ MIDTRANS_CLIENT_KEY = env('MIDTRANS_CLIENT_KEY', default='')
 MIDTRANS_SERVER_KEY = env('MIDTRANS_SERVER_KEY', default='')
 MIDTRANS_SANDBOX = env('MIDTRANS_SANDBOX', cast=bool, default=True)
 
-RAJAONGKIR_API_KEY = env('RAJAONGKIR_API_KEY', default='')
+EXPEDITION_API_KEY = env('EXPEDITION_API_KEY', default='')
 QRISLY_API_KEY = env('QRISLY_API_KEY', default='')
 
 

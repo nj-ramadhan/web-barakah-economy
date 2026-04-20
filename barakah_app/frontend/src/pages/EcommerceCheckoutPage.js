@@ -107,17 +107,18 @@ const EcommerceCheckoutPage = () => {
               courier: selectedCourier
           });
 
-          // Extract costs from RajaOngkir response array
-          const costs = res.data?.rajaongkir?.results?.[0]?.costs || [];
-          if(costs.length > 0) {
+          // Extract costs from Expedition API response (Flat list from backend)
+          const costs = res.data || [];
+          if(Array.isArray(costs) && costs.length > 0) {
               setShippingOptions(costs);
-              // Auto-select first option
-              setSelectedShipping(costs[0].cost[0].value);
+              // Auto-select first option cost
+              setSelectedShipping(costs[0].cost);
           } else {
               setShippingOptions([]);
               setSelectedShipping(0);
               alert('Layanan kurir tidak tersedia untuk rute Anda.');
           }
+
       } catch (e) {
           console.error(e);
           alert('Gagal mengecek ongkir.');
@@ -268,13 +269,16 @@ const EcommerceCheckoutPage = () => {
         {/* Pengiriman & Voucher */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
             <div className="bg-orange-50 p-4 rounded-2xl border border-orange-100">
-                <label className="block text-xs font-bold text-orange-800 mb-2">Pilih Kurir (RajaOngkir)</label>
+                <label className="block text-xs font-bold text-orange-800 mb-2">Pilih Kurir (Ekspedisi)</label>
                 <select value={courier} onChange={(e) => checkOngkir(e.target.value)} disabled={!profile} className="w-full text-sm bg-white border-none rounded-xl p-3 focus:ring-2 focus:ring-orange-500 outline-none">
                     <option value="">- Pilih Jasa Ekspedisi -</option>
                     <option value="jne">JNE</option>
                     <option value="pos">POS Indonesia</option>
                     <option value="tiki">TIKI</option>
+                    <option value="jnt">J&T Express</option>
+                    <option value="sicepat">SiCepat</option>
                 </select>
+
                 {isFetchingShipping && <p className="text-xs text-orange-600 mt-2 animate-pulse">Menghitung Biaya...</p>}
                 
                 {shippingOptions.length > 0 && (

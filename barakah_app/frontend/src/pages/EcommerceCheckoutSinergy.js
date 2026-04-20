@@ -14,6 +14,8 @@ const EcommerceCheckoutSinergy = () => {
     const [showQrisModal, setShowQrisModal] = useState(false);
     const [courierOptions, setCourierOptions] = useState({}); // { sellerId: [ { service, cost, description, etd } ] }
     const [loadingCosts, setLoadingCosts] = useState({});
+    const [sellerConfigs, setSellerConfigs] = useState({}); // { sellerId: { supported_couriers: 'jne,pos...' } }
+
 
 
     // Example checkoutConfigs state:
@@ -36,11 +38,12 @@ const EcommerceCheckoutSinergy = () => {
                 
                 const p = profileRes.data;
                 // Basic Validation for Shipping
-                if (!p.address_subdistrict_id || !p.address) {
-                    alert('Mohon lengkapi Alamat, Kota, dan Kecamatan di profil Anda untuk kalkulasi ongkos kirim Sinergy.');
+                if (!p.address_village_id || !p.address) {
+                    alert('Mohon lengkapi Alamat, Kota, Kecamatan, dan Kelurahan di profil Anda untuk kalkulasi ongkos kirim Sinergy.');
                     navigate('/profile/edit?complete=address');
                     return;
                 }
+
 
                 setAddresses(p);
 
@@ -52,6 +55,24 @@ const EcommerceCheckoutSinergy = () => {
                 // Temporary dummy data if endpoint not fully ready
                 const items = cartRes.data || [];
                 setCartItems(items);
+                
+                // Fetch seller configurations (supported couriers)
+                const uniqueSellers = [...new Set(items.map(item => item.product?.seller_id || "0"))];
+                const sellerData = {};
+                for (const s_id of uniqueSellers) {
+                    try {
+                        // Using user retrieval endpoint if seller_id corresponds to user_id
+                        const sRes = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/profiles/${s_id}/`, {
+                            headers: { Authorization: `Bearer ${user.access}` }
+                        });
+                        sellerData[s_id] = sRes.data;
+                    } catch (e) {
+                        console.error(`Failed to fetch seller ${s_id} config`, e);
+                        // Fallback to defaults
+                        sellerData[s_id] = { shop_supported_couriers: 'jne,pos,tiki,jnt' };
+                    }
+                }
+                setSellerConfigs(sellerData);
 
                 // Initialize checkout configs based on sellers in cart
                 const initialConfigs = {};
@@ -86,11 +107,10 @@ const EcommerceCheckoutSinergy = () => {
         setLoadingCosts(prev => ({ ...prev, [sellerId]: true }));
         try {
             const user = JSON.parse(localStorage.getItem('user'));
-            // Using a default origin for now (e.g. Bandung) or try to get seller's origin if available
-            // In a real app, each seller should have their origin_id set in their profile.
-            // For BAE, we assume the platform/seller default origin is constant or fetched.
-            const origin_id = "1138"; // Example: Kecamatan ID for typical hub
-            const destination_id = addresses.address_subdistrict_id;
+            // Origin: Using a default for BAE (e.g. Center of Jakarta)
+            // Ideally this should come from seller's profile if they have one.
+            const origin_code = "3216061005"; // Default: Desa Lambangjaya, Tambun Selatan (Contoh Hub BAE)
+            const destination_code = addresses.address_village_id;
             
             // Total weight of items for this seller
             const weight = cartItems
@@ -98,19 +118,19 @@ const EcommerceCheckoutSinergy = () => {
                 .reduce((acc, item) => acc + (item.product.weight || 1000) * item.quantity, 0);
 
             const res = await axios.post(`${process.env.REACT_APP_API_BASE_URL}/api/shippings/costs/`, {
-                origin: origin_id,
-                destination: destination_id,
+                origin: origin_code,
+                destination: destination_code,
                 weight: weight,
                 courier: courier
             }, {
                 headers: { Authorization: `Bearer ${user.access}` }
             });
 
-            // Komerce structure: { meta: ..., data: [ service_name, cost, etd, etc ] }
-            // Let's assume the API returns a list of services
+            // API.co.id format (mapped by backend): [ { service, cost, etd, description } ]
             if (res.data && Array.isArray(res.data)) {
                 setCourierOptions(prev => ({ ...prev, [sellerId]: res.data }));
             }
+
         } catch (err) {
             console.error("Shipping fetch error", err);
         } finally {
@@ -161,7 +181,7 @@ const EcommerceCheckoutSinergy = () => {
     cartItems.forEach(item => {
         const s_id = item.product?.seller_id || "0";
         if (!sellerGroups[s_id]) sellerGroups[s_id] = { items: [], total_price: 0 };
-        sellerGroups[s_id].items.append(item);
+        sellerGroups[s_id].items.push(item);
         
         let p = item.product.price;
         if(item.variation && item.variation.additional_price) p += item.variation.additional_price;
@@ -170,7 +190,7 @@ const EcommerceCheckoutSinergy = () => {
 
     return (
         <div className="body bg-gray-50 min-h-screen">
-            <Helmet><title>Checkout Sinergy - Barakah Economy</title></Helmet>
+            <Helmet><title>Checkout - Barakah Economy</title></Helmet>
             <Header />
             <div className="max-w-4xl mx-auto px-4 py-8 pb-24">
                 <h1 className="text-2xl font-bold text-gray-800 mb-6">Checkout Produk Fisik</h1>
@@ -214,7 +234,8 @@ const EcommerceCheckoutSinergy = () => {
 
                             {/* Couriers Selection */}
                             <div className="bg-orange-50/50 p-3 rounded-xl border border-orange-100 mb-4">
-                                <label className="block text-[11px] font-bold text-orange-800 mb-2 uppercase tracking-wider">Cek Ongkir RajaOngkir</label>
+                                <label className="block text-[11px] font-bold text-orange-800 mb-2 uppercase tracking-wider">Cek Ongkos Kirim Otomatis</label>
+
                                 <div className="space-y-2">
                                     <select 
                                         className="w-full text-sm bg-white border border-orange-200 rounded-lg p-2 focus:ring-1 focus:ring-orange-500"
@@ -225,13 +246,20 @@ const EcommerceCheckoutSinergy = () => {
                                         }}
                                     >
                                         <option value="">Pilih Kurir</option>
-                                        <option value="jne">JNE (Jalur Nugraha Ekakurir)</option>
-                                        <option value="pos">POS Indonesia</option>
-                                        <option value="tiki">TIKI (Titipan Kilat)</option>
-                                        <option value="jnt">J&T Express</option>
-                                        <option value="sicepat">SiCepat</option>
-                                        <option value="anteraja">AnterAja</option>
+                                        {[
+                                            { id: 'jne', name: 'JNE (Jalur Nugraha Ekakurir)' },
+                                            { id: 'pos', name: 'POS Indonesia' },
+                                            { id: 'tiki', name: 'TIKI (Titipan Kilat)' },
+                                            { id: 'jnt', name: 'J&T Express' },
+                                            { id: 'sicepat', name: 'SiCepat' },
+                                            { id: 'anteraja', name: 'AnterAja' },
+                                            { id: 'wahana', name: 'Wahana' },
+                                            { id: 'ninja', name: 'Ninja' },
+                                        ].filter(c => (sellerConfigs[s_id]?.shop_supported_couriers || 'jne,pos,tiki,jnt').split(',').includes(c.id)).map(c => (
+                                            <option key={c.id} value={c.id}>{c.name}</option>
+                                        ))}
                                     </select>
+
 
                                     {config?.shipping_courier && (
                                         <select 
@@ -255,8 +283,9 @@ const EcommerceCheckoutSinergy = () => {
                                         </select>
                                     )}
                                 </div>
-                                <p className="text-[10px] text-gray-400 mt-1 italic">*Terkoneksi langsung dengan RajaOngkir API (Kecamatan Accurate)</p>
+                                <p className="text-[10px] text-gray-400 mt-1 italic">*Terkoneksi langsung dengan API.co.id (Kelurahan Accurate)</p>
                             </div>
+
 
 
                             {/* Vouchers and Payments Options */}

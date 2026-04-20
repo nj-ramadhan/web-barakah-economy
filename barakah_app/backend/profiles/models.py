@@ -159,11 +159,12 @@ class Profile(models.Model):
     address_latitude = models.FloatField(blank=True, null=True)
     address_longitude = models.FloatField(blank=True, null=True)  
     address_province = models.CharField(max_length=50, blank=True, null=True)
-    address_province_id = models.CharField(max_length=10, blank=True, null=True, help_text="RajaOngkir Province ID")
-    address_city_id = models.CharField(max_length=10, blank=True, null=True, help_text="RajaOngkir City ID")
+    address_province_id = models.CharField(max_length=10, blank=True, null=True, help_text="Expedition Province ID")
+    address_city_id = models.CharField(max_length=10, blank=True, null=True, help_text="Expedition City ID")
     address_city_name = models.CharField(max_length=100, blank=True, null=True)
-    address_subdistrict_id = models.CharField(max_length=10, blank=True, null=True, help_text="RajaOngkir Subdistrict ID")
+    address_subdistrict_id = models.CharField(max_length=10, blank=True, null=True, help_text="Expedition Subdistrict ID")
     address_subdistrict_name = models.CharField(max_length=100, blank=True, null=True)
+    address_village_id = models.CharField(max_length=10, blank=True, null=True, help_text="Expedition Village ID")
     address_postal_code = models.CharField(max_length=10, blank=True, null=True)
     
     # Shop fields for digital product sellers
@@ -176,6 +177,8 @@ class Profile(models.Model):
     shop_template = models.CharField(max_length=50, default='none', blank=True)
     shop_header_style = models.CharField(max_length=50, default='theme', blank=True) # Options: 'theme', 'transparent'
     shop_text_color = models.CharField(max_length=50, default='#ffffff', blank=True)
+    shop_supported_couriers = models.CharField(max_length=255, default='jne,pos,tiki,jnt', blank=True, help_text="Comma separated active courier codes")
+
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)

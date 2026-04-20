@@ -13,7 +13,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='profile',
             name='address_city_id',
-            field=models.CharField(blank=True, help_text='RajaOngkir City ID', max_length=10, null=True),
+            field=models.CharField(blank=True, help_text='Expedition City ID', max_length=10, null=True),
         ),
         migrations.AddField(
             model_name='profile',
@@ -28,12 +28,12 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='profile',
             name='address_province_id',
-            field=models.CharField(blank=True, help_text='RajaOngkir Province ID', max_length=10, null=True),
+            field=models.CharField(blank=True, help_text='Expedition Province ID', max_length=10, null=True),
         ),
         migrations.AddField(
             model_name='profile',
             name='address_subdistrict_id',
-            field=models.CharField(blank=True, help_text='RajaOngkir Subdistrict ID', max_length=10, null=True),
+            field=models.CharField(blank=True, help_text='Expedition Subdistrict ID', max_length=10, null=True),
         ),
         migrations.AddField(
             model_name='profile',
@@ -41,3 +41,4 @@ class Migration(migrations.Migration):
             field=models.CharField(blank=True, max_length=100, null=True),
         ),
     ]
+

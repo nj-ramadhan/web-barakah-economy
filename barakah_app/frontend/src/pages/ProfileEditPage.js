@@ -51,14 +51,21 @@ const ProfileEditPage = () => {
     shop_thumbnail: null,
     address_subdistrict_id: '',
     address_subdistrict_name: '',
+    address_village_id: '',
+    address_village_name: '',
+    shop_supported_couriers: 'jne,pos,tiki,jnt',
   });
 
 
+
+
   const [provinces, setProvinces] = useState([]);
-  const [cities, setCities] = useState([]);
   const [districts, setDistricts] = useState([]);
+  const [villages, setVillages] = useState([]);
   const [loadingCities, setLoadingCities] = useState(false);
   const [loadingDistricts, setLoadingDistricts] = useState(false);
+  const [loadingVillages, setLoadingVillages] = useState(false);
+
 
 
 
@@ -102,7 +109,8 @@ const ProfileEditPage = () => {
     init();
   }, [navigate, isCompleteMode]);
 
-  // RajaOngkir Fetchers
+  // Expedition API Fetchers
+
   useEffect(() => {
     const fetchProvinces = async () => {
       try {
@@ -159,6 +167,28 @@ const ProfileEditPage = () => {
     };
     fetchDistricts();
   }, [profile.address_city_id]);
+
+  useEffect(() => {
+    const fetchVillages = async () => {
+      if (!profile.address_subdistrict_id) {
+        setVillages([]);
+        return;
+      }
+      setLoadingVillages(true);
+      try {
+        const res = await axios.get(`${API}/api/shippings/villages/?district=${profile.address_subdistrict_id}`);
+        if (Array.isArray(res.data)) {
+          setVillages(res.data);
+        }
+      } catch (err) {
+        console.error("Failed to fetch villages", err);
+      } finally {
+        setLoadingVillages(false);
+      }
+    };
+    fetchVillages();
+  }, [profile.address_subdistrict_id]);
+
 
 
   // Auto-detect location from coordinates (Reverse Geocoding)
@@ -528,8 +558,11 @@ const ProfileEditPage = () => {
                     address_city_id: '',
                     address_city_name: '',
                     address_subdistrict_id: '',
-                    address_subdistrict_name: ''
+                    address_subdistrict_name: '',
+                    address_village_id: '',
+                    address_village_name: ''
                   }));
+
 
                 }} 
                 className={inputCls('address_province')}
@@ -540,7 +573,8 @@ const ProfileEditPage = () => {
                 ))}
               </select>
               {provinces.length === 0 && (
-                <p className="text-[10px] text-red-500 mt-1">Gagal memuat daftar provinsi. Periksa koneksi atau konfigurasi RajaOngkir.</p>
+                <p className="text-[10px] text-red-500 mt-1">Gagal memuat daftar wilayah. Periksa koneksi internet atau konfigurasi sistem pengiriman.</p>
+
               )}
 
             </div>
@@ -558,8 +592,11 @@ const ProfileEditPage = () => {
                     address_city_id: e.target.value,
                     address_city_name: selected ? (selected.type + ' ' + selected.city_name) : '',
                     address_subdistrict_id: '',
-                    address_subdistrict_name: ''
+                    address_subdistrict_name: '',
+                    address_village_id: '',
+                    address_village_name: ''
                   }));
+
 
                 }} 
                 disabled={!profile.address_province_id || loadingCities}
@@ -584,7 +621,9 @@ const ProfileEditPage = () => {
                   setProfile(prev => ({
                     ...prev,
                     address_subdistrict_id: e.target.value,
-                    address_subdistrict_name: selected ? selected.district_name : ''
+                    address_subdistrict_name: selected ? selected.district_name : '',
+                    address_village_id: '',
+                    address_village_name: ''
                   }));
                 }} 
                 disabled={!profile.address_city_id || loadingDistricts}
@@ -597,6 +636,72 @@ const ProfileEditPage = () => {
               </select>
               <p className="text-[10px] text-gray-400 mt-1">*Pilih kecamatan untuk akurasi ongkir terbaik</p>
             </div>
+            <div>
+              <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
+                Kelurahan / Desa
+              </label>
+              <select 
+                name="address_village_id" 
+                value={profile.address_village_id || ''} 
+                onChange={(e) => {
+                  const selected = villages.find(v => v.village_id === e.target.value);
+                  setProfile(prev => ({
+                    ...prev,
+                    address_village_id: e.target.value,
+                    address_village_name: selected ? selected.village_name : ''
+                  }));
+                }} 
+                disabled={!profile.address_subdistrict_id || loadingVillages}
+                className={inputCls('address_village_name')}
+              >
+                <option value="">{loadingVillages ? 'Memuat Kelurahan...' : 'Pilih Kelurahan'}</option>
+                {villages.map(v => (
+                  <option key={v.village_id} value={v.village_id}>{v.village_name}</option>
+                ))}
+              </select>
+              <p className="text-[10px] text-gray-400 mt-1">*Pilih kelurahan sebagai poin pengiriman akhir</p>
+            </div>
+
+            <div className="md:col-span-2 mt-4 p-4 bg-orange-50 rounded-2xl border border-orange-100">
+              <h4 className="text-xs font-bold text-orange-800 uppercase tracking-wider mb-3 flex items-center gap-2">
+                <span className="material-icons text-[16px]">local_shipping</span> Layanan Ekspedisi (Untuk Seller)
+              </h4>
+              <p className="text-[10px] text-orange-700 mb-4 italic">Pilih ekspedisi yang tersedia untuk pengiriman produk fisik Anda. Jika Anda adalah Seller, pelanggan hanya bisa memilih kurir yang Anda aktifkan di sini.</p>
+              
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {[
+                  { id: 'jne', name: 'JNE' },
+                  { id: 'pos', name: 'POS' },
+                  { id: 'tiki', name: 'TIKI' },
+                  { id: 'jnt', name: 'J&T' },
+                  { id: 'sicepat', name: 'SiCepat' },
+                  { id: 'anteraja', name: 'AnterAja' },
+                  { id: 'wahana', name: 'Wahana' },
+                  { id: 'ninja', name: 'Ninja' },
+                ].map(courier => (
+                  <label key={courier.id} className="flex items-center gap-2 p-2 bg-white rounded-xl border border-orange-200 cursor-pointer hover:bg-orange-100 transition-colors">
+                    <input 
+                      type="checkbox" 
+                      className="form-checkbox h-4 w-4 text-orange-600 rounded border-gray-300 focus:ring-orange-500"
+                      checked={(profile.shop_supported_couriers || '').split(',').includes(courier.id)}
+                      onChange={(e) => {
+                        const current = (profile.shop_supported_couriers || '').split(',').filter(c => c !== '');
+                        let updated = [];
+                        if (e.target.checked) {
+                          updated = [...current, courier.id];
+                        } else {
+                          updated = current.filter(c => c !== courier.id);
+                        }
+                        setProfile(prev => ({ ...prev, shop_supported_couriers: updated.join(',') }));
+                      }}
+                    />
+                    <span className="text-xs font-bold text-gray-700">{courier.name}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+
 
 
             
@@ -616,6 +721,7 @@ const ProfileEditPage = () => {
                   <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Latitude</label>
                   <input type="number" name="address_latitude" placeholder="Dari Peta" value={profile.address_latitude || ''} onChange={handleChange} className="w-full p-2 border border-gray-200 bg-gray-50 rounded-lg text-xs outline-none focus:ring-2 focus:ring-green-500" />
                 </div>
+
                 <div>
                   <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Longitude</label>
                   <input type="number" name="address_longitude" placeholder="Dari Peta" value={profile.address_longitude || ''} onChange={handleChange} className="w-full p-2 border border-gray-200 bg-gray-50 rounded-lg text-xs outline-none focus:ring-2 focus:ring-green-500" />
