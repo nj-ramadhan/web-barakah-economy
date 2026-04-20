@@ -226,8 +226,7 @@ const LayoutWrapper = ({ isDesktop }) => {
         <Route path="/riwayat-donasi" element={<ResponsiveLayout isDesktop={isDesktop}><CrowdfundingDonationHistoryPage /></ResponsiveLayout>} />
         <Route path="/konfirmasi-pembayaran-donasi" element={<ResponsiveLayout isDesktop={isDesktop}><CrowdfundingPaymentConfirmation /></ResponsiveLayout>} />
 
-        {/* Ecommerce Routes - Sinergy hidden per request */}
-        {/* <Route path="/sinergy" element={<ResponsiveLayout isDesktop={isDesktop}><EcommerceMainPage /></ResponsiveLayout>} /> */}
+        <Route path="/sinergy" element={<ResponsiveLayout isDesktop={isDesktop}><EcommerceMainPage /></ResponsiveLayout>} />
         <Route path="/produk/:slug" element={<ResponsiveLayout isDesktop={isDesktop}><EcommerceProductDetail /></ResponsiveLayout>} />
         <Route path="/incaran" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><EcommerceWishlistPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/keranjang" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><EcommerceCartPage /></ResponsiveLayout></PrivateRoute>} />
