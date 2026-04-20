@@ -21,12 +21,11 @@ def get_shipping_cost(origin_id, destination_id, weight, courier):
     # Komerce format: origin, destination (district IDs), weight, courier (separated by :)
     payload = f"origin={origin_id}&destination={destination_id}&weight={weight}&courier={courier}"
     
+    print(f"DEBUG RajaOngkir Cost: Requesting for {origin_id} to {destination_id} via {courier}")
     try:
         response = requests.post(url, data=payload, headers=headers)
         if response.status_code == 200:
             data = response.json()
-            # The domestic-cost API for Komerce returns a list of services directly in 'data'
-            # We map them to the format expected by the frontend: { service, cost, etd }
             results = []
             for item in data.get('data', []):
                 results.append({
@@ -37,20 +36,22 @@ def get_shipping_cost(origin_id, destination_id, weight, courier):
                 })
             return results
         else:
-            print(f"Komerce RajaOngkir Cost Error: {response.status_code} - {response.text}")
+            print(f"DEBUG RajaOngkir Cost Error: {response.status_code} - {response.text}")
             return {"error": f"API Error: {response.status_code}"}
     except Exception as e:
+        print(f"DEBUG RajaOngkir Cost Exception: {str(e)}")
         return {"error": str(e)}
 
 def get_provinces():
     url = f"{RAJAONGKIR_BASE_URL}destination/province"
     headers = {'key': RAJAONGKIR_API_KEY}
+    print(f"DEBUG RajaOngkir Province: Using Key {RAJAONGKIR_API_KEY[:4]}...{RAJAONGKIR_API_KEY[-4:] if RAJAONGKIR_API_KEY else ''}")
     try:
         response = requests.get(url, headers=headers)
         if response.status_code == 200:
             data = response.json()
             source_data = data.get('data', [])
-            # Map Komerce keys (id, name) to Legacy names (province_id, province)
+            print(f"DEBUG RajaOngkir Province: Success, found {len(source_data)} items")
             mapped_data = []
             for item in source_data:
                 mapped_data.append({
@@ -59,10 +60,10 @@ def get_provinces():
                 })
             return mapped_data
         else:
-            print(f"Komerce Province Error: {response.status_code} - {response.text}")
+            print(f"DEBUG RajaOngkir Province Error: {response.status_code} - {response.text}")
             return []
     except Exception as e:
-        print(f"Komerce Province Exception: {str(e)}")
+        print(f"DEBUG RajaOngkir Province Exception: {str(e)}")
         return []
 
 def get_cities(province_id=None):
@@ -70,25 +71,25 @@ def get_cities(province_id=None):
         return []
     url = f"{RAJAONGKIR_BASE_URL}destination/city/{province_id}"
     headers = {'key': RAJAONGKIR_API_KEY}
+    print(f"DEBUG RajaOngkir City: Fetching for Province {province_id}")
     try:
         response = requests.get(url, headers=headers)
         if response.status_code == 200:
             data = response.json()
             source_data = data.get('data', [])
-            # Map Komerce keys (id, name) to Legacy names (city_id, city_name)
             mapped_data = []
             for item in source_data:
                 mapped_data.append({
                     'city_id': str(item.get('id')),
                     'city_name': item.get('name'),
-                    'type': '' # Komerce doesn't seem to provide separate type (Kota/Kab)
+                    'type': ''
                 })
             return mapped_data
         else:
-            print(f"Komerce City Error: {response.status_code} - {response.text}")
+            print(f"DEBUG RajaOngkir City Error: {response.status_code} - {response.text}")
             return []
     except Exception as e:
-        print(f"Komerce City Exception: {str(e)}")
+        print(f"DEBUG RajaOngkir City Exception: {str(e)}")
         return []
 
 def get_districts(city_id=None):
@@ -96,12 +97,12 @@ def get_districts(city_id=None):
         return []
     url = f"{RAJAONGKIR_BASE_URL}destination/district/{city_id}"
     headers = {'key': RAJAONGKIR_API_KEY}
+    print(f"DEBUG RajaOngkir District: Fetching for City {city_id}")
     try:
         response = requests.get(url, headers=headers)
         if response.status_code == 200:
             data = response.json()
             source_data = data.get('data', [])
-            # Map Komerce keys (id, name) to Legacy names (district_id, district_name)
             mapped_data = []
             for item in source_data:
                 mapped_data.append({
@@ -110,8 +111,8 @@ def get_districts(city_id=None):
                 })
             return mapped_data
         else:
-            print(f"Komerce District Error: {response.status_code} - {response.text}")
+            print(f"DEBUG RajaOngkir District Error: {response.status_code} - {response.text}")
             return []
     except Exception as e:
-        print(f"Komerce District Exception: {str(e)}")
+        print(f"DEBUG RajaOngkir District Exception: {str(e)}")
         return []
