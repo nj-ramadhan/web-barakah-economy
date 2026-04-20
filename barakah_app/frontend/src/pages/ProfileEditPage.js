@@ -536,146 +536,147 @@ const ProfileEditPage = () => {
 
       case 'address':
         return (
-          <div className="space-y-4">
-            <div>
-              <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
-                Alamat {isFieldMissing('address') && <span className="text-red-500">*wajib</span>}
+          <div className="space-y-6">
+            <div className="bg-emerald-50 p-4 rounded-2xl border border-emerald-100 mb-2">
+              <div className="flex gap-3">
+                <span className="material-icons text-emerald-600">location_on</span>
+                <div>
+                  <h4 className="text-sm font-bold text-emerald-900">Lokasi & Pengiriman</h4>
+                  <p className="text-[11px] text-emerald-700 leading-relaxed">Sistem kami menggunakan Keluarahan/Desa untuk akurasi biaya pengiriman (API.co.id). Mohon pilih hingga tingkat Kelurahan.</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
+                  Alamat Lengkap {isFieldMissing('address') && <span className="text-red-500">*wajib</span>}
+                </label>
+                <textarea 
+                  name="address" 
+                  rows="2"
+                  placeholder="Nama jalan, Nomor rumah, RT/RW..." 
+                  value={profile.address || ''} 
+                  onChange={handleChange} 
+                  className={inputCls('address')} 
+                />
+              </div>
+
+              {/* 4-Tier Selection Hierarchy */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
+                    Provinsi {isFieldMissing('address_province') && <span className="text-red-500">*wajib</span>}
+                  </label>
+                  <select 
+                    name="address_province_id" 
+                    value={profile.address_province_id || ''} 
+                    onChange={(e) => {
+                      const selected = provinces.find(p => p.province_id === e.target.value);
+                      setProfile(prev => ({
+                        ...prev,
+                        address_province_id: e.target.value,
+                        address_province: selected ? selected.province : '',
+                        address_city_id: '', address_city_name: '',
+                        address_subdistrict_id: '', address_subdistrict_name: '',
+                        address_village_id: '', address_village_name: ''
+                      }));
+                    }} 
+                    className={inputCls('address_province')}
+                  >
+                    <option value="">Pilih Provinsi</option>
+                    {provinces.map(p => (
+                      <option key={p.province_id} value={p.province_id}>{p.province}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
+                    Kota / Kabupaten {isFieldMissing('address_city_name') && <span className="text-red-500">*wajib</span>}
+                  </label>
+                  <select 
+                    name="address_city_id" 
+                    value={profile.address_city_id || ''} 
+                    onChange={(e) => {
+                      const selected = cities.find(c => c.city_id === e.target.value);
+                      setProfile(prev => ({
+                        ...prev,
+                        address_city_id: e.target.value,
+                        address_city_name: selected ? (`${selected.type} ${selected.city_name}`) : '',
+                        address_subdistrict_id: '', address_subdistrict_name: '',
+                        address_village_id: '', address_village_name: ''
+                      }));
+                    }} 
+                    disabled={!profile.address_province_id || loadingCities}
+                    className={inputCls('address_city_name')}
+                  >
+                    <option value="">{loadingCities ? 'Memuat Kota...' : 'Pilih Kota'}</option>
+                    {cities.map(c => (
+                      <option key={c.city_id} value={c.city_id}>{c.type} {c.city_name}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
+                    Kecamatan
+                  </label>
+                  <select 
+                    name="address_subdistrict_id" 
+                    value={profile.address_subdistrict_id || ''} 
+                    onChange={(e) => {
+                      const selected = districts.find(d => d.district_id === e.target.value);
+                      setProfile(prev => ({
+                        ...prev,
+                        address_subdistrict_id: e.target.value,
+                        address_subdistrict_name: selected ? selected.district_name : '',
+                        address_village_id: '', address_village_name: ''
+                      }));
+                    }} 
+                    disabled={!profile.address_city_id || loadingDistricts}
+                    className={inputCls('address_subdistrict_name')}
+                  >
+                    <option value="">{loadingDistricts ? 'Memuat Kecamatan...' : 'Pilih Kecamatan'}</option>
+                    {districts.map(d => (
+                      <option key={d.district_id} value={d.district_id}>{d.district_name}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
+                    Kelurahan / Desa
+                  </label>
+                  <select 
+                    name="address_village_id" 
+                    value={profile.address_village_id || ''} 
+                    onChange={(e) => {
+                      const selected = villages.find(v => v.village_id === e.target.value);
+                      setProfile(prev => ({
+                        ...prev,
+                        address_village_id: e.target.value,
+                        address_village_name: selected ? selected.village_name : ''
+                      }));
+                    }} 
+                    disabled={!profile.address_subdistrict_id || loadingVillages}
+                    className={inputCls('address_village_name')}
+                  >
+                    <option value="">{loadingVillages ? 'Memuat Kelurahan...' : 'Pilih Kelurahan'}</option>
+                    {villages.map(v => (
+                      <option key={v.village_id} value={v.village_id}>{v.village_name}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-4 pt-6 border-t border-gray-100">
+              <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-2">
+                <span className="material-icons text-sm text-gray-400">map</span>
+                Titik Koordinat Peta (Opsional)
               </label>
-              <input type="text" name="address" placeholder="Alamat lengkap" value={profile.address || ''} onChange={handleChange} className={inputCls('address')} />
-            </div>
-            <div>
-              <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
-                Provinsi {isFieldMissing('address_province') && <span className="text-red-500">*wajib</span>}
-              </label>
-              <select 
-                name="address_province_id" 
-                value={profile.address_province_id || ''} 
-                onChange={(e) => {
-                  const selected = provinces.find(p => p.province_id === e.target.value);
-                  setProfile(prev => ({
-                    ...prev,
-                    address_province_id: e.target.value,
-                    address_province: selected ? selected.province : '',
-                    address_city_id: '',
-                    address_city_name: '',
-                    address_subdistrict_id: '',
-                    address_subdistrict_name: '',
-                    address_village_id: '',
-                    address_village_name: ''
-                  }));
-
-
-                }} 
-                className={inputCls('address_province')}
-              >
-                <option value="">Pilih Provinsi</option>
-                {provinces.map(p => (
-                  <option key={p.province_id} value={p.province_id}>{p.province}</option>
-                ))}
-              </select>
-              {provinces.length === 0 && (
-                <p className="text-[10px] text-red-500 mt-1">Gagal memuat daftar wilayah. Periksa koneksi internet atau konfigurasi sistem pengiriman.</p>
-
-              )}
-
-            </div>
-            <div>
-              <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
-                Kota / Kabupaten {isFieldMissing('address_city_name') && <span className="text-red-500">*wajib</span>}
-              </label>
-              <select 
-                name="address_city_id" 
-                value={profile.address_city_id || ''} 
-                onChange={(e) => {
-                  const selected = cities.find(c => c.city_id === e.target.value);
-                  setProfile(prev => ({
-                    ...prev,
-                    address_city_id: e.target.value,
-                    address_city_name: selected ? (selected.type + ' ' + selected.city_name) : '',
-                    address_subdistrict_id: '',
-                    address_subdistrict_name: '',
-                    address_village_id: '',
-                    address_village_name: ''
-                  }));
-
-
-                }} 
-                disabled={!profile.address_province_id || loadingCities}
-                className={inputCls('address_city_name')}
-              >
-                <option value="">{loadingCities ? 'Memuat Kota...' : 'Pilih Kota'}</option>
-                {cities.map(c => (
-                  <option key={c.city_id} value={c.city_id}>{c.type} {c.city_name}</option>
-                ))}
-              </select>
-              <p className="text-[10px] text-gray-400 mt-1">*Pilih kota sesuai lokasi pengiriman/penerimaan</p>
-            </div>
-            <div>
-              <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
-                Kecamatan (District)
-              </label>
-              <select 
-                name="address_subdistrict_id" 
-                value={profile.address_subdistrict_id || ''} 
-                onChange={(e) => {
-                  const selected = districts.find(d => d.district_id === e.target.value);
-                  setProfile(prev => ({
-                    ...prev,
-                    address_subdistrict_id: e.target.value,
-                    address_subdistrict_name: selected ? selected.district_name : '',
-                    address_village_id: '',
-                    address_village_name: ''
-                  }));
-                }} 
-                disabled={!profile.address_city_id || loadingDistricts}
-                className={inputCls('address_subdistrict_name')}
-              >
-                <option value="">{loadingDistricts ? 'Memuat Kecamatan...' : 'Pilih Kecamatan'}</option>
-                {districts.map(d => (
-                  <option key={d.district_id} value={d.district_id}>{d.district_name}</option>
-                ))}
-              </select>
-              <p className="text-[10px] text-gray-400 mt-1">*Pilih kecamatan untuk akurasi ongkir terbaik</p>
-            </div>
-            <div>
-              <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
-                Kelurahan / Desa
-              </label>
-              <select 
-                name="address_village_id" 
-                value={profile.address_village_id || ''} 
-                onChange={(e) => {
-                  const selected = villages.find(v => v.village_id === e.target.value);
-                  setProfile(prev => ({
-                    ...prev,
-                    address_village_id: e.target.value,
-                    address_village_name: selected ? selected.village_name : ''
-                  }));
-                }} 
-                disabled={!profile.address_subdistrict_id || loadingVillages}
-                className={inputCls('address_village_name')}
-              >
-                <option value="">{loadingVillages ? 'Memuat Kelurahan...' : 'Pilih Kelurahan'}</option>
-                {villages.map(v => (
-                  <option key={v.village_id} value={v.village_id}>{v.village_name}</option>
-                ))}
-              </select>
-              <p className="text-[10px] text-gray-400 mt-1">*Pilih kelurahan sebagai poin pengiriman akhir</p>
-            </div>
-
-
-            <div className="md:col-span-2 mt-4">
-               {/* Expedition section removed - moved to product level */}
-            </div>
-
-
-
-
-
-            
-            <div className="mt-4 border-t border-gray-200 pt-4">
-              <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Pilih Titik Lokasi Peta (Opsional)</label>
-              <div className="h-48 sm:h-64 rounded-xl overflow-hidden border border-gray-200 relative z-0 mb-3">
+              <div className="h-64 rounded-2xl overflow-hidden border border-gray-200 relative z-0 mb-4 shadow-inner">
                 <MapContainer center={[profile.address_latitude || -6.914744, profile.address_longitude || 107.609810]} zoom={13} style={{ height: '100%', width: '100%' }}>
                   <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution="&copy; OSM" />
                   <MapClickHandler setLocation={(lat, lng) => setProfile(prev => ({ ...prev, address_latitude: lat, address_longitude: lng }))} />
@@ -684,17 +685,23 @@ const ProfileEditPage = () => {
                   )}
                 </MapContainer>
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Latitude</label>
-                  <input type="number" name="address_latitude" placeholder="Dari Peta" value={profile.address_latitude || ''} onChange={handleChange} className="w-full p-2 border border-gray-200 bg-gray-50 rounded-lg text-xs outline-none focus:ring-2 focus:ring-green-500" />
+                  <input type="number" name="address_latitude" readOnly value={profile.address_latitude || ''} className="w-full p-3 bg-gray-50 border border-gray-100 rounded-xl text-xs font-mono text-gray-500" />
                 </div>
-
                 <div>
                   <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Longitude</label>
-                  <input type="number" name="address_longitude" placeholder="Dari Peta" value={profile.address_longitude || ''} onChange={handleChange} className="w-full p-2 border border-gray-200 bg-gray-50 rounded-lg text-xs outline-none focus:ring-2 focus:ring-green-500" />
+                  <input type="number" name="address_longitude" readOnly value={profile.address_longitude || ''} className="w-full p-3 bg-gray-50 border border-gray-100 rounded-xl text-xs font-mono text-gray-500" />
                 </div>
               </div>
+            </div>
+            
+            <div className="flex justify-center mt-4">
+                 <button type="button" onClick={() => navigate(`/shop/${profile.user}`)} className="flex items-center gap-2 px-6 py-3 bg-emerald-50 text-emerald-700 rounded-xl text-sm font-bold hover:bg-emerald-100 transition border border-emerald-200">
+                    <span className="material-icons">storefront</span>
+                    Lihat Toko Saya
+                 </button>
             </div>
           </div>
         );

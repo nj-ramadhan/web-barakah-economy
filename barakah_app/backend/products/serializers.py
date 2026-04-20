@@ -22,6 +22,8 @@ class ProductSerializer(serializers.ModelSerializer):
     variations = ProductVariationSerializer(many=True, read_only=True)
     seller_name = serializers.CharField(source='seller.username', read_only=True)
     seller_city_id = serializers.SerializerMethodField()
+    seller_city_name = serializers.CharField(source='seller.profile.address_city_name', read_only=True)
+    seller_village_id = serializers.CharField(source='seller.profile.address_village_id', read_only=True)
 
     class Meta:
         model = Product
@@ -32,10 +34,11 @@ class ProductSerializer(serializers.ModelSerializer):
             if obj.seller and hasattr(obj.seller, 'profile'):
                 profile = obj.seller.profile
                 if profile:
-                    return profile.address_city_id or '153'
-            return '153' # Default (Jakarta Selatan)
+                    # Priority given to Village ID if available, as the new API requires it
+                    return profile.address_village_id or profile.address_city_id or '153'
+            return '3216061005' # Consistent default village code (Desa Lambangjaya)
         except Exception:
-            return '153'
+            return '3216061005'
 
 class ShopVoucherSerializer(serializers.ModelSerializer):
     class Meta:

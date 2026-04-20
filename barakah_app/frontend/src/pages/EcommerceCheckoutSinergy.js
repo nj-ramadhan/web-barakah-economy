@@ -91,14 +91,16 @@ const EcommerceCheckoutSinergy = () => {
         setLoadingCosts(prev => ({ ...prev, [sellerId]: true }));
         try {
             const user = JSON.parse(localStorage.getItem('user'));
-            // Origin: Using a default for BAE (e.g. Center of Jakarta)
-            // Ideally this should come from seller's profile if they have one.
-            const origin_code = "3216061005"; // Default: Desa Lambangjaya, Tambun Selatan (Contoh Hub BAE)
+            const itemsFromThisSeller = cartItems.filter(item => (item.product?.seller_id || "0") === sellerId);
+            const firstItem = itemsFromThisSeller[0];
+            
+            // Logic: Use Seller's Village ID from Product Serializer
+            // Fallback to a default village code if seller profile is incomplete
+            const origin_code = firstItem?.product?.seller_village_id || firstItem?.product?.seller_city_id || "3216061005"; 
             const destination_code = addresses.address_village_id;
             
             // Total weight of items for this seller
-            const weight = cartItems
-                .filter(item => (item.product?.seller_id || "0") === sellerId)
+            const weight = itemsFromThisSeller
                 .reduce((acc, item) => acc + (item.product.weight || 1000) * item.quantity, 0);
 
             const res = await axios.post(`${process.env.REACT_APP_API_BASE_URL}/api/shippings/costs/`, {
@@ -109,6 +111,11 @@ const EcommerceCheckoutSinergy = () => {
             }, {
                 headers: { Authorization: `Bearer ${user.access}` }
             });
+
+            if (res.data && res.data.error) {
+                alert(`Error Ongkir: ${res.data.error}`);
+                return;
+            }
 
             // API.co.id format (mapped by backend): [ { service, cost, etd, description } ]
             if (res.data && Array.isArray(res.data)) {

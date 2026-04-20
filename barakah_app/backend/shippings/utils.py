@@ -31,6 +31,10 @@ def get_shipping_cost(origin_village_code, destination_village_code, weight_gram
         'weight': weight_kg
     }
     
+    # API.co.id requires 10-digit village codes (Kemendagri/BPS)
+    if len(str(origin_village_code)) != 10 or len(str(destination_village_code)) != 10:
+        return {"error": f"Invalid location code length. Required: 10 digits. Got: {len(str(origin_village_code))} and {len(str(destination_village_code))}. Please update your profile with a valid Village/Kelurahan."}
+
     try:
         response = requests.get(url, params=params, headers=headers, timeout=10)
         if response.status_code == 200:
