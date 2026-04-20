@@ -14,10 +14,10 @@ const FloatingCartModal = () => {
         if (!user || !user.access) return;
         try {
             // Adjust endpoints based on backend setup
-            // const cartRes = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/carts/`, { headers: { Authorization: `Bearer ${user.access}` } });
-            // setCartItems(cartRes.data);
-            // const wishRes = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/wishlists/`, { headers: { Authorization: `Bearer ${user.access}` } });
-            // setWishlistItems(wishRes.data);
+            const cartRes = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/carts/cart/`, { headers: { Authorization: `Bearer ${user.access}` } });
+            setCartItems(cartRes.data);
+            const wishRes = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/wishlists/wishlist/`, { headers: { Authorization: `Bearer ${user.access}` } });
+            setWishlistItems(wishRes.data);
         } catch (err) {
             console.error(err);
         }
@@ -49,7 +49,7 @@ const FloatingCartModal = () => {
             <button
                 id="cart-floating-bubble"
                 onClick={toggleCart}
-                className="fixed bottom-24 right-4 w-14 h-14 bg-gradient-to-br from-green-500 to-green-700 text-white rounded-full shadow-[0_8px_30px_rgb(0,0,0,0.12)] flex items-center justify-center z-[1000] hover:scale-105 transition-transform"
+                className="fixed bottom-32 right-4 w-14 h-14 bg-gradient-to-br from-green-500 to-green-700 text-white rounded-full shadow-[0_8px_30px_rgb(0,0,0,0.12)] flex items-center justify-center z-[1000] hover:scale-105 transition-transform"
             >
                 <span className="material-icons text-2xl">shopping_cart</span>
                 {totalQty > 0 && (

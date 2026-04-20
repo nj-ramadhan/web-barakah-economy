@@ -97,7 +97,7 @@ const DesktopLandingPage = () => {
                 setEvents(Array.isArray(eventRes.data) ? eventRes.data : []);
                 
                 // Fetch About Us explicitly if not in previous results
-                const aboutDataRes = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/site_content/about-us/`).catch(() => ({ data: [] }));
+                const aboutDataRes = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/site-content/about-us/`).catch(() => ({ data: [] }));
                 const items = Array.isArray(aboutDataRes.data) ? aboutDataRes.data : [aboutDataRes.data];
                 if (items.length > 0) setAboutUs(items[0]);
             } catch (err) {

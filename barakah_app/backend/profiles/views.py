@@ -120,16 +120,16 @@ def profile_update(request, user_id):
         
         # Auto-role assignment check
         user = profile.user
-        if user.role == 'user':
-            # Check completeness using the existing logic (simplified here or call method)
-            from accounts.models import Role
-            required_fields = set()
-            try:
-                anggota_role = Role.objects.get(code='anggota_bae')
-                required_fields.update(anggota_role.required_profile_fields or [])
-            except Role.DoesNotExist:
-                required_fields = {'name_full', 'nik', 'gender', 'birth_place', 'birth_date', 'address', 'address_province'}
-            
+        from accounts.models import Role
+        
+        active_roles = Role.objects.filter(is_active=True)
+        assigned_new_role = False
+        
+        for role_obj in active_roles:
+            required_fields = set(role_obj.required_profile_fields or [])
+            if not required_fields:
+                continue # Skip roles with no requirements to avoid auto-assigning everything
+                
             missing = []
             for field in required_fields:
                 val = getattr(profile, field, None)
@@ -137,16 +137,17 @@ def profile_update(request, user_id):
                     missing.append(field)
             
             if not missing:
-                user.is_verified_member = True
-                user.role = 'seller'  # Upgrade to seller role upon completion
-                user.save()
-                
-                # Assign anggota_bae role if it exists
-                try:
-                    role_obj = Role.objects.get(code='anggota_bae')
+                if role_obj not in user.custom_roles.all():
                     user.custom_roles.add(role_obj)
-                except Role.DoesNotExist:
-                    pass
+                    assigned_new_role = True
+                    
+        if assigned_new_role or user.role == 'user':
+            # Optionally set as verified member if they met at least one role's reqs
+            # We'll just check if they got anggota_bae or similar, but generally any auto-role might mean verified
+            if user.role == 'user' and assigned_new_role:
+                 user.is_verified_member = True
+                 user.role = 'seller'
+                 user.save()
                     
         return Response(serializer.data)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

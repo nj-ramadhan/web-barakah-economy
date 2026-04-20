@@ -455,7 +455,13 @@ class WithdrawalViewSet(viewsets.ModelViewSet):
                 payment_status='verified'
             ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
             
-            total_sales += total_course_sales
+            from orders.models import Order
+            total_sinergy_sales = Order.objects.filter(
+                seller=request.user,
+                status__in=['Paid', 'Shipped', 'Delivered']
+            ).aggregate(total=Sum('total_price'))['total'] or Decimal('0')
+
+            total_sales = total_sales + total_course_sales + Decimal(total_sinergy_sales)
         except Exception as e:
             logger.error(f"Error calculating total sales: {e}")
             total_sales = Decimal('0')
@@ -513,9 +519,18 @@ class WithdrawalViewSet(viewsets.ModelViewSet):
                 payment_status='verified'
             ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
             
-            total_sales = total_digital_sales + total_course_sales
+            from orders.models import Order
+            total_sinergy_sales = Order.objects.filter(
+                seller=request.user,
+                status__in=['Paid', 'Shipped', 'Delivered']
+            ).aggregate(total=Sum('total_price'))['total'] or Decimal('0')
+
+            total_sales = total_digital_sales + total_course_sales + Decimal(total_sinergy_sales)
         except Exception:
             total_sales = Decimal('0')
+            total_digital_sales = Decimal('0')
+            total_course_sales = Decimal('0')
+            total_sinergy_sales = Decimal('0')
 
         try:
             total_withdrawn = WithdrawalRequest.objects.filter(
@@ -529,6 +544,7 @@ class WithdrawalViewSet(viewsets.ModelViewSet):
             'total_sales': total_sales,
             'total_digital_sales': total_digital_sales,
             'total_course_sales': total_course_sales,
+            'total_sinergy_sales': total_sinergy_sales,
             'total_withdrawn': total_withdrawn,
             'available_balance': total_sales - total_withdrawn
         })

@@ -96,7 +96,7 @@ const EcommerceProductDetail = () => {
         }
       });
 
-      alert('Berhasil menambahkan produk ke keranjang!');
+      window.dispatchEvent(new Event('cartUpdated'));
     } catch (error) {
       console.error('Error adding product to cart:', error);
       alert('Gagal menambahkan produk ke keranjang');
@@ -122,7 +122,7 @@ const EcommerceProductDetail = () => {
         }
       });
 
-      alert('Berhasil menambahkan ke Incaran!');
+      window.dispatchEvent(new Event('cartUpdated'));
     } catch (error) {
       console.error('Error adding product to wishlist:', error);
       alert('Gagal menambahkan ke Incaran, ' + error['response']['data']['message']);
@@ -202,6 +202,9 @@ const EcommerceProductDetail = () => {
 
       {/* Product Details */}
       <div className="px-4 py-8 max-w-6xl mx-auto">
+        <button onClick={() => navigate(-1)} className="flex items-center text-sm font-bold text-gray-500 hover:text-green-700 transition mb-4">
+            <span className="material-icons text-sm mr-1">arrow_back</span> Kembali
+        </button>
         <div className="bg-white rounded-2xl overflow-hidden shadow-lg border border-gray-100 flex flex-col md:flex-row">
           <div className="md:w-1/2">
             <img
@@ -218,7 +221,7 @@ const EcommerceProductDetail = () => {
               <h1 className="text-2xl md:text-3xl font-bold mb-4 text-gray-900">{product.title}</h1>
               <div className="flex justify-between items-center mb-6">
                 <p className="text-2xl font-bold text-green-700">{formatIDR(product.price)}</p>
-                <p className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">Stok: {product.stock} {product.unit}</p>
+                <p className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">Stok: {product.stock}</p>
               </div>
 
               <div className="flex items-center gap-4 mb-8">

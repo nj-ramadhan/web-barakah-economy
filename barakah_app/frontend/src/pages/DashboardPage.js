@@ -321,13 +321,14 @@ const DashboardPage = () => {
                             <div className="flex gap-2">
                                 <span>Digital: {formatIDR(balanceData.digital_sales_total || 0)}</span>
                                 <span>Course: {formatIDR(balanceData.course_sales_total || 0)}</span>
+                                <span>Sinergy: {formatIDR(balanceData.total_sinergy_sales || 0)}</span>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 {/* Stats */}
-                <div className="grid grid-cols-2 gap-3 mb-6">
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-6">
                     <Link to="/dashboard/digital-products" className="bg-gradient-to-br from-green-500 to-green-700 rounded-xl p-4 text-white">
                         <span className="material-icons text-2xl mb-1">inventory_2</span>
                         <p className="font-bold text-2xl">{loading ? '...' : productCount}</p>
@@ -338,6 +339,13 @@ const DashboardPage = () => {
                         <p className="font-bold text-2xl">{loading ? '...' : courseCount}</p>
                         <p className="text-[10px] opacity-80 uppercase tracking-wider font-semibold">E-Course Saya</p>
                     </Link>
+                    {userProfile?.accessible_menus?.includes('sinergy_products') || userProfile?.username === 'admin' || userProfile?.role === 'admin' ? (
+                        <Link to="/dashboard/sinergy/seller" className="bg-gradient-to-br from-emerald-500 to-emerald-700 rounded-xl p-4 text-white">
+                            <span className="material-icons text-2xl mb-1">shopping_bag</span>
+                            <p className="font-bold text-2xl">Sinergy</p>
+                            <p className="text-[10px] opacity-80 uppercase tracking-wider font-semibold">Produk Fisik</p>
+                        </Link>
+                    ) : null}
                 </div>
 
                 {/* Menu */}
