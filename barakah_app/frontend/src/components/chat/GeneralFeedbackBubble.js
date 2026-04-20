@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { submitGeneralFeedback } from '../../services/chatApi';
 
 const GeneralFeedbackBubble = () => {
+    return null;
     const [isOpen, setIsOpen] = useState(false);
     const [content, setContent] = useState('');
     const [urgent, setUrgent] = useState(false);

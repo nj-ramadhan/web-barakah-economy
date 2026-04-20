@@ -20,12 +20,21 @@ class CartView(APIView):
     def post(self, request):
         user = request.user
         product_id = request.data.get('product_id')
+        variation_id = request.data.get('variation_id')
         quantity = request.data.get('quantity', 1)
         product = get_object_or_404(Product, id=product_id)
+        
+        from products.models import ProductVariation
+        variation = None
+        if variation_id:
+            variation = get_object_or_404(ProductVariation, id=variation_id, product=product)
 
-        cart_item, created = Cart.objects.get_or_create(user=user, product=product)
+        cart_item, created = Cart.objects.get_or_create(user=user, product=product, variation=variation)
         if not created:
             cart_item.quantity += int(quantity)
+            cart_item.save()
+        else:
+            cart_item.quantity = int(quantity)
             cart_item.save()
 
         serializer = CartSerializer(cart_item)

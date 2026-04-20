@@ -50,6 +50,40 @@ const DashboardSinergySellersPage = () => {
         setVariants(newVariants);
     };
 
+    const handleSaveProduct = async (e) => {
+        e.preventDefault();
+        const user = JSON.parse(localStorage.getItem('user'));
+        if (!user || !user.access) return;
+
+        try {
+            const formData = new FormData();
+            formData.append('title', e.target.title.value);
+            formData.append('purchase_price', e.target.purchase_price.value);
+            formData.append('price', e.target.price.value);
+            formData.append('stock', e.target.stock.value);
+            formData.append('weight', e.target.weight.value);
+            formData.append('category', e.target.category.value);
+            formData.append('variations', JSON.stringify(variants));
+
+            if (editingProduct) {
+                await axios.patch(`${process.env.REACT_APP_API_BASE_URL}/api/products/${editingProduct.id}/`, formData, {
+                    headers: { 'Authorization': `Bearer ${user.access}` }
+                });
+                alert('Produk berhasil diubah');
+            } else {
+                await axios.post(`${process.env.REACT_APP_API_BASE_URL}/api/products/`, formData, {
+                    headers: { 'Authorization': `Bearer ${user.access}` }
+                });
+                alert('Produk berhasil ditambahkan');
+            }
+            fetchProducts();
+            setActiveTab('list');
+        } catch (error) {
+            console.error(error);
+            alert('Gagal menyimpan produk');
+        }
+    };
+
     const renderList = () => (
         <div className="space-y-4 animate-fade-in">
             <div className="flex justify-between items-center mb-6">
@@ -86,7 +120,15 @@ const DashboardSinergySellersPage = () => {
                                 <p className="text-xs text-gray-500 line-clamp-2 mt-1">{p.description}</p>
                             </div>
                             <div className="flex gap-2">
-                                <button onClick={() => handleEdit(p)} className="flex-1 py-2 text-xs font-bold text-emerald-700 bg-emerald-50 rounded-xl hover:bg-emerald-100 border border-emerald-100 transition">Edit & Variasi</button>
+                                <button onClick={() => {
+                                    setEditingProduct(p);
+                                    if (p.variations && p.variations.length > 0) {
+                                        setVariants(p.variations);
+                                    } else {
+                                        setVariants([{name: '', additional_price: 0, stock: 0}]);
+                                    }
+                                    setActiveTab('edit');
+                                }} className="flex-1 py-2 text-xs font-bold text-emerald-700 bg-emerald-50 rounded-xl hover:bg-emerald-100 border border-emerald-100 transition">Edit & Variasi</button>
                             </div>
                         </div>
                     ))}
@@ -98,39 +140,39 @@ const DashboardSinergySellersPage = () => {
     const renderForm = () => (
         <div className="bg-white rounded-3xl p-6 shadow-xl border border-gray-100 animate-slide-up">
             <div className="flex items-center gap-3 mb-6 pb-4 border-b border-gray-100">
-                <button onClick={() => setActiveTab('list')} className="w-8 h-8 flex items-center justify-center bg-gray-50 hover:bg-gray-100 rounded-full text-gray-500 transition"><span className="material-icons">arrow_back</span></button>
+                <button type="button" onClick={() => setActiveTab('list')} className="w-8 h-8 flex items-center justify-center bg-gray-50 hover:bg-gray-100 rounded-full text-gray-500 transition"><span className="material-icons">arrow_back</span></button>
                 <h2 className="text-xl font-bold text-gray-800">{activeTab === 'edit' ? 'Edit Produk Sinergy' : 'Tambah Produk Sinergy Baru'}</h2>
             </div>
             
-            <form className="space-y-6" onSubmit={(e) => { e.preventDefault(); alert('Modul simpan API dalam pengerjaan'); setActiveTab('list'); }}>
+            <form className="space-y-6" onSubmit={handleSaveProduct}>
                 <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-1">Nama Produk</label>
-                    <input type="text" defaultValue={editingProduct?.title || ''} placeholder="Contoh: Madu Hutan Asli 500ml" required className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none transition" />
+                    <input type="text" name="title" defaultValue={editingProduct?.title || ''} placeholder="Contoh: Madu Hutan Asli 500ml" required className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none transition" />
                 </div>
                 
                 <div className="grid grid-cols-2 gap-4">
                     <div>
                         <label className="block text-sm font-semibold text-gray-700 mb-1">Harga Beli Dasar (Rp)</label>
-                        <input type="number" defaultValue={editingProduct?.purchase_price || ''} placeholder="0" className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none transition" />
+                        <input type="number" name="purchase_price" defaultValue={editingProduct?.purchase_price || ''} placeholder="0" className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none transition" />
                     </div>
                     <div>
                         <label className="block text-sm font-semibold text-gray-700 mb-1">Harga Jual (Rp)</label>
-                        <input type="number" defaultValue={editingProduct?.price || ''} required placeholder="0" className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none transition" />
+                        <input type="number" name="price" defaultValue={editingProduct?.price || ''} required placeholder="0" className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none transition" />
                     </div>
                 </div>
 
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                     <div>
                         <label className="block text-sm font-semibold text-gray-700 mb-1">Stok Gudang</label>
-                        <input type="number" defaultValue={editingProduct?.stock || ''} required placeholder="0" className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none transition" />
+                        <input type="number" name="stock" defaultValue={editingProduct?.stock || ''} required placeholder="0" className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none transition" />
                     </div>
                     <div>
                          <label className="block text-sm font-semibold text-gray-700 mb-1">Berat (gram)</label>
-                        <input type="number" defaultValue={editingProduct?.weight || ''} required placeholder="1000" className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none transition" />
+                        <input type="number" name="weight" defaultValue={editingProduct?.weight || ''} required placeholder="1000" className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none transition" />
                     </div>
                     <div className="col-span-2">
                         <label className="block text-sm font-semibold text-gray-700 mb-1">Kategori</label>
-                        <input type="text" list="categories" required placeholder="Pilih atau Ketik Kategori Baru" defaultValue={editingProduct?.category?.name || ''} className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none transition" />
+                        <input type="text" name="category" list="categories" required placeholder="Pilih atau Ketik Kategori Baru" defaultValue={editingProduct?.category || ''} className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none transition" />
                         <datalist id="categories">
                             <option value="Sembako" />
                             <option value="Herbal" />

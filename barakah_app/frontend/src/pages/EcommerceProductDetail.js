@@ -55,6 +55,7 @@ const EcommerceProductDetail = () => {
   const [quantity, setQuantity] = useState(1); // State to manage product quantity
   const [showFullDescription, setShowFullDescription] = useState(false);
   const [showFullTestimonies, setShowFullTestimonies] = useState({});
+  const [selectedVariation, setSelectedVariation] = useState(null);
 
   const baseUrl = process.env.REACT_APP_API_BASE_URL;
 
@@ -88,6 +89,7 @@ const EcommerceProductDetail = () => {
 
       await axios.post(`${process.env.REACT_APP_API_BASE_URL}/api/carts/cart/`, {
         product_id: product.id,
+        variation_id: selectedVariation?.id || null,
         quantity: quantity
       }, {
         headers: {
@@ -220,9 +222,26 @@ const EcommerceProductDetail = () => {
             <div>
               <h1 className="text-2xl md:text-3xl font-bold mb-4 text-gray-900">{product.title}</h1>
               <div className="flex justify-between items-center mb-6">
-                <p className="text-2xl font-bold text-green-700">{formatIDR(product.price)}</p>
+                <p className="text-2xl font-bold text-green-700">{formatIDR(selectedVariation ? product.price + selectedVariation.additional_price : product.price)}</p>
                 <p className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">Stok: {product.stock}</p>
               </div>
+
+              {product?.variations && product.variations.length > 0 && (
+                <div className="mb-6">
+                  <h3 className="font-semibold text-gray-800 mb-2">Pilih Variasi {selectedVariation ? `: ${selectedVariation.name}` : ''}</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {product.variations.map(variant => (
+                      <button 
+                        key={variant.id} 
+                        onClick={() => setSelectedVariation(variant)}
+                        className={`px-4 py-2 border rounded-xl font-medium text-sm transition ${selectedVariation?.id === variant.id ? 'border-green-600 bg-green-50 text-green-700' : 'border-gray-200 hover:border-green-500 hover:text-green-700'}`}
+                      >
+                        {variant.name} {variant.additional_price > 0 && `(+${formatIDR(variant.additional_price)})`}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               <div className="flex items-center gap-4 mb-8">
                 <span className="text-sm font-medium text-gray-700">Jumlah:</span>
@@ -246,20 +265,35 @@ const EcommerceProductDetail = () => {
               </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-4">
-              <button
-                onClick={() => addToWishlist(product.id)}
-                className="flex-1 flex items-center justify-center gap-2 bg-red-50 text-red-600 py-3 rounded-xl font-bold hover:bg-red-100 transition"
+            {/* Action Buttons */}
+            <div className="flex flex-col md:flex-row gap-4">
+              <button 
+                className="flex-1 bg-green-600 hover:bg-green-700 text-white py-3 px-6 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-green-200 transition-all transform hover:-translate-y-1"
+                onClick={addToCart}
               >
-                <span className="material-icons">favorite_border</span>
-                + INCARAN
+                <span className="material-icons text-xl">shopping_cart</span>
+                Keranjang
               </button>
-              <button
-                onClick={() => addToCart(product.id)}
-                className="flex-1 flex items-center justify-center gap-2 bg-green-700 text-white py-3 rounded-xl font-bold hover:bg-green-800 transition shadow-md"
+              <button 
+                className="px-6 py-3 border-2 border-green-600 text-green-700 font-bold rounded-xl flex items-center justify-center gap-2 hover:bg-green-50 transition-all whitespace-nowrap"
+                onClick={() => addToWishlist(product.id)}
               >
-                <span className="material-icons">add_shopping_cart</span>
-                + KERANJANG
+                <span className="material-icons text-xl">favorite_border</span>
+              </button>
+
+              {/* BELI LANGSUNG */}
+              <button 
+                className="flex-[2] bg-emerald-500 hover:bg-emerald-600 text-white py-3 px-6 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-emerald-200 transition-all transform hover:-translate-y-1 mt-4 md:mt-0"
+                onClick={() => {
+                    addToCart();
+                    setTimeout(() => {
+                        const bubble = document.getElementById('cart-floating-bubble');
+                        if(bubble) bubble.click();
+                    }, 500);
+                }}
+              >
+                <span className="material-icons text-xl">shopping_bag</span>
+                Beli Langsung
               </button>
             </div>
           </div>

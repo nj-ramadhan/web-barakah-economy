@@ -34,7 +34,34 @@ class ProductViewSet(viewsets.ModelViewSet):
         return queryset.filter(Q(status='approved', is_active=True) | Q(seller=user))
 
     def perform_create(self, serializer):
-        serializer.save(seller=self.request.user, status='pending')
+        product = serializer.save(seller=self.request.user, status='pending')
+        self._save_variations(product)
+
+    def perform_update(self, serializer):
+        product = serializer.save()
+        self._save_variations(product)
+
+    def _save_variations(self, product):
+        import json
+        from .models import ProductVariation
+        variations_data = self.request.data.get('variations')
+        if variations_data:
+            try:
+                if isinstance(variations_data, str):
+                    variations = json.loads(variations_data)
+                else:
+                    variations = variations_data
+                
+                product.variations.all().delete()
+                for var in variations:
+                    ProductVariation.objects.create(
+                        product=product,
+                        name=var.get('name'),
+                        additional_price=var.get('additional_price', 0),
+                        stock=var.get('stock', 0)
+                    )
+            except Exception as e:
+                print(f"Error saving variations: {e}")
 
 class ProductDetailView(APIView):
     def get(self, request, slug):

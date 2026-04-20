@@ -23,6 +23,34 @@ const FloatingCartModal = () => {
         }
     };
 
+    const handleDeleteCart = async (productId) => {
+        const user = JSON.parse(localStorage.getItem('user'));
+        if (!user || !user.access) return;
+        try {
+            await axios.delete(`${process.env.REACT_APP_API_BASE_URL}/api/carts/cart/`, {
+                data: { product_id: productId },
+                headers: { Authorization: `Bearer ${user.access}` }
+            });
+            window.dispatchEvent(new Event('cartUpdated'));
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
+    const handleDeleteWishlist = async (productId) => {
+        const user = JSON.parse(localStorage.getItem('user'));
+        if (!user || !user.access) return;
+        try {
+            await axios.delete(`${process.env.REACT_APP_API_BASE_URL}/api/wishlists/wishlist/`, {
+                data: { product_id: productId },
+                headers: { Authorization: `Bearer ${user.access}` }
+            });
+            window.dispatchEvent(new Event('cartUpdated'));
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
     useEffect(() => {
         fetchItems();
         // Add listener for custom event to trigger animation and refetch
@@ -98,7 +126,11 @@ const FloatingCartModal = () => {
                                 ) : (
                                     cartItems.map(item => (
                                         <div key={item.id} className="bg-white p-3 rounded-2xl shadow-sm border border-gray-100 flex gap-3">
-                                            <div className="w-20 h-20 bg-gray-100 rounded-xl"></div>
+                                            {item.product?.thumbnail ? (
+                                                <img src={item.product.thumbnail} alt={item.product?.title} className="w-20 h-20 bg-gray-100 rounded-xl object-cover" />
+                                            ) : (
+                                                <div className="w-20 h-20 bg-gray-100 rounded-xl"></div>
+                                            )}
                                             <div className="flex-1 flex flex-col">
                                                 <h4 className="font-bold text-sm text-gray-800 line-clamp-2">{item.product?.title}</h4>
                                                 {item.variation && <span className="text-[10px] bg-green-50 text-green-700 px-2 py-0.5 rounded-full w-fit mt-1">{item.variation.name}</span>}
@@ -106,7 +138,7 @@ const FloatingCartModal = () => {
                                                     <span className="font-bold text-green-700 text-sm">Rp {item.total_price}</span>
                                                     <div className="flex items-center gap-2">
                                                         <span className="text-xs text-gray-500">Qty: {item.quantity}</span>
-                                                        <button className="material-icons text-red-400 text-sm hover:bg-red-50 rounded p-1">delete</button>
+                                                        <button onClick={() => handleDeleteCart(item.product?.id)} className="material-icons text-red-400 text-sm hover:bg-red-50 rounded p-1">delete</button>
                                                     </div>
                                                 </div>
                                             </div>
@@ -120,9 +152,22 @@ const FloatingCartModal = () => {
                                         <p className="text-sm">Belum ada barang incaran</p>
                                     </div>
                                 ) : (
-                                     <div className="flex flex-col items-center justify-center h-full text-gray-400">
-                                        <p className="text-sm">Item incaran belum dimuat</p>
-                                     </div>
+                                    wishlistItems.map(item => (
+                                        <div key={item.id} className="bg-white p-3 rounded-2xl shadow-sm border border-gray-100 flex gap-3">
+                                            {item.product?.thumbnail ? (
+                                                <img src={item.product.thumbnail} alt={item.product?.title} className="w-20 h-20 bg-gray-100 rounded-xl object-cover" />
+                                            ) : (
+                                                <div className="w-20 h-20 bg-gray-100 rounded-xl"></div>
+                                            )}
+                                            <div className="flex-1 flex flex-col">
+                                                <h4 className="font-bold text-sm text-gray-800 line-clamp-2">{item.product?.title}</h4>
+                                                <div className="mt-auto flex justify-between items-end">
+                                                    <span className="font-bold text-green-700 text-sm">Rp {item.product?.price}</span>
+                                                    <button onClick={() => handleDeleteWishlist(item.product?.id)} className="material-icons text-red-400 text-sm hover:bg-red-50 rounded p-1">favorite</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))
                                 )
                             )}
                         </div>
@@ -133,7 +178,7 @@ const FloatingCartModal = () => {
                                 <button
                                     onClick={() => {
                                         setIsOpen(false);
-                                        navigate('/sinergy/checkout');
+                                        navigate('/bayar-belanja', { state: { cartItems: cartItems } });
                                     }}
                                     className="w-full py-4 bg-gradient-to-r from-green-600 to-green-700 text-white font-bold rounded-2xl shadow-lg shadow-green-200 hover:shadow-xl transition-all"
                                 >
