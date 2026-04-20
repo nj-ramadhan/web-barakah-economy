@@ -12,6 +12,9 @@ const EcommerceCheckoutSinergy = () => {
     const [checkoutConfigs, setCheckoutConfigs] = useState({});
     const [qrisData, setQrisData] = useState(null); // { payload: '', amount: 0 }
     const [showQrisModal, setShowQrisModal] = useState(false);
+    const [courierOptions, setCourierOptions] = useState({}); // { sellerId: [ { service, cost, description, etd } ] }
+    const [loadingCosts, setLoadingCosts] = useState({});
+
 
     // Example checkoutConfigs state:
     // { "seller_id_1": { "shipping_cost": 15000, "shipping_courier": "jne", "shipping_service": "REG", "voucher_code": "X", "voucher_nominal": 5000, "payment_method": "qris" } }
@@ -33,11 +36,12 @@ const EcommerceCheckoutSinergy = () => {
                 
                 const p = profileRes.data;
                 // Basic Validation for Shipping
-                if (!p.address_city_id || !p.address) {
-                    alert('Mohon lengkapi Alamat dan Kota di profil Anda untuk kalkulasi ongkos kirim Sinergy.');
+                if (!p.address_subdistrict_id || !p.address) {
+                    alert('Mohon lengkapi Alamat, Kota, dan Kecamatan di profil Anda untuk kalkulasi ongkos kirim Sinergy.');
                     navigate('/profile/edit?complete=address');
                     return;
                 }
+
                 setAddresses(p);
 
                 // Fetch Carts
@@ -76,6 +80,44 @@ const EcommerceCheckoutSinergy = () => {
             }
         }));
     };
+
+    const fetchShippingOptions = async (sellerId, courier) => {
+        if (!courier) return;
+        setLoadingCosts(prev => ({ ...prev, [sellerId]: true }));
+        try {
+            const user = JSON.parse(localStorage.getItem('user'));
+            // Using a default origin for now (e.g. Bandung) or try to get seller's origin if available
+            // In a real app, each seller should have their origin_id set in their profile.
+            // For BAE, we assume the platform/seller default origin is constant or fetched.
+            const origin_id = "1138"; // Example: Kecamatan ID for typical hub
+            const destination_id = addresses.address_subdistrict_id;
+            
+            // Total weight of items for this seller
+            const weight = cartItems
+                .filter(item => (item.product?.seller_id || "0") === sellerId)
+                .reduce((acc, item) => acc + (item.product.weight || 1000) * item.quantity, 0);
+
+            const res = await axios.post(`${process.env.REACT_APP_API_BASE_URL}/api/shippings/costs/`, {
+                origin: origin_id,
+                destination: destination_id,
+                weight: weight,
+                courier: courier
+            }, {
+                headers: { Authorization: `Bearer ${user.access}` }
+            });
+
+            // Komerce structure: { meta: ..., data: [ service_name, cost, etd, etc ] }
+            // Let's assume the API returns a list of services
+            if (res.data && Array.isArray(res.data)) {
+                setCourierOptions(prev => ({ ...prev, [sellerId]: res.data }));
+            }
+        } catch (err) {
+            console.error("Shipping fetch error", err);
+        } finally {
+            setLoadingCosts(prev => ({ ...prev, [sellerId]: false }));
+        }
+    };
+
 
     const handleProcessSplitCheckout = async () => {
         const user = JSON.parse(localStorage.getItem('user'));
@@ -173,18 +215,49 @@ const EcommerceCheckoutSinergy = () => {
                             {/* Couriers Selection */}
                             <div className="bg-orange-50/50 p-3 rounded-xl border border-orange-100 mb-4">
                                 <label className="block text-[11px] font-bold text-orange-800 mb-2 uppercase tracking-wider">Cek Ongkir RajaOngkir</label>
-                                <div className="flex gap-2">
+                                <div className="space-y-2">
                                     <select 
-                                        className="flex-1 text-sm bg-white border-none rounded-lg p-2 focus:ring-1 focus:ring-orange-500"
-                                        onChange={(e) => handleConfigChange(s_id, 'shipping_courier', e.target.value)}
+                                        className="w-full text-sm bg-white border border-orange-200 rounded-lg p-2 focus:ring-1 focus:ring-orange-500"
+                                        value={config?.shipping_courier || ''}
+                                        onChange={(e) => {
+                                            handleConfigChange(s_id, 'shipping_courier', e.target.value);
+                                            fetchShippingOptions(s_id, e.target.value);
+                                        }}
                                     >
                                         <option value="">Pilih Kurir</option>
-                                        <option value="jne">JNE - Reguler (Rp 15.000)</option>
-                                        <option value="sicepat">SiCepat - Halu (Rp 12.000)</option>
+                                        <option value="jne">JNE (Jalur Nugraha Ekakurir)</option>
+                                        <option value="pos">POS Indonesia</option>
+                                        <option value="tiki">TIKI (Titipan Kilat)</option>
+                                        <option value="jnt">J&T Express</option>
+                                        <option value="sicepat">SiCepat</option>
+                                        <option value="anteraja">AnterAja</option>
                                     </select>
+
+                                    {config?.shipping_courier && (
+                                        <select 
+                                            className="w-full text-sm bg-white border border-orange-200 rounded-lg p-2 focus:ring-1 focus:ring-orange-500"
+                                            value={config?.shipping_service || ''}
+                                            onChange={(e) => {
+                                                const opt = courierOptions[s_id]?.find(o => o.service === e.target.value);
+                                                if (opt) {
+                                                    handleConfigChange(s_id, 'shipping_service', opt.service);
+                                                    handleConfigChange(s_id, 'shipping_cost', opt.cost);
+                                                }
+                                            }}
+                                            disabled={loadingCosts[s_id]}
+                                        >
+                                            <option value="">{loadingCosts[s_id] ? 'Memuat Layanan...' : 'Pilih Layanan'}</option>
+                                            {courierOptions[s_id]?.map(opt => (
+                                                <option key={opt.service} value={opt.service}>
+                                                    {opt.service} - Rp {opt.cost.toLocaleString('id-ID')} ({opt.etd})
+                                                </option>
+                                            ))}
+                                        </select>
+                                    )}
                                 </div>
-                                <p className="text-[10px] text-gray-400 mt-1 italic">*Terkoneksi lansung dengan RajaOngkir API</p>
+                                <p className="text-[10px] text-gray-400 mt-1 italic">*Terkoneksi langsung dengan RajaOngkir API (Kecamatan Accurate)</p>
                             </div>
+
 
                             {/* Vouchers and Payments Options */}
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

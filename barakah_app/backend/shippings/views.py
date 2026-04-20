@@ -4,7 +4,8 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from .models import ShippingAddress
 from .serializers import ShippingAddressSerializer
-from .utils import get_shipping_cost, get_provinces, get_cities
+from .utils import get_shipping_cost, get_provinces, get_cities, get_districts
+
 
 class ShippingAddressListView(generics.ListCreateAPIView):
     serializer_class = ShippingAddressSerializer
@@ -31,6 +32,13 @@ class CityListView(APIView):
         province_id = request.query_params.get('province')
         cities = get_cities(province_id)
         return Response(cities)
+
+class DistrictListView(APIView):
+    def get(self, request):
+        city_id = request.query_params.get('city')
+        districts = get_districts(city_id)
+        return Response(districts)
+
 
 class ShippingCostAPIView(APIView):
     def post(self, request):

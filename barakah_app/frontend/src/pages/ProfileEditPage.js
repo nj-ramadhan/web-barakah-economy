@@ -48,13 +48,18 @@ const ProfileEditPage = () => {
     address: '', job: '', work_field: '', work_institution: '',
     work_position: '', work_salary: '', address_latitude: '',
     address_longitude: '', address_province: '', address_province_id: '',
-    address_city_id: '', address_city_name: '', picture: null, ktp_image: null,
     shop_thumbnail: null,
+    address_subdistrict_id: '',
+    address_subdistrict_name: '',
   });
+
 
   const [provinces, setProvinces] = useState([]);
   const [cities, setCities] = useState([]);
+  const [districts, setDistricts] = useState([]);
   const [loadingCities, setLoadingCities] = useState(false);
+  const [loadingDistricts, setLoadingDistricts] = useState(false);
+
 
 
   const [cropper, setCropper] = useState({ active: false, image: null });
@@ -102,9 +107,10 @@ const ProfileEditPage = () => {
     const fetchProvinces = async () => {
       try {
         const res = await axios.get(`${API}/api/shippings/provinces/`);
-        if (res.data.rajaongkir && res.data.rajaongkir.results) {
-          setProvinces(res.data.rajaongkir.results);
+        if (Array.isArray(res.data)) {
+          setProvinces(res.data);
         }
+
       } catch (err) {
         console.error("Failed to fetch provinces", err);
       }
@@ -121,8 +127,8 @@ const ProfileEditPage = () => {
       setLoadingCities(true);
       try {
         const res = await axios.get(`${API}/api/shippings/cities/?province=${profile.address_province_id}`);
-        if (res.data.rajaongkir && res.data.rajaongkir.results) {
-          setCities(res.data.rajaongkir.results);
+        if (Array.isArray(res.data)) {
+          setCities(res.data);
         }
       } catch (err) {
         console.error("Failed to fetch cities", err);
@@ -132,6 +138,28 @@ const ProfileEditPage = () => {
     };
     fetchCities();
   }, [profile.address_province_id]);
+
+  useEffect(() => {
+    const fetchDistricts = async () => {
+      if (!profile.address_city_id) {
+        setDistricts([]);
+        return;
+      }
+      setLoadingDistricts(true);
+      try {
+        const res = await axios.get(`${API}/api/shippings/districts/?city=${profile.address_city_id}`);
+        if (Array.isArray(res.data)) {
+          setDistricts(res.data);
+        }
+      } catch (err) {
+        console.error("Failed to fetch districts", err);
+      } finally {
+        setLoadingDistricts(false);
+      }
+    };
+    fetchDistricts();
+  }, [profile.address_city_id]);
+
 
   // Auto-detect location from coordinates (Reverse Geocoding)
   useEffect(() => {
@@ -498,8 +526,11 @@ const ProfileEditPage = () => {
                     address_province_id: e.target.value,
                     address_province: selected ? selected.province : '',
                     address_city_id: '',
-                    address_city_name: ''
+                    address_city_name: '',
+                    address_subdistrict_id: '',
+                    address_subdistrict_name: ''
                   }));
+
                 }} 
                 className={inputCls('address_province')}
               >
@@ -525,8 +556,11 @@ const ProfileEditPage = () => {
                   setProfile(prev => ({
                     ...prev,
                     address_city_id: e.target.value,
-                    address_city_name: selected ? (selected.type + ' ' + selected.city_name) : ''
+                    address_city_name: selected ? (selected.type + ' ' + selected.city_name) : '',
+                    address_subdistrict_id: '',
+                    address_subdistrict_name: ''
                   }));
+
                 }} 
                 disabled={!profile.address_province_id || loadingCities}
                 className={inputCls('address_city_name')}
@@ -538,6 +572,32 @@ const ProfileEditPage = () => {
               </select>
               <p className="text-[10px] text-gray-400 mt-1">*Pilih kota sesuai lokasi pengiriman/penerimaan</p>
             </div>
+            <div>
+              <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
+                Kecamatan (District)
+              </label>
+              <select 
+                name="address_subdistrict_id" 
+                value={profile.address_subdistrict_id || ''} 
+                onChange={(e) => {
+                  const selected = districts.find(d => d.district_id === e.target.value);
+                  setProfile(prev => ({
+                    ...prev,
+                    address_subdistrict_id: e.target.value,
+                    address_subdistrict_name: selected ? selected.district_name : ''
+                  }));
+                }} 
+                disabled={!profile.address_city_id || loadingDistricts}
+                className={inputCls('address_subdistrict_name')}
+              >
+                <option value="">{loadingDistricts ? 'Memuat Kecamatan...' : 'Pilih Kecamatan'}</option>
+                {districts.map(d => (
+                  <option key={d.district_id} value={d.district_id}>{d.district_name}</option>
+                ))}
+              </select>
+              <p className="text-[10px] text-gray-400 mt-1">*Pilih kecamatan untuk akurasi ongkir terbaik</p>
+            </div>
+
 
             
             <div className="mt-4 border-t border-gray-200 pt-4">
