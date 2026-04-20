@@ -14,7 +14,8 @@ const EcommerceCheckoutSinergy = () => {
     const [showQrisModal, setShowQrisModal] = useState(false);
     const [courierOptions, setCourierOptions] = useState({}); // { sellerId: [ { service, cost, description, etd } ] }
     const [loadingCosts, setLoadingCosts] = useState({});
-    const [sellerConfigs, setSellerConfigs] = useState({}); // { sellerId: { supported_couriers: 'jne,pos...' } }
+    // sellerConfigs is removed because we focus on product level
+
 
 
 
@@ -56,24 +57,6 @@ const EcommerceCheckoutSinergy = () => {
                 const items = cartRes.data || [];
                 setCartItems(items);
                 
-                // Fetch seller configurations (supported couriers)
-                const uniqueSellers = [...new Set(items.map(item => item.product?.seller_id || "0"))];
-                const sellerData = {};
-                for (const s_id of uniqueSellers) {
-                    try {
-                        // Using user retrieval endpoint if seller_id corresponds to user_id
-                        const sRes = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/profiles/${s_id}/`, {
-                            headers: { Authorization: `Bearer ${user.access}` }
-                        });
-                        sellerData[s_id] = sRes.data;
-                    } catch (e) {
-                        console.error(`Failed to fetch seller ${s_id} config`, e);
-                        // Fallback to defaults
-                        sellerData[s_id] = { shop_supported_couriers: 'jne,pos,tiki,jnt' };
-                    }
-                }
-                setSellerConfigs(sellerData);
-
                 // Initialize checkout configs based on sellers in cart
                 const initialConfigs = {};
                 items.forEach(item => {
@@ -88,6 +71,7 @@ const EcommerceCheckoutSinergy = () => {
             } finally {
                 setLoading(false);
             }
+
         };
         fetchData();
     }, [navigate]);
@@ -255,10 +239,30 @@ const EcommerceCheckoutSinergy = () => {
                                             { id: 'anteraja', name: 'AnterAja' },
                                             { id: 'wahana', name: 'Wahana' },
                                             { id: 'ninja', name: 'Ninja' },
-                                        ].filter(c => (sellerConfigs[s_id]?.shop_supported_couriers || 'jne,pos,tiki,jnt').split(',').includes(c.id)).map(c => (
+                                        ].filter(c => {
+                                            // Calculate intersection of supported_couriers for all items from this seller
+                                            const itemsFromThisSeller = cartItems.filter(item => (item.product?.seller_id || "0") === s_id);
+                                            return itemsFromThisSeller.every(item => {
+                                                const supported = (item.product?.supported_couriers || 'jne,pos,tiki,jnt').split(',');
+                                                return supported.includes(c.id);
+                                            });
+                                        }).map(c => (
                                             <option key={c.id} value={c.id}>{c.name}</option>
                                         ))}
                                     </select>
+                                    {/* Warning if no common courier found */}
+                                    {(() => {
+                                        const itemsFromThisSeller = cartItems.filter(item => (item.product?.seller_id || "0") === s_id);
+                                        const common = [
+                                            'jne', 'pos', 'tiki', 'jnt', 'sicepat', 'anteraja', 'wahana', 'ninja'
+                                        ].filter(cid => itemsFromThisSeller.every(item => (item.product?.supported_couriers || 'jne,pos,tiki,jnt').split(',').includes(cid)));
+                                        
+                                        if (common.length === 0 && itemsFromThisSeller.length > 0) {
+                                            return <p className="text-[10px] text-red-500 mt-2">Tidak ada kurir yang mendukung semua barang dalam pesanan ini. Mohon pisahkan pesanan.</p>;
+                                        }
+                                        return null;
+                                    })()}
+
 
 
                                     {config?.shipping_courier && (

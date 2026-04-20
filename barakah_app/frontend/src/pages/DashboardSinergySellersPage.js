@@ -12,6 +12,8 @@ const DashboardSinergySellersPage = () => {
     const [activeTab, setActiveTab] = useState('list'); // 'list' | 'add' | 'edit' | 'voucher'
     const [editingProduct, setEditingProduct] = useState(null);
     const [variants, setVariants] = useState([{name: '', additional_price: 0, stock: 0}]);
+    const [selectedCouriers, setSelectedCouriers] = useState(['jne', 'pos', 'tiki', 'jnt']);
+
 
     const fetchDashboardData = async () => {
         const user = JSON.parse(localStorage.getItem('user'));
@@ -41,8 +43,10 @@ const DashboardSinergySellersPage = () => {
     const handleEdit = (product) => {
         setEditingProduct(product);
         setVariants(product.variations && product.variations.length > 0 ? product.variations : [{name: '', additional_price: 0, stock: 0}]);
+        setSelectedCouriers(product.supported_couriers ? product.supported_couriers.split(',') : ['jne', 'pos', 'tiki', 'jnt']);
         setActiveTab('edit');
     };
+
 
     const addVariant = () => {
         setVariants([...variants, {name: '', additional_price: 0, stock: 0}]);
@@ -71,7 +75,9 @@ const DashboardSinergySellersPage = () => {
             formData.append('stock', e.target.stock.value);
             formData.append('weight', e.target.weight.value);
             formData.append('category', e.target.category.value);
+            formData.append('supported_couriers', selectedCouriers.join(','));
             formData.append('variations', JSON.stringify(variants));
+
 
             if (editingProduct) {
                 await axios.patch(`${process.env.REACT_APP_API_BASE_URL}/api/products/${editingProduct.id}/`, formData, {
@@ -168,8 +174,10 @@ const DashboardSinergySellersPage = () => {
                                     } else {
                                         setVariants([{name: '', additional_price: 0, stock: 0}]);
                                     }
+                                    setSelectedCouriers(p.supported_couriers ? p.supported_couriers.split(',') : ['jne', 'pos', 'tiki', 'jnt']);
                                     setActiveTab('edit');
                                 }} className="flex-1 py-2 text-xs font-bold text-emerald-700 bg-emerald-50 rounded-xl hover:bg-emerald-100 border border-emerald-100 transition">Edit & Variasi</button>
+
                             </div>
                         </div>
                     ))}
@@ -275,7 +283,41 @@ const DashboardSinergySellersPage = () => {
                 </div>
 
                 <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Layanan Ekspedisi yang Didukung</label>
+                    <p className="text-[10px] text-gray-500 mb-3">Pilih kurir yang tersedia untuk pengiriman produk ini.</p>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                        {[
+                            { id: 'jne', name: 'JNE' },
+                            { id: 'pos', name: 'POS' },
+                            { id: 'tiki', name: 'TIKI' },
+                            { id: 'jnt', name: 'J&T' },
+                            { id: 'sicepat', name: 'SiCepat' },
+                            { id: 'anteraja', name: 'AnterAja' },
+                            { id: 'wahana', name: 'Wahana' },
+                            { id: 'ninja', name: 'Ninja' },
+                        ].map(courier => (
+                            <label key={courier.id} className="flex items-center gap-2 p-2 bg-gray-50 rounded-xl border border-gray-200 cursor-pointer hover:bg-emerald-50 transition-colors">
+                                <input 
+                                    type="checkbox" 
+                                    className="form-checkbox h-4 w-4 text-emerald-600 rounded border-gray-300 focus:ring-emerald-500"
+                                    checked={selectedCouriers.includes(courier.id)}
+                                    onChange={(e) => {
+                                        if (e.target.checked) {
+                                            setSelectedCouriers([...selectedCouriers, courier.id]);
+                                        } else {
+                                            setSelectedCouriers(selectedCouriers.filter(c => c !== courier.id));
+                                        }
+                                    }}
+                                />
+                                <span className="text-xs font-bold text-gray-700">{courier.name}</span>
+                            </label>
+                        ))}
+                    </div>
+                </div>
+
+                <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-1">Foto Multi / Carousel</label>
+
                     <div className="border border-dashed border-gray-300 rounded-xl p-6 text-center hover:bg-gray-50 cursor-pointer transition">
                         <span className="material-icons text-gray-400 text-3xl">add_photo_alternate</span>
                         <p className="text-sm font-medium text-gray-500 mt-2">Pilih beberapa foto (Max 5)</p>

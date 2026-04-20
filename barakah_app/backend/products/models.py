@@ -64,6 +64,8 @@ class Product(models.Model):
     seller = models.ForeignKey('accounts.User', on_delete=models.CASCADE, related_name='physical_products', null=True, blank=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
     weight = models.PositiveIntegerField(default=1000, help_text="Berat dalam gram")
+    supported_couriers = models.CharField(max_length=255, default='jne,pos,tiki,jnt', blank=True, help_text="Comma separated active courier codes for this product")
+
 
     purchase_price = models.DecimalField(max_digits=12, decimal_places=2, default=0, help_text="Harga Beli")
     price = models.DecimalField(max_digits=12, decimal_places=2, help_text="Harga Jual") # selling_price

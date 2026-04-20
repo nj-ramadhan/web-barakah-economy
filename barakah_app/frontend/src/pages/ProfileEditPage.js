@@ -663,44 +663,11 @@ const ProfileEditPage = () => {
               <p className="text-[10px] text-gray-400 mt-1">*Pilih kelurahan sebagai poin pengiriman akhir</p>
             </div>
 
-            <div className="md:col-span-2 mt-4 p-4 bg-orange-50 rounded-2xl border border-orange-100">
-              <h4 className="text-xs font-bold text-orange-800 uppercase tracking-wider mb-3 flex items-center gap-2">
-                <span className="material-icons text-[16px]">local_shipping</span> Layanan Ekspedisi (Untuk Seller)
-              </h4>
-              <p className="text-[10px] text-orange-700 mb-4 italic">Pilih ekspedisi yang tersedia untuk pengiriman produk fisik Anda. Jika Anda adalah Seller, pelanggan hanya bisa memilih kurir yang Anda aktifkan di sini.</p>
-              
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                {[
-                  { id: 'jne', name: 'JNE' },
-                  { id: 'pos', name: 'POS' },
-                  { id: 'tiki', name: 'TIKI' },
-                  { id: 'jnt', name: 'J&T' },
-                  { id: 'sicepat', name: 'SiCepat' },
-                  { id: 'anteraja', name: 'AnterAja' },
-                  { id: 'wahana', name: 'Wahana' },
-                  { id: 'ninja', name: 'Ninja' },
-                ].map(courier => (
-                  <label key={courier.id} className="flex items-center gap-2 p-2 bg-white rounded-xl border border-orange-200 cursor-pointer hover:bg-orange-100 transition-colors">
-                    <input 
-                      type="checkbox" 
-                      className="form-checkbox h-4 w-4 text-orange-600 rounded border-gray-300 focus:ring-orange-500"
-                      checked={(profile.shop_supported_couriers || '').split(',').includes(courier.id)}
-                      onChange={(e) => {
-                        const current = (profile.shop_supported_couriers || '').split(',').filter(c => c !== '');
-                        let updated = [];
-                        if (e.target.checked) {
-                          updated = [...current, courier.id];
-                        } else {
-                          updated = current.filter(c => c !== courier.id);
-                        }
-                        setProfile(prev => ({ ...prev, shop_supported_couriers: updated.join(',') }));
-                      }}
-                    />
-                    <span className="text-xs font-bold text-gray-700">{courier.name}</span>
-                  </label>
-                ))}
-              </div>
+
+            <div className="md:col-span-2 mt-4">
+               {/* Expedition section removed - moved to product level */}
             </div>
+
 
 
 
