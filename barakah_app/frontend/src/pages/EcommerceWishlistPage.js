@@ -97,6 +97,13 @@ const EcommerceWishlistPage = () => {
                 return;
             }
 
+            // Check for variations before adding to cart
+            const item = wishlistItems.find(i => i.product.id === productId);
+            if (item && item.product.variations && item.product.variations.length > 0) {
+                navigate(`/produk/${item.product.slug || item.product.id}`);
+                return;
+            }
+
             await axios.post(`${process.env.REACT_APP_API_BASE_URL}/api/carts/cart/`, {
                 product_id: productId,
                 quantity: 1

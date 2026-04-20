@@ -197,6 +197,8 @@ const ProfileEditPage = () => {
   // Auto-detect location from coordinates (Reverse Geocoding)
   useEffect(() => {
     const detectLocation = async () => {
+      // PROMPT FIX: If we already have a province and city, don't auto-overwrite with detectLocation on mount
+      if (profile.address_province_id && profile.address_city_id) return;
       if (!profile.address_latitude || !profile.address_longitude) return;
       
       try {
@@ -596,10 +598,11 @@ const ProfileEditPage = () => {
                     name="address_city_id" 
                     value={profile.address_city_id || ''} 
                     onChange={(e) => {
-                      const selected = cities.find(c => c.city_id === e.target.value);
+                      const val = String(e.target.value);
+                      const selected = cities.find(c => String(c.city_id) === val);
                       setProfile(prev => ({
                         ...prev,
-                        address_city_id: e.target.value,
+                        address_city_id: val,
                         address_city_name: selected ? (`${selected.type} ${selected.city_name}`) : '',
                         address_subdistrict_id: '', address_subdistrict_name: '',
                         address_village_id: '', address_village_name: ''
@@ -623,10 +626,11 @@ const ProfileEditPage = () => {
                     name="address_subdistrict_id" 
                     value={profile.address_subdistrict_id || ''} 
                     onChange={(e) => {
-                      const selected = districts.find(d => d.district_id === e.target.value);
+                      const val = String(e.target.value);
+                      const selected = districts.find(d => String(d.district_id) === val);
                       setProfile(prev => ({
                         ...prev,
-                        address_subdistrict_id: e.target.value,
+                        address_subdistrict_id: val,
                         address_subdistrict_name: selected ? selected.district_name : '',
                         address_village_id: '', address_village_name: ''
                       }));
@@ -649,10 +653,11 @@ const ProfileEditPage = () => {
                     name="address_village_id" 
                     value={profile.address_village_id || ''} 
                     onChange={(e) => {
-                      const selected = villages.find(v => v.village_id === e.target.value);
+                      const val = String(e.target.value);
+                      const selected = villages.find(v => String(v.village_id) === val);
                       setProfile(prev => ({
                         ...prev,
-                        address_village_id: e.target.value,
+                        address_village_id: val,
                         address_village_name: selected ? selected.village_name : ''
                       }));
                     }} 

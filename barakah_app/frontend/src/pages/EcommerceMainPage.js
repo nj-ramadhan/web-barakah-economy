@@ -130,6 +130,13 @@ const EcommerceMainPage = () => {
         return;
       }
 
+      // Check for variations before adding to cart
+      const product = products.find(p => p.id === productId) || featuredProducts.find(p => p.id === productId);
+      if (product && product.variations && product.variations.length > 0) {
+        navigate(`/produk/${product.slug || product.id}`);
+        return;
+      }
+
       await axios.post(`${process.env.REACT_APP_API_BASE_URL}/api/carts/cart/`, {
         product_id: productId,
         quantity: 1
