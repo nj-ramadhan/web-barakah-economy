@@ -24,7 +24,18 @@ def get_shipping_cost(origin_id, destination_id, weight, courier):
     try:
         response = requests.post(url, data=payload, headers=headers)
         if response.status_code == 200:
-            return response.json()
+            data = response.json()
+            # The domestic-cost API for Komerce returns a list of services directly in 'data'
+            # We map them to the format expected by the frontend: { service, cost, etd }
+            results = []
+            for item in data.get('data', []):
+                results.append({
+                    'service': item.get('service'),
+                    'cost': item.get('cost'),
+                    'etd': item.get('etd'),
+                    'description': item.get('description', '')
+                })
+            return results
         else:
             print(f"Komerce RajaOngkir Cost Error: {response.status_code} - {response.text}")
             return {"error": f"API Error: {response.status_code}"}
@@ -37,9 +48,16 @@ def get_provinces():
     try:
         response = requests.get(url, headers=headers)
         if response.status_code == 200:
-            # Komerce returns { "meta": ..., "data": [...] }
             data = response.json()
-            return data.get('data', [])
+            source_data = data.get('data', [])
+            # Map Komerce keys (id, name) to Legacy names (province_id, province)
+            mapped_data = []
+            for item in source_data:
+                mapped_data.append({
+                    'province_id': str(item.get('id')),
+                    'province': item.get('name')
+                })
+            return mapped_data
         else:
             print(f"Komerce Province Error: {response.status_code} - {response.text}")
             return []
@@ -56,7 +74,16 @@ def get_cities(province_id=None):
         response = requests.get(url, headers=headers)
         if response.status_code == 200:
             data = response.json()
-            return data.get('data', [])
+            source_data = data.get('data', [])
+            # Map Komerce keys (id, name) to Legacy names (city_id, city_name)
+            mapped_data = []
+            for item in source_data:
+                mapped_data.append({
+                    'city_id': str(item.get('id')),
+                    'city_name': item.get('name'),
+                    'type': '' # Komerce doesn't seem to provide separate type (Kota/Kab)
+                })
+            return mapped_data
         else:
             print(f"Komerce City Error: {response.status_code} - {response.text}")
             return []
@@ -73,7 +100,15 @@ def get_districts(city_id=None):
         response = requests.get(url, headers=headers)
         if response.status_code == 200:
             data = response.json()
-            return data.get('data', [])
+            source_data = data.get('data', [])
+            # Map Komerce keys (id, name) to Legacy names (district_id, district_name)
+            mapped_data = []
+            for item in source_data:
+                mapped_data.append({
+                    'district_id': str(item.get('id')),
+                    'district_name': item.get('name')
+                })
+            return mapped_data
         else:
             print(f"Komerce District Error: {response.status_code} - {response.text}")
             return []
