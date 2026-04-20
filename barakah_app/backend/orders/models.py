@@ -15,10 +15,17 @@ class Order(models.Model):
     voucher_code = models.CharField(max_length=50, blank=True, null=True)
     voucher_nominal = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     grand_total = models.DecimalField(max_digits=12, decimal_places=2, default=0) # total_price + shipping - voucher
+    payment_method = models.CharField(max_length=50, default='manual')
+
 
     status = models.CharField(max_length=50, default='Pending')  # e.g., Pending, Shipped, Delivered
     order_number = models.CharField(max_length=20, unique=True, blank=True)
     resi_number = models.CharField(max_length=100, blank=True, null=True)
+    
+    # Qrisly Integration
+    qrisly_history_id = models.CharField(max_length=100, blank=True, null=True)
+    qris_payload = models.TextField(blank=True, null=True)
+
 
 
     def save(self, *args, **kwargs):

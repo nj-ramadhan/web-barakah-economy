@@ -133,6 +133,67 @@ const ProfileEditPage = () => {
     fetchCities();
   }, [profile.address_province_id]);
 
+  // Auto-detect location from coordinates (Reverse Geocoding)
+  useEffect(() => {
+    const detectLocation = async () => {
+      if (!profile.address_latitude || !profile.address_longitude) return;
+      
+      try {
+        const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${profile.address_latitude}&lon=${profile.address_longitude}&zoom=10&addressdetails=1`);
+        const data = await response.json();
+        
+        if (data.address) {
+          const state = data.address.state || '';
+          const cityName = data.address.city || data.address.town || data.address.municipality || data.address.county || '';
+          
+          if (state && provinces.length > 0) {
+            // Match Province
+            const matchProvince = provinces.find(p => 
+              state.toLowerCase().includes(p.province.toLowerCase()) || 
+              p.province.toLowerCase().includes(state.toLowerCase())
+            );
+            
+            if (matchProvince) {
+               setProfile(prev => ({ 
+                 ...prev, 
+                 address_province_id: matchProvince.province_id,
+                 address_province: matchProvince.province 
+               }));
+
+               // We will use another effect or wait for cities to load to match the city
+               // Storing detected city name temporarily to match once cities are fetched
+               setProfile(prev => ({ ...prev, _detected_city: cityName }));
+            }
+          }
+        }
+      } catch (err) {
+        console.error("Reverse geocoding failed", err);
+      }
+    };
+    detectLocation();
+  }, [profile.address_latitude, profile.address_longitude, provinces.length > 0]);
+
+  // Match city once cities are loaded after auto-province detection
+  useEffect(() => {
+    if (profile._detected_city && cities.length > 0 && profile.address_province_id) {
+       const cityToFind = profile._detected_city.toLowerCase();
+       const matchCity = cities.find(c => 
+         cityToFind.includes(c.city_name.toLowerCase()) || 
+         c.city_name.toLowerCase().includes(cityToFind)
+       );
+       
+       if (matchCity) {
+         setProfile(prev => ({
+           ...prev,
+           address_city_id: matchCity.city_id,
+           address_city_name: `${matchCity.type} ${matchCity.city_name}`,
+           _detected_city: null // Clear once matched
+         }));
+       }
+    }
+  }, [cities, profile._detected_city]);
+
+
   
   const ProfileSkeleton = () => (
     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden animate-pulse">
@@ -447,6 +508,10 @@ const ProfileEditPage = () => {
                   <option key={p.province_id} value={p.province_id}>{p.province}</option>
                 ))}
               </select>
+              {provinces.length === 0 && (
+                <p className="text-[10px] text-red-500 mt-1">Gagal memuat daftar provinsi. Periksa koneksi atau konfigurasi RajaOngkir.</p>
+              )}
+
             </div>
             <div>
               <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">

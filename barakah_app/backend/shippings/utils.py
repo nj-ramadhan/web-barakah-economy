@@ -2,8 +2,9 @@ import requests
 import json
 from django.conf import settings
 
-RAJAONGKIR_API_KEY = getattr(settings, 'RAJAONGKIR_API_KEY', 'yVPaNLQjd2d58e2c739ff193MuU0gbTJ')
-RAJAONGKIR_BASE_URL = getattr(settings, 'RAJAONGKIR_BASE_URL', 'https://api.rajaongkir.com/starter/')
+RAJAONGKIR_API_KEY = getattr(settings, 'RAJAONGKIR_API_KEY', '')
+RAJAONGKIR_BASE_URL = 'https://api.rajaongkir.com/starter/'
+
 
 def get_shipping_cost(origin_id, destination_id, weight, courier):
     """
@@ -30,9 +31,13 @@ def get_provinces():
     headers = {'key': RAJAONGKIR_API_KEY}
     try:
         response = requests.request("GET", url, headers=headers)
+        if response.status_code != 200:
+            print(f"RajaOngkir Province Error: {response.status_code} - {response.text}")
         return response.json()
     except Exception as e:
+        print(f"RajaOngkir Province Exception: {str(e)}")
         return {"error": str(e)}
+
 
 def get_cities(province_id=None):
     url = f"{RAJAONGKIR_BASE_URL}city"
@@ -41,6 +46,10 @@ def get_cities(province_id=None):
     headers = {'key': RAJAONGKIR_API_KEY}
     try:
         response = requests.request("GET", url, headers=headers)
+        if response.status_code != 200:
+            print(f"RajaOngkir City Error: {response.status_code} - {response.text}")
         return response.json()
     except Exception as e:
+        print(f"RajaOngkir City Exception: {str(e)}")
         return {"error": str(e)}
+

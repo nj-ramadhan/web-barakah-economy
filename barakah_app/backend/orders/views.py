@@ -9,6 +9,8 @@ from django.shortcuts import get_object_or_404
 from .models import Order, OrderItem
 from carts.models import Cart # Assuming you have a Cart and CartItem model
 from .serializers import OrderSerializer, OrderItemSerializer
+from payments.qrisly import generate_dynamic_qris
+
 
 class CreateOrderView(APIView):
     permission_classes = [IsAuthenticated]
@@ -29,7 +31,9 @@ class CreateOrderView(APIView):
         shipping_courier = request.data.get('shipping_courier', '')
         voucher_code = request.data.get('voucher_code', '')
         voucher_nominal = request.data.get('voucher_nominal', 0)
+        payment_method = request.data.get('payment_method', 'manual')
         proof_file = request.FILES.get('proof_file')
+
 
         # Fetch only selected cart items for the user
         cart_items = Cart.objects.filter(user=user, is_selected=True)
@@ -93,8 +97,20 @@ class CreateOrderView(APIView):
                 total_price += price_for_item
 
             order.total_price = total_price
+            order.payment_method = payment_method # Ensure this field exists or handle via local variable
+            
+            # Calculate grand total
+            grand_total = float(total_price) + float(order.shipping_cost) - float(order.voucher_nominal)
+            
+            if payment_method == 'qris':
+                qris_res = generate_dynamic_qris(grand_total, order.order_number)
+                if "error" not in qris_res:
+                    order.qrisly_history_id = qris_res.get('history_id')
+                    order.qris_payload = qris_res.get('qris_content')
+            
             order.save() 
             created_orders.append(order)
+
 
         # Clear selected cart items
         cart_items.delete()

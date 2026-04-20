@@ -28,7 +28,8 @@ class OrderSerializer(serializers.ModelSerializer):
         model = Order
         fields = ['id', 'order_number', 'user', 'buyer_details', 'seller', 'seller_name', 'created_at', 'updated_at', 
                   'total_price', 'shipping_cost', 'shipping_courier', 'shipping_service', 
-                  'voucher_code', 'voucher_nominal', 'grand_total', 'status', 'resi_number', 'items']
+                  'voucher_code', 'voucher_nominal', 'grand_total', 'status', 'resi_number', 'items', 'qris_payload']
+
 
 
     def get_buyer_details(self, obj):

@@ -10,6 +10,9 @@ const EcommerceCheckoutSinergy = () => {
     const [loading, setLoading] = useState(true);
     const [addresses, setAddresses] = useState(null);
     const [checkoutConfigs, setCheckoutConfigs] = useState({});
+    const [qrisData, setQrisData] = useState(null); // { payload: '', amount: 0 }
+    const [showQrisModal, setShowQrisModal] = useState(false);
+
     // Example checkoutConfigs state:
     // { "seller_id_1": { "shipping_cost": 15000, "shipping_courier": "jne", "shipping_service": "REG", "voucher_code": "X", "voucher_nominal": 5000, "payment_method": "qris" } }
 
@@ -85,17 +88,26 @@ const EcommerceCheckoutSinergy = () => {
 
         try {
             const res = await axios.post(`${process.env.REACT_APP_API_BASE_URL}/api/orders/`, {
-                checkouts: checkoutsList
+                checkouts: checkoutsList,
+                payment_method: checkoutsList[0]?.payment_method || 'manual' // Assuming single method for now
             }, {
                 headers: { Authorization: `Bearer ${user.access}` }
             });
 
-            // If any method was QRIS, route specifically or general success
-            navigate('/riwayat-belanja');
+            const orders = res.data;
+            const qrisOrder = orders.find(o => o.qris_payload);
+            
+            if (qrisOrder) {
+                setQrisData({ payload: qrisOrder.qris_payload, amount: qrisOrder.grand_total, orderNumber: qrisOrder.order_number });
+                setShowQrisModal(true);
+            } else {
+                navigate('/riwayat-belanja');
+            }
         } catch (err) {
             alert('Gagal memproses Checkout. Silakan coba lagi.');
         }
     };
+
 
     if (loading) {
         return <div className="min-h-screen flex items-center justify-center bg-gray-50"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600"></div></div>;
@@ -209,10 +221,44 @@ const EcommerceCheckoutSinergy = () => {
                         Buat Pesanan & Bayar
                     </button>
                 </div>
+
+                {/* QRIS Modal */}
+                {showQrisModal && qrisData && (
+                    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[999] flex items-center justify-center p-4">
+                        <div className="bg-white rounded-3xl w-full max-w-sm overflow-hidden animate-in fade-in zoom-in duration-300">
+                            <div className="bg-emerald-600 p-6 text-center text-white">
+                                <h3 className="text-lg font-bold">QRIS Otomatis Dinamis</h3>
+                                <p className="text-xs opacity-80 mt-1">Scan kode di bawah untuk membayar</p>
+                            </div>
+                            <div className="p-8 flex flex-col items-center">
+                                <div className="bg-white p-4 border-2 border-gray-100 rounded-2xl mb-6 shadow-Inner">
+                                    <img 
+                                        src={`https://chart.googleapis.com/chart?chs=300x300&cht=qr&chl=${encodeURIComponent(qrisData.payload)}&choe=UTF-8`} 
+                                        alt="QRIS Code" 
+                                        className="w-48 h-48"
+                                    />
+                                </div>
+                                <div className="text-center mb-6">
+                                    <p className="text-xs text-gray-500 font-bold uppercase tracking-widest mb-1">Total Bayar</p>
+                                    <p className="text-3xl font-black text-emerald-700">Rp {Number(qrisData.amount).toLocaleString('id-ID')}</p>
+                                    <p className="text-xs text-gray-400 mt-2">No. Pesanan: {qrisData.orderNumber}</p>
+                                </div>
+                                <button 
+                                    onClick={() => navigate('/riwayat-belanja')}
+                                    className="w-full py-4 bg-gray-900 text-white font-bold rounded-2xl hover:bg-black transition-colors"
+                                >
+                                    Selesai, Cek Status Pesanan
+                                </button>
+                                <p className="text-[10px] text-gray-400 mt-4 text-center">Silakan simpan/screenshot QR ini. Pesanan Anda akan diproses otomatis setelah pembayaran terverifikasi.</p>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
             <NavigationButton />
         </div>
     );
 };
+
 
 export default EcommerceCheckoutSinergy;

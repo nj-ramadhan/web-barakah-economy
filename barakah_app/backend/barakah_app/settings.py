@@ -17,20 +17,33 @@ import environ
 
 # # Initialize environment variables
 env = environ.Env()
-environ.Env.read_env()  # Reads the ...env file
+
+
 
 # Load the GOOGLE_CLIENT_ID from the environment variables
-GOOGLE_CLIENT_ID = env('GOOGLE_CLIENT_ID')
-GOOGLE_CLIENT_SECRET= env('GOOGLE_CLIENT_SECRET')
-
-MIDTRANS_MERCHANT_ID = env('MIDTRANS_MERCHANT_ID')
-MIDTRANS_CLIENT_KEY = env('MIDTRANS_CLIENT_KEY')
-MIDTRANS_SERVER_KEY = env('MIDTRANS_SERVER_KEY')
-MIDTRANS_SANDBOX = env('MIDTRANS_SANDBOX', cast=bool)
-
-
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
+
+# Load the GOOGLE_CLIENT_ID from the environment variables
+GOOGLE_CLIENT_ID = env('GOOGLE_CLIENT_ID', default='')
+GOOGLE_CLIENT_SECRET= env('GOOGLE_CLIENT_SECRET', default='')
+
+MIDTRANS_MERCHANT_ID = env('MIDTRANS_MERCHANT_ID', default='')
+MIDTRANS_CLIENT_KEY = env('MIDTRANS_CLIENT_KEY', default='')
+MIDTRANS_SERVER_KEY = env('MIDTRANS_SERVER_KEY', default='')
+MIDTRANS_SANDBOX = env('MIDTRANS_SANDBOX', cast=bool, default=True)
+
+RAJAONGKIR_API_KEY = env('RAJAONGKIR_API_KEY', default='')
+QRISLY_API_KEY = env('QRISLY_API_KEY', default='')
+
+
+
+
+
+
+
 
 
 # Quick-start development settings - unsuitable for production
