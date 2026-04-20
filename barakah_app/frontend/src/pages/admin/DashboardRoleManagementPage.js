@@ -27,15 +27,15 @@ const MENU_OPTIONS = [
     { key: 'all_courses', label: 'Semua Course (Admin)' },
     { key: 'consultants', label: 'Pengaturan Konsultasi' },
     { key: 'transactions', label: 'Riwayat Transaksi' },
-    {key: 'forum', label: 'Manajemen Forum'},
-    {key: 'withdrawals', label: 'Manajemen Penarikan'},
-    {key: 'campaign_submit', label: 'Ajukan Kampanye'},
-    {key: 'campaign_approval', label: 'Persetujuan Kampanye'},
-    {key: 'articles', label: 'Tulis Article'},
-    {key: 'event', label: 'Event'},
-    {key: 'admin_events', label: 'Manajemen Event'},
-    {key: 'sinergy_products', label: 'Pembuatan Produk (Sinergy)'},
-    {key: 'admin_sinergy', label: 'Manajemen Sinergy (Admin)'},
+    { key: 'forum', label: 'Manajemen Forum' },
+    { key: 'withdrawals', label: 'Manajemen Penarikan' },
+    { key: 'campaign_submit', label: 'Ajukan Kampanye' },
+    { key: 'campaign_approval', label: 'Persetujuan Kampanye' },
+    { key: 'articles', label: 'Tulis Article' },
+    { key: 'event', label: 'Event' },
+    { key: 'admin_events', label: 'Manajemen Event' },
+    { key: 'sinergy_products', label: 'Pembuatan Produk (Sinergy)' },
+    { key: 'admin_sinergy', label: 'Manajemen Sinergy (Admin)' },
 ];
 
 // All profile fields that can be set as required
@@ -192,7 +192,7 @@ const DashboardRoleManagementPage = () => {
         } catch (err) { alert('Gagal menghapus'); }
     };
 
-    const LABEL_COLORS = ['gray','red','orange','yellow','green','blue','indigo','purple','pink'];
+    const LABEL_COLORS = ['gray', 'red', 'orange', 'yellow', 'green', 'blue', 'indigo', 'purple', 'pink'];
 
     return (
         <div className="body bg-gray-50 min-h-screen">
@@ -214,11 +214,10 @@ const DashboardRoleManagementPage = () => {
                         { key: 'labels', label: 'Label Pengguna', icon: 'label' },
                     ].map(tab => (
                         <button key={tab.key} onClick={() => setActiveTab(tab.key)}
-                            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition ${
-                                activeTab === tab.key 
-                                    ? 'bg-green-700 text-white shadow-lg shadow-green-100' 
+                            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition ${activeTab === tab.key
+                                    ? 'bg-green-700 text-white shadow-lg shadow-green-100'
                                     : 'bg-white text-gray-500 border border-gray-100 hover:bg-gray-50'
-                            }`}
+                                }`}
                         >
                             <span className="material-icons text-sm">{tab.icon}</span>
                             {tab.label}
@@ -344,25 +343,24 @@ const DashboardRoleManagementPage = () => {
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-1">
                                         <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Nama Role</label>
-                                        <input type="text" required className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm outline-none" value={roleForm.name} onChange={e => setRoleForm({...roleForm, name: e.target.value})} placeholder="Contoh: Campaign Creator" />
+                                        <input type="text" required className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm outline-none" value={roleForm.name} onChange={e => setRoleForm({ ...roleForm, name: e.target.value })} placeholder="Contoh: Campaign Creator" />
                                     </div>
                                     <div className="space-y-1">
                                         <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Kode</label>
-                                        <input type="text" required className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm outline-none font-mono" value={roleForm.code} onChange={e => setRoleForm({...roleForm, code: e.target.value})} placeholder="campaign_creator" />
+                                        <input type="text" required className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm outline-none font-mono" value={roleForm.code} onChange={e => setRoleForm({ ...roleForm, code: e.target.value })} placeholder="campaign_creator" />
                                     </div>
                                 </div>
                                 <div className="space-y-1">
                                     <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Deskripsi</label>
-                                    <textarea className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm outline-none" rows="2" value={roleForm.description} onChange={e => setRoleForm({...roleForm, description: e.target.value})} />
+                                    <textarea className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm outline-none" rows="2" value={roleForm.description} onChange={e => setRoleForm({ ...roleForm, description: e.target.value })} />
                                 </div>
 
                                 <div>
                                     <label className="text-xs font-bold text-green-700 uppercase tracking-widest mb-3 block">Menu yang Dapat Diakses</label>
                                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                                         {MENU_OPTIONS.map(opt => (
-                                            <label key={opt.key} className={`flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer transition text-sm ${
-                                                roleForm.accessible_menus.includes(opt.key) ? 'bg-green-50 border-green-200 text-green-800' : 'bg-white border-gray-100 text-gray-600 hover:bg-gray-50'
-                                            }`}>
+                                            <label key={opt.key} className={`flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer transition text-sm ${roleForm.accessible_menus.includes(opt.key) ? 'bg-green-50 border-green-200 text-green-800' : 'bg-white border-gray-100 text-gray-600 hover:bg-gray-50'
+                                                }`}>
                                                 <input type="checkbox" checked={roleForm.accessible_menus.includes(opt.key)} onChange={() => toggleMenuAccess(opt.key)} className="w-4 h-4 text-green-600 rounded" />
                                                 {opt.label}
                                             </label>
@@ -374,9 +372,8 @@ const DashboardRoleManagementPage = () => {
                                     <label className="text-xs font-bold text-orange-700 uppercase tracking-widest mb-3 block">Persyaratan Data Profile Wajib</label>
                                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                                         {PROFILE_FIELDS.map(opt => (
-                                            <label key={opt.key} className={`flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer transition text-sm ${
-                                                roleForm.required_profile_fields.includes(opt.key) ? 'bg-orange-50 border-orange-200 text-orange-800' : 'bg-white border-gray-100 text-gray-600 hover:bg-gray-50'
-                                            }`}>
+                                            <label key={opt.key} className={`flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer transition text-sm ${roleForm.required_profile_fields.includes(opt.key) ? 'bg-orange-50 border-orange-200 text-orange-800' : 'bg-white border-gray-100 text-gray-600 hover:bg-gray-50'
+                                                }`}>
                                                 <input type="checkbox" checked={roleForm.required_profile_fields.includes(opt.key)} onChange={() => toggleProfileField(opt.key)} className="w-4 h-4 text-orange-600 rounded" />
                                                 {opt.label}
                                             </label>
@@ -385,7 +382,7 @@ const DashboardRoleManagementPage = () => {
                                 </div>
 
                                 <div className="flex items-center gap-2">
-                                    <input type="checkbox" id="role_active" checked={roleForm.is_active} onChange={e => setRoleForm({...roleForm, is_active: e.target.checked})} className="w-4 h-4 text-green-600 rounded" />
+                                    <input type="checkbox" id="role_active" checked={roleForm.is_active} onChange={e => setRoleForm({ ...roleForm, is_active: e.target.checked })} className="w-4 h-4 text-green-600 rounded" />
                                     <label htmlFor="role_active" className="text-sm font-medium text-gray-700">Role Aktif</label>
                                 </div>
                             </div>
@@ -412,17 +409,17 @@ const DashboardRoleManagementPage = () => {
                             <div className="p-8 space-y-5">
                                 <div className="space-y-1">
                                     <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Nama Label</label>
-                                    <input type="text" required className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm outline-none" value={labelForm.name} onChange={e => setLabelForm({...labelForm, name: e.target.value})} placeholder="Contoh: Donatur Aktif" />
+                                    <input type="text" required className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm outline-none" value={labelForm.name} onChange={e => setLabelForm({ ...labelForm, name: e.target.value })} placeholder="Contoh: Donatur Aktif" />
                                 </div>
                                 <div className="space-y-1">
                                     <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Kode (disamarkan untuk non-admin)</label>
-                                    <input type="text" required className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm outline-none font-mono" value={labelForm.code} onChange={e => setLabelForm({...labelForm, code: e.target.value})} placeholder="DA001" />
+                                    <input type="text" required className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm outline-none font-mono" value={labelForm.code} onChange={e => setLabelForm({ ...labelForm, code: e.target.value })} placeholder="DA001" />
                                 </div>
                                 <div className="space-y-1">
                                     <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Warna</label>
                                     <div className="flex flex-wrap gap-2">
                                         {LABEL_COLORS.map(c => (
-                                            <button key={c} type="button" onClick={() => setLabelForm({...labelForm, color: c})}
+                                            <button key={c} type="button" onClick={() => setLabelForm({ ...labelForm, color: c })}
                                                 className={`w-8 h-8 rounded-full bg-${c}-400 border-2 transition ${labelForm.color === c ? 'border-gray-900 scale-110 shadow-lg' : 'border-white shadow'}`}
                                             />
                                         ))}
