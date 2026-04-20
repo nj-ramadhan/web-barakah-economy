@@ -36,3 +36,4 @@ class ShopVoucherSerializer(serializers.ModelSerializer):
     class Meta:
         model = ShopVoucher
         fields = '__all__'
+        read_only_fields = ['seller']

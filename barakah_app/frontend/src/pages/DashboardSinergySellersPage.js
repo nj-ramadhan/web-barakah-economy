@@ -39,6 +39,7 @@ const DashboardSinergySellersPage = () => {
 
     const handleEdit = (product) => {
         setEditingProduct(product);
+        setVariants(product.variations && product.variations.length > 0 ? product.variations : [{name: '', additional_price: 0, stock: 0}]);
         setActiveTab('edit');
     };
 

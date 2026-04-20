@@ -73,6 +73,7 @@ class ProductViewSet(viewsets.ModelViewSet):
 
     def _save_variations(self, product):
         import json
+        import uuid
         from .models import ProductVariation
         variations_data = self.request.data.get('variations')
         if variations_data:
@@ -83,9 +84,11 @@ class ProductViewSet(viewsets.ModelViewSet):
                     variations = variations_data
                 
                 product.variations.all().delete()
-                for var in variations:
+                for i, var in enumerate(variations):
+                    unique_sku = f"{product.slug[:20]}-{uuid.uuid4().hex[:6]}-{i}"
                     ProductVariation.objects.create(
                         product=product,
+                        sku=unique_sku,
                         name=var.get('name'),
                         additional_price=var.get('additional_price', 0),
                         stock=var.get('stock', 0)

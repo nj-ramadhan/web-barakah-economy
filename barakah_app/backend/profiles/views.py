@@ -13,6 +13,15 @@ class ProfileViewSet(viewsets.ModelViewSet):
     queryset = Profile.objects.all()
     serializer_class = ProfileSerializer
 
+    @action(detail=False, methods=['get'])
+    def me(self, request):
+        try:
+            profile = Profile.objects.get(user=request.user)
+            serializer = self.get_serializer(profile)
+            return Response(serializer.data)
+        except Profile.DoesNotExist:
+            return Response({'error': 'Profile not found'}, status=status.HTTP_404_NOT_FOUND)
+
     @action(detail=False, methods=['get'], url_path='check-completeness')
     def check_completeness(self, request):
         user = request.user

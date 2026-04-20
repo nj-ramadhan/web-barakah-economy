@@ -128,6 +128,17 @@ const EcommercePaymentConfirmation = () => {
       return;
     }
 
+    const {
+      amount,
+      bank,
+      customerName,
+      customerPhone,
+      shippingCost,
+      courier,
+      voucherCode,
+      voucherDiscount
+    } = location.state;
+
     // Prepare payment confirmation data
     const paymentData = new FormData();
     paymentData.append('amount', amount);
@@ -139,6 +150,12 @@ const EcommercePaymentConfirmation = () => {
     paymentData.append('source_account', formData.sourceAccount);
     paymentData.append('transfer_date', formData.transferDate);
     paymentData.append('proof_file', selectedFile);
+
+    // Shipping & Voucher
+    paymentData.append('shipping_cost', shippingCost || 0);
+    paymentData.append('shipping_courier', courier || '');
+    paymentData.append('voucher_code', voucherCode || '');
+    paymentData.append('voucher_nominal', voucherDiscount || 0);
 
     const userData = localStorage.getItem('user');
 
@@ -252,12 +269,18 @@ Semoga dapat menjadi amal ibadah bagi saya dan bermanfaat untuk program serta pe
             </div>
 
             {selectedBankInfo.isQRIS && (
-              <div className="w-full flex justify-center p-4 bg-gray-50 rounded-lg">
-                <img
-                  src="/images/qris-bae2.png"
-                  alt="QRIS BAE"
-                  className="max-w-xs w-full shadow-sm rounded-lg"
-                />
+              <div className="w-full flex flex-col items-center justify-center p-6 bg-white rounded-2xl border-2 border-emerald-50 shadow-inner">
+                <div className="bg-white p-4 rounded-3xl shadow-xl mb-6 border border-gray-100">
+                  <img
+                    src="/images/qris-bae2.png"
+                    alt="QRIS BAE"
+                    className="max-w-md w-full rounded-2xl"
+                  />
+                </div>
+                <a href="/images/qris-bae2.png" download="QRIS-BAE-Community.png" className="bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-3 rounded-2xl text-base font-bold flex items-center transition-all shadow-lg hover:shadow-emerald-200 hover:-translate-y-0.5 active:translate-y-0">
+                  <span className="material-icons mr-2">download</span> UNDUH QRIS SEKARANG
+                </a>
+                <p className="mt-4 text-[10px] text-gray-400 uppercase tracking-widest font-bold">Screenshot atau Unduh QRIS untuk membayar</p>
               </div>
             )}
           </div>

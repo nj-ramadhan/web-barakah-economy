@@ -23,12 +23,12 @@ const FloatingCartModal = () => {
         }
     };
 
-    const handleDeleteCart = async (productId) => {
+    const handleDeleteCart = async (cartItemId) => {
         const user = JSON.parse(localStorage.getItem('user'));
         if (!user || !user.access) return;
         try {
             await axios.delete(`${process.env.REACT_APP_API_BASE_URL}/api/carts/cart/`, {
-                data: { product_id: productId },
+                data: { cart_item_id: cartItemId },
                 headers: { Authorization: `Bearer ${user.access}` }
             });
             window.dispatchEvent(new Event('cartUpdated'));
@@ -37,12 +37,12 @@ const FloatingCartModal = () => {
         }
     };
 
-    const handleDeleteWishlist = async (productId) => {
+    const handleDeleteWishlist = async (wishlistItemId) => {
         const user = JSON.parse(localStorage.getItem('user'));
         if (!user || !user.access) return;
         try {
             await axios.delete(`${process.env.REACT_APP_API_BASE_URL}/api/wishlists/wishlist/`, {
-                data: { product_id: productId },
+                data: { wishlist_item_id: wishlistItemId },
                 headers: { Authorization: `Bearer ${user.access}` }
             });
             window.dispatchEvent(new Event('cartUpdated'));
@@ -138,7 +138,7 @@ const FloatingCartModal = () => {
                                                     <span className="font-bold text-green-700 text-sm">Rp {item.total_price}</span>
                                                     <div className="flex items-center gap-2">
                                                         <span className="text-xs text-gray-500">Qty: {item.quantity}</span>
-                                                        <button onClick={() => handleDeleteCart(item.product?.id)} className="material-icons text-red-400 text-sm hover:bg-red-50 rounded p-1">delete</button>
+                                                        <button onClick={() => handleDeleteCart(item.id)} className="material-icons text-red-400 text-sm hover:bg-red-50 rounded p-1">delete</button>
                                                     </div>
                                                 </div>
                                             </div>
@@ -163,7 +163,7 @@ const FloatingCartModal = () => {
                                                 <h4 className="font-bold text-sm text-gray-800 line-clamp-2">{item.product?.title}</h4>
                                                 <div className="mt-auto flex justify-between items-end">
                                                     <span className="font-bold text-green-700 text-sm">Rp {item.product?.price}</span>
-                                                    <button onClick={() => handleDeleteWishlist(item.product?.id)} className="material-icons text-red-400 text-sm hover:bg-red-50 rounded p-1">favorite</button>
+                                                    <button onClick={() => handleDeleteWishlist(item.id)} className="material-icons text-red-400 text-sm hover:bg-red-50 rounded p-1">favorite</button>
                                                 </div>
                                             </div>
                                         </div>

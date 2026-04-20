@@ -42,7 +42,14 @@ class CartView(APIView):
 
     def delete(self, request):
         user = request.user
-        product_id = request.data.get('product_id')
-        cart_item = get_object_or_404(Cart, user=user, product_id=product_id)
+        cart_item_id = request.data.get('cart_item_id')
+        if not cart_item_id:
+            # Fallback for old clients
+            product_id = request.data.get('product_id')
+            cart_items = Cart.objects.filter(user=user, product_id=product_id)
+            cart_items.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+            
+        cart_item = get_object_or_404(Cart, user=user, id=cart_item_id)
         cart_item.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)

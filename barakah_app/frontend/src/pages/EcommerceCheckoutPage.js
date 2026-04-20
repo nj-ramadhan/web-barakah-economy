@@ -24,7 +24,7 @@ const EcommerceCheckoutPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { cartItems } = location.state || { cartItems: [] };
-  const [selectedBank, setSelectedBank] = useState('');
+  const [selectedBank, setSelectedBank] = useState('qris');
   const [profile, setProfile] = useState(null);
   
   // Checkout States
@@ -82,9 +82,7 @@ const EcommerceCheckoutPage = () => {
   }, [navigate]);
 
   const banks = [
-    { id: 'bsi', name: 'Bank BSI', logo: '/images/bsi-logo.png' },
-    { id: 'qris', name: 'QRIS', logo: '/images/qris-bae2.png' },
-    { id: 'midtrans', name: 'Midtrans (Gopay, OVO, dll)', logo: '/images/gopay-logo.png' }
+    { id: 'qris', name: 'QRIS BAE Community', logo: '/images/qris-bae2.png' }
   ];
 
   const checkOngkir = async (selectedCourier) => {
@@ -206,7 +204,10 @@ const EcommerceCheckoutPage = () => {
             email: formData.email, 
             message: formData.message, 
             cartItems: cartItems,
-            shippingCost: selectedShipping
+            shippingCost: selectedShipping,
+            courier: courier,
+            voucherCode: voucherCode,
+            voucherDiscount: voucherDiscount
         }
       });
     }
