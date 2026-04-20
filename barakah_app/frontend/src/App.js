@@ -90,6 +90,10 @@ import DashboardArticleEditorPage from './pages/DashboardArticleEditorPage';
 import ForumMainPage from './pages/ForumMainPage';
 import ForumThreadDetail from './pages/ForumThreadDetail';
 
+import DashboardSinergySellersPage from './pages/DashboardSinergySellersPage';
+import DashboardSinergyAdminPage from './pages/admin/DashboardSinergyAdminPage';
+import FloatingCartModal from './components/layout/FloatingCartModal';
+
 import { ResponsiveLayout, MobileContainer } from './components/layout/ResponsiveLayout';
 import ScrollToTop from './components/layout/ScrollToTop';
 import NotificationService from './services/NotificationService';
@@ -316,12 +320,15 @@ const LayoutWrapper = ({ isDesktop }) => {
         <Route path="/dashboard/my-campaigns" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardMyCampaignsPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/articles" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardArticleEditorPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/articles/:slug" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardArticleEditorPage /></ResponsiveLayout></PrivateRoute>} />
+        <Route path="/dashboard/sinergy/seller" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardSinergySellersPage /></ResponsiveLayout></PrivateRoute>} />
+        <Route path="/dashboard/admin/sinergy" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardSinergyAdminPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/digital-products" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardDigitalProductsPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/ecourses" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardEcourseListPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/ecourses/new" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardEcourseFormPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/ecourses/:id/edit" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardEcourseFormPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/ecourses/:id/materials" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardEcourseMaterialsPage /></ResponsiveLayout></PrivateRoute>} />
       </Routes>
+      <FloatingCartModal />
     </div>
   );
 };

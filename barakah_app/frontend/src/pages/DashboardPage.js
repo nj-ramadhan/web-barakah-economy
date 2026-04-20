@@ -472,6 +472,36 @@ const DashboardPage = () => {
                         
                         return (
                             <>
+                            {hasAccess('sinergy_products') && (
+                                <Link
+                                    to="/dashboard/sinergy/seller"
+                                    className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-green-100 hover:shadow-md transition"
+                                >
+                                    <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
+                                        <span className="material-icons text-green-700">inventory</span>
+                                    </div>
+                                    <div className="flex-1">
+                                        <h3 className="font-bold text-gray-800 text-sm">Pembuatan Produk (Sinergy)</h3>
+                                        <p className="text-[11px] text-gray-500">Kelola dan tambah produk fisik Anda</p>
+                                    </div>
+                                    <span className="material-icons text-gray-400">chevron_right</span>
+                                </Link>
+                            )}
+                            {hasAccess('admin_sinergy') && (
+                                <Link
+                                    to="/dashboard/admin/sinergy"
+                                    className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-emerald-100 hover:shadow-md transition"
+                                >
+                                    <div className="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center">
+                                        <span className="material-icons text-emerald-700">storefront</span>
+                                    </div>
+                                    <div className="flex-1">
+                                        <h3 className="font-bold text-gray-800 text-sm">Manajemen Produk (Sinergy)</h3>
+                                        <p className="text-[11px] text-gray-500">Persetujuan dan manajemen seluruh produk fisik (Admin)</p>
+                                    </div>
+                                    <span className="material-icons text-gray-400">chevron_right</span>
+                                </Link>
+                            )}
                             {hasAccess('withdrawals') && (
                                 <Link
                                     to="/dashboard/admin/withdrawals"

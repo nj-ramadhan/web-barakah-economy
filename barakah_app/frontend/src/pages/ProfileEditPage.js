@@ -378,12 +378,28 @@ const ProfileEditPage = () => {
               <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
                 Provinsi {isFieldMissing('address_province') && <span className="text-red-500">*wajib</span>}
               </label>
-              <select name="address_province" value={profile.address_province || ''} onChange={handleChange} className={inputCls('address_province')}>
+              <select name="address_province" value={profile.address_province || ''} onChange={(e) => {
+                  handleChange(e);
+                  // Find ID to trigger city fetch if we stored it
+                }} className={inputCls('address_province')}>
                 <option value="">Pilih Provinsi</option>
-                {[['aceh','Aceh'],['sumatera_utara','Sumatera Utara'],['sumatera_barat','Sumatera Barat'],['riau','Riau'],['jambi','Jambi'],['sumatera_selatan','Sumatera Selatan'],['bengkulu','Bengkulu'],['lampung','Lampung'],['kepulauan_bangka_belitung','Kep. Bangka Belitung'],['kepulauan_riau','Kepulauan Riau'],['dki_jakarta','DKI Jakarta'],['jawa_barat','Jawa Barat'],['jawa_tengah','Jawa Tengah'],['di_yogyakarta','DI Yogyakarta'],['jawa_timur','Jawa Timur'],['banten','Banten'],['bali','Bali'],['nusa_tenggara_barat','NTB'],['nusa_tenggara_timur','NTT'],['kalimantan_barat','Kalimantan Barat'],['kalimantan_tengah','Kalimantan Tengah'],['kalimantan_selatan','Kalimantan Selatan'],['kalimantan_timur','Kalimantan Timur'],['kalimantan_utara','Kalimantan Utara'],['sulawesi_utara','Sulawesi Utara'],['sulawesi_tengah','Sulawesi Tengah'],['sulawesi_selatan','Sulawesi Selatan'],['sulawesi_tenggara','Sulawesi Tenggara'],['gorontalo','Gorontalo'],['sulawesi_barat','Sulawesi Barat'],['maluku','Maluku'],['maluku_utara','Maluku Utara'],['papua','Papua'],['papua_barat','Papua Barat']].map(([v,l])=>
-                  <option key={v} value={v}>{l}</option>
-                )}
+                <option value="Jawa Barat">Jawa Barat (Dummy RajaOngkir Name)</option>
               </select>
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
+                Kota / Kabupaten Sinergy {isFieldMissing('address_city_id') && <span className="text-red-500">*wajib</span>}
+              </label>
+              <select name="address_city_id" value={profile.address_city_id || ''} onChange={(e) => {
+                  handleChange(e);
+                  const cityName = e.target.options[e.target.selectedIndex].text;
+                  setProfile(prev => ({...prev, address_city_name: cityName}));
+              }} className={inputCls('address_city_id')}>
+                <option value="">Pilih Kota (Simulasi RajaOngkir)</option>
+                <option value="22">Bandung</option>
+                <option value="153">Jakarta Selatan</option>
+              </select>
+              <p className="text-[10px] text-gray-400 mt-1">*Diperlukan untuk cek ongkir fisik Sinergy via RajaOngkir</p>
             </div>
             
             <div className="mt-4 border-t border-gray-200 pt-4">

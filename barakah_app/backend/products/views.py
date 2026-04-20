@@ -9,18 +9,32 @@ from .models import Product
 from .serializers import ProductSerializer
     
 class ProductViewSet(viewsets.ModelViewSet):
-    queryset = Product.objects.filter(is_active=True)
     serializer_class = ProductSerializer
     
     def get_queryset(self):
-        queryset = Product.objects.filter(is_active=True)
+        user = self.request.user
+        queryset = Product.objects.all()
+
         search = self.request.query_params.get('search', None)
         if search:
             queryset = queryset.filter(
                 Q(title__icontains=search) |
                 Q(description__icontains=search)
             )
-        return queryset
+
+        # For unauthenticated or standard users, only show approved & active
+        if not user.is_authenticated:
+            return queryset.filter(status='approved', is_active=True)
+
+        # If admin, can see all or filter by a specific query
+        if user.role == 'admin':
+            return queryset
+
+        # Standard users see approved products globally, plus their own products
+        return queryset.filter(Q(status='approved', is_active=True) | Q(seller=user))
+
+    def perform_create(self, serializer):
+        serializer.save(seller=self.request.user, status='pending')
 
 class ProductDetailView(APIView):
     def get(self, request, slug):

@@ -159,6 +159,12 @@ class Profile(models.Model):
     address_latitude = models.FloatField(blank=True, null=True)
     address_longitude = models.FloatField(blank=True, null=True)  
     address_province = models.CharField(max_length=50, choices=PROVINCE_CHOICES, blank=True, null=True)
+    address_province_id = models.CharField(max_length=10, blank=True, null=True, help_text="RajaOngkir Province ID")
+    address_city_id = models.CharField(max_length=10, blank=True, null=True, help_text="RajaOngkir City ID")
+    address_city_name = models.CharField(max_length=100, blank=True, null=True)
+    address_subdistrict_id = models.CharField(max_length=10, blank=True, null=True, help_text="RajaOngkir Subdistrict ID")
+    address_subdistrict_name = models.CharField(max_length=100, blank=True, null=True)
+    address_postal_code = models.CharField(max_length=10, blank=True, null=True)
     
     # Shop fields for digital product sellers
     shop_thumbnail = models.ImageField(upload_to='shop_thumbnails/', blank=True, null=True)
