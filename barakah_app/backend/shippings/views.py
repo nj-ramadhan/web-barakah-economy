@@ -62,10 +62,15 @@ class ExpeditionDiagnosticView(APIView):
     Returns basic province list and raw response for debugging.
     """
     def get(self, request):
-        from .utils import get_provinces, EXPEDITION_API_KEY, REGIONAL_BASE_URL
+        from django.conf import settings
+        from .utils import get_provinces, REGIONAL_BASE_URL
+        
+        # Fetch directly from settings to avoid import caching in utils
+        api_key = getattr(settings, 'EXPEDITION_API_KEY', '')
         
         results = {
-            "api_configured": bool(EXPEDITION_API_KEY),
+            "api_configured": bool(api_key),
+            "key_preview": f"{api_key[:4]}...{api_key[-4:]}" if len(api_key) > 8 else "too_short_or_empty",
             "base_url": REGIONAL_BASE_URL,
             "provinces": [],
             "error": None
@@ -75,8 +80,8 @@ class ExpeditionDiagnosticView(APIView):
             provinces = get_provinces()
             results["provinces"] = provinces
             results["count"] = len(provinces)
-            if not provinces and EXPEDITION_API_KEY:
-                results["error"] = "No provinces returned. Check API Key or connectivity."
+            if not provinces and api_key:
+                results["error"] = "No provinces returned. The API Key might be invalid or the external service is down."
         except Exception as e:
             results["error"] = str(e)
             
