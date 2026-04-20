@@ -60,6 +60,7 @@ const ProfileEditPage = () => {
 
 
   const [provinces, setProvinces] = useState([]);
+  const [cities, setCities] = useState([]);
   const [districts, setDistricts] = useState([]);
   const [villages, setVillages] = useState([]);
   const [loadingCities, setLoadingCities] = useState(false);
