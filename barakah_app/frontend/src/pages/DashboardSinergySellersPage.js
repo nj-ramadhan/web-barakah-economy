@@ -80,7 +80,7 @@ const DashboardSinergySellersPage = () => {
 
 
             if (editingProduct) {
-                await axios.patch(`${process.env.REACT_APP_API_BASE_URL}/api/products/${editingProduct.id}/`, formData, {
+                await axios.patch(`${process.env.REACT_APP_API_BASE_URL}/api/products/${editingProduct.id}/?manage=true`, formData, {
                     headers: { 'Authorization': `Bearer ${user.access}` }
                 });
                 alert('Produk berhasil diubah');

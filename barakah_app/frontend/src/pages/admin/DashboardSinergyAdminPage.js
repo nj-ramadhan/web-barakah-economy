@@ -32,7 +32,7 @@ const DashboardSinergyAdminPage = () => {
     const handleUpdateStatus = async (productId, status) => {
         const user = JSON.parse(localStorage.getItem('user'));
         try {
-            await axios.patch(`${process.env.REACT_APP_API_BASE_URL}/api/products/${productId}/`, 
+            await axios.patch(`${process.env.REACT_APP_API_BASE_URL}/api/products/${productId}/?manage=true`, 
                 { status }, 
                 { headers: { Authorization: `Bearer ${user.access}` } }
             );

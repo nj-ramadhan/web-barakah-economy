@@ -425,6 +425,8 @@ const ProfileEditPage = () => {
   const FIELD_LABELS = {
     name_full: 'Nama Lengkap', gender: 'Jenis Kelamin', birth_place: 'Tempat Lahir',
     birth_date: 'Tanggal Lahir', address: 'Alamat', address_province: 'Provinsi',
+    address_city_name: 'Kota/Kabupaten', address_subdistrict_name: 'Kecamatan',
+    address_village_name: 'Kelurahan/Desa',
     marital_status: 'Status Pernikahan', segment: 'Segmen',
   };
 

@@ -25,16 +25,20 @@ def get_shipping_cost(origin_village_code, destination_village_code, weight_gram
     # Weight must be in KG and > 0
     weight_kg = max(weight_grams / 1000, 0.1)
     
+    # Validation for Village IDs (must be 10 digits)
+    # Using '3216062003' as the correct Barakah Warehouse code for api.co.id
+    if not origin_village_code or len(str(origin_village_code)) != 10:
+        origin_village_code = '3216062003'
+        
+    if not destination_village_code or len(str(destination_village_code)) != 10:
+        return {"error": f"Invalid destination location code length. Required: 10 digits. Got: {len(str(destination_village_code)) if destination_village_code else 'none'}. Please update your profile with a valid Village/Kelurahan."}
+
     params = {
         'origin_village_code': origin_village_code,
         'destination_village_code': destination_village_code,
         'weight': weight_kg
     }
     
-    # API.co.id requires 10-digit village codes (Kemendagri/BPS)
-    if len(str(origin_village_code)) != 10 or len(str(destination_village_code)) != 10:
-        return {"error": f"Invalid location code length. Required: 10 digits. Got: {len(str(origin_village_code))} and {len(str(destination_village_code))}. Please update your profile with a valid Village/Kelurahan."}
-
     try:
         response = requests.get(url, params=params, headers=headers, timeout=10)
         if response.status_code == 200:

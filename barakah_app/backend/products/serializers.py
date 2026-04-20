@@ -39,9 +39,9 @@ class ProductSerializer(serializers.ModelSerializer):
                     if v_id and len(str(v_id)) == 10:
                         return str(v_id)
             # Default to Barakah Warehouse (Desa Lambangjaya) if seller profile is incomplete
-            return '3216061005' 
+            return '3216062003' 
         except Exception:
-            return '3216061005'
+            return '3216062003'
 
 class ShopVoucherSerializer(serializers.ModelSerializer):
     class Meta:
