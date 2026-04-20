@@ -94,11 +94,22 @@ const EcommerceCheckoutSinergy = () => {
             const itemsFromThisSeller = cartItems.filter(item => (item.product?.seller_id || "0") === sellerId);
             const firstItem = itemsFromThisSeller[0];
             
-            // Logic: Use Seller's Village ID from Product Serializer
-            // Fallback to a default village code if seller profile is incomplete
-            const origin_code = firstItem?.product?.seller_village_id || firstItem?.product?.seller_city_id || "3216061005"; 
-            const destination_code = addresses.address_village_id;
+            // Logic: Use Seller's City ID from Serializer (which we fixed in backend to be 10-digit village ID)
+            const origin_code = String(firstItem?.product?.seller_city_id || "3216061005"); 
+            const destination_code = String(addresses.address_village_id || "");
             
+            // Validation for 10-digit codes required by API.co.id
+            if (origin_code.length !== 10) {
+                alert('Alamat Toko Penjual (Origin) tidak valid untuk kurir ini. Hubungi admin Barakah.');
+                return;
+            }
+
+            if (destination_code.length !== 10) {
+                alert(`Alamat Kelurahan Anda (${destination_code.length} digit) tidak valid. Mohon lengkapi profil Anda dengan Kelurahan yang benar agar ongkir bisa dihitung.`);
+                navigate('/profile/edit?complete=address');
+                return;
+            }
+
             // Total weight of items for this seller
             const weight = itemsFromThisSeller
                 .reduce((acc, item) => acc + (item.product.weight || 1000) * item.quantity, 0);

@@ -13,8 +13,8 @@ const DashboardSinergyAdminPage = () => {
         const user = JSON.parse(localStorage.getItem('user'));
         if (!user || user.role !== 'admin') return;
         try {
-            // Note: with our ModelViewSet, Admin receives ALL products.
-            const res = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/products/`, {
+            // Note: with our ModelViewSet, Admin receives ALL products if ?manage=true is set.
+            const res = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/products/?manage=true`, {
                 headers: { Authorization: `Bearer ${user.access}` }
             });
             setProducts(res.data);

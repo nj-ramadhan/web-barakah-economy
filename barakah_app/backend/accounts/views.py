@@ -253,6 +253,13 @@ class UserViewSet(viewsets.ModelViewSet):
                 user.date_joined.strftime('%Y-%m-%d %H:%M:%S') if user.date_joined else '',
             ]
             if profile:
+                # Robustly get province display name
+                province_display = profile.address_province
+                if profile.address_province:
+                    from profiles.models import Profile
+                    province_map = dict(Profile.PROVINCE_CHOICES)
+                    province_display = province_map.get(profile.address_province, profile.address_province)
+
                 row.extend([
                     profile.name_full or '',
                     profile.get_gender_display() if profile.gender else '',
@@ -275,7 +282,7 @@ class UserViewSet(viewsets.ModelViewSet):
                     profile.work_institution or '',
                     profile.work_position or '',
                     profile.work_salary or '',
-                    profile.get_address_province_display() if profile.address_province else '',
+                    province_display or '',
                 ])
             else:
                 row.extend([''] * 22)

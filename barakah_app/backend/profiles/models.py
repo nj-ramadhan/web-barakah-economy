@@ -158,7 +158,7 @@ class Profile(models.Model):
     work_salary = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(0)], blank=True, null=True)
     address_latitude = models.FloatField(blank=True, null=True)
     address_longitude = models.FloatField(blank=True, null=True)  
-    address_province = models.CharField(max_length=50, blank=True, null=True)
+    address_province = models.CharField(max_length=50, choices=PROVINCE_CHOICES, blank=True, null=True)
     address_province_id = models.CharField(max_length=10, blank=True, null=True, help_text="Expedition Province ID")
     address_city_id = models.CharField(max_length=10, blank=True, null=True, help_text="Expedition City ID")
     address_city_name = models.CharField(max_length=100, blank=True, null=True)

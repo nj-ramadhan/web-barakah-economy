@@ -95,16 +95,29 @@ const EcommerceCheckoutPage = () => {
       
       setIsFetchingShipping(true);
       try {
-          // Determine origin based on first item seller
-          const originCity = cartItems[0]?.product?.seller_city_id || '153';
-          const destCity = profile.address_city_id;
+          // Determine origin based on first item seller (fixed to 10-digit in backend)
+          const originCode = String(cartItems[0]?.product?.seller_city_id || '3216061005');
+          const destCode = String(profile.address_village_id || profile.address_city_id || '');
+          
+          if (originCode.length !== 10) {
+              alert('Alamat pengirim (toko) tidak valid. Harap hubungi admin.');
+              return;
+          }
+          if (destCode.length !== 10) {
+              alert('Alamat Anda (penerima) belum lengkap dengan Kelurahan. Silakan update profil Anda.');
+              navigate('/profile/edit?complete=address');
+              return;
+          }
+
           const totalWeight = cartItems.reduce((acc, item) => acc + ((item.product.weight || 1000) * item.quantity), 0);
           
           const res = await axios.post(`${process.env.REACT_APP_API_BASE_URL}/api/shippings/costs/`, {
-              origin: originCity,
-              destination: destCity,
+              origin: originCode,
+              destination: destCode,
               weight: totalWeight,
               courier: selectedCourier
+          }, {
+              headers: { Authorization: `Bearer ${JSON.parse(localStorage.getItem('user')).access}` }
           });
 
           // Extract costs from Expedition API response (Flat list from backend)

@@ -34,9 +34,12 @@ class ProductSerializer(serializers.ModelSerializer):
             if obj.seller and hasattr(obj.seller, 'profile'):
                 profile = obj.seller.profile
                 if profile:
-                    # Priority given to Village ID if available, as the new API requires it
-                    return profile.address_village_id or profile.address_city_id or '153'
-            return '3216061005' # Consistent default village code (Desa Lambangjaya)
+                    # Priority given to 10-digit Village ID
+                    v_id = profile.address_village_id
+                    if v_id and len(str(v_id)) == 10:
+                        return str(v_id)
+            # Default to Barakah Warehouse (Desa Lambangjaya) if seller profile is incomplete
+            return '3216061005' 
         except Exception:
             return '3216061005'
 

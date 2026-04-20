@@ -14,9 +14,9 @@ import icon from 'leaflet/dist/images/marker-icon.png';
 import iconShadow from 'leaflet/dist/images/marker-shadow.png';
 
 let DefaultIcon = L.icon({
-    iconUrl: icon,
-    shadowUrl: iconShadow,
-    iconAnchor: [12, 41]
+  iconUrl: icon,
+  shadowUrl: iconShadow,
+  iconAnchor: [12, 41]
 });
 L.Marker.prototype.options.icon = DefaultIcon;
 
@@ -90,14 +90,14 @@ const ProfileEditPage = () => {
         if (user && user.id) {
           const profileData = await authService.getProfile(user.id);
           setProfile(profileData);
-          
+
           if (isCompleteMode && user.access) {
             try {
               const res = await axios.get(`${API}/api/profiles/check-completeness/`, {
-                 headers: { Authorization: `Bearer ${user.access}` }
+                headers: { Authorization: `Bearer ${user.access}` }
               });
               setMissingFields(res.data.missing_fields || []);
-            } catch (err) {}
+            } catch (err) { }
           }
         } else {
           navigate('/login');
@@ -113,84 +113,58 @@ const ProfileEditPage = () => {
 
   // Expedition API Fetchers
 
-  useEffect(() => {
-    const fetchProvinces = async () => {
-      try {
-        const res = await axios.get(`${API}/api/shippings/provinces/`);
-        if (Array.isArray(res.data)) {
-          setProvinces(res.data);
-        }
+  // Lazy Expedition API Fetchers
+  const fetchProvinces = async (force = false) => {
+    if (provinces.length > 0 && !force) return;
+    try {
+      const res = await axios.get(`${API}/api/shippings/provinces/`);
+      if (Array.isArray(res.data)) setProvinces(res.data);
+    } catch (err) {
+      console.error("Failed to fetch provinces", err);
+    }
+  };
 
-      } catch (err) {
-        console.error("Failed to fetch provinces", err);
-      }
-    };
-    fetchProvinces();
-  }, []);
+  const fetchCities = async (provinceId, force = false) => {
+    if (!provinceId) return;
+    if (cities.length > 0 && !force) return;
+    setLoadingCities(true);
+    try {
+      const res = await axios.get(`${API}/api/shippings/cities/?province=${provinceId}`);
+      if (Array.isArray(res.data)) setCities(res.data);
+    } catch (err) {
+      console.error("Failed to fetch cities", err);
+    } finally {
+      setLoadingCities(false);
+    }
+  };
 
-  useEffect(() => {
-    const fetchCities = async () => {
-      if (!profile.address_province_id) {
-        setCities([]);
-        return;
-      }
-      setLoadingCities(true);
-      try {
-        const res = await axios.get(`${API}/api/shippings/cities/?province=${profile.address_province_id}`);
-        if (Array.isArray(res.data)) {
-          setCities(res.data);
-        }
-      } catch (err) {
-        console.error("Failed to fetch cities", err);
-      } finally {
-        setLoadingCities(false);
-      }
-    };
-    fetchCities();
-  }, [profile.address_province_id]);
+  const fetchDistricts = async (cityId, force = false) => {
+    if (!cityId) return;
+    if (districts.length > 0 && !force) return;
+    setLoadingDistricts(true);
+    try {
+      const res = await axios.get(`${API}/api/shippings/districts/?city=${cityId}`);
+      if (Array.isArray(res.data)) setDistricts(res.data);
+    } catch (err) {
+      console.error("Failed to fetch districts", err);
+    } finally {
+      setLoadingDistricts(false);
+    }
+  };
 
-  useEffect(() => {
-    const fetchDistricts = async () => {
-      if (!profile.address_city_id) {
-        setDistricts([]);
-        return;
-      }
-      setLoadingDistricts(true);
-      try {
-        const res = await axios.get(`${API}/api/shippings/districts/?city=${profile.address_city_id}`);
-        if (Array.isArray(res.data)) {
-          setDistricts(res.data);
-        }
-      } catch (err) {
-        console.error("Failed to fetch districts", err);
-      } finally {
-        setLoadingDistricts(false);
-      }
-    };
-    fetchDistricts();
-  }, [profile.address_city_id]);
-
-  useEffect(() => {
-    const fetchVillages = async () => {
-      if (!profile.address_subdistrict_id) {
-        setVillages([]);
-        return;
-      }
-      setLoadingVillages(true);
-      try {
-        const res = await axios.get(`${API}/api/shippings/villages/?district=${profile.address_subdistrict_id}`);
-        console.log(`DEBUG: Fetched ${res.data.length} villages for subdistrict ${profile.address_subdistrict_id}`);
-        if (Array.isArray(res.data)) {
-          setVillages(res.data);
-        }
-      } catch (err) {
-        console.error("Failed to fetch villages", err);
-      } finally {
-        setLoadingVillages(false);
-      }
-    };
-    fetchVillages();
-  }, [profile.address_subdistrict_id]);
+  const fetchVillages = async (districtId, force = false) => {
+    if (!districtId) return;
+    if (villages.length > 0 && !force) return;
+    setLoadingVillages(true);
+    try {
+      const res = await axios.get(`${API}/api/shippings/villages/?district=${districtId}`);
+      if (Array.isArray(res.data)) setVillages(res.data);
+    } catch (err) {
+      console.error("Failed to fetch villages", err);
+    } finally {
+      setLoadingVillages(false);
+    }
+  };
 
 
 
@@ -200,28 +174,31 @@ const ProfileEditPage = () => {
       // PROMPT FIX: If we already have a province and city, don't auto-overwrite with detectLocation on mount
       if (profile.address_province_id && profile.address_city_id) return;
       if (!profile.address_latitude || !profile.address_longitude) return;
-      
+
       try {
         const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${profile.address_latitude}&lon=${profile.address_longitude}&zoom=10&addressdetails=1`);
         const data = await response.json();
-        
+
         if (data.address) {
           const state = data.address.state || '';
           const cityName = data.address.city || data.address.town || data.address.municipality || data.address.county || '';
-          
+
           if (state && provinces.length > 0) {
             // Match Province
-            const matchProvince = provinces.find(p => 
-              state.toLowerCase().includes(p.province.toLowerCase()) || 
+            const matchProvince = provinces.find(p =>
+              state.toLowerCase().includes(p.province.toLowerCase()) ||
               p.province.toLowerCase().includes(state.toLowerCase())
             );
-            
+
             if (matchProvince) {
                setProfile(prev => ({ 
                  ...prev, 
                  address_province_id: matchProvince.province_id,
                  address_province: matchProvince.province 
                }));
+
+               // Fetch cities lazily for this province so city matching can happen
+               fetchCities(matchProvince.province_id, true);
 
                // We will use another effect or wait for cities to load to match the city
                // Storing detected city name temporarily to match once cities are fetched
@@ -239,30 +216,30 @@ const ProfileEditPage = () => {
   // Match city once cities are loaded after auto-province detection
   useEffect(() => {
     if (profile._detected_city && cities.length > 0 && profile.address_province_id) {
-       const cityToFind = profile._detected_city.toLowerCase();
-       const matchCity = cities.find(c => 
-         cityToFind.includes(c.city_name.toLowerCase()) || 
-         c.city_name.toLowerCase().includes(cityToFind)
-       );
-       
-       if (matchCity) {
-         setProfile(prev => ({
-           ...prev,
-           address_city_id: matchCity.city_id,
-           address_city_name: `${matchCity.type} ${matchCity.city_name}`,
-           _detected_city: null // Clear once matched
-         }));
-       }
+      const cityToFind = profile._detected_city.toLowerCase();
+      const matchCity = cities.find(c =>
+        cityToFind.includes(c.city_name.toLowerCase()) ||
+        c.city_name.toLowerCase().includes(cityToFind)
+      );
+
+      if (matchCity) {
+        setProfile(prev => ({
+          ...prev,
+          address_city_id: matchCity.city_id,
+          address_city_name: `${matchCity.type} ${matchCity.city_name}`,
+          _detected_city: null // Clear once matched
+        }));
+      }
     }
   }, [cities, profile._detected_city]);
 
 
-  
+
   const ProfileSkeleton = () => (
     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden animate-pulse">
       <div className="p-5">
         <div className="h-6 bg-gray-200 rounded w-1/3 mb-5"></div>
-        
+
         {/* Profile Picture Skeleton */}
         <div className="flex items-center gap-4 mb-6">
           <div className="w-20 h-20 rounded-2xl bg-gray-200"></div>
@@ -271,7 +248,7 @@ const ProfileEditPage = () => {
             <div className="h-3 bg-gray-100 rounded w-32"></div>
           </div>
         </div>
-        
+
         {/* Tabs Skeleton */}
         <div className="flex bg-gray-50 rounded-xl p-1 mb-5 gap-1">
           <div className="h-10 bg-gray-200 rounded-lg flex-1"></div>
@@ -279,7 +256,7 @@ const ProfileEditPage = () => {
           <div className="h-10 bg-gray-200 rounded-lg flex-1"></div>
           <div className="h-10 bg-gray-200 rounded-lg flex-1"></div>
         </div>
-        
+
         {/* Form Fields Skeleton */}
         <div className="space-y-4">
           {[1, 2, 3, 4, 5].map(i => (
@@ -289,7 +266,7 @@ const ProfileEditPage = () => {
             </div>
           ))}
         </div>
-        
+
         <div className="h-12 bg-gray-200 rounded-xl w-full mt-6"></div>
       </div>
     </div>
@@ -384,12 +361,19 @@ const ProfileEditPage = () => {
       alert('File foto profil terlalu besar (Maks 5MB)');
       return;
     }
+
+    // Validation for Shipping (Village ID must be 10 digits if address is started)
+    if (profile.address_province_id && (!profile.address_village_id || String(profile.address_village_id).length !== 10)) {
+      alert('PENTING: Mohon lengkapi Kelurahan/Desa Anda. Diperlukan untuk perhitungan ongkos kirim yang akurat.');
+      setActiveTab('address');
+      return;
+    }
     try {
       const user = JSON.parse(localStorage.getItem('user'));
       if (user && user.id) {
         const formData = new FormData();
         const numericFields = ['study_semester', 'study_start_year', 'study_finish_year', 'address_latitude', 'address_longitude'];
-        
+
         for (const key in profile) {
           if (profile[key] !== null && profile[key] !== undefined) {
             // Fix 1: Handle Files correctly
@@ -398,7 +382,7 @@ const ProfileEditPage = () => {
               if (profile[key] instanceof File) {
                 formData.append(key, profile[key]);
               }
-            } 
+            }
             // Fix 2: Skip empty strings for numeric fields, but allow '0'
             else if (numericFields.includes(key) && profile[key] === '') {
               // Skip
@@ -410,19 +394,19 @@ const ProfileEditPage = () => {
           }
 
         }
-        
+
         // Debug: Log FormData keys
         // for (let pair of formData.entries()) { console.log(pair[0] + ': ' + pair[1]); }
 
         const updatedProfile = await authService.updateProfile(user.id, formData);
-        
+
         // Update user in localStorage with new picture
         if (updatedProfile && updatedProfile.picture) {
-           const currentUser = JSON.parse(localStorage.getItem('user'));
-           if (currentUser) {
-               currentUser.picture = updatedProfile.picture;
-               localStorage.setItem('user', JSON.stringify(currentUser));
-           }
+          const currentUser = JSON.parse(localStorage.getItem('user'));
+          if (currentUser) {
+            currentUser.picture = updatedProfile.picture;
+            localStorage.setItem('user', JSON.stringify(currentUser));
+          }
         }
 
         alert('Data Profile berhasil diperbaharui');
@@ -447,8 +431,7 @@ const ProfileEditPage = () => {
   const isFieldMissing = (field) => missingFields.includes(field);
 
   const inputCls = (field) =>
-    `w-full p-3 border rounded-xl text-sm transition outline-none focus:ring-2 ${
-      isFieldMissing(field) ? 'border-red-300 bg-red-50 focus:ring-red-400' : 'border-gray-200 bg-gray-50 focus:ring-green-500'
+    `w-full p-3 border rounded-xl text-sm transition outline-none focus:ring-2 ${isFieldMissing(field) ? 'border-red-300 bg-red-50 focus:ring-red-400' : 'border-gray-200 bg-gray-50 focus:ring-green-500'
     }`;
 
   const renderTabContent = () => {
@@ -462,35 +445,35 @@ const ProfileEditPage = () => {
               </label>
               <input type="text" name="name_full" placeholder="Nama Lengkap sesuai KTP" value={profile.name_full || ''} onChange={handleChange} className={inputCls('name_full')} />
             </div>
-              {/* Start File Upload KTP inside tab */}
-              <div className="bg-blue-50 rounded-xl p-4 border border-blue-100 flex flex-col sm:flex-row items-start sm:items-center gap-4">
-                <div className="bg-blue-100 text-blue-600 w-12 h-12 rounded-full flex items-center justify-center shrink-0">
-                  <span className="material-icons">badge</span>
-                </div>
-                <div className="flex-1">
-                  <h4 className="text-sm font-bold text-blue-900">Scan KTP Otomatis</h4>
-                  <p className="text-xs text-blue-700 mt-0.5">Isi data lebih cepat dengan mengunggah foto KTP Anda.</p>
-                  
-                  {ktpResult && (
-                    <div className={`mt-2 p-2 rounded-lg text-xs font-medium ${ktpResult.success ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                      {ktpResult.message}
-                    </div>
-                  )}
-                </div>
-                <label className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-bold cursor-pointer transition shadow-sm whitespace-nowrap self-stretch sm:self-auto text-center flex items-center justify-center gap-2">
-                  <span className="material-icons text-sm">photo_camera</span>
-                  {ktpScanning ? 'Memproses...' : 'Scan KTP'}
-                  <input type="file" accept="image/*" capture="environment" onChange={handleKtpScan} className="hidden" disabled={ktpScanning} />
-                </label>
+            {/* Start File Upload KTP inside tab */}
+            <div className="bg-blue-50 rounded-xl p-4 border border-blue-100 flex flex-col sm:flex-row items-start sm:items-center gap-4">
+              <div className="bg-blue-100 text-blue-600 w-12 h-12 rounded-full flex items-center justify-center shrink-0">
+                <span className="material-icons">badge</span>
               </div>
-              {/* End File Upload KTP */}
+              <div className="flex-1">
+                <h4 className="text-sm font-bold text-blue-900">Scan KTP Otomatis</h4>
+                <p className="text-xs text-blue-700 mt-0.5">Isi data lebih cepat dengan mengunggah foto KTP Anda.</p>
 
-              <div>
-                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
-                  NIK (No. KTP) <span className="text-gray-400 text-[9px] font-normal">opsional</span>
-                </label>
-                <input type="text" name="nik" placeholder="16 digit NIK" maxLength="16" value={profile.nik || ''} onChange={handleChange} className="w-full p-3 border border-gray-200 bg-gray-50 rounded-xl text-sm outline-none focus:ring-2 focus:ring-green-500 tracking-widest" />
+                {ktpResult && (
+                  <div className={`mt-2 p-2 rounded-lg text-xs font-medium ${ktpResult.success ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                    {ktpResult.message}
+                  </div>
+                )}
               </div>
+              <label className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-bold cursor-pointer transition shadow-sm whitespace-nowrap self-stretch sm:self-auto text-center flex items-center justify-center gap-2">
+                <span className="material-icons text-sm">photo_camera</span>
+                {ktpScanning ? 'Memproses...' : 'Scan KTP'}
+                <input type="file" accept="image/*" capture="environment" onChange={handleKtpScan} className="hidden" disabled={ktpScanning} />
+              </label>
+            </div>
+            {/* End File Upload KTP */}
+
+            <div>
+              <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
+                NIK (No. KTP) <span className="text-gray-400 text-[9px] font-normal">opsional</span>
+              </label>
+              <input type="text" name="nik" placeholder="16 digit NIK" maxLength="16" value={profile.nik || ''} onChange={handleChange} className="w-full p-3 border border-gray-200 bg-gray-50 rounded-xl text-sm outline-none focus:ring-2 focus:ring-green-500 tracking-widest" />
+            </div>
             <div>
               <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
                 Jenis Kelamin {isFieldMissing('gender') && <span className="text-red-500">*wajib</span>}
@@ -551,13 +534,13 @@ const ProfileEditPage = () => {
                 <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
                   Alamat Lengkap {isFieldMissing('address') && <span className="text-red-500">*wajib</span>}
                 </label>
-                <textarea 
-                  name="address" 
+                <textarea
+                  name="address"
                   rows="2"
-                  placeholder="Nama jalan, Nomor rumah, RT/RW..." 
-                  value={profile.address || ''} 
-                  onChange={handleChange} 
-                  className={inputCls('address')} 
+                  placeholder="Nama jalan, Nomor rumah, RT/RW..."
+                  value={profile.address || ''}
+                  onChange={handleChange}
+                  className={inputCls('address')}
                 />
               </div>
 
@@ -567,9 +550,10 @@ const ProfileEditPage = () => {
                   <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
                     Provinsi {isFieldMissing('address_province') && <span className="text-red-500">*wajib</span>}
                   </label>
-                  <select 
-                    name="address_province_id" 
-                    value={profile.address_province_id || ''} 
+                  <select
+                    name="address_province_id"
+                    value={profile.address_province_id || ''}
+                    onFocus={() => fetchProvinces()}
                     onChange={(e) => {
                       const selected = provinces.find(p => p.province_id === e.target.value);
                       setProfile(prev => ({
@@ -580,10 +564,16 @@ const ProfileEditPage = () => {
                         address_subdistrict_id: '', address_subdistrict_name: '',
                         address_village_id: '', address_village_name: ''
                       }));
-                    }} 
+                      setCities([]);
+                      setDistricts([]);
+                      setVillages([]);
+                    }}
                     className={inputCls('address_province')}
                   >
                     <option value="">Pilih Provinsi</option>
+                    {provinces.length === 0 && profile.address_province_id && (
+                      <option value={profile.address_province_id}>{profile.address_province || 'Loading...'}</option>
+                    )}
                     {provinces.map(p => (
                       <option key={p.province_id} value={p.province_id}>{p.province}</option>
                     ))}
@@ -594,9 +584,10 @@ const ProfileEditPage = () => {
                   <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
                     Kota / Kabupaten {isFieldMissing('address_city_name') && <span className="text-red-500">*wajib</span>}
                   </label>
-                  <select 
-                    name="address_city_id" 
-                    value={profile.address_city_id || ''} 
+                  <select
+                    name="address_city_id"
+                    value={profile.address_city_id || ''}
+                    onFocus={() => fetchCities(profile.address_province_id)}
                     onChange={(e) => {
                       const val = String(e.target.value);
                       const selected = cities.find(c => String(c.city_id) === val);
@@ -607,11 +598,16 @@ const ProfileEditPage = () => {
                         address_subdistrict_id: '', address_subdistrict_name: '',
                         address_village_id: '', address_village_name: ''
                       }));
-                    }} 
+                      setDistricts([]);
+                      setVillages([]);
+                    }}
                     disabled={!profile.address_province_id || loadingCities}
                     className={inputCls('address_city_name')}
                   >
                     <option value="">{loadingCities ? 'Memuat Kota...' : 'Pilih Kota'}</option>
+                    {cities.length === 0 && profile.address_city_id && (
+                       <option value={profile.address_city_id}>{profile.address_city_name || 'Loading...'}</option>
+                    )}
                     {cities.map(c => (
                       <option key={c.city_id} value={c.city_id}>{c.type} {c.city_name}</option>
                     ))}
@@ -622,9 +618,10 @@ const ProfileEditPage = () => {
                   <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
                     Kecamatan
                   </label>
-                  <select 
-                    name="address_subdistrict_id" 
-                    value={profile.address_subdistrict_id || ''} 
+                  <select
+                    name="address_subdistrict_id"
+                    value={profile.address_subdistrict_id || ''}
+                    onFocus={() => fetchDistricts(profile.address_city_id)}
                     onChange={(e) => {
                       const val = String(e.target.value);
                       const selected = districts.find(d => String(d.district_id) === val);
@@ -634,11 +631,15 @@ const ProfileEditPage = () => {
                         address_subdistrict_name: selected ? selected.district_name : '',
                         address_village_id: '', address_village_name: ''
                       }));
-                    }} 
+                      setVillages([]);
+                    }}
                     disabled={!profile.address_city_id || loadingDistricts}
                     className={inputCls('address_subdistrict_name')}
                   >
                     <option value="">{loadingDistricts ? 'Memuat Kecamatan...' : 'Pilih Kecamatan'}</option>
+                    {districts.length === 0 && profile.address_subdistrict_id && (
+                      <option value={profile.address_subdistrict_id}>{profile.address_subdistrict_name || 'Loading...'}</option>
+                    )}
                     {districts.map(d => (
                       <option key={d.district_id} value={d.district_id}>{d.district_name}</option>
                     ))}
@@ -649,9 +650,10 @@ const ProfileEditPage = () => {
                   <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
                     Kelurahan / Desa
                   </label>
-                  <select 
-                    name="address_village_id" 
-                    value={profile.address_village_id || ''} 
+                  <select
+                    name="address_village_id"
+                    value={profile.address_village_id || ''}
+                    onFocus={() => fetchVillages(profile.address_subdistrict_id)}
                     onChange={(e) => {
                       const val = String(e.target.value);
                       const selected = villages.find(v => String(v.village_id) === val);
@@ -660,11 +662,14 @@ const ProfileEditPage = () => {
                         address_village_id: val,
                         address_village_name: selected ? selected.village_name : ''
                       }));
-                    }} 
+                    }}
                     disabled={!profile.address_subdistrict_id || loadingVillages}
                     className={inputCls('address_village_name')}
                   >
                     <option value="">{loadingVillages ? 'Memuat Kelurahan...' : 'Pilih Kelurahan'}</option>
+                    {villages.length === 0 && profile.address_village_id && (
+                      <option value={profile.address_village_id}>{profile.address_village_name || 'Loading...'}</option>
+                    )}
                     {villages.map(v => (
                       <option key={v.village_id} value={v.village_id}>{v.village_name}</option>
                     ))}
@@ -698,12 +703,12 @@ const ProfileEditPage = () => {
                 </div>
               </div>
             </div>
-            
+
             <div className="flex justify-center mt-4 text-center">
-                 <button type="button" onClick={() => navigate(`/digital-produk/${profile.username}`)} className="flex items-center gap-2 px-6 py-3 bg-emerald-50 text-emerald-700 rounded-xl text-sm font-bold hover:bg-emerald-100 transition border border-emerald-200">
-                    <span className="material-icons">storefront</span>
-                    Lihat Toko Saya
-                 </button>
+              <button type="button" onClick={() => navigate(`/digital-produk/${profile.username}`)} className="flex items-center gap-2 px-6 py-3 bg-emerald-50 text-emerald-700 rounded-xl text-sm font-bold hover:bg-emerald-100 transition border border-emerald-200">
+                <span className="material-icons">storefront</span>
+                Lihat Toko Saya
+              </button>
             </div>
           </div>
         );
@@ -723,7 +728,7 @@ const ProfileEditPage = () => {
                 <option value="s2">Magister</option><option value="s3">Doktor</option>
               </select>
             </div>
-            
+
             <div>
               <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
                 {isBasicSchool ? 'Nama Sekolah' : 'Kampus / Universitas'} {isFieldMissing('study_campus') && <span className="text-red-500">*wajib</span>}
@@ -731,12 +736,12 @@ const ProfileEditPage = () => {
               <input type="text" name="study_campus" placeholder={isBasicSchool ? 'Contoh: SMA Negeri 1' : 'Contoh: Universitas Indonesia'} value={profile.study_campus || ''} onChange={handleChange} className={inputCls('study_campus')} />
             </div>
 
-            {!isBasicSchool && ['study_faculty','study_department','study_program'].map(f => (
+            {!isBasicSchool && ['study_faculty', 'study_department', 'study_program'].map(f => (
               <div key={f}>
                 <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
                   {f === 'study_faculty' ? 'Fakultas' : f === 'study_department' ? 'Jurusan' : 'Program Studi'} {isFieldMissing(f) && <span className="text-red-500">*wajib</span>}
                 </label>
-                <input type="text" name={f} placeholder={f.replace('study_','')} value={profile[f] || ''} onChange={handleChange} className={inputCls(f)} />
+                <input type="text" name={f} placeholder={f.replace('study_', '')} value={profile[f] || ''} onChange={handleChange} className={inputCls(f)} />
               </div>
             ))}
 
@@ -749,7 +754,7 @@ const ProfileEditPage = () => {
                   <input type="number" name="study_semester" value={profile.study_semester || ''} onChange={handleChange} className={inputCls('study_semester')} />
                 </div>
               )}
-              {['study_start_year','study_finish_year'].map(f => (
+              {['study_start_year', 'study_finish_year'].map(f => (
                 <div key={f}>
                   <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
                     {f === 'study_start_year' ? 'Thn Masuk' : 'Thn Lulus'} {isFieldMissing(f) && <span className="text-red-500">*wajib</span>}
@@ -774,7 +779,7 @@ const ProfileEditPage = () => {
               </label>
               <select name="job" value={profile.job || ''} onChange={handleChange} className={inputCls('job')}>
                 <option value="">Pilih</option>
-                {[['mahasiswa','Mahasiswa'],['asn','ASN'],['karyawan_swasta','Karyawan Swasta'],['guru','Guru'],['dosen','Dosen'],['dokter','Dokter'],['perawat','Perawat'],['apoteker','Apoteker'],['programmer','Programmer'],['data_scientist','Data Scientist'],['desainer_grafis','Desainer Grafis'],['marketing','Marketing'],['hrd','HRD'],['akuntan','Akuntan'],['konsultan','Konsultan'],['arsitek','Arsitek'],['insinyur','Insinyur'],['peneliti','Peneliti'],['jurnalis','Jurnalis'],['penulis','Penulis'],['penerjemah','Penerjemah'],['pilot','Pilot'],['pramugari','Pramugari'],['chef','Chef'],['pengusaha','Pengusaha'],['petani','Petani'],['nelayan','Nelayan'],['pengrajin','Pengrajin'],['teknisi','Teknisi'],['seniman','Seniman'],['musisi','Musisi'],['atlet','Atlet'],['polisi','Polisi'],['tentara','Tentara'],['pengacara','Pengacara'],['notaris','Notaris'],['psikolog','Psikolog'],['sopir','Sopir'],['kurir','Kurir'],['barista','Barista'],['freelancer','Freelancer']].map(([v,l])=>
+                {[['mahasiswa', 'Mahasiswa'], ['asn', 'ASN'], ['karyawan_swasta', 'Karyawan Swasta'], ['guru', 'Guru'], ['dosen', 'Dosen'], ['dokter', 'Dokter'], ['perawat', 'Perawat'], ['apoteker', 'Apoteker'], ['programmer', 'Programmer'], ['data_scientist', 'Data Scientist'], ['desainer_grafis', 'Desainer Grafis'], ['marketing', 'Marketing'], ['hrd', 'HRD'], ['akuntan', 'Akuntan'], ['konsultan', 'Konsultan'], ['arsitek', 'Arsitek'], ['insinyur', 'Insinyur'], ['peneliti', 'Peneliti'], ['jurnalis', 'Jurnalis'], ['penulis', 'Penulis'], ['penerjemah', 'Penerjemah'], ['pilot', 'Pilot'], ['pramugari', 'Pramugari'], ['chef', 'Chef'], ['pengusaha', 'Pengusaha'], ['petani', 'Petani'], ['nelayan', 'Nelayan'], ['pengrajin', 'Pengrajin'], ['teknisi', 'Teknisi'], ['seniman', 'Seniman'], ['musisi', 'Musisi'], ['atlet', 'Atlet'], ['polisi', 'Polisi'], ['tentara', 'Tentara'], ['pengacara', 'Pengacara'], ['notaris', 'Notaris'], ['psikolog', 'Psikolog'], ['sopir', 'Sopir'], ['kurir', 'Kurir'], ['barista', 'Barista'], ['freelancer', 'Freelancer']].map(([v, l]) =>
                   <option key={v} value={v}>{l}</option>
                 )}
               </select>
@@ -785,17 +790,17 @@ const ProfileEditPage = () => {
               </label>
               <select name="work_field" value={profile.work_field || ''} onChange={handleChange} className={inputCls('work_field')}>
                 <option value="">Pilih</option>
-                {[['pendidikan','Pendidikan'],['kesehatan','Kesehatan'],['ekobis','Ekonomi Bisnis'],['agrotek','Agrotek'],['herbal','Herbal-Farmasi'],['it','IT'],['manufaktur','Manufaktur'],['energi','Energi-Mineral'],['sains','Sains'],['teknologi','Teknologi'],['polhuk','Politik-Hukum'],['humaniora','Humaniora'],['media','Media-Literasi'],['sejarah','Sejarah']].map(([v,l])=>
+                {[['pendidikan', 'Pendidikan'], ['kesehatan', 'Kesehatan'], ['ekobis', 'Ekonomi Bisnis'], ['agrotek', 'Agrotek'], ['herbal', 'Herbal-Farmasi'], ['it', 'IT'], ['manufaktur', 'Manufaktur'], ['energi', 'Energi-Mineral'], ['sains', 'Sains'], ['teknologi', 'Teknologi'], ['polhuk', 'Politik-Hukum'], ['humaniora', 'Humaniora'], ['media', 'Media-Literasi'], ['sejarah', 'Sejarah']].map(([v, l]) =>
                   <option key={v} value={v}>{l}</option>
                 )}
               </select>
             </div>
-            {['work_institution','work_position'].map(f => (
+            {['work_institution', 'work_position'].map(f => (
               <div key={f}>
                 <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
                   {f === 'work_institution' ? 'Instansi' : 'Posisi/Jabatan'} {isFieldMissing(f) && <span className="text-red-500">*wajib</span>}
                 </label>
-                <input type="text" name={f} placeholder={f.replace('work_','')} value={profile[f] || ''} onChange={handleChange} className={inputCls(f)} />
+                <input type="text" name={f} placeholder={f.replace('work_', '')} value={profile[f] || ''} onChange={handleChange} className={inputCls(f)} />
               </div>
             ))}
             <div>
@@ -843,69 +848,68 @@ const ProfileEditPage = () => {
         {loading ? (
           <ProfileSkeleton />
         ) : (
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-          <div className="p-5">
-            <div className="flex items-center gap-2 mb-5">
-              <BackButton fallback="/profile" />
-              <h3 className="text-xl font-bold text-gray-900">Edit Profile</h3>
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="p-5">
+              <div className="flex items-center gap-2 mb-5">
+                <BackButton fallback="/profile" />
+                <h3 className="text-xl font-bold text-gray-900">Edit Profile</h3>
+              </div>
+
+              {/* Profile Picture */}
+              <div className="flex items-center gap-4 mb-6">
+                <div className="w-20 h-20 rounded-2xl overflow-hidden border-2 border-gray-200 bg-gray-50 flex items-center justify-center shrink-0">
+                  <img
+                    src={profile.picture instanceof File ? URL.createObjectURL(profile.picture) : (profile.picture || `${API}/media/profile_images/pas_foto_standard.png`)}
+                    alt="Profile"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <div>
+                  <label className="bg-green-50 text-green-700 border border-green-200 px-4 py-2 rounded-xl text-sm font-bold cursor-pointer hover:bg-green-100 transition inline-flex items-center gap-2">
+                    <span className="material-icons text-sm">upload</span> Ganti Foto
+                    <input type="file" onChange={handleFileChange} accept="image/*" className="hidden" />
+                  </label>
+                  <p className="text-[10px] text-gray-400 mt-1">Maks 5MB. JPG/PNG</p>
+                </div>
+              </div>
+
+              <form onSubmit={handleSubmit}>
+                {/* Tabs */}
+                <div className="flex bg-gray-100 rounded-xl p-1 mb-5 gap-1">
+                  {[
+                    { key: 'general', icon: 'person', label: 'Umum' },
+                    { key: 'address', icon: 'location_on', label: 'Alamat' },
+                    { key: 'study', icon: 'school', label: 'Pendidikan' },
+                    { key: 'work', icon: 'work', label: 'Pekerjaan' },
+                  ].map(tab => (
+                    <button
+                      key={tab.key}
+                      type="button"
+                      onClick={() => setActiveTab(tab.key)}
+                      className={`flex-1 flex items-center justify-center gap-1 py-2.5 rounded-lg text-xs font-bold transition ${activeTab === tab.key
+                          ? 'bg-white text-green-700 shadow-sm shadow-gray-200'
+                          : 'text-gray-500 hover:text-gray-700'
+                        }`}
+                    >
+                      <span className="material-icons text-sm">{tab.icon}</span>
+                      <span className="hidden sm:inline">{tab.label}</span>
+                    </button>
+                  ))}
+                </div>
+
+                {/* Tab Content */}
+                <div className="min-h-[300px]">
+                  {renderTabContent()}
+                </div>
+
+                {/* Submit Button */}
+                <button type="submit" disabled={loading} className="w-full bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white py-3.5 rounded-xl font-bold flex items-center justify-center mt-6 shadow-lg shadow-green-100 transition disabled:opacity-50">
+                  <span className="material-icons mr-2">save</span>
+                  Simpan Perubahan
+                </button>
+              </form>
             </div>
-
-            {/* Profile Picture */}
-            <div className="flex items-center gap-4 mb-6">
-              <div className="w-20 h-20 rounded-2xl overflow-hidden border-2 border-gray-200 bg-gray-50 flex items-center justify-center shrink-0">
-                <img
-                  src={profile.picture instanceof File ? URL.createObjectURL(profile.picture) : (profile.picture || `${API}/media/profile_images/pas_foto_standard.png`)}
-                  alt="Profile"
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              <div>
-                <label className="bg-green-50 text-green-700 border border-green-200 px-4 py-2 rounded-xl text-sm font-bold cursor-pointer hover:bg-green-100 transition inline-flex items-center gap-2">
-                  <span className="material-icons text-sm">upload</span> Ganti Foto
-                  <input type="file" onChange={handleFileChange} accept="image/*" className="hidden" />
-                </label>
-                <p className="text-[10px] text-gray-400 mt-1">Maks 5MB. JPG/PNG</p>
-              </div>
-            </div>
-
-            <form onSubmit={handleSubmit}>
-              {/* Tabs */}
-              <div className="flex bg-gray-100 rounded-xl p-1 mb-5 gap-1">
-                {[
-                  { key: 'general', icon: 'person', label: 'Umum' },
-                  { key: 'address', icon: 'location_on', label: 'Alamat' },
-                  { key: 'study', icon: 'school', label: 'Pendidikan' },
-                  { key: 'work', icon: 'work', label: 'Pekerjaan' },
-                ].map(tab => (
-                  <button
-                    key={tab.key}
-                    type="button"
-                    onClick={() => setActiveTab(tab.key)}
-                    className={`flex-1 flex items-center justify-center gap-1 py-2.5 rounded-lg text-xs font-bold transition ${
-                      activeTab === tab.key
-                        ? 'bg-white text-green-700 shadow-sm shadow-gray-200'
-                        : 'text-gray-500 hover:text-gray-700'
-                    }`}
-                  >
-                    <span className="material-icons text-sm">{tab.icon}</span>
-                    <span className="hidden sm:inline">{tab.label}</span>
-                  </button>
-                ))}
-              </div>
-
-              {/* Tab Content */}
-              <div className="min-h-[300px]">
-                {renderTabContent()}
-              </div>
-
-              {/* Submit Button */}
-              <button type="submit" disabled={loading} className="w-full bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white py-3.5 rounded-xl font-bold flex items-center justify-center mt-6 shadow-lg shadow-green-100 transition disabled:opacity-50">
-                <span className="material-icons mr-2">save</span>
-                Simpan Perubahan
-              </button>
-            </form>
           </div>
-        </div>
         )}
       </div>
       <NavigationButton />
