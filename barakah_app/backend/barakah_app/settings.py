@@ -20,11 +20,17 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Load environment variables from .env file
 env = environ.Env()
-# Check multiple possible locations for .env
-env_path = os.path.join(BASE_DIR, '.env')
-if os.path.exists(env_path):
-    environ.Env.read_env(env_path)
-    env.read_env(env_path) # Some versions prefer instance method
+# Check multiple possible locations for .env to ensure it's found on all environments
+env_paths = [
+    os.path.join(BASE_DIR, '.env'),
+    os.path.join(BASE_DIR, 'barakah_app', '.env'),
+    os.path.join(os.getcwd(), '.env'),
+]
+
+for path in env_paths:
+    if os.path.exists(path):
+        environ.Env.read_env(path)
+        env.read_env(path)
 
 # Load the GOOGLE_CLIENT_ID from the environment variables
 GOOGLE_CLIENT_ID = env('GOOGLE_CLIENT_ID', default='')
