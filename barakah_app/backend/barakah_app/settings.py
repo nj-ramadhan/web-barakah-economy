@@ -186,15 +186,15 @@ else:
     #     }
     # }
     DATABASES = {
-            'default': {
-                'ENGINE': 'django.db.backends.postgresql',
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
                 'NAME': 'bae_db',
-                'USER': 'bae_user',
+            'USER': 'bae_user',
                 'PASSWORD': 'BarakahEconomy2025!',
-                'HOST': 'localhost',
-                'PORT': '5432',
-            }
+            'HOST': 'localhost',
+            'PORT': '5432',
         }
+    }
 
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators

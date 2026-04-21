@@ -334,8 +334,8 @@ const EventRegistrationSubmissionPage = () => {
                 </div>
 
                 {/* Modern Action Toolbar */}
-                <div className="mt-12 flex justify-center no-print">
-                    <div className="inline-flex items-center gap-3 p-3 bg-white/80 backdrop-blur-xl border border-white rounded-[2.5rem] shadow-2xl shadow-green-900/10 transition-all duration-500 hover:shadow-green-900/20">
+                <div className="mt-12 flex justify-center no-print px-4">
+                    <div className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 bg-white/80 backdrop-blur-xl border border-white rounded-[2rem] sm:rounded-[2.5rem] shadow-2xl shadow-green-900/10 transition-all duration-500 hover:shadow-green-900/20 max-w-full overflow-hidden">
                         {/* Status Label (If Selected) */}
                         {selectedIds.length > 0 && (
                             <div className="hidden sm:flex items-center gap-2 px-4 py-2 bg-green-50 rounded-full border border-green-100 mr-2 animate-in fade-in slide-in-from-left-4">
@@ -344,12 +344,12 @@ const EventRegistrationSubmissionPage = () => {
                             </div>
                         )}
 
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1.5 sm:gap-2">
                             {/* Delete Button */}
                             <button
                                 onClick={handleBulkDelete}
                                 disabled={selectedIds.length === 0}
-                                className="group flex items-center gap-2 px-5 py-3 bg-red-50 hover:bg-red-100 text-red-600 rounded-2xl font-bold transition-all disabled:opacity-20 active:scale-95 border border-red-100"
+                                className="group flex items-center gap-2 px-3.5 sm:px-5 py-2.5 sm:py-3 bg-red-50 hover:bg-red-100 text-red-600 rounded-2xl font-bold transition-all disabled:opacity-20 active:scale-95 border border-red-100"
                                 title="Hapus Data Terpilih"
                             >
                                 <span className="material-icons text-xl group-hover:rotate-12 transition-transform">delete_sweep</span>
@@ -360,26 +360,27 @@ const EventRegistrationSubmissionPage = () => {
                             <button
                                 onClick={handleExportCsv}
                                 disabled={isExporting}
-                                className="group flex items-center gap-2 px-5 py-3 bg-gray-50 hover:bg-gray-100 text-gray-700 rounded-2xl font-bold transition-all disabled:opacity-50 active:scale-95 border border-gray-200"
+                                className="group flex items-center gap-2 px-3.5 sm:px-5 py-2.5 sm:py-3 bg-gray-50 hover:bg-gray-100 text-gray-700 rounded-2xl font-bold transition-all disabled:opacity-50 active:scale-95 border border-gray-200"
                             >
                                 <span className={`material-icons text-xl ${isExporting ? 'animate-spin' : 'group-hover:-translate-y-0.5 transition-transform'}`}>
                                     {isExporting ? 'sync' : 'cloud_download'}
                                 </span>
                                 <span className="text-[10px] uppercase tracking-widest hidden sm:inline">
-                                    {isExporting ? 'Exporting...' : 'Export CSV'}
+                                    {isExporting ? 'Export CSV' : 'Export CSV'}
                                 </span>
                             </button>
 
-                            <div className="w-px h-8 bg-gray-200 mx-1"></div>
+                            <div className="w-px h-8 bg-gray-200 mx-1 sm:mx-2"></div>
 
                             {/* Blast Button */}
                             <button 
                                 onClick={() => setShowBlastModal(true)}
-                                className="group relative flex items-center gap-3 px-8 py-3.5 bg-gradient-to-br from-emerald-600 to-teal-800 text-white rounded-[1.25rem] shadow-xl shadow-emerald-200 hover:shadow-emerald-300 hover:scale-[1.02] active:scale-95 transition-all font-black overflow-hidden"
+                                className="group relative flex items-center gap-2 sm:gap-3 px-5 sm:px-8 py-3 sm:py-3.5 bg-gradient-to-br from-emerald-600 to-teal-800 text-white rounded-[1.25rem] shadow-xl shadow-emerald-200 hover:shadow-emerald-300 hover:scale-[1.02] active:scale-95 transition-all font-black overflow-hidden"
                             >
                                 <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
                                 <span className="material-icons text-xl group-hover:rotate-12 transition-transform">whatsapp</span>
-                                <span className="text-[11px] uppercase tracking-[0.15em]">Blast WA</span>
+                                <span className="text-[11px] uppercase tracking-[0.15em] hidden xs:inline">Blast WA</span>
+                                <span className="text-[11px] uppercase tracking-[0.15em] xs:hidden">Blast</span>
                             </button>
                         </div>
                     </div>
