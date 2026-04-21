@@ -48,7 +48,7 @@ const EventRegistrationSubmissionPage = () => {
     };
 
     const handleSelectOne = (id) => {
-        setSelectedIds(prev => 
+        setSelectedIds(prev =>
             prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
         );
     };
@@ -63,7 +63,7 @@ const EventRegistrationSubmissionPage = () => {
         if (reg.user_details) {
             name = reg.user_details.profile?.name_full || reg.user_details.username || "";
             if (reg.user_details.profile?.name_full) isProfileComplete = true;
-            
+
             email = reg.user_details.email || "";
             phone = reg.user_details.phone || "";
             if (phone) isProfileComplete = true;
@@ -199,8 +199,8 @@ const EventRegistrationSubmissionPage = () => {
                             <thead>
                                 <tr className="bg-gray-50 border-b border-gray-100">
                                     <th className="p-5 w-10">
-                                        <input 
-                                            type="checkbox" 
+                                        <input
+                                            type="checkbox"
                                             className="w-4 h-4 rounded border-gray-300 text-green-700 focus:ring-green-500"
                                             onChange={handleSelectAll}
                                             checked={registrations.length > 0 && selectedIds.length === registrations.length}
@@ -231,8 +231,8 @@ const EventRegistrationSubmissionPage = () => {
                                         return (
                                             <tr key={reg.id} className={`hover:bg-gray-50/50 transition-colors ${selectedIds.includes(reg.id) ? 'bg-green-50/30' : ''}`}>
                                                 <td className="p-5">
-                                                    <input 
-                                                        type="checkbox" 
+                                                    <input
+                                                        type="checkbox"
                                                         className="w-4 h-4 rounded border-gray-300 text-green-700 focus:ring-green-500"
                                                         checked={selectedIds.includes(reg.id)}
                                                         onChange={() => handleSelectOne(reg.id)}
@@ -256,75 +256,74 @@ const EventRegistrationSubmissionPage = () => {
                                                         {hybrid.email}
                                                     </div>
                                                 </td>
-                                            {event?.form_fields?.map(field => {
-                                                let value = reg.responses[field.id];
-                                                
-                                                // Robust fallback: if ID mismatch (e.g. fields were deleted/recreated), 
-                                                // try to find by label match in responses
-                                                if (!value && reg.responses) {
-                                                    const labelKey = Object.keys(reg.responses).find(k => k.toLowerCase() === field.label?.toLowerCase());
-                                                    if (labelKey) value = reg.responses[labelKey];
-                                                }
+                                                {event?.form_fields?.map(field => {
+                                                    let value = reg.responses[field.id];
 
-                                                const file = reg.uploaded_files?.find(f => f.field === field.id);
+                                                    // Robust fallback: if ID mismatch (e.g. fields were deleted/recreated), 
+                                                    // try to find by label match in responses
+                                                    if (!value && reg.responses) {
+                                                        const labelKey = Object.keys(reg.responses).find(k => k.toLowerCase() === field.label?.toLowerCase());
+                                                        if (labelKey) value = reg.responses[labelKey];
+                                                    }
 
-                                                return (
-                                                    <td key={field.id} className="p-5 text-sm text-gray-600">
-                                                        {field.field_type === 'file' && file ? (
-                                                            <a href={getImageUrl(file.file)} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-green-700 font-bold hover:underline">
-                                                                <span className="material-icons text-sm">download</span> Lihat File
-                                                            </a>
-                                                        ) : Array.isArray(value) ? (
-                                                            <div className="flex flex-wrap gap-1">
-                                                                {value.map(v => <span key={v} className="px-2 py-0.5 bg-gray-100 rounded text-[10px] font-medium">{v}</span>)}
-                                                            </div>
-                                                        ) : (
-                                                            <span className="line-clamp-2 italic">{value || '-'}</span>
-                                                        )}
+                                                    const file = reg.uploaded_files?.find(f => f.field === field.id);
+
+                                                    return (
+                                                        <td key={field.id} className="p-5 text-sm text-gray-600">
+                                                            {field.field_type === 'file' && file ? (
+                                                                <a href={getImageUrl(file.file)} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-green-700 font-bold hover:underline">
+                                                                    <span className="material-icons text-sm">download</span> Lihat File
+                                                                </a>
+                                                            ) : Array.isArray(value) ? (
+                                                                <div className="flex flex-wrap gap-1">
+                                                                    {value.map(v => <span key={v} className="px-2 py-0.5 bg-gray-100 rounded text-[10px] font-medium">{v}</span>)}
+                                                                </div>
+                                                            ) : (
+                                                                <span className="line-clamp-2 italic">{value || '-'}</span>
+                                                            )}
+                                                        </td>
+                                                    );
+                                                })}
+                                                {event?.price_type !== 'free' && (
+                                                    <td className="p-5 text-xs whitespace-nowrap">
+                                                        <div className="font-black text-gray-900">Rp {Number(reg.payment_amount || 0).toLocaleString('id-ID')}</div>
+                                                        <div className="flex flex-col gap-1.5 mt-1.5">
+                                                            {reg.payment_proof ? (
+                                                                <button
+                                                                    onClick={() => setSelectedPaymentProof(reg.payment_proof)}
+                                                                    className="flex items-center gap-1 text-blue-600 font-bold hover:underline py-1"
+                                                                >
+                                                                    <span className="material-icons text-xs">receipt_long</span>
+                                                                    Bukti Transfer
+                                                                </button>
+                                                            ) : (
+                                                                <span className="text-gray-400 italic">No Proof</span>
+                                                            )}
+                                                            <span className={`w-fit px-1.5 py-0.5 rounded text-[8px] font-black uppercase ${reg.payment_status === 'verified' ? 'bg-green-50 text-green-700' :
+                                                                    reg.payment_status === 'rejected' ? 'bg-red-50 text-red-700' :
+                                                                        'bg-orange-50 text-orange-700'
+                                                                }`}>
+                                                                {reg.payment_status || 'Pending'}
+                                                            </span>
+                                                        </div>
                                                     </td>
-                                                );
-                                            })}
-                                            {event?.price_type !== 'free' && (
-                                                <td className="p-5 text-xs whitespace-nowrap">
-                                                    <div className="font-black text-gray-900">Rp {Number(reg.payment_amount || 0).toLocaleString('id-ID')}</div>
-                                                    <div className="flex flex-col gap-1.5 mt-1.5">
-                                                        {reg.payment_proof ? (
-                                                            <button 
-                                                                onClick={() => setSelectedPaymentProof(reg.payment_proof)}
-                                                                className="flex items-center gap-1 text-blue-600 font-bold hover:underline py-1"
-                                                            >
-                                                                <span className="material-icons text-xs">receipt_long</span>
-                                                                Bukti Transfer
-                                                            </button>
-                                                        ) : (
-                                                            <span className="text-gray-400 italic">No Proof</span>
-                                                        )}
-                                                        <span className={`w-fit px-1.5 py-0.5 rounded text-[8px] font-black uppercase ${
-                                                            reg.payment_status === 'verified' ? 'bg-green-50 text-green-700' :
-                                                            reg.payment_status === 'rejected' ? 'bg-red-50 text-red-700' :
-                                                            'bg-orange-50 text-orange-700'
-                                                        }`}>
-                                                            {reg.payment_status || 'Pending'}
-                                                        </span>
-                                                    </div>
-                                                </td>
-                                            )}
-                                            <td className="p-5 text-right">
-                                                <div className="flex flex-col items-end gap-1.5">
-                                                    <span className={`w-fit px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${reg.status === 'approved' ? 'bg-green-100 text-green-700' :
+                                                )}
+                                                <td className="p-5 text-right">
+                                                    <div className="flex flex-col items-end gap-1.5">
+                                                        <span className={`w-fit px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${reg.status === 'approved' ? 'bg-green-100 text-green-700' :
                                                             reg.status === 'rejected' ? 'bg-red-100 text-red-700' :
                                                                 'bg-orange-100 text-orange-700'
-                                                        }`}>
-                                                        {reg.status}
-                                                    </span>
-                                                    {reg.is_attended && (
-                                                        <span className="w-fit bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider flex items-center gap-1" title={reg.attended_at ? new Date(reg.attended_at).toLocaleString('id-ID') : 'Hadir'}>
-                                                            <span className="material-icons text-[10px]">how_to_reg</span> Hadir
+                                                            }`}>
+                                                            {reg.status}
                                                         </span>
-                                                    )}
-                                                </div>
-                                            </td>
-                                        </tr>
+                                                        {reg.is_attended && (
+                                                            <span className="w-fit bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider flex items-center gap-1" title={reg.attended_at ? new Date(reg.attended_at).toLocaleString('id-ID') : 'Hadir'}>
+                                                                <span className="material-icons text-[10px]">how_to_reg</span> Hadir
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                            </tr>
                                         );
                                     })
                                 )}
@@ -373,12 +372,11 @@ const EventRegistrationSubmissionPage = () => {
                             <div className="w-px h-8 bg-gray-200 mx-1 sm:mx-2"></div>
 
                             {/* Blast Button */}
-                            <button 
+                            <button
                                 onClick={() => setShowBlastModal(true)}
                                 className="group relative flex items-center gap-2 sm:gap-3 px-5 sm:px-8 py-3 sm:py-3.5 bg-gradient-to-br from-emerald-600 to-teal-800 text-white rounded-[1.25rem] shadow-xl shadow-emerald-200 hover:shadow-emerald-300 hover:scale-[1.02] active:scale-95 transition-all font-black overflow-hidden"
                             >
                                 <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
-                                <span className="material-icons text-xl group-hover:rotate-12 transition-transform">whatsapp</span>
                                 <span className="text-[11px] uppercase tracking-[0.15em] hidden xs:inline">Blast WA</span>
                                 <span className="text-[11px] uppercase tracking-[0.15em] xs:hidden">Blast</span>
                             </button>
@@ -489,8 +487,8 @@ const EventRegistrationSubmissionPage = () => {
                                     <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-0.5">Broadcast Message</p>
                                 </div>
                             </div>
-                            <button 
-                                onClick={() => setShowBlastModal(false)} 
+                            <button
+                                onClick={() => setShowBlastModal(false)}
                                 className="w-10 h-10 flex items-center justify-center text-gray-400 hover:text-gray-900 hover:bg-gray-100 rounded-full transition-all"
                             >
                                 <span className="material-icons">close</span>
@@ -563,7 +561,7 @@ const EventRegistrationSubmissionPage = () => {
                                     <p className="text-[10px] text-gray-500 font-bold italic uppercase tracking-wider">Preview Transaksi</p>
                                 </div>
                             </div>
-                            <button 
+                            <button
                                 onClick={() => setSelectedPaymentProof(null)}
                                 className="w-10 h-10 bg-gray-50 text-gray-400 hover:bg-red-50 hover:text-red-500 rounded-full flex items-center justify-center transition"
                             >
@@ -571,14 +569,14 @@ const EventRegistrationSubmissionPage = () => {
                             </button>
                         </div>
                         <div className="p-8 bg-gray-50 flex-1 overflow-auto flex items-center justify-center min-h-0">
-                            <img 
-                                src={getImageUrl(selectedPaymentProof)} 
-                                alt="Bukti Transfer" 
+                            <img
+                                src={getImageUrl(selectedPaymentProof)}
+                                alt="Bukti Transfer"
                                 className="max-w-full max-h-full object-contain rounded-xl shadow-lg border border-gray-200"
                             />
                         </div>
                         <div className="p-6 bg-white border-t border-gray-100 flex justify-end shrink-0">
-                            <button 
+                            <button
                                 onClick={() => setSelectedPaymentProof(null)}
                                 className="px-6 py-3 bg-gray-900 text-white rounded-2xl text-xs font-black shadow-xl hover:bg-gray-800 transition active:scale-95"
                             >

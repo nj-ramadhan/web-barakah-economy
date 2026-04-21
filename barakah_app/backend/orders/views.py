@@ -26,97 +26,111 @@ class CreateOrderView(APIView):
 
     def post(self, request):
         user = request.user
+        from decimal import Decimal
+        import logging
+        logger = logging.getLogger('accounts')
         
-        # New: Support for simple checkout passed from confirmation page
-        shipping_cost = request.data.get('shipping_cost', 0)
-        shipping_courier = request.data.get('shipping_courier', '')
-        voucher_code = request.data.get('voucher_code', '')
-        voucher_nominal = request.data.get('voucher_nominal', 0)
-        payment_method = request.data.get('payment_method', 'manual')
-        proof_file = request.FILES.get('proof_file')
+        try:
+            # Extract and validate inputs
+            def clean_decimal(val):
+                try:
+                    if val is None or str(val).strip() == "":
+                        return Decimal('0')
+                    return Decimal(str(val))
+                except:
+                    return Decimal('0')
 
+            shipping_cost = clean_decimal(request.data.get('shipping_cost', 0))
+            shipping_courier = request.data.get('shipping_courier', '')
+            voucher_code = request.data.get('voucher_code', '')
+            voucher_nominal = clean_decimal(request.data.get('voucher_nominal', 0))
+            payment_method = request.data.get('payment_method', 'manual')
+            proof_file = request.FILES.get('proof_file')
 
-        # Fetch only selected cart items for the user
-        cart_items = Cart.objects.filter(user=user, is_selected=True)
+            # Fetch only selected cart items for the user
+            cart_items = Cart.objects.filter(user=user, is_selected=True)
 
-        if not cart_items.exists():
-            return Response({'message': 'No selected items in cart'}, status=status.HTTP_400_BAD_REQUEST)
+            if not cart_items.exists():
+                return Response({'message': 'No selected items in cart'}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Group by seller
-        seller_carts = {}
-        for item in cart_items:
-            seller_id = str(item.product.seller_id) if item.product.seller_id else "0"
-            if seller_id not in seller_carts:
-                seller_carts[seller_id] = []
-            seller_carts[seller_id].append(item)
+            # Group by seller
+            seller_carts = {}
+            for item in cart_items:
+                seller_id = str(item.product.seller_id) if item.product.seller_id else "0"
+                if seller_id not in seller_carts:
+                    seller_carts[seller_id] = []
+                seller_carts[seller_id].append(item)
 
-        created_orders = []
+            created_orders = []
 
-        for s_id, items in seller_carts.items():
-            seller_user = None
-            if s_id != "0":
-                from accounts.models import User
-                seller_user = User.objects.filter(id=s_id).first()
+            for s_id, items in seller_carts.items():
+                seller_user = None
+                if s_id != "0":
+                    from accounts.models import User
+                    seller_user = User.objects.filter(id=s_id).first()
 
-            # For multi-seller, we currently apply aggregate shipping/voucher to the first seller order
-            # or handle it as a single order if they are from the same seller.
-            # In a basic setup, we'll just apply it to each order but that might be incorrect for split shipping.
-            # However, for now, let's assume single seller or aggregate.
-            
-            order = Order.objects.create(
-                user=user,
-                seller=seller_user,
-                total_price=0,
-                shipping_cost=shipping_cost if not created_orders else 0, # Only apply to first
-                shipping_courier=shipping_courier,
-                voucher_code=voucher_code,
-                voucher_nominal=voucher_nominal if not created_orders else 0,
-                status='paid' if proof_file else 'pending',
-                payment_method=payment_method,
-                payment_proof=proof_file
-            )
-            
-            total_price = 0
-            for cart_item in items:
-                # Variation price replaces product price if set
-                base_price = cart_item.product.price
-                if cart_item.variation and cart_item.variation.additional_price and cart_item.variation.additional_price > 0:
-                    base_price = cart_item.variation.additional_price
-                
-                price_for_item = base_price * cart_item.quantity
-
-                OrderItem.objects.create(
-                    order=order,
-                    product=cart_item.product,
-                    variation=cart_item.variation,
-                    quantity=cart_item.quantity,
-                    price=price_for_item
+                # Create Order
+                order = Order.objects.create(
+                    user=user,
+                    seller=seller_user,
+                    total_price=Decimal('0'),
+                    shipping_cost=shipping_cost if not created_orders else Decimal('0'),
+                    shipping_courier=shipping_courier,
+                    voucher_code=voucher_code,
+                    voucher_nominal=voucher_nominal if not created_orders else Decimal('0'),
+                    status='paid' if proof_file else 'pending',
+                    payment_method=payment_method,
+                    payment_proof=proof_file
                 )
-                total_price += price_for_item
+                
+                total_price = Decimal('0')
+                for cart_item in items:
+                    # Variation price replaces product price if set
+                    base_price = cart_item.product.price
+                    if cart_item.variation and cart_item.variation.additional_price and cart_item.variation.additional_price > 0:
+                        base_price = cart_item.variation.additional_price
+                    
+                    price_for_item = base_price * cart_item.quantity
 
-            order.total_price = total_price
-            # Recalculate grand_total (save method handles it but we can be explicit)
-            order.grand_total = float(total_price) + float(order.shipping_cost) - float(order.voucher_nominal)
-            order.save() 
-            created_orders.append(order)
+                    OrderItem.objects.create(
+                        order=order,
+                        product=cart_item.product,
+                        variation=cart_item.variation,
+                        quantity=cart_item.quantity,
+                        price=price_for_item
+                    )
+                    total_price += price_for_item
 
+                order.total_price = total_price
+                order.grand_total = total_price + Decimal(str(order.shipping_cost)) - Decimal(str(order.voucher_nominal))
+                if order.grand_total < 0:
+                    order.grand_total = Decimal('0')
+                order.save() 
+                created_orders.append(order)
 
+            # Clear selected cart items
+            cart_items.delete()
 
-        # Clear selected cart items
-        cart_items.delete()
+            # Send Notifications for each created order
+            from .utils import send_order_invoice_to_buyer, send_order_notification_to_seller
+            for order in created_orders:
+                try:
+                    send_order_invoice_to_buyer(order)
+                    send_order_notification_to_seller(order)
+                except Exception as e:
+                    logger.error(f"Failed to send order notifications for {order.order_number}: {e}")
 
-        # Send Notifications for each created order
-        from .utils import send_order_invoice_to_buyer, send_order_notification_to_seller
-        for order in created_orders:
-            try:
-                send_order_invoice_to_buyer(order)
-                send_order_notification_to_seller(order)
-            except Exception as e:
-                import logging
-                logging.getLogger('accounts').error(f"Failed to send order notifications: {e}")
+            serializer = OrderSerializer(created_orders, many=True)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-        serializer = OrderSerializer(created_orders, many=True)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        except Exception as e:
+            logger.error(f"CreateOrderView Critical Error: {str(e)}")
+            import traceback
+            logger.error(traceback.format_exc())
+            return Response(
+                {'message': f'Server Error: {str(e)}', 'details': 'Pastikan kolom database sudah terupdate dan folder media tersedia.'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 
     def delete(self, request):

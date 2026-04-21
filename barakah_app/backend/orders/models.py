@@ -30,10 +30,15 @@ class Order(models.Model):
 
 
     def save(self, *args, **kwargs):
-        # Calculate Grand Total just in case
-        self.grand_total = float(self.total_price) + float(self.shipping_cost) - float(self.voucher_nominal)
+        # Calculate Grand Total using Decimal for accuracy
+        from decimal import Decimal
+        tp = Decimal(str(self.total_price or 0))
+        sc = Decimal(str(self.shipping_cost or 0))
+        vn = Decimal(str(self.voucher_nominal or 0))
+        
+        self.grand_total = tp + sc - vn
         if self.grand_total < 0:
-            self.grand_total = 0
+            self.grand_total = Decimal('0')
 
         if not self.pk:
             super().save(*args, **kwargs)

@@ -18,28 +18,18 @@ const LoginPage = () => {
     const queryParams = new URLSearchParams(location.search);
     const nextPath = queryParams.get('next') || '/';
 
-    const [profile, setProfile] = useState({
-// ... (omitting profile fields for brevity, they are unchanged)
-    });
-
     useEffect(() => {
-        const user = JSON.parse(localStorage.getItem('user'));
-        if (user) {
-            setIsLoggedIn(true);
-            const fetchProfile = async () => {
-                try {
-                    if (user && user.id) {
-                        const profileData = await authService.getProfile(user.id); // Fetch profile data
-                        setProfile(profileData);
-                    } else {
-                        navigate('/login');
-                    }
-                } catch (error) {
-                    console.log('Failed to fetch profile data');
+        const userStr = localStorage.getItem('user');
+        if (userStr) {
+            try {
+                const user = JSON.parse(userStr);
+                if (user && user.access) {
+                    setIsLoggedIn(true);
+                    navigate('/profile', { replace: true });
                 }
-            };
-
-            fetchProfile();
+            } catch (e) {
+                localStorage.removeItem('user');
+            }
         }
     }, [navigate]);
 
@@ -110,100 +100,20 @@ const LoginPage = () => {
         navigate('/login');
     };
 
-    if (isLoggedIn) {
-        return (
-            <div className="body">
-                <Header />
-                <div className="container">
-                    <div className="bg-white rounded-lg shadow overflow-hidden mt-6">
-                        <div className="p-4">
-                            <div className="flex items-center mb-4">
-                                <img
-                                    src={profile.picture || `${process.env.REACT_APP_API_BASE_URL}/media/profile_images/pas_foto_standard.png`}
-                                    alt="Profile"
-                                    className="w-16 h-16 rounded-full object-cover mr-4"
-                                />
-                                <div>
-                                    <h3 className="text-sm font-medium mb-2 line-clamp-2">Selamat datang, {profile.name_full}</h3>
-                                    <p className="text-xs font-medium mb-2 line-clamp-2">{profile.email}</p>
-                                </div>
-                            </div>
-
-                            <h3 className="text-sm font-medium mb-2 line-clamp-2 mt-6">Perbaharui Profil Kamu</h3>
-                            <div className="flex flex-col space-y-4">
-                                <Link
-                                    to="/profile"
-                                    className="w-full bg-gray-200 hover:bg-green-600 text-green py-3 rounded-lg text-sm flex items-center justify-left"
-                                >
-                                    <span className="material-icons text-sm ml-4 mr-2">person</span>
-                                    Profile
-                                </Link>
-                            </div>
-
-                            <h3 className="text-sm font-medium mb-2 line-clamp-2 mt-6">Lihat Riwayat Donasi</h3>
-                            <div className="flex flex-col space-y-4">
-                                <Link
-                                    to="/riwayat-donasi" // Cart page
-                                    className="w-full bg-gray-200 hover:bg-green-600 text-green py-3 rounded-lg text-sm flex items-center justify-left"
-                                >
-                                    <span className="material-icons text-sm ml-4 mr-2">volunteer_activism</span>
-                                    Riwayat Donasi
-                                </Link>
-                            </div>
-
-                            <h3 className="text-sm font-medium mb-2 line-clamp-2 mt-6">Lihat Riwayat Belanja</h3>
-                            <div className="flex flex-col space-y-4">
-                                <Link
-                                    to="/incaran" // Wishlist page
-                                    className="w-full bg-gray-200 hover:bg-green-600 text-green py-3 rounded-lg text-sm flex items-center justify-left"
-                                >
-                                    <span className="material-icons text-sm ml-4 mr-2">favorite</span>
-                                    Produk Incaran
-                                </Link>
-                                <Link
-                                    to="/keranjang" // Cart page
-                                    className="w-full bg-gray-200 hover:bg-green-600 text-green py-3 rounded-lg text-sm flex items-center justify-left"
-                                >
-                                    <span className="material-icons text-sm ml-4 mr-2">shopping_cart</span>
-                                    Keranjang Belanja
-                                </Link>
-                                <Link
-                                    to="/riwayat-belanja" // Cart page
-                                    className="w-full bg-gray-200 hover:bg-green-600 text-green py-3 rounded-lg text-sm flex items-center justify-left"
-                                >
-                                    <span className="material-icons text-sm ml-4 mr-2">timer</span>
-                                    Riwayat Belanja
-                                </Link>
-                            </div>
-
-                            <h3 className="text-sm font-medium mb-2 line-clamp-2 mt-6">Reset Password</h3>
-                            <div className="flex flex-col space-y-4 mt-6">
-                                <Link
-                                    to="/reset-password"
-                                    className="w-full bg-yellow-100 hover:bg-yellow-200 text-yellow-800 py-3 rounded-lg text-sm flex items-center justify-left"
-                                >
-                                    <span className="material-icons text-sm ml-4 mr-2">lock_reset</span>
-                                    Reset Password
-                                </Link>
-                            </div>
-
-                            <h3 className="text-sm font-medium mb-2 line-clamp-2 mt-6">Log Keluar</h3>
-                            <div className="flex flex-col space-y-4">
-                                <button
-                                    onClick={handleLogout}
-                                    className="w-full bg-red-600 hover:bg-red-700 text-white py-3 rounded-lg text-sm flex items-center justify-left"
-                                >
-                                    <span className="material-icons text-sm ml-4 mr-2">logout</span>
-                                    Logout
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <NavigationButton />
-            </div>
-        );
-    }
+    useEffect(() => {
+        const userStr = localStorage.getItem('user');
+        if (userStr) {
+            try {
+                const user = JSON.parse(userStr);
+                if (user && user.access) {
+                    setIsLoggedIn(true);
+                    navigate('/profile', { replace: true });
+                }
+            } catch (e) {
+                localStorage.removeItem('user');
+            }
+        }
+    }, [navigate]);
 
     return (
         <div className="body">

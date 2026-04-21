@@ -367,40 +367,172 @@ const PurchasesTab = () => {
                     </div>
                 ) : (
                     <div className="space-y-3">
-                        {physicalOrders.map(order => (
-                            <div key={order.id} className="bg-white p-3 rounded-xl border shadow-sm">
-                                <div className="flex justify-between items-start mb-2">
-                                    <h3 className="text-sm font-bold text-gray-800">Order #{order.order_number}</h3>
-                                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
-                                        order.status?.toLowerCase().includes('selesai') || order.status?.toLowerCase().includes('complete') || order.status?.toLowerCase().includes('verified')
-                                        ? 'bg-green-50 text-green-600' 
-                                        : 'bg-orange-50 text-orange-600'
-                                    }`}>
-                                        {order.status || 'Pending'}
-                                    </span>
-                                </div>
-                                <div className="space-y-1 my-2">
-                                    {order.items?.map((item, idx) => (
-                                        <div key={idx} className="text-[11px] text-gray-600 flex justify-between">
-                                            <span>{item.product_name} x {item.quantity}</span>
-                                            <span className="font-medium text-gray-400">Rp {formatIDR(item.price)}</span>
+                        {physicalOrders.map(order => {
+                            const status = (order.status || '').toLowerCase();
+                            let badgeStyle = 'bg-gray-50 text-gray-500';
+                            if (['paid', 'berhasil', 'success'].includes(status)) badgeStyle = 'bg-emerald-50 text-emerald-600';
+                            else if (['shipped', 'dikirim'].includes(status)) badgeStyle = 'bg-blue-50 text-blue-600';
+                            else if (['pending', 'menunggu'].includes(status)) badgeStyle = 'bg-amber-50 text-amber-600';
+                            else if (['failed', 'gagal', 'batal'].includes(status)) badgeStyle = 'bg-red-50 text-red-600';
+
+                            return (
+                                 <div key={order.id} className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-all">
+                                    <div className="flex justify-between items-start mb-2">
+                                        <h3 className="text-sm font-black text-gray-900 tracking-tight">Order #{order.order_number}</h3>
+                                        <span className={`text-[10px] px-2.5 py-1 rounded-full font-black uppercase tracking-widest ${badgeStyle}`}>
+                                            {order.status || 'Pending'}
+                                        </span>
+                                    </div>
+                                    <div className="space-y-1.5 my-3">
+                                        {order.items?.map((item, idx) => (
+                                            <div key={idx} className="text-[11px] text-gray-600 flex justify-between items-center bg-gray-50/50 p-2 rounded-lg">
+                                                <span className="font-bold">{item.product_name} <span className="text-gray-400 font-medium">x{item.quantity}</span></span>
+                                                <span className="font-black text-gray-400">{formatIDR(item.price)}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <div className="flex justify-between items-center pt-3 border-t border-gray-50 mt-3">
+                                        <div className="flex items-center gap-1.5 text-gray-400">
+                                            <span className="material-icons text-xs">calendar_today</span>
+                                            <span className="text-[10px] font-bold">{formatDate(order.created_at)}</span>
                                         </div>
-                                    ))}
+                                        <div className="text-right">
+                                            <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">Grand Total</p>
+                                            <p className="text-sm font-black text-emerald-600">Rp {formatIDR(order.grand_total || order.total_price)}</p>
+                                        </div>
+                                    </div>
+                                    <div className="mt-4 flex justify-end">
+                                        <Link to="/riwayat-belanja" className="text-[10px] bg-gray-900 text-white px-4 py-2 rounded-xl font-black uppercase tracking-widest hover:bg-emerald-600 transition-colors flex items-center gap-2">
+                                            Detail Lacak <span className="material-icons text-xs">arrow_forward</span>
+                                        </Link>
+                                    </div>
                                 </div>
-                                <div className="flex justify-between items-center text-[10px] text-gray-400 mt-2">
-                                    <span>{formatDate(order.created_at)}</span>
-                                    <span className="text-xs font-black text-gray-900">Total Rp {formatIDR(order.total_price)}</span>
-                                </div>
-                                <div className="mt-3 pt-2 border-t flex justify-end">
-                                    <Link to="/riwayat-belanja" className="text-[10px] text-blue-600 font-bold hover:underline flex items-center gap-1">
-                                        Lacak Pesanan <span className="material-icons text-[12px]">local_shipping</span>
-                                    </Link>
+                            );
+                        })}
+                    </div>
+    );
+};
+
+const DonationsTab = () => {
+    const [donations, setDonations] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchDonations = async () => {
+            const user = JSON.parse(localStorage.getItem('user'));
+            if (!user) return;
+            try {
+                const res = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/donations/donation/`, {
+                    headers: { Authorization: `Bearer ${user.access}` }
+                });
+                setDonations(res.data);
+            } catch (err) {
+                console.error('Error fetching donations:', err);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchDonations();
+    }, []);
+
+    if (loading) return (
+        <div className="space-y-3 animate-pulse">
+            <div className="p-4 bg-gray-50 rounded-xl mb-4">
+                <div className="h-4 bg-gray-200 rounded w-1/4 mb-3"></div>
+                <div className="h-10 bg-gray-200 rounded w-full"></div>
+            </div>
+            {[1, 2].map(i => <div key={i} className="h-20 bg-gray-100 rounded-xl"></div>)}
+        </div>
+    );
+
+    return (
+        <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
+            <div className="flex justify-between items-center px-1">
+                <h2 className="font-bold text-gray-800">Riwayat Donasi</h2>
+                <Link to="/donasi" className="text-[10px] bg-green-600 text-white px-3 py-1 rounded-full font-black uppercase tracking-wider hover:bg-green-700 transition-colors">Donasi Lagi</Link>
+            </div>
+            {donations.length === 0 ? (
+                <div className="text-center py-12 text-gray-400 bg-gray-50 rounded-3xl border border-dashed border-gray-200">
+                    <span className="material-icons text-4xl mb-2 opacity-20">volunteer_activism</span>
+                    <p className="text-sm font-medium">Belum ada riwayat donasi</p>
+                </div>
+            ) : (
+                <div className="space-y-3">
+                    {donations.map(item => (
+                        <div key={item.id} className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow flex items-center gap-4">
+                            <div className="w-14 h-14 rounded-xl overflow-hidden shrink-0 border border-gray-50 bg-gray-50">
+                                <img 
+                                    src={item.campaign?.thumbnail || '/images/default-campaign.jpg'} 
+                                    alt="Campaign" 
+                                    className="w-full h-full object-cover"
+                                    onError={(e) => { e.target.src = '/images/default-campaign.jpg'; }}
+                                />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <h3 className="text-sm font-bold text-gray-800 truncate leading-tight">{item.campaign_title || 'Donasi Tanpa Judul'}</h3>
+                                <div className="flex items-center gap-2 mt-1.5">
+                                    <span className="text-[11px] text-emerald-600 font-black">Rp {formatIDR(item.amount)}</span>
+                                    <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
+                                    <span className="text-[10px] text-gray-400 font-bold uppercase tracking-tight">{formatDate(item.created_at)}</span>
                                 </div>
                             </div>
-                        ))}
-                    </div>
-                )
+                            <div className="w-8 h-8 bg-green-50 rounded-full flex items-center justify-center">
+                                <span className="material-icons text-green-500 text-lg">check_circle</span>
+                            </div>
+                        </div>
+                    ))}
+                </div>
             )}
+        </div>
+    );
+};
+
+const ShoppingTab = () => {
+    return (
+        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+            <h2 className="font-bold text-gray-800 px-1">Belanja & Incaran</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <Link to="/keranjang" className="bg-gradient-to-br from-emerald-500 to-teal-600 p-5 rounded-3xl text-white shadow-xl shadow-emerald-100 flex flex-col gap-4 transition-all hover:-translate-y-1 active:scale-[0.98]">
+                    <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm">
+                        <span className="material-icons text-2xl">shopping_cart</span>
+                    </div>
+                    <div>
+                        <h3 className="font-black text-sm uppercase tracking-wider">Keranjang Belanja</h3>
+                        <p className="text-[10px] opacity-80 font-medium mt-1 leading-relaxed">Selesaikan belanjaan yang masih tersimpan</p>
+                    </div>
+                    <div className="mt-2 flex justify-end">
+                        <span className="material-icons text-sm">arrow_forward</span>
+                    </div>
+                </Link>
+
+                <Link to="/incaran" className="bg-gradient-to-br from-rose-500 to-pink-600 p-5 rounded-3xl text-white shadow-xl shadow-rose-100 flex flex-col gap-4 transition-all hover:-translate-y-1 active:scale-[0.98]">
+                    <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm">
+                        <span className="material-icons text-2xl">favorite</span>
+                    </div>
+                    <div>
+                        <h3 className="font-black text-sm uppercase tracking-wider">Produk Incaran</h3>
+                        <p className="text-[10px] opacity-80 font-medium mt-1 leading-relaxed">Cek kembali produk yang Anda minati</p>
+                    </div>
+                    <div className="mt-2 flex justify-end">
+                        <span className="material-icons text-sm">arrow_forward</span>
+                    </div>
+                </Link>
+            </div>
+
+            <div className="bg-gray-50 p-6 rounded-3xl border border-gray-100 mt-8">
+                <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4 px-1">Butuh Bantuan Belanja?</h4>
+                <div className="space-y-3">
+                    <a href="https://wa.me/6281234567890" target="_blank" rel="noreferrer" className="flex items-center gap-4 p-4 bg-white rounded-2xl border border-gray-100 hover:border-green-300 transition-colors group">
+                        <div className="w-10 h-10 bg-green-50 rounded-xl flex items-center justify-center group-hover:bg-green-500 transition-colors">
+                            <span className="material-icons text-green-500 group-hover:text-white transition-colors">whatsapp</span>
+                        </div>
+                        <div className="flex-1">
+                            <p className="text-xs font-black text-gray-700">Chat Admin Support</p>
+                            <p className="text-[10px] text-gray-400 font-medium">Bantuan cepat via WhatsApp</p>
+                        </div>
+                    </a>
+                </div>
+            </div>
         </div>
     );
 };
@@ -763,6 +895,8 @@ const ProfilePage = () => {
                                 { id: 'work', icon: 'work', label: 'Pekerjaan' },
                                 { id: 'shop', icon: 'storefront', label: 'Toko' },
                                 { id: 'courses', icon: 'school', label: 'Kelas' },
+                                { id: 'shopping', icon: 'shopping_bag', label: 'Belanja' },
+                                { id: 'charity', icon: 'volunteer_activism', label: 'Donasi' },
                                 { id: 'purchases', icon: 'history', label: 'Riwayat' }
                             ].map(tab => (
                                 <button
@@ -859,6 +993,8 @@ const ProfilePage = () => {
 
                             {activeTab === 'courses' && <CoursesTab />}
                             {activeTab === 'purchases' && <PurchasesTab />}
+                            {activeTab === 'charity' && <DonationsTab />}
+                            {activeTab === 'shopping' && <ShoppingTab />}
                         </div>
 
                         {/* Footer Actions */}
