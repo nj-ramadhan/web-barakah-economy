@@ -39,6 +39,7 @@ const DashboardPage = () => {
     const [testimonialForm, setTestimonialForm] = useState({ content: '', rating: 5 });
     const [savingTestimonial, setSavingTestimonial] = useState(false);
 
+    const [sinergyPendingCount, setSinergyPendingCount] = useState(0);
     // Management Stats State
     const [managementStats, setManagementStats] = useState({});
 
@@ -58,7 +59,7 @@ const DashboardPage = () => {
         const fetchStats = async () => {
             try {
                 const user = JSON.parse(localStorage.getItem('user'));
-                const [productRes, courseRes, balanceRes, historyRes, profileRes, testimonialRes, statsRes] = await Promise.all([
+                const [productRes, courseRes, balanceRes, historyRes, profileRes, testimonialRes, statsRes, sinergyStatsRes] = await Promise.all([
                     getMyDigitalProducts(),
                     getMyCourses(),
                     getDigitalBalance().catch(() => ({ data: { available_balance: 0, total_sales: 0 } })),
@@ -69,8 +70,15 @@ const DashboardPage = () => {
                     }).catch(() => ({ data: {} })),
                     axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/site-content/management-stats/`, {
                         headers: { Authorization: `Bearer ${user.access}` }
-                    }).catch(() => ({ data: {} }))
+                    }).catch(() => ({ data: {} })),
+                    axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/orders/seller-orders/stats/`, {
+                        headers: { Authorization: `Bearer ${user.access}` }
+                    }).catch(() => ({ data: { pending_count: 0 } }))
                 ])
+                
+                if (sinergyStatsRes && sinergyStatsRes.data) {
+                    setSinergyPendingCount(sinergyStatsRes.data.pending_count || 0);
+                }
 
                 // Also check profile completeness to enforce dashboard access
                 try {
@@ -349,7 +357,12 @@ const DashboardPage = () => {
                         <p className="text-[10px] opacity-80 uppercase tracking-wider font-semibold">E-Course Saya</p>
                     </Link>
                     {userProfile?.accessible_menus?.includes('sinergy_products') || userProfile?.username === 'admin' || userProfile?.role === 'admin' ? (
-                        <Link to="/dashboard/sinergy/seller" className="bg-gradient-to-br from-emerald-500 to-emerald-700 rounded-xl p-4 text-white">
+                        <Link to="/dashboard/sinergy/seller" className="bg-gradient-to-br from-emerald-500 to-emerald-700 rounded-xl p-4 text-white relative">
+                            {sinergyPendingCount > 0 && (
+                                <div className="absolute top-2 right-2 bg-red-500 text-white text-[10px] font-black w-6 h-6 rounded-full flex items-center justify-center border-2 border-white shadow-lg animate-bounce">
+                                    {sinergyPendingCount}
+                                </div>
+                            )}
                             <span className="material-icons text-2xl mb-1">shopping_bag</span>
                             <p className="font-bold text-2xl">Sinergy</p>
                             <p className="text-[10px] opacity-80 uppercase tracking-wider font-semibold">Produk Fisik</p>
@@ -492,8 +505,13 @@ const DashboardPage = () => {
                                 {hasAccess('sinergy_products') && (
                                     <Link
                                         to="/dashboard/sinergy/seller"
-                                        className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-green-100 hover:shadow-md transition"
+                                        className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-green-100 hover:shadow-md transition relative"
                                     >
+                                        {sinergyPendingCount > 0 && (
+                                            <div className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center border-2 border-white shadow-sm z-10 animate-bounce">
+                                                {sinergyPendingCount}
+                                            </div>
+                                        )}
                                         <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
                                             <span className="material-icons text-green-700">inventory</span>
                                         </div>

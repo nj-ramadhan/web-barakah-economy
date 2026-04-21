@@ -182,20 +182,29 @@ class SellerOrderViewSet(viewsets.ModelViewSet):
         return Order.objects.filter(seller=user).order_by('-created_at')
 
     def partial_update(self, request, *args, **kwargs):
+        # Simply update without auto-sending WA
+        return super().partial_update(request, *args, **kwargs)
+
+    @action(detail=True, methods=['post'], url_path='send-wa-update')
+    def send_wa_update(self, request, pk=None):
+        """Manual trigger to send WA status update to buyer."""
         instance = self.get_object()
-        old_status = instance.status
-        old_resi = instance.resi_number
-        
-        response = super().partial_update(request, *args, **kwargs)
-        
-        instance.refresh_from_db()
-        if instance.status != old_status or instance.resi_number != old_resi:
-            from .utils import send_status_update_notification
-            try:
-                send_status_update_notification(instance)
-            except Exception as e:
-                import logging
-                logging.getLogger('accounts').error(f"Failed to send status update notification: {e}")
-                
-        return response
+        from .utils import send_status_update_notification
+        try:
+            result = send_status_update_notification(instance)
+            if result and result.get('success'):
+                return Response({'message': 'Notifikasi WA berhasil dikirim'})
+            return Response({'error': result.get('message') if result else 'Gagal mengirim'}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    @action(detail=False, methods=['get'])
+    def stats(self, request):
+        """Get order statistics for notification badges."""
+        user = request.user
+        queryset = self.get_queryset()
+        pending_count = queryset.filter(status__iexact='Pending').count()
+        return Response({
+            'pending_count': pending_count
+        })
 

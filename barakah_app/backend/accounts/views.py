@@ -145,11 +145,13 @@ class GoogleLoginView(APIView):
                 'is_new_user': created,
             }, status=status.HTTP_200_OK)
         except ValueError as e:
-            logger.error(f"Token verification failed: {e}")
-            return Response({'error': 'Invalid token'}, status=status.HTTP_400_BAD_REQUEST)
+            logger.error(f"Google Token verification failed: {e}")
+            return Response({'error': f'Invalid token: {str(e)}'}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            logger.error(f"Error during Google login: {e}")
-            return Response({'error': 'An error occurred during Google login'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            import traceback
+            logger.error(f"Critical error during Google login: {str(e)}")
+            logger.error(traceback.format_exc())
+            return Response({'error': f'Server error: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class PasswordResetRequestView(APIView):
     permission_classes = [permissions.AllowAny]

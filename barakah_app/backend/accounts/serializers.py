@@ -110,6 +110,15 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         return value
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
+    def validate(self, attrs):
+        login_id = attrs.get('username')
+        if login_id:
+            user_obj = User.objects.filter(email=login_id).first() or \
+                       User.objects.filter(username=login_id).first()
+            if user_obj:
+                attrs['username'] = user_obj.username
+        return super().validate(attrs)
+
     @classmethod
     def get_token(cls, user):
         token = super().get_token(user)

@@ -60,6 +60,26 @@ const DashboardSinergySellerOrdersPage = () => {
     };
 
 
+    const [sendingWaId, setSendingWaId] = useState(null);
+
+    const handleSendWa = async (orderId) => {
+        const user = JSON.parse(localStorage.getItem('user'));
+        if (!user) return;
+        
+        setSendingWaId(orderId);
+        try {
+            const res = await axios.post(`${process.env.REACT_APP_API_BASE_URL}/api/orders/seller-orders/${orderId}/send-wa-update/`, 
+                {},
+                { headers: { Authorization: `Bearer ${user.access}` } }
+            );
+            alert(res.data.message || 'Pemberitahuan WA berhasil dikirim!');
+        } catch (error) {
+            alert(error.response?.data?.error || 'Gagal mengirim WA. Pastikan nomor HP pembeli valid.');
+        } finally {
+            setSendingWaId(null);
+        }
+    };
+
     const formatIDR = (amount) => {
         return 'Rp ' + new Intl.NumberFormat('id-ID').format(amount || 0);
     };
@@ -233,9 +253,22 @@ const DashboardSinergySellerOrdersPage = () => {
                                                 </div>
                                             </div>
                                             
+                                            <button 
+                                                onClick={() => handleSendWa(order.id)}
+                                                disabled={sendingWaId === order.id}
+                                                className="w-full bg-emerald-50 text-emerald-700 py-3 rounded-xl text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 border border-emerald-100 hover:bg-emerald-600 hover:text-white transition group disabled:opacity-50"
+                                            >
+                                                {sendingWaId === order.id ? (
+                                                    <div className="animate-spin h-3 w-3 border-b-2 border-emerald-600 rounded-full"></div>
+                                                ) : (
+                                                    <span className="material-icons text-sm">whatsapp</span>
+                                                )}
+                                                KIRIM NOTIFIKASI WA
+                                            </button>
+
                                             <div className="p-4 bg-blue-50/50 rounded-xl border border-blue-100">
                                                 <p className="text-[10px] text-blue-700 font-medium leading-relaxed">
-                                                    <span className="font-bold">Info:</span> Mengubah status akan mengirimkan pemberitahuan ke pembeli. Pastikan Anda memperbarui status segera setelah memproses atau mengirim barang.
+                                                    <span className="font-bold">Info:</span> Klik <span className="font-bold italic">Simpan</span> untuk update status & resi. Klik <span className="font-bold italic text-emerald-700">Kirim Notifikasi WA</span> untuk mengirim update manual ke pembeli.
                                                 </p>
                                             </div>
                                         </div>
