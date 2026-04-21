@@ -31,10 +31,21 @@ const AboutUs = () => {
     fetchAboutUs();
   }, []);
 
-  const getMediaUrl = (url) => {
-    if (!url) return '';
-    if (url.startsWith('http')) return url;
-    return `${process.env.REACT_APP_API_BASE_URL}${url}`;
+  const getMediaUrl = (path, file) => {
+    if (file instanceof Blob) return URL.createObjectURL(file);
+    if (!path) return '';
+    if (path.startsWith('http')) return path;
+    
+    const baseUrl = process.env.REACT_APP_API_BASE_URL.replace(/\/$/, '');
+    let cleanPath = path;
+    
+    if (!cleanPath.startsWith('/media/') && !cleanPath.startsWith('media/')) {
+      cleanPath = cleanPath.startsWith('/') ? `/media${cleanPath}` : `/media/${cleanPath}`;
+    } else {
+      cleanPath = cleanPath.startsWith('/') ? cleanPath : `/${cleanPath}`;
+    }
+    
+    return `${baseUrl}${cleanPath}`;
   };
 
   if (loading) return (

@@ -27,7 +27,18 @@ const DashboardAboutUsPage = () => {
         if (file instanceof Blob) return URL.createObjectURL(file);
         if (!path) return '';
         if (path.startsWith('http')) return path;
-        return API + path;
+        
+        const baseUrl = API.replace(/\/$/, '');
+        let cleanPath = path;
+        
+        // Auto-fix if /media/ is missing
+        if (!cleanPath.startsWith('/media/') && !cleanPath.startsWith('media/')) {
+            cleanPath = cleanPath.startsWith('/') ? `/media${cleanPath}` : `/media/${cleanPath}`;
+        } else {
+            cleanPath = cleanPath.startsWith('/') ? cleanPath : `/${cleanPath}`;
+        }
+        
+        return `${baseUrl}${cleanPath}`;
     };
 
     const fetchAboutUs = async () => {
