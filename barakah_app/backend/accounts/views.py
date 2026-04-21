@@ -76,6 +76,7 @@ class GoogleLoginView(APIView):
             return Response({'error': 'Token is required'}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
+            logger.info(f"Using GOOGLE_CLIENT_ID: '{settings.GOOGLE_CLIENT_ID}'")
             id_info = id_token.verify_oauth2_token(token, requests.Request(), settings.GOOGLE_CLIENT_ID)
             logger.info(f"Decoded token: {id_info}")
 
