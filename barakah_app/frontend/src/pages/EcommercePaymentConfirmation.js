@@ -2,6 +2,7 @@
 import React, { useState, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import Tesseract from 'tesseract.js';
 import Header from '../components/layout/Header';
 import NavigationButton from '../components/layout/Navigation';
 import '../styles/Body.css';
@@ -14,29 +15,18 @@ const getCsrfToken = () => {
   return cookieValue;
 };
 
-const formatDate = (deadline) => {
-  if (!deadline) return 'tidak ada';
-  const date = new Date(deadline);
-  return date.toLocaleDateString('id-ID', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-  });
-};
-
 const EcommercePaymentConfirmation = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
+  
   const [selectedFile, setSelectedFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState('');
-  const [formData, setFormData] = useState({
-    accountName: '',
-    sourceBank: '',
-    sourceAccount: '',
-    transferDate: new Date().toISOString().split('T')[0],
-    amount: location.state?.amount || 0
-  });
+  const [uploading, setUploading] = useState(false);
+  const [ocrLoading, setOcrLoading] = useState(false);
+  const [ocrError, setOcrError] = useState('');
+  const [isSuccess, setIsSuccess] = useState(false);
+  const [orderNumber, setOrderNumber] = useState('');
 
   // Redirect if no data passed
   if (!location.state) {
@@ -47,24 +37,28 @@ const EcommercePaymentConfirmation = () => {
   const {
     amount,
     bank,
-    customerName, // Extract the customer's name
+    customerName,
     customerPhone,
+    shippingCost,
+    courier,
+    voucherCode,
+    voucherDiscount
   } = location.state;
 
-  // Format amount with dot thousand separator
   const formattedAmount = new Intl.NumberFormat('id-ID').format(amount);
 
-  // Bank account info based on selected bank
   const bankAccounts = {
     bsi: {
       name: 'bsi',
       number: '1040 4974 08',
-      fullName: 'Bank Syariah Indonesia'
+      fullName: 'Bank Syariah Indonesia',
+      owner: 'DENY SETIAWAN'
     },
     bjb: {
       name: 'bjb',
       number: '5130 1020 01161',
-      fullName: 'Bank Jabar Banten Syariah'
+      fullName: 'Bank Jabar Banten Syariah',
+      owner: 'DENY SETIAWAN'
     },
     qris: {
       name: 'qris',
@@ -77,15 +71,10 @@ const EcommercePaymentConfirmation = () => {
 
   const selectedBankInfo = bankAccounts[bank];
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      if (file.size > 5 * 1024 * 1024) { // Limit file size to 5MB
+      if (file.size > 5 * 1024 * 1024) {
         alert('Ukuran file terlalu besar. Maksimal 5MB.');
         return;
       }
@@ -95,325 +84,274 @@ const EcommercePaymentConfirmation = () => {
       }
 
       setSelectedFile(file);
-      const fileReader = new FileReader();
-      fileReader.onload = () => {
-        setPreviewUrl(fileReader.result);
-      };
-      fileReader.readAsDataURL(file);
+      setPreviewUrl(URL.createObjectURL(file));
+      setOcrError('');
     }
   };
 
   const copyToClipboard = (text, type) => {
     navigator.clipboard.writeText(text)
-      .then(() => {
-        alert(`${type} berhasil disalin!`);
-      })
-      .catch(err => {
-        console.error('Failed to copy: ', err);
-      });
+      .then(() => alert(`${type} berhasil disalin!`))
+      .catch(err => console.error('Failed to copy: ', err));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    const csrfToken = getCsrfToken();
-
     if (!selectedFile) {
       alert('Mohon upload bukti transfer');
       return;
     }
 
-    if (!formData.sourceBank || (!selectedBankInfo.isQRIS && !formData.sourceAccount) || !formData.transferDate) {
-      alert('Mohon lengkapi semua data yang diperlukan.');
-      return;
-    }
-
-    const {
-      amount,
-      bank,
-      customerName,
-      customerPhone,
-      shippingCost,
-      courier,
-      voucherCode,
-      voucherDiscount
-    } = location.state;
-
-    // Prepare payment confirmation data
-    const paymentData = new FormData();
-    paymentData.append('amount', amount);
-    paymentData.append('customer_name', customerName);
-    paymentData.append('customer_phone', customerPhone);
-    paymentData.append('customer_email', formData.customer_email || '');
-    paymentData.append('payment_method', selectedBankInfo.name);
-    paymentData.append('source_bank', formData.sourceBank);
-    paymentData.append('source_account', formData.sourceAccount);
-    paymentData.append('transfer_date', formData.transferDate);
-    paymentData.append('proof_file', selectedFile);
-
-    // Shipping & Voucher
-    paymentData.append('shipping_cost', shippingCost || 0);
-    paymentData.append('shipping_courier', courier || '');
-    paymentData.append('voucher_code', voucherCode || '');
-    paymentData.append('voucher_nominal', voucherDiscount || 0);
-
-    const userData = localStorage.getItem('user');
-
-    // Parse the JSON object to extract the token
-    let authToken = null;
-    if (userData) {
-      const user = JSON.parse(userData);
-      authToken = user.access; // Extract the JWT access token
-    }
-
-    const headers = {
-      'Content-Type': 'multipart/form-data',
-      'X-CSRFToken': csrfToken,
-    };
-
-    if (authToken) {
-      headers['Authorization'] = `Bearer ${authToken}`; // Include the JWT token for authenticated users
-    }
+    setUploading(true);
+    setOcrLoading(true);
+    setOcrError('');
 
     try {
+      // --- OCR VALIDATION ---
+      console.log("Starting OCR processing...");
+      const { data: { text } } = await Tesseract.recognize(selectedFile, 'ind');
+      const lowerText = text.toLowerCase();
+      console.log("OCR Result:", text);
+
+      const isBaeCommunityPresent = lowerText.includes('bae community');
+      const isDenySetiawanPresent = lowerText.includes('deny setiawan');
+
+      const numericTotal = Math.floor(Number(amount));
+      const totalStr = String(numericTotal);
+      const totalFormatted = numericTotal.toLocaleString('id-ID');
+      const scrubbedText = lowerText.replace(/rp/g, '').replace(/\./g, '').replace(/,/g, '').replace(/\s+/g, '');
+
+      const isAmountPresent = 
+        text.includes(totalStr) || 
+        text.includes(totalFormatted) || 
+        scrubbedText.includes(totalStr);
+
+      if (!isBaeCommunityPresent && !isDenySetiawanPresent) {
+        setOcrError('Validasi Gagal: Struk tidak mencantumkan nama "BAE Community" atau "DENY SETIAWAN". Pastikan Anda transfer ke rekening yang benar.');
+        setUploading(false);
+        setOcrLoading(false);
+        return;
+      }
+
+      if (!isAmountPresent) {
+        setOcrError(`Validasi Gagal: Nominal struk tidak sesuai dengan total tagihan (Rp ${totalFormatted}).`);
+        setUploading(false);
+        setOcrLoading(false);
+        return;
+      }
+      // --- END OCR ---
+
+      const csrfToken = getCsrfToken();
+      const paymentData = new FormData();
+      paymentData.append('amount', amount);
+      paymentData.append('customer_name', customerName);
+      paymentData.append('customer_phone', customerPhone);
+      paymentData.append('payment_method', selectedBankInfo.name);
+      paymentData.append('transfer_date', new Date().toISOString().split('T')[0]);
+      paymentData.append('proof_file', selectedFile);
+      paymentData.append('shipping_cost', shippingCost || 0);
+      paymentData.append('shipping_courier', courier || '');
+      paymentData.append('voucher_code', voucherCode || '');
+      paymentData.append('voucher_nominal', voucherDiscount || 0);
+
+      const userData = localStorage.getItem('user');
+      let authToken = null;
+      if (userData) {
+        authToken = JSON.parse(userData).access;
+      }
+
+      const headers = {
+        'Content-Type': 'multipart/form-data',
+        'X-CSRFToken': csrfToken,
+      };
+      if (authToken) headers['Authorization'] = `Bearer ${authToken}`;
+
       const response = await axios.post(
         `${process.env.REACT_APP_API_BASE_URL}/api/orders/create-order/`,
         paymentData,
-        {
-          headers: headers,
-        }
+        { headers }
       );
 
-      const { order_number } = response.data; // Get the order number from the backend
-      console.log('Order Number:', order_number);
-
-      const sourceAccountInfo = selectedBankInfo.isQRIS
-        ? ''
-        : `, dengan No. Rekening ${formData.sourceAccount}`;
-
-      const message = encodeURIComponent(`*Konfirmasi Pembayaran Belanja*%0A
-------------------------------------%0A
-Bismillah..%0A
-Pada hari ini,%0A 
-Tanggal ${formatDate(formData.transferDate)}%0A
-Saya ${formData.accountName || ''} telah melakukan pembayaran untuk pesanan ${order_number}%0A
-dengan nominal Rp ${formattedAmount} melalui ${selectedBankInfo.fullName}%0A
-%0A
-Saya mengirim pembayaran dari Bank ${formData.sourceBank}${sourceAccountInfo}%0A
-------------------------------------%0A%0A
-Bukti transfer telah saya upload, mohon konfirmasi.%0A
-Semoga dapat menjadi amal ibadah bagi saya dan bermanfaat untuk program serta penerimanya.`);
-
       if (response.status === 201) {
-        // Open WhatsApp with prepared message
-        window.open(`https://wa.me/6285643848251?text=${message}`, '_blank');
-
-        // Navigate to success page
-        navigate('/', {
-          state: {
-            amount: amount,
-            date: new Date().toISOString(),
-          },
-        });
+        setOrderNumber(response.data[0]?.order_number || 'N/A');
+        setIsSuccess(true);
       } else {
         alert('Gagal mengkonfirmasi pembayaran. Silakan coba lagi.');
       }
     } catch (error) {
       console.error('Error confirming payment:', error.response?.data || error.message);
-      alert('Terjadi kesalahan saat mengkonfirmasi pembayaran. Silakan coba lagi.');
+      setOcrError('Terjadi kesalahan saat memproses. Silakan pastikan gambar struk terbaca jelas.');
+    } finally {
+      setUploading(false);
+      setOcrLoading(false);
     }
   };
+
+  if (isSuccess) {
+    return (
+      <div className="body">
+        <Header />
+        <div className="container px-4 py-12 text-center h-[80vh] flex flex-col justify-center items-center">
+            <div className="bg-white/80 backdrop-blur-xl p-8 rounded-[40px] shadow-2xl border border-white/20 w-full max-w-md">
+                <div className="w-24 h-24 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg shadow-emerald-100 animate-bounce">
+                    <span className="material-icons text-white text-5xl">check_circle</span>
+                </div>
+                <h1 className="text-3xl font-extrabold text-gray-900 mb-2">Terima Kasih!</h1>
+                <p className="text-emerald-600 font-bold mb-6 italic">Pembayaran Anda Telah Diverifikasi Otomatis</p>
+                
+                <div className="bg-gray-50 rounded-2xl p-4 mb-8 text-left border border-gray-100">
+                    <div className="flex justify-between mb-2">
+                        <span className="text-gray-400 text-xs font-bold uppercase tracking-widest">Order ID</span>
+                        <span className="text-gray-900 font-mono font-bold">#{orderNumber}</span>
+                    </div>
+                    <div className="flex justify-between">
+                        <span className="text-gray-400 text-xs font-bold uppercase tracking-widest">Total Bayar</span>
+                        <span className="text-gray-900 font-bold font-mono">Rp {formattedAmount}</span>
+                    </div>
+                </div>
+
+                <p className="text-gray-500 text-sm mb-10 leading-relaxed">
+                    Nota bukti pembelian telah dikirim ke WhatsApp Anda. Penjual juga telah mendapatkan notifikasi untuk segera memproses pesanan Anda.
+                </p>
+
+                <button
+                    onClick={() => navigate('/riwayat-belanja')}
+                    className="w-full py-4 bg-gradient-to-r from-emerald-600 to-teal-700 text-white rounded-2xl font-bold shadow-xl shadow-emerald-100 hover:shadow-emerald-200 transition-all hover:scale-[1.02] active:scale-[0.98]"
+                >
+                    Lihat Status Pesanan
+                </button>
+                
+                <button
+                    onClick={() => navigate('/sinergy')}
+                    className="mt-4 w-full py-2 text-gray-400 font-bold text-sm hover:text-emerald-600 transition-colors"
+                >
+                    Kembali ke Sinergy
+                </button>
+            </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="body">
       <Header />
-      <div className="container">
-        {/* Thank you message */}
-        <div className="text-center mb-6">
-          <h1 className="text-xl font-medium text-gray-700">
-            Terimakasih, <span className="text-green-600">{customerName}</span>
-          </h1>
-          <p className="text-gray-600">
-            atas pembayaran yang akan anda lakukan :
-          </p>
+      <div className="container max-w-lg mb-20 px-4">
+        {/* Header Section */}
+        <div className="text-center py-6">
+          <h1 className="text-2xl font-black text-gray-800 tracking-tight">Konfirmasi Pembayaran</h1>
+          <p className="text-gray-500 text-sm">Upload struk untuk verifikasi otomatis via <span className="text-emerald-600 font-bold">OCR AI</span></p>
         </div>
 
-        {/* Bank information card */}
-        <div className="bg-white rounded-lg shadow overflow-hidden mb-6">
-          <div className="p-4 flex flex-col items-center">
-            <div className="flex items-center w-full mb-4">
-              <img
-                src={`/images/${bank}-logo.png`}
-                alt={selectedBankInfo.name}
-                className="w-12 mr-2"
-              />
-              <div className="flex-1">
-                <div className="flex justify-between items-center">
-                  <h3 className="text-xl font-bold">{selectedBankInfo.number}</h3>
-                  {!selectedBankInfo.isQRIS && (
-                    <button
-                      onClick={() => copyToClipboard(selectedBankInfo.number, 'Nomor rekening')}
-                      className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-2 py-1 rounded flex items-center text-sm"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                      </svg>
-                      Salin No Rek.
-                    </button>
-                  )}
-                </div>
-                <p className="text-gray-600">
-                  {selectedBankInfo.isQRIS ? 'Scan QRIS untuk pembayaran' : `a.n. ${selectedBankInfo.owner || 'Deny Setiawan'}`}
-                </p>
-              </div>
+        {/* Bank Card */}
+        <div className="bg-white rounded-[32px] shadow-xl shadow-gray-200/50 p-6 mb-6 border border-gray-50">
+          <div className="flex items-center gap-4 mb-6">
+            <div className="w-16 h-16 bg-gray-50 rounded-2xl flex items-center justify-center p-2 border border-gray-100">
+                <img src={`/images/${bank}-logo.png`} alt={bank} className="max-w-full" />
             </div>
-
-            {selectedBankInfo.isQRIS && (
-              <div className="w-full flex flex-col items-center justify-center p-6 bg-white rounded-2xl border-2 border-emerald-50 shadow-inner">
-                <div className="bg-white p-4 rounded-3xl shadow-xl mb-6 border border-gray-100">
-                  <img
-                    src="/images/qris-bae2.png"
-                    alt="QRIS BAE"
-                    className="max-w-md w-full rounded-2xl"
-                  />
-                </div>
-                <a href="/images/qris-bae2.png" download="QRIS-BAE-Community.png" className="bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-3 rounded-2xl text-base font-bold flex items-center transition-all shadow-lg hover:shadow-emerald-200 hover:-translate-y-0.5 active:translate-y-0">
-                  <span className="material-icons mr-2">download</span> UNDUH QRIS SEKARANG
-                </a>
-                <p className="mt-4 text-[10px] text-gray-400 uppercase tracking-widest font-bold">Screenshot atau Unduh QRIS untuk membayar</p>
-              </div>
-            )}
+            <div>
+                <p className="text-[10px] text-emerald-600 font-black uppercase tracking-[0.2em]">{selectedBankInfo.fullName}</p>
+                <h3 className="text-xl font-black text-gray-900">{selectedBankInfo.number}</h3>
+                <p className="text-xs text-gray-400 font-bold">a.n. {selectedBankInfo.owner}</p>
+            </div>
           </div>
+          
+          <button 
+            onClick={() => copyToClipboard(selectedBankInfo.number, 'Nomor rekening')}
+            className="w-full py-3 bg-emerald-50 text-emerald-700 rounded-xl font-bold text-xs hover:bg-emerald-100 transition-colors flex items-center justify-center gap-2"
+          >
+            <span className="material-icons text-sm">content_copy</span> SALIN NOMOR REKENING
+          </button>
         </div>
 
-        {/* Amount card */}
-        <div className="bg-white rounded-lg shadow overflow-hidden mb-4">
-          <div className="p-4">
-            <div className="flex items-center mb-2">
-              <div className="flex-1 flex justify-between items-center">
-                <h3 className="text-2xl font-bold">
-                  Rp. <span className="text-green-500">{formattedAmount}</span>
-                </h3>
-                <button
-                  onClick={() => copyToClipboard(amount, 'Nominal')}
-                  className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-2 py-1 rounded flex items-center text-sm"
+        {/* Amount Card */}
+        <div className="bg-gradient-to-br from-emerald-600 to-teal-700 rounded-[32px] p-6 mb-8 shadow-xl shadow-emerald-100">
+            <p className="text-emerald-100 text-[10px] font-black uppercase tracking-[0.2em] mb-1">Total Tagihan</p>
+            <div className="flex justify-between items-end">
+                <h2 className="text-3xl font-black text-white tracking-tight">Rp {formattedAmount}</h2>
+                <button 
+                    onClick={() => copyToClipboard(amount, 'Nominal')}
+                    className="p-2 bg-white/20 backdrop-blur-sm rounded-lg text-white hover:bg-white/30 transition-colors"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                  </svg>
-                  Salin Nominal
+                    <span className="material-icons text-sm">content_copy</span>
                 </button>
-              </div>
             </div>
-          </div>
         </div>
 
-        {/* Payment confirmation form */}
-        <div className="bg-white rounded-lg shadow overflow-hidden mt-6">
-          <div className="p-4">
-            <h3 className="text-xl font-bold mb-4">Konfirmasi Pembayaran</h3>
+        {/* QRIS if selected */}
+        {selectedBankInfo.isQRIS && (
+            <div className="bg-white rounded-[32px] p-6 mb-8 border-2 border-dashed border-emerald-100 flex flex-col items-center">
+                <img src="/images/qris-bae2.png" alt="QRIS" className="w-full max-w-[240px] mb-4" />
+                <a href="/images/qris-bae2.png" download className="text-emerald-600 font-black text-xs uppercase tracking-widest hover:underline">Unduh QRIS</a>
+            </div>
+        )}
 
-            <form onSubmit={handleSubmit} className="space-y-4 mb-10">
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Transfer dari <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  name="sourceBank"
-                  placeholder="Nama Bank Pengirim"
-                  className="w-full p-3 rounded-lg border border-gray-300 focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none mb-2"
-                  value={formData.sourceBank}
-                  onChange={handleInputChange}
-                  required
-                />
-                {!selectedBankInfo.isQRIS && (
-                  <input
-                    type="text"
-                    name="sourceAccount"
-                    placeholder="Nomor Rekening Pengirim"
-                    className="w-full p-3 rounded-lg border border-gray-300 focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none mb-2"
-                    value={formData.sourceAccount}
-                    onChange={handleInputChange}
-                    required
-                  />
+        {/* Upload Form */}
+        <form onSubmit={handleSubmit} className="space-y-6">
+            <div 
+                className={`relative border-3 border-dashed rounded-[32px] p-8 text-center transition-all cursor-pointer ${
+                    previewUrl ? 'border-emerald-500 bg-emerald-50/30' : 'border-gray-200 hover:border-emerald-300 hover:bg-gray-50'
+                }`}
+                onClick={() => fileInputRef.current.click()}
+            >
+                {previewUrl ? (
+                    <div className="relative group">
+                        <img src={previewUrl} alt="Preview" className="max-h-64 mx-auto rounded-2xl shadow-lg shadow-emerald-200/50" />
+                        <div className="absolute inset-0 bg-emerald-900/40 rounded-2xl opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                            <span className="text-white font-black text-sm">GANTI FOTO</span>
+                        </div>
+                    </div>
+                ) : (
+                    <div className="py-6">
+                        <div className="w-16 h-16 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <span className="material-icons text-emerald-600 text-3xl">cloud_upload</span>
+                        </div>
+                        <p className="text-gray-900 font-black text-base">Upload Struk Pembayaran</p>
+                        <p className="text-gray-400 text-xs mt-1 font-bold">Pastikan gambar terang dan nominal terbaca</p>
+                    </div>
                 )}
-                <input
-                  type="text"
-                  name="accountName"
-                  placeholder="Atas Nama (opsional)"
-                  className="w-full p-3 rounded-lg border border-gray-300 focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none mb-2"
-                  value={formData.accountName || ''}
-                  onChange={handleInputChange}
+                <input 
+                    type="file" 
+                    accept="image/*" 
+                    ref={fileInputRef} 
+                    onChange={handleFileChange} 
+                    className="hidden" 
                 />
+            </div>
 
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Tanggal Transfer <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="date"
-                  name="transferDate"
-                  className="w-full p-3 rounded-lg border border-gray-300 focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none"
-                  value={formData.transferDate}
-                  onChange={handleInputChange}
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Bukti Transfer <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  ref={fileInputRef}
-                  onChange={handleFileChange}
-                  className="hidden"
-                  required
-                />
-                <div
-                  className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:bg-gray-50 transition-colors cursor-pointer"
-                  onClick={() => fileInputRef.current.click()}
-                >
-                  {previewUrl ? (
-                    <div className="relative">
-                      <img
-                        src={previewUrl}
-                        alt="Bukti Transfer"
-                        className="max-h-48 mx-auto rounded-lg"
-                      />
-                      <div className="mt-2 text-sm text-green-600">Klik untuk mengganti</div>
+            {ocrError && (
+                <div className="bg-red-50 border border-red-100 p-4 rounded-2xl flex items-start gap-3">
+                    <span className="material-icons text-red-600">error_outline</span>
+                    <div>
+                        <p className="text-red-700 font-black text-xs uppercase tracking-widest mb-1">Validasi Gagal</p>
+                        <p className="text-red-600 text-[11px] leading-relaxed font-bold">{ocrError}</p>
                     </div>
-                  ) : (
-                    <div className="py-4">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 mx-auto text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                      </svg>
-                      <p className="mt-2 text-sm text-gray-500">Pilih File</p>
-                      <p className="text-xs text-gray-400">JPG, PNG, JPEG</p>
-                    </div>
-                  )}
                 </div>
-              </div>
+            )}
 
-              <div className="mb-3 mt-4 bg-yellow-50 p-3 rounded-lg text-sm border border-yellow-200">
-                <p className="text-yellow-800">
-                  <strong>Catatan:</strong> Setelah klik KIRIM, Anda akan diarahkan ke WhatsApp untuk mengirim konfirmasi kepada admin. Mohon lampirkan juga bukti transfer di chat WhatsApp.
-                </p>
-              </div>
-
-              <button
+            <button
                 type="submit"
-                className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-medium flex items-center justify-center"
-              >
-                KIRIM VIA WHATSAPP
-              </button>
-            </form>
-          </div>
-        </div>
+                disabled={uploading || !selectedFile}
+                className={`w-full py-5 rounded-[24px] font-black text-base tracking-widest shadow-2xl transition-all flex items-center justify-center gap-3 ${
+                    uploading 
+                    ? 'bg-gray-200 text-gray-400 cursor-not-allowed' 
+                    : 'bg-gradient-to-r from-emerald-600 to-teal-700 text-white shadow-emerald-100 hover:shadow-emerald-200 hover:-translate-y-1'
+                }`}
+            >
+                {uploading ? (
+                    <>
+                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-emerald-600"></div>
+                        <span className="animate-pulse">{ocrLoading ? 'MEMINDAI STRUK...' : 'MEMPROSES...'}</span>
+                    </>
+                ) : (
+                    <>KONFIRMASI SEKARANG</>
+                )}
+            </button>
+            
+            <p className="text-center text-[10px] text-gray-400 font-bold italic">
+                *Sistem AI akan memvalidasi pembayaran Anda dalam hitungan detik.
+            </p>
+        </form>
       </div>
       <NavigationButton />
     </div>

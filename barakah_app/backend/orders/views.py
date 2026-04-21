@@ -71,14 +71,11 @@ class CreateOrderView(APIView):
                 shipping_courier=shipping_courier,
                 voucher_code=voucher_code,
                 voucher_nominal=voucher_nominal if not created_orders else 0,
-                status='paid' if proof_file else 'pending'
+                status='paid' if proof_file else 'pending',
+                payment_method=payment_method,
+                payment_proof=proof_file
             )
             
-            if proof_file:
-                # Assuming Order model or a related Payment model handles the proof_file
-                # If not on Order, we might need to update the model.
-                pass
-
             total_price = 0
             for cart_item in items:
                 # Variation price replaces product price if set
@@ -98,8 +95,8 @@ class CreateOrderView(APIView):
                 total_price += price_for_item
 
             order.total_price = total_price
-            order.payment_method = payment_method
-            order.status = 'pending' # All orders start as pending for manual verification
+            # Recalculate grand_total (save method handles it but we can be explicit)
+            order.grand_total = float(total_price) + float(order.shipping_cost) - float(order.voucher_nominal)
             order.save() 
             created_orders.append(order)
 

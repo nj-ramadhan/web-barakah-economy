@@ -16,6 +16,7 @@ class Order(models.Model):
     voucher_nominal = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     grand_total = models.DecimalField(max_digits=12, decimal_places=2, default=0) # total_price + shipping - voucher
     payment_method = models.CharField(max_length=50, default='manual')
+    payment_proof = models.ImageField(upload_to='payment_proofs/orders/', null=True, blank=True)
 
 
     status = models.CharField(max_length=50, default='Pending')  # e.g., Pending, Shipped, Delivered
