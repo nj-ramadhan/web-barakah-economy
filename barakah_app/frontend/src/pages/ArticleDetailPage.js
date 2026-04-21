@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useParams } from "react-router-dom";
 import axios from "axios";
+import { Helmet } from "react-helmet";
 import HeaderHome from "../components/layout/HeaderHome";
 import NavigationButton from "../components/layout/Navigation";
 import FloatingBubble from '../components/common/FloatingBubble';
@@ -59,6 +60,30 @@ const ArticleDetailPage = () => {
 
   return (
     <div className="body bg-gray-50 min-h-screen">
+      <Helmet>
+        <title>{article.title} | BARAKAH ECONOMY</title>
+        <meta name="description" content={article.content?.replace(/<[^>]+>/g, '').slice(0, 160)} />
+        <meta property="og:title" content={article.title} />
+        <meta property="og:description" content={article.content?.replace(/<[^>]+>/g, '').slice(0, 160)} />
+        <meta property="og:image" content={article.images && article.images.length > 0 ? article.images[0].full_path : ''} />
+        <meta property="og:type" content="article" />
+        <meta property="og:url" content={window.location.href} />
+        
+        {/* JSON-LD Structured Data */}
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Article",
+            "headline": article.title,
+            "image": article.images && article.images.length > 0 ? [article.images[0].full_path] : [],
+            "datePublished": article.date,
+            "author": {
+              "@type": "Person",
+              "name": "Barakah Economy"
+            }
+          })}
+        </script>
+      </Helmet>
       <HeaderHome />
 
       <div className="px-4 py-8 md:py-12 max-w-4xl mx-auto mb-24 bg-white shadow-sm sm:rounded-2xl sm:mt-8 sm:p-10 border border-gray-100">

@@ -11,12 +11,26 @@ from courses.views import CourseViewSet
 from profiles.views import ProfileViewSet
 
 router = SimpleRouter()
-router.register(r'profiles', ProfileViewSet, basename='profile')
-
-from events.views import event_detail_seo
+from barakah_app.seo_views import (
+    robots_txt, sitemap_xml, seo_product_detail, 
+    seo_campaign_detail, seo_article_detail, 
+    seo_course_detail, seo_event_detail, seo_seller_profile
+)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('robots.txt', robots_txt),
+    path('sitemap.xml', sitemap_xml),
+    
+    # --- SEO Crawler Traps (Frontend Paths Caught by Backend) ---
+    path('produk/<slug:slug>/', seo_product_detail),
+    path('kampanye/<slug:slug>/', seo_campaign_detail),
+    path('articles/<slug:slug>/', seo_article_detail),
+    path('academy/articles/<slug:slug>/', seo_article_detail),
+    path('kelas/<slug:slug>/', seo_course_detail),
+    path('event/<slug:slug>/', seo_event_detail),
+    path('<str:username>/', seo_seller_profile),
+
     path('api/auth/', include('accounts.urls')),
     path('api/', include(router.urls)),
 

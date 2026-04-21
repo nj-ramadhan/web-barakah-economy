@@ -88,6 +88,12 @@ export const rejectRegistration = (id) => {
     });
 };
 
+export const bulkDeleteRegistrations = (ids) => {
+    return axios.post(`${API_BASE_URL}/api/events/registrations/bulk_delete/`, { ids }, {
+        headers: getAuthHeaders()
+    });
+};
+
 export const exportRegistrationsCsv = (slug) => {
     return axios.get(`${API_BASE_URL}/api/events/${slug}/export_registrations/`, {
         headers: getAuthHeaders(),

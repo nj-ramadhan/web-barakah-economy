@@ -170,6 +170,27 @@ const CrowdfundingCampaignDetail = () => {
         <meta property="og:image" content={campaign.thumbnail} />
         <meta property="og:type" content="website" />
         <meta property="og:url" content={window.location.href} />
+
+        {/* JSON-LD Structured Data */}
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Product",
+            "name": campaign.title,
+            "description": campaign.description?.replace(/<[^>]+>/g, '').slice(0, 200),
+            "image": campaign.thumbnail,
+            "brand": {
+              "@type": "Brand",
+              "name": "Barakah Economy Charity"
+            },
+            "offers": {
+              "@type": "Offer",
+              "availability": isCampaignExpired(campaign.deadline) ? "https://schema.org/Discontinued" : "https://schema.org/InStock",
+              "price": "0",
+              "priceCurrency": "IDR"
+            }
+          })}
+        </script>
       </Helmet>
 
       <Header />

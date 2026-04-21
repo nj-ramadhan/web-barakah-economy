@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
 import Header from '../../components/layout/Header';
 import NavigationButton from '../../components/layout/Navigation';
-import { getEventRegistrations, getEventDetail, exportRegistrationsCsv, blastEventWhatsapp } from '../../services/eventApi';
+import { getEventRegistrations, getEventDetail, exportRegistrationsCsv, blastEventWhatsapp, bulkDeleteRegistrations } from '../../services/eventApi';
 import '../../styles/Body.css';
 
 const EventRegistrationSubmissionPage = () => {
@@ -148,6 +148,28 @@ const EventRegistrationSubmissionPage = () => {
             alert('Gagal mengirim blast: ' + (err.response?.data?.error || err.message));
         } finally {
             setIsBlasting(false);
+        }
+    };
+
+    const handleBulkDelete = async () => {
+        if (selectedIds.length === 0) {
+            alert('Pilih peserta yang akan dihapus terlebih dahulu.');
+            return;
+        }
+
+        if (!window.confirm(`Hapus ${selectedIds.length} peserta yang dipilih? Tindakan ini tidak dapat dibatalkan.`)) {
+            return;
+        }
+
+        try {
+            await bulkDeleteRegistrations(selectedIds);
+            alert('Berhasil menghapus peserta.');
+            // Update UI
+            setRegistrations(prev => prev.filter(r => !selectedIds.includes(r.id)));
+            setSelectedIds([]);
+        } catch (err) {
+            console.error(err);
+            alert('Gagal menghapus peserta: ' + (err.response?.data?.error || err.message));
         }
     };
 
@@ -312,23 +334,31 @@ const EventRegistrationSubmissionPage = () => {
                 </div>
 
                 <div className="mt-8 flex flex-wrap justify-center gap-4 no-print">
-                    <button
-                        onClick={handleExportCsv}
-                        disabled={isExporting}
-                        className="flex items-center justify-center gap-2 bg-white text-green-700 border-2 border-green-700 px-6 py-3 rounded-2xl text-xs font-bold shadow-sm hover:bg-green-50 transition disabled:opacity-50"
-                    >
-                        <span className="material-icons text-sm">{isExporting ? 'hourglass_top' : 'download'}</span>
-                        {isExporting ? 'MENGEKSPOR...' : 'EKSPOR DATA (CSV)'}
-                    </button>
-
-                    <button
-                        onClick={() => setShowBlastModal(true)}
-                        className="flex items-center justify-center gap-2 bg-green-700 text-white px-6 py-3 rounded-2xl text-xs font-bold shadow-xl hover:bg-green-800 transition"
-                    >
-                        <span className="material-icons text-sm">campaign</span>
-                        BLAST PENGINGAT (WA)
-                    </button>
-
+                    <div className="flex gap-2 w-full sm:w-auto">
+                        <button
+                            onClick={handleBulkDelete}
+                            disabled={selectedIds.length === 0}
+                            className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 border-2 border-red-100 text-red-600 rounded-xl hover:bg-red-50 font-bold transition-all disabled:opacity-30"
+                        >
+                            <span className="material-icons text-[18px]">delete_sweep</span>
+                            <span className="text-xs uppercase tracking-widest">Hapus</span>
+                        </button>
+                        <button
+                            onClick={handleExportCsv}
+                            disabled={isExporting}
+                            className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 border-2 border-emerald-100 text-emerald-600 rounded-xl hover:bg-emerald-50 font-bold transition-all disabled:opacity-50"
+                        >
+                            <span className="material-icons text-[18px]">{isExporting ? 'sync' : 'download'}</span>
+                            <span className="text-xs uppercase tracking-widest">{isExporting ? 'Exporting...' : 'Export CSV'}</span>
+                        </button>
+                        <button 
+                            onClick={() => setShowBlastModal(true)}
+                            className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-600 to-teal-700 text-white rounded-xl shadow-lg shadow-emerald-100 hover:shadow-emerald-200 transition-all font-bold"
+                        >
+                            <span className="material-icons text-[18px]">whatsapp</span>
+                            <span className="text-xs uppercase tracking-widest">Blast WA</span>
+                        </button>
+                    </div>
                 </div>
             </div>
 

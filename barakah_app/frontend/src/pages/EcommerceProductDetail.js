@@ -205,6 +205,34 @@ const EcommerceProductDetail = () => {
         <meta property="og:image" content={product.thumbnail} />
         <meta property="og:type" content="website" />
         <meta property="og:url" content={window.location.href} />
+        
+        {/* JSON-LD Structured Data */}
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org/",
+            "@type": "Product",
+            "name": product.title,
+            "image": [product.thumbnail],
+            "description": product.description?.replace(/<[^>]+>/g, '').slice(0, 200),
+            "sku": `PROD-${product.id}`,
+            "brand": {
+              "@type": "Brand",
+              "name": "Barakah Economy"
+            },
+            "offers": {
+              "@type": "Offer",
+              "url": window.location.href,
+              "priceCurrency": "IDR",
+              "price": product.price,
+              "availability": product.stock > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock"
+            },
+            "aggregateRating": product.testimonies?.length > 0 ? {
+              "@type": "AggregateRating",
+              "ratingValue": (product.testimonies.reduce((acc, curr) => acc + curr.stars, 0) / product.testimonies.length).toFixed(1),
+              "reviewCount": product.testimonies.length
+            } : undefined
+          })}
+        </script>
       </Helmet>
 
       <Header />

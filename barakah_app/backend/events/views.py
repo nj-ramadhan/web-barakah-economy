@@ -1,7 +1,7 @@
 from rest_framework import viewsets, permissions, status, filters
 from rest_framework.response import Response
 from rest_framework.decorators import action
-from django.core.mail import send_mail
+from django.core.mail import send_mail, EmailMessage
 from django.conf import settings
 from django.http import HttpResponse
 import csv
@@ -271,26 +271,38 @@ class EventViewSet(viewsets.ModelViewSet):
                     import logging
                     logging.getLogger(__name__).error(f"Gagal mengirim gambar WA QR: {e}")
 
-        # Send Email
-        if email:
             subject = f"Konfirmasi Pendaftaran Event: {registration.event.title}"
-            message = (
+            email_body = (
                 f"Assalamu'alaikum,\n\n"
                 f"Terima kasih telah mendaftar di event '{registration.event.title}'.\n"
                 f"Pendaftaran Anda telah berhasil dikonfirmasi secara otomatis.\n\n"
+                f"🎫 KODE TIKET ANDA: {registration.unique_code or '-'}\n\n"
                 f"Detail Event:\n"
                 f"- Judul: {registration.event.title}\n"
                 f"- Lokasi: {registration.event.location}\n"
                 f"- Waktu: {registration.event.start_date.strftime('%d %b %Y %H:%M')}\n\n"
+                f"QR Code tiket Anda terlampir pada email ini.\n"
                 f"Terima kasih,\nTim Barakah Economy"
             )
-            send_mail(
-                subject,
-                message,
-                settings.DEFAULT_FROM_EMAIL,
-                [email],
-                fail_silently=True
-            )
+            
+            try:
+                email_msg = EmailMessage(
+                    subject,
+                    email_body,
+                    settings.DEFAULT_FROM_EMAIL,
+                    [email]
+                )
+                
+                # Attach QR Image if exists
+                if registration.qr_image:
+                    # Seek to beginning if it was read elsewhere
+                    registration.qr_image.seek(0)
+                    email_msg.attach(f"tiket_{registration.unique_code}.png", registration.qr_image.read(), 'image/png')
+                
+                email_msg.send(fail_silently=True)
+            except Exception as e:
+                import logging
+                logging.getLogger(__name__).error(f"Gagal mengirim email QR: {e}")
 
     def _format_phone_number(self, phone):
         if not phone: return None
@@ -602,6 +614,28 @@ class EventRegistrationViewSet(viewsets.ModelViewSet):
     serializer_class = EventRegistrationSerializer
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
     filterset_fields = ['event', 'status', 'user']
+
+    @action(detail=False, methods=['post'])
+    def bulk_delete(self, request):
+        ids = request.data.get('ids', [])
+        if not ids:
+            return Response({"error": "No IDs provided"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Filter registrations by IDs and ensure the user has permission for EACH event
+        # For simplicity and security, we loop or filter with complex logic
+        registrations = EventRegistration.objects.filter(id__in=ids)
+        
+        # Check permissions for each registration (ensure they belong to events managed by searcher)
+        if not request.user.is_staff:
+            managed_events = Event.objects.filter(created_by=request.user)
+            unauthorized_count = registrations.exclude(event__in=managed_events).count()
+            if unauthorized_count > 0:
+                return Response({"error": "Unauthorized to delete some registrations"}, status=status.HTTP_403_FORBIDDEN)
+        
+        count = registrations.count()
+        registrations.delete()
+        
+        return Response({"message": f"Successfully deleted {count} registrations."}, status=status.HTTP_200_OK)
 
     def get_permissions(self):
         # Registration management only for authenticated users (Staff/Creators)

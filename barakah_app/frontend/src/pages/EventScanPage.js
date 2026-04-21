@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import { Helmet } from 'react-helmet';
-import { Html5QrcodeScanner } from 'html5-qrcode';
+import { Html5Qrcode } from 'html5-qrcode';
 import Header from '../components/layout/Header';
 import NavigationButton from '../components/layout/Navigation';
 
@@ -20,6 +20,7 @@ const EventScanPage = () => {
     const [scanResult, setScanResult] = useState(null); // { status, message, registration }
     const [recentScans, setRecentScans] = useState([]);
     const inputRef = useRef(null);
+    const scannerRef = useRef(null); // To store Html5Qrcode instance
 
     const getAuth = () => {
         const user = JSON.parse(localStorage.getItem('user'));
@@ -49,6 +50,7 @@ const EventScanPage = () => {
             inputRef.current.focus();
         }
     }, [loading]);
+
 
     const handleScan = useCallback(async (code = manualCode) => {
         const cleanCode = code.trim().toUpperCase();
@@ -82,35 +84,111 @@ const EventScanPage = () => {
         } finally {
             setScanning(false);
         }
-    }, [slug]); // removed manualCode to ensure handleScan reference is stable
+    }, [slug]);
 
     const handleKeyDown = (e) => {
         if (e.key === 'Enter') handleScan(manualCode);
     };
 
-    useEffect(() => {
-        let html5QrcodeScanner;
-        if (isCameraOpen) {
-            html5QrcodeScanner = new Html5QrcodeScanner(
-                "qr-reader",
-                { fps: 10, qrbox: { width: 250, height: 250 }, rememberLastUsedCamera: true },
-                false
-            );
-            html5QrcodeScanner.render(
+    const [cameras, setCameras] = useState([]);
+    const [activeCameraIndex, setActiveCameraIndex] = useState(0);
+    const [cameraLoading, setCameraLoading] = useState(false);
+
+    const stopScanner = async () => {
+        if (scannerRef.current) {
+            try {
+                if (scannerRef.current.isScanning) {
+                    await scannerRef.current.stop();
+                    console.log("Scanner stopped successfully");
+                }
+            } catch (err) {
+                console.error("Scanner stop fail", err);
+            }
+        }
+    };
+
+    const startScanner = async (index = activeCameraIndex) => {
+        if (!isCameraOpen) return;
+        
+        setCameraLoading(true);
+        try {
+            // Clean up previous instance if any
+            await stopScanner();
+            
+            const scanner = new Html5Qrcode("qr-reader");
+            scannerRef.current = scanner;
+
+            let availableCameras = [];
+            try {
+                availableCameras = await Html5Qrcode.getCameras();
+                setCameras(availableCameras);
+            } catch (e) {
+                console.error("Failed to get cameras", e);
+            }
+
+            let cameraId = { facingMode: "environment" };
+            
+            if (availableCameras.length > 0) {
+                // If we have cameras, pick the one at index, or try to find a "back" camera on first load
+                if (index === 0 && activeCameraIndex === 0) {
+                    const backCam = availableCameras.find(c => 
+                        c.label.toLowerCase().includes('back') || 
+                        c.label.toLowerCase().includes('rear') ||
+                        c.label.toLowerCase().includes('environment')
+                    );
+                    if (backCam) {
+                        cameraId = backCam.id;
+                        const idx = availableCameras.indexOf(backCam);
+                        setActiveCameraIndex(idx);
+                    } else {
+                        cameraId = availableCameras[0].id;
+                    }
+                } else if (availableCameras[index]) {
+                    cameraId = availableCameras[index].id;
+                }
+            }
+
+            await scanner.start(
+                cameraId,
+                { fps: 10, qrbox: { width: 250, height: 250 } },
                 (decodedText) => {
                     handleScan(decodedText);
-                    setIsCameraOpen(false); // Close camera after scan to prevent multiple submits
-                    html5QrcodeScanner.clear().catch(e => console.error(e));
+                    setIsCameraOpen(false); // Auto close on success
                 },
-                (error) => { /* ignore */ }
+                () => {} // silent error during framing
             );
-        }
-        return () => {
-            if (html5QrcodeScanner) {
-                html5QrcodeScanner.clear().catch(e => console.error(e));
+        } catch (err) {
+            console.error("Scanner start fail", err);
+            // Fallback for some browsers
+            if (err.toString().includes("Permission denied")) {
+                alert("Izin kamera ditolak. Silakan berikan izin di pengaturan browser Anda.");
+            } else {
+                alert("Gagal membuka kamera: " + err);
             }
+            setIsCameraOpen(false);
+        } finally {
+            setCameraLoading(false);
+        }
+    };
+
+    const switchCamera = () => {
+        if (cameras.length <= 1) return;
+        const nextIndex = (activeCameraIndex + 1) % cameras.length;
+        setActiveCameraIndex(nextIndex);
+        startScanner(nextIndex);
+    };
+
+    useEffect(() => {
+        if (isCameraOpen) {
+            startScanner();
+        } else {
+            stopScanner();
+        }
+
+        return () => {
+            stopScanner();
         };
-    }, [isCameraOpen, handleScan]);
+    }, [isCameraOpen]);
 
     if (loading) return (
         <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -190,13 +268,41 @@ const EventScanPage = () => {
 
                     {isCameraOpen && (
                         <div className="mt-4 animate-in slide-in-from-top-2 duration-300">
-                            <div className="overflow-hidden rounded-xl border-2 border-purple-500 bg-black aspect-square max-h-[250px] mx-auto relative">
+                            <div className="overflow-hidden rounded-xl border-2 border-purple-500 bg-black aspect-square max-h-[250px] mx-auto relative group">
                                 <div id="qr-reader" className="w-full h-full"></div>
+                                
+                                {cameraLoading && (
+                                    <div className="absolute inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm z-10">
+                                        <div className="animate-spin w-8 h-8 border-4 border-purple-400 border-t-transparent rounded-full"></div>
+                                    </div>
+                                )}
+
                                 <div className="absolute inset-0 pointer-events-none border-[30px] border-black/30">
                                     <div className="w-full h-full border-2 border-purple-400 rounded-lg"></div>
                                 </div>
+
+                                {/* Switch Camera Button */}
+                                {cameras.length > 1 && !cameraLoading && (
+                                    <button 
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            switchCamera();
+                                        }}
+                                        className="absolute bottom-4 right-4 w-10 h-10 bg-white/20 hover:bg-white/40 backdrop-blur-md text-white rounded-full flex items-center justify-center transition-all z-20 active:scale-90"
+                                        title="Switch Camera"
+                                    >
+                                        <span className="material-icons text-xl">flip_camera_ios</span>
+                                    </button>
+                                )}
                             </div>
-                            <p className="text-[9px] text-purple-600 font-bold mt-2 text-center uppercase tracking-widest">Arahkan QR Code ke Kotak</p>
+                            <p className="text-[9px] text-purple-600 font-bold mt-2 text-center uppercase tracking-widest">
+                                {cameras.length > 1 ? 'Klik icon putar untuk ganti kamera' : 'Arahkan QR Code ke Kotak'}
+                            </p>
+                            {cameras.length > 0 && activeCameraIndex < cameras.length && (
+                                <p className="text-[8px] text-gray-400 text-center mt-1 truncate px-4">
+                                    Aktif: {cameras[activeCameraIndex].label || `Camera ${activeCameraIndex + 1}`}
+                                </p>
+                            )}
                         </div>
                     )}
                     

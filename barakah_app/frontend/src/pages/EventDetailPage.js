@@ -250,6 +250,48 @@ const EventDetailPage = () => {
                 <meta property="twitter:title" content={event.title} />
                 <meta property="twitter:description" content={event.description?.replace(/<[^>]*>/g, '').substring(0, 160)} />
                 <meta property="twitter:image" content={getAbsoluteUrl(event.thumbnail || event.header_image)} />
+
+                {/* JSON-LD Structured Data for Rich Snippets */}
+                <script type="application/ld+json">
+                    {JSON.stringify({
+                        "@context": "https://schema.org",
+                        "@type": "Event",
+                        "name": event.title,
+                        "description": event.description?.replace(/<[^>]*>/g, '').substring(0, 400),
+                        "image": [
+                            getAbsoluteUrl(event.thumbnail || event.header_image)
+                        ],
+                        "startDate": event.date,
+                        "endDate": event.end_date || event.date,
+                        "eventStatus": "https://schema.org/EventScheduled",
+                        "eventAttendanceMode": event.location_type === 'online' ? "https://schema.org/OnlineEventAttendanceMode" : "https://schema.org/OfflineEventAttendanceMode",
+                        "location": event.location_type === 'online' ? {
+                            "@type": "VirtualLocation",
+                            "url": window.location.href
+                        } : {
+                            "@type": "Place",
+                            "name": event.location,
+                            "address": {
+                                "@type": "PostalAddress",
+                                "streetAddress": event.location,
+                                "addressLocality": "Indonesia",
+                                "addressCountry": "ID"
+                            }
+                        },
+                        "offers": {
+                            "@type": "Offer",
+                            "url": window.location.href,
+                            "price": event.price || "0",
+                            "priceCurrency": "IDR",
+                            "availability": "https://schema.org/InStock"
+                        },
+                        "organizer": {
+                            "@type": "Organization",
+                            "name": "Barakah Economy",
+                            "url": window.location.origin
+                        }
+                    })}
+                </script>
             </Helmet>
             <Header />
 
@@ -599,7 +641,7 @@ const EventDetailPage = () => {
                             <span className="material-icons text-4xl">check_circle</span>
                         </div>
                         <h3 className="text-2xl font-extrabold text-gray-900 mb-2">Pendaftaran Berhasil!</h3>
-                        <p className="text-gray-500 mb-6 text-sm leading-relaxed">Simpan QR Code & kode tiket di bawah ini sebagai bukti pendaftaran Anda.</p>
+                        <p className="text-gray-500 mb-6 text-sm leading-relaxed">Kode tiket dan QR Code telah dikirimkan ke <b>Email</b> dan <b>WhatsApp</b> Anda.</p>
                         
                         {registeredCode && (
                             <div className="bg-gradient-to-br from-green-50 to-emerald-50 border-2 border-green-200 rounded-3xl p-6 mb-6">
@@ -617,9 +659,9 @@ const EventDetailPage = () => {
                                     <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-1">Kode Tiket</p>
                                     <p className="text-2xl font-black text-green-700 tracking-[0.3em] font-mono">{registeredCode}</p>
                                 </div>
-                                <div className="mt-4 bg-yellow-50 border border-yellow-200 rounded-2xl p-3 text-left">
-                                    <p className="text-[10px] text-yellow-800 font-medium">
-                                        📱 <strong>Screenshot</strong> QR Code ini atau catat kode tiket. Kode WA juga sudah dikirimkan ke nomor Anda.
+                                <div className="mt-4 bg-blue-50 border border-blue-200 rounded-2xl p-3 text-left">
+                                    <p className="text-[10px] text-blue-800 font-medium leading-relaxed">
+                                        🎫 Silakan cek email masuk (atau folder spam) dan pesan WhatsApp Anda untuk tiket resmi. Simpan tiket tersebut untuk ditunjukkan saat acara.
                                     </p>
                                 </div>
                             </div>
@@ -627,17 +669,10 @@ const EventDetailPage = () => {
 
                         <div className="flex flex-col gap-3">
                             <button 
-                                onClick={() => window.print()}
-                                className="w-full py-3.5 bg-green-600 text-white rounded-2xl text-sm font-bold shadow-lg hover:bg-green-700 transition flex items-center justify-center gap-2"
-                            >
-                                <span className="material-icons text-sm">save_alt</span>
-                                Screenshot / Simpan Tiket
-                            </button>
-                            <button 
                                 onClick={() => setSuccess(false)}
-                                className="w-full py-3.5 bg-gray-900 text-white rounded-2xl text-sm font-bold shadow-xl hover:bg-gray-800 transition"
+                                className="w-full py-3.5 bg-green-600 text-white rounded-2xl text-sm font-bold shadow-lg hover:bg-green-700 transition"
                             >
-                                Tutup
+                                Selesai
                             </button>
                             <Link to="/event" className="text-xs font-bold text-gray-400 uppercase tracking-widest hover:text-green-700 transition">Kembali ke Daftar Event</Link>
                         </div>

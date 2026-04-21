@@ -186,6 +186,28 @@ const EcourseCourseDetail = () => {
         <meta property="og:image" content={course.thumbnail} />
         <meta property="og:type" content="website" />
         <meta property="og:url" content={window.location.href} />
+
+        {/* JSON-LD Structured Data */}
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Course",
+            "name": course.title,
+            "description": course.description?.replace(/<[^>]+>/g, '').slice(0, 200),
+            "provider": {
+              "@type": "Organization",
+              "name": "Barakah Economy Academy",
+              "sameAs": window.location.origin
+            },
+            "offers": {
+              "@type": "Offer",
+              "price": course.price,
+              "priceCurrency": "IDR",
+              "availability": "https://schema.org/InStock",
+              "url": window.location.href
+            }
+          })}
+        </script>
       </Helmet>
 
       <Header />

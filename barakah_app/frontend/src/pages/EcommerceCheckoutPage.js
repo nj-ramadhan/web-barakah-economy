@@ -390,7 +390,7 @@ const EcommerceCheckoutPage = () => {
           <input type="email" name="email" placeholder="Email Anda (opsional)" className="w-full p-3 rounded-xl bg-gray-50 text-sm outline-none" value={formData.email} onChange={handleInputChange} />
           <textarea name="message" placeholder="Catatan ke penjual (opsional)" className="w-full p-3 rounded-xl bg-gray-50 text-sm outline-none h-20" value={formData.message} onChange={handleInputChange} />
 
-          <button type="submit" disabled={!selectedBank || selectedShipping === 0} className="w-full mt-4 bg-gradient-to-r from-emerald-600 to-teal-700 text-white font-bold py-4 rounded-xl hover:shadow-lg hover:shadow-emerald-200 hover:scale-[1.01] transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+          <button type="submit" disabled={!selectedBank || (courier !== 'none' && selectedShipping === 0)} className="w-full mt-4 bg-gradient-to-r from-emerald-600 to-teal-700 text-white font-bold py-4 rounded-xl hover:shadow-lg hover:shadow-emerald-200 hover:scale-[1.01] transition-all disabled:opacity-50 disabled:cursor-not-allowed">
             BAYAR {formatIDR(grandTotal)}
           </button>
         </form>
