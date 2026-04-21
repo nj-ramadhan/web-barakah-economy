@@ -17,12 +17,13 @@ def clean_phone(phone):
         phone = '62' + phone[1:]
     return phone
 
-def send_order_invoice_to_buyer(order):
+def send_order_invoice_to_buyer(order, alternate_phone=None):
     """Send a formatted text invoice to the buyer."""
-    phone = clean_phone(order.user.phone)
+    raw_phone = alternate_phone if alternate_phone else (order.user.phone if hasattr(order.user, 'phone') else None)
+    phone = clean_phone(raw_phone)
     if not phone:
         logger.warning(f"Cannot send invoice to buyer {order.user.username}: No phone number.")
-        return
+        return {'success': False, 'message': 'Nomor HP tidak ditemukan'}
 
     items_str = ""
     for item in order.items.all():

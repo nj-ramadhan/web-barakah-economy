@@ -571,6 +571,7 @@ const ProfilePage = () => {
         picture: '', // Profile picture URL
         username: '',
         email: '',
+        phone: '',
     });
 
     const [activeTab, setActiveTab] = useState('general');
@@ -866,6 +867,7 @@ const ProfilePage = () => {
                             <div className="text-center mb-8">
                                 <h3 className="text-2xl font-black text-gray-900">{profile.name_full || profile.username || 'Anggota Barakah'}</h3>
                                 <p className="text-sm text-gray-500 font-medium">{profile.email || 'tanpa email'}</p>
+                                {profile.phone && <p className="text-xs text-emerald-600 font-black mt-1 flex items-center justify-center gap-1"><span className="material-icons text-xs">phone</span> {profile.phone}</p>}
                                 <div className="flex justify-center gap-2 mt-3">
                                     {profile.is_verified_member && (
                                         <span className="bg-blue-50 text-blue-600 text-[10px] font-bold px-3 py-1 rounded-full flex items-center gap-1 border border-blue-100">

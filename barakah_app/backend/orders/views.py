@@ -118,9 +118,11 @@ class CreateOrderView(APIView):
 
             # Send Notifications for each created order
             from .utils import send_order_invoice_to_buyer, send_order_notification_to_seller
+            customer_phone = request.data.get('customer_phone') or request.data.get('phone')
+            
             for order in created_orders:
                 try:
-                    res_buyer = send_order_invoice_to_buyer(order)
+                    res_buyer = send_order_invoice_to_buyer(order, alternate_phone=customer_phone)
                     if res_buyer and not res_buyer.get('success'):
                         logger.error(f"WA Buyer Fail ({order.order_number}): {res_buyer.get('message')}")
                         

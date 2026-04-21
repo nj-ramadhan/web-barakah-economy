@@ -40,13 +40,11 @@ class Order(models.Model):
         if self.grand_total < 0:
             self.grand_total = Decimal('0')
 
-        if not self.pk:
-            super().save(*args, **kwargs)
+        super().save(*args, **kwargs)
         
         if not self.order_number:
             self.order_number = f"ORD-{self.user.id:03d}-{self.id:04d}"
-            kwargs['force_insert'] = False
-            super().save(*args, **kwargs)
+            super().save(update_fields=['order_number'])
 
     def __str__(self):
         return f"Order {self.order_number} by {self.user.username}"

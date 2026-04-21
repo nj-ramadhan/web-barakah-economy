@@ -54,6 +54,7 @@ const ProfileEditPage = () => {
     address_village_id: '',
     address_village_name: '',
     username: '',
+    phone: '',
     shop_supported_couriers: 'jne,pos,tiki,jnt',
   });
 
@@ -446,6 +447,12 @@ const ProfileEditPage = () => {
                 Nama Lengkap {isFieldMissing('name_full') && <span className="text-red-500">*wajib</span>}
               </label>
               <input type="text" name="name_full" placeholder="Nama Lengkap sesuai KTP" value={profile.name_full || ''} onChange={handleChange} className={inputCls('name_full')} />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
+                No. HP / WhatsApp {isFieldMissing('phone') && <span className="text-red-500">*wajib</span>}
+              </label>
+              <input type="text" name="phone" placeholder="Contoh: 081234567890" value={profile.phone || ''} onChange={handleChange} className={inputCls('phone')} />
             </div>
             {/* Start File Upload KTP inside tab */}
             <div className="bg-blue-50 rounded-xl p-4 border border-blue-100 flex flex-col sm:flex-row items-start sm:items-center gap-4">
