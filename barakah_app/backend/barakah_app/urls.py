@@ -4,13 +4,8 @@ from ckeditor_uploader import views as ckeditor_views
 from django.conf import settings
 from django.conf.urls.static import static
 from rest_framework.routers import SimpleRouter
-from campaigns.views import CampaignViewSet
-from donations.views import DonationViewSet
-from products.views import ProductViewSet
-from courses.views import CourseViewSet
-from profiles.views import ProfileViewSet
-
 router = SimpleRouter()
+
 from barakah_app.seo_views import (
     robots_txt, sitemap_xml, seo_product_detail, 
     seo_campaign_detail, seo_article_detail, 
@@ -32,6 +27,7 @@ urlpatterns = [
     path('<str:username>/', seo_seller_profile),
 
     path('api/auth/', include('accounts.urls')),
+    path('api/profiles/', include('profiles.urls')),
     path('api/', include(router.urls)),
 
     path('api/', include('article.urls')),

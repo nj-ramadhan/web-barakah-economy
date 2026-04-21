@@ -12,6 +12,7 @@ from .serializers import ProfileSerializer
 class ProfileViewSet(viewsets.ModelViewSet):
     queryset = Profile.objects.all()
     serializer_class = ProfileSerializer
+    lookup_field = 'user_id'
 
     @action(detail=False, methods=['get'])
     def me(self, request):

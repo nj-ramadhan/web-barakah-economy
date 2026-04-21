@@ -333,31 +333,55 @@ const EventRegistrationSubmissionPage = () => {
                     </div>
                 </div>
 
-                <div className="mt-8 flex flex-wrap justify-center gap-4 no-print">
-                    <div className="flex gap-2 w-full sm:w-auto">
-                        <button
-                            onClick={handleBulkDelete}
-                            disabled={selectedIds.length === 0}
-                            className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 border-2 border-red-100 text-red-600 rounded-xl hover:bg-red-50 font-bold transition-all disabled:opacity-30"
-                        >
-                            <span className="material-icons text-[18px]">delete_sweep</span>
-                            <span className="text-xs uppercase tracking-widest">Hapus</span>
-                        </button>
-                        <button
-                            onClick={handleExportCsv}
-                            disabled={isExporting}
-                            className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 border-2 border-emerald-100 text-emerald-600 rounded-xl hover:bg-emerald-50 font-bold transition-all disabled:opacity-50"
-                        >
-                            <span className="material-icons text-[18px]">{isExporting ? 'sync' : 'download'}</span>
-                            <span className="text-xs uppercase tracking-widest">{isExporting ? 'Exporting...' : 'Export CSV'}</span>
-                        </button>
-                        <button 
-                            onClick={() => setShowBlastModal(true)}
-                            className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-600 to-teal-700 text-white rounded-xl shadow-lg shadow-emerald-100 hover:shadow-emerald-200 transition-all font-bold"
-                        >
-                            <span className="material-icons text-[18px]">whatsapp</span>
-                            <span className="text-xs uppercase tracking-widest">Blast WA</span>
-                        </button>
+                {/* Modern Action Toolbar */}
+                <div className="mt-12 flex justify-center no-print">
+                    <div className="inline-flex items-center gap-3 p-3 bg-white/80 backdrop-blur-xl border border-white rounded-[2.5rem] shadow-2xl shadow-green-900/10 transition-all duration-500 hover:shadow-green-900/20">
+                        {/* Status Label (If Selected) */}
+                        {selectedIds.length > 0 && (
+                            <div className="hidden sm:flex items-center gap-2 px-4 py-2 bg-green-50 rounded-full border border-green-100 mr-2 animate-in fade-in slide-in-from-left-4">
+                                <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                                <span className="text-[10px] font-black text-green-700 uppercase tracking-widest">{selectedIds.length} Terpilih</span>
+                            </div>
+                        )}
+
+                        <div className="flex items-center gap-2">
+                            {/* Delete Button */}
+                            <button
+                                onClick={handleBulkDelete}
+                                disabled={selectedIds.length === 0}
+                                className="group flex items-center gap-2 px-5 py-3 bg-red-50 hover:bg-red-100 text-red-600 rounded-2xl font-bold transition-all disabled:opacity-20 active:scale-95 border border-red-100"
+                                title="Hapus Data Terpilih"
+                            >
+                                <span className="material-icons text-xl group-hover:rotate-12 transition-transform">delete_sweep</span>
+                                <span className="text-[10px] uppercase tracking-widest hidden sm:inline">Hapus</span>
+                            </button>
+
+                            {/* Export Button */}
+                            <button
+                                onClick={handleExportCsv}
+                                disabled={isExporting}
+                                className="group flex items-center gap-2 px-5 py-3 bg-gray-50 hover:bg-gray-100 text-gray-700 rounded-2xl font-bold transition-all disabled:opacity-50 active:scale-95 border border-gray-200"
+                            >
+                                <span className={`material-icons text-xl ${isExporting ? 'animate-spin' : 'group-hover:-translate-y-0.5 transition-transform'}`}>
+                                    {isExporting ? 'sync' : 'cloud_download'}
+                                </span>
+                                <span className="text-[10px] uppercase tracking-widest hidden sm:inline">
+                                    {isExporting ? 'Exporting...' : 'Export CSV'}
+                                </span>
+                            </button>
+
+                            <div className="w-px h-8 bg-gray-200 mx-1"></div>
+
+                            {/* Blast Button */}
+                            <button 
+                                onClick={() => setShowBlastModal(true)}
+                                className="group relative flex items-center gap-3 px-8 py-3.5 bg-gradient-to-br from-emerald-600 to-teal-800 text-white rounded-[1.25rem] shadow-xl shadow-emerald-200 hover:shadow-emerald-300 hover:scale-[1.02] active:scale-95 transition-all font-black overflow-hidden"
+                            >
+                                <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
+                                <span className="material-icons text-xl group-hover:rotate-12 transition-transform">whatsapp</span>
+                                <span className="text-[11px] uppercase tracking-[0.15em]">Blast WA</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -452,57 +476,72 @@ const EventRegistrationSubmissionPage = () => {
 
             {/* Blast Modal */}
             {showBlastModal && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-                    <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden transform animate-in zoom-in-95 duration-200">
-                        <div className="p-6 border-b border-gray-100 flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                                <span className="material-icons text-green-700">campaign</span>
-                                <h3 className="font-black text-gray-900 uppercase tracking-tight">Blast WhatsApp</h3>
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-gray-900/40 backdrop-blur-md animate-in fade-in duration-300">
+                    <div className="bg-white rounded-[2.5rem] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.2)] w-full max-w-md overflow-hidden transform animate-in zoom-in-95 duration-300 border border-white">
+                        <div className="p-8 border-b border-gray-50 flex items-center justify-between bg-gradient-to-br from-white to-gray-50/50">
+                            <div className="flex items-center gap-3">
+                                <div className="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center shadow-inner">
+                                    <span className="material-icons text-2xl">campaign</span>
+                                </div>
+                                <div>
+                                    <h3 className="font-black text-gray-900 uppercase tracking-tight">Blast WhatsApp</h3>
+                                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-0.5">Broadcast Message</p>
+                                </div>
                             </div>
-                            <button onClick={() => setShowBlastModal(false)} className="text-gray-400 hover:text-gray-600 transition">
+                            <button 
+                                onClick={() => setShowBlastModal(false)} 
+                                className="w-10 h-10 flex items-center justify-center text-gray-400 hover:text-gray-900 hover:bg-gray-100 rounded-full transition-all"
+                            >
                                 <span className="material-icons">close</span>
                             </button>
                         </div>
-                        <div className="p-6">
-                            <p className="text-xs text-gray-500 font-medium mb-4 italic">
-                                {selectedIds.length > 0 ? (
-                                    <>Akan mengirim pesan ke <span className="text-green-700 font-black">{selectedIds.length}</span> peserta terpilih.</>
-                                ) : (
-                                    <>Pesan akan dikirim ke <span className="text-green-600 font-bold text-xs">SELURUH</span> peserta yang terdaftar.</>
-                                )}
-                            </p>
+                        <div className="p-8">
+                            <div className="mb-6 p-4 bg-indigo-50/50 border border-indigo-100 rounded-2xl flex items-start gap-3">
+                                <span className="material-icons text-indigo-500 text-lg">info</span>
+                                <p className="text-[11px] text-indigo-900 font-medium leading-relaxed">
+                                    {selectedIds.length > 0 ? (
+                                        <>Mengirim pesan ke <span className="font-black text-indigo-700">{selectedIds.length}</span> peserta yang Anda pilih di tabel.</>
+                                    ) : (
+                                        <>Pesan akan dikirim ke <span className="font-black text-indigo-700">SELURUH</span> peserta dengan status Approved.</>
+                                    )}
+                                </p>
+                            </div>
 
-                            <div className="mb-4">
-                                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Isi Pesan</label>
+                            <div className="mb-8">
+                                <div className="flex justify-between items-center mb-2 px-1">
+                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Isi Pesan</label>
+                                    <div className="flex gap-1.5">
+                                        <button onClick={() => setBlastMessage(prev => prev + ' {name}')} className="text-[9px] font-bold text-emerald-700 bg-emerald-50 px-2 py-1 rounded-lg hover:bg-emerald-100 transition">+{'{name}'}</button>
+                                        <button onClick={() => setBlastMessage(prev => prev + ' {event}')} className="text-[9px] font-bold text-blue-700 bg-blue-50 px-2 py-1 rounded-lg hover:bg-blue-100 transition">+{'{event}'}</button>
+                                    </div>
+                                </div>
                                 <textarea
-                                    className="w-full h-32 p-4 bg-gray-50 border border-gray-100 rounded-2xl text-sm focus:ring-2 focus:ring-green-500 outline-none transition"
+                                    className="w-full h-40 p-5 bg-gray-50 border border-gray-100 rounded-3xl text-sm focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500/30 outline-none transition-all resize-none shadow-inner"
                                     value={blastMessage}
                                     onChange={(e) => setBlastMessage(e.target.value)}
                                     placeholder="Tulis pesan pengingat..."
                                 />
-                                <div className="mt-2 flex flex-wrap gap-2">
-                                    <span className="text-[9px] text-gray-400">Gunakan tag: </span>
-                                    <code className="text-[9px] bg-indigo-50 text-indigo-700 px-1 py-0.5 rounded font-bold">{'{name}'}</code>
-                                    <code className="text-[9px] bg-indigo-50 text-indigo-700 px-1 py-0.5 rounded font-bold">{'{event}'}</code>
-                                </div>
                             </div>
 
                             <button
                                 onClick={handleBlast}
                                 disabled={isBlasting || !blastMessage.trim()}
-                                className="w-full bg-green-700 text-white font-black py-4 rounded-2xl shadow-xl shadow-green-700/20 hover:bg-green-800 transition disabled:opacity-50 flex items-center justify-center gap-2"
+                                className="group relative w-full bg-gradient-to-br from-emerald-600 to-teal-800 text-white font-black py-5 rounded-[1.5rem] shadow-2xl shadow-emerald-900/20 hover:shadow-emerald-900/30 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50 overflow-hidden"
                             >
-                                {isBlasting ? (
-                                    <>
-                                        <span className="material-icons animate-spin">sync</span>
-                                        SEDANG MENGIRIM...
-                                    </>
-                                ) : (
-                                    <>
-                                        <span className="material-icons">send</span>
-                                        KIRIM SEKARANG
-                                    </>
-                                )}
+                                <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                                <div className="flex items-center justify-center gap-3 relative z-10">
+                                    {isBlasting ? (
+                                        <>
+                                            <span className="material-icons animate-spin">sync</span>
+                                            <span className="tracking-widest text-xs">SEDANG MENGIRIM...</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <span className="material-icons group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform">send</span>
+                                            <span className="tracking-widest text-xs">KIRIM BROADCAST</span>
+                                        </>
+                                    )}
+                                </div>
                             </button>
                         </div>
                     </div>
