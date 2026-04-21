@@ -95,7 +95,6 @@ const LoginPage = () => {
     const handleLogout = () => {
         localStorage.removeItem('user');
         setIsLoggedIn(false);
-        setProfile(null);
         alert('Logout successful!');
         navigate('/login');
     };
