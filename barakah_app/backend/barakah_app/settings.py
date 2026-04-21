@@ -15,20 +15,18 @@ from pathlib import Path
 from datetime import timedelta
 import environ
 
-# # Initialize environment variables
-env = environ.Env()
-
-
-
-# Load the GOOGLE_CLIENT_ID from the environment variables
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
+# Load environment variables from .env file
+env = environ.Env()
+env_file = BASE_DIR / '.env'
+if env_file.exists():
+    environ.Env.read_env(str(env_file))
 
 # Load the GOOGLE_CLIENT_ID from the environment variables
 GOOGLE_CLIENT_ID = env('GOOGLE_CLIENT_ID', default='')
-GOOGLE_CLIENT_SECRET= env('GOOGLE_CLIENT_SECRET', default='')
+GOOGLE_CLIENT_SECRET = env('GOOGLE_CLIENT_SECRET', default='')
 
 MIDTRANS_MERCHANT_ID = env('MIDTRANS_MERCHANT_ID', default='')
 MIDTRANS_CLIENT_KEY = env('MIDTRANS_CLIENT_KEY', default='')
