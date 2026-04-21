@@ -212,7 +212,7 @@ class EventViewSet(viewsets.ModelViewSet):
             import logging
             logging.getLogger(__name__).error(f"Failed to send notifications for registration {registration.id}: {e}")
         
-        return Response({"message": "Pendaftaran berhasil dikirim! Silakan tunggu verifikasi admin.", "id": registration.id}, status=status.HTTP_201_CREATED)
+        return Response({"message": "Pendaftaran berhasil! Kode tiket Anda: " + registration.unique_code, "id": registration.id, "unique_code": registration.unique_code}, status=status.HTTP_201_CREATED)
 
     def _send_registration_notifications(self, registration):
         """Helper to send Email and WhatsApp notifications on registration."""
@@ -245,10 +245,18 @@ class EventViewSet(viewsets.ModelViewSet):
         # Send WhatsApp
         if phone:
             formatted_phone = self._format_phone_number(phone)
+            unique_code = registration.unique_code or '-'
             wa_message = (
                 f"Halo! Terima kasih telah mendaftar di event: *{registration.event.title}*.\n\n"
-                f"Pendaftaran Anda telah berhasil dikonfirmasi secara otomatis.\n"
-                f"Sampai jumpa di lokasi acara!\n\n"
+                f"✅ Pendaftaran Anda diterima!\n\n"
+                f"🎫 *KODE TIKET ANDA:*\n"
+                f"━━━━━━━━━━━━━━━━\n"
+                f"*{unique_code}*\n"
+                f"━━━━━━━━━━━━━━━━\n\n"
+                f"📌 Simpan kode ini sebagai tiket masuk event. Kode ini akan di-scan saat Anda hadir.\n"
+                f"📷 QR Code tiket bisa dilihat di halaman detail event.\n\n"
+                f"📅 Waktu: {registration.event.start_date.strftime('%d %b %Y %H:%M')}\n"
+                f"📍 Lokasi: {registration.event.location}\n\n"
                 f"Salam,\nBarakah Economy"
             )
             whatsapp_service.send_message(formatted_phone, wa_message)
@@ -417,6 +425,73 @@ class EventViewSet(viewsets.ModelViewSet):
             return Response({"message": "Image deleted."})
         except EventDocumentationImage.DoesNotExist:
             return Response({"error": "Image not found"}, status=status.HTTP_404_NOT_FOUND)
+
+    @action(detail=True, methods=['get'], permission_classes=[permissions.IsAuthenticated])
+    def my_registration(self, request, slug=None):
+        """Get current user's registration detail for this event."""
+        event = self.get_object()
+        reg = EventRegistration.objects.filter(event=event, user=request.user).first()
+        if not reg:
+            return Response({'detail': 'Belum terdaftar'}, status=status.HTTP_404_NOT_FOUND)
+        from .serializers import EventRegistrationSerializer
+        return Response(EventRegistrationSerializer(reg).data)
+
+    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
+    def scan_attendance(self, request, slug=None):
+        """Scan QR code untuk menandai kehadiran peserta."""
+        event = self.get_object()
+        
+        # Hanya organizer atau admin event
+        if not (request.user.is_staff or event.created_by == request.user or request.user.has_menu_access('admin_events')):
+            return Response({'error': 'Hanya penyelenggara atau admin yang bisa scan kehadiran.'}, status=status.HTTP_403_FORBIDDEN)
+        
+        unique_code = request.data.get('unique_code', '').strip().upper()
+        if not unique_code:
+            return Response({'error': 'Kode unik wajib diisi.'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            registration = EventRegistration.objects.get(event=event, unique_code=unique_code)
+        except EventRegistration.DoesNotExist:
+            return Response({'error': 'Kode tidak valid atau tidak terdaftar di event ini.'}, status=status.HTTP_404_NOT_FOUND)
+        
+        if registration.is_attended:
+            # Sudah hadir sebelumnya
+            return Response({
+                'status': 'already_attended',
+                'message': f'Peserta ini sudah ditandai hadir pada {registration.attended_at.strftime("%d %b %Y %H:%M") if registration.attended_at else "-"}.',
+                'registration': {
+                    'id': registration.id,
+                    'name': registration.user.profile.name_full if registration.user and hasattr(registration.user, 'profile') else (registration.guest_name or 'Tamu'),
+                    'unique_code': registration.unique_code,
+                    'is_attended': registration.is_attended,
+                    'attended_at': registration.attended_at,
+                }
+            }, status=status.HTTP_200_OK)
+        
+        # Tandai hadir
+        from django.utils import timezone
+        registration.is_attended = True
+        registration.attended_at = timezone.now()
+        registration.save(update_fields=['is_attended', 'attended_at'])
+        
+        name = ''
+        if registration.user:
+            profile = getattr(registration.user, 'profile', None)
+            name = profile.name_full if profile and profile.name_full else registration.user.username
+        else:
+            name = registration.guest_name or 'Tamu'
+        
+        return Response({
+            'status': 'success',
+            'message': f'Selamat datang, {name}! Kehadiran berhasil dicatat.',
+            'registration': {
+                'id': registration.id,
+                'name': name,
+                'unique_code': registration.unique_code,
+                'is_attended': registration.is_attended,
+                'attended_at': registration.attended_at,
+            }
+        }, status=status.HTTP_200_OK)
 
     @action(detail=True, methods=['get'], permission_classes=[permissions.AllowAny])
     def participants(self, request, slug=None):

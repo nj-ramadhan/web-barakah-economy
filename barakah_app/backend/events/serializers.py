@@ -32,7 +32,10 @@ class EventSerializer(serializers.ModelSerializer):
         if reg:
             return {
                 "id": reg.id,
-                "status": reg.status
+                "status": reg.status,
+                "unique_code": reg.unique_code,
+                "is_attended": reg.is_attended,
+                "attended_at": reg.attended_at,
             }
         return None
     
@@ -102,4 +105,4 @@ class EventRegistrationSerializer(serializers.ModelSerializer):
     class Meta:
         model = EventRegistration
         fields = '__all__'
-        read_only_fields = ('created_at', 'updated_at', 'status')
+        read_only_fields = ('created_at', 'updated_at', 'status', 'unique_code', 'is_attended', 'attended_at')

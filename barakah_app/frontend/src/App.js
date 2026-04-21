@@ -54,6 +54,7 @@ import EventLandingPage from './pages/EventLandingPage';
 import EventSubmissionPage from './pages/EventSubmissionPage';
 import EventDetailPage from './pages/EventDetailPage';
 import EventRegistrationSubmissionPage from './pages/admin/EventRegistrationSubmissionPage';
+import EventScanPage from './pages/EventScanPage';
 
 import DigitalProductListPage from './pages/DigitalProductListPage';
 import DigitalProductDetailPage from './pages/DigitalProductDetailPage';
@@ -307,6 +308,7 @@ const LayoutWrapper = ({ isDesktop }) => {
         <Route path="/dashboard/admin/events" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardEventPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/event" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardEventPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/event/submissions/:slug" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><EventRegistrationSubmissionPage /></ResponsiveLayout></PrivateRoute>} />
+        <Route path="/dashboard/event/scan/:slug" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><EventScanPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/admin/users" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardUserPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/admin/all-products" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><AdminAllProductsPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/admin/all-courses" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><AdminAllCoursesPage /></ResponsiveLayout></PrivateRoute>} />

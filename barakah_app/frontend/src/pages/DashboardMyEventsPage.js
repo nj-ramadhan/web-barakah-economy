@@ -159,6 +159,13 @@ const DashboardMyEventsPage = () => {
                                                 <span className="material-icons text-sm">group</span>
                                                 Peserta
                                             </Link>
+                                            <Link 
+                                                to={`/dashboard/event/scan/${event.slug}`}
+                                                className="px-4 py-2 bg-purple-50 text-purple-600 rounded-xl text-xs font-bold hover:bg-purple-100 transition flex items-center gap-1.5"
+                                            >
+                                                <span className="material-icons text-sm">qr_code_scanner</span>
+                                                Scan Hadir
+                                            </Link>
                                         </div>
                                         
                                         {event.status === 'rejected' && event.rejection_reason && (

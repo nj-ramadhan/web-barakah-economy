@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
+import { QRCodeSVG } from 'qrcode.react';
 import Header from '../components/layout/Header';
 import NavigationButton from '../components/layout/Navigation';
 import { getEventDetail, registerForEvent, getEventParticipants } from '../services/eventApi';
@@ -20,13 +21,14 @@ const EventDetailPage = () => {
     const [files, setFiles] = useState({});
     const [participants, setParticipants] = useState([]);
     const [loadingParticipants, setLoadingParticipants] = useState(false);
-    const [selectedImage, setSelectedImage] = useState(null); // For documentation image popup
+    const [selectedImage, setSelectedImage] = useState(null);
     const [paymentAmount, setPaymentAmount] = useState('');
     const [paymentProof, setPaymentProof] = useState(null);
-    const [isRegistered, setIsRegistered] = useState(false); // To check if user already registered
+    const [isRegistered, setIsRegistered] = useState(false);
     const [activeTab, setActiveTab] = useState('about');
     const [showRegisterModal, setShowRegisterModal] = useState(false);
     const [isSharing, setIsSharing] = useState(false);
+    const [registeredCode, setRegisteredCode] = useState(null); // kode unik QR setelah daftar
 
     const API = process.env.REACT_APP_API_BASE_URL;
 
@@ -156,7 +158,11 @@ const EventDetailPage = () => {
         }
 
         try {
-            await registerForEvent(slug, data);
+            const res = await registerForEvent(slug, data);
+            // Simpan kode unik dari response
+            if (res.data?.unique_code) {
+                setRegisteredCode(res.data.unique_code);
+            }
             setSuccess(true);
             setShowRegisterModal(false);
             window.scrollTo(0, 0);
@@ -587,19 +593,51 @@ const EventDetailPage = () => {
 
             {/* Registration Success Overlay */}
             {success && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-white/90 backdrop-blur-md animate-fade-in">
-                    <div className="max-w-md w-full bg-white p-12 rounded-[3.5rem] shadow-2xl text-center border border-gray-100 animate-scale-up">
-                        <div className="w-24 h-24 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
-                            <span className="material-icons text-5xl">check_circle</span>
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-white/95 backdrop-blur-md animate-fade-in overflow-y-auto">
+                    <div className="max-w-sm w-full bg-white p-8 rounded-[3rem] shadow-2xl text-center border border-gray-100 animate-scale-up my-4">
+                        <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-inner">
+                            <span className="material-icons text-4xl">check_circle</span>
                         </div>
-                        <h3 className="text-3xl font-extrabold text-gray-900 mb-4">Pendaftaran Berhasil!</h3>
-                        <p className="text-gray-500 mb-10 leading-relaxed font-medium">Terima kasih telah mendaftar. Pendaftaran Anda telah dikonfirmasi secara otomatis. Nama Anda kini muncul di daftar peserta.</p>
-                        <div className="flex flex-col gap-4">
+                        <h3 className="text-2xl font-extrabold text-gray-900 mb-2">Pendaftaran Berhasil!</h3>
+                        <p className="text-gray-500 mb-6 text-sm leading-relaxed">Simpan QR Code & kode tiket di bawah ini sebagai bukti pendaftaran Anda.</p>
+                        
+                        {registeredCode && (
+                            <div className="bg-gradient-to-br from-green-50 to-emerald-50 border-2 border-green-200 rounded-3xl p-6 mb-6">
+                                <p className="text-[10px] text-green-700 font-bold uppercase tracking-widest mb-4">QR Code Tiket Anda</p>
+                                <div className="flex justify-center mb-4 bg-white p-3 rounded-2xl shadow-inner">
+                                    <QRCodeSVG
+                                        value={registeredCode}
+                                        size={160}
+                                        level="H"
+                                        includeMargin={false}
+                                        fgColor="#065f46"
+                                    />
+                                </div>
+                                <div className="bg-white px-4 py-3 rounded-2xl border border-green-100">
+                                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-1">Kode Tiket</p>
+                                    <p className="text-2xl font-black text-green-700 tracking-[0.3em] font-mono">{registeredCode}</p>
+                                </div>
+                                <div className="mt-4 bg-yellow-50 border border-yellow-200 rounded-2xl p-3 text-left">
+                                    <p className="text-[10px] text-yellow-800 font-medium">
+                                        📱 <strong>Screenshot</strong> QR Code ini atau catat kode tiket. Kode WA juga sudah dikirimkan ke nomor Anda.
+                                    </p>
+                                </div>
+                            </div>
+                        )}
+
+                        <div className="flex flex-col gap-3">
+                            <button 
+                                onClick={() => window.print()}
+                                className="w-full py-3.5 bg-green-600 text-white rounded-2xl text-sm font-bold shadow-lg hover:bg-green-700 transition flex items-center justify-center gap-2"
+                            >
+                                <span className="material-icons text-sm">save_alt</span>
+                                Screenshot / Simpan Tiket
+                            </button>
                             <button 
                                 onClick={() => setSuccess(false)}
-                                className="w-full py-4 bg-gray-900 text-white rounded-2xl text-sm font-bold shadow-xl hover:bg-gray-800 transition"
+                                className="w-full py-3.5 bg-gray-900 text-white rounded-2xl text-sm font-bold shadow-xl hover:bg-gray-800 transition"
                             >
-                                Tutup Pesan
+                                Tutup
                             </button>
                             <Link to="/event" className="text-xs font-bold text-gray-400 uppercase tracking-widest hover:text-green-700 transition">Kembali ke Daftar Event</Link>
                         </div>

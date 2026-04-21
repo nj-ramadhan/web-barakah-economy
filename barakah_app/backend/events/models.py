@@ -129,6 +129,11 @@ class EventRegistration(models.Model):
     payment_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     payment_status = models.CharField(max_length=20, choices=[('pending', 'Pending'), ('verified', 'Verified'), ('rejected', 'Rejected')], default='pending')
     
+    # QR Code & Attendance
+    unique_code = models.CharField(max_length=20, unique=True, blank=True, null=True, help_text="Kode unik untuk QR Code kehadiran")
+    is_attended = models.BooleanField(default=False, help_text="Tandai hadir saat event berlangsung")
+    attended_at = models.DateTimeField(blank=True, null=True, help_text="Waktu scan kehadiran")
+    
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -137,6 +142,16 @@ class EventRegistration(models.Model):
 
     def __str__(self):
         return f"{self.event.title} - {self.guest_name or (self.user.username if self.user else 'Guest')}"
+
+    def save(self, *args, **kwargs):
+        # Auto-generate kode unik 8 karakter saat pertama dibuat
+        if not self.unique_code:
+            import uuid
+            self.unique_code = uuid.uuid4().hex[:8].upper()
+            # Pastikan tidak ada duplikat
+            while EventRegistration.objects.filter(unique_code=self.unique_code).exclude(pk=self.pk).exists():
+                self.unique_code = uuid.uuid4().hex[:8].upper()
+        super().save(*args, **kwargs)
 
 class EventRegistrationFile(models.Model):
     registration = models.ForeignKey(EventRegistration, on_delete=models.CASCADE, related_name='uploaded_files')

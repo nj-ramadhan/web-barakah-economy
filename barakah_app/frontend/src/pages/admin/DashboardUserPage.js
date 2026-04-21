@@ -521,8 +521,9 @@ const DashboardUserPage = () => {
                                         </div>
                                     </div>
                                 ) : (
-                                    {/* Col 1: Account */}
-                                    <div className="space-y-3">
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                        {/* Col 1: Account */}
+                                        <div className="space-y-3">
                                         <h3 className="text-[10px] font-bold text-blue-700 uppercase tracking-widest border-b border-blue-100 pb-2 mb-2">Data Akun</h3>
                                         <FI label="Username" value={editFormData.username} onChange={v => setEditFormData(f=>({...f, username:v}))} />
                                         <FI label="Email" value={editFormData.email} onChange={v => setEditFormData(f=>({...f, email:v}))} />
@@ -592,6 +593,7 @@ const DashboardUserPage = () => {
                                         <FI label="Jabatan" value={editFormData.profile?.work_position} onChange={v => setP('work_position',v)} />
                                         <FI label="Gaji (Rp)" value={editFormData.profile?.work_salary} onChange={v => setP('work_salary',v)} type="number" />
                                     </div>
+                                </div>
                                 )} {/* end if editingUser else */}
                             </div>
                             <div className="p-6 bg-gray-50 border-t flex justify-end gap-3 rounded-b-3xl">
