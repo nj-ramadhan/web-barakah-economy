@@ -172,7 +172,14 @@ class SellerOrderViewSet(viewsets.ModelViewSet):
     http_method_names = ['get', 'patch', 'head', 'options']
 
     def get_queryset(self):
-        return Order.objects.filter(seller=self.request.user).order_by('-created_at')
+        user = self.request.user
+        if user.is_superuser:
+            # Admins can see orders assigned to ANY superuser (central orders)
+            from django.contrib.auth import get_user_model
+            User = get_user_model()
+            superusers = User.objects.filter(is_superuser=True)
+            return Order.objects.filter(seller__in=superusers).order_by('-created_at')
+        return Order.objects.filter(seller=user).order_by('-created_at')
 
     def partial_update(self, request, *args, **kwargs):
         instance = self.get_object()
