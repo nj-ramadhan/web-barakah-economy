@@ -410,6 +410,9 @@ const PurchasesTab = () => {
                             );
                         })}
                     </div>
+                )
+            )}
+        </div>
     );
 };
 
