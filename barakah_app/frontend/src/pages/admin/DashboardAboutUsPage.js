@@ -82,6 +82,11 @@ const DashboardAboutUsPage = () => {
         if (formData.organization_structure_image instanceof File) {
             fd.append('organization_structure_image', formData.organization_structure_image);
         }
+        
+        // Add legal_description from aboutData state
+        if (aboutData?.legal_description) {
+            fd.append('legal_description', aboutData.legal_description);
+        }
 
         try {
             if (aboutData) {
