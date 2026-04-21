@@ -374,11 +374,10 @@ const EventRegistrationSubmissionPage = () => {
                             {/* Blast Button */}
                             <button
                                 onClick={() => setShowBlastModal(true)}
-                                className="group relative flex items-center gap-2 sm:gap-3 px-5 sm:px-8 py-3 sm:py-3.5 bg-gradient-to-br from-emerald-600 to-teal-800 text-white rounded-[1.25rem] shadow-xl shadow-emerald-200 hover:shadow-emerald-300 hover:scale-[1.02] active:scale-95 transition-all font-black overflow-hidden"
+                                className="group relative flex items-center justify-center gap-2 sm:gap-3 px-6 sm:px-10 py-3 sm:py-3.5 bg-gradient-to-br from-emerald-600 to-teal-800 text-white rounded-[1.25rem] shadow-xl shadow-emerald-200 hover:shadow-emerald-300 hover:scale-[1.02] active:scale-95 transition-all font-black overflow-hidden min-w-[120px]"
                             >
                                 <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
-                                <span className="text-[11px] uppercase tracking-[0.15em] hidden xs:inline">Blast WA</span>
-                                <span className="text-[11px] uppercase tracking-[0.15em] xs:hidden">Blast</span>
+                                <span className="text-[11px] uppercase tracking-[0.2em]">Blast WA</span>
                             </button>
                         </div>
                     </div>
@@ -531,14 +530,11 @@ const EventRegistrationSubmissionPage = () => {
                                 <div className="flex items-center justify-center gap-3 relative z-10">
                                     {isBlasting ? (
                                         <>
-                                            <span className="material-icons animate-spin">sync</span>
-                                            <span className="tracking-widest text-xs">SEDANG MENGIRIM...</span>
+                                            <span className="material-icons animate-spin text-sm">sync</span>
+                                            <span className="tracking-widest text-[11px] uppercase">Sedang Mengirim...</span>
                                         </>
                                     ) : (
-                                        <>
-                                            <span className="material-icons group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform">send</span>
-                                            <span className="tracking-widest text-xs">KIRIM BROADCAST</span>
-                                        </>
+                                        <span className="tracking-widest text-[11px] uppercase">Kirim Blast Sekarang</span>
                                     )}
                                 </div>
                             </button>
