@@ -161,7 +161,9 @@ const EcommerceOrderHistoryPage = () => {
                                     <div className="pt-4 border-t border-gray-50 mt-4">
                                         <div className="flex justify-between items-center bg-emerald-50/50 p-4 rounded-2xl border border-emerald-100/50">
                                             <span className="text-xs font-black text-emerald-800 uppercase tracking-widest">Total Bayar</span>
-                                            <span className="text-base font-black text-emerald-600">{formatIDR(order.grand_total || order.total_price)}</span>
+                                            <span className="text-base font-black text-emerald-600">
+                                                {formatIDR(Number(order.grand_total) > 0 ? order.grand_total : order.total_price)}
+                                            </span>
                                         </div>
                                     </div>
 

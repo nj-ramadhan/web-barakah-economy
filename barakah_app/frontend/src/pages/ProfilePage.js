@@ -320,13 +320,13 @@ const PurchasesTab = () => {
             <div className="flex items-center justify-between">
                 <h2 className="font-bold text-gray-800">Riwayat Transaksi</h2>
                 <div className="flex bg-gray-100 p-1 rounded-lg gap-1">
-                    <button 
+                    <button
                         onClick={() => setHistoryType('digital')}
                         className={`px-3 py-1 rounded text-[10px] font-black uppercase transition-all ${historyType === 'digital' ? 'bg-white text-green-700 shadow-sm' : 'text-gray-400'}`}
                     >
                         Digital
                     </button>
-                    <button 
+                    <button
                         onClick={() => setHistoryType('sinergy')}
                         className={`px-3 py-1 rounded text-[10px] font-black uppercase transition-all ${historyType === 'sinergy' ? 'bg-white text-green-700 shadow-sm' : 'text-gray-400'}`}
                     >
@@ -376,7 +376,7 @@ const PurchasesTab = () => {
                             else if (['failed', 'gagal', 'batal'].includes(status)) badgeStyle = 'bg-red-50 text-red-600';
 
                             return (
-                                 <div key={order.id} className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-all">
+                                <div key={order.id} className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-all">
                                     <div className="flex justify-between items-start mb-2">
                                         <h3 className="text-sm font-black text-gray-900 tracking-tight">Order #{order.order_number}</h3>
                                         <span className={`text-[10px] px-2.5 py-1 rounded-full font-black uppercase tracking-widest ${badgeStyle}`}>
@@ -398,7 +398,9 @@ const PurchasesTab = () => {
                                         </div>
                                         <div className="text-right">
                                             <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">Grand Total</p>
-                                            <p className="text-sm font-black text-emerald-600">Rp {formatIDR(order.grand_total || order.total_price)}</p>
+                                            <p className="text-sm font-black text-emerald-600">
+                                                Rp {formatIDR(Number(order.grand_total) > 0 ? order.grand_total : order.total_price)}
+                                            </p>
                                         </div>
                                     </div>
                                     <div className="mt-4 flex justify-end">
@@ -452,7 +454,7 @@ const DonationsTab = () => {
         <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
             <div className="flex justify-between items-center px-1">
                 <h2 className="font-bold text-gray-800">Riwayat Donasi</h2>
-                <Link to="/donasi" className="text-[10px] bg-green-600 text-white px-3 py-1 rounded-full font-black uppercase tracking-wider hover:bg-green-700 transition-colors">Donasi Lagi</Link>
+                <Link to="/charity" className="text-[10px] bg-green-600 text-white px-3 py-1 rounded-full font-black uppercase tracking-wider hover:bg-green-700 transition-colors">Donasi Lagi</Link>
             </div>
             {donations.length === 0 ? (
                 <div className="text-center py-12 text-gray-400 bg-gray-50 rounded-3xl border border-dashed border-gray-200">
@@ -464,9 +466,9 @@ const DonationsTab = () => {
                     {donations.map(item => (
                         <div key={item.id} className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow flex items-center gap-4">
                             <div className="w-14 h-14 rounded-xl overflow-hidden shrink-0 border border-gray-50 bg-gray-50">
-                                <img 
-                                    src={item.campaign?.thumbnail || '/images/default-campaign.jpg'} 
-                                    alt="Campaign" 
+                                <img
+                                    src={item.campaign?.thumbnail || '/images/default-campaign.jpg'}
+                                    alt="Campaign"
                                     className="w-full h-full object-cover"
                                     onError={(e) => { e.target.src = '/images/default-campaign.jpg'; }}
                                 />
@@ -846,185 +848,182 @@ const ProfilePage = () => {
                         </div>
                     </div>
                 ) : (
-                <div className="bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden mt-6 pb-24 max-w-4xl mx-auto">
-                    {/* Header Banner */}
-                    <div className="h-32 bg-gradient-to-r from-green-600 to-emerald-700 relative">
-                        <div className="absolute -bottom-16 left-1/2 -translate-x-1/2 px-1 py-1 bg-white rounded-full shadow-lg">
-                            <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-white">
-                                <img
-                                    src={profile.picture ? (profile.picture.startsWith('http') ? profile.picture : `${process.env.REACT_APP_API_BASE_URL}${profile.picture}`) : `${process.env.REACT_APP_API_BASE_URL}/media/profile_images/pas_foto_standard.png`}
-                                    alt="Profile"
-                                    className="w-full h-full object-cover"
-                                />
+                    <div className="bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden mt-6 pb-24 max-w-4xl mx-auto">
+                        {/* Header Banner */}
+                        <div className="h-32 bg-gradient-to-r from-green-600 to-emerald-700 relative">
+                            <div className="absolute -bottom-16 left-1/2 -translate-x-1/2 px-1 py-1 bg-white rounded-full shadow-lg">
+                                <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-white">
+                                    <img
+                                        src={profile.picture ? (profile.picture.startsWith('http') ? profile.picture : `${process.env.REACT_APP_API_BASE_URL}${profile.picture}`) : `${process.env.REACT_APP_API_BASE_URL}/media/profile_images/pas_foto_standard.png`}
+                                        alt="Profile"
+                                        className="w-full h-full object-cover"
+                                    />
+                                </div>
                             </div>
                         </div>
-                    </div>
 
-                    <div className="pt-20 px-6">
-                        <div className="text-center mb-8">
-                            <h3 className="text-2xl font-black text-gray-900">{profile.name_full || profile.username || 'Anggota Barakah'}</h3>
-                            <p className="text-sm text-gray-500 font-medium">{profile.email || 'tanpa email'}</p>
-                            <div className="flex justify-center gap-2 mt-3">
-                                {profile.is_verified_member && (
-                                    <span className="bg-blue-50 text-blue-600 text-[10px] font-bold px-3 py-1 rounded-full flex items-center gap-1 border border-blue-100">
-                                        <span className="material-icons text-xs">verified</span>
-                                        Anggota Terverifikasi
+                        <div className="pt-20 px-6">
+                            <div className="text-center mb-8">
+                                <h3 className="text-2xl font-black text-gray-900">{profile.name_full || profile.username || 'Anggota Barakah'}</h3>
+                                <p className="text-sm text-gray-500 font-medium">{profile.email || 'tanpa email'}</p>
+                                <div className="flex justify-center gap-2 mt-3">
+                                    {profile.is_verified_member && (
+                                        <span className="bg-blue-50 text-blue-600 text-[10px] font-bold px-3 py-1 rounded-full flex items-center gap-1 border border-blue-100">
+                                            <span className="material-icons text-xs">verified</span>
+                                            Anggota Terverifikasi
+                                        </span>
+                                    )}
+                                    <span className="bg-green-50 text-green-600 text-[10px] font-bold px-3 py-1 rounded-full flex items-center gap-1 border border-green-100 uppercase">
+                                        {SEGMENT_CHOICES[profile.segment] || 'Umum'}
                                     </span>
+                                </div>
+                            </div>
+
+                            {/* Quick Stats/Links */}
+                            <div className="grid grid-cols-2 gap-3 mb-8">
+                                <Link to="/profile/edit" className="flex items-center justify-center gap-2 py-3 bg-gray-50 hover:bg-gray-100 text-gray-700 rounded-2xl text-sm font-bold transition">
+                                    <span className="material-icons text-sm">edit</span>
+                                    Edit Profil
+                                </Link>
+                                <Link to="/dashboard" className="flex items-center justify-center gap-2 py-3 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-2xl text-sm font-bold transition">
+                                    <span className="material-icons text-sm">dashboard</span>
+                                    Dashboard
+                                </Link>
+                            </div>
+
+                            {/* Navigation Tabs */}
+                            <div className="flex flex-wrap justify-center md:justify-start gap-1 mb-6 bg-gray-50 p-1.5 rounded-2xl">
+                                {[
+                                    { id: 'general', icon: 'person', label: 'Data Diri' },
+                                    { id: 'address', icon: 'location_on', label: 'Alamat' },
+                                    { id: 'study', icon: 'school', label: 'Pendidikan' },
+                                    { id: 'work', icon: 'work', label: 'Pekerjaan' },
+                                    { id: 'shop', icon: 'storefront', label: 'Toko' },
+                                    { id: 'courses', icon: 'school', label: 'Kelas' },
+                                    { id: 'charity', icon: 'volunteer_activism', label: 'Donasi' },
+                                    { id: 'purchases', icon: 'history', label: 'Riwayat' }
+                                ].map(tab => (
+                                    <button
+                                        key={tab.id}
+                                        onClick={() => setActiveTab(tab.id)}
+                                        className={`flex items-center gap-2 px-4 py-2.5 rounded-xl whitespace-nowrap text-sm font-bold transition-all ${activeTab === tab.id
+                                                ? 'bg-white text-green-700 shadow-sm'
+                                                : 'text-gray-400 hover:text-gray-600'
+                                            }`}
+                                    >
+                                        <span className="material-icons text-lg">{tab.icon}</span>
+                                        {tab.label}
+                                    </button>
+                                ))}
+                            </div>
+
+                            {/* Tab Content Area */}
+                            <div className="min-h-[300px]">
+                                {activeTab === 'general' && (
+                                    <div className="space-y-4">
+                                        <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest px-1">Informasi Pribadi</h4>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <ProfileInfoItem label="Nama Lengkap" value={profile.name_full} icon="badge" />
+                                            <ProfileInfoItem label="NIK / No. KTP" value={profile.nik} icon="fingerprint" />
+                                            <ProfileInfoItem label="Jenis Kelamin" value={GENDER_CHOICES[profile.gender]} icon="wc" />
+                                            <ProfileInfoItem label="Tgl Lahir" value={formatDate(profile.birth_date)} icon="calendar_today" />
+                                            <ProfileInfoItem label="Tempat Lahir" value={profile.birth_place} icon="map" />
+                                            <ProfileInfoItem label="Status Pernikahan" value={MARITAL_CHOICES[profile.marital_status]} icon="favorite" />
+                                        </div>
+                                    </div>
                                 )}
-                                <span className="bg-green-50 text-green-600 text-[10px] font-bold px-3 py-1 rounded-full flex items-center gap-1 border border-green-100 uppercase">
-                                    {SEGMENT_CHOICES[profile.segment] || 'Umum'}
-                                </span>
+
+                                {activeTab === 'address' && (
+                                    <div className="space-y-4">
+                                        <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest px-1">Lokasi & Pengiriman</h4>
+                                        <div className="bg-emerald-50 rounded-2xl p-4 mb-4 border border-emerald-100 flex gap-3">
+                                            <span className="material-icons text-emerald-600">info</span>
+                                            <p className="text-[11px] text-emerald-800 leading-relaxed font-medium">Data kelurahan digunakan untuk menghitung biaya ongkir dari kurir Sinergy kami.</p>
+                                        </div>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <ProfileInfoItem label="Provinsi" value={profile.address_province} icon="domain" />
+                                            <ProfileInfoItem label="Kota / Kabupaten" value={profile.address_city_name} icon="location_city" />
+                                            <ProfileInfoItem label="Kecamatan" value={profile.address_subdistrict_name} icon="home_work" />
+                                            <ProfileInfoItem label="Kelurahan / Desa" value={profile.address_village_name} icon="holiday_village" />
+                                            <ProfileInfoItem label="Alamat Lengkap" value={profile.address} icon="place" fullWidth />
+                                        </div>
+                                    </div>
+                                )}
+
+                                {activeTab === 'study' && (
+                                    <div className="space-y-4">
+                                        <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest px-1">Riwayat Pendidikan</h4>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <ProfileInfoItem label="Tingkat" value={STUDY_LEVEL_CHOICES[profile.study_level]} icon="layers" />
+                                            <ProfileInfoItem label="Kampus / Sekolah" value={profile.study_campus} icon="account_balance" />
+                                            <ProfileInfoItem label="Fakultas" value={profile.study_faculty} icon="domain" />
+                                            <ProfileInfoItem label="Jurusan / Prodi" value={profile.study_program || profile.study_department} icon="architecture" />
+                                            <ProfileInfoItem label="Semester Current" value={profile.study_semester} icon="numbers" />
+                                            <ProfileInfoItem label="Periode" value={profile.study_start_year ? `${profile.study_start_year} - ${profile.study_finish_year || 'Sekarang'}` : null} icon="date_range" />
+                                        </div>
+                                    </div>
+                                )}
+
+                                {activeTab === 'work' && (
+                                    <div className="space-y-4">
+                                        <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest px-1">Informasi Karir</h4>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <ProfileInfoItem label="Pekerjaan" value={JOB_CHOICES[profile.job]} icon="business_center" />
+                                            <ProfileInfoItem label="Bidang" value={WORK_FIELD_CHOICES[profile.work_field]} icon="category" />
+                                            <ProfileInfoItem label="Instansi" value={profile.work_institution} icon="apartment" />
+                                            <ProfileInfoItem label="Posisi" value={profile.work_position} icon="badge" />
+                                            <ProfileInfoItem label="Estimasi Gaji" value={profile.work_salary ? `Rp ${formatIDR(profile.work_salary)}` : null} icon="payments" />
+                                        </div>
+                                    </div>
+                                )}
+
+                                {activeTab === 'shop' && (
+                                    <div className="space-y-4">
+                                        <div className="flex justify-between items-center px-1">
+                                            <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest">Pengaturan Toko Digital</h4>
+                                            <Link to={`/digital-produk/${profile.username || ''}`} className="text-[10px] font-black text-purple-600 uppercase flex items-center gap-1 hover:underline">
+                                                Kunjungi Toko <span className="material-icons text-xs">open_in_new</span>
+                                            </Link>
+                                        </div>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <ProfileInfoItem label="Deskripsi Toko" value={profile.shop_description} icon="description" fullWidth />
+                                            <ProfileInfoItem label="Tema Warna" value={profile.shop_theme_color} icon="palette" />
+                                            <ProfileInfoItem label="Gaya Font" value={profile.shop_font} icon="font_download" />
+                                            <ProfileInfoItem label="Kurir Aktif" value={profile.shop_supported_couriers?.toUpperCase()} icon="local_shipping" fullWidth />
+                                        </div>
+                                    </div>
+                                )}
+
+                                {activeTab === 'courses' && <CoursesTab />}
+                                {activeTab === 'purchases' && <PurchasesTab />}
+                                {activeTab === 'charity' && <DonationsTab />}
+                            </div>
+
+                            {/* Footer Actions */}
+                            <div className="mt-12 pt-6 border-t border-gray-100">
+                                <button
+                                    onClick={() => setShowChangePwModal(true)}
+                                    className="w-full bg-blue-50 hover:bg-blue-100 text-blue-600 py-4 rounded-2xl font-black text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.98] mb-3"
+                                >
+                                    <span className="material-icons">lock</span>
+                                    GANTI KATA SANDI
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        localStorage.removeItem('user');
+                                        localStorage.removeItem('access_token');
+                                        localStorage.removeItem('refresh_token');
+                                        window.location.href = '/login';
+                                    }}
+                                    className="w-full bg-red-50 hover:bg-red-100 text-red-600 py-4 rounded-2xl font-black text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
+                                >
+                                    <span className="material-icons">logout</span>
+                                    KELUAR DARI APLIKASI
+                                </button>
+                                <p className="text-center text-[10px] text-gray-400 font-bold mt-4 uppercase tracking-widest">Barakah App v2.5 • 2026</p>
                             </div>
                         </div>
-
-                        {/* Quick Stats/Links */}
-                        <div className="grid grid-cols-2 gap-3 mb-8">
-                            <Link to="/profile/edit" className="flex items-center justify-center gap-2 py-3 bg-gray-50 hover:bg-gray-100 text-gray-700 rounded-2xl text-sm font-bold transition">
-                                <span className="material-icons text-sm">edit</span>
-                                Edit Profil
-                            </Link>
-                            <Link to="/dashboard" className="flex items-center justify-center gap-2 py-3 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-2xl text-sm font-bold transition">
-                                <span className="material-icons text-sm">dashboard</span>
-                                Dashboard
-                            </Link>
-                        </div>
-
-                        {/* Navigation Tabs */}
-                        <div className="flex flex-wrap justify-center md:justify-start gap-1 mb-6 bg-gray-50 p-1.5 rounded-2xl">
-                            {[
-                                { id: 'general', icon: 'person', label: 'Data Diri' },
-                                { id: 'address', icon: 'location_on', label: 'Alamat' },
-                                { id: 'study', icon: 'school', label: 'Pendidikan' },
-                                { id: 'work', icon: 'work', label: 'Pekerjaan' },
-                                { id: 'shop', icon: 'storefront', label: 'Toko' },
-                                { id: 'courses', icon: 'school', label: 'Kelas' },
-                                { id: 'shopping', icon: 'shopping_bag', label: 'Belanja' },
-                                { id: 'charity', icon: 'volunteer_activism', label: 'Donasi' },
-                                { id: 'purchases', icon: 'history', label: 'Riwayat' }
-                            ].map(tab => (
-                                <button
-                                    key={tab.id}
-                                    onClick={() => setActiveTab(tab.id)}
-                                    className={`flex items-center gap-2 px-4 py-2.5 rounded-xl whitespace-nowrap text-sm font-bold transition-all ${
-                                        activeTab === tab.id 
-                                        ? 'bg-white text-green-700 shadow-sm' 
-                                        : 'text-gray-400 hover:text-gray-600'
-                                    }`}
-                                >
-                                    <span className="material-icons text-lg">{tab.icon}</span>
-                                    {tab.label}
-                                </button>
-                            ))}
-                        </div>
-
-                        {/* Tab Content Area */}
-                        <div className="min-h-[300px]">
-                            {activeTab === 'general' && (
-                                <div className="space-y-4">
-                                    <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest px-1">Informasi Pribadi</h4>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <ProfileInfoItem label="Nama Lengkap" value={profile.name_full} icon="badge" />
-                                        <ProfileInfoItem label="NIK / No. KTP" value={profile.nik} icon="fingerprint" />
-                                        <ProfileInfoItem label="Jenis Kelamin" value={GENDER_CHOICES[profile.gender]} icon="wc" />
-                                        <ProfileInfoItem label="Tgl Lahir" value={formatDate(profile.birth_date)} icon="calendar_today" />
-                                        <ProfileInfoItem label="Tempat Lahir" value={profile.birth_place} icon="map" />
-                                        <ProfileInfoItem label="Status Pernikahan" value={MARITAL_CHOICES[profile.marital_status]} icon="favorite" />
-                                    </div>
-                                </div>
-                            )}
-
-                            {activeTab === 'address' && (
-                                <div className="space-y-4">
-                                    <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest px-1">Lokasi & Pengiriman</h4>
-                                    <div className="bg-emerald-50 rounded-2xl p-4 mb-4 border border-emerald-100 flex gap-3">
-                                        <span className="material-icons text-emerald-600">info</span>
-                                        <p className="text-[11px] text-emerald-800 leading-relaxed font-medium">Data kelurahan digunakan untuk menghitung biaya ongkir dari kurir Sinergy kami.</p>
-                                    </div>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <ProfileInfoItem label="Provinsi" value={profile.address_province} icon="domain" />
-                                        <ProfileInfoItem label="Kota / Kabupaten" value={profile.address_city_name} icon="location_city" />
-                                        <ProfileInfoItem label="Kecamatan" value={profile.address_subdistrict_name} icon="home_work" />
-                                        <ProfileInfoItem label="Kelurahan / Desa" value={profile.address_village_name} icon="holiday_village" />
-                                        <ProfileInfoItem label="Alamat Lengkap" value={profile.address} icon="place" fullWidth />
-                                    </div>
-                                </div>
-                            )}
-
-                            {activeTab === 'study' && (
-                                <div className="space-y-4">
-                                    <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest px-1">Riwayat Pendidikan</h4>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <ProfileInfoItem label="Tingkat" value={STUDY_LEVEL_CHOICES[profile.study_level]} icon="layers" />
-                                        <ProfileInfoItem label="Kampus / Sekolah" value={profile.study_campus} icon="account_balance" />
-                                        <ProfileInfoItem label="Fakultas" value={profile.study_faculty} icon="domain" />
-                                        <ProfileInfoItem label="Jurusan / Prodi" value={profile.study_program || profile.study_department} icon="architecture" />
-                                        <ProfileInfoItem label="Semester Current" value={profile.study_semester} icon="numbers" />
-                                        <ProfileInfoItem label="Periode" value={profile.study_start_year ? `${profile.study_start_year} - ${profile.study_finish_year || 'Sekarang'}` : null} icon="date_range" />
-                                    </div>
-                                </div>
-                            )}
-
-                            {activeTab === 'work' && (
-                                <div className="space-y-4">
-                                    <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest px-1">Informasi Karir</h4>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <ProfileInfoItem label="Pekerjaan" value={JOB_CHOICES[profile.job]} icon="business_center" />
-                                        <ProfileInfoItem label="Bidang" value={WORK_FIELD_CHOICES[profile.work_field]} icon="category" />
-                                        <ProfileInfoItem label="Instansi" value={profile.work_institution} icon="apartment" />
-                                        <ProfileInfoItem label="Posisi" value={profile.work_position} icon="badge" />
-                                        <ProfileInfoItem label="Estimasi Gaji" value={profile.work_salary ? `Rp ${formatIDR(profile.work_salary)}` : null} icon="payments" />
-                                    </div>
-                                </div>
-                            )}
-
-                            {activeTab === 'shop' && (
-                                <div className="space-y-4">
-                                    <div className="flex justify-between items-center px-1">
-                                        <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest">Pengaturan Toko Digital</h4>
-                                        <Link to={`/digital-produk/${profile.username || ''}`} className="text-[10px] font-black text-purple-600 uppercase flex items-center gap-1 hover:underline">
-                                            Kunjungi Toko <span className="material-icons text-xs">open_in_new</span>
-                                        </Link>
-                                    </div>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <ProfileInfoItem label="Deskripsi Toko" value={profile.shop_description} icon="description" fullWidth />
-                                        <ProfileInfoItem label="Tema Warna" value={profile.shop_theme_color} icon="palette" />
-                                        <ProfileInfoItem label="Gaya Font" value={profile.shop_font} icon="font_download" />
-                                        <ProfileInfoItem label="Kurir Aktif" value={profile.shop_supported_couriers?.toUpperCase()} icon="local_shipping" fullWidth />
-                                    </div>
-                                </div>
-                            )}
-
-                            {activeTab === 'courses' && <CoursesTab />}
-                            {activeTab === 'purchases' && <PurchasesTab />}
-                            {activeTab === 'charity' && <DonationsTab />}
-                            {activeTab === 'shopping' && <ShoppingTab />}
-                        </div>
-
-                        {/* Footer Actions */}
-                        <div className="mt-12 pt-6 border-t border-gray-100">
-                            <button
-                                onClick={() => setShowChangePwModal(true)}
-                                className="w-full bg-blue-50 hover:bg-blue-100 text-blue-600 py-4 rounded-2xl font-black text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.98] mb-3"
-                            >
-                                <span className="material-icons">lock</span>
-                                GANTI KATA SANDI
-                            </button>
-                            <button
-                                onClick={() => {
-                                    localStorage.removeItem('user');
-                                    localStorage.removeItem('access_token');
-                                    localStorage.removeItem('refresh_token');
-                                    window.location.href = '/login';
-                                }}
-                                className="w-full bg-red-50 hover:bg-red-100 text-red-600 py-4 rounded-2xl font-black text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
-                            >
-                                <span className="material-icons">logout</span>
-                                KELUAR DARI APLIKASI
-                            </button>
-                            <p className="text-center text-[10px] text-gray-400 font-bold mt-4 uppercase tracking-widest">Barakah App v2.5 • 2026</p>
-                        </div>
                     </div>
-                </div>
                 )}
             </div>
             <NavigationButton />
