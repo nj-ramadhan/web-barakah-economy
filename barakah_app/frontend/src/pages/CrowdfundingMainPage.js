@@ -318,12 +318,11 @@ const CrowdfundingMainPage = () => {
                       </div>
                       {/* Nominal Realisasi – hanya tampilkan jika ada */}
                       {campaign.total_realization > 0 && (
-                        <div className="mt-1.5 bg-emerald-50 border border-emerald-200 rounded-lg px-2 py-1.5 flex items-center gap-1.5">
-                          <span className="material-icons text-emerald-600 text-[13px]">volunteer_activism</span>
-                          <div>
-                            <p className="text-[9px] text-emerald-700 font-bold uppercase tracking-widest">Realisasi Disalurkan</p>
-                            <p className="text-xs font-black text-emerald-700">{formatIDR(campaign.total_realization)}</p>
-                          </div>
+                        <div className="flex justify-between items-center mt-1.5 pt-1.5 border-t border-gray-100">
+                          <span className="text-xs text-emerald-600 font-medium">Disalurkan</span>
+                          <span className="text-xs text-emerald-600 font-bold">
+                            {formatIDR(campaign.total_realization)}
+                          </span>
                         </div>
                       )}
                     </div>

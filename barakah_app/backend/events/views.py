@@ -261,6 +261,16 @@ class EventViewSet(viewsets.ModelViewSet):
             )
             whatsapp_service.send_message(formatted_phone, wa_message)
 
+            if registration.qr_image:
+                try:
+                    import base64
+                    encoded = base64.b64encode(registration.qr_image.read()).decode('utf-8')
+                    file_b64 = f"data:image/png;base64,{encoded}"
+                    whatsapp_service.send_file(formatted_phone, f"QR Tiket {unique_code}", file_b64, filename=f"tiket_{unique_code}.png")
+                except Exception as e:
+                    import logging
+                    logging.getLogger(__name__).error(f"Gagal mengirim gambar WA QR: {e}")
+
         # Send Email
         if email:
             subject = f"Konfirmasi Pendaftaran Event: {registration.event.title}"

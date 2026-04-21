@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import { Helmet } from 'react-helmet';
+import { Html5QrcodeScanner } from 'html5-qrcode';
 import Header from '../components/layout/Header';
 import NavigationButton from '../components/layout/Navigation';
 
@@ -15,6 +16,7 @@ const EventScanPage = () => {
     const [loading, setLoading] = useState(true);
     const [manualCode, setManualCode] = useState('');
     const [scanning, setScanning] = useState(false);
+    const [isCameraOpen, setIsCameraOpen] = useState(false);
     const [scanResult, setScanResult] = useState(null); // { status, message, registration }
     const [recentScans, setRecentScans] = useState([]);
     const inputRef = useRef(null);
@@ -80,11 +82,35 @@ const EventScanPage = () => {
         } finally {
             setScanning(false);
         }
-    }, [manualCode, slug]);
+    }, [slug]); // removed manualCode to ensure handleScan reference is stable
 
     const handleKeyDown = (e) => {
-        if (e.key === 'Enter') handleScan();
+        if (e.key === 'Enter') handleScan(manualCode);
     };
+
+    useEffect(() => {
+        let html5QrcodeScanner;
+        if (isCameraOpen) {
+            html5QrcodeScanner = new Html5QrcodeScanner(
+                "qr-reader",
+                { fps: 10, qrbox: { width: 250, height: 250 }, rememberLastUsedCamera: true },
+                false
+            );
+            html5QrcodeScanner.render(
+                (decodedText) => {
+                    handleScan(decodedText);
+                    setIsCameraOpen(false); // Close camera after scan to prevent multiple submits
+                    html5QrcodeScanner.clear().catch(e => console.error(e));
+                },
+                (error) => { /* ignore */ }
+            );
+        }
+        return () => {
+            if (html5QrcodeScanner) {
+                html5QrcodeScanner.clear().catch(e => console.error(e));
+            }
+        };
+    }, [isCameraOpen, handleScan]);
 
     if (loading) return (
         <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -159,7 +185,14 @@ const EventScanPage = () => {
                             autoComplete="off"
                         />
                         <button
-                            onClick={() => handleScan()}
+                            onClick={() => setIsCameraOpen(!isCameraOpen)}
+                            className={`px-4 bg-${isCameraOpen ? 'red' : 'purple'}-100 text-${isCameraOpen ? 'red' : 'purple'}-600 rounded-2xl hover:bg-${isCameraOpen ? 'red' : 'purple'}-200 transition flex items-center justify-center`}
+                            title="Buka Kamera"
+                        >
+                            <span className="material-icons">{isCameraOpen ? 'videocam_off' : 'photo_camera'}</span>
+                        </button>
+                        <button
+                            onClick={() => handleScan(manualCode)}
                             disabled={scanning || !manualCode.trim()}
                             className="px-5 py-3.5 bg-purple-600 hover:bg-purple-700 text-white rounded-2xl font-black transition disabled:opacity-50 flex items-center gap-2"
                         >
@@ -176,6 +209,14 @@ const EventScanPage = () => {
                     <p className="text-[10px] text-gray-400 mt-2 text-center">
                         Tekan Enter atau klik tombol untuk konfirmasi kehadiran
                     </p>
+                    
+                    {/* Camera Scanner Container */}
+                    {isCameraOpen && (
+                        <div className="mt-4 p-4 border-2 border-purple-100 rounded-2xl bg-purple-50">
+                            <div id="qr-reader" className="w-full rounded-xl overflow-hidden shadow-inner bg-black"></div>
+                            <p className="text-[10px] text-purple-600 font-bold mt-3 text-center uppercase tracking-widest">Arahkan QR Code ke Kamera</p>
+                        </div>
+                    )}
                 </div>
 
                 {/* Hasil Scan */}

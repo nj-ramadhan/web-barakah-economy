@@ -288,12 +288,19 @@ const EventRegistrationSubmissionPage = () => {
                                                 </td>
                                             )}
                                             <td className="p-5 text-right">
-                                                <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${reg.status === 'approved' ? 'bg-green-100 text-green-700' :
-                                                        reg.status === 'rejected' ? 'bg-red-100 text-red-700' :
-                                                            'bg-orange-100 text-orange-700'
-                                                    }`}>
-                                                    {reg.status}
-                                                </span>
+                                                <div className="flex flex-col items-end gap-1.5">
+                                                    <span className={`w-fit px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${reg.status === 'approved' ? 'bg-green-100 text-green-700' :
+                                                            reg.status === 'rejected' ? 'bg-red-100 text-red-700' :
+                                                                'bg-orange-100 text-orange-700'
+                                                        }`}>
+                                                        {reg.status}
+                                                    </span>
+                                                    {reg.is_attended && (
+                                                        <span className="w-fit bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider flex items-center gap-1" title={reg.attended_at ? new Date(reg.attended_at).toLocaleString('id-ID') : 'Hadir'}>
+                                                            <span className="material-icons text-[10px]">how_to_reg</span> Hadir
+                                                        </span>
+                                                    )}
+                                                </div>
                                             </td>
                                         </tr>
                                         );

@@ -131,6 +131,7 @@ class EventRegistration(models.Model):
     
     # QR Code & Attendance
     unique_code = models.CharField(max_length=20, unique=True, blank=True, null=True, help_text="Kode unik untuk QR Code kehadiran")
+    qr_image = models.ImageField(upload_to='events/qr_codes/', blank=True, null=True, help_text="QR Code yang di-generate server")
     is_attended = models.BooleanField(default=False, help_text="Tandai hadir saat event berlangsung")
     attended_at = models.DateTimeField(blank=True, null=True, help_text="Waktu scan kehadiran")
     
@@ -151,6 +152,25 @@ class EventRegistration(models.Model):
             # Pastikan tidak ada duplikat
             while EventRegistration.objects.filter(unique_code=self.unique_code).exclude(pk=self.pk).exists():
                 self.unique_code = uuid.uuid4().hex[:8].upper()
+                
+        # Auto-generate QR code image
+        if not self.qr_image and self.unique_code:
+            try:
+                import qrcode
+                from io import BytesIO
+                from django.core.files.base import ContentFile
+                
+                qr = qrcode.QRCode(version=1, box_size=10, border=4)
+                qr.add_data(self.unique_code)
+                qr.make(fit=True)
+                img = qr.make_image(fill_color="black", back_color="white")
+                
+                buffer = BytesIO()
+                img.save(buffer, format="PNG")
+                self.qr_image.save(f"qr_{self.unique_code}.png", ContentFile(buffer.getvalue()), save=False)
+            except ImportError:
+                print("Library qrcode belum terinstall. Lewati generate gambar QR.")
+                
         super().save(*args, **kwargs)
 
 class EventRegistrationFile(models.Model):

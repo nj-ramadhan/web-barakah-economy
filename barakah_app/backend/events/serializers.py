@@ -34,6 +34,7 @@ class EventSerializer(serializers.ModelSerializer):
                 "id": reg.id,
                 "status": reg.status,
                 "unique_code": reg.unique_code,
+                "qr_image": request.build_absolute_uri(reg.qr_image.url) if reg.qr_image else None,
                 "is_attended": reg.is_attended,
                 "attended_at": reg.attended_at,
             }

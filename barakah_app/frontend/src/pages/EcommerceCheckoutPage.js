@@ -151,12 +151,24 @@ const EcommerceCheckoutPage = () => {
   };
 
   const totalItemsPrice = cartItems.reduce((total, item) => {
-      let base = parseFloat(item.product.price);
-      if(item.variation?.additional_price) {
-          base += parseFloat(item.variation.additional_price);
+      let base = parseFloat(item.product.price) - parseFloat(item.product.discount || 0);
+      if(item.variation) {
+          base += parseFloat(item.variation.additional_price || 0) - parseFloat(item.variation.discount || 0);
       }
       return total + (base * item.quantity);
   }, 0);
+
+  const getOriginalItemPrice = (item) => {
+      let base = parseFloat(item.product.price);
+      if(item.variation) base += parseFloat(item.variation.additional_price || 0);
+      return base;
+  };
+
+  const getDiscountedItemPrice = (item) => {
+      let base = parseFloat(item.product.price) - parseFloat(item.product.discount || 0);
+      if(item.variation) base += parseFloat(item.variation.additional_price || 0) - parseFloat(item.variation.discount || 0);
+      return base;
+  };
   
   const grandTotal = Math.max(0, totalItemsPrice + selectedShipping - voucherDiscount);
 
@@ -188,7 +200,7 @@ const EcommerceCheckoutPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!selectedBank) { alert('pilih metode pembayaran'); return; }
-    if (!courier || selectedShipping === 0) { alert('Pilih kurir dan ongkir terlebih dahulu'); return; }
+    if (courier !== 'none' && (!courier || selectedShipping === 0)) { alert('Pilih kurir dan ongkir terlebih dahulu'); return; }
 
     const paymentData = {
       amount: grandTotal,
@@ -265,10 +277,18 @@ const EcommerceCheckoutPage = () => {
                 <div className="flex-1">
                   <h3 className="text-sm font-semibold">{item.product.title}</h3>
                   {item.variation && <p className="text-[10px] text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full w-fit mt-1">{item.variation.name}</p>}
-                  <p className="text-xs text-gray-500 mt-1">{formatIDR(parseFloat(item.product.price) + (item.variation?.additional_price ? parseFloat(item.variation.additional_price) : 0))} x {item.quantity}</p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {getOriginalItemPrice(item) > getDiscountedItemPrice(item) && (
+                        <span className="line-through text-gray-400 mr-1">{formatIDR(getOriginalItemPrice(item))}</span>
+                    )}
+                    <span className="font-bold text-gray-700">{formatIDR(getDiscountedItemPrice(item))}</span> x {item.quantity}
+                  </p>
                 </div>
-                <div className="font-bold text-sm text-emerald-700">
-                    {formatIDR((parseFloat(item.product.price) + (item.variation?.additional_price ? parseFloat(item.variation.additional_price) : 0)) * item.quantity)}
+                <div className="font-bold text-sm text-emerald-700 text-right">
+                    {getOriginalItemPrice(item) > getDiscountedItemPrice(item) && (
+                        <div className="font-normal text-[10px] text-red-500 bg-red-50 px-2 py-0.5 rounded-full mb-1 inline-block">Diskon</div>
+                    )}
+                    <div>{formatIDR(getDiscountedItemPrice(item) * item.quantity)}</div>
                 </div>
               </li>
             ))}
@@ -279,8 +299,23 @@ const EcommerceCheckoutPage = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
             <div className="bg-orange-50 p-4 rounded-2xl border border-orange-100">
                 <label className="block text-xs font-bold text-orange-800 mb-2">Pilih Kurir (Ekspedisi)</label>
-                <select value={courier} onChange={(e) => checkOngkir(e.target.value)} disabled={!profile} className="w-full text-sm bg-white border-none rounded-xl p-3 focus:ring-2 focus:ring-orange-500 outline-none">
+                <select 
+                    value={courier} 
+                    onChange={(e) => {
+                        const val = e.target.value;
+                        if (val === 'none') {
+                            setCourier('none');
+                            setSelectedShipping(0);
+                            setShippingOptions([]);
+                        } else {
+                            checkOngkir(val);
+                        }
+                    }} 
+                    disabled={!profile} 
+                    className="w-full text-sm bg-white border-none rounded-xl p-3 focus:ring-2 focus:ring-orange-500 outline-none"
+                >
                     <option value="">- Pilih Jasa Ekspedisi -</option>
+                    <option value="none">Tanpa Ongkir (Ambil Sendiri / Non Fisik)</option>
                     <option value="jne">JNE</option>
                     <option value="pos">POS Indonesia</option>
                     <option value="tiki">TIKI</option>
