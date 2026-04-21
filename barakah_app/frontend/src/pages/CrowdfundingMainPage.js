@@ -316,6 +316,16 @@ const CrowdfundingMainPage = () => {
                           ? Math.round((campaign.current_amount / campaign.target_amount) * 100)
                           : 0} % tercapai
                       </div>
+                      {/* Nominal Realisasi – hanya tampilkan jika ada */}
+                      {campaign.total_realization > 0 && (
+                        <div className="mt-1.5 bg-emerald-50 border border-emerald-200 rounded-lg px-2 py-1.5 flex items-center gap-1.5">
+                          <span className="material-icons text-emerald-600 text-[13px]">volunteer_activism</span>
+                          <div>
+                            <p className="text-[9px] text-emerald-700 font-bold uppercase tracking-widest">Realisasi Disalurkan</p>
+                            <p className="text-xs font-black text-emerald-700">{formatIDR(campaign.total_realization)}</p>
+                          </div>
+                        </div>
+                      )}
                     </div>
 
                     {/* Donate Button */}

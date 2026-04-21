@@ -95,7 +95,6 @@ const EcommerceCheckoutPage = () => {
       
       setIsFetchingShipping(true);
       try {
-          // Determine origin based on first item seller (fixed to 10-digit in backend)
           const originCode = String(cartItems[0]?.product?.seller_city_id || '3216061005');
           const destCode = String(profile.address_village_id || profile.address_city_id || '');
           
@@ -120,12 +119,10 @@ const EcommerceCheckoutPage = () => {
               headers: { Authorization: `Bearer ${JSON.parse(localStorage.getItem('user')).access}` }
           });
 
-          // Extract costs from Expedition API response (Flat list from backend)
           const costs = res.data || [];
           if(Array.isArray(costs) && costs.length > 0) {
               setShippingOptions(costs);
-              // Auto-select first option cost
-              setSelectedShipping(costs[0].cost);
+              setSelectedShipping(costs[0].cost[0].value);
           } else {
               setShippingOptions([]);
               setSelectedShipping(0);
@@ -154,10 +151,9 @@ const EcommerceCheckoutPage = () => {
   };
 
   const totalItemsPrice = cartItems.reduce((total, item) => {
-      // Variation price replaces product price if set
-      let base = item.product.price;
-      if(item.variation?.additional_price && item.variation.additional_price > 0) {
-          base = parseFloat(item.variation.additional_price);
+      let base = parseFloat(item.product.price);
+      if(item.variation?.additional_price) {
+          base += parseFloat(item.variation.additional_price);
       }
       return total + (base * item.quantity);
   }, 0);
@@ -269,10 +265,10 @@ const EcommerceCheckoutPage = () => {
                 <div className="flex-1">
                   <h3 className="text-sm font-semibold">{item.product.title}</h3>
                   {item.variation && <p className="text-[10px] text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full w-fit mt-1">{item.variation.name}</p>}
-                  <p className="text-xs text-gray-500 mt-1">{formatIDR(item.product.price + (item.variation?.additional_price ? parseFloat(item.variation.additional_price) : 0))} x {item.quantity}</p>
+                  <p className="text-xs text-gray-500 mt-1">{formatIDR(parseFloat(item.product.price) + (item.variation?.additional_price ? parseFloat(item.variation.additional_price) : 0))} x {item.quantity}</p>
                 </div>
                 <div className="font-bold text-sm text-emerald-700">
-                    {formatIDR((item.product.price + (item.variation?.additional_price ? parseFloat(item.variation.additional_price) : 0)) * item.quantity)}
+                    {formatIDR((parseFloat(item.product.price) + (item.variation?.additional_price ? parseFloat(item.variation.additional_price) : 0)) * item.quantity)}
                 </div>
               </li>
             ))}

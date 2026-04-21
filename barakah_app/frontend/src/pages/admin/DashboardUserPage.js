@@ -45,6 +45,10 @@ const DashboardUserPage = () => {
     const [blastResult, setBlastResult] = useState(null);
     const [allRoles, setAllRoles] = useState([]);
     const [allLabels, setAllLabels] = useState([]);
+    // Reset password state
+    const [showResetPasswordModal, setShowResetPasswordModal] = useState(false);
+    const [resetPasswordResult, setResetPasswordResult] = useState(null);
+    const [resettingPassword, setResettingPassword] = useState(false);
 
     const fetchMeta = useCallback(async () => {
         try {
@@ -111,6 +115,16 @@ const DashboardUserPage = () => {
         } catch (err) { alert('Gagal export'); }
     };
 
+    const openAddModal = () => {
+        setEditingUser(null);
+        setEditFormData({
+            username: '', email: '', phone: '', password: '',
+            role: 'user', is_verified_member: false,
+            name_full: '', custom_role_ids: [], label_ids: [], profile: {}
+        });
+        setShowEditModal(true);
+    };
+
     const openEditModal = (user) => {
         setEditingUser(user);
         const p = user.profile || {};
@@ -138,6 +152,21 @@ const DashboardUserPage = () => {
     const handleUpdate = async (e) => {
         e.preventDefault();
         try {
+            // Mode buat user baru
+            if (!editingUser) {
+                if (!editFormData.password) { alert('Password wajib diisi untuk user baru.'); return; }
+                const payload = {
+                    username: editFormData.username, email: editFormData.email,
+                    phone: editFormData.phone, password: editFormData.password,
+                    role: editFormData.role, is_verified_member: editFormData.is_verified_member,
+                    name_full: editFormData.name_full || '',
+                };
+                await axios.post(`${API}/api/auth/users/`, payload, getAuth());
+                alert('User baru berhasil dibuat!');
+                setShowEditModal(false);
+                fetchUsers(currentPage);
+                return;
+            }
             // Clean profile data: remove empty strings to avoid validation issues
             const cleanProfile = {};
             Object.entries(editFormData.profile || {}).forEach(([k, v]) => {
@@ -169,6 +198,20 @@ const DashboardUserPage = () => {
             await axios.delete(`${API}/api/auth/users/${userId}/`, getAuth());
             alert('User berhasil dihapus'); fetchUsers(currentPage);
         } catch (err) { alert('Gagal menghapus user'); }
+    };
+
+    const handleResetPassword = async (user) => {
+        if (!window.confirm(`Reset password untuk @${user.username}? Password lama akan tidak berlaku.`)) return;
+        setResettingPassword(true);
+        try {
+            const res = await axios.post(`${API}/api/auth/users/${user.id}/reset_password/`, {}, getAuth());
+            setResetPasswordResult(res.data);
+            setShowResetPasswordModal(true);
+        } catch (err) {
+            alert('Gagal reset password: ' + (err.response?.data?.error || err.message));
+        } finally {
+            setResettingPassword(false);
+        }
     };
 
     const handleBlast = async () => {
@@ -238,7 +281,7 @@ const DashboardUserPage = () => {
                         </div>
                     </div>
                     <div className="flex gap-2">
-                        <button onClick={() => { setEditingUser(null); setEditFormData({ username: '', email: '', phone: '', role: 'user', is_verified_member: false, profile: {} }); setShowEditModal(true); }}
+                        <button onClick={openAddModal}
                             className="bg-gray-900 text-white px-5 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 shadow-lg hover:bg-gray-800 transition">
                             <span className="material-icons text-sm">person_add</span> Tambah User
                         </button>
@@ -354,6 +397,9 @@ const DashboardUserPage = () => {
                                                 <button onClick={() => openEditModal(u)} className="w-6 h-6 bg-white border border-gray-100 rounded text-gray-400 hover:text-blue-700 hover:bg-blue-50 transition flex items-center justify-center" title="Edit">
                                                     <span className="material-icons text-[14px]">edit</span>
                                                 </button>
+                                                <button onClick={() => handleResetPassword(u)} disabled={resettingPassword} className="w-6 h-6 bg-white border border-gray-100 rounded text-gray-400 hover:text-orange-700 hover:bg-orange-50 transition flex items-center justify-center" title="Reset Password">
+                                                    <span className="material-icons text-[14px]">lock_reset</span>
+                                                </button>
                                                 <button onClick={() => handleDelete(u.id)} className="w-6 h-6 bg-white border border-gray-100 rounded text-gray-400 hover:text-red-700 hover:bg-red-50 transition flex items-center justify-center" title="Hapus">
                                                     <span className="material-icons text-[14px]">delete</span>
                                                 </button>
@@ -450,17 +496,31 @@ const DashboardUserPage = () => {
                 </div>
             )}
 
-            {/* ============ EDIT MODAL (ALL FIELDS) ============ */}
-            {showEditModal && editingUser && (
+            {/* ============ EDIT / ADD MODAL ============ */}
+            {showEditModal && (
                 <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[110] flex items-center justify-center p-4 overflow-y-auto">
                     <div className="bg-white w-full max-w-5xl rounded-3xl shadow-2xl my-4">
                         <div className="p-6 border-b border-gray-100 flex justify-between items-center">
-                            <h2 className="text-xl font-bold text-gray-900">Edit User: {editingUser.username}</h2>
+                            <h2 className="text-xl font-bold text-gray-900">{editingUser ? `Edit User: ${editingUser.username}` : 'Tambah User Baru'}</h2>
                             <button onClick={() => setShowEditModal(false)} className="text-gray-400 hover:text-gray-600"><span className="material-icons">close</span></button>
                         </div>
                         <form onSubmit={handleUpdate}>
                             <div className="p-6 max-h-[75vh] overflow-y-auto">
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                {/* Jika tambah user baru, hanya tampilkan field dasar */}
+                                {!editingUser ? (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <FI label="Nama Lengkap" value={editFormData.name_full} onChange={v => setEditFormData(f=>({...f, name_full:v}))} />
+                                        <FI label="Username" value={editFormData.username} onChange={v => setEditFormData(f=>({...f, username:v}))} />
+                                        <FI label="Email" value={editFormData.email} onChange={v => setEditFormData(f=>({...f, email:v}))} />
+                                        <FI label="No. Telepon" value={editFormData.phone} onChange={v => setEditFormData(f=>({...f, phone:v}))} />
+                                        <FI label="Password (wajib)*" value={editFormData.password} onChange={v => setEditFormData(f=>({...f, password:v}))} type="password" />
+                                        <FS label="Role" value={editFormData.role} onChange={v => setEditFormData(f=>({...f, role:v}))} options={[['user','User'],['admin','Admin'],['seller','Seller'],['staff','Staff']]} />
+                                        <div className="flex items-center gap-2 col-span-2">
+                                            <input type="checkbox" id="is_v_new" checked={editFormData.is_verified_member} onChange={e => setEditFormData(f=>({...f, is_verified_member:e.target.checked}))} className="w-4 h-4 text-blue-600 rounded" />
+                                            <label htmlFor="is_v_new" className="text-sm font-medium text-gray-700">Verified Member</label>
+                                        </div>
+                                    </div>
+                                ) : (
                                     {/* Col 1: Account */}
                                     <div className="space-y-3">
                                         <h3 className="text-[10px] font-bold text-blue-700 uppercase tracking-widest border-b border-blue-100 pb-2 mb-2">Data Akun</h3>
@@ -532,7 +592,7 @@ const DashboardUserPage = () => {
                                         <FI label="Jabatan" value={editFormData.profile?.work_position} onChange={v => setP('work_position',v)} />
                                         <FI label="Gaji (Rp)" value={editFormData.profile?.work_salary} onChange={v => setP('work_salary',v)} type="number" />
                                     </div>
-                                </div>
+                                )} {/* end if editingUser else */}
                             </div>
                             <div className="p-6 bg-gray-50 border-t flex justify-end gap-3 rounded-b-3xl">
                                 <button type="button" onClick={() => setShowEditModal(false)} className="px-6 py-2.5 rounded-xl text-sm font-bold text-gray-500 hover:bg-gray-200 transition">Batal</button>
@@ -567,6 +627,39 @@ const DashboardUserPage = () => {
                             <button onClick={handleBlast} disabled={blasting || !blastMessage.trim()}
                                 className="bg-green-600 text-white px-8 py-2.5 rounded-xl text-sm font-bold shadow-lg hover:bg-green-700 transition disabled:opacity-50">
                                 {blasting ? 'Mengirim...' : 'Kirim Blast'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* ============ RESET PASSWORD MODAL ============ */}
+            {showResetPasswordModal && resetPasswordResult && (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[130] flex items-center justify-center p-4">
+                    <div className="bg-white w-full max-w-sm rounded-3xl shadow-2xl overflow-hidden">
+                        <div className="bg-gradient-to-br from-orange-500 to-red-500 p-6 text-white text-center">
+                            <span className="material-icons text-4xl mb-2">lock_reset</span>
+                            <h2 className="text-lg font-black">Password Direset!</h2>
+                        </div>
+                        <div className="p-6 text-center">
+                            <p className="text-sm text-gray-600 mb-4">
+                                Password sementara untuk <span className="font-bold text-gray-800">@{resetPasswordResult.username}</span>:
+                            </p>
+                            <div className="bg-gray-50 border-2 border-dashed border-orange-300 rounded-2xl p-4 mb-4">
+                                <p className="text-2xl font-black text-orange-700 tracking-widest font-mono">
+                                    {resetPasswordResult.temp_password}
+                                </p>
+                            </div>
+                            <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-3 mb-4 text-left">
+                                <p className="text-xs text-yellow-800 font-medium">
+                                    ⚠️ <strong>Penting:</strong> Catat dan berikan password ini kepada user. User harus mengganti password setelah login.
+                                </p>
+                            </div>
+                            <button
+                                onClick={() => { setShowResetPasswordModal(false); setResetPasswordResult(null); }}
+                                className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 rounded-xl transition"
+                            >
+                                Tutup
                             </button>
                         </div>
                     </div>

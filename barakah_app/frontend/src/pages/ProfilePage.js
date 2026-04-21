@@ -436,8 +436,13 @@ const ProfilePage = () => {
         email: '',
     });
 
-    const [activeTab, setActiveTab] = useState('general'); // State to manage active tab
+    const [activeTab, setActiveTab] = useState('general');
     const [loadingProfile, setLoadingProfile] = useState(true);
+    // Change password state
+    const [showChangePwModal, setShowChangePwModal] = useState(false);
+    const [changePwForm, setChangePwForm] = useState({ old_password: '', new_password: '', confirm_password: '' });
+    const [changePwLoading, setChangePwLoading] = useState(false);
+    const [changePwError, setChangePwError] = useState('');
 
     useEffect(() => {
         const fetchProfile = async () => {
@@ -464,6 +469,38 @@ const ProfilePage = () => {
         localStorage.removeItem('access_token');
         localStorage.removeItem('refresh_token');
         window.location.href = '/login';
+    };
+
+    const handleChangePassword = async (e) => {
+        e.preventDefault();
+        setChangePwError('');
+        if (changePwForm.new_password !== changePwForm.confirm_password) {
+            setChangePwError('Konfirmasi password tidak cocok.');
+            return;
+        }
+        if (changePwForm.new_password.length < 8) {
+            setChangePwError('Password baru minimal 8 karakter.');
+            return;
+        }
+        setChangePwLoading(true);
+        try {
+            const user = JSON.parse(localStorage.getItem('user'));
+            await axios.post(
+                `${process.env.REACT_APP_API_BASE_URL}/api/auth/change-password/`,
+                changePwForm,
+                { headers: { Authorization: `Bearer ${user.access}`, 'Content-Type': 'application/json' } }
+            );
+            alert('Password berhasil diubah! Silakan login kembali.');
+            setShowChangePwModal(false);
+            setChangePwForm({ old_password: '', new_password: '', confirm_password: '' });
+            // Logout setelah ganti password karena token lama sudah tidak valid
+            localStorage.removeItem('user');
+            window.location.href = '/login';
+        } catch (err) {
+            setChangePwError(err.response?.data?.error || 'Gagal mengubah password.');
+        } finally {
+            setChangePwLoading(false);
+        }
     };
 
     // Render tab content
@@ -827,19 +864,109 @@ const ProfilePage = () => {
                         {/* Footer Actions */}
                         <div className="mt-12 pt-6 border-t border-gray-100">
                             <button
-                                onClick={handleLogout}
+                                onClick={() => setShowChangePwModal(true)}
+                                className="w-full bg-blue-50 hover:bg-blue-100 text-blue-600 py-4 rounded-2xl font-black text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.98] mb-3"
+                            >
+                                <span className="material-icons">lock</span>
+                                GANTI KATA SANDI
+                            </button>
+                            <button
+                                onClick={() => {
+                                    localStorage.removeItem('user');
+                                    localStorage.removeItem('access_token');
+                                    localStorage.removeItem('refresh_token');
+                                    window.location.href = '/login';
+                                }}
                                 className="w-full bg-red-50 hover:bg-red-100 text-red-600 py-4 rounded-2xl font-black text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
                             >
                                 <span className="material-icons">logout</span>
                                 KELUAR DARI APLIKASI
                             </button>
-                            <p className="text-center text-[10px] text-gray-400 font-bold mt-4 uppercase tracking-widest">Barakah App v2.4 • 2026</p>
+                            <p className="text-center text-[10px] text-gray-400 font-bold mt-4 uppercase tracking-widest">Barakah App v2.5 • 2026</p>
                         </div>
                     </div>
                 </div>
                 )}
             </div>
             <NavigationButton />
+
+            {/* ======= MODAL GANTI PASSWORD ======= */}
+            {showChangePwModal && (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[200] flex items-end justify-center p-4 sm:items-center">
+                    <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden">
+                        <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-6 text-white">
+                            <h2 className="text-lg font-black flex items-center gap-2">
+                                <span className="material-icons">lock</span> Ganti Kata Sandi
+                            </h2>
+                            <p className="text-blue-100 text-xs mt-1">Setelah berhasil, Anda akan diminta login ulang</p>
+                        </div>
+                        <form onSubmit={handleChangePassword} className="p-6 space-y-4">
+                            {changePwError && (
+                                <div className="bg-red-50 border border-red-200 rounded-xl p-3">
+                                    <p className="text-sm text-red-600">{changePwError}</p>
+                                </div>
+                            )}
+                            <div>
+                                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Password Lama</label>
+                                <input
+                                    type="password"
+                                    placeholder="Masukkan password lama"
+                                    value={changePwForm.old_password}
+                                    onChange={e => setChangePwForm(f => ({ ...f, old_password: e.target.value }))}
+                                    required
+                                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500 transition"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Password Baru</label>
+                                <input
+                                    type="password"
+                                    placeholder="Minimal 8 karakter"
+                                    value={changePwForm.new_password}
+                                    onChange={e => setChangePwForm(f => ({ ...f, new_password: e.target.value }))}
+                                    required
+                                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500 transition"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Konfirmasi Password Baru</label>
+                                <input
+                                    type="password"
+                                    placeholder="Ulangi password baru"
+                                    value={changePwForm.confirm_password}
+                                    onChange={e => setChangePwForm(f => ({ ...f, confirm_password: e.target.value }))}
+                                    required
+                                    className={`w-full px-4 py-3 bg-gray-50 border rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500 transition ${changePwForm.confirm_password && changePwForm.new_password !== changePwForm.confirm_password ? 'border-red-300 ring-2 ring-red-200' : 'border-gray-200'}`}
+                                />
+                                {changePwForm.confirm_password && changePwForm.new_password !== changePwForm.confirm_password && (
+                                    <p className="text-xs text-red-500 mt-1">Password tidak cocok</p>
+                                )}
+                            </div>
+                            <div className="flex gap-3 pt-2">
+                                <button
+                                    type="button"
+                                    onClick={() => { setShowChangePwModal(false); setChangePwError(''); setChangePwForm({ old_password: '', new_password: '', confirm_password: '' }); }}
+                                    className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-600 font-bold py-3 rounded-xl transition text-sm"
+                                >
+                                    Batal
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={changePwLoading}
+                                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition text-sm disabled:opacity-60 flex items-center justify-center gap-2"
+                                >
+                                    {changePwLoading ? (
+                                        <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+                                    ) : (
+                                        <span className="material-icons text-sm">save</span>
+                                    )}
+                                    Simpan
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

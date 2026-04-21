@@ -134,6 +134,7 @@ class Profile(models.Model):
     id_m = models.CharField(max_length=10, blank=True, null=True)
     nik = models.CharField(max_length=16, blank=True, null=True, help_text='Nomor Induk Kependudukan (NIK) dari KTP')
     picture = models.ImageField(upload_to='profile_images/', blank=True, null=True)
+    google_picture_url = models.URLField(max_length=500, blank=True, null=True, help_text="URL foto profil dari Google OAuth")
     ktp_image = models.ImageField(upload_to='ktp_images/', blank=True, null=True)
     name_full = models.CharField(max_length=100, blank=True, null=True)
     gender = models.CharField(max_length=1, choices=GENDER_CHOICES, blank=True, null=True)
@@ -165,6 +166,7 @@ class Profile(models.Model):
     address_subdistrict_id = models.CharField(max_length=10, blank=True, null=True, help_text="Expedition Subdistrict ID")
     address_subdistrict_name = models.CharField(max_length=100, blank=True, null=True)
     address_village_id = models.CharField(max_length=10, blank=True, null=True, help_text="Expedition Village ID")
+    address_village_name = models.CharField(max_length=100, blank=True, null=True, help_text="Nama Kelurahan/Desa")
     address_postal_code = models.CharField(max_length=10, blank=True, null=True)
     
     # Shop fields for digital product sellers

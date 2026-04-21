@@ -3,6 +3,7 @@ from rest_framework.routers import SimpleRouter
 from .views import (
     RegisterView, LoginView, LogoutView, GoogleLoginView,
     PasswordResetRequestView, PasswordResetConfirmView,
+    ChangePasswordView,
     UserViewSet, RoleViewSet, UserLabelViewSet
 )
 
@@ -18,5 +19,6 @@ urlpatterns = [
     path('google-login/', GoogleLoginView.as_view(), name='google-login'),
     path('password-reset/', PasswordResetRequestView.as_view(), name='password_reset'),
     path('password-reset-confirm/', PasswordResetConfirmView.as_view(), name='password_reset_confirm'),
+    path('change-password/', ChangePasswordView.as_view(), name='change_password'),
     path('', include(router.urls)),
 ]

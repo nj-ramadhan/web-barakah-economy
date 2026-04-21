@@ -11,6 +11,8 @@ from .models import Role, UserLabel
 from rest_framework.decorators import action
 from django.http import HttpResponse
 import csv
+import random
+import string
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -78,12 +80,18 @@ class GoogleLoginView(APIView):
             logger.info(f"Decoded token: {id_info}")
 
             email = id_info.get('email')
-            name = id_info.get('name')
-            first_name = id_info.get('given_name')
-            last_name = id_info.get('family_name')
+            name = id_info.get('name', '')
+            google_picture = id_info.get('picture', '')
             logger.info(f"name: {name}")
-            username = str(name).replace(" ", "_").lower()
-            logger.info(f"email: {email}, name: {username}")
+            # Generate username yang unik jika sudah ada
+            base_username = str(name).replace(" ", "_").lower() if name else email.split('@')[0]
+            username = base_username
+            counter = 1
+            while User.objects.filter(username=username).exclude(email=email).exists():
+                username = f"{base_username}_{counter}"
+                counter += 1
+
+            logger.info(f"email: {email}, username: {username}")
             if not email:
                 return Response({'error': 'Email not found in token'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -96,14 +104,33 @@ class GoogleLoginView(APIView):
             )
             logger.info(f"User created: {created}, User: {user}")
 
+            # Jika user baru, auto-isi data profil dari Google
+            if created and name:
+                try:
+                    from profiles.models import Profile
+                    profile, _ = Profile.objects.get_or_create(user=user)
+                    if not profile.name_full:
+                        profile.name_full = name
+                    # Simpan URL foto Google sebagai google_picture_url (tidak download file)
+                    if google_picture and not profile.picture:
+                        profile.google_picture_url = google_picture
+                    profile.save()
+                except Exception as pe:
+                    logger.warning(f"Failed to auto-fill profile on Google login: {pe}")
+
             refresh = RefreshToken.for_user(user)
             access = str(refresh.access_token)
 
             try:
                 profile = getattr(user, 'profile', None)
-                picture_url = request.build_absolute_uri(profile.picture.url) if profile and profile.picture else None
+                if profile and profile.picture:
+                    picture_url = request.build_absolute_uri(profile.picture.url)
+                elif profile and hasattr(profile, 'google_picture_url') and profile.google_picture_url:
+                    picture_url = profile.google_picture_url
+                else:
+                    picture_url = google_picture or None
             except Exception:
-                picture_url = None
+                picture_url = google_picture or None
 
             return Response({
                 'access': access,
@@ -115,6 +142,7 @@ class GoogleLoginView(APIView):
                 'is_verified_member': user.is_verified_member,
                 'accessible_menus': user.get_all_accessible_menus(),
                 'picture': picture_url,
+                'is_new_user': created,
             }, status=status.HTTP_200_OK)
         except ValueError as e:
             logger.error(f"Token verification failed: {e}")
@@ -124,31 +152,71 @@ class GoogleLoginView(APIView):
             return Response({'error': 'An error occurred during Google login'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class PasswordResetRequestView(APIView):
+    permission_classes = [permissions.AllowAny]
     def post(self, request):
         email = request.data.get('email')
+        if not email:
+            return Response({'error': 'Email wajib diisi.'}, status=status.HTTP_400_BAD_REQUEST)
         user = User.objects.filter(email=email).first()
         if user:
             token = default_token_generator.make_token(user)
-            reset_url = f"{request.data.get('frontend_url')}/reset-password?uid={user.pk}&token={token}"
-            send_mail(
-                'Reset Password',
-                f'Click the link to reset your password: {reset_url}',
-                'no-reply@yourdomain.com',
-                [email],
-            )
-        return Response({'message': 'If the email exists, a reset link has been sent.'}, status=status.HTTP_200_OK)
+            frontend_url = request.data.get('frontend_url', settings.FRONTEND_URL if hasattr(settings, 'FRONTEND_URL') else 'http://localhost:3000')
+            reset_url = f"{frontend_url}/reset-password?uid={user.pk}&token={token}"
+            try:
+                from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@barakaheconomy.com')
+                send_mail(
+                    subject='[Barakah App] Reset Password Anda',
+                    message=f'Klik tautan berikut untuk mengatur ulang kata sandi Anda:\n\n{reset_url}\n\nTautan ini akan kedaluwarsa dalam 24 jam.\n\nJika Anda tidak meminta reset password, abaikan email ini.',
+                    from_email=from_email,
+                    recipient_list=[email],
+                    fail_silently=False,
+                )
+                logger.info(f"Password reset email sent to {email}")
+            except Exception as e:
+                logger.error(f"Failed to send password reset email: {e}")
+                # Tetap return success agar tidak expose apakah email terdaftar
+        return Response({'message': 'Jika email terdaftar, tautan reset password telah dikirim.'}, status=status.HTTP_200_OK)
 
 class PasswordResetConfirmView(APIView):
+    permission_classes = [permissions.AllowAny]
     def post(self, request):
         uid = request.data.get('uid')
         token = request.data.get('token')
         new_password = request.data.get('new_password')
+        if not all([uid, token, new_password]):
+            return Response({'error': 'Data tidak lengkap.'}, status=status.HTTP_400_BAD_REQUEST)
         user = User.objects.filter(pk=uid).first()
         if user and default_token_generator.check_token(user, token):
             user.set_password(new_password)
             user.save()
-            return Response({'message': 'Password reset successful.'}, status=status.HTTP_200_OK)
-        return Response({'error': 'Invalid token or user.'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'message': 'Password berhasil diubah. Silakan login kembali.'}, status=status.HTTP_200_OK)
+        return Response({'error': 'Token tidak valid atau sudah kedaluwarsa.'}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ChangePasswordView(APIView):
+    """Endpoint untuk user mengubah password sendiri (butuh auth)."""
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        old_password = request.data.get('old_password')
+        new_password = request.data.get('new_password')
+        confirm_password = request.data.get('confirm_password')
+
+        if not all([old_password, new_password, confirm_password]):
+            return Response({'error': 'Semua field wajib diisi.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if not request.user.check_password(old_password):
+            return Response({'error': 'Password lama tidak benar.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if new_password != confirm_password:
+            return Response({'error': 'Konfirmasi password tidak cocok.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if len(new_password) < 8:
+            return Response({'error': 'Password baru minimal 8 karakter.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        request.user.set_password(new_password)
+        request.user.save()
+        return Response({'message': 'Password berhasil diubah.'}, status=status.HTTP_200_OK)
 
 
 class RoleViewSet(viewsets.ModelViewSet):
@@ -169,6 +237,37 @@ class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all().select_related('profile').prefetch_related('custom_roles', 'labels').order_by('-date_joined')
     serializer_class = UserAdminSerializer
     permission_classes = [permissions.IsAdminUser]
+
+    def create(self, request, *args, **kwargs):
+        """Override create untuk support pembuatan user baru dengan password."""
+        username = request.data.get('username')
+        email = request.data.get('email')
+        password = request.data.get('password')
+        phone = request.data.get('phone', '')
+        role = request.data.get('role', 'user')
+        is_verified = request.data.get('is_verified_member', False)
+        name_full = request.data.get('name_full', '')
+
+        if not username or not email or not password:
+            return Response({'error': 'Username, email, dan password wajib diisi.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if User.objects.filter(username=username).exists():
+            return Response({'error': 'Username sudah digunakan.'}, status=status.HTTP_400_BAD_REQUEST)
+        if User.objects.filter(email=email).exists():
+            return Response({'error': 'Email sudah terdaftar.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        user = User.objects.create_user(
+            username=username, email=email, password=password,
+            phone=phone, role=role, is_verified_member=is_verified
+        )
+
+        if name_full:
+            from profiles.models import Profile
+            profile, _ = Profile.objects.get_or_create(user=user)
+            profile.name_full = name_full
+            profile.save()
+
+        return Response(UserAdminSerializer(user).data, status=status.HTTP_201_CREATED)
 
     def get_queryset(self):
         qs = super().get_queryset()
@@ -343,3 +442,19 @@ class UserViewSet(viewsets.ModelViewSet):
         """Get all available labels for filter dropdown."""
         labels = UserLabel.objects.all()
         return Response(UserLabelSerializer(labels, many=True).data)
+
+    @action(detail=True, methods=['post'])
+    def reset_password(self, request, pk=None):
+        """Admin reset password user – generate password sementara."""
+        user = self.get_object()
+        # Generate password sementara 10 karakter
+        chars = string.ascii_letters + string.digits
+        temp_password = ''.join(random.choices(chars, k=10))
+        user.set_password(temp_password)
+        user.save()
+        logger.info(f"Admin {request.user.username} reset password for user {user.username}")
+        return Response({
+            'message': f'Password user @{user.username} berhasil direset.',
+            'temp_password': temp_password,
+            'username': user.username,
+        }, status=status.HTTP_200_OK)

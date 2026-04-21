@@ -60,6 +60,8 @@ const googleLogin = (token) => {
         email: response.data.email,
         role: response.data.role,
         picture: response.data.picture,
+        is_verified_member: response.data.is_verified_member,
+        accessible_menus: response.data.accessible_menus,
       }));
     }
     return response.data;
@@ -69,11 +71,13 @@ const googleLogin = (token) => {
   });
 };
 
-const register = (username, email, password) => {
+const register = (username, email, password, name_full = '', phone = '') => {
   return axiosInstance.post('register/', {
     username,
     email,
     password,
+    name_full,
+    phone,
   });
 };
 

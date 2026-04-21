@@ -81,19 +81,27 @@ class UserAdminSerializer(serializers.ModelSerializer):
 class UserRegistrationSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, validators=[validate_password])
     phone = serializers.CharField(max_length=15, required=False, allow_blank=True)
+    name_full = serializers.CharField(max_length=100, required=False, allow_blank=True)
     is_verified_member = serializers.BooleanField(default=False)
 
     class Meta:
         model = User
-        fields = ('username', 'email', 'password', 'phone', 'role', 'is_verified_member')
+        fields = ('username', 'email', 'password', 'phone', 'name_full', 'role', 'is_verified_member')
 
     def create(self, validated_data):
+        name_full = validated_data.pop('name_full', '')
         user = User.objects.create_user(
             username=validated_data['username'],
             email=validated_data['email'],
             password=validated_data['password'],
             phone=validated_data.get('phone', ''),
         )
+        # Auto-buat profil dengan nama lengkap
+        if name_full:
+            from profiles.models import Profile
+            profile, _ = Profile.objects.get_or_create(user=user)
+            profile.name_full = name_full
+            profile.save()
         return user
 
     def validate_email(self, value):
