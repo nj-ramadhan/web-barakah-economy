@@ -130,168 +130,162 @@ const EventScanPage = () => {
     };
 
     return (
-        <div className="body min-h-screen bg-gray-50 pb-24">
+        <div className="body min-h-screen bg-gray-50 pb-20">
             <Helmet>
                 <title>Scan Kehadiran – {event?.title || 'Event'}</title>
             </Helmet>
             <Header />
+            <NavigationButton />
 
-            <div className="max-w-lg mx-auto px-4 py-6">
-                {/* Header Event */}
-                <div className="bg-gradient-to-br from-purple-600 to-indigo-700 rounded-3xl p-6 text-white mb-6 shadow-xl shadow-purple-200">
-                    <div className="flex items-center gap-3 mb-2">
-                        <span className="material-icons text-3xl">qr_code_scanner</span>
+            <div className="max-w-md mx-auto px-4 py-6">
+                {/* Header Event - More Compact */}
+                <div className="bg-gradient-to-br from-purple-600 to-indigo-700 rounded-2xl p-5 text-white mb-4 shadow-lg shadow-purple-100">
+                    <div className="flex items-center gap-2 mb-1">
+                        <span className="material-icons text-xl">qr_code_scanner</span>
                         <div>
-                            <h1 className="text-lg font-black">Scan Kehadiran</h1>
-                            <p className="text-purple-200 text-xs line-clamp-1">{event?.title}</p>
+                            <h1 className="text-sm font-black uppercase tracking-tight">Scan Kehadiran</h1>
+                            <p className="text-purple-200 text-[10px] line-clamp-1">{event?.title}</p>
                         </div>
                     </div>
-                    <div className="grid grid-cols-3 gap-3 mt-4">
-                        <div className="bg-white/20 rounded-2xl p-3 text-center">
-                            <p className="text-2xl font-black">{recentScans.length}</p>
-                            <p className="text-[10px] uppercase tracking-widest">Scan Sesi Ini</p>
+                    <div className="grid grid-cols-3 gap-2 mt-4">
+                        <div className="bg-white/10 rounded-xl p-2 text-center backdrop-blur-sm border border-white/10">
+                            <p className="text-lg font-black">{recentScans.length}</p>
+                            <p className="text-[8px] font-bold uppercase tracking-widest opacity-70">Sesi</p>
                         </div>
-                        <div className="bg-white/20 rounded-2xl p-3 text-center">
-                            <p className="text-2xl font-black">{recentScans.filter(r => r.scanStatus === 'success').length}</p>
-                            <p className="text-[10px] uppercase tracking-widest">Berhasil</p>
+                        <div className="bg-white/10 rounded-xl p-2 text-center backdrop-blur-sm border border-white/10">
+                            <p className="text-lg font-black">{recentScans.filter(r => r.scanStatus === 'success').length}</p>
+                            <p className="text-[8px] font-bold uppercase tracking-widest opacity-70">Hadir</p>
                         </div>
-                        <div className="bg-white/20 rounded-2xl p-3 text-center">
-                            <p className="text-2xl font-black">{event?.registration_count || 0}</p>
-                            <p className="text-[10px] uppercase tracking-widest">Total Peserta</p>
+                        <div className="bg-white/10 rounded-xl p-2 text-center backdrop-blur-sm border border-white/10">
+                            <p className="text-lg font-black">{event?.registration_count || 0}</p>
+                            <p className="text-[8px] font-bold uppercase tracking-widest opacity-70">Total</p>
                         </div>
                     </div>
                 </div>
 
                 {/* Input Kode */}
-                <div className="bg-white rounded-3xl shadow-lg border border-gray-100 p-6 mb-4">
-                    <h2 className="text-sm font-black text-gray-700 uppercase tracking-widest mb-4 flex items-center gap-2">
-                        <span className="material-icons text-purple-600">keyboard</span>
-                        Input Kode Tiket
-                    </h2>
-                    <p className="text-xs text-gray-500 mb-4">
-                        Scan QR Code peserta menggunakan scanner eksternal (kode otomatis terdeteksi), 
-                        atau ketik kode 8 karakter secara manual.
-                    </p>
-                    <div className="flex gap-3">
+                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 mb-4">
+                    <div className="flex gap-2">
                         <input
                             ref={inputRef}
                             type="text"
-                            placeholder="Contoh: A1B2C3D4"
+                            placeholder="KODE TIKET"
                             value={manualCode}
                             onChange={e => setManualCode(e.target.value.toUpperCase())}
                             onKeyDown={handleKeyDown}
                             maxLength={20}
-                            className="flex-1 px-4 py-3.5 bg-gray-50 border-2 border-purple-200 focus:border-purple-500 rounded-2xl text-lg font-black text-center tracking-[0.3em] uppercase outline-none transition"
+                            className="flex-1 px-4 py-3 bg-gray-50 border-2 border-purple-100 focus:border-purple-500 rounded-xl text-sm font-black text-center tracking-[0.2em] outline-none transition-all"
                             autoComplete="off"
                         />
                         <button
                             onClick={() => setIsCameraOpen(!isCameraOpen)}
-                            className={`px-4 bg-${isCameraOpen ? 'red' : 'purple'}-100 text-${isCameraOpen ? 'red' : 'purple'}-600 rounded-2xl hover:bg-${isCameraOpen ? 'red' : 'purple'}-200 transition flex items-center justify-center`}
+                            className={`w-12 h-12 flex items-center justify-center rounded-xl transition-all shadow-sm ${
+                                isCameraOpen ? 'bg-red-500 text-white' : 'bg-purple-100 text-purple-600'
+                            }`}
                             title="Buka Kamera"
                         >
                             <span className="material-icons">{isCameraOpen ? 'videocam_off' : 'photo_camera'}</span>
                         </button>
-                        <button
-                            onClick={() => handleScan(manualCode)}
-                            disabled={scanning || !manualCode.trim()}
-                            className="px-5 py-3.5 bg-purple-600 hover:bg-purple-700 text-white rounded-2xl font-black transition disabled:opacity-50 flex items-center gap-2"
-                        >
-                            {scanning ? (
-                                <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
-                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-                                </svg>
-                            ) : (
-                                <span className="material-icons">send</span>
-                            )}
-                        </button>
                     </div>
-                    <p className="text-[10px] text-gray-400 mt-2 text-center">
-                        Tekan Enter atau klik tombol untuk konfirmasi kehadiran
-                    </p>
-                    
-                    {/* Camera Scanner Container */}
+
                     {isCameraOpen && (
-                        <div className="mt-4 p-4 border-2 border-purple-100 rounded-2xl bg-purple-50">
-                            <div id="qr-reader" className="w-full rounded-xl overflow-hidden shadow-inner bg-black"></div>
-                            <p className="text-[10px] text-purple-600 font-bold mt-3 text-center uppercase tracking-widest">Arahkan QR Code ke Kamera</p>
+                        <div className="mt-4 animate-in slide-in-from-top-2 duration-300">
+                            <div className="overflow-hidden rounded-xl border-2 border-purple-500 bg-black aspect-square max-h-[250px] mx-auto relative">
+                                <div id="qr-reader" className="w-full h-full"></div>
+                                <div className="absolute inset-0 pointer-events-none border-[30px] border-black/30">
+                                    <div className="w-full h-full border-2 border-purple-400 rounded-lg"></div>
+                                </div>
+                            </div>
+                            <p className="text-[9px] text-purple-600 font-bold mt-2 text-center uppercase tracking-widest">Arahkan QR Code ke Kotak</p>
+                        </div>
+                    )}
+                    
+                    {!isCameraOpen && (
+                        <div className="mt-2 text-center">
+                             <button 
+                                onClick={() => handleScan(manualCode)} 
+                                disabled={scanning || !manualCode.trim()} 
+                                className="text-[10px] font-black text-purple-600 uppercase tracking-widest py-1 px-4 rounded-full border border-purple-100 hover:bg-purple-50 disabled:opacity-30"
+                             >
+                                {scanning ? 'MEMPROSES...' : 'KIRIM MANUAL'}
+                             </button>
                         </div>
                     )}
                 </div>
 
-                {/* Hasil Scan */}
+                {/* Hasil Scan - Overlay compact */}
                 {scanResult && (
-                    <div className={`rounded-3xl overflow-hidden mb-4 shadow-lg`}>
-                        <div className={`bg-gradient-to-r ${resultColor[scanResult.status] || 'from-gray-400 to-gray-500'} p-6 text-white`}>
+                    <div className={`rounded-xl overflow-hidden mb-4 shadow-md border animate-in zoom-in-95 ${
+                        scanResult.status === 'success' ? 'bg-emerald-50 border-emerald-200' :
+                        scanResult.status === 'already_attended' ? 'bg-orange-50 border-orange-200' : 'bg-red-50 border-red-200'
+                    }`}>
+                        <div className="p-4">
                             <div className="flex items-center gap-3">
-                                <span className="material-icons text-4xl">{resultIcon[scanResult.status] || 'info'}</span>
-                                <div>
-                                    <p className="font-black text-lg">
-                                        {scanResult.status === 'success' ? 'Selamat Datang!' :
-                                         scanResult.status === 'already_attended' ? 'Sudah Hadir' : 'Kode Tidak Valid'}
+                                <span className={`material-icons text-2xl ${
+                                    scanResult.status === 'success' ? 'text-emerald-600' :
+                                    scanResult.status === 'already_attended' ? 'text-orange-600' : 'text-red-600'
+                                }`}>{resultIcon[scanResult.status] || 'info'}</span>
+                                <div className="flex-1">
+                                    <p className={`font-black text-xs uppercase tracking-widest ${
+                                        scanResult.status === 'success' ? 'text-emerald-800' :
+                                        scanResult.status === 'already_attended' ? 'text-orange-800' : 'text-red-800'
+                                    }`}>
+                                        {scanResult.status === 'success' ? 'Berhasil Terpindai' :
+                                         scanResult.status === 'already_attended' ? 'Sudah Ada Data' : 'Gagal Verifikasi'}
                                     </p>
-                                    <p className="text-white/90 text-sm">{scanResult.message}</p>
+                                    <p className="text-[10px] text-gray-600 font-medium leading-tight">{scanResult.message}</p>
                                 </div>
                             </div>
-                            {scanResult.registration && (
-                                <div className="mt-4 bg-white/20 rounded-2xl p-4">
-                                    <p className="text-xs text-white/70 uppercase tracking-widest font-bold mb-1">Peserta</p>
-                                    <p className="font-black text-xl">{scanResult.registration.name}</p>
-                                    <p className="text-white/80 text-xs font-mono mt-1">{scanResult.registration.unique_code}</p>
-                                </div>
-                            )}
                         </div>
                     </div>
                 )}
 
                 {/* Riwayat Scan */}
                 {recentScans.length > 0 && (
-                    <div className="bg-white rounded-3xl shadow-lg border border-gray-100 overflow-hidden">
-                        <div className="p-4 border-b border-gray-50">
-                            <h2 className="text-sm font-black text-gray-700 uppercase tracking-widest flex items-center gap-2">
-                                <span className="material-icons text-purple-600 text-sm">history</span>
-                                Riwayat Scan ({recentScans.length})
+                    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                        <div className="p-3 border-b border-gray-50 flex justify-between items-center bg-gray-50/30">
+                            <h2 className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-1">
+                                <span className="material-icons text-xs">history</span>
+                                Riwayat Scan
                             </h2>
+                            <span className="text-[10px] font-bold text-white bg-purple-500 px-2 rounded-full">{recentScans.length}</span>
                         </div>
-                        <div className="divide-y divide-gray-50 max-h-64 overflow-y-auto">
+                        <div className="divide-y divide-gray-50 max-h-48 overflow-y-auto">
                             {recentScans.map((scan, i) => (
-                                <div key={i} className="flex items-center gap-3 px-4 py-3">
-                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
-                                        scan.scanStatus === 'success' ? 'bg-green-100' : 
-                                        scan.scanStatus === 'already_attended' ? 'bg-yellow-100' : 'bg-red-100'
+                                <div key={i} className="flex items-center gap-3 px-3 py-2 transition hover:bg-gray-50">
+                                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
+                                        scan.scanStatus === 'success' ? 'bg-emerald-100' : 
+                                        scan.scanStatus === 'already_attended' ? 'bg-orange-100' : 'bg-red-100'
                                     }`}>
-                                        <span className={`material-icons text-sm ${
-                                            scan.scanStatus === 'success' ? 'text-green-600' : 
-                                            scan.scanStatus === 'already_attended' ? 'text-yellow-600' : 'text-red-600'
+                                        <span className={`material-icons text-[14px] ${
+                                            scan.scanStatus === 'success' ? 'text-emerald-600' : 
+                                            scan.scanStatus === 'already_attended' ? 'text-orange-600' : 'text-red-600'
                                         }`}>
                                             {scan.scanStatus === 'success' ? 'check' : 
-                                             scan.scanStatus === 'already_attended' ? 'warning' : 'close'}
+                                             scan.scanStatus === 'already_attended' ? 'priority_high' : 'close'}
                                         </span>
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                        <p className="text-sm font-bold text-gray-800 truncate">{scan.name || 'Unknown'}</p>
-                                        <p className="text-[10px] text-gray-400 font-mono">{scan.unique_code}</p>
+                                        <p className="text-xs font-bold text-gray-700 truncate capitalize">{scan.name || 'Hamba Allah'}</p>
+                                        <p className="text-[9px] text-gray-400 font-mono tracking-tighter">{scan.unique_code}</p>
                                     </div>
-                                    <span className="text-[10px] text-gray-400 shrink-0">{scan.time}</span>
+                                    <span className="text-[8px] font-bold text-gray-400 shrink-0 bg-gray-100 px-1.5 py-0.5 rounded-full">{scan.time}</span>
                                 </div>
                             ))}
                         </div>
                     </div>
                 )}
 
-                {/* Link ke Daftar Peserta */}
-                <div className="mt-4 text-center">
+                <div className="mt-6 text-center">
                     <Link
                         to={`/dashboard/event/submissions/${slug}`}
-                        className="text-purple-600 text-sm font-bold hover:underline flex items-center justify-center gap-1"
+                        className="text-purple-600 text-[11px] font-black uppercase tracking-widest hover:underline flex items-center justify-center gap-1"
                     >
                         <span className="material-icons text-sm">group</span>
-                        Lihat semua daftar peserta & kehadiran
+                        Data Pendaftar & Kehadiran
                     </Link>
                 </div>
             </div>
-
-            <NavigationButton />
         </div>
     );
 };

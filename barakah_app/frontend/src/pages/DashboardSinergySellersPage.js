@@ -11,7 +11,7 @@ const DashboardSinergySellersPage = () => {
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('list'); // 'list' | 'add' | 'edit' | 'voucher'
     const [editingProduct, setEditingProduct] = useState(null);
-    const [variants, setVariants] = useState([{name: '', additional_price: 0, discount: 0, stock: 0}]);
+    const [variants, setVariants] = useState([{name: '', additional_price: 0, stock: 0}]);
     const [selectedCouriers, setSelectedCouriers] = useState(['jne', 'pos', 'tiki', 'jnt']);
 
 
@@ -42,14 +42,14 @@ const DashboardSinergySellersPage = () => {
 
     const handleEdit = (product) => {
         setEditingProduct(product);
-        setVariants(product.variations && product.variations.length > 0 ? product.variations : [{name: '', additional_price: 0, discount: 0, stock: 0}]);
+        setVariants(product.variations && product.variations.length > 0 ? product.variations : [{name: '', additional_price: 0, stock: 0}]);
         setSelectedCouriers(product.supported_couriers ? product.supported_couriers.split(',') : ['jne', 'pos', 'tiki', 'jnt']);
         setActiveTab('edit');
     };
 
 
     const addVariant = () => {
-        setVariants([...variants, {name: '', additional_price: 0, discount: 0, stock: 0}]);
+        setVariants([...variants, {name: '', additional_price: 0, stock: 0}]);
     };
 
     const removeVariant = (index) => {
@@ -139,7 +139,7 @@ const DashboardSinergySellersPage = () => {
                     <button onClick={() => setActiveTab('voucher')} className="bg-orange-100 hover:bg-orange-200 text-orange-700 px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 transition-all">
                         <span className="material-icons text-sm">local_activity</span> Buat Voucher
                     </button>
-                    <button onClick={() => { setActiveTab('add'); setEditingProduct(null); setVariants([{name: '', additional_price: 0, discount: 0, stock: 0}]); }} className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 shadow-sm transition-all shadow-emerald-200">
+                    <button onClick={() => { setActiveTab('add'); setEditingProduct(null); setVariants([{name: '', additional_price: 0, stock: 0}]); }} className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 shadow-sm transition-all shadow-emerald-200">
                         <span className="material-icons text-sm">add</span> Tambah Produk
                     </button>
                 </div>
@@ -172,7 +172,7 @@ const DashboardSinergySellersPage = () => {
                                     if (p.variations && p.variations.length > 0) {
                                         setVariants(p.variations);
                                     } else {
-                                        setVariants([{name: '', additional_price: 0, discount: 0, stock: 0}]);
+                                        setVariants([{name: '', additional_price: 0, stock: 0}]);
                                     }
                                     setSelectedCouriers(p.supported_couriers ? p.supported_couriers.split(',') : ['jne', 'pos', 'tiki', 'jnt']);
                                     setActiveTab('edit');
@@ -333,17 +333,21 @@ const DashboardSinergySellersPage = () => {
                     <div className="space-y-3">
                         {variants.map((v, i) => (
                             <div key={i} className="flex gap-2">
-                                <input type="text" placeholder="Nama Varian" value={v.name} onChange={(e) => updateVariant(i, 'name', e.target.value)} className="flex-[2] px-3 py-2 text-sm border border-gray-200 rounded-lg outline-none" />
-                                <input type="number" placeholder="Harga (Rp)" value={v.additional_price || ''} onChange={(e) => updateVariant(i, 'additional_price', e.target.value)} className="flex-1 px-3 py-2 text-sm border border-gray-200 rounded-lg outline-none" />
-                                <input type="number" placeholder="Diskon" value={v.discount || ''} onChange={(e) => updateVariant(i, 'discount', e.target.value)} className="flex-1 px-3 py-2 text-sm border border-gray-200 rounded-lg outline-none text-red-600 font-bold" title="Diskon Nominal (Rp)" />
-                                <input type="number" placeholder="Stok" value={v.stock || ''} onChange={(e) => updateVariant(i, 'stock', e.target.value)} className="w-16 px-2 py-2 text-sm border border-gray-200 rounded-lg outline-none" />
+                                <input type="text" placeholder="Nama Varian (Cth: XL / Merah)" value={v.name} onChange={(e) => updateVariant(i, 'name', e.target.value)} className="flex-[2] px-3 py-2 text-sm border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500" />
+                                <div className="flex-1 relative">
+                                    <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[10px] font-bold text-gray-400">Rp</span>
+                                    <input type="number" placeholder="Harga" value={v.additional_price || ''} onChange={(e) => updateVariant(i, 'additional_price', e.target.value)} className="w-full pl-7 pr-2 py-2 text-sm border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500 font-bold text-emerald-700" title="Harga Total untuk varian ini" />
+                                </div>
+                                <div className="w-20 relative">
+                                    <input type="number" placeholder="Stok" value={v.stock || ''} onChange={(e) => updateVariant(i, 'stock', e.target.value)} className="w-full px-2 py-2 text-sm border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500" />
+                                </div>
                                 {variants.length > 1 && (
-                                    <button type="button" onClick={() => removeVariant(i)} className="w-8 flex items-center justify-center text-red-500 bg-red-50 rounded-lg hover:bg-red-100"><span className="material-icons text-sm">close</span></button>
+                                    <button type="button" onClick={() => removeVariant(i)} className="w-10 flex items-center justify-center text-red-500 bg-red-50 rounded-lg hover:bg-red-100 transition"><span className="material-icons text-sm">delete</span></button>
                                 )}
                             </div>
                         ))}
                     </div>
-                    <p className="text-[10px] text-gray-500 mt-3 pt-2 border-t border-emerald-200/50">SKU Otomatis akan di buat setiap kali ada penambahan variasi.</p>
+                    <p className="text-[10px] text-gray-500 mt-3 pt-2 border-t border-emerald-200/50">Harga varian adalah <b>Harga Total</b> yang akan dibayar pembeli (menggantikan harga produk utama).</p>
                 </div>
 
                 <div className="pt-4 border-t border-gray-100 flex gap-3">

@@ -185,7 +185,7 @@ const EventRegistrationSubmissionPage = () => {
                                         />
                                     </th>
                                     <th className="p-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Waktu</th>
-                                    <th className="p-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">ID Peserta</th>
+                                    <th className="p-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Kode Tiket</th>
                                     <th className="p-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Identitas</th>
                                     {event?.form_fields?.map(field => (
                                         <th key={field.id} className="p-5 text-[10px] font-black text-gray-400 uppercase tracking-widest min-w-[150px]">{field.label}</th>
@@ -222,8 +222,8 @@ const EventRegistrationSubmissionPage = () => {
                                                     {new Date(reg.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
                                                 </td>
                                                 <td className="p-5">
-                                                    <div className="bg-gray-100 text-gray-600 px-2 py-1 rounded text-[10px] font-black inline-block">
-                                                        {reg.user_details?.id || '-'}
+                                                    <div className="bg-purple-100 text-purple-700 px-2 py-1 rounded text-[10px] font-black inline-block font-mono">
+                                                        {reg.unique_code || '-'}
                                                     </div>
                                                 </td>
                                                 <td className="p-5">

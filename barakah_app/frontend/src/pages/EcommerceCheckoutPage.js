@@ -26,13 +26,13 @@ const EcommerceCheckoutPage = () => {
   const { cartItems } = location.state || { cartItems: [] };
   const [selectedBank, setSelectedBank] = useState('qris');
   const [profile, setProfile] = useState(null);
-  
+
   // Checkout States
   const [courier, setCourier] = useState('');
   const [shippingOptions, setShippingOptions] = useState([]);
   const [selectedShipping, setSelectedShipping] = useState(0);
   const [isFetchingShipping, setIsFetchingShipping] = useState(false);
-  
+
   // Voucher States
   const [voucherCode, setVoucherCode] = useState('');
   const [voucherDiscount, setVoucherDiscount] = useState(0);
@@ -51,7 +51,7 @@ const EcommerceCheckoutPage = () => {
       const script = document.createElement('script');
       script.src = 'https://app.sandbox.midtrans.com/snap/snap.js';
       script.dataset.clientKey = 'SB-Mid-client-wm4shJTARC2PTcY6';
-      script.onload = () => {};
+      script.onload = () => { };
       document.body.appendChild(script);
       return () => { document.body.removeChild(script); };
     }
@@ -59,117 +59,129 @@ const EcommerceCheckoutPage = () => {
 
   useEffect(() => {
     const checkProfile = async () => {
-        const user = JSON.parse(localStorage.getItem('user'));
-        if (!user) { navigate('/login'); return; }
-        
-        try {
-            const res = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/profiles/me/`, {
-                headers: { Authorization: `Bearer ${user.access}` }
-            });
-            const p = res.data;
-            if (!p.address_city_id || !p.address) {
-                alert('Tolong lengkapi alamat dan kota Anda terlebih dahulu untuk pengiriman barang (Sinergy).');
-                navigate('/profile/edit?complete=address');
-                return;
-            }
-            setProfile(p);
-            setFormData(prev => ({ ...prev, fullName: p.name_full || user.username, phone: p.phone_number || '' }));
-        } catch (error) {
-            console.error(error);
+      const user = JSON.parse(localStorage.getItem('user'));
+      if (!user) { navigate('/login'); return; }
+
+      try {
+        const res = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/profiles/me/`, {
+          headers: { Authorization: `Bearer ${user.access}` }
+        });
+        const p = res.data;
+        if (!p.address_city_id || !p.address) {
+          alert('Tolong lengkapi alamat dan kota Anda terlebih dahulu untuk pengiriman barang (Sinergy).');
+          navigate('/profile/edit?complete=address');
+          return;
         }
+        setProfile(p);
+        setFormData(prev => ({ ...prev, fullName: p.name_full || user.username, phone: p.phone_number || '' }));
+
+        // AUTO SHIPPING CHECK
+        // If some products don't have couriers specified, default to 'none'
+        const hasNoShipping = cartItems.some(item => !item.product.supported_couriers || item.product.supported_couriers.trim() === "");
+        if (hasNoShipping) {
+          setCourier('none');
+        }
+      } catch (error) {
+        console.error(error);
+      }
     };
     checkProfile();
-  }, [navigate]);
+  }, [navigate, cartItems]);
 
   const banks = [
     { id: 'qris', name: 'QRIS BAE Community', logo: '/images/qris-bae2.png' }
   ];
 
   const checkOngkir = async (selectedCourier) => {
-      setCourier(selectedCourier);
-      if (!selectedCourier) {
-          setShippingOptions([]);
-          setSelectedShipping(0);
-          return;
+    setCourier(selectedCourier);
+    if (!selectedCourier) {
+      setShippingOptions([]);
+      setSelectedShipping(0);
+      return;
+    }
+
+    setIsFetchingShipping(true);
+    try {
+      const originCode = String(cartItems[0]?.product?.seller_city_id || '3216061005');
+      const destCode = String(profile.address_village_id || profile.address_city_id || '');
+
+      if (originCode.length !== 10) {
+        alert('Alamat pengirim (toko) tidak valid. Harap hubungi admin.');
+        return;
       }
-      
-      setIsFetchingShipping(true);
-      try {
-          const originCode = String(cartItems[0]?.product?.seller_city_id || '3216061005');
-          const destCode = String(profile.address_village_id || profile.address_city_id || '');
-          
-          if (originCode.length !== 10) {
-              alert('Alamat pengirim (toko) tidak valid. Harap hubungi admin.');
-              return;
-          }
-          if (destCode.length !== 10) {
-              alert('Alamat Anda (penerima) belum lengkap dengan Kelurahan. Silakan update profil Anda.');
-              navigate('/profile/edit?complete=address');
-              return;
-          }
-
-          const totalWeight = cartItems.reduce((acc, item) => acc + ((item.product.weight || 1000) * item.quantity), 0);
-          
-          const res = await axios.post(`${process.env.REACT_APP_API_BASE_URL}/api/shippings/costs/`, {
-              origin: originCode,
-              destination: destCode,
-              weight: totalWeight,
-              courier: selectedCourier
-          }, {
-              headers: { Authorization: `Bearer ${JSON.parse(localStorage.getItem('user')).access}` }
-          });
-
-          const costs = res.data || [];
-          if(Array.isArray(costs) && costs.length > 0) {
-              setShippingOptions(costs);
-              setSelectedShipping(costs[0].cost[0].value);
-          } else {
-              setShippingOptions([]);
-              setSelectedShipping(0);
-              alert('Layanan kurir tidak tersedia untuk rute Anda.');
-          }
-
-      } catch (e) {
-          console.error(e);
-          alert('Gagal mengecek ongkir.');
-      } finally {
-          setIsFetchingShipping(false);
+      if (destCode.length !== 10) {
+        alert('Alamat Anda (penerima) belum lengkap dengan Kelurahan. Silakan update profil Anda.');
+        navigate('/profile/edit?complete=address');
+        return;
       }
+
+      const totalWeight = cartItems.reduce((acc, item) => acc + ((item.product.weight || 1000) * item.quantity), 0);
+
+      const res = await axios.post(`${process.env.REACT_APP_API_BASE_URL}/api/shippings/costs/`, {
+        origin: originCode,
+        destination: destCode,
+        weight: totalWeight,
+        courier: selectedCourier
+      }, {
+        headers: { Authorization: `Bearer ${JSON.parse(localStorage.getItem('user')).access}` }
+      });
+
+      const costs = res.data || [];
+      if (Array.isArray(costs) && costs.length > 0) {
+        setShippingOptions(costs);
+        setSelectedShipping(costs[0].cost[0].value);
+      } else {
+        setShippingOptions([]);
+        setSelectedShipping(0);
+        alert('Layanan kurir tidak tersedia untuk rute Anda.');
+      }
+
+    } catch (e) {
+      console.error(e);
+      alert('Gagal mengecek ongkir.');
+    } finally {
+      setIsFetchingShipping(false);
+    }
   };
 
   const handleApplyVoucher = async () => {
-      if(!voucherCode) return;
-      try {
-          const res = await axios.post(`${process.env.REACT_APP_API_BASE_URL}/api/products/vouchers/validate/`, { code: voucherCode });
-          const nominal = parseFloat(res.data.nominal);
-          setVoucherDiscount(nominal);
-          setVoucherStatus('Voucher berhasil diaplikasikan (Diskon Rp ' + nominal + ')');
-      } catch (err) {
-          setVoucherDiscount(0);
-          setVoucherStatus(err.response?.data?.error || 'Voucher tidak valid');
-      }
+    if (!voucherCode) return;
+    try {
+      const res = await axios.post(`${process.env.REACT_APP_API_BASE_URL}/api/products/vouchers/validate/`, { code: voucherCode });
+      const nominal = parseFloat(res.data.nominal);
+      setVoucherDiscount(nominal);
+      setVoucherStatus('Voucher berhasil diaplikasikan (Diskon Rp ' + nominal + ')');
+    } catch (err) {
+      setVoucherDiscount(0);
+      setVoucherStatus(err.response?.data?.error || 'Voucher tidak valid');
+    }
   };
 
   const totalItemsPrice = cartItems.reduce((total, item) => {
-      let base = parseFloat(item.product.price) - parseFloat(item.product.discount || 0);
-      if(item.variation) {
-          base += parseFloat(item.variation.additional_price || 0) - parseFloat(item.variation.discount || 0);
-      }
-      return total + (base * item.quantity);
+    let price = 0;
+    if (item.variation) {
+      // If variation exists, use variation price as TOTAL price
+      price = parseFloat(item.variation.additional_price || 0);
+    } else {
+      // If no variation, use product price - discount
+      price = parseFloat(item.product.price) - parseFloat(item.product.discount || 0);
+    }
+    return total + (price * item.quantity);
   }, 0);
 
   const getOriginalItemPrice = (item) => {
-      let base = parseFloat(item.product.price);
-      if(item.variation) base += parseFloat(item.variation.additional_price || 0);
-      return base;
+    // If variation exists, it doesn't have "original vs discount" anymore based on request
+    // But we can show the product's base price if we want. 
+    // However, the request says "jika ada variasi maka harga nya pakai yang di variasi"
+    if (item.variation) return parseFloat(item.variation.additional_price || 0);
+    return parseFloat(item.product.price);
   };
 
   const getDiscountedItemPrice = (item) => {
-      let base = parseFloat(item.product.price) - parseFloat(item.product.discount || 0);
-      if(item.variation) base += parseFloat(item.variation.additional_price || 0) - parseFloat(item.variation.discount || 0);
-      return base;
+    if (item.variation) return parseFloat(item.variation.additional_price || 0);
+    return parseFloat(item.product.price) - parseFloat(item.product.discount || 0);
   };
-  
+
   const grandTotal = Math.max(0, totalItemsPrice + selectedShipping - voucherDiscount);
 
   const handlePayment = async (token) => {
@@ -221,18 +233,18 @@ const EcommerceCheckoutPage = () => {
       } catch (e) { alert('Terjadi kesalahan memproses Token Midtrans.'); }
     } else {
       navigate('/konfirmasi-pembayaran-belanja', {
-        state: { 
-            amount: grandTotal, 
-            bank: selectedBank, 
-            customerName: formData.fullName, 
-            customerPhone: formData.phone, 
-            email: formData.email, 
-            message: formData.message, 
-            cartItems: cartItems,
-            shippingCost: selectedShipping,
-            courier: courier,
-            voucherCode: voucherCode,
-            voucherDiscount: voucherDiscount
+        state: {
+          amount: grandTotal,
+          bank: selectedBank,
+          customerName: formData.fullName,
+          customerPhone: formData.phone,
+          email: formData.email,
+          message: formData.message,
+          cartItems: cartItems,
+          shippingCost: selectedShipping,
+          courier: courier,
+          voucherCode: voucherCode,
+          voucherDiscount: voucherDiscount
         }
       });
     }
@@ -241,9 +253,9 @@ const EcommerceCheckoutPage = () => {
   const clearCart = async () => {
     try {
       const user = JSON.parse(localStorage.getItem('user'));
-      if(!user) return;
+      if (!user) return;
       await axios.delete(`${process.env.REACT_APP_API_BASE_URL}/api/cart/clear/`, { headers: { Authorization: `Bearer ${user.access}` } });
-    } catch (error) {}
+    } catch (error) { }
   };
 
   return (
@@ -254,17 +266,17 @@ const EcommerceCheckoutPage = () => {
 
         {/* Alamat Penerima */}
         {profile && (
-            <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 mb-6">
-                <div className="flex justify-between items-center mb-3">
-                    <h2 className="font-bold text-sm text-gray-800 flex items-center gap-2"><span className="material-icons text-emerald-600 text-[18px]">location_on</span> Alamat Pengiriman (Tujuan)</h2>
-                    <button type="button" onClick={() => navigate('/profile/edit')} className="text-xs text-blue-600 font-bold bg-blue-50 px-3 py-1 rounded-full">Ubah</button>
-                </div>
-                <div>
-                    <p className="font-bold text-sm text-gray-800">{profile.name_full || formData.fullName}</p>
-                    <p className="text-xs text-gray-500 mt-1">{profile.address}</p>
-                    <p className="text-xs text-gray-500">{profile.address_city_name}, {profile.address_province}</p>
-                </div>
+          <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 mb-6">
+            <div className="flex justify-between items-center mb-3">
+              <h2 className="font-bold text-sm text-gray-800 flex items-center gap-2"><span className="material-icons text-emerald-600 text-[18px]">location_on</span> Alamat Pengiriman (Tujuan)</h2>
+              <button type="button" onClick={() => navigate('/profile/edit')} className="text-xs text-blue-600 font-bold bg-blue-50 px-3 py-1 rounded-full">Ubah</button>
             </div>
+            <div>
+              <p className="font-bold text-sm text-gray-800">{profile.name_full || formData.fullName}</p>
+              <p className="text-xs text-gray-500 mt-1">{profile.address}</p>
+              <p className="text-xs text-gray-500">{profile.address_city_name}, {profile.address_province}</p>
+            </div>
+          </div>
         )}
 
         {/* Daftar Barang */}
@@ -279,16 +291,16 @@ const EcommerceCheckoutPage = () => {
                   {item.variation && <p className="text-[10px] text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full w-fit mt-1">{item.variation.name}</p>}
                   <p className="text-xs text-gray-500 mt-1">
                     {getOriginalItemPrice(item) > getDiscountedItemPrice(item) && (
-                        <span className="line-through text-gray-400 mr-1">{formatIDR(getOriginalItemPrice(item))}</span>
+                      <span className="line-through text-gray-400 mr-1">{formatIDR(getOriginalItemPrice(item))}</span>
                     )}
                     <span className="font-bold text-gray-700">{formatIDR(getDiscountedItemPrice(item))}</span> x {item.quantity}
                   </p>
                 </div>
                 <div className="font-bold text-sm text-emerald-700 text-right">
-                    {getOriginalItemPrice(item) > getDiscountedItemPrice(item) && (
-                        <div className="font-normal text-[10px] text-red-500 bg-red-50 px-2 py-0.5 rounded-full mb-1 inline-block">Diskon</div>
-                    )}
-                    <div>{formatIDR(getDiscountedItemPrice(item) * item.quantity)}</div>
+                  {getOriginalItemPrice(item) > getDiscountedItemPrice(item) && (
+                    <div className="font-normal text-[10px] text-red-500 bg-red-50 px-2 py-0.5 rounded-full mb-1 inline-block">Diskon</div>
+                  )}
+                  <div>{formatIDR(getDiscountedItemPrice(item) * item.quantity)}</div>
                 </div>
               </li>
             ))}
@@ -297,65 +309,65 @@ const EcommerceCheckoutPage = () => {
 
         {/* Pengiriman & Voucher */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-            <div className="bg-orange-50 p-4 rounded-2xl border border-orange-100">
-                <label className="block text-xs font-bold text-orange-800 mb-2">Pilih Kurir (Ekspedisi)</label>
-                <select 
-                    value={courier} 
-                    onChange={(e) => {
-                        const val = e.target.value;
-                        if (val === 'none') {
-                            setCourier('none');
-                            setSelectedShipping(0);
-                            setShippingOptions([]);
-                        } else {
-                            checkOngkir(val);
-                        }
-                    }} 
-                    disabled={!profile} 
-                    className="w-full text-sm bg-white border-none rounded-xl p-3 focus:ring-2 focus:ring-orange-500 outline-none"
-                >
-                    <option value="">- Pilih Jasa Ekspedisi -</option>
-                    <option value="none">Tanpa Ongkir (Ambil Sendiri / Non Fisik)</option>
-                    <option value="jne">JNE</option>
-                    <option value="pos">POS Indonesia</option>
-                    <option value="tiki">TIKI</option>
-                    <option value="jnt">J&T Express</option>
-                    <option value="sicepat">SiCepat</option>
+          <div className="bg-orange-50 p-4 rounded-2xl border border-orange-100">
+            <label className="block text-xs font-bold text-orange-800 mb-2">Pilih Kurir (Ekspedisi)</label>
+            <select
+              value={courier}
+              onChange={(e) => {
+                const val = e.target.value;
+                if (val === 'none') {
+                  setCourier('none');
+                  setSelectedShipping(0);
+                  setShippingOptions([]);
+                } else {
+                  checkOngkir(val);
+                }
+              }}
+              disabled={!profile}
+              className="w-full text-sm bg-white border-none rounded-xl p-3 focus:ring-2 focus:ring-orange-500 outline-none"
+            >
+              <option value="">- Pilih Jasa Ekspedisi -</option>
+              <option value="none">Tanpa Ongkir (Ongkir terpisah / hubungi penjualk)</option>
+              <option value="jne">JNE</option>
+              <option value="pos">POS Indonesia</option>
+              <option value="tiki">TIKI</option>
+              <option value="jnt">J&T Express</option>
+              <option value="sicepat">SiCepat</option>
+            </select>
+
+            {isFetchingShipping && <p className="text-xs text-orange-600 mt-2 animate-pulse">Menghitung Biaya...</p>}
+
+            {shippingOptions.length > 0 && (
+              <div className="mt-3">
+                <label className="block text-xs font-bold text-orange-800 mb-2">Layanan yang Tersedia:</label>
+                <select value={selectedShipping} onChange={(e) => setSelectedShipping(parseFloat(e.target.value))} className="w-full text-sm bg-white border-none rounded-xl p-3 outline-none">
+                  {shippingOptions.map((opt, i) => (
+                    <option key={i} value={opt.cost[0].value}>{opt.service} - {opt.description} ({formatIDR(opt.cost[0].value)})</option>
+                  ))}
                 </select>
+              </div>
+            )}
+          </div>
 
-                {isFetchingShipping && <p className="text-xs text-orange-600 mt-2 animate-pulse">Menghitung Biaya...</p>}
-                
-                {shippingOptions.length > 0 && (
-                    <div className="mt-3">
-                        <label className="block text-xs font-bold text-orange-800 mb-2">Layanan yang Tersedia:</label>
-                        <select value={selectedShipping} onChange={(e) => setSelectedShipping(parseFloat(e.target.value))} className="w-full text-sm bg-white border-none rounded-xl p-3 outline-none">
-                            {shippingOptions.map((opt, i) => (
-                                <option key={i} value={opt.cost[0].value}>{opt.service} - {opt.description} ({formatIDR(opt.cost[0].value)})</option>
-                            ))}
-                        </select>
-                    </div>
-                )}
+          <div className="bg-blue-50 p-4 rounded-2xl border border-blue-100">
+            <label className="block text-xs font-bold text-blue-800 mb-2">Kode Voucher Toko</label>
+            <div className="flex gap-2">
+              <input type="text" value={voucherCode} onChange={e => setVoucherCode(e.target.value)} placeholder="Mis: PROMO2025" className="flex-1 text-sm bg-white border-none rounded-xl p-3 outline-none uppercase" />
+              <button type="button" onClick={handleApplyVoucher} className="bg-blue-600 text-white font-bold text-xs px-4 rounded-xl hover:bg-blue-700">TERAPKAN</button>
             </div>
-
-            <div className="bg-blue-50 p-4 rounded-2xl border border-blue-100">
-                <label className="block text-xs font-bold text-blue-800 mb-2">Kode Voucher Toko</label>
-                <div className="flex gap-2">
-                    <input type="text" value={voucherCode} onChange={e => setVoucherCode(e.target.value)} placeholder="Mis: PROMO2025" className="flex-1 text-sm bg-white border-none rounded-xl p-3 outline-none uppercase" />
-                    <button type="button" onClick={handleApplyVoucher} className="bg-blue-600 text-white font-bold text-xs px-4 rounded-xl hover:bg-blue-700">TERAPKAN</button>
-                </div>
-                {voucherStatus && <p className={`text-[10px] mt-2 font-bold ${voucherDiscount > 0 ? 'text-emerald-600' : 'text-red-500'}`}>{voucherStatus}</p>}
-            </div>
+            {voucherStatus && <p className={`text-[10px] mt-2 font-bold ${voucherDiscount > 0 ? 'text-emerald-600' : 'text-red-500'}`}>{voucherStatus}</p>}
+          </div>
         </div>
 
         {/* Ringkasan Belanja */}
         <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-200 mb-6 space-y-2">
-            <div className="flex justify-between text-sm text-gray-600"><p>Subtotal Produk</p><p>{formatIDR(totalItemsPrice)}</p></div>
-            <div className="flex justify-between text-sm text-gray-600"><p>Ongkos Kirim {courier && `(${courier.toUpperCase()})`}</p><p>+{formatIDR(selectedShipping)}</p></div>
-            {voucherDiscount > 0 && <div className="flex justify-between text-sm text-emerald-600 font-bold"><p>Diskon Voucher</p><p>-{formatIDR(voucherDiscount)}</p></div>}
-            <div className="pt-3 mt-3 border-t flex justify-between text-lg font-black text-gray-800">
-                <p>TOTAL PEMBAYARAN</p>
-                <p className="text-emerald-700">{formatIDR(grandTotal)}</p>
-            </div>
+          <div className="flex justify-between text-sm text-gray-600"><p>Subtotal Produk</p><p>{formatIDR(totalItemsPrice)}</p></div>
+          <div className="flex justify-between text-sm text-gray-600"><p>Ongkos Kirim {courier && `(${courier.toUpperCase()})`}</p><p>+{formatIDR(selectedShipping)}</p></div>
+          {voucherDiscount > 0 && <div className="flex justify-between text-sm text-emerald-600 font-bold"><p>Diskon Voucher</p><p>-{formatIDR(voucherDiscount)}</p></div>}
+          <div className="pt-3 mt-3 border-t flex justify-between text-lg font-black text-gray-800">
+            <p>TOTAL PEMBAYARAN</p>
+            <p className="text-emerald-700">{formatIDR(grandTotal)}</p>
+          </div>
         </div>
 
         {/* Metode Pembayaran */}
@@ -377,7 +389,7 @@ const EcommerceCheckoutPage = () => {
           <input type="tel" name="phone" placeholder="No Whatsapp (wajib)" className="w-full p-3 rounded-xl bg-gray-50 text-sm outline-none" value={formData.phone} onChange={handleInputChange} required />
           <input type="email" name="email" placeholder="Email Anda (opsional)" className="w-full p-3 rounded-xl bg-gray-50 text-sm outline-none" value={formData.email} onChange={handleInputChange} />
           <textarea name="message" placeholder="Catatan ke penjual (opsional)" className="w-full p-3 rounded-xl bg-gray-50 text-sm outline-none h-20" value={formData.message} onChange={handleInputChange} />
-          
+
           <button type="submit" disabled={!selectedBank || selectedShipping === 0} className="w-full mt-4 bg-gradient-to-r from-emerald-600 to-teal-700 text-white font-bold py-4 rounded-xl hover:shadow-lg hover:shadow-emerald-200 hover:scale-[1.01] transition-all disabled:opacity-50 disabled:cursor-not-allowed">
             BAYAR {formatIDR(grandTotal)}
           </button>
