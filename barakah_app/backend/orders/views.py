@@ -68,6 +68,11 @@ class CreateOrderView(APIView):
                 if s_id != "0":
                     from accounts.models import User
                     seller_user = User.objects.filter(id=s_id).first()
+                
+                # Fallback to first superuser if product has no seller (Official BAE products)
+                if not seller_user:
+                    from accounts.models import User
+                    seller_user = User.objects.filter(is_superuser=True).first()
 
                 # Create Order
                 order = Order.objects.create(
@@ -115,10 +120,15 @@ class CreateOrderView(APIView):
             from .utils import send_order_invoice_to_buyer, send_order_notification_to_seller
             for order in created_orders:
                 try:
-                    send_order_invoice_to_buyer(order)
-                    send_order_notification_to_seller(order)
+                    res_buyer = send_order_invoice_to_buyer(order)
+                    if res_buyer and not res_buyer.get('success'):
+                        logger.error(f"WA Buyer Fail ({order.order_number}): {res_buyer.get('message')}")
+                        
+                    res_seller = send_order_notification_to_seller(order)
+                    if res_seller and not res_seller.get('success'):
+                        logger.error(f"WA Seller Fail ({order.order_number}): {res_seller.get('message')}")
                 except Exception as e:
-                    logger.error(f"Failed to send order notifications for {order.order_number}: {e}")
+                    logger.error(f"WA Notification Error ({order.order_number}): {str(e)}")
 
             serializer = OrderSerializer(created_orders, many=True)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
