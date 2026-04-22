@@ -90,12 +90,12 @@ const AboutUs = () => {
 
   const PersonnelCard = ({ person }) => (
     <div className="flex flex-col items-center group w-full">
-      <div className="bg-white p-4 md:p-6 rounded-[2.5rem] shadow-xl shadow-gray-200/50 border border-gray-100 w-full min-w-[220px] max-w-[280px] text-center relative hover:shadow-2xl transition duration-500 transform hover:-translate-y-2 z-10">
-        <div className="w-24 h-24 md:w-32 md:w-32 rounded-[2rem] aspect-square overflow-hidden mx-auto mb-6 shadow-xl border-4 border-white ring-4 ring-gray-50/50 group-hover:ring-green-50 transition-all">
+      <div className="bg-white p-3 md:p-5 rounded-3xl md:rounded-[2rem] shadow-xl shadow-gray-200/50 border border-gray-100 w-full min-w-[180px] max-w-[240px] text-center relative hover:shadow-2xl transition duration-500 transform hover:-translate-y-2 z-10">
+        <div className="w-20 h-20 md:w-24 md:h-24 rounded-[1.5rem] md:rounded-[2rem] aspect-square overflow-hidden mx-auto mb-4 md:mb-5 shadow-xl border-4 border-white ring-4 ring-gray-50/50 group-hover:ring-green-50 transition-all">
           <img src={getMediaUrl(person.image)} alt={person.name} className="w-full h-full object-cover" />
         </div>
-        <h4 className="text-lg md:text-xl font-black text-gray-900 mb-1 leading-tight">{person.name}</h4>
-        <p className="text-xs font-black text-green-600 uppercase tracking-widest mb-4">{person.job_title}</p>
+        <h4 className="text-base md:text-lg font-black text-gray-900 mb-1 leading-tight">{person.name}</h4>
+        <p className="text-[10px] md:text-xs font-black text-green-600 uppercase tracking-widest mb-3 md:mb-4">{person.job_title}</p>
         
         {person.social_media?.length > 0 && (
           <div className="flex justify-center gap-4 mt-2 pt-4 border-t border-gray-50">
@@ -149,7 +149,7 @@ const AboutUs = () => {
       <Header />
 
       {/* Hero Section */}
-      <div className="relative h-[45vh] md:h-[65vh] overflow-hidden">
+      <div className="relative h-[35vh] md:h-[50vh] overflow-hidden">
         {aboutUs?.hero_image ? (
           <img 
             src={getMediaUrl(aboutUs.hero_image)} 
@@ -161,10 +161,10 @@ const AboutUs = () => {
         )}
         <div className="absolute inset-0 bg-black/40 backdrop-blur-[1px]"></div>
         <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-4">
-          <h1 className="text-4xl md:text-7xl font-black text-white mb-6 drop-shadow-2xl">
+          <h1 className="text-3xl md:text-5xl font-black text-white mb-4 md:mb-6 drop-shadow-2xl">
             {aboutUs?.title || 'Tentang Kami'}
           </h1>
-          <div className="w-32 h-2 bg-green-500 rounded-full shadow-lg animate-pulse"></div>
+          <div className="w-24 h-1.5 md:w-32 md:h-2 bg-green-500 rounded-full shadow-lg animate-pulse"></div>
         </div>
       </div>
 
@@ -174,7 +174,7 @@ const AboutUs = () => {
         </Link>
 
         {/* Improved Tabs UI */}
-        <div className="bg-white/90 backdrop-blur-2xl p-2 rounded-[2.5rem] shadow-2xl shadow-gray-300/40 flex flex-wrap gap-2 mb-16 border border-white sticky top-24 z-30">
+        <div className="bg-white/90 backdrop-blur-2xl p-1.5 md:p-2 rounded-3xl md:rounded-[2.5rem] shadow-2xl shadow-gray-300/40 flex flex-wrap gap-2 mb-12 border border-white sticky top-20 md:top-24 z-30">
           {[
             { id: 'about', label: 'Profil Kami', icon: 'auto_awesome' },
             { id: 'team', label: 'Struktur Team', icon: 'account_tree' },
@@ -184,13 +184,13 @@ const AboutUs = () => {
             <button 
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex-1 py-4 px-6 rounded-[2rem] text-sm font-black transition flex items-center justify-center gap-3 min-w-[140px] ${
+              className={`flex-1 py-3 px-3 md:py-4 md:px-6 rounded-2xl md:rounded-[2rem] text-xs md:text-sm font-black transition flex items-center justify-center gap-2 md:gap-3 min-w-[120px] ${
                 activeTab === tab.id 
                 ? 'bg-green-700 text-white shadow-xl shadow-green-100' 
                 : 'text-gray-500 hover:bg-green-50 hover:text-green-700'
               }`}
             >
-              <span className="material-icons text-xl">{tab.icon}</span>
+              <span className="material-icons text-lg md:text-xl">{tab.icon}</span>
               <span>{tab.label}</span>
             </button>
           ))}
@@ -199,13 +199,13 @@ const AboutUs = () => {
         <div className="space-y-20">
           {activeTab === 'about' && (
             <div className="animate-in fade-in slide-in-from-bottom-6 duration-700">
-              <div className="bg-white rounded-[4rem] p-12 md:p-20 shadow-2xl shadow-gray-200/30 border border-gray-50 relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-96 h-96 bg-green-50 rounded-full -mr-48 -mt-48 opacity-50 blur-3xl"></div>
-                <h2 className="text-4xl font-black text-gray-900 mb-10 flex items-center gap-4">
-                  <span className="w-4 h-12 bg-green-600 rounded-full"></span>
+              <div className="bg-white rounded-[3rem] px-8 py-10 md:p-14 shadow-2xl shadow-gray-200/30 border border-gray-50 relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-64 md:w-96 h-64 md:h-96 bg-green-50 rounded-full -mr-32 md:-mr-48 -mt-32 md:-mt-48 opacity-50 blur-3xl"></div>
+                <h2 className="text-2xl md:text-3xl font-black text-gray-900 mb-8 flex items-center gap-4">
+                  <span className="w-3 md:w-4 h-8 md:h-12 bg-green-600 rounded-full"></span>
                   Eksistensi Barakah Economy
                 </h2>
-                <div className="text-xl text-gray-600 leading-relaxed space-y-8 max-w-4xl">
+                <div className="text-base md:text-lg text-gray-600 leading-relaxed space-y-6 max-w-4xl">
                   {aboutUs?.description ? (
                     <div className="whitespace-pre-line">{aboutUs.description}</div>
                   ) : (
@@ -218,9 +218,9 @@ const AboutUs = () => {
 
           {activeTab === 'team' && (
             <div className="animate-in fade-in slide-in-from-bottom-8 duration-700 space-y-16">
-              <div className="text-center space-y-4">
-                <h2 className="text-4xl font-black text-gray-900">Struktur Organisasi</h2>
-                <p className="text-gray-500 font-bold max-w-2xl mx-auto uppercase tracking-widest text-xs">Sinergi Pemuda untuk Ekonomi Barakah</p>
+              <div className="text-center space-y-3">
+                <h2 className="text-2xl md:text-3xl font-black text-gray-900">Struktur Organisasi</h2>
+                <p className="text-gray-500 font-bold max-w-2xl mx-auto uppercase tracking-widest text-[10px] md:text-xs">Sinergi Pemuda untuk Ekonomi Barakah</p>
               </div>
 
               {/* Personnel Tree Rendering */}
@@ -237,23 +237,23 @@ const AboutUs = () => {
 
           {activeTab === 'vision' && (
             <div className="grid md:grid-cols-2 gap-10 animate-in zoom-in-95 duration-500">
-                <div className="bg-gradient-to-br from-green-800 to-green-950 rounded-[4rem] p-16 text-white shadow-2xl shadow-green-100 flex flex-col justify-center relative overflow-hidden">
-                  <span className="material-icons absolute -bottom-10 -left-10 text-[240px] opacity-10">center_focus_strong</span>
-                  <h3 className="text-3xl font-black mb-10 flex items-center gap-4">
+                <div className="bg-gradient-to-br from-green-800 to-green-950 rounded-[3rem] px-8 py-10 md:p-14 text-white shadow-2xl shadow-green-100 flex flex-col justify-center relative overflow-hidden">
+                  <span className="material-icons absolute -bottom-10 -left-10 text-[200px] opacity-10">center_focus_strong</span>
+                  <h3 className="text-2xl font-black mb-8 flex items-center gap-4">
                     Visi
                     <div className="flex-1 h-0.5 bg-white/20"></div>
                   </h3>
-                  <p className="text-3xl leading-[1.4] font-black italic">
+                  <p className="text-2xl leading-[1.4] font-black italic">
                     "{aboutUs?.vision || 'Membumikan Ekonomi Syariah.'}"
                   </p>
                 </div>
 
-                <div className="bg-white rounded-[4rem] p-16 shadow-2xl shadow-gray-200/30 border border-gray-100">
-                  <h3 className="text-3xl font-black text-gray-900 mb-10 flex items-center gap-4">
-                    <span className="material-icons text-green-600 text-4xl">rocket_launch</span>
+                <div className="bg-white rounded-[3rem] px-8 py-10 md:p-14 shadow-2xl shadow-gray-200/30 border border-gray-100">
+                  <h3 className="text-2xl font-black text-gray-900 mb-8 flex items-center gap-4">
+                    <span className="material-icons text-green-600 text-3xl">rocket_launch</span>
                     Misi Kami
                   </h3>
-                  <div className="text-gray-600 text-xl leading-relaxed whitespace-pre-line font-medium">
+                  <div className="text-gray-600 text-base md:text-lg leading-relaxed whitespace-pre-line font-medium">
                     {aboutUs?.mission}
                   </div>
                 </div>
@@ -262,15 +262,15 @@ const AboutUs = () => {
 
           {activeTab === 'legal' && (
             <div className="animate-in fade-in slide-in-from-right-10 duration-700">
-              <div className="bg-white rounded-[4rem] p-12 md:p-20 shadow-2xl shadow-gray-200/30 border border-gray-50">
-                <div className="text-center mb-16">
-                  <h2 className="text-4xl font-black text-gray-900 mb-6">Legalitas Organisasi</h2>
-                  <p className="text-gray-500 text-lg max-w-3xl mx-auto leading-relaxed">
+              <div className="bg-white rounded-[3rem] px-8 py-10 md:p-14 shadow-2xl shadow-gray-200/30 border border-gray-50">
+                <div className="text-center mb-10 md:mb-14">
+                  <h2 className="text-2xl md:text-3xl font-black text-gray-900 mb-4 md:mb-6">Legalitas Organisasi</h2>
+                  <p className="text-gray-500 text-sm md:text-base max-w-3xl mx-auto leading-relaxed">
                     {aboutUs?.legal_description || "Memastikan transparansi dan kepatuhan hukum dalam setiap langkah perjuangan kita."}
                   </p>
                 </div>
 
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
                   {aboutUs?.legal_documents?.map((doc) => (
                     <div key={doc.id} className="group relative aspect-[3/4] rounded-[2.5rem] overflow-hidden border-4 border-gray-50 hover:shadow-2xl transition duration-700 cursor-zoom-in" onClick={() => window.open(getMediaUrl(doc.image), '_blank')}>
                       <img src={getMediaUrl(doc.image)} alt={doc.title} className="w-full h-full object-cover transition-all group-hover:scale-110" />
