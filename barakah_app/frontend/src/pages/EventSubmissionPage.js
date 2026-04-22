@@ -268,8 +268,12 @@ const EventSubmissionPage = () => {
             // Only append non-file fields that are not null/empty
             // Skip thumbnail and header_image if they are just strings (URLs)
             if (key !== 'thumbnail' && key !== 'header_image' && key !== 'thumbnail_full' && key !== 'header_image_full') {
-                if (formData[key] !== null && formData[key] !== undefined) {
-                    data.append(key, formData[key]);
+                const val = formData[key];
+                if (val !== null && val !== undefined && val !== '') {
+                    data.append(key, val);
+                } else if ((key === 'capacity' || key === 'price_fixed') && val === '') {
+                    // Prevent empty string for integer/decimal fields causing 400 errors
+                    data.append(key, 0);
                 }
             }
         });
@@ -632,7 +636,6 @@ const EventSubmissionPage = () => {
                         </div>
 
                         {/* PHASE 6: DOKUMENTASI (POST-EVENT) */}
-                        {isEdit && (
                             <div className="space-y-4 pt-4">
                                 <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
                                     <span className="w-6 h-6 bg-purple-100 text-purple-700 rounded-lg flex items-center justify-center text-xs">6</span>
@@ -640,18 +643,20 @@ const EventSubmissionPage = () => {
                                 </h3>
                                 
                                 <div className="space-y-4">
-                                    <div className="space-y-1.5">
-                                        <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Link Download Dokumentasi</label>
-                                        <input 
-                                            type="url" 
-                                            name="documentation_link"
-                                            value={formData.documentation_link}
-                                            onChange={handleChange}
-                                            placeholder="https://drive.google.com/..."
-                                            className="w-full px-5 py-3.5 bg-gray-50 border-none rounded-2xl text-sm focus:ring-2 focus:ring-green-500 transition"
-                                        />
-                                        <p className="text-[10px] text-gray-400 ml-1 italic">Link ini hanya akan tampil bagi peserta yang sudah login dan terdaftar.</p>
-                                    </div>
+                                    {isEdit && (
+                                        <div className="space-y-1.5">
+                                            <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Link Download Dokumentasi</label>
+                                            <input 
+                                                type="url" 
+                                                name="documentation_link"
+                                                value={formData.documentation_link}
+                                                onChange={handleChange}
+                                                placeholder="https://drive.google.com/..."
+                                                className="w-full px-5 py-3.5 bg-gray-50 border-none rounded-2xl text-sm focus:ring-2 focus:ring-green-500 transition"
+                                            />
+                                            <p className="text-[10px] text-gray-400 ml-1 italic">Link ini hanya akan tampil bagi peserta yang sudah login dan terdaftar.</p>
+                                        </div>
+                                    )}
                                     
                                     <div className="space-y-2 mb-6">
                                         <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Bingkai Dokumentasi Ukuran 4:5 Transparan (PNG) Opsional</label>
@@ -669,58 +674,58 @@ const EventSubmissionPage = () => {
                                         </div>
                                     </div>
 
-                                    <div className="space-y-2">
-                                        <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Foto Dokumentasi (Max 3x3 Grid)</label>
-                                        <div className="grid grid-cols-3 gap-3">
-                                            {/* Existing Images */}
-                                            {existingDocImages.map((img) => (
-                                                <div key={img.id} className="relative aspect-[4/5] rounded-xl overflow-hidden border border-gray-100 shadow-sm group">
-                                                    <img 
-                                                        src={img.image} 
-                                                        className="w-full h-full object-cover cursor-pointer" 
-                                                        alt="Doc" 
-                                                        onClick={() => openPreview(img.image)}
-                                                    />
-                                                    <button 
-                                                        type="button" 
-                                                        onClick={(e) => { e.stopPropagation(); removeDocImage(null, true, img.id); }}
-                                                        className="absolute top-1 right-1 w-6 h-6 bg-red-600/80 text-white rounded-full opacity-0 group-hover:opacity-100 transition flex items-center justify-center shadow-lg"
-                                                    >
-                                                        <span className="material-icons text-xs">delete</span>
-                                                    </button>
-                                                </div>
-                                            ))}
-                                            
-                                            {/* New Uploads */}
-                                            {files.documentation_images.map((img, idx) => (
-                                                <div key={idx} className="relative aspect-[4/5] rounded-xl overflow-hidden border border-green-100 shadow-sm group">
-                                                    <img 
-                                                        src={URL.createObjectURL(img)} 
-                                                        className="w-full h-full object-cover cursor-pointer" 
-                                                        alt="New Doc" 
-                                                        onClick={() => openPreview(img)}
-                                                    />
-                                                    <button 
-                                                        type="button" 
-                                                        onClick={(e) => { e.stopPropagation(); removeDocImage(idx, false); }}
-                                                        className="absolute top-1 right-1 bg-red-500/80 text-white rounded-full w-6 h-6 shadow-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition"
-                                                    >
-                                                        <span className="material-icons text-xs">close</span>
-                                                    </button>
-                                                </div>
-                                            ))}
-                                            
-                                            <label className="aspect-[4/5] rounded-xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center cursor-pointer hover:border-green-500 hover:bg-green-50 text-gray-400 hover:text-green-600 transition-all">
-                                                <span className="material-icons text-2xl">add_a_photo</span>
-                                                <span className="text-[10px] font-bold mt-1 uppercase tracking-tighter">Tambah</span>
-                                                <input type="file" accept="image/*" className="hidden" onChange={handleDocImageUpload} multiple />
-                                            </label>
+                                    {isEdit && (
+                                        <div className="space-y-2">
+                                            <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Foto Dokumentasi (Max 3x3 Grid)</label>
+                                            <div className="grid grid-cols-3 gap-3">
+                                                {/* Existing Images */}
+                                                {existingDocImages.map((img) => (
+                                                    <div key={img.id} className="relative aspect-[4/5] rounded-xl overflow-hidden border border-gray-100 shadow-sm group">
+                                                        <img 
+                                                            src={img.image} 
+                                                            className="w-full h-full object-cover cursor-pointer" 
+                                                            alt="Doc" 
+                                                            onClick={() => openPreview(img.image)}
+                                                        />
+                                                        <button 
+                                                            type="button" 
+                                                            onClick={(e) => { e.stopPropagation(); removeDocImage(null, true, img.id); }}
+                                                            className="absolute top-1 right-1 w-6 h-6 bg-red-600/80 text-white rounded-full opacity-0 group-hover:opacity-100 transition flex items-center justify-center shadow-lg"
+                                                        >
+                                                            <span className="material-icons text-xs">delete</span>
+                                                        </button>
+                                                    </div>
+                                                ))}
+                                                
+                                                {/* New Uploads */}
+                                                {files.documentation_images.map((img, idx) => (
+                                                    <div key={idx} className="relative aspect-[4/5] rounded-xl overflow-hidden border border-green-100 shadow-sm group">
+                                                        <img 
+                                                            src={URL.createObjectURL(img)} 
+                                                            className="w-full h-full object-cover cursor-pointer" 
+                                                            alt="New Doc" 
+                                                            onClick={() => openPreview(img)}
+                                                        />
+                                                        <button 
+                                                            type="button" 
+                                                            onClick={(e) => { e.stopPropagation(); removeDocImage(idx, false); }}
+                                                            className="absolute top-1 right-1 bg-red-500/80 text-white rounded-full w-6 h-6 shadow-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition"
+                                                        >
+                                                            <span className="material-icons text-xs">close</span>
+                                                        </button>
+                                                    </div>
+                                                ))}
+                                                
+                                                <label className="aspect-[4/5] rounded-xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center cursor-pointer hover:border-green-500 hover:bg-green-50 text-gray-400 hover:text-green-600 transition-all">
+                                                    <span className="material-icons text-2xl">add_a_photo</span>
+                                                    <span className="text-[10px] font-bold mt-1 uppercase tracking-tighter">Tambah</span>
+                                                    <input type="file" accept="image/*" className="hidden" onChange={handleDocImageUpload} multiple />
+                                                </label>
+                                            </div>
                                         </div>
-                                    </div>
+                                    )}
                                 </div>
                             </div>
-                        )}
-
                         {/* PHASE 7: FORM PENDAFTARAN */}
                         <div className="space-y-4 pt-4">
                             <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
