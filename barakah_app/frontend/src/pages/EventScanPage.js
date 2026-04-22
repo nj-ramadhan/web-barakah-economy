@@ -70,6 +70,10 @@ const EventScanPage = () => {
             );
             setScanResult(res.data);
 
+            if (res.data.status === 'success') {
+                setIsCameraOpen(false);
+            }
+
             // Tambahkan ke recent scans
             setRecentScans(prev => [{
                 ...res.data.registration,

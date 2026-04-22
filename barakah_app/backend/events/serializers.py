@@ -25,6 +25,7 @@ class EventSessionSerializer(serializers.ModelSerializer):
         fields = ['id', 'title', 'start_time', 'end_time', 'order']
 
 class EventAttendanceSerializer(serializers.ModelSerializer):
+    session = serializers.PrimaryKeyRelatedField(read_only=True)
     session_title = serializers.SerializerMethodField()
     scanned_by_name = serializers.SerializerMethodField()
     

@@ -313,7 +313,10 @@ const EventRegistrationSubmissionPage = () => {
                                                 {/* Dynamic Session Attendance Columns */}
                                                 {event?.sessions && event.sessions.length > 0 ? (
                                                     event.sessions.map(ses => {
-                                                        const attendance = reg.attendances_list?.find(att => Number(att.session) === Number(ses.id));
+                                                        const attendance = reg.attendances_list?.find(att => {
+                                                            const attSessionId = typeof att.session === 'object' ? att.session.id : att.session;
+                                                            return Number(attSessionId) === Number(ses.id);
+                                                        });
                                                         return (
                                                             <td key={ses.id} className="p-5 text-center">
                                                                 {attendance ? (
