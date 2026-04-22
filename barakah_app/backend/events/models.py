@@ -57,6 +57,16 @@ class Event(models.Model):
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='created_events')
     rejection_reason = models.TextField(blank=True, null=True)
     view_count = models.PositiveIntegerField(default=0)
+    
+    # New Fields for Attachments & Visibility
+    attachment_file = models.FileField(upload_to='events/attachments/', blank=True, null=True, help_text="Lampiran berkas pendukung (PDF/Gambar/Dokumen)")
+    attachment_link = models.URLField(blank=True, null=True, help_text="Link tautan eksternal pendukung")
+    VISIBILITY_CHOICES = [
+        ('public', 'Umum (Tampil di Beranda)'),
+        ('private', 'Privat (Hanya lewat link langsung)'),
+    ]
+    visibility = models.CharField(max_length=10, choices=VISIBILITY_CHOICES, default='public')
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

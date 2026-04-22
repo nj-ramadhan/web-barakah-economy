@@ -32,6 +32,8 @@ const EventSubmissionPage = () => {
         capacity: '',
         terms_do: '',
         terms_dont: '',
+        attachment_link: '',
+        visibility: 'public',
     });
     const [speakers, setSpeakers] = useState([]);
     const [sessions, setSessions] = useState([]);
@@ -41,6 +43,7 @@ const EventSubmissionPage = () => {
         thumbnail: null,
         thumbnail_full: null,
         documentation_frame_1_1: null,
+        attachment_file: null,
         documentation_images: [], // New images to upload
     });
     const [existingDocImages, setExistingDocImages] = useState([]); // Images already on server
@@ -81,6 +84,9 @@ const EventSubmissionPage = () => {
                         thumbnail: d.thumbnail,
                         thumbnail_full: d.thumbnail_full,
                         documentation_frame_1_1: d.documentation_frame_1_1,
+                        attachment_link: d.attachment_link || '',
+                        visibility: d.visibility || 'public',
+                        attachment_file: d.attachment_file,
                     });
                     
                     if (d.speakers && d.speakers.length > 0) setSpeakers(d.speakers);
@@ -267,7 +273,7 @@ const EventSubmissionPage = () => {
         Object.keys(formData).forEach(key => {
             // Only append non-file fields that are not null/empty
             // Skip thumbnail and header_image if they are just strings (URLs)
-            if (key !== 'thumbnail' && key !== 'header_image' && key !== 'thumbnail_full' && key !== 'header_image_full' && key !== 'documentation_frame_1_1') {
+            if (key !== 'thumbnail' && key !== 'header_image' && key !== 'thumbnail_full' && key !== 'header_image_full' && key !== 'documentation_frame_1_1' && key !== 'attachment_file') {
                 const val = formData[key];
                 if (val !== null && val !== undefined && val !== '') {
                     data.append(key, val);
@@ -299,9 +305,9 @@ const EventSubmissionPage = () => {
             data.append('sessions', JSON.stringify(sessions));
         }
 
-        if (files.documentation_frame_1_1 instanceof File) {
-            data.append('documentation_frame_1_1', files.documentation_frame_1_1);
-        }
+        if (files.thumbnail_full instanceof File) data.append('thumbnail_full', files.thumbnail_full);
+        if (files.documentation_frame_1_1 instanceof File) data.append('documentation_frame_1_1', files.documentation_frame_1_1);
+        if (files.attachment_file instanceof File) data.append('attachment_file', files.attachment_file);
 
         // Append documentation images if any
         if (files.documentation_images.length > 0) {

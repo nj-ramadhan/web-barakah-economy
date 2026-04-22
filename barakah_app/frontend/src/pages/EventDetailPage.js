@@ -485,6 +485,50 @@ const EventDetailPage = () => {
                                     ></div>
                                 </div>
 
+                                {/* Attachment Section */}
+                                {(event.attachment_file || event.attachment_link) && (
+                                    <div className="bg-blue-50/50 p-8 rounded-[2.5rem] border border-blue-100 flex flex-col gap-6">
+                                        <div>
+                                            <h3 className="text-xl font-extrabold text-blue-900 flex items-center gap-2">
+                                                <span className="material-icons text-blue-600">attachment</span>
+                                                Berkas & Informasi Pendukung
+                                            </h3>
+                                            <p className="text-blue-700/60 text-xs font-bold mt-1 uppercase tracking-wider ml-8">Unduh berkas di bawah ini untuk informasi lebih lanjut</p>
+                                        </div>
+                                        
+                                        <div className="flex flex-wrap gap-4">
+                                            {event.attachment_file && (
+                                                <a 
+                                                    href={event.attachment_file} 
+                                                    target="_blank" 
+                                                    rel="noreferrer"
+                                                    className="inline-flex items-center gap-3 px-6 py-4 bg-white text-blue-700 rounded-3xl border border-blue-200 shadow-sm hover:shadow-md hover:border-blue-300 transition group"
+                                                >
+                                                    <span className="material-icons text-blue-600 bg-blue-50 p-2 rounded-xl group-hover:bg-blue-100 transition">download</span>
+                                                    <div className="text-left">
+                                                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-1">Unduh Berkas</p>
+                                                        <p className="font-extrabold text-xs">LIHAT/AMBIL LAMPIRAN</p>
+                                                    </div>
+                                                </a>
+                                            )}
+                                            {event.attachment_link && (
+                                                <a 
+                                                    href={event.attachment_link} 
+                                                    target="_blank" 
+                                                    rel="noreferrer"
+                                                    className="inline-flex items-center gap-3 px-6 py-4 bg-white text-blue-700 rounded-3xl border border-blue-200 shadow-sm hover:shadow-md hover:border-blue-300 transition group"
+                                                >
+                                                    <span className="material-icons text-blue-600 bg-blue-50 p-2 rounded-xl group-hover:bg-blue-100 transition">open_in_new</span>
+                                                    <div className="text-left">
+                                                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-1">Tautan Eksternal</p>
+                                                        <p className="font-extrabold text-xs">BUKA LINK PENDUKUNG</p>
+                                                    </div>
+                                                </a>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+
                                 {/* Speakers Section */}
                                 {event.speakers && event.speakers.length > 0 && (
                                     <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-100">
