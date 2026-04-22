@@ -36,13 +36,14 @@ const AboutUs = () => {
     if (!path) return '';
     if (path.startsWith('http')) return path;
     
-    const baseUrl = process.env.REACT_APP_API_BASE_URL.replace(/\/$/, '');
-    let cleanPath = path;
+    // Extract origin from API URL (e.g. https://domain.com/api -> https://domain.com)
+    const baseUrl = process.env.REACT_APP_API_BASE_URL.replace(/\/api\/?$/, '').replace(/\/$/, '');
     
-    if (!cleanPath.startsWith('/media/') && !cleanPath.startsWith('media/')) {
-      cleanPath = cleanPath.startsWith('/') ? `/media${cleanPath}` : `/media/${cleanPath}`;
-    } else {
+    let cleanPath = path;
+    if (cleanPath.startsWith('/media/') || cleanPath.startsWith('media/')) {
       cleanPath = cleanPath.startsWith('/') ? cleanPath : `/${cleanPath}`;
+    } else {
+      cleanPath = cleanPath.startsWith('/') ? `/media${cleanPath}` : `/media/${cleanPath}`;
     }
     
     return `${baseUrl}${cleanPath}`;

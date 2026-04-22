@@ -42,16 +42,19 @@ const DashboardAboutUsPage = () => {
         if (!path) return '';
         if (path.startsWith('http')) return path;
         
-        const baseUrl = API.replace(/\/$/, '');
-        let cleanPath = path;
+        // Extract origin from API URL (e.g. https://domain.com/api -> https://domain.com)
+        const origin = API.replace(/\/api\/?$/, '');
         
-        if (!cleanPath.startsWith('/media/') && !cleanPath.startsWith('media/')) {
-            cleanPath = cleanPath.startsWith('/') ? `/media${cleanPath}` : `/media/${cleanPath}`;
-        } else {
+        let cleanPath = path;
+        // If path already has /media/ or media/, just ensure it has leading slash
+        if (cleanPath.startsWith('/media/') || cleanPath.startsWith('media/')) {
             cleanPath = cleanPath.startsWith('/') ? cleanPath : `/${cleanPath}`;
+        } else {
+            // Otherwise prepend /media/
+            cleanPath = cleanPath.startsWith('/') ? `/media${cleanPath}` : `/media/${cleanPath}`;
         }
         
-        return `${baseUrl}${cleanPath}`;
+        return `${origin}${cleanPath}`;
     };
 
     const fetchAboutUs = async () => {
@@ -105,10 +108,10 @@ const DashboardAboutUsPage = () => {
         fd.append('mission', formData.mission);
         fd.append('legal_description', formData.legal_description);
         
-        if (formData.hero_image instanceof File) {
+        if (formData.hero_image instanceof File || formData.hero_image instanceof Blob) {
             fd.append('hero_image', formData.hero_image);
         }
-        if (formData.organization_structure_image instanceof File) {
+        if (formData.organization_structure_image instanceof File || formData.organization_structure_image instanceof Blob) {
             fd.append('organization_structure_image', formData.organization_structure_image);
         }
 
@@ -175,7 +178,7 @@ const DashboardAboutUsPage = () => {
         fd.append('hierarchy_code', personnelFormData.hierarchy_code);
         fd.append('order', personnelFormData.order);
         
-        if (personnelFormData.image instanceof File) {
+        if (personnelFormData.image instanceof File || personnelFormData.image instanceof Blob) {
             fd.append('image', personnelFormData.image);
         }
 
@@ -193,9 +196,24 @@ const DashboardAboutUsPage = () => {
             }
 
             // Save Social Media
-            // Note: Simplification - we just delete and re-add or sync. 
-            // For now, let's just use the main save and skip complex sync unless needed.
-            // But we can add a basic sync here if personnel_social_media is needed.
+            // Strategy: Get existing IDs and delete them, then add from personnelFormData.social_media
+            if (editingPersonnel?.id && editingPersonnel.social_media) {
+                for (const sm of editingPersonnel.social_media) {
+                    await axios.delete(`${API}/api/site-content/personnel-social-media/${sm.id}/`, {
+                        headers: { Authorization: `Bearer ${token}` }
+                    });
+                }
+            }
+
+            for (const sm of personnelFormData.social_media) {
+                await axios.post(`${API}/api/site-content/personnel-social-media/`, {
+                    personnel: personId,
+                    icon: sm.icon,
+                    link: sm.link
+                }, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+            }
             
             setShowPersonnelModal(false);
             fetchAboutUs();

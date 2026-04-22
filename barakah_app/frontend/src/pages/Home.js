@@ -411,11 +411,10 @@ const Home = () => {
       const user = JSON.parse(localStorage.getItem('user'));
       if (!user || !user.access) {
         console.error('User not logged in');
-        navigate('/login'); // Redirect to login page if not logged in
+        navigate('/login');
         return;
       }
 
-      // Check for variations before adding to cart
       const product = featuredProducts.find(p => p.id === productId) || products.find(p => p.id === productId);
       if (product && product.variations && product.variations.length > 0) {
         navigate(`/produk/${product.slug || product.id}`);
@@ -445,7 +444,7 @@ const Home = () => {
       const user = JSON.parse(localStorage.getItem('user'));
       if (!user || !user.access) {
         console.error('User not logged in');
-        navigate('/login'); // Redirect to login page if not logged in
+        navigate('/login');
         return;
       }
 
@@ -465,19 +464,85 @@ const Home = () => {
     }
   };
 
-  // Sort campaigns based on the most donated
   const sortedCampaigns = campaigns;
-
-  const sortedProducts = [...products].sort((a, b) => {
-    return (b.price || 0) - (a.price || 0);
-  });
-
-  const sortedCourses = [...courses].sort((a, b) => {
-    return (b.price || 0) - (a.price || 0);
-  });
-
+  const sortedProducts = [...products].sort((a, b) => (b.price || 0) - (a.price || 0));
+  const sortedCourses = [...courses].sort((a, b) => (b.price || 0) - (a.price || 0));
   const onlyPartners = partners.filter(p => !p.type || p.type === 'partner');
   const onlyMitra = partners.filter(p => p.type === 'mitra');
+
+  // Hierarchy Tree Logic
+  const buildTree = (records) => {
+    if (!records) return [];
+    const map = {};
+    const roots = [];
+    const sorted = [...records].sort((a, b) => 
+      (a.hierarchy_code || "").localeCompare(b.hierarchy_code || "", undefined, { numeric: true, sensitivity: 'base' })
+    );
+
+    sorted.forEach(val => {
+      map[val.hierarchy_code] = { ...val, children: [] };
+      const parts = val.hierarchy_code.split('.');
+      if (parts.length === 1) {
+        roots.push(map[val.hierarchy_code]);
+      } else {
+        const parentKey = parts.slice(0, -1).join('.');
+        if (map[parentKey]) {
+          map[parentKey].children.push(map[val.hierarchy_code]);
+        } else {
+          roots.push(map[val.hierarchy_code]);
+        }
+      }
+    });
+    return roots;
+  };
+
+  const personnelTree = buildTree(aboutUs?.personnel);
+
+  const PersonnelCard = ({ person }) => (
+    <div className="flex flex-col items-center group">
+      <div className="bg-white p-4 md:p-6 rounded-[2.5rem] shadow-xl shadow-gray-200/50 border border-gray-100 w-full max-w-[280px] text-center relative hover:shadow-2xl transition duration-500 transform hover:-translate-y-2">
+        <div className="w-20 h-20 md:w-24 md:h-24 rounded-[2rem] overflow-hidden mx-auto mb-4 shadow-xl border-4 border-white ring-4 ring-gray-50/50 group-hover:ring-green-50 transition-all">
+          <img 
+            src={getMediaUrl(person.image)} 
+            alt={person.name} 
+            className="w-full h-full object-cover" 
+            onError={(e) => { e.target.src = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(person.name) + '&background=0D8ABC&color=fff'; }}
+          />
+        </div>
+        <h4 className="text-base md:text-lg font-black text-gray-900 mb-1 leading-tight">{person.name}</h4>
+        <p className="text-[10px] font-black text-green-600 uppercase tracking-widest mb-4">{person.job_title}</p>
+        
+        {person.social_media?.length > 0 && (
+          <div className="flex justify-center gap-3 mt-2 pt-4 border-t border-gray-50">
+            {person.social_media.map((sm, i) => (
+              <a key={i} href={sm.link} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-green-600 transition transform hover:scale-125">
+                <span className={`material-icons text-sm ${sm.icon === 'language' ? 'material-icons-outlined' : ''}`}>
+                  {sm.icon === 'twitter' ? 'close' : (sm.icon === 'website' ? 'language' : sm.icon)}
+                </span>
+              </a>
+            ))}
+          </div>
+        )}
+      </div>
+      
+      {person.children?.length > 0 && (
+        <div className="relative pt-12 w-full flex flex-col items-center">
+          <div className="absolute top-0 w-0.5 h-12 bg-green-200"></div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-12 relative">
+             {person.children.length > 1 && (
+               <div className="hidden md:block absolute top-0 left-12 right-12 h-0.5 bg-green-200"></div>
+             )}
+             {person.children.map(child => (
+               <div key={child.id} className="relative pt-6">
+                  <div className="hidden md:block absolute top-[-24px] left-1/2 w-0.5 h-6 bg-green-200"></div>
+                  <PersonnelCard person={child} />
+               </div>
+             ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
 
   return (
     <div className="body">
@@ -1624,6 +1689,24 @@ const Home = () => {
           </Link>
         </div>
       </div>
+
+      {/* Struktur Team Section */}
+      {personnelTree.length > 0 && (
+        <section className="py-20 px-4 md:px-8 bg-[#fcfdfe] overflow-hidden">
+          <div className="max-w-7xl mx-auto">
+            <div className="text-center mb-16">
+              <h2 className="text-3xl md:text-4xl font-black text-gray-900 mb-4 uppercase tracking-tight">Struktur Team</h2>
+              <div className="w-24 h-1.5 bg-green-600 mx-auto rounded-full"></div>
+            </div>
+            
+            <div className="flex flex-col items-center">
+              {personnelTree.map(root => (
+                <PersonnelCard key={root.id} person={root} />
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Tentang Kami Section */}
       <section id="about" className="py-20 px-8 lg:px-24 bg-white">
