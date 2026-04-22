@@ -7,7 +7,7 @@ sys.path.append(os.getcwd())
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'barakah_app.settings')
 django.setup()
 
-from django.db import connection, TableNames
+from django.db import connection
 from django.db.models.fields import CharField, IntegerField, TextField, URLField, DateTimeField, PositiveIntegerField
 from django.db.models import FileField, ImageField, ForeignKey, CASCADE, SET_NULL
 from events.models import Event, EventRegistration, EventSession, EventSpeaker, EventAttendance
