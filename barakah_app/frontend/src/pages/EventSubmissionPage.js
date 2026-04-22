@@ -267,7 +267,7 @@ const EventSubmissionPage = () => {
         Object.keys(formData).forEach(key => {
             // Only append non-file fields that are not null/empty
             // Skip thumbnail and header_image if they are just strings (URLs)
-            if (key !== 'thumbnail' && key !== 'header_image' && key !== 'thumbnail_full' && key !== 'header_image_full') {
+            if (key !== 'thumbnail' && key !== 'header_image' && key !== 'thumbnail_full' && key !== 'header_image_full' && key !== 'documentation_frame_1_1') {
                 const val = formData[key];
                 if (val !== null && val !== undefined && val !== '') {
                     data.append(key, val);
