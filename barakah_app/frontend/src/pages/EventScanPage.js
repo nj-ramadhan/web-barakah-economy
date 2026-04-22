@@ -28,25 +28,25 @@ const EventScanPage = () => {
         return { headers: { Authorization: `Bearer ${user?.access}` } };
     };
 
+    const fetchEvent = useCallback(async () => {
+        try {
+            const res = await axios.get(`${API}/api/events/${slug}/`, getAuth());
+            setEvent(res.data);
+            if (!selectedSession && res.data.sessions && res.data.sessions.length > 0) {
+                setSelectedSession(res.data.sessions[0].id);
+            }
+        } catch {
+            navigate('/dashboard/my-events');
+        } finally {
+            setLoading(false);
+        }
+    }, [slug, navigate, selectedSession]);
+
     useEffect(() => {
         const user = JSON.parse(localStorage.getItem('user'));
         if (!user) { navigate('/login'); return; }
-
-        const fetchEvent = async () => {
-            try {
-                const res = await axios.get(`${API}/api/events/${slug}/`, getAuth());
-                setEvent(res.data);
-                if (res.data.sessions && res.data.sessions.length > 0) {
-                    setSelectedSession(res.data.sessions[0].id);
-                }
-            } catch {
-                navigate('/dashboard/my-events');
-            } finally {
-                setLoading(false);
-            }
-        };
         fetchEvent();
-    }, [slug, navigate]);
+    }, [fetchEvent]);
 
     // Auto-focus input saat halaman dibuka
     useEffect(() => {
