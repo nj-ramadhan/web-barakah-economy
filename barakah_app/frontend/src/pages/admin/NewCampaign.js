@@ -2,7 +2,6 @@
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ImageCropperModal from '../../components/common/ImageCropper';
-import { formatNumber, parseCurrency } from '../../utils/formatters';
 
 const NewCampaign = () => {
   const navigate = useNavigate();
@@ -166,13 +165,15 @@ const NewCampaign = () => {
                       Rp
                     </span>
                     <input
-                      type="text"
+                      type="number"
                       name="targetAmount"
                       required
+                      min="1000"
+                      step="1000"
                       className="w-full px-3 py-2 border border-gray-300 rounded-r-md focus:outline-none focus:ring-2 focus:ring-green-500"
-                      placeholder="1.000.000"
-                      value={formatNumber(formData.targetAmount)}
-                      onChange={(e) => setFormData(prev => ({ ...prev, targetAmount: parseCurrency(e.target.value) }))}
+                      placeholder="1000000"
+                      value={formData.targetAmount}
+                      onChange={handleInputChange}
                     />
                   </div>
                   <p className="text-xs text-gray-500 mt-1">

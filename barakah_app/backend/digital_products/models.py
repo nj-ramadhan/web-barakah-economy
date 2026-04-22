@@ -90,7 +90,6 @@ class DigitalOrder(models.Model):
     payment_proof = models.FileField(upload_to=digital_order_proof_path, blank=True, null=True)
     payment_status = models.CharField(max_length=20, choices=PAYMENT_STATUS_CHOICES, default='pending')
     ocr_verified = models.BooleanField(default=False)
-    ocr_data = models.JSONField(null=True, blank=True, help_text="Data hasil ekstraksi OCR AI")
     email_sent = models.BooleanField(default=False)
     email_sent_at = models.DateTimeField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)

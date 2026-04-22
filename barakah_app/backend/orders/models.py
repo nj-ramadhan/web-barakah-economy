@@ -17,8 +17,6 @@ class Order(models.Model):
     grand_total = models.DecimalField(max_digits=12, decimal_places=2, default=0) # total_price + shipping - voucher
     payment_method = models.CharField(max_length=50, default='manual')
     payment_proof = models.ImageField(upload_to='payment_proofs/orders/', null=True, blank=True)
-    ocr_verified = models.BooleanField(default=False)
-    ocr_data = models.JSONField(null=True, blank=True, help_text="Data hasil ekstraksi OCR AI")
 
 
     status = models.CharField(max_length=50, default='Pending')  # e.g., Pending, Shipped, Delivered

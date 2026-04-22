@@ -4,7 +4,6 @@ import { Helmet } from 'react-helmet';
 import Header from '../components/layout/Header';
 import NavigationButton from '../components/layout/Navigation';
 import { Link } from 'react-router-dom';
-import { formatNumber, parseCurrency } from '../utils/formatters';
 
 const DashboardSinergySellersPage = () => {
     const [products, setProducts] = useState([]);
@@ -203,18 +202,7 @@ const DashboardSinergySellersPage = () => {
                     </div>
                     <div>
                         <label className="block text-[11px] font-bold text-gray-600 mb-1">Nominal Diskon (Rp)</label>
-                        <input
-                            type="text"
-                            name="nominal"
-                            required
-                            placeholder="10.000"
-                            className="w-full px-3 py-2 text-sm border-none rounded-xl outline-none focus:ring-2 focus:ring-orange-400"
-                            onChange={(e) => {
-                                const pos = e.target.selectionStart;
-                                const val = parseCurrency(e.target.value);
-                                e.target.value = formatNumber(val);
-                            }}
-                        />
+                        <input type="number" name="nominal" required placeholder="10000" className="w-full px-3 py-2 text-sm border-none rounded-xl outline-none focus:ring-2 focus:ring-orange-400" />
                     </div>
                     <div>
                         <label className="block text-[11px] font-bold text-gray-600 mb-1">Batas Kuota Pemakaian</label>
@@ -263,32 +251,11 @@ const DashboardSinergySellersPage = () => {
                 <div className="grid grid-cols-2 gap-4">
                     <div>
                         <label className="block text-sm font-semibold text-gray-700 mb-1">Harga Beli Dasar (Rp)</label>
-                        <input
-                            type="text"
-                            name="purchase_price"
-                            defaultValue={formatNumber(editingProduct?.purchase_price)}
-                            placeholder="0"
-                            className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none transition"
-                            onChange={(e) => {
-                                const val = parseCurrency(e.target.value);
-                                e.target.value = formatNumber(val);
-                            }}
-                        />
+                        <input type="number" name="purchase_price" defaultValue={editingProduct?.purchase_price || ''} placeholder="0" className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none transition" />
                     </div>
                     <div>
                         <label className="block text-sm font-semibold text-gray-700 mb-1">Harga Jual (Rp)</label>
-                        <input
-                            type="text"
-                            name="price"
-                            defaultValue={formatNumber(editingProduct?.price)}
-                            required
-                            placeholder="0"
-                            className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none transition"
-                            onChange={(e) => {
-                                const val = parseCurrency(e.target.value);
-                                e.target.value = formatNumber(val);
-                            }}
-                        />
+                        <input type="number" name="price" defaultValue={editingProduct?.price || ''} required placeholder="0" className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none transition" />
                     </div>
                 </div>
 
@@ -369,14 +336,7 @@ const DashboardSinergySellersPage = () => {
                                 <input type="text" placeholder="Nama Varian (Cth: XL / Merah)" value={v.name} onChange={(e) => updateVariant(i, 'name', e.target.value)} className="flex-[2] px-3 py-2 text-sm border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500" />
                                 <div className="flex-1 relative">
                                     <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[10px] font-bold text-gray-400">Rp</span>
-                                    <input
-                                        type="text"
-                                        placeholder="Harga"
-                                        value={formatNumber(v.additional_price || '')}
-                                        onChange={(e) => updateVariant(i, 'additional_price', parseCurrency(e.target.value))}
-                                        className="w-full pl-7 pr-2 py-2 text-sm border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500 font-bold text-emerald-700"
-                                        title="Harga Total untuk varian ini"
-                                    />
+                                    <input type="number" placeholder="Harga" value={v.additional_price || ''} onChange={(e) => updateVariant(i, 'additional_price', e.target.value)} className="w-full pl-7 pr-2 py-2 text-sm border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500 font-bold text-emerald-700" title="Harga Total untuk varian ini" />
                                 </div>
                                 <div className="w-20 relative">
                                     <input type="number" placeholder="Stok" value={v.stock || ''} onChange={(e) => updateVariant(i, 'stock', e.target.value)} className="w-full px-2 py-2 text-sm border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500" />

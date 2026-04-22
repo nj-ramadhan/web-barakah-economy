@@ -4,7 +4,6 @@ import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import Header from '../components/layout/Header';
 import NavigationButton from '../components/layout/Navigation';
-import { formatNumber, parseCurrency } from '../utils/formatters';
 import '../styles/Body.css';
 
 const getCsrfToken = () => {
@@ -90,17 +89,17 @@ const CrowdfundingDonationPage = () => {
   }, [slug]);
 
   const donationAmounts = [
-    { label: 'Rp 25.000', value: 25000 },
-    { label: 'Rp 50.000', value: 50000 },
-    { label: 'Rp 100.000', value: 100000 },
-    { label: 'Rp 200.000', value: 200000 },
-    { label: 'Rp 500.000', value: 500000 },
-    { label: 'Rp 1.000.000', value: 1000000 },
-    { label: 'Rp 2.500.000', value: 2500000 },
-    { label: 'Rp 5.000.000', value: 5000000 },
-    { label: 'Rp 10.000.000', value: 10000000 },
-    { label: 'Rp 20.000.000', value: 20000000 },
-    { label: 'Rp 50.000.000', value: 50000000 },
+    { label: 'Rp 25 rb', value: 25000 },
+    { label: 'Rp 50 rb', value: 50000 },
+    { label: 'Rp 100 rb', value: 100000 },
+    { label: 'Rp 200 rb', value: 200000 },
+    { label: 'Rp 500 rb', value: 500000 },
+    { label: 'Rp 1 jt', value: 1000000 },
+    { label: 'Rp 2,5 jt', value: 2500000 },
+    { label: 'Rp 5 jt', value: 5000000 },
+    { label: 'Rp 10 jt', value: 10000000 },
+    { label: 'Rp 20 jt', value: 20000000 },
+    { label: 'Rp 50 jt', value: 50000000 },
     { label: 'Nominal Lainnya', value: 'custom' },
   ];
 
@@ -348,11 +347,11 @@ const CrowdfundingDonationPage = () => {
             <div className="flex items-center bg-white rounded-lg px-3 shadow-sm">
               <span className="text-gray-500">Rp</span>
               <input
-                type="text"
+                type="number"
                 className="flex-1 py-3 px-2 outline-none"
                 placeholder="Masukan Nominal"
-                value={formatNumber(customAmount)}
-                onChange={(e) => setCustomAmount(parseCurrency(e.target.value))}
+                value={customAmount}
+                onChange={(e) => setCustomAmount(e.target.value)}
               />
             </div>
           </div>

@@ -7,7 +7,6 @@ import NavigationButton from '../components/layout/Navigation';
 import { getEventDetail, registerForEvent, getEventParticipants } from '../services/eventApi';
 import authService from '../services/auth';
 import Footer from '../components/layout/Footer';
-import { formatNumber, parseCurrency } from '../utils/formatters';
 import '../styles/Body.css';
 
 const EventDetailPage = () => {
@@ -777,17 +776,18 @@ const EventDetailPage = () => {
                                                             <div className="relative">
                                                                 <span className="absolute left-5 top-1/2 -translate-y-1/2 font-bold text-gray-400 text-sm">Rp</span>
                                                                 <input 
-                                                                    type="text"
+                                                                    type="number"
+                                                                    min="0"
                                                                     required={event.price_type === 'voluntary'}
-                                                                    value={formatNumber(paymentAmount)}
+                                                                    value={paymentAmount}
                                                                     onChange={(e) => {
-                                                                        const val = parseCurrency(e.target.value);
-                                                                        if (val >= 0) {
+                                                                        const val = e.target.value;
+                                                                        if (val === '' || Number(val) >= 0) {
                                                                             setPaymentAmount(val);
                                                                         }
                                                                     }}
                                                                     placeholder="Masukkan nominal..."
-                                                                    className="w-full pl-12 pr-5 py-3.5 bg-white border border-gray-200 rounded-2xl text-sm font-bold outline-none focus:ring-2 focus:ring-green-500 shadow-sm"
+                                                                    className="w-full pl-12 pr-5 py-3.5 bg-white border border-gray-200 rounded-2xl text-sm font-bold outline-none focus:ring-2 focus:ring-green-500 shadow-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                                                 />
                                                             </div>
                                                         </div>
@@ -972,7 +972,7 @@ const EventDetailPage = () => {
                                                 disabled={submitting}
                                                 className={`w-full py-5 bg-green-600 text-white rounded-[2rem] text-sm font-extrabold uppercase tracking-widest shadow-2xl shadow-green-100 transition active:scale-[0.98] ${submitting ? 'opacity-70 cursor-not-allowed' : 'hover:bg-green-700'}`}
                                             >
-                                                {submitting ? (paymentProof ? 'MENVERIFIKASI PEMBAYARAN...' : 'SEDANG MENGIRIM...') : 'KIRIM PENDAFTARAN'}
+                                                {submitting ? 'SEDANG MENGIRIM...' : 'KIRIM PENDAFTARAN'}
                                             </button>
                                             <p className="text-center text-[10px] text-gray-400 font-bold uppercase tracking-[0.2em] px-8">Pendaftaran akan ditinjau oleh tim BAE. Mohon persiapkan bukti transfer jika event berbayar.</p>
                                         </div>

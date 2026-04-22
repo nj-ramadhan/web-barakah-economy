@@ -11,8 +11,6 @@ from .models import Course, CourseEnrollment, CourseMaterial, UserCourseProgress
 from .serializers import CourseSerializer, CourseEnrollmentSerializer, CourseMaterialSerializer, UserCourseProgressSerializer, CertificateRequestSerializer
 from django.conf import settings
 from django.shortcuts import render
-from decimal import Decimal
-from events.ocr_service import extract_payment_proof_data
 
 class CourseViewSet(viewsets.ModelViewSet):
     serializer_class = CourseSerializer
@@ -139,8 +137,7 @@ class CourseEnrollmentViewSet(viewsets.ModelViewSet):
             buyer_email=request.data.get('buyer_email', request.user.email),
             buyer_phone=request.data.get('buyer_phone', getattr(request.user, 'phone', '')),
             amount=course.price,
-            payment_status='paid' if course.price == 0 else 'pending',
-            ocr_verified=True if course.price == 0 else False
+            payment_status='paid' if course.price == 0 else 'pending'
         )
         
         return Response(CourseEnrollmentSerializer(enrollment).data, status=status.HTTP_201_CREATED)
@@ -163,42 +160,10 @@ class CourseEnrollmentViewSet(viewsets.ModelViewSet):
             return Response({'detail': 'Bukti transfer wajib diunggah.'}, status=status.HTTP_400_BAD_REQUEST)
 
         enrollment.proof_file = proof_file
-        enrollment.save()
-
-        # Perform OCR Validation
-        expected_amount = Decimal(str(enrollment.amount or 0))
-        ocr_result = extract_payment_proof_data(proof_file, expected_amount=expected_amount)
-        
-        if '_error' in ocr_result:
-            # We save the file but return error if OCR fails, so they can try again or admin can verify manually
-            return Response({'error': ocr_result['_error']}, status=status.HTTP_400_BAD_REQUEST)
-        
-        # Validate Recipient
-        if not ocr_result.get('is_to_bae', False):
-            return Response({
-                'error': f"Penerima tidak valid (Terdeteksi: {ocr_result.get('recipient_name', 'Tidak dikenal')}). Transfer harus ditujukan ke BAE Community."
-            }, status=status.HTTP_400_BAD_REQUEST)
-        
-        # Validate Amount
-        if not ocr_result.get('amount_match', False):
-            detected = ocr_result.get('amount', 0)
-            return Response({
-                'error': f"Nominal transfer tidak sesuai. Diharapkan: Rp {expected_amount:,.0f}, Terdeteksi: Rp {detected:,.0f}. Silakan unggah bukti yang benar."
-            }, status=status.HTTP_400_BAD_REQUEST)
-
-        # Validate Date
-        if not ocr_result.get('date_match', False):
-            detected_date = ocr_result.get('transaction_date', 'Tidak terdeteksi')
-            return Response({
-                'error': f"Tanggal transaksi tidak valid (Terdeteksi: {detected_date}). Bukti transfer harus dari hari ini atau maksimal 1 hari sebelumnya."
-            }, status=status.HTTP_400_BAD_REQUEST)
-
         enrollment.payment_status = 'verified'
-        enrollment.ocr_verified = True
-        enrollment.ocr_data = ocr_result
         enrollment.save()
 
-        return Response({'message': 'Bukti pembayaran berhasil diverifikasi otomatis oleh AI.'}, status=status.HTTP_200_OK)
+        return Response({'message': 'Bukti pembayaran berhasil diunggah.'}, status=status.HTTP_200_OK)
 
     @action(detail=True, methods=['post'])
     def confirm_payment(self, request, pk=None):
