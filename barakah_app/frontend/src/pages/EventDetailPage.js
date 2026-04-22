@@ -395,10 +395,17 @@ const EventDetailPage = () => {
                         ) : (
                             <button
                                 onClick={() => setShowRegisterModal(true)}
-                                className="w-full bg-green-700 text-white py-3.5 rounded-xl font-bold text-xs uppercase tracking-widest shadow-lg shadow-green-100 flex items-center gap-3 justify-center active:scale-[0.98] transition"
+                                className="w-full bg-green-600 hover:bg-green-700 text-white py-4 rounded-2xl font-extrabold text-sm uppercase tracking-wider shadow-xl shadow-green-900/30 transition active:scale-[0.97] flex flex-col items-center justify-center gap-1"
                             >
-                                <span className="material-icons text-lg">person_add</span>
-                                Ikuti Event Ini
+                                <div className="flex items-center gap-3">
+                                    <span className="material-icons text-xl">person_add</span>
+                                    Ikuti Event Ini
+                                </div>
+                                {event.capacity > 0 && (
+                                    <span className="text-[10px] opacity-80 normal-case font-bold tracking-normal italic">
+                                        Tersisa {event.capacity - (event.registration_count || 0)} Slot Lagi
+                                    </span>
+                                )}
                             </button>
                         )}
 
@@ -768,12 +775,17 @@ const EventDetailPage = () => {
                                     KUOTA PENUH
                                 </div>
                             ) : (
-                                <button
-                                    onClick={() => setShowRegisterModal(true)}
-                                    className="w-full bg-white text-gray-900 py-4 rounded-2xl text-xs font-extrabold uppercase tracking-widest hover:bg-green-50 transition shadow-xl relative z-10"
-                                >
-                                    Daftar Sekarang
-                                </button>
+                            <button
+                                onClick={() => setShowRegisterModal(true)}
+                                className="w-full bg-white text-gray-900 py-4 rounded-2xl text-xs font-extrabold uppercase tracking-widest hover:bg-green-50 transition shadow-xl relative z-10 flex flex-col items-center justify-center gap-1"
+                            >
+                                <span>Daftar Sekarang</span>
+                                {event.capacity > 0 && (
+                                    <span className="text-[9px] text-green-600 opacity-80 normal-case font-bold tracking-normal italic">
+                                        Tersisa {event.capacity - (event.registration_count || 0)} Slot Lagi
+                                    </span>
+                                )}
+                            </button>
                             )}
                         </div>
                     </div>

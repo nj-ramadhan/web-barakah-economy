@@ -372,6 +372,17 @@ class EventViewSet(viewsets.ModelViewSet):
             else:
                 time_str += f" - {local_end.strftime('%d %b %Y %H:%M')}"
 
+        # Prepare sessions string
+        sessions_str = ""
+        sessions = registration.event.sessions.all()
+        if sessions.exists():
+            sessions_str = "\n\n*Rangkaian Acara:*"
+            for ses in sessions:
+                s_start = timezone.localtime(ses.start_time).strftime('%H:%M') if ses.start_time else ""
+                s_end = timezone.localtime(ses.end_time).strftime('%H:%M') if ses.end_time else ""
+                time_range = f" ({s_start} - {s_end})" if s_start else ""
+                sessions_str += f"\n- {ses.title}{time_range}"
+
         # Send WhatsApp
         if phone:
             formatted_phone = self._format_phone_number(phone)
@@ -387,7 +398,8 @@ class EventViewSet(viewsets.ModelViewSet):
                 f"📷 QR Code tiket bisa dilihat di halaman detail event.\n\n"
                 f"📅 Waktu: {time_str}\n"
                 f"📍 Lokasi: {registration.event.location}\n"
-                f"🔗 Link Lokasi: {registration.event.location_url or '-'}\n\n"
+                f"🔗 Link Lokasi: {registration.event.location_url or '-'}"
+                f"{sessions_str}\n\n"
                 f"Salam,\nBarakah Economy"
             )
             whatsapp_service.send_message(formatted_phone, wa_message)
