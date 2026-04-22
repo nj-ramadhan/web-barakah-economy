@@ -314,7 +314,7 @@ const EventRegistrationSubmissionPage = () => {
                                                 {event?.sessions && event.sessions.length > 0 ? (
                                                     event.sessions.map(ses => {
                                                         const attendance = reg.attendances_list?.find(att => {
-                                                            const attSessionId = typeof att.session === 'object' ? att.session.id : att.session;
+                                                            const attSessionId = (att.session && typeof att.session === 'object') ? att.session.id : att.session;
                                                             return Number(attSessionId) === Number(ses.id);
                                                         });
                                                         return (
