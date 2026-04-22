@@ -73,6 +73,20 @@ class EventSerializer(serializers.ModelSerializer):
         fields = '__all__'
         read_only_fields = ('created_by', 'slug', 'created_at', 'updated_at')
 
+    def to_internal_value(self, data):
+        # Handle JSON strings sent via FormData (Multipart)
+        import json
+        mutable_data = data.copy() if hasattr(data, 'copy') else data
+        
+        for field in ['form_fields', 'speakers', 'sessions']:
+            if field in mutable_data and isinstance(mutable_data[field], str):
+                try:
+                    mutable_data[field] = json.loads(mutable_data[field])
+                except (json.JSONDecodeError, TypeError):
+                    pass
+        
+        return super().to_internal_value(mutable_data)
+
     def create(self, validated_data):
         fields_data = validated_data.pop('form_fields', [])
         speakers_data = validated_data.pop('speakers', [])
