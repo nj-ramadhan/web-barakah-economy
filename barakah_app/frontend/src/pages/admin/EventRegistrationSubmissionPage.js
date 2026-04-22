@@ -211,7 +211,7 @@ const EventRegistrationSubmissionPage = () => {
                             <span className="material-icons text-sm">delete_sweep</span>
                             Hapus
                         </button>
-                        <button 
+                        <button
                             onClick={handleExportCsv}
                             disabled={isExporting}
                             className="bg-gray-100 text-gray-700 px-5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 hover:bg-gray-200 transition shadow-sm border border-gray-200 disabled:opacity-50"
@@ -221,14 +221,14 @@ const EventRegistrationSubmissionPage = () => {
                             </span>
                             Export CSV
                         </button>
-                        <button 
+                        <button
                             onClick={() => setShowManualModal(true)}
                             className="bg-green-600 text-white px-5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 hover:bg-green-700 transition shadow-lg shadow-green-100"
                         >
                             <span className="material-icons text-sm">person_add</span>
                             Tambah
                         </button>
-                        <button 
+                        <button
                             onClick={() => setShowBlastModal(true)}
                             className="bg-purple-600 text-white px-5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 hover:bg-purple-700 transition shadow-lg shadow-purple-100"
                         >
@@ -332,7 +332,7 @@ const EventRegistrationSubmissionPage = () => {
                                                 ) : (
                                                     <td className="p-5 text-center">
                                                         {reg.is_attended ? (
-                                                             <div className="flex flex-col items-center">
+                                                            <div className="flex flex-col items-center">
                                                                 <span className="material-icons text-purple-600 text-xl">check_circle</span>
                                                                 <span className="text-[8px] font-bold text-gray-400 uppercase">
                                                                     {reg.attended_at ? new Date(reg.attended_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : 'Hadir'}
@@ -405,8 +405,8 @@ const EventRegistrationSubmissionPage = () => {
                                                                 <span className="text-gray-400 italic">No Proof</span>
                                                             )}
                                                             <span className={`w-fit px-1.5 py-0.5 rounded text-[8px] font-black uppercase ${reg.payment_status === 'verified' ? 'bg-green-50 text-green-700' :
-                                                                    reg.payment_status === 'rejected' ? 'bg-red-50 text-red-700' :
-                                                                        'bg-orange-50 text-orange-700'
+                                                                reg.payment_status === 'rejected' ? 'bg-red-50 text-red-700' :
+                                                                    'bg-orange-50 text-orange-700'
                                                                 }`}>
                                                                 {reg.payment_status || 'Pending'}
                                                             </span>
@@ -429,36 +429,6 @@ const EventRegistrationSubmissionPage = () => {
                                 )}
                             </tbody>
                         </table>
-                    </div>
-                </div>
-
-
-
-                            {/* Export Button */}
-                            <button
-                                onClick={handleExportCsv}
-                                disabled={isExporting}
-                                className="group flex items-center gap-2 px-3.5 sm:px-5 py-2.5 sm:py-3 bg-gray-50 hover:bg-gray-100 text-gray-700 rounded-2xl font-bold transition-all disabled:opacity-50 active:scale-95 border border-gray-200"
-                            >
-                                <span className={`material-icons text-xl ${isExporting ? 'animate-spin' : 'group-hover:-translate-y-0.5 transition-transform'}`}>
-                                    {isExporting ? 'sync' : 'cloud_download'}
-                                </span>
-                                <span className="text-[10px] uppercase tracking-widest hidden sm:inline">
-                                    {isExporting ? 'Export CSV' : 'Export CSV'}
-                                </span>
-                            </button>
-
-                            <div className="w-px h-8 bg-gray-200 mx-1 sm:mx-2"></div>
-
-                            {/* Blast Button */}
-                            <button
-                                onClick={() => setShowBlastModal(true)}
-                                className="group relative flex items-center justify-center gap-2 sm:gap-3 px-6 sm:px-10 py-3 sm:py-3.5 bg-gradient-to-br from-emerald-600 to-teal-800 text-white rounded-[1.25rem] shadow-xl shadow-emerald-200 hover:shadow-emerald-300 hover:scale-[1.02] active:scale-95 transition-all font-black overflow-hidden min-w-[120px]"
-                            >
-                                <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
-                                <span className="text-[11px] uppercase tracking-[0.2em]">Blast WA</span>
-                            </button>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -663,7 +633,7 @@ const EventRegistrationSubmissionPage = () => {
             )}
 
             {/* Manual Registration Modal */}
-            <EventManualRegistrationModal 
+            <EventManualRegistrationModal
                 isOpen={showManualModal}
                 onClose={() => setShowManualModal(false)}
                 event={event}
