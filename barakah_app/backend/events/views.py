@@ -775,10 +775,12 @@ class EventViewSet(viewsets.ModelViewSet):
         sessions = event.sessions.all().order_by('order', 'start_time')
         
         # Create the HttpResponse object with the appropriate CSV header.
-        response = HttpResponse(content_type='text/csv')
+        response = HttpResponse(content_type='text/csv; charset=utf-8')
         response['Content-Disposition'] = f'attachment; filename="participants_{event.slug}.csv"'
         
-        writer = csv.writer(response)
+        # Add UTF-8 BOM for Excel compatibility
+        response.write('\ufeff'.encode('utf8'))
+        writer = csv.writer(response, delimiter=';')
         
         # CSV Header
         header = ['Waktu Daftar', 'ID Peserta', 'Kode Tiket', 'Nama', 'Email', 'Status', 'Kehadiran Umum']
