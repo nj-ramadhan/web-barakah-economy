@@ -241,6 +241,22 @@ const DashboardAboutUsPage = () => {
         });
     };
 
+    const handleDeleteLegalDoc = async (id) => {
+        if (!window.confirm('Hapus dokumen ini?')) return;
+        const user = JSON.parse(localStorage.getItem('user'));
+        const token = user?.access;
+        try {
+            await axios.delete(`${API}/api/site-content/about-us-legal-docs/${id}/`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            fetchAboutUs();
+        } catch (err) {
+            console.error('Error deleting legal doc:', err);
+        }
+    };
+
+    const [fullPhoto, setFullPhoto] = useState(null);
+
     if (loading) {
         return (
             <div className="min-h-screen bg-gray-50 flex flex-col pt-20">
@@ -282,7 +298,7 @@ const DashboardAboutUsPage = () => {
                         {/* Section 1: Content */}
                         <div className="bg-white rounded-[3rem] p-8 md:p-12 shadow-xl shadow-gray-200/40 border border-white space-y-8">
                             <div className="space-y-3">
-                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1">Judu / Nama Organisasi</label>
+                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1">Nama Organisasi</label>
                                 <input
                                     type="text"
                                     className="w-full p-5 bg-gray-50 border-2 border-transparent rounded-[1.5rem] text-xl font-black text-gray-900 focus:border-green-500 focus:bg-white transition-all outline-none"
@@ -363,26 +379,41 @@ const DashboardAboutUsPage = () => {
                             </div>
                         </div>
 
-                        {/* Section 3: Legal Docs */}
+                        {/* Section 3: Legal Docs (GRID PHOTO) */}
                         <div className="bg-white rounded-[3rem] p-8 md:p-12 shadow-xl shadow-gray-200/40 border border-white space-y-8">
-                            <h2 className="text-2xl font-black text-gray-900">Legalitas & Sertifikasi</h2>
-                            <div className="space-y-3">
-                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1">Keterangan Legalitas</label>
-                                <textarea className="w-full p-4 bg-gray-50 border-none rounded-2xl text-sm" value={formData.legal_description} onChange={(e) => setFormData({ ...formData, legal_description: e.target.value })} placeholder="Akta Notaris, SK Kemenkumham, dll..." />
+                            <div>
+                                <h2 className="text-2xl font-black text-gray-900">Galeri Legalitas & Sertifikat</h2>
+                                <p className="text-gray-400 text-[10px] font-black uppercase tracking-widest mt-1">Klik gambar untuk melihat resolusi penuh</p>
                             </div>
-                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                            
+                            <div className="space-y-3">
+                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1">Narasi Legalitas</label>
+                                <textarea className="w-full p-4 bg-gray-50 border-none rounded-2xl text-sm" value={formData.legal_description} onChange={(e) => setFormData({ ...formData, legal_description: e.target.value })} placeholder="Keterangan tambahan legalitas organisasi..." />
+                            </div>
+
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-6">
                                 {aboutData?.legal_documents?.map(doc => (
-                                    <div key={doc.id} className="relative group rounded-3xl overflow-hidden aspect-[3/4] border-4 border-gray-50 shadow-sm">
-                                        <img src={getMediaUrl(doc.image)} alt={doc.title} className="w-full h-full object-cover" />
+                                    <div key={doc.id} className="relative group rounded-[2rem] overflow-hidden aspect-[3/4] border-4 border-gray-50 shadow-sm transition hover:shadow-xl hover:border-green-100">
+                                        <img 
+                                            src={getMediaUrl(doc.image)} 
+                                            alt={doc.title} 
+                                            className="w-full h-full object-cover cursor-pointer" 
+                                            onClick={() => setFullPhoto(getMediaUrl(doc.image))}
+                                        />
                                         <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition flex items-center justify-center p-4">
-                                            <button onClick={() => handleDeleteLegalDoc(doc.id)} className="w-10 h-10 bg-red-600 text-white rounded-xl shadow-lg flex items-center justify-center"><span className="material-icons text-sm">delete</span></button>
+                                            <div className="flex gap-2">
+                                                <button onClick={() => setFullPhoto(getMediaUrl(doc.image))} className="w-10 h-10 bg-white text-gray-900 rounded-xl shadow-lg flex items-center justify-center hover:scale-110 transition"><span className="material-icons text-sm">visibility</span></button>
+                                                <button onClick={() => handleDeleteLegalDoc(doc.id)} className="w-10 h-10 bg-red-600 text-white rounded-xl shadow-lg flex items-center justify-center hover:scale-110 transition"><span className="material-icons text-sm">delete</span></button>
+                                            </div>
                                         </div>
                                     </div>
                                 ))}
-                                <label className="border-4 border-dashed border-gray-100 rounded-3xl flex flex-col items-center justify-center bg-gray-50 aspect-[3/4] cursor-pointer hover:bg-green-50 hover:border-green-200 transition group">
+                                <label className="border-4 border-dashed border-gray-100 rounded-[2rem] flex flex-col items-center justify-center bg-gray-50 aspect-[3/4] cursor-pointer hover:bg-green-50 hover:border-green-200 transition group">
                                     <input type="file" className="hidden" accept="image/*" onChange={e => handleFileChange(e, 'legal_doc', 3/4)} />
-                                    <span className="material-icons text-3xl text-gray-300 group-hover:text-green-500 transition">add_photo_alternate</span>
-                                    <span className="text-[10px] font-black text-gray-400 uppercase mt-2">Tambah Dokumen</span>
+                                    <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-sm text-gray-300 group-hover:text-green-500 transition mb-3">
+                                        <span className="material-icons text-3xl">add_photo_alternate</span>
+                                    </div>
+                                    <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest text-center px-4 leading-tight">Unggah Dokumen Baru</span>
                                 </label>
                             </div>
                         </div>
@@ -422,6 +453,16 @@ const DashboardAboutUsPage = () => {
                     </div>
                 </div>
             </div>
+
+            {/* FULL PHOTO OVERLAY */}
+            {fullPhoto && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/95 backdrop-blur-md p-4 animate-in fade-in zoom-in-95 duration-200" onClick={() => setFullPhoto(null)}>
+                    <div className="relative max-w-5xl max-h-[90vh] flex items-center justify-center border-8 border-white/5 rounded-3xl overflow-hidden shadow-2xl">
+                        <img src={fullPhoto} className="max-w-full max-h-full object-contain" alt="Full" />
+                        <button onClick={() => setFullPhoto(null)} className="absolute top-4 right-4 w-12 h-12 bg-white/10 hover:bg-white/20 text-white rounded-full flex items-center justify-center backdrop-blur transition"><span className="material-icons">close</span></button>
+                    </div>
+                </div>
+            )}
 
             {/* PERSONNEL MODAL */}
             {showPersonnelModal && (
