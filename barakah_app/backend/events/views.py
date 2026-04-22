@@ -224,35 +224,49 @@ class EventViewSet(viewsets.ModelViewSet):
             ocr_data = ocr_result
 
         # 3. Create registration
-        # Status defaults to 'pending' as defined in model
-        registration = EventRegistration.objects.create(
-            event=event,
-            user=user,
-            responses=responses,
-            payment_proof=payment_proof,
-            payment_amount=payment_amount,
-            status='approved', # Force auto-approve if payment is verified
-            ocr_verified=ocr_verified,
-            ocr_data=ocr_data
-        )
-        
-        # 4. Handle File Uploads for dynamic fields
-        for field in form_fields:
-            if field.field_type == 'file' and str(field.id) in request.FILES:
-                EventRegistrationFile.objects.create(
-                    registration=registration,
-                    field=field,
-                    file=request.FILES[str(field.id)]
-                )
-        
-        # 5. Automated Notifications
         try:
-            self._send_registration_notifications(registration)
+            registration = EventRegistration.objects.create(
+                event=event,
+                user=user,
+                responses=responses,
+                payment_proof=payment_proof,
+                payment_amount=payment_amount,
+                status='approved', # Force auto-approve if payment is verified
+                ocr_verified=ocr_verified,
+                ocr_data=ocr_data
+            )
+            
+            # 4. Handle File Uploads for dynamic fields
+            for field in form_fields:
+                if field.field_type == 'file' and str(field.id) in request.FILES:
+                    EventRegistrationFile.objects.create(
+                        registration=registration,
+                        field=field,
+                        file=request.FILES[str(field.id)]
+                    )
+            
+            # 5. Automated Notifications
+            try:
+                self._send_registration_notifications(registration)
+            except Exception as e:
+                # Log notification errors but don't fail the registration
+                import logging
+                logging.getLogger(__name__).error(f"Gagal mengirim notifikasi pendaftaran: {e}")
+
+            return Response({
+                "message": "Pendaftaran berhasil dilakukan.",
+                "registration_id": registration.id,
+                "unique_code": registration.unique_code
+            }, status=status.HTTP_201_CREATED)
+
         except Exception as e:
             import logging
-            logging.getLogger(__name__).error(f"Failed to send notifications for registration {registration.id}: {e}")
-        
-        return Response({"message": "Pendaftaran berhasil! Kode tiket Anda: " + registration.unique_code, "id": registration.id, "unique_code": registration.unique_code}, status=status.HTTP_201_CREATED)
+            logger = logging.getLogger(__name__)
+            logger.error(f"Error saat pendaftaran event: {str(e)}")
+            return Response({
+                "error": "Terjadi kesalahan internal saat memproses pendaftaran.",
+                "details": str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def _send_registration_notifications(self, registration):
         """Helper to send Email and WhatsApp notifications on registration."""
