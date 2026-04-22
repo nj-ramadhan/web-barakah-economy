@@ -4,6 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import Header from '../components/layout/Header';
 import NavigationButton from '../components/layout/Navigation';
+import CurrencyInput from '../components/common/CurrencyInput';
 import '../styles/Body.css';
 
 const getCsrfToken = () => {
@@ -344,16 +345,11 @@ const CrowdfundingDonationPage = () => {
         {/* Custom Amount Input */}
         {selectedAmount === 'custom' && (
           <div className="mb-6">
-            <div className="flex items-center bg-white rounded-lg px-3 shadow-sm">
-              <span className="text-gray-500">Rp</span>
-              <input
-                type="number"
-                className="flex-1 py-3 px-2 outline-none"
-                placeholder="Masukan Nominal"
-                value={customAmount}
-                onChange={(e) => setCustomAmount(e.target.value)}
-              />
-            </div>
+            <CurrencyInput
+              value={customAmount}
+              onChange={(e) => setCustomAmount(e.target.value)}
+              placeholder="Masukkan Nominal"
+            />
           </div>
         )}
 

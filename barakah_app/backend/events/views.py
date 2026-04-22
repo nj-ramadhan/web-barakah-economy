@@ -12,6 +12,7 @@ from barakah_app.utils import send_status_update_email
 import json
 from django.utils import timezone
 from accounts import whatsapp_service
+from .payment_ocr_service import extract_payment_data
 import os
 import re
 
@@ -185,6 +186,55 @@ class EventViewSet(viewsets.ModelViewSet):
         if event.price_type != 'free' and not payment_proof:
             return Response({"error": "Bukti pembayaran wajib diunggah untuk event berbayar."}, status=status.HTTP_400_BAD_REQUEST)
 
+        # 2b. OCR Validation
+        ocr_data = None
+        ocr_verified = False
+        if payment_proof:
+            import decimal
+            try:
+                expected_amount = decimal.Decimal(str(payment_amount))
+            except:
+                expected_amount = decimal.Decimal('0')
+
+            # Call OCR Service
+            ocr_result = extract_payment_data(payment_proof)
+            
+            if '_error' in ocr_result:
+                # If AI fails, we still allow but warn? 
+                # User requested: "kalo tidak sesuai maka berikan info / notif nya"
+                # For now let's be strict if AI works but data is wrong.
+                # If AI itself fails (API error), let it pass as unverified.
+                pass
+            else:
+                ocr_data = ocr_result
+                extracted_name = str(ocr_result.get('recipient_name', '')).lower()
+                extracted_amount = ocr_result.get('amount')
+                
+                # Validation logic
+                valid_names = ['bae community', 'barakah economy community', 'barakah community', 'barakah economy']
+                is_name_valid = any(vn in extracted_name for vn in valid_names)
+                
+                # Amount validation
+                is_amount_valid = False
+                if extracted_amount:
+                    try:
+                        # Convert both to float for comparison if they are numbers
+                        is_amount_valid = abs(float(extracted_amount) - float(expected_amount)) < 1
+                    except:
+                        pass
+                
+                if not is_name_valid:
+                    return Response({
+                        "error": f"Penerima di bukti transfer ('{ocr_result.get('recipient_name') or 'Tidak terdeteksi'}') tidak sesuai. Harus atas nama BAE Community."
+                    }, status=status.HTTP_400_BAD_REQUEST)
+                
+                if not is_amount_valid:
+                    return Response({
+                        "error": f"Nominal di bukti transfer (Rp {float(extracted_amount or 0):,.0f}) tidak sesuai dengan total yang harus dibayar (Rp {float(expected_amount):,.0f})."
+                    }, status=status.HTTP_400_BAD_REQUEST)
+                
+                ocr_verified = True
+
         # 3. Create registration
         # Status defaults to 'pending' as defined in model
         registration = EventRegistration.objects.create(
@@ -193,6 +243,8 @@ class EventViewSet(viewsets.ModelViewSet):
             responses=responses,
             payment_proof=payment_proof,
             payment_amount=payment_amount,
+            ocr_data=ocr_data,
+            ocr_verified=ocr_verified,
             status='approved' # Force auto-approve
         )
         
@@ -242,6 +294,18 @@ class EventViewSet(viewsets.ModelViewSet):
             if any(kw in label for kw in ['wa', 'whatsapp', 'hp', 'telepon', 'phone', 'handphone']):
                 phone = value
 
+        # Prepare time string with timezone handling
+        # Use timezone.localtime to convert from UTC to Asia/Jakarta (set in settings)
+        local_start = timezone.localtime(registration.event.start_date)
+        time_str = local_start.strftime('%d %b %Y %H:%M')
+        
+        if registration.event.end_date:
+            local_end = timezone.localtime(registration.event.end_date)
+            if local_start.date() == local_end.date():
+                time_str += f" - {local_end.strftime('%H:%M')}"
+            else:
+                time_str += f" - {local_end.strftime('%d %b %Y %H:%M')}"
+
         # Send WhatsApp
         if phone:
             formatted_phone = self._format_phone_number(phone)
@@ -255,8 +319,9 @@ class EventViewSet(viewsets.ModelViewSet):
                 f"━━━━━━━━━━━━━━━━\n\n"
                 f"📌 Simpan kode ini sebagai tiket masuk event. Kode ini akan di-scan saat Anda hadir.\n"
                 f"📷 QR Code tiket bisa dilihat di halaman detail event.\n\n"
-                f"📅 Waktu: {registration.event.start_date.strftime('%d %b %Y %H:%M')}\n"
-                f"📍 Lokasi: {registration.event.location}\n\n"
+                f"📅 Waktu: {time_str}\n"
+                f"📍 Lokasi: {registration.event.location}\n"
+                f"🔗 Link Lokasi: {registration.event.location_url or '-'}\n\n"
                 f"Salam,\nBarakah Economy"
             )
             whatsapp_service.send_message(formatted_phone, wa_message)
@@ -280,7 +345,8 @@ class EventViewSet(viewsets.ModelViewSet):
                 f"Detail Event:\n"
                 f"- Judul: {registration.event.title}\n"
                 f"- Lokasi: {registration.event.location}\n"
-                f"- Waktu: {registration.event.start_date.strftime('%d %b %Y %H:%M')}\n\n"
+                f"- Waktu: {time_str}\n\n"
+                f"🔗 Link Lokasi: {registration.event.location_url or '-'}\n\n"
                 f"QR Code tiket Anda terlampir pada email ini.\n"
                 f"Terima kasih,\nTim Barakah Economy"
             )
@@ -478,9 +544,10 @@ class EventViewSet(viewsets.ModelViewSet):
         
         if registration.is_attended:
             # Sudah hadir sebelumnya
+            attended_time = timezone.localtime(registration.attended_at).strftime("%d %b %Y %H:%M") if registration.attended_at else "-"
             return Response({
                 'status': 'already_attended',
-                'message': f'Peserta ini sudah ditandai hadir pada {registration.attended_at.strftime("%d %b %Y %H:%M") if registration.attended_at else "-"}.',
+                'message': f'Peserta ini sudah ditandai hadir pada {attended_time}.',
                 'registration': {
                     'id': registration.id,
                     'name': registration.user.profile.name_full if registration.user and hasattr(registration.user, 'profile') else (registration.guest_name or 'Tamu'),

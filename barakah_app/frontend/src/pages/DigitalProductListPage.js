@@ -4,11 +4,12 @@ import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
 import HeaderHome from '../components/layout/HeaderHome';
 import NavigationButton from '../components/layout/Navigation';
+import { formatCurrency } from '../utils/formatters';
 import { getDigitalProducts, getPopularSellers } from '../services/digitalProductApi';
 import '../styles/Body.css';
 
 const formatIDR = (amount) => {
-    return 'Rp. ' + new Intl.NumberFormat('id-ID', { minimumFractionDigits: 0 }).format(amount);
+    return 'Rp ' + formatCurrency(amount);
 };
 
 const getMediaUrl = (url) => {

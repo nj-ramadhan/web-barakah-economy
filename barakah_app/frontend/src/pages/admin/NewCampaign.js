@@ -2,6 +2,7 @@
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ImageCropperModal from '../../components/common/ImageCropper';
+import CurrencyInput from '../../components/common/CurrencyInput';
 
 const NewCampaign = () => {
   const navigate = useNavigate();
@@ -160,24 +161,16 @@ const NewCampaign = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Target Donasi <span className="text-red-500">*</span>
                   </label>
-                  <div className="flex items-center">
-                    <span className="bg-gray-100 px-3 py-2 text-gray-500 border border-r-0 border-gray-300 rounded-l-md">
-                      Rp
-                    </span>
-                    <input
-                      type="number"
-                      name="targetAmount"
-                      required
-                      min="1000"
-                      step="1000"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-r-md focus:outline-none focus:ring-2 focus:ring-green-500"
-                      placeholder="1000000"
-                      value={formData.targetAmount}
-                      onChange={handleInputChange}
-                    />
-                  </div>
+                  <CurrencyInput
+                    name="targetAmount"
+                    required
+                    value={formData.targetAmount}
+                    onChange={handleInputChange}
+                    placeholder="1000000"
+                    className="!rounded-md"
+                  />
                   <p className="text-xs text-gray-500 mt-1">
-                    Masukkan jumlah tanpa tanda titik, contoh: 50000000
+                    Masukkan jumlah target donasi program ini.
                   </p>
                 </div>
 

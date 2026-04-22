@@ -5,6 +5,7 @@ import { Helmet } from 'react-helmet';
 import Header from '../components/layout/Header';
 import { uploadPaymentProof, getDigitalOrderStatus } from '../services/digitalProductApi';
 import Tesseract from 'tesseract.js';
+import { formatCurrency } from '../utils/formatters';
 import '../styles/Body.css';
 
 const DigitalProductPaymentPage = () => {
@@ -85,7 +86,7 @@ const DigitalProductPaymentPage = () => {
 
             const numericTotal = Math.floor(Number(order.amount));
             const totalStr = String(numericTotal);
-            const totalFormatted = numericTotal.toLocaleString('id-ID');
+            const totalFormatted = formatCurrency(numericTotal);
 
             const scrubbedText = lowerText.replace(/rp/g, '').replace(/\./g, '').replace(/,/g, '').replace(/\s+/g, '');
 
@@ -176,7 +177,7 @@ const DigitalProductPaymentPage = () => {
                             <div>
                                 <p className="text-[10px] text-green-600 uppercase font-bold tracking-wider">Total Tagihan</p>
                                 <p className="text-lg font-bold text-green-900">
-                                    Rp {Number(order.amount).toLocaleString('id-ID')}
+                                    Rp {formatCurrency(order.amount)}
                                 </p>
                             </div>
                             <div className="text-right">

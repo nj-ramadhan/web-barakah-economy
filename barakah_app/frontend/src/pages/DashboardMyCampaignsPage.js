@@ -4,6 +4,8 @@ import { Helmet } from 'react-helmet';
 import axios from 'axios';
 import Header from '../components/layout/Header';
 import NavigationButton from '../components/layout/Navigation';
+import CurrencyInput from '../components/common/CurrencyInput';
+import { formatCurrency } from '../utils/formatters';
 
 const API = process.env.REACT_APP_API_BASE_URL;
 const getAuth = () => {
@@ -137,7 +139,13 @@ const DashboardMyCampaignsPage = () => {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-1">
                                     <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Target Donasi (Rp)</label>
-                                    <input type="number" required min="10000" className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm outline-none" value={formData.target_amount} onChange={e => setFormData({...formData, target_amount: e.target.value})} placeholder="50000000" />
+                                    <CurrencyInput
+                                        required
+                                        value={formData.target_amount}
+                                        onChange={e => setFormData({...formData, target_amount: e.target.value})}
+                                        placeholder="50000000"
+                                        className="!px-4 !py-2.5"
+                                    />
                                 </div>
                                 <div className="space-y-1">
                                     <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Gambar Thumbnail</label>
@@ -181,8 +189,8 @@ const DashboardMyCampaignsPage = () => {
                                         </div>
                                         <p className="text-xs text-gray-500 mt-1 line-clamp-2">{c.description?.replace(/<[^>]*>/g, '')}</p>
                                         <div className="flex gap-4 mt-2 text-xs text-gray-500">
-                                            <span>Target: Rp {Number(c.target_amount).toLocaleString('id-ID')}</span>
-                                            <span>Terkumpul: Rp {Number(c.current_amount).toLocaleString('id-ID')}</span>
+                                            <span>Target: Rp {formatCurrency(c.target_amount)}</span>
+                                            <span>Terkumpul: Rp {formatCurrency(c.current_amount)}</span>
                                         </div>
                                         {c.approval_status === 'rejected' && c.rejection_reason && (
                                             <div className="mt-2 bg-red-50 border border-red-100 rounded-lg px-3 py-2 text-xs text-red-700">

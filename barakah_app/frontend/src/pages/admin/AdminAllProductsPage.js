@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Header from '../../components/layout/Header';
 import NavigationButton from '../../components/layout/Navigation';
 import { getAdminAllProducts, deleteAdminProduct } from '../../services/digitalProductApi';
+import { formatCurrency } from '../../utils/formatters';
 
 const getMediaUrl = (url) => {
     if (!url) return '';
@@ -113,7 +114,7 @@ const AdminAllProductsPage = () => {
                                                 {product.seller_name}
                                             </td>
                                             <td className="p-4 text-xs font-black text-emerald-600">
-                                                Rp {product.price.toLocaleString('id-ID')}
+                                                Rp {formatCurrency(product.price)}
                                             </td>
                                             <td className="p-4 text-[10px] font-bold text-gray-400 uppercase">
                                                 {product.category_name || 'DIGITAL'}

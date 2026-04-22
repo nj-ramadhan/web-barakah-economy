@@ -4,6 +4,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import Header from '../components/layout/Header';
 import NavigationButton from '../components/layout/Navigation';
+import { formatCurrency } from '../utils/formatters';
 import '../styles/Body.css';
 
 const getCsrfToken = () => {
@@ -15,9 +16,7 @@ const getCsrfToken = () => {
 };
 
 const formatIDR = (amount) => {
-  return 'Rp. ' + new Intl.NumberFormat('id-ID', {
-    minimumFractionDigits: 0,
-  }).format(amount);
+  return 'Rp ' + formatCurrency(amount);
 };
 
 const EcommerceCheckoutPage = () => {

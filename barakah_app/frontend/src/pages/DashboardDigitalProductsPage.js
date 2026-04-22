@@ -12,11 +12,13 @@ import {
 } from '../services/digitalProductApi';
 import BackButton from '../components/global/BackButton';
 import ImageCropperModal from '../components/common/ImageCropper';
+import CurrencyInput from '../components/common/CurrencyInput';
+import { formatCurrency } from '../utils/formatters';
 import '../styles/Body.css';
 
 const formatIDR = (amount) => {
     if (amount === 0 || amount === '0') return 'Gratis';
-    return 'Rp. ' + new Intl.NumberFormat('id-ID', { minimumFractionDigits: 0 }).format(amount);
+    return 'Rp ' + formatCurrency(amount);
 };
 
 const getMediaUrl = (url) => {
@@ -285,13 +287,12 @@ const DashboardDigitalProductsPage = () => {
                             </div>
                             <div>
                                 <label className="block text-xs font-medium text-gray-600 mb-1">Harga (Rp) *</label>
-                                <input
-                                    type="number"
+                                <CurrencyInput
                                     value={price}
                                     onChange={(e) => setPrice(e.target.value)}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent"
                                     placeholder="10000"
                                     required
+                                    className="!py-2 !rounded-lg border-gray-300"
                                 />
                             </div>
                         </div>

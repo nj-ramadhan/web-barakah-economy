@@ -6,18 +6,15 @@ import { Helmet } from 'react-helmet';
 import HeaderHome from '../components/layout/HeaderHome'; // Import the Header component
 import NavigationButton from '../components/layout/Navigation'; // Import the Navigation component
 import ShareButton from '../components/campaigns/ShareButton';
+import { formatCurrency } from '../utils/formatters';
 
 const formatIDR = (amount) => {
-  return 'Rp. ' + new Intl.NumberFormat('id-ID', {
-    minimumFractionDigits: 0,
-  }).format(amount);
+  return 'Rp ' + formatCurrency(amount);
 };
 
 const formatIDRTarget = (amount) => {
   if (amount <= 0) return '\u221E';
-  return 'Rp. ' + new Intl.NumberFormat('id-ID', {
-    minimumFractionDigits: 0,
-  }).format(amount);
+  return 'Rp ' + formatCurrency(amount);
 };
 
 const isCampaignExpired = (deadline) => {
@@ -305,10 +302,10 @@ const CrowdfundingMainPage = () => {
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="text-xs text-gray-500 mt-1">
-                          {campaign.current_amount ? formatIDR(campaign.current_amount) : 'Rp. 0'}
+                          {campaign.current_amount ? formatIDR(campaign.current_amount) : 'Rp 0'}
                         </span>
                         <span className="text-xs text-gray-500 mt-1">
-                          dari {campaign.target_amount ? formatIDRTarget(campaign.target_amount) : 'Rp. 0'}
+                          dari {campaign.target_amount ? formatIDRTarget(campaign.target_amount) : 'Rp 0'}
                         </span>
                       </div>
                       <div className="text-right text-xs text-gray-500 mt-1">

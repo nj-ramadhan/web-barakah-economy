@@ -5,6 +5,7 @@ import axios from 'axios';
 import { Helmet } from 'react-helmet';
 import Header from '../components/layout/Header';
 import NavigationButton from '../components/layout/Navigation';
+import { formatCurrency } from '../utils/formatters';
 import '../styles/Body.css';
 
 function getCsrfToken() {
@@ -40,9 +41,7 @@ const getTimeElapsed = (createdAt) => {
 };
 
 const formatIDR = (amount) => {
-  return 'Rp. ' + new Intl.NumberFormat('id-ID', {
-    minimumFractionDigits: 0,
-  }).format(amount);
+  return 'Rp ' + formatCurrency(amount);
 };
 
 const EcommerceProductDetail = () => {

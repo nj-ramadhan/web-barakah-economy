@@ -7,6 +7,8 @@ import NavigationButton from '../components/layout/Navigation';
 import { getEventDetail, registerForEvent, getEventParticipants } from '../services/eventApi';
 import authService from '../services/auth';
 import Footer from '../components/layout/Footer';
+import CurrencyInput from '../components/common/CurrencyInput';
+import { formatCurrency } from '../utils/formatters';
 import '../styles/Body.css';
 
 const EventDetailPage = () => {
@@ -762,7 +764,7 @@ const EventDetailPage = () => {
                                                     {(event.price_type === 'fixed' || event.price_type === 'hybrid_1') && (
                                                         <div className="flex items-center justify-between bg-white px-5 py-4 rounded-2xl border border-gray-100">
                                                             <span className="text-xs font-bold text-gray-500 uppercase">HTM {event.price_type === 'hybrid_1' ? 'Minimal' : ''}</span>
-                                                            <span className="text-lg font-black text-green-700">Rp {Number(event.price_fixed).toLocaleString('id-ID')}</span>
+                                                            <span className="text-lg font-black text-green-700">Rp {formatCurrency(event.price_fixed)}</span>
                                                         </div>
                                                     )}
 
@@ -773,23 +775,12 @@ const EventDetailPage = () => {
                                                                  event.price_type === 'hybrid_2' ? 'Pilih Nominal Bayar (Min. Rp 0)' : 
                                                                  'Nominal Sukarela *'}
                                                             </label>
-                                                            <div className="relative">
-                                                                <span className="absolute left-5 top-1/2 -translate-y-1/2 font-bold text-gray-400 text-sm">Rp</span>
-                                                                <input 
-                                                                    type="number"
-                                                                    min="0"
-                                                                    required={event.price_type === 'voluntary'}
-                                                                    value={paymentAmount}
-                                                                    onChange={(e) => {
-                                                                        const val = e.target.value;
-                                                                        if (val === '' || Number(val) >= 0) {
-                                                                            setPaymentAmount(val);
-                                                                        }
-                                                                    }}
-                                                                    placeholder="Masukkan nominal..."
-                                                                    className="w-full pl-12 pr-5 py-3.5 bg-white border border-gray-200 rounded-2xl text-sm font-bold outline-none focus:ring-2 focus:ring-green-500 shadow-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                                                                />
-                                                            </div>
+                                                            <CurrencyInput
+                                                                value={paymentAmount}
+                                                                onChange={(e) => setPaymentAmount(e.target.value)}
+                                                                required={event.price_type === 'voluntary'}
+                                                                placeholder="Masukkan nominal..."
+                                                            />
                                                         </div>
                                                     )}
                                                 </div>
@@ -807,7 +798,7 @@ const EventDetailPage = () => {
                                                             else if (event?.price_type === 'hybrid_1') total = fixed + extra;
                                                             else total = extra; // voluntary or hybrid_2
                                                             
-                                                            return total.toLocaleString('id-ID');
+                                                            return formatCurrency(total);
                                                         })()}
                                                     </p>
                                                 </div>

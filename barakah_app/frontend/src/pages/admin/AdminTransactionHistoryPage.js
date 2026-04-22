@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import Header from '../../components/layout/Header';
 import NavigationButton from '../../components/layout/Navigation';
 import { getAdminAllTransactions } from '../../services/digitalProductApi';
+import { formatCurrency } from '../../utils/formatters';
 
 const formatIDR = (amount) => {
-    return 'Rp ' + new Intl.NumberFormat('id-ID', { minimumFractionDigits: 0 }).format(amount || 0);
+    return 'Rp ' + formatCurrency(amount);
 };
 
 const AdminTransactionHistoryPage = () => {

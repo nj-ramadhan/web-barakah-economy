@@ -6,13 +6,12 @@ import Header from '../components/layout/Header';
 import NavigationButton from '../components/layout/Navigation';
 import ShareButton from '../components/campaigns/ShareButton';
 import { getCourseBySlug, getMyEnrolledCourses, createEnrollment } from '../services/ecourseApi';
+import { formatCurrency } from '../utils/formatters';
 import '../styles/Body.css';
 
 const formatIDR = (amount) => {
   if (amount <= 0) return 'GRATIS';
-  return 'Rp. ' + new Intl.NumberFormat('id-ID', {
-    minimumFractionDigits: 0,
-  }).format(amount);
+  return 'Rp ' + formatCurrency(amount);
 };
 
 const EcourseCourseDetail = () => {

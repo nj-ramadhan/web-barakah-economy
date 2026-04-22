@@ -4,6 +4,8 @@ import { Helmet } from 'react-helmet';
 import Header from '../components/layout/Header';
 import NavigationButton from '../components/layout/Navigation';
 import { Link } from 'react-router-dom';
+import CurrencyInput from '../components/common/CurrencyInput';
+import { formatCurrency } from '../utils/formatters';
 
 const DashboardSinergySellersPage = () => {
     const [products, setProducts] = useState([]);
@@ -163,7 +165,7 @@ const DashboardSinergySellersPage = () => {
                             <img src={p.thumbnail || p.thumbnail_url} alt={p.title} className="w-full h-32 object-cover rounded-xl bg-gray-50" />
                             <div className="flex-1">
                                 <h3 className="font-bold text-gray-800 line-clamp-1">{p.title}</h3>
-                                <p className="text-xs text-gray-500">Harga: <span className="font-semibold text-emerald-700">Rp {p.price}</span></p>
+                                <p className="text-xs text-gray-500">Harga: <span className="font-semibold text-emerald-700">Rp {formatCurrency(p.price)}</span></p>
                                 <p className="text-xs text-gray-500 line-clamp-2 mt-1">{p.description}</p>
                             </div>
                             <div className="flex gap-2">
@@ -202,7 +204,7 @@ const DashboardSinergySellersPage = () => {
                     </div>
                     <div>
                         <label className="block text-[11px] font-bold text-gray-600 mb-1">Nominal Diskon (Rp)</label>
-                        <input type="number" name="nominal" required placeholder="10000" className="w-full px-3 py-2 text-sm border-none rounded-xl outline-none focus:ring-2 focus:ring-orange-400" />
+                        <CurrencyInput name="nominal" required placeholder="10000" className="!px-3 !py-2 !rounded-xl" />
                     </div>
                     <div>
                         <label className="block text-[11px] font-bold text-gray-600 mb-1">Batas Kuota Pemakaian</label>
@@ -222,7 +224,7 @@ const DashboardSinergySellersPage = () => {
                             <div key={v.id} className="flex justify-between items-center bg-gray-50 p-4 rounded-xl border border-gray-100">
                                 <div>
                                     <h4 className="font-bold text-emerald-700 text-lg uppercase">{v.code}</h4>
-                                    <p className="text-xs text-gray-500">Potongan Rp {v.nominal} • Sisa Kuota: {v.quantity}</p>
+                                    <p className="text-xs text-gray-500">Potongan Rp {formatCurrency(v.nominal)} • Sisa Kuota: {v.quantity}</p>
                                 </div>
                                 <button onClick={() => handleDeleteVoucher(v.id)} className="text-red-500 bg-red-50 p-2 rounded-lg hover:bg-red-100">
                                     <span className="material-icons text-[18px]">delete</span>
@@ -251,11 +253,11 @@ const DashboardSinergySellersPage = () => {
                 <div className="grid grid-cols-2 gap-4">
                     <div>
                         <label className="block text-sm font-semibold text-gray-700 mb-1">Harga Beli Dasar (Rp)</label>
-                        <input type="number" name="purchase_price" defaultValue={editingProduct?.purchase_price || ''} placeholder="0" className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none transition" />
+                        <CurrencyInput name="purchase_price" defaultValue={editingProduct?.purchase_price || ''} placeholder="0" className="!px-4 !py-3 !bg-gray-50 !border-gray-200 !rounded-xl" />
                     </div>
                     <div>
                         <label className="block text-sm font-semibold text-gray-700 mb-1">Harga Jual (Rp)</label>
-                        <input type="number" name="price" defaultValue={editingProduct?.price || ''} required placeholder="0" className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none transition" />
+                        <CurrencyInput name="price" defaultValue={editingProduct?.price || ''} required placeholder="0" className="!px-4 !py-3 !bg-gray-50 !border-gray-200 !rounded-xl" />
                     </div>
                 </div>
 
@@ -335,8 +337,13 @@ const DashboardSinergySellersPage = () => {
                             <div key={i} className="flex gap-2">
                                 <input type="text" placeholder="Nama Varian (Cth: XL / Merah)" value={v.name} onChange={(e) => updateVariant(i, 'name', e.target.value)} className="flex-[2] px-3 py-2 text-sm border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500" />
                                 <div className="flex-1 relative">
-                                    <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[10px] font-bold text-gray-400">Rp</span>
-                                    <input type="number" placeholder="Harga" value={v.additional_price || ''} onChange={(e) => updateVariant(i, 'additional_price', e.target.value)} className="w-full pl-7 pr-2 py-2 text-sm border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500 font-bold text-emerald-700" title="Harga Total untuk varian ini" />
+                                    <CurrencyInput 
+                                        value={v.additional_price || ''} 
+                                        onChange={(e) => updateVariant(i, 'additional_price', e.target.value)} 
+                                        placeholder="Harga" 
+                                        className="!px-2 !py-2 !rounded-lg !border-gray-200 !text-emerald-700" 
+                                        title="Harga Total untuk varian ini" 
+                                    />
                                 </div>
                                 <div className="w-20 relative">
                                     <input type="number" placeholder="Stok" value={v.stock || ''} onChange={(e) => updateVariant(i, 'stock', e.target.value)} className="w-full px-2 py-2 text-sm border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500" />

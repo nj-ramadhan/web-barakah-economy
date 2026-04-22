@@ -5,6 +5,7 @@ import axios from 'axios';
 import { Helmet } from 'react-helmet';
 import HeaderHome from '../components/layout/HeaderHome'; // Import the Header component
 import NavigationButton from '../components/layout/Navigation'; // Import the Navigation component
+import { formatCurrency } from '../utils/formatters';
 
 function getCsrfToken() {
   const cookies = document.cookie.split(';');
@@ -18,9 +19,7 @@ function getCsrfToken() {
 }
 
 const formatIDR = (amount) => {
-  return 'Rp. ' + new Intl.NumberFormat('id-ID', {
-    minimumFractionDigits: 0,
-  }).format(amount);
+  return 'Rp ' + formatCurrency(amount);
 };
 
 const EcommerceMainPage = () => {

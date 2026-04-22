@@ -4,12 +4,14 @@ import { Helmet } from 'react-helmet';
 import axios from 'axios';
 import Header from '../components/layout/Header';
 import NavigationButton from '../components/layout/Navigation';
+import CurrencyInput from '../components/common/CurrencyInput';
+import { formatCurrency } from '../utils/formatters';
 import { getMyDigitalProducts, getDigitalBalance, getWithdrawalHistory, createWithdrawalRequest } from '../services/digitalProductApi';
 import { getMyCourses } from '../services/ecourseApi';
 import authService from '../services/auth';
 
 const formatIDR = (amount) => {
-    return 'Rp ' + new Intl.NumberFormat('id-ID', { minimumFractionDigits: 0 }).format(amount || 0);
+    return 'Rp ' + formatCurrency(amount);
 };
 
 const DashboardPage = () => {
@@ -917,11 +919,10 @@ const DashboardPage = () => {
                                         Tarik Semua
                                     </button>
                                 </div>
-                                <input
-                                    type="number"
+                                <CurrencyInput
                                     value={withdrawAmount}
                                     onChange={(e) => setWithdrawAmount(e.target.value)}
-                                    className="w-full px-4 py-3 bg-gray-100 border-none rounded-xl text-sm focus:ring-2 focus:ring-green-500"
+                                    className="!px-4 !py-3 !bg-gray-100 !border-none !rounded-xl"
                                     placeholder="Contoh: 50000"
                                     required
                                 />
@@ -929,11 +930,10 @@ const DashboardPage = () => {
 
                             <div>
                                 <label className="block text-xs font-medium text-gray-500 mb-1">Donasi Program Sosial (Opsional)</label>
-                                <input
-                                    type="number"
+                                <CurrencyInput
                                     value={donationAmount}
                                     onChange={(e) => setDonationAmount(e.target.value)}
-                                    className="w-full px-4 py-3 bg-gray-100 border-none rounded-xl text-sm focus:ring-2 focus:ring-green-500"
+                                    className="!px-4 !py-3 !bg-gray-100 !border-none !rounded-xl"
                                     placeholder="Berapapun donasi Anda sangat berarti"
                                 />
                             </div>

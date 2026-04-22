@@ -6,6 +6,7 @@ import Header from '../components/layout/Header';
 import NavigationButton from '../components/layout/Navigation';
 import { createCourse, updateCourse, getCourseDetail } from '../services/ecourseApi';
 import ImageCropperModal from '../components/common/ImageCropper';
+import CurrencyInput from '../components/common/CurrencyInput';
 import '../styles/Body.css';
 
 const CATEGORY_CHOICES = [
@@ -249,13 +250,12 @@ const DashboardEcourseFormPage = () => {
                         </div>
                         <div>
                             <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Harga (Rp) *</label>
-                            <input
-                                type="number"
+                            <CurrencyInput
                                 value={price}
                                 onChange={(e) => setPrice(e.target.value)}
-                                className="w-full px-4 py-3 bg-gray-50 border-none rounded-xl text-sm font-semibold focus:ring-2 focus:ring-green-500"
                                 placeholder="Harga Jual"
                                 required
+                                className="!bg-gray-50 !border-none !rounded-xl !py-3 font-semibold"
                             />
                             <p className="text-[10px] text-gray-400 mt-1 italic">Isi 0 jika kursus ini Gratis</p>
                         </div>
