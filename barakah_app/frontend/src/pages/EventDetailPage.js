@@ -495,7 +495,7 @@ const EventDetailPage = () => {
                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                             {event.speakers.map(spk => (
                                                 <div key={spk.id} className="flex items-center gap-4 bg-gray-50 border border-gray-100 p-4 rounded-3xl group hover:border-blue-200 transition">
-                                                    <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-700 text-white rounded-full flex items-center justify-center font-bold text-2xl shadow-lg">{spk.name.charAt(0)}</div>
+                                                    <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-700 text-white rounded-full flex items-center justify-center font-bold text-2xl shadow-lg shrink-0 aspect-square overflow-hidden">{spk.name.charAt(0)}</div>
                                                     <div>
                                                         <p className="font-extrabold text-gray-900 text-base">{spk.name}</p>
                                                         {spk.role && <p className="text-xs text-blue-600 font-bold uppercase tracking-wider mt-1">{spk.role}</p>}
@@ -513,7 +513,7 @@ const EventDetailPage = () => {
                                             <span className="w-2 h-8 bg-purple-600 rounded-full"></span>
                                             Rangkaian Acara
                                         </h2>
-                                        <div className="space-y-4">
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                             {event.sessions.map((ses, idx) => (
                                                 <div key={idx} className="bg-gray-50 border border-gray-100 p-5 rounded-2xl flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 group hover:border-purple-200 transition">
                                                     <div className="flex items-center gap-4">
@@ -538,7 +538,7 @@ const EventDetailPage = () => {
                                             <span className="w-2 h-8 bg-orange-500 rounded-full"></span>
                                             Syarat & Ketentuan
                                         </h2>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                                             {event.terms_do && (
                                                 <div className="bg-green-50/50 p-6 rounded-3xl border border-green-100 h-full">
                                                     <h3 className="font-extrabold text-green-800 text-sm flex items-center gap-2 mb-4 uppercase tracking-wider"><span className="material-icons text-green-600 bg-green-100 rounded-full p-1">check</span>Yang Boleh/Wajib</h3>
@@ -718,6 +718,10 @@ const EventDetailPage = () => {
                             ) : isCompleted ? (
                                 <div className="w-full bg-white/5 text-gray-500 py-4 rounded-2xl text-[10px] font-extrabold uppercase tracking-[0.2em] relative z-10 border border-white/10 text-center">
                                     EVENT SELESAI
+                                </div>
+                            ) : (event.capacity > 0 && (event.registration_count || 0) >= event.capacity) ? (
+                                <div className="w-full bg-red-500/10 text-red-500 py-4 rounded-2xl text-[10px] font-extrabold uppercase tracking-[0.2em] relative z-10 border border-red-500/20 text-center">
+                                    KUOTA PENUH
                                 </div>
                             ) : (
                                 <button

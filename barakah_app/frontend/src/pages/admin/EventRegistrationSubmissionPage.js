@@ -4,6 +4,7 @@ import { Helmet } from 'react-helmet';
 import Header from '../../components/layout/Header';
 import NavigationButton from '../../components/layout/Navigation';
 import { getEventRegistrations, getEventDetail, exportRegistrationsCsv, blastEventWhatsapp, bulkDeleteRegistrations } from '../../services/eventApi';
+import EventManualRegistrationModal from '../../components/admin/EventManualRegistrationModal';
 import '../../styles/Body.css';
 
 const EventRegistrationSubmissionPage = () => {
@@ -18,26 +19,29 @@ const EventRegistrationSubmissionPage = () => {
     const [isBlasting, setIsBlasting] = useState(false);
     const [selectedPaymentProof, setSelectedPaymentProof] = useState(null);
     const [selectedIds, setSelectedIds] = useState([]);
+    const [showManualModal, setShowManualModal] = useState(false);
 
     useEffect(() => {
-        const fetchData = async () => {
-            try {
-                // Get event detail to know the fields
-                const eventRes = await getEventDetail(slug);
-                setEvent(eventRes.data);
-
-                // Get registrations for this event
-                const regRes = await getEventRegistrations({ event: eventRes.data.id });
-                setRegistrations(regRes.data);
-            } catch (err) {
-                console.error(err);
-                setError('Gagal memuat data pendaftaran.');
-            } finally {
-                setLoading(false);
-            }
-        };
         fetchData();
     }, [slug]);
+
+    const fetchData = async () => {
+        setLoading(true);
+        try {
+            // Get event detail to know the fields
+            const eventRes = await getEventDetail(slug);
+            setEvent(eventRes.data);
+
+            // Get registrations for this event
+            const regRes = await getEventRegistrations({ event: eventRes.data.id });
+            setRegistrations(regRes.data);
+        } catch (err) {
+            console.error(err);
+            setError('Gagal memuat data pendaftaran.');
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const handleSelectAll = (e) => {
         if (e.target.checked) {
@@ -188,8 +192,24 @@ const EventRegistrationSubmissionPage = () => {
                         <Link to="/dashboard/my-events" className="text-xs font-bold text-green-700 flex items-center gap-1 mb-2 hover:underline">
                             <span className="material-icons text-sm">arrow_back</span> Kembali ke Dashboard
                         </Link>
-                        <h1 className="text-2xl font-black text-gray-900 tracking-tight">Data Pendaftar Event</h1>
-                        <p className="text-sm text-gray-500 font-medium italic">{event?.title}</p>
+                        <h1 className="text-3xl font-black text-gray-900 tracking-tight">Daftar Pendaftar</h1>
+                        <p className="text-xs font-bold text-gray-400 uppercase tracking-[0.2em] mt-1">{event?.title}</p>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                        <button 
+                            onClick={() => setShowManualModal(true)}
+                            className="bg-green-600 text-white px-5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 hover:bg-green-700 transition shadow-lg shadow-green-100"
+                        >
+                            <span className="material-icons text-sm">person_add</span>
+                            Tambah Peserta Manual
+                        </button>
+                        <button 
+                            onClick={() => setShowBlastModal(true)}
+                            className="bg-purple-600 text-white px-5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 hover:bg-purple-700 transition shadow-lg shadow-purple-100"
+                        >
+                            <span className="material-icons text-sm">send</span>
+                            Blast WhatsApp
+                        </button>
                     </div>
                 </div>
 
@@ -606,6 +626,14 @@ const EventRegistrationSubmissionPage = () => {
                     </div>
                 </div>
             )}
+
+            {/* Manual Registration Modal */}
+            <EventManualRegistrationModal 
+                isOpen={showManualModal}
+                onClose={() => setShowManualModal(false)}
+                event={event}
+                onSuccess={() => fetchData()}
+            />
 
             <NavigationButton />
         </div>

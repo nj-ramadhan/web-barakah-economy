@@ -269,6 +269,69 @@ class EventViewSet(viewsets.ModelViewSet):
         
         return Response({"message": "Pendaftaran berhasil! Kode tiket Anda: " + registration.unique_code, "id": registration.id, "unique_code": registration.unique_code}, status=status.HTTP_201_CREATED)
 
+    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
+    def manual_register(self, request, slug=None):
+        """
+        Manually add a participant (Admin/Organizer only).
+        Skips payment validation and auto-approves.
+        """
+        event = self.get_object()
+        
+        # Check permissions: Admin or Event Creator
+        if not (request.user.is_staff or event.created_by == request.user or request.user.has_menu_access('admin_events')):
+            return Response({"error": "Unauthorized"}, status=status.HTTP_403_FORBIDDEN)
+
+        # Basic identification
+        name = request.data.get('name')
+        email = request.data.get('email')
+        phone = request.data.get('phone')
+        responses = request.data.get('responses', {})
+        
+        if not name:
+            return Response({"error": "Nama wajib diisi."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Parse responses if string
+        if isinstance(responses, str):
+            try:
+                responses = json.loads(responses)
+            except:
+                responses = {}
+
+        # Create registration
+        registration = EventRegistration.objects.create(
+            event=event,
+            guest_name=name,
+            guest_email=email,
+            responses=responses,
+            status='approved',
+            payment_status='verified',
+            payment_amount=0,
+            ocr_verified=True
+        )
+
+        # Handle file uploads if any (though unlikely for manual add)
+        form_fields = event.form_fields.all()
+        for field in form_fields:
+            if field.field_type == 'file' and str(field.id) in request.FILES:
+                EventRegistrationFile.objects.create(
+                    registration=registration,
+                    field=field,
+                    file=request.FILES[str(field.id)]
+                )
+
+        # Trigger notifications (WhatsApp & Email)
+        try:
+            self._send_registration_notifications(registration)
+        except Exception as e:
+            import logging
+            logging.getLogger(__name__).error(f"Failed to send manual registration notifications: {e}")
+
+        return Response({
+            "message": f"Peserta {name} berhasil ditambahkan secara manual.",
+            "unique_code": registration.unique_code,
+            "id": registration.id
+        }, status=status.HTTP_201_CREATED)
+
     def _send_registration_notifications(self, registration):
         """Helper to send Email and WhatsApp notifications on registration."""
         responses = registration.responses

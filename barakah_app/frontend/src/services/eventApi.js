@@ -62,6 +62,12 @@ export const registerForEvent = (slug, formData) => {
     });
 };
 
+export const manualRegisterParticipant = (slug, data) => {
+    return axios.post(`${API_BASE_URL}/api/events/${slug}/manual_register/`, data, {
+        headers: getAuthHeaders()
+    });
+};
+
 export const getEventParticipants = (slug) => {
     return axios.get(`${API_BASE_URL}/api/events/${slug}/participants/`, {
         headers: getAuthHeaders()
