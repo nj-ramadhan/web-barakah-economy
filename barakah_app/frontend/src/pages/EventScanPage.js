@@ -19,6 +19,7 @@ const EventScanPage = () => {
     const [isCameraOpen, setIsCameraOpen] = useState(false);
     const [scanResult, setScanResult] = useState(null); // { status, message, registration }
     const [recentScans, setRecentScans] = useState([]);
+    const [selectedSession, setSelectedSession] = useState('');
     const inputRef = useRef(null);
     const scannerRef = useRef(null); // To store Html5Qrcode instance
 
@@ -35,6 +36,9 @@ const EventScanPage = () => {
             try {
                 const res = await axios.get(`${API}/api/events/${slug}/`, getAuth());
                 setEvent(res.data);
+                if (res.data.sessions && res.data.sessions.length > 0) {
+                    setSelectedSession(res.data.sessions[0].id);
+                }
             } catch {
                 navigate('/dashboard/my-events');
             } finally {
@@ -61,7 +65,7 @@ const EventScanPage = () => {
         try {
             const res = await axios.post(
                 `${API}/api/events/${slug}/scan_attendance/`,
-                { unique_code: cleanCode },
+                { unique_code: cleanCode, session_id: selectedSession || null },
                 getAuth()
             );
             setScanResult(res.data);
@@ -240,6 +244,22 @@ const EventScanPage = () => {
                         </div>
                     </div>
                 </div>
+
+                {/* Session Selector (If any) */}
+                {event?.sessions && event.sessions.length > 0 && (
+                    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 mb-4">
+                        <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Pilih Sesi</label>
+                        <select
+                            value={selectedSession}
+                            onChange={(e) => setSelectedSession(e.target.value)}
+                            className="w-full p-3 bg-gray-50 border-2 border-purple-100 rounded-xl text-sm font-bold text-gray-800 outline-none focus:border-purple-500 transition-all"
+                        >
+                            {event.sessions.map(ses => (
+                                <option key={ses.id} value={ses.id}>{ses.title}</option>
+                            ))}
+                        </select>
+                    </div>
+                )}
 
                 {/* Input Kode */}
                 <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 mb-4">

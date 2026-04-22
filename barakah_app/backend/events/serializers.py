@@ -12,10 +12,33 @@ class EventDocumentationImageSerializer(serializers.ModelSerializer):
         model = EventDocumentationImage
         fields = ['id', 'image', 'created_at']
 
+from .models import EventSpeaker, EventSession, EventAttendance
+
+class EventSpeakerSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EventSpeaker
+        fields = ['id', 'name', 'role', 'photo', 'order']
+
+class EventSessionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EventSession
+        fields = ['id', 'title', 'start_time', 'end_time', 'order']
+
+class EventAttendanceSerializer(serializers.ModelSerializer):
+    session_title = serializers.ReadOnlyField(source='session.title', default='Umum')
+    scanned_by_name = serializers.ReadOnlyField(source='scanned_by.name_full', default='')
+    
+    class Meta:
+        model = EventAttendance
+        fields = ['id', 'session', 'session_title', 'attended_at', 'scanned_by_name']
+
+
 class EventSerializer(serializers.ModelSerializer):
     created_by_details = UserAdminSerializer(source='created_by', read_only=True)
     form_fields = EventFormFieldSerializer(many=True, required=False)
     documentation_images = EventDocumentationImageSerializer(many=True, read_only=True)
+    speakers = EventSpeakerSerializer(many=True, required=False)
+    sessions = EventSessionSerializer(many=True, required=False)
     registration_count = serializers.SerializerMethodField()
     user_registration = serializers.SerializerMethodField()
 
@@ -52,7 +75,9 @@ class EventSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         fields_data = validated_data.pop('form_fields', [])
-        # Extract documentation images from request if available since they are not in validated_data (sent as extra files)
+        speakers_data = validated_data.pop('speakers', [])
+        sessions_data = validated_data.pop('sessions', [])
+        
         request = self.context.get('request')
         doc_images = request.FILES.getlist('documentation_images_upload') if request else []
         
@@ -60,6 +85,12 @@ class EventSerializer(serializers.ModelSerializer):
         
         for field in fields_data:
             EventFormField.objects.create(event=event, **field)
+            
+        for spk in speakers_data:
+            EventSpeaker.objects.create(event=event, **spk)
+            
+        for ses in sessions_data:
+            EventSession.objects.create(event=event, **ses)
             
         from .models import EventDocumentationImage
         for img in doc_images:
@@ -69,37 +100,56 @@ class EventSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         fields_data = validated_data.pop('form_fields', None)
+        speakers_data = validated_data.pop('speakers', None)
+        sessions_data = validated_data.pop('sessions', None)
         
         # Update event basic fields
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
         instance.save()
         
-        # Update fields if provided
+        # Sync form fields
         if fields_data is not None:
-            # Get existing fields for this event
             existing_fields = {f.label.lower(): f for f in instance.form_fields.all()}
             new_field_ids = []
-            
             for field_item in fields_data:
-                # Remove ID if present to avoid manual injection
                 field_item.pop('id', None)
                 label = field_item.get('label', '').lower()
-                
                 if label in existing_fields:
-                    # Update existing field
                     field_obj = existing_fields[label]
                     for attr, val in field_item.items():
                         setattr(field_obj, attr, val)
                     field_obj.save()
                     new_field_ids.append(field_obj.id)
                 else:
-                    # Create new field
                     new_field = EventFormField.objects.create(event=instance, **field_item)
                     new_field_ids.append(new_field.id)
-            
-            # Delete fields that are no longer in the new list
             instance.form_fields.exclude(id__in=new_field_ids).delete()
+
+        # Sync speakers (just recreate for simplicity since no hard foreign keys depend on them)
+        if speakers_data is not None:
+            instance.speakers.all().delete()
+            for spk in speakers_data:
+                spk.pop('id', None)
+                EventSpeaker.objects.create(event=instance, **spk)
+
+        # Sync sessions
+        if sessions_data is not None:
+            existing_sessions = {s.title.lower(): s for s in instance.sessions.all()}
+            new_sessions_ids = []
+            for ses_item in sessions_data:
+                ses_item.pop('id', None)
+                title = ses_item.get('title', '').lower()
+                if title in existing_sessions:
+                    ses_obj = existing_sessions[title]
+                    for attr, val in ses_item.items():
+                        setattr(ses_obj, attr, val)
+                    ses_obj.save()
+                    new_sessions_ids.append(ses_obj.id)
+                else:
+                    new_ses = EventSession.objects.create(event=instance, **ses_item)
+                    new_sessions_ids.append(new_ses.id)
+            instance.sessions.exclude(id__in=new_sessions_ids).delete()
         
         # Handle new documentation images
         request = self.context.get('request')
@@ -120,6 +170,7 @@ class EventRegistrationSerializer(serializers.ModelSerializer):
     uploaded_files = EventRegistrationFileSerializer(many=True, read_only=True)
     user_details = UserAdminSerializer(source='user', read_only=True)
     responses_with_labels = serializers.SerializerMethodField()
+    attendances_list = EventAttendanceSerializer(source='attendances', many=True, read_only=True)
 
     class Meta:
         model = EventRegistration

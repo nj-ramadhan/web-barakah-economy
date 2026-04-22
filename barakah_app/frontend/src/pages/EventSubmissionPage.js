@@ -29,11 +29,18 @@ const EventSubmissionPage = () => {
         price_type: 'free',
         price_fixed: 0,
         documentation_link: '',
+        capacity: '',
+        terms_do: '',
+        terms_dont: '',
     });
+    const [speakers, setSpeakers] = useState([]);
+    const [sessions, setSessions] = useState([]);
+
     const [formFields, setFormFields] = useState([]);
     const [files, setFiles] = useState({
         thumbnail: null,
         thumbnail_full: null,
+        documentation_frame_1_1: null,
         documentation_images: [], // New images to upload
     });
     const [existingDocImages, setExistingDocImages] = useState([]); // Images already on server
@@ -66,11 +73,18 @@ const EventSubmissionPage = () => {
                         price_type: d.price_type || 'free',
                         price_fixed: d.price_fixed || 0,
                         documentation_link: d.documentation_link || '',
+                        capacity: d.capacity || '',
+                        terms_do: d.terms_do || '',
+                        terms_dont: d.terms_dont || '',
                         header_image: d.header_image,
                         header_image_full: d.header_image_full,
                         thumbnail: d.thumbnail,
                         thumbnail_full: d.thumbnail_full,
+                        documentation_frame_1_1: d.documentation_frame_1_1,
                     });
+                    
+                    if (d.speakers && d.speakers.length > 0) setSpeakers(d.speakers);
+                    if (d.sessions && d.sessions.length > 0) setSessions(d.sessions);
                     
                     // Populate form fields
                     if (d.form_fields && d.form_fields.length > 0) {
@@ -183,6 +197,22 @@ const EventSubmissionPage = () => {
         setFormFields(newFields);
     };
 
+    const addSpeaker = () => setSpeakers([...speakers, { name: '', role: '', order: speakers.length }]);
+    const removeSpeaker = (index) => setSpeakers(speakers.filter((_, i) => i !== index));
+    const updateSpeaker = (index, updates) => {
+        const newArr = [...speakers];
+        newArr[index] = { ...newArr[index], ...updates };
+        setSpeakers(newArr);
+    };
+
+    const addSession = () => setSessions([...sessions, { title: '', start_time: '', end_time: '', order: sessions.length }]);
+    const removeSession = (index) => setSessions(sessions.filter((_, i) => i !== index));
+    const updateSession = (index, updates) => {
+        const newArr = [...sessions];
+        newArr[index] = { ...newArr[index], ...updates };
+        setSessions(newArr);
+    };
+
     const handleDocImageUpload = async (e) => {
         const uploadedFiles = Array.from(e.target.files);
         setLoading(true);
@@ -255,6 +285,18 @@ const EventSubmissionPage = () => {
         // Append form fields as JSON string (backend will handle)
         if (formFields.length > 0) {
             data.append('form_fields', JSON.stringify(formFields));
+        }
+
+        if (speakers.length > 0) {
+            data.append('speakers', JSON.stringify(speakers));
+        }
+
+        if (sessions.length > 0) {
+            data.append('sessions', JSON.stringify(sessions));
+        }
+
+        if (files.documentation_frame_1_1 instanceof File) {
+            data.append('documentation_frame_1_1', files.documentation_frame_1_1);
         }
 
         // Append documentation images if any
@@ -521,14 +563,79 @@ const EventSubmissionPage = () => {
                                         />
                                     </div>
                                 )}
+                                
+                                <div className="space-y-1.5 md:col-span-2">
+                                    <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Kapasitas Peserta</label>
+                                    <input 
+                                        type="number" 
+                                        name="capacity"
+                                        value={formData.capacity}
+                                        onChange={handleChange}
+                                        placeholder="Kosongkan atau isi 0 jika tak terbatas"
+                                        className="w-full px-5 py-3.5 bg-gray-50 border-none rounded-2xl text-sm focus:ring-2 focus:ring-green-500 transition"
+                                    />
+                                    <p className="text-[10px] text-gray-400 ml-1 italic">Kosong/0 = Tanpa batas kuota.</p>
+                                </div>
                             </div>
                         </div>
 
-                        {/* PHASE 5: DOKUMENTASI (POST-EVENT) */}
+                        {/* PHASE: SYARAT, NARASUMBER, SESI */}
+                        <div className="space-y-6 pt-4">
+                            <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                                <span className="w-6 h-6 bg-green-100 text-green-700 rounded-lg flex items-center justify-center text-xs">5</span>
+                                Kapasitas & Detail Acara
+                            </h3>
+                            
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border border-gray-100 p-4 rounded-3xl bg-gray-50/50">
+                                <div className="space-y-1.5">
+                                    <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Syarat & Ketentuan (DO)</label>
+                                    <textarea name="terms_do" value={formData.terms_do} onChange={handleChange} rows="4" placeholder="Yang boleh dilakukan/dibawa (tiap baris jadi 1 point)" className="w-full px-5 py-3.5 bg-white border border-gray-100 rounded-2xl text-sm focus:ring-2 focus:ring-green-500 transition"></textarea>
+                                </div>
+                                <div className="space-y-1.5">
+                                    <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Syarat & Ketentuan (DON'T)</label>
+                                    <textarea name="terms_dont" value={formData.terms_dont} onChange={handleChange} rows="4" placeholder="Yang dilarang (tiap baris jadi 1 point)" className="w-full px-5 py-3.5 bg-white border border-gray-100 rounded-2xl text-sm focus:ring-2 focus:ring-green-500 transition"></textarea>
+                                </div>
+                            </div>
+                            
+                            <div className="space-y-3">
+                                <div className="flex justify-between items-end">
+                                    <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Daftar Narasumber</label>
+                                    <button type="button" onClick={addSpeaker} className="text-[10px] font-black text-green-700 bg-green-100 px-3 py-1.5 rounded-full hover:bg-green-200 uppercase flex items-center gap-1">Tambah Narasumber</button>
+                                </div>
+                                {speakers.map((spk, idx) => (
+                                    <div key={idx} className="flex gap-2 items-center bg-gray-50 p-2 rounded-2xl border border-gray-100 relative">
+                                        <input type="text" placeholder="Nama Narasumber" value={spk.name} onChange={e => updateSpeaker(idx, {name: e.target.value})} className="flex-1 px-4 py-2 border border-gray-100 rounded-xl text-sm" />
+                                        <input type="text" placeholder="Gelar/Role (Opsional)" value={spk.role} onChange={e => updateSpeaker(idx, {role: e.target.value})} className="flex-1 px-4 py-2 border border-gray-100 rounded-xl text-sm" />
+                                        <button type="button" onClick={() => removeSpeaker(idx)} className="absolute -right-3 -top-3 w-6 h-6 rounded-full bg-red-500 text-white flex items-center justify-center shadow-lg hover:scale-110 transition shrink-0"><span className="material-icons text-[10px]">close</span></button>
+                                    </div>
+                                ))}
+                                {speakers.length === 0 && <p className="text-xs text-gray-400 italic px-2">Opsional (bisa dikosongkan)</p>}
+                            </div>
+
+                            <div className="space-y-3">
+                                <div className="flex justify-between items-end">
+                                    <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Sesi Acara (Multiple Sessions)</label>
+                                    <button type="button" onClick={addSession} className="text-[10px] font-black text-green-700 bg-green-100 px-3 py-1.5 rounded-full hover:bg-green-200 uppercase flex items-center gap-1">Tambah Sesi</button>
+                                </div>
+                                {sessions.map((ses, idx) => (
+                                    <div key={idx} className="grid grid-cols-3 gap-2 items-center bg-gray-50 p-2 rounded-2xl border border-gray-100 relative">
+                                        <input type="text" placeholder="Judul Sesi (Misal: Sesi 1 / Pagi)" value={ses.title} onChange={e => updateSession(idx, {title: e.target.value})} className="col-span-3 px-4 py-2 border border-gray-100 rounded-xl text-sm" />
+                                        <div className="col-span-3 flex gap-2">
+                                            <input type="datetime-local" value={ses.start_time ? ses.start_time.substring(0, 16) : ''} onChange={e => updateSession(idx, {start_time: e.target.value})} className="flex-1 px-4 py-2 border border-gray-100 rounded-xl text-xs" />
+                                            <input type="datetime-local" value={ses.end_time ? ses.end_time.substring(0, 16) : ''} onChange={e => updateSession(idx, {end_time: e.target.value})} className="flex-1 px-4 py-2 border border-gray-100 rounded-xl text-xs" />
+                                        </div>
+                                        <button type="button" onClick={() => removeSession(idx)} className="absolute -right-3 -top-3 w-6 h-6 rounded-full bg-red-500 text-white flex items-center justify-center shadow-lg hover:scale-110 transition shrink-0"><span className="material-icons text-[10px]">close</span></button>
+                                    </div>
+                                ))}
+                                {sessions.length === 0 && <p className="text-[10px] text-gray-400 italic px-2">Jika tidak ada sesi khusus, kehadiran dihitung 1x (Umum).</p>}
+                            </div>
+                        </div>
+
+                        {/* PHASE 6: DOKUMENTASI (POST-EVENT) */}
                         {isEdit && (
                             <div className="space-y-4 pt-4">
                                 <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                                    <span className="w-6 h-6 bg-purple-100 text-purple-700 rounded-lg flex items-center justify-center text-xs">5</span>
+                                    <span className="w-6 h-6 bg-purple-100 text-purple-700 rounded-lg flex items-center justify-center text-xs">6</span>
                                     Dokumentasi (Pasca-Event)
                                 </h3>
                                 
@@ -546,12 +653,28 @@ const EventSubmissionPage = () => {
                                         <p className="text-[10px] text-gray-400 ml-1 italic">Link ini hanya akan tampil bagi peserta yang sudah login dan terdaftar.</p>
                                     </div>
                                     
+                                    <div className="space-y-2 mb-6">
+                                        <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Bingkai Dokumentasi Ukuran 4:5 Transparan (PNG) Opsional</label>
+                                        <div className="flex gap-4 items-end">
+                                            <div className="w-24 h-24 bg-gray-50 border-2 border-dashed border-gray-200 rounded-2xl flex items-center justify-center shrink-0">
+                                                {files.documentation_frame_1_1 || formData.documentation_frame_1_1 ? (
+                                                    <img src={files.documentation_frame_1_1 instanceof File ? URL.createObjectURL(files.documentation_frame_1_1) : formData.documentation_frame_1_1} className="w-full h-full object-contain p-2" alt="frame preview" />
+                                                ) : <span className="material-icons text-gray-300 text-3xl">filter_frames</span>}
+                                            </div>
+                                            <div className="flex-1">
+                                                <input type="file" accept="image/png" id="frame-upload" className="hidden" onChange={e => setFiles(p => ({...p, documentation_frame_1_1: e.target.files[0]}))} />
+                                                <label htmlFor="frame-upload" className="text-xs bg-purple-50 text-purple-700 px-4 py-2 rounded-xl font-bold cursor-pointer inline-block border border-purple-100">Pilih File Bingkai</label>
+                                                <p className="text-[10px] text-gray-400 mt-2 leading-relaxed">Pilih PNG transparan rasio 4:5. Bingkai ini akan otomatis ditempel ketika admin upload foto dokumentasi.</p>
+                                            </div>
+                                        </div>
+                                    </div>
+
                                     <div className="space-y-2">
                                         <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Foto Dokumentasi (Max 3x3 Grid)</label>
                                         <div className="grid grid-cols-3 gap-3">
                                             {/* Existing Images */}
                                             {existingDocImages.map((img) => (
-                                                <div key={img.id} className="relative aspect-square rounded-xl overflow-hidden border border-gray-100 shadow-sm group">
+                                                <div key={img.id} className="relative aspect-[4/5] rounded-xl overflow-hidden border border-gray-100 shadow-sm group">
                                                     <img 
                                                         src={img.image} 
                                                         className="w-full h-full object-cover cursor-pointer" 
@@ -570,7 +693,7 @@ const EventSubmissionPage = () => {
                                             
                                             {/* New Uploads */}
                                             {files.documentation_images.map((img, idx) => (
-                                                <div key={idx} className="relative aspect-square rounded-xl overflow-hidden border border-green-100 shadow-sm group">
+                                                <div key={idx} className="relative aspect-[4/5] rounded-xl overflow-hidden border border-green-100 shadow-sm group">
                                                     <img 
                                                         src={URL.createObjectURL(img)} 
                                                         className="w-full h-full object-cover cursor-pointer" 
@@ -587,7 +710,7 @@ const EventSubmissionPage = () => {
                                                 </div>
                                             ))}
                                             
-                                            <label className="aspect-square rounded-xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center cursor-pointer hover:border-green-500 hover:bg-green-50 text-gray-400 hover:text-green-600 transition-all">
+                                            <label className="aspect-[4/5] rounded-xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center cursor-pointer hover:border-green-500 hover:bg-green-50 text-gray-400 hover:text-green-600 transition-all">
                                                 <span className="material-icons text-2xl">add_a_photo</span>
                                                 <span className="text-[10px] font-bold mt-1 uppercase tracking-tighter">Tambah</span>
                                                 <input type="file" accept="image/*" className="hidden" onChange={handleDocImageUpload} multiple />
@@ -598,11 +721,11 @@ const EventSubmissionPage = () => {
                             </div>
                         )}
 
-                        {/* PHASE 6: FORM PENDAFTARAN */}
+                        {/* PHASE 7: FORM PENDAFTARAN */}
                         <div className="space-y-4 pt-4">
                             <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                                <span className="w-6 h-6 bg-green-100 text-green-700 rounded-lg flex items-center justify-center text-xs">{isEdit ? '6' : '5'}</span>
-                                Form Pendaftaran (Wajib Diisi)
+                                <span className="w-6 h-6 bg-green-100 text-green-700 rounded-lg flex items-center justify-center text-xs">7</span>
+                                Formulir Pendaftaran Khusus
                             </h3>
                             <p className="text-xs text-gray-500 bg-green-50 p-3 rounded-xl border border-green-100 italic">
                                 Tentukan data apa saja yang wajib diisi oleh calon pendaftar event Anda (Minimal: Nama Lengkap).

@@ -334,7 +334,13 @@ const EventRegistrationSubmissionPage = () => {
                                                             }`}>
                                                             {reg.status}
                                                         </span>
-                                                        {reg.is_attended && (
+                                                        {reg.attendances_list && reg.attendances_list.length > 0 ? (
+                                                            reg.attendances_list.map((att, i) => (
+                                                                <span key={i} className="w-fit bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-wider flex items-center gap-1" title={new Date(att.attended_at).toLocaleString('id-ID')}>
+                                                                    <span className="material-icons text-[10px]">how_to_reg</span> {att.session_title || 'Hadir'}
+                                                                </span>
+                                                            ))
+                                                        ) : reg.is_attended && (
                                                             <span className="w-fit bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider flex items-center gap-1" title={reg.attended_at ? new Date(reg.attended_at).toLocaleString('id-ID') : 'Hadir'}>
                                                                 <span className="material-icons text-[10px]">how_to_reg</span> Hadir
                                                             </span>

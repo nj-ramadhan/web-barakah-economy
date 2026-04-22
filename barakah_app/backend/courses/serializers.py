@@ -26,13 +26,14 @@ class CertificateRequestSerializer(serializers.ModelSerializer):
 class CourseEnrollmentSerializer(serializers.ModelSerializer):
     course_title = serializers.ReadOnlyField(source='course.title')
     course_slug = serializers.ReadOnlyField(source='course.slug')
+    course_thumbnail = serializers.ImageField(source='course.thumbnail', read_only=True)
     student_count = serializers.SerializerMethodField()
     material_count = serializers.SerializerMethodField()
     
     class Meta:
         model = CourseEnrollment
         fields = [
-            'id', 'user', 'course', 'course_title', 'course_slug', 
+            'id', 'user', 'course', 'course_title', 'course_slug', 'course_thumbnail',
             'buyer_name', 'buyer_email', 'buyer_phone',
             'proof_file', 'enrolled_at', 'payment_status', 
             'student_count', 'material_count'

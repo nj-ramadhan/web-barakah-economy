@@ -36,6 +36,12 @@ class Event(models.Model):
 
     # Documentation
     documentation_link = models.URLField(blank=True, null=True)
+    documentation_frame_1_1 = models.ImageField(upload_to='events/frames/', blank=True, null=True, help_text="Bingkai 1:1 format transparan (PNG) untuk otomatis overlay dokumentasi.")
+
+    # Details
+    capacity = models.IntegerField(blank=True, null=True, default=0, help_text="Kapasitas terbatas jika > 0, tak terbatas jika 0.")
+    terms_do = models.TextField(blank=True, null=True, help_text="Baris baru memisahkan tiap point Do")
+    terms_dont = models.TextField(blank=True, null=True, help_text="Baris baru memisahkan tiap point Dont")
 
     # HTM / Payment Settings
     PRICE_TYPE_CHOICES = [
@@ -78,6 +84,94 @@ class EventDocumentationImage(models.Model):
 
     def __str__(self):
         return f"Documentation for {self.event.title}"
+
+    def save(self, *args, **kwargs):
+        is_new = self._state.adding
+        super().save(*args, **kwargs)
+
+        if is_new and self.event.documentation_frame_1_1 and self.image:
+            try:
+                from PIL import Image
+                import os
+                
+                doc_path = self.image.path
+                frame_path = self.event.documentation_frame_1_1.path
+                
+                if os.path.exists(doc_path) and os.path.exists(frame_path):
+                    doc_img = Image.open(doc_path).convert("RGBA")
+                    frame_img = Image.open(frame_path).convert("RGBA")
+                    
+                    # Crop to 4:5 (Width:Height)
+                    width, height = doc_img.size
+                    target_ratio = 4 / 5
+                    current_ratio = width / height
+                    
+                    if current_ratio > target_ratio:
+                        # Image is wider than 4:5, crop horizontal
+                        new_height = height
+                        new_width = int(new_height * target_ratio)
+                    else:
+                        # Image is taller than 4:5, crop vertical
+                        new_width = width
+                        new_height = int(new_width / target_ratio)
+                    
+                    left = (width - new_width) / 2
+                    top = (height - new_height) / 2
+                    right = (width + new_width) / 2
+                    bottom = (height + new_height) / 2
+                    
+                    doc_img = doc_img.crop((left, top, right, bottom))
+                    
+                    # Resize doc to match exactly frame dimensions
+                    f_width, f_height = frame_img.size
+                    
+                    doc_img = doc_img.resize((f_width, f_height), Image.Resampling.LANCZOS)
+                    
+                    combined = Image.alpha_composite(doc_img, frame_img)
+                    final_img = combined.convert("RGB")
+                    
+                    final_img.save(doc_path, format="JPEG", quality=90)
+            except Exception as e:
+                import logging
+                logging.getLogger(__name__).error(f"Error processing doc frame overlay: {str(e)}")
+
+class EventSpeaker(models.Model):
+    event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name='speakers')
+    name = models.CharField(max_length=255)
+    role = models.CharField(max_length=255, blank=True, help_text="Misal: Pemateri Ahli")
+    photo = models.ImageField(upload_to='events/speakers/', blank=True, null=True)
+    order = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ['order', 'id']
+
+    def __str__(self):
+        return f"{self.name} - {self.event.title}"
+
+class EventSession(models.Model):
+    event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name='sessions')
+    title = models.CharField(max_length=255, help_text="Misal: Sesi 1 - Pembukaan")
+    start_time = models.DateTimeField(blank=True, null=True)
+    end_time = models.DateTimeField(blank=True, null=True)
+    order = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ['order', 'start_time']
+
+    def __str__(self):
+        return f"{self.title} - {self.event.title}"
+
+class EventAttendance(models.Model):
+    registration = models.ForeignKey('EventRegistration', on_delete=models.CASCADE, related_name='attendances')
+    session = models.ForeignKey(EventSession, on_delete=models.CASCADE, related_name='attendances', null=True, blank=True)
+    attended_at = models.DateTimeField(auto_now_add=True)
+    scanned_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+
+    class Meta:
+        unique_together = ('registration', 'session')
+
+    def __str__(self):
+        return f"Attendance {self.registration.id} Sesi: {self.session.title if self.session else 'Umum'}"
 
 class EventFormField(models.Model):
     FIELD_TYPES = [

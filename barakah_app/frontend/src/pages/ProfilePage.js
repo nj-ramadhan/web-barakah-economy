@@ -223,11 +223,19 @@ const CoursesTab = () => {
             ) : (
                 <div className="grid grid-cols-1 gap-3">
                     {courses.map(enroll => (
-                        <div key={enroll.id} className="bg-white p-3 rounded-xl border shadow-sm flex items-center gap-3">
-                            <div className="w-16 h-16 bg-green-100 rounded-lg flex items-center justify-center">
-                                <span className="material-icons text-green-600">school</span>
+                        <div key={enroll.id} className="bg-white p-3 rounded-xl border shadow-sm flex items-center gap-3 hover:shadow-md transition">
+                            <div className="w-16 h-16 bg-green-50 rounded-xl overflow-hidden flex items-center justify-center shrink-0 border border-gray-100">
+                                {enroll.course_thumbnail ? (
+                                    <img 
+                                        src={enroll.course_thumbnail.startsWith('http') ? enroll.course_thumbnail : `${process.env.REACT_APP_API_BASE_URL}${enroll.course_thumbnail}`} 
+                                        alt={enroll.course_title} 
+                                        className="w-full h-full object-cover"
+                                        onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
+                                    />
+                                ) : null}
+                                <span className={`material-icons text-green-600 ${enroll.course_thumbnail ? 'hidden' : ''}`}>school</span>
                             </div>
-                            <div className="flex-1">
+                            <div className="flex-1 min-w-0">
                                 <h3 className="text-sm font-bold text-gray-800">{enroll.course_title}</h3>
                                 <div className="flex items-center gap-2 mt-1">
                                     <span className="text-[9px] text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded flex items-center gap-0.5">

@@ -135,25 +135,25 @@ const EventDetailPage = () => {
 
         const data = new FormData();
         const user = JSON.parse(localStorage.getItem('user'));
-        
+
         if (!user) {
             data.append('guest_name', guestInfo.name);
             data.append('guest_email', guestInfo.email);
         }
-        
+
         data.append('responses', JSON.stringify(responses));
         Object.keys(files).forEach(fieldId => {
             if (files[fieldId]) data.append(fieldId, files[fieldId]);
         });
-        
+
         if (paymentProof) {
             const fixed = Number(event?.price_fixed) || 0;
             const extra = Number(paymentAmount) || 0;
             let totalToSave = 0;
-            
+
             if (event?.price_type === 'fixed') totalToSave = fixed;
             else if (event?.price_type === 'hybrid_1') totalToSave = fixed + extra;
-            else totalToSave = extra; 
+            else totalToSave = extra;
 
             data.append('payment_proof', paymentProof);
             data.append('payment_amount', totalToSave);
@@ -171,8 +171,8 @@ const EventDetailPage = () => {
             if (activeTab === 'participants') fetchParticipants();
         } catch (err) {
             console.error(err);
-            const msg = err.response?.data?.errors 
-                ? Object.values(err.response.data.errors).join(', ') 
+            const msg = err.response?.data?.errors
+                ? Object.values(err.response.data.errors).join(', ')
                 : (err.response?.data?.error || 'Gagal mengirim pendaftaran. Mohon cek kembali data Anda.');
             setError(msg);
         } finally {
@@ -236,7 +236,7 @@ const EventDetailPage = () => {
             <Helmet>
                 <title>{event.title} - Barakah Economy</title>
                 <meta name="description" content={event.description?.replace(/<[^>]*>/g, '').substring(0, 160)} />
-                
+
                 {/* Open Graph / Facebook / WhatsApp */}
                 <meta property="og:type" content="website" />
                 <meta property="og:url" content={window.location.href} />
@@ -307,15 +307,15 @@ const EventDetailPage = () => {
             <div className="relative w-full max-w-6xl mx-auto sm:px-4">
                 {/* Image Container */}
                 <div className="relative h-auto sm:h-[500px] w-full overflow-hidden bg-gray-100 flex items-center justify-center sm:rounded-[3rem] shadow-2xl border border-gray-100">
-                    <img 
-                        src={event.header_image || event.thumbnail || '/images/event-header-default.jpg'} 
-                        alt={event.title} 
+                    <img
+                        src={event.header_image || event.thumbnail || '/images/event-header-default.jpg'}
+                        alt={event.title}
                         className="w-full h-auto sm:h-full sm:object-cover"
                         onError={(e) => { e.target.onerror = null; e.target.src = '/images/event-header-default.jpg'; }}
                     />
                     {/* Desktop Overlay Gradient */}
                     <div className="hidden sm:block absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent"></div>
-                    
+
                     {/* Desktop Info Overlay */}
                     <div className="hidden sm:block absolute bottom-0 left-0 w-full p-12 text-white">
                         <div className="flex sm:items-end justify-between gap-6">
@@ -342,7 +342,7 @@ const EventDetailPage = () => {
                                         Event Selesai
                                     </div>
                                 ) : (
-                                    <button 
+                                    <button
                                         onClick={() => setShowRegisterModal(true)}
                                         className="bg-green-600 hover:bg-green-700 text-white px-8 py-4 rounded-2xl font-extrabold text-sm uppercase tracking-wider shadow-xl shadow-green-900/30 transition active:scale-[0.97] flex items-center gap-3 justify-center"
                                     >
@@ -350,8 +350,8 @@ const EventDetailPage = () => {
                                         Ikuti Event Ini
                                     </button>
                                 )}
- 
-                                <button 
+
+                                <button
                                     onClick={handleShare}
                                     className="bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/30 text-white px-6 py-4 rounded-2xl font-extrabold text-sm uppercase tracking-wider transition active:scale-[0.97] flex items-center gap-3 justify-center group"
                                     title="Bagikan Event"
@@ -362,9 +362,9 @@ const EventDetailPage = () => {
                             </div>
                         </div>
                     </div>
- 
+
                     {/* View Full Image Button - Visible on Desktop */}
-                    <button 
+                    <button
                         onClick={() => window.open(event.header_image_full || event.header_image || event.thumbnail_full || event.thumbnail || '/images/event-header-default.jpg', '_blank')}
                         className="hidden sm:flex absolute top-10 right-10 bg-black/40 hover:bg-black/60 backdrop-blur-md text-white px-6 py-3 rounded-2xl border border-white/20 items-center gap-3 text-xs font-bold transition-all shadow-2xl group"
                     >
@@ -380,7 +380,7 @@ const EventDetailPage = () => {
                         <span className="px-3 py-1 bg-gray-100 rounded-full text-[8px] font-bold uppercase tracking-widest text-gray-500">{event.status}</span>
                     </div>
                     <h1 className="text-2xl font-extrabold text-gray-900 leading-tight mb-6">{event.title}</h1>
-                    
+
                     <div className="flex flex-col gap-3">
                         {event.user_registration ? (
                             <div className="w-full bg-green-50 text-green-700 py-3.5 rounded-xl font-bold text-xs uppercase tracking-widest flex items-center gap-3 justify-center border border-green-100">
@@ -393,7 +393,7 @@ const EventDetailPage = () => {
                                 Event Telah Selesai
                             </div>
                         ) : (
-                            <button 
+                            <button
                                 onClick={() => setShowRegisterModal(true)}
                                 className="w-full bg-green-700 text-white py-3.5 rounded-xl font-bold text-xs uppercase tracking-widest shadow-lg shadow-green-100 flex items-center gap-3 justify-center active:scale-[0.98] transition"
                             >
@@ -401,8 +401,8 @@ const EventDetailPage = () => {
                                 Ikuti Event Ini
                             </button>
                         )}
-                        
-                        <button 
+
+                        <button
                             onClick={handleShare}
                             className="w-full bg-white text-gray-700 py-3.5 rounded-xl font-bold text-xs uppercase tracking-widest border border-gray-200 flex items-center gap-3 justify-center active:scale-[0.98] transition"
                         >
@@ -419,14 +419,14 @@ const EventDetailPage = () => {
                     <div className="lg:col-span-8 space-y-8 min-w-0">
                         {/* Tabs Navigation */}
                         <div className="bg-white p-1 sm:p-2 rounded-2xl sm:rounded-[2.5rem] shadow-xl border border-gray-100 flex gap-1 sm:gap-2">
-                            <button 
+                            <button
                                 onClick={() => setActiveTab('about')}
                                 className={`flex-1 py-3 sm:py-4 px-1 sm:px-6 rounded-xl sm:rounded-[2rem] text-[10px] sm:text-sm font-bold transition flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 ${activeTab === 'about' ? 'bg-gray-900 text-white shadow-lg' : 'bg-transparent text-gray-500 hover:bg-gray-50'}`}
                             >
                                 <span className="material-icons text-sm sm:text-lg">description</span>
                                 <span className="text-center">Tentang</span>
                             </button>
-                            <button 
+                            <button
                                 onClick={() => setActiveTab('participants')}
                                 className={`flex-1 py-3 sm:py-4 px-1 sm:px-6 rounded-xl sm:rounded-[2rem] text-[10px] sm:text-sm font-bold transition flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 ${activeTab === 'participants' ? 'bg-gray-900 text-white shadow-lg' : 'bg-transparent text-gray-500 hover:bg-gray-50'}`}
                             >
@@ -436,7 +436,7 @@ const EventDetailPage = () => {
                                     {event.registration_count || 0}
                                 </span>
                             </button>
-                            <button 
+                            <button
                                 onClick={() => setActiveTab('documentation')}
                                 className={`flex-1 py-3 sm:py-4 px-1 sm:px-6 rounded-xl sm:rounded-[2rem] text-[10px] sm:text-sm font-bold transition flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 ${activeTab === 'documentation' ? 'bg-gray-900 text-white shadow-lg' : 'bg-transparent text-gray-500 hover:bg-gray-50'}`}
                             >
@@ -467,7 +467,7 @@ const EventDetailPage = () => {
                                     <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 flex items-start gap-3">
                                         <span className="material-icons text-orange-600 bg-orange-50 p-2 rounded-xl">location_on</span>
                                         <div>
-                                            <p className="text-[10px] font-bold text-gray-400 uppercase">Lokasi</p>
+                                            <p className="text-[10px] font-bold text-gray-400 uppercase">Lokasi *klik untuk buka link</p>
                                             <a href={event.location_url} target="_blank" rel="noreferrer" className="text-sm font-extrabold text-green-700 hover:underline line-clamp-1">{event.location}</a>
                                         </div>
                                     </div>
@@ -479,11 +479,95 @@ const EventDetailPage = () => {
                                         <span className="w-2 h-8 bg-green-600 rounded-full"></span>
                                         Deskripsi Event
                                     </h2>
-                                    <div 
-                                        className="prose prose-lg max-w-none text-gray-600 leading-relaxed" 
+                                    <div
+                                        className="prose prose-lg max-w-none text-gray-600 leading-relaxed"
                                         dangerouslySetInnerHTML={{ __html: event.description || '' }}
                                     ></div>
                                 </div>
+
+                                {/* Speakers Section */}
+                                {event.speakers && event.speakers.length > 0 && (
+                                    <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-100">
+                                        <h2 className="text-2xl font-extrabold text-gray-900 mb-8 flex items-center gap-3">
+                                            <span className="w-2 h-8 bg-blue-600 rounded-full"></span>
+                                            Narasumber
+                                        </h2>
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                            {event.speakers.map(spk => (
+                                                <div key={spk.id} className="flex items-center gap-4 bg-gray-50 border border-gray-100 p-4 rounded-3xl group hover:border-blue-200 transition">
+                                                    <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-700 text-white rounded-full flex items-center justify-center font-bold text-2xl shadow-lg">{spk.name.charAt(0)}</div>
+                                                    <div>
+                                                        <p className="font-extrabold text-gray-900 text-base">{spk.name}</p>
+                                                        {spk.role && <p className="text-xs text-blue-600 font-bold uppercase tracking-wider mt-1">{spk.role}</p>}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Sessions Section */}
+                                {event.sessions && event.sessions.length > 0 && (
+                                    <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-100">
+                                        <h2 className="text-2xl font-extrabold text-gray-900 mb-8 flex items-center gap-3">
+                                            <span className="w-2 h-8 bg-purple-600 rounded-full"></span>
+                                            Rangkaian Acara
+                                        </h2>
+                                        <div className="space-y-4">
+                                            {event.sessions.map((ses, idx) => (
+                                                <div key={idx} className="bg-gray-50 border border-gray-100 p-5 rounded-2xl flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 group hover:border-purple-200 transition">
+                                                    <div className="flex items-center gap-4">
+                                                        <div className="w-10 h-10 rounded-full bg-purple-100 text-purple-700 font-black text-sm flex items-center justify-center shrink-0 shadow-inner">{idx+1}</div>
+                                                        <p className="font-bold text-base text-gray-800 break-words">{ses.title}</p>
+                                                    </div>
+                                                    <div className="text-xs font-bold text-gray-500 bg-white px-4 py-2 rounded-xl border border-gray-100 shrink-0 text-center sm:text-right">
+                                                        <span className="material-icons text-xs align-middle mr-1 text-purple-500">schedule</span>
+                                                        {ses.start_time ? new Date(ses.start_time).toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'}) : ''} 
+                                                        {ses.end_time ? ` - ${new Date(ses.end_time).toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'})} WIB` : ' WIB'}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Terms Section */}
+                                {(event.terms_do || event.terms_dont) && (
+                                    <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-100">
+                                        <h2 className="text-2xl font-extrabold text-gray-900 mb-8 flex items-center gap-3">
+                                            <span className="w-2 h-8 bg-orange-500 rounded-full"></span>
+                                            Syarat & Ketentuan
+                                        </h2>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            {event.terms_do && (
+                                                <div className="bg-green-50/50 p-6 rounded-3xl border border-green-100 h-full">
+                                                    <h3 className="font-extrabold text-green-800 text-sm flex items-center gap-2 mb-4 uppercase tracking-wider"><span className="material-icons text-green-600 bg-green-100 rounded-full p-1">check</span>Yang Boleh/Wajib</h3>
+                                                    <ul className="space-y-3">
+                                                        {event.terms_do.split('\n').filter(t => t.trim()).map((t, idx) => (
+                                                            <li key={idx} className="text-sm text-green-900 flex items-start gap-3 bg-white p-3 rounded-2xl border border-green-50 shadow-sm leading-relaxed">
+                                                                <span className="w-2 h-2 bg-green-500 rounded-full mt-1.5 shrink-0"></span>
+                                                                {t}
+                                                            </li>
+                                                        ))}
+                                                    </ul>
+                                                </div>
+                                            )}
+                                            {event.terms_dont && (
+                                                <div className="bg-red-50/50 p-6 rounded-3xl border border-red-100 h-full">
+                                                    <h3 className="font-extrabold text-red-800 text-sm flex items-center gap-2 mb-4 uppercase tracking-wider"><span className="material-icons text-red-600 bg-red-100 rounded-full p-1">close</span>Yang Dilarang</h3>
+                                                    <ul className="space-y-3">
+                                                        {event.terms_dont.split('\n').filter(t => t.trim()).map((t, idx) => (
+                                                            <li key={idx} className="text-sm text-red-900 flex items-start gap-3 bg-white p-3 rounded-2xl border border-red-50 shadow-sm leading-relaxed">
+                                                                <span className="w-2 h-2 bg-red-500 rounded-full mt-1.5 shrink-0"></span>
+                                                                {t}
+                                                            </li>
+                                                        ))}
+                                                    </ul>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         ) : activeTab === 'participants' ? (
                             <div className="animate-fade-in space-y-6">
@@ -527,14 +611,14 @@ const EventDetailPage = () => {
                                             <span className="w-2 h-8 bg-purple-600 rounded-full"></span>
                                             Dokumentasi Event
                                         </h2>
-                                        
+
                                         {/* Link Download - Private */}
                                         {event.documentation_link && (
                                             <div className="shrink-0">
                                                 {event.user_registration && event.user_registration.status === 'approved' ? (
-                                                    <a 
-                                                        href={event.documentation_link} 
-                                                        target="_blank" 
+                                                    <a
+                                                        href={event.documentation_link}
+                                                        target="_blank"
                                                         rel="noreferrer"
                                                         className="bg-purple-100 text-purple-700 px-5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 hover:bg-purple-200 transition"
                                                     >
@@ -561,14 +645,14 @@ const EventDetailPage = () => {
                                     ) : (
                                         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                                             {event.documentation_images.map((img) => (
-                                                <div 
-                                                    key={img.id} 
+                                                <div
+                                                    key={img.id}
                                                     onClick={() => setSelectedImage(img.image)}
-                                                    className="aspect-square bg-gray-100 rounded-xl overflow-hidden cursor-pointer hover:opacity-90 transition relative group"
+                                                    className="aspect-[4/5] bg-gray-100 rounded-xl overflow-hidden cursor-pointer hover:opacity-90 transition relative group"
                                                 >
-                                                    <img 
-                                                        src={img.image} 
-                                                        alt="Documentation" 
+                                                    <img
+                                                        src={img.image}
+                                                        alt="Documentation"
                                                         className="w-full h-full object-cover"
                                                     />
                                                     <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
@@ -609,6 +693,19 @@ const EventDetailPage = () => {
                             </div>
                         </div>
 
+                        {/* Capacity Card */}
+                        {event.capacity > 0 && (
+                            <div className="bg-white p-8 rounded-[2.5rem] shadow-xl border border-gray-100 flex items-center justify-between">
+                                <div>
+                                    <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-1">Kapasitas Maksimal</h3>
+                                    <p className="text-2xl font-extrabold text-gray-900">{event.capacity} <span className="text-sm font-bold text-gray-500">Kuota</span></p>
+                                </div>
+                                <div className="w-14 h-14 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+                                    <span className="material-icons text-2xl">event_seat</span>
+                                </div>
+                            </div>
+                        )}
+
                         {/* Quick Stats / FAQ / CTA Mini */}
                         <div className="bg-gray-900 p-8 rounded-[2.5rem] shadow-2xl text-white relative overflow-hidden group">
                             <div className="absolute top-0 right-0 w-32 h-32 bg-green-500/10 rounded-full -mr-16 -mt-16 blur-2xl group-hover:bg-green-500/20 transition-all duration-700"></div>
@@ -644,7 +741,7 @@ const EventDetailPage = () => {
                         </div>
                         <h3 className="text-2xl font-extrabold text-gray-900 mb-2">Pendaftaran Berhasil!</h3>
                         <p className="text-gray-500 mb-6 text-sm leading-relaxed">Kode tiket dan QR Code telah dikirimkan ke <b>Email</b> dan <b>WhatsApp</b> Anda.</p>
-                        
+
                         {registeredCode && (
                             <div className="bg-gradient-to-br from-green-50 to-emerald-50 border-2 border-green-200 rounded-3xl p-6 mb-6">
                                 <p className="text-[10px] text-green-700 font-bold uppercase tracking-widest mb-4">QR Code Tiket Anda</p>
@@ -670,7 +767,7 @@ const EventDetailPage = () => {
                         )}
 
                         <div className="flex flex-col gap-3">
-                            <button 
+                            <button
                                 onClick={() => setSuccess(false)}
                                 className="w-full py-3.5 bg-green-600 text-white rounded-2xl text-sm font-bold shadow-lg hover:bg-green-700 transition"
                             >
@@ -692,7 +789,7 @@ const EventDetailPage = () => {
                                 <h2 className="text-2xl font-extrabold text-gray-900 leading-tight">Formulir Pendaftaran</h2>
                                 <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-1">LENGKAPI DATA UNTUK {event.title}</p>
                             </div>
-                            <button 
+                            <button
                                 onClick={() => setShowRegisterModal(false)}
                                 className="w-10 h-10 bg-gray-100 text-gray-400 rounded-full flex items-center justify-center hover:bg-gray-200 hover:text-gray-600 transition shadow-inner"
                             >
@@ -711,7 +808,7 @@ const EventDetailPage = () => {
                                         <h3 className="text-xl font-extrabold text-gray-900">Login Diperlukan</h3>
                                         <p className="text-gray-500 text-sm">Anda harus masuk ke akun Barakah Economy terlebih dahulu untuk mendaftar event ini.</p>
                                     </div>
-                                    <Link 
+                                    <Link
                                         to={`/login?redirect=/event/${slug}`}
                                         className="w-full block py-4 bg-gray-900 text-white rounded-2xl text-sm font-bold shadow-xl hover:bg-gray-800 transition"
                                     >
@@ -748,8 +845,8 @@ const EventDetailPage = () => {
                                                         <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Pindai QRIS BAE</p>
                                                         <p className="text-lg font-black text-gray-900 mt-1">Barakah App Economy</p>
                                                         <p className="text-xs text-gray-500 mt-2 leading-relaxed">Silakan bayar melalui QRIS di atas dan unggah bukti transfernya di bawah ini.</p>
-                                                        <a 
-                                                            href="/images/qris-bae2.png" 
+                                                        <a
+                                                            href="/images/qris-bae2.png"
                                                             download="QRIS-BAE.png"
                                                             className="mt-3 inline-flex items-center gap-2 text-[10px] font-bold text-green-700 hover:text-green-800 transition bg-green-50 px-3 py-1.5 rounded-lg border border-green-100"
                                                         >
@@ -771,9 +868,9 @@ const EventDetailPage = () => {
                                                     {(event.price_type === 'voluntary' || event.price_type === 'hybrid_1' || event.price_type === 'hybrid_2') && (
                                                         <div className="space-y-2">
                                                             <label className="text-[10px] font-bold text-gray-600 uppercase ml-1">
-                                                                {event.price_type === 'hybrid_1' ? 'Tambah Infaq (Opsional)' : 
-                                                                 event.price_type === 'hybrid_2' ? 'Pilih Nominal Bayar (Min. Rp 0)' : 
-                                                                 'Nominal Sukarela *'}
+                                                                {event.price_type === 'hybrid_1' ? 'Tambah Infaq (Opsional)' :
+                                                                    event.price_type === 'hybrid_2' ? 'Pilih Nominal Bayar (Min. Rp 0)' :
+                                                                        'Nominal Sukarela *'}
                                                             </label>
                                                             <CurrencyInput
                                                                 value={paymentAmount}
@@ -784,7 +881,7 @@ const EventDetailPage = () => {
                                                         </div>
                                                     )}
                                                 </div>
-                                                
+
                                                 {/* Total Display */}
                                                 <div className="flex flex-col gap-1 p-5 bg-green-50 rounded-2xl border-2 border-green-200 shadow-inner">
                                                     <p className="text-[10px] font-black text-green-600 uppercase tracking-[0.2em] text-center">Total yang Harus Ditransfer</p>
@@ -793,11 +890,11 @@ const EventDetailPage = () => {
                                                             const fixed = Number(event?.price_fixed) || 0;
                                                             const extra = Number(paymentAmount) || 0;
                                                             let total = 0;
-                                                            
+
                                                             if (event?.price_type === 'fixed') total = fixed;
                                                             else if (event?.price_type === 'hybrid_1') total = fixed + extra;
                                                             else total = extra; // voluntary or hybrid_2
-                                                            
+
                                                             return formatCurrency(total);
                                                         })()}
                                                     </p>
@@ -811,12 +908,12 @@ const EventDetailPage = () => {
                                                             <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Pilih Foto Bukti</p>
                                                             {paymentProof && <p className="mt-1 text-xs text-green-600 font-bold">{paymentProof.name}</p>}
                                                         </div>
-                                                        <input 
-                                                            type="file" 
+                                                        <input
+                                                            type="file"
                                                             required
                                                             accept="image/*"
                                                             onChange={(e) => setPaymentProof(e.target.files[0])}
-                                                            className="hidden" 
+                                                            className="hidden"
                                                         />
                                                     </label>
                                                 </div>
@@ -834,11 +931,11 @@ const EventDetailPage = () => {
                                                             </label>
                                                             <span className="text-[9px] font-bold text-gray-300 uppercase">{field.field_type}</span>
                                                         </div>
-                                                        
+
                                                         {field.field_type === 'text' && (
-                                                            <input 
+                                                            <input
                                                                 required={field.required}
-                                                                type="text" 
+                                                                type="text"
                                                                 value={responses[field.id] || ''}
                                                                 placeholder={field.placeholder}
                                                                 onChange={(e) => handleResponseChange(field.id, e.target.value)}
@@ -847,7 +944,7 @@ const EventDetailPage = () => {
                                                         )}
 
                                                         {field.field_type === 'textarea' && (
-                                                            <textarea 
+                                                            <textarea
                                                                 required={field.required}
                                                                 value={responses[field.id] || ''}
                                                                 placeholder={field.placeholder}
@@ -858,9 +955,9 @@ const EventDetailPage = () => {
                                                         )}
 
                                                         {field.field_type === 'number' && (
-                                                            <input 
+                                                            <input
                                                                 required={field.required}
-                                                                type="number" 
+                                                                type="number"
                                                                 value={responses[field.id] || ''}
                                                                 onChange={(e) => handleResponseChange(field.id, e.target.value)}
                                                                 className="w-full px-5 py-3.5 bg-gray-50 border border-transparent rounded-2xl text-sm outline-none focus:bg-white focus:border-green-500 focus:ring-4 focus:ring-green-500/10 transition shadow-inner"
@@ -868,9 +965,9 @@ const EventDetailPage = () => {
                                                         )}
 
                                                         {field.field_type === 'email' && (
-                                                            <input 
+                                                            <input
                                                                 required={field.required}
-                                                                type="email" 
+                                                                type="email"
                                                                 value={responses[field.id] || ''}
                                                                 onChange={(e) => handleResponseChange(field.id, e.target.value)}
                                                                 className="w-full px-5 py-3.5 bg-gray-50 border border-transparent rounded-2xl text-sm outline-none focus:bg-white focus:border-green-500 focus:ring-4 focus:ring-green-500/10 transition shadow-inner"
@@ -878,9 +975,9 @@ const EventDetailPage = () => {
                                                         )}
 
                                                         {field.field_type === 'phone' && (
-                                                            <input 
+                                                            <input
                                                                 required={field.required}
-                                                                type="tel" 
+                                                                type="tel"
                                                                 value={responses[field.id] || ''}
                                                                 onChange={(e) => handleResponseChange(field.id, e.target.value)}
                                                                 className="w-full px-5 py-3.5 bg-gray-50 border border-transparent rounded-2xl text-sm outline-none focus:bg-white focus:border-green-500 focus:ring-4 focus:ring-green-500/10 transition shadow-inner"
@@ -888,9 +985,9 @@ const EventDetailPage = () => {
                                                         )}
 
                                                         {field.field_type === 'date' && (
-                                                            <input 
+                                                            <input
                                                                 required={field.required}
-                                                                type="date" 
+                                                                type="date"
                                                                 value={responses[field.id] || ''}
                                                                 onChange={(e) => handleResponseChange(field.id, e.target.value)}
                                                                 className="w-full px-5 py-3.5 bg-gray-50 border border-transparent rounded-2xl text-sm outline-none focus:bg-white focus:border-green-500 focus:ring-4 focus:ring-green-500/10 transition shadow-inner"
@@ -899,7 +996,7 @@ const EventDetailPage = () => {
 
                                                         {(field.field_type === 'select' || field.field_type === 'radio') && (
                                                             <div className="relative">
-                                                                <select 
+                                                                <select
                                                                     required={field.required}
                                                                     value={responses[field.id] || ''}
                                                                     onChange={(e) => handleResponseChange(field.id, e.target.value)}
@@ -924,8 +1021,8 @@ const EventDetailPage = () => {
                                                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
                                                                 {(field.options || []).map(opt => (
                                                                     <label key={opt} className={`flex items-center gap-3 px-4 py-3 rounded-2xl border cursor-pointer transition ${(responses[field.id] || []).includes(opt) ? 'bg-green-50 border-green-200 text-green-700' : 'bg-white border-gray-100 text-gray-500 hover:border-gray-200'}`}>
-                                                                        <input 
-                                                                            type="checkbox" 
+                                                                        <input
+                                                                            type="checkbox"
                                                                             onChange={(e) => handleCheckboxChange(field.id, opt, e.target.checked)}
                                                                             className="w-4 h-4 text-green-600 rounded"
                                                                         />
@@ -943,11 +1040,11 @@ const EventDetailPage = () => {
                                                                         <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Click to upload file</p>
                                                                         {files[field.id] && <p className="mt-1 text-xs text-green-600 font-bold max-w-[200px] truncate">{files[field.id].name}</p>}
                                                                     </div>
-                                                                    <input 
+                                                                    <input
                                                                         required={field.required}
-                                                                        type="file" 
+                                                                        type="file"
                                                                         onChange={(e) => handleFileChange(field.id, e.target.files[0])}
-                                                                        className="hidden" 
+                                                                        className="hidden"
                                                                     />
                                                                 </label>
                                                             </div>
@@ -958,7 +1055,7 @@ const EventDetailPage = () => {
                                         )}
 
                                         <div className="pt-4 border-t border-gray-100 flex flex-col gap-4">
-                                            <button 
+                                            <button
                                                 type="submit"
                                                 disabled={submitting}
                                                 className={`w-full py-5 bg-green-600 text-white rounded-[2rem] text-sm font-extrabold uppercase tracking-widest shadow-2xl shadow-green-100 transition active:scale-[0.98] ${submitting ? 'opacity-70 cursor-not-allowed' : 'hover:bg-green-700'}`}
@@ -978,7 +1075,7 @@ const EventDetailPage = () => {
             {/* Image Full-size Popup */}
             {selectedImage && (
                 <div className="fixed inset-0 z-[200] bg-black/90 backdrop-blur-lg flex items-center justify-center p-4 animate-fade-in">
-                    <button 
+                    <button
                         onClick={() => setSelectedImage(null)}
                         className="absolute top-6 right-6 w-12 h-12 bg-white/10 text-white rounded-full flex items-center justify-center hover:bg-white/20 transition"
                     >
@@ -989,9 +1086,9 @@ const EventDetailPage = () => {
                             <img src={selectedImage} alt="Documentation Full" className="max-w-full max-h-[80vh] rounded-2xl shadow-2xl object-contain animate-scale-up" />
                         </div>
                         <div className="flex gap-4">
-                            <a 
-                                href={selectedImage} 
-                                download 
+                            <a
+                                href={selectedImage}
+                                download
                                 target="_blank"
                                 rel="noreferrer"
                                 className="bg-white text-gray-900 px-8 py-3 rounded-full text-sm font-black uppercase flex items-center gap-2 hover:bg-gray-100 transition shadow-xl"
@@ -999,7 +1096,7 @@ const EventDetailPage = () => {
                                 <span className="material-icons">download</span>
                                 Simpan Gambar
                             </a>
-                            <button 
+                            <button
                                 onClick={() => setSelectedImage(null)}
                                 className="bg-white/10 text-white border border-white/20 px-8 py-3 rounded-full text-sm font-bold uppercase hover:bg-white/20 transition"
                             >
