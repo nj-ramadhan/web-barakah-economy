@@ -12,12 +12,10 @@ import {
 } from '../services/digitalProductApi';
 import BackButton from '../components/global/BackButton';
 import ImageCropperModal from '../components/common/ImageCropper';
+import { formatCurrency, formatNumber, parseCurrency } from '../utils/formatters';
 import '../styles/Body.css';
 
-const formatIDR = (amount) => {
-    if (amount === 0 || amount === '0') return 'Gratis';
-    return 'Rp. ' + new Intl.NumberFormat('id-ID', { minimumFractionDigits: 0 }).format(amount);
-};
+// Removed local formatIDR in favor of imported formatCurrency
 
 const getMediaUrl = (url) => {
     if (!url) return '';
@@ -286,11 +284,11 @@ const DashboardDigitalProductsPage = () => {
                             <div>
                                 <label className="block text-xs font-medium text-gray-600 mb-1">Harga (Rp) *</label>
                                 <input
-                                    type="number"
-                                    value={price}
-                                    onChange={(e) => setPrice(e.target.value)}
+                                    type="text"
+                                    value={formatNumber(price)}
+                                    onChange={(e) => setPrice(parseCurrency(e.target.value))}
                                     className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                                    placeholder="10000"
+                                    placeholder="10.000"
                                     required
                                 />
                             </div>
@@ -372,7 +370,7 @@ const DashboardDigitalProductsPage = () => {
                                             )}
                                         </div>
                                         <span className="inline-block text-[10px] bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full mt-0.5">{product.category}</span>
-                                        <p className="text-green-700 font-bold text-sm mt-1">{formatIDR(product.price)}</p>
+                                        <p className="text-green-700 font-bold text-sm mt-1">{formatCurrency(product.price)}</p>
                                     </div>
                                     <div className="flex gap-1 flex-shrink-0">
                                         <button

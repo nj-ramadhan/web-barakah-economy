@@ -128,6 +128,8 @@ class EventRegistration(models.Model):
     payment_proof = models.ImageField(upload_to='events/payments/', blank=True, null=True)
     payment_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     payment_status = models.CharField(max_length=20, choices=[('pending', 'Pending'), ('verified', 'Verified'), ('rejected', 'Rejected')], default='pending')
+    ocr_verified = models.BooleanField(default=False)
+    ocr_data = models.JSONField(null=True, blank=True, help_text="Data hasil ekstraksi OCR AI")
     
     # QR Code & Attendance
     unique_code = models.CharField(max_length=20, unique=True, blank=True, null=True, help_text="Kode unik untuk QR Code kehadiran")

@@ -7,10 +7,9 @@ import NavigationButton from '../components/layout/Navigation';
 import { getMyDigitalProducts, getDigitalBalance, getWithdrawalHistory, createWithdrawalRequest } from '../services/digitalProductApi';
 import { getMyCourses } from '../services/ecourseApi';
 import authService from '../services/auth';
+import { formatCurrency, formatNumber, parseCurrency } from '../utils/formatters';
 
-const formatIDR = (amount) => {
-    return 'Rp ' + new Intl.NumberFormat('id-ID', { minimumFractionDigits: 0 }).format(amount || 0);
-};
+// Removed local formatIDR in favor of imported formatCurrency
 
 const DashboardPage = () => {
     const navigate = useNavigate();
@@ -325,7 +324,7 @@ const DashboardPage = () => {
                         <span className="material-icons text-sm">history</span>
                     </button>
                     <p className="text-xs opacity-80 mb-1">Saldo Tersedia</p>
-                    <h2 className="text-2xl font-bold mb-4">{formatIDR(balanceData.available_balance)}</h2>
+                    <h2 className="text-2xl font-bold mb-4">{formatCurrency(balanceData.available_balance)}</h2>
                     <div className="flex gap-2">
                         <button
                             onClick={() => setShowWithdrawModal(true)}
@@ -334,11 +333,11 @@ const DashboardPage = () => {
                             Tarik Saldo
                         </button>
                         <div className="text-[10px] opacity-70 flex flex-col justify-center">
-                            <span>Total Penjualan: {formatIDR(balanceData.total_sales)}</span>
+                            <span>Total Penjualan: {formatCurrency(balanceData.total_sales)}</span>
                             <div className="flex gap-2">
-                                <span>Digital: {formatIDR(balanceData.digital_sales_total || 0)}</span>
-                                <span>Course: {formatIDR(balanceData.course_sales_total || 0)}</span>
-                                <span>Sinergy: {formatIDR(balanceData.total_sinergy_sales || 0)}</span>
+                                <span>Digital: {formatCurrency(balanceData.digital_sales_total || 0)}</span>
+                                <span>Course: {formatCurrency(balanceData.course_sales_total || 0)}</span>
+                                <span>Sinergy: {formatCurrency(balanceData.total_sinergy_sales || 0)}</span>
                             </div>
                         </div>
                     </div>
@@ -918,11 +917,11 @@ const DashboardPage = () => {
                                     </button>
                                 </div>
                                 <input
-                                    type="number"
-                                    value={withdrawAmount}
-                                    onChange={(e) => setWithdrawAmount(e.target.value)}
+                                    type="text"
+                                    value={formatNumber(withdrawAmount)}
+                                    onChange={(e) => setWithdrawAmount(parseCurrency(e.target.value))}
                                     className="w-full px-4 py-3 bg-gray-100 border-none rounded-xl text-sm focus:ring-2 focus:ring-green-500"
-                                    placeholder="Contoh: 50000"
+                                    placeholder="Contoh: 50.000"
                                     required
                                 />
                             </div>
@@ -930,9 +929,9 @@ const DashboardPage = () => {
                             <div>
                                 <label className="block text-xs font-medium text-gray-500 mb-1">Donasi Program Sosial (Opsional)</label>
                                 <input
-                                    type="number"
-                                    value={donationAmount}
-                                    onChange={(e) => setDonationAmount(e.target.value)}
+                                    type="text"
+                                    value={formatNumber(donationAmount)}
+                                    onChange={(e) => setDonationAmount(parseCurrency(e.target.value))}
                                     className="w-full px-4 py-3 bg-gray-100 border-none rounded-xl text-sm focus:ring-2 focus:ring-green-500"
                                     placeholder="Berapapun donasi Anda sangat berarti"
                                 />
@@ -1001,11 +1000,11 @@ const DashboardPage = () => {
                             <div className="bg-orange-50 p-4 rounded-xl border border-orange-100 space-y-1">
                                 <div className="flex justify-between text-xs text-orange-800">
                                     <span>Biaya Admin:</span>
-                                    <span>{formatIDR(adminFeeVal)}</span>
+                                    <span>{formatCurrency(adminFeeVal)}</span>
                                 </div>
                                 <div className="flex justify-between text-xs text-orange-800 font-bold">
                                     <span>Total Pengurangan Saldo:</span>
-                                    <span>{formatIDR(totalDeductionVal)}</span>
+                                    <span>{formatCurrency(totalDeductionVal)}</span>
                                 </div>
                                 <p className="text-[9px] text-orange-600 mt-2">* Gratis biaya admin jika menggunakan BSI atau GOPAY</p>
                             </div>
@@ -1042,7 +1041,7 @@ const DashboardPage = () => {
                                     <div key={w.id} className="bg-gray-50 p-4 rounded-2xl border border-gray-100">
                                         <div className="flex justify-between items-start">
                                             <div>
-                                                <p className="font-bold text-gray-800">{formatIDR(w.amount)}</p>
+                                                <p className="font-bold text-gray-800">{formatCurrency(w.amount)}</p>
                                                 <div className="flex items-center gap-2 mt-1">
                                                     <span className="material-icons text-[12px] text-gray-400">calendar_today</span>
                                                     <p className="text-[10px] text-gray-500">{new Date(w.created_at).toLocaleString('id-ID', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>

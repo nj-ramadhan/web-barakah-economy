@@ -75,6 +75,8 @@ class CourseEnrollment(models.Model):
     proof_file = models.FileField(upload_to=proof_file_path, null=True, blank=True)
     enrolled_at = models.DateTimeField(auto_now_add=True)
     payment_status = models.CharField(max_length=20, choices=PAYMENT_STATUS_CHOICES, default='pending')
+    ocr_verified = models.BooleanField(default=False)
+    ocr_data = models.JSONField(null=True, blank=True, help_text="Data hasil ekstraksi OCR AI")
 
     def save(self, *args, **kwargs):
         # Generate order number if not exists

@@ -7,6 +7,7 @@ import ImageCropperModal from '../components/common/ImageCropper';
 import { compressImage } from '../components/common/canvasUtils';
 import { createEvent, getEventDetail, updateEvent } from '../services/eventApi';
 import CKEditorComponent from '../components/common/CKEditor';
+import { formatNumber, parseCurrency } from '../utils/formatters';
 
 const EventSubmissionPage = () => {
     const navigate = useNavigate();
@@ -512,11 +513,11 @@ const EventSubmissionPage = () => {
                                     <div className="space-y-1.5 md:col-span-2">
                                         <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Nominal Fix / Minimal (IDR) *</label>
                                         <input 
-                                            type="number" 
+                                            type="text" 
                                             name="price_fixed"
-                                            value={formData.price_fixed}
-                                            onChange={handleChange}
-                                            placeholder="Contoh: 20000"
+                                            value={formatNumber(formData.price_fixed)}
+                                            onChange={(e) => setFormData(prev => ({ ...prev, price_fixed: parseCurrency(e.target.value) }))}
+                                            placeholder="Contoh: 20.000"
                                             className="w-full px-5 py-3.5 bg-gray-50 border-none rounded-2xl text-sm focus:ring-2 focus:ring-green-500 transition font-bold"
                                         />
                                     </div>

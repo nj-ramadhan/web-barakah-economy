@@ -10,6 +10,7 @@ from django.shortcuts import get_object_or_404
 from .models import Order, OrderItem
 from carts.models import Cart # Assuming you have a Cart and CartItem model
 from .serializers import OrderSerializer, OrderItemSerializer
+from events.ocr_service import extract_payment_proof_data
 # Removed dynamic Qrisly for now
 
 
@@ -111,6 +112,41 @@ class CreateOrderView(APIView):
                 order.grand_total = total_price + Decimal(str(order.shipping_cost)) - Decimal(str(order.voucher_nominal))
                 if order.grand_total < 0:
                     order.grand_total = Decimal('0')
+                
+                # Perform OCR Validation if proof is uploaded
+                if proof_file:
+                    expected_amount = Decimal(str(order.grand_total))
+                    ocr_result = extract_payment_proof_data(proof_file, expected_amount=expected_amount)
+                    
+                    if '_error' in ocr_result:
+                        # Allow order creation but set status back to pending if AI fails?
+                        # Or block? User said "harus", so let's block or return error.
+                        return Response({"error": ocr_result['_error']}, status=status.HTTP_400_BAD_REQUEST)
+                    
+                    # Validate Recipient
+                    if not ocr_result.get('is_to_bae', False):
+                        return Response({
+                            "error": f"Penerima tidak valid (Terdeteksi: {ocr_result.get('recipient_name', 'Tidak dikenal')}). Transfer harus ditujukan ke BAE Community."
+                        }, status=status.HTTP_400_BAD_REQUEST)
+                    
+                    # Validate Amount
+                    if not ocr_result.get('amount_match', False):
+                        detected = ocr_result.get('amount', 0)
+                        return Response({
+                            "error": f"Nominal transfer tidak sesuai. Diharapkan: Rp {expected_amount:,.0f}, Terdeteksi: Rp {detected:,.0f}. Silakan unggah bukti yang benar."
+                        }, status=status.HTTP_400_BAD_REQUEST)
+
+                    # Validate Date
+                    if not ocr_result.get('date_match', False):
+                        detected_date = ocr_result.get('transaction_date', 'Tidak terdeteksi')
+                        return Response({
+                            "error": f"Tanggal transaksi tidak valid (Terdeteksi: {detected_date}). Bukti transfer harus dari hari ini atau maksimal 1 hari sebelumnya."
+                        }, status=status.HTTP_400_BAD_REQUEST)
+                    
+                    order.ocr_verified = True
+                    order.ocr_data = ocr_result
+                    order.status = 'paid' # Or 'verified' depends on system
+
                 order.save() 
                 created_orders.append(order)
 
@@ -209,3 +245,51 @@ class SellerOrderViewSet(viewsets.ModelViewSet):
             'pending_count': pending_count
         })
 
+class ProofUploadView(APIView):
+    permission_classes = [IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser]
+
+    def post(self, request, order_id):
+        order = get_object_or_404(Order, id=order_id, user=request.user)
+        proof_file = request.FILES.get('proof_file')
+        
+        if not proof_file:
+            return Response({'error': 'Bukti transfer wajib diunggah.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Perform OCR Validation
+        expected_amount = Decimal(str(order.grand_total))
+        ocr_result = extract_payment_proof_data(proof_file, expected_amount=expected_amount)
+        
+        if '_error' in ocr_result:
+            return Response({"error": ocr_result['_error']}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Validate Recipient
+        if not ocr_result.get('is_to_bae', False):
+            return Response({
+                "error": f"Penerima tidak valid (Terdeteksi: {ocr_result.get('recipient_name', 'Tidak dikenal')}). Transfer harus ditujukan ke BAE Community."
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Validate Amount
+        if not ocr_result.get('amount_match', False):
+            detected = ocr_result.get('amount', 0)
+            return Response({
+                "error": f"Nominal transfer tidak sesuai. Diharapkan: Rp {expected_amount:,.0f}, Terdeteksi: Rp {detected:,.0f}. Silakan unggah bukti yang benar."
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Validate Date
+        if not ocr_result.get('date_match', False):
+            detected_date = ocr_result.get('transaction_date', 'Tidak terdeteksi')
+            return Response({
+                "error": f"Tanggal transaksi tidak valid (Terdeteksi: {detected_date}). Bukti transfer harus dari hari ini atau maksimal 1 hari sebelumnya."
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        order.payment_proof = proof_file
+        order.status = 'paid'
+        order.ocr_verified = True
+        order.ocr_data = ocr_result
+        order.save()
+
+        return Response({
+            'message': 'Bukti pembayaran berhasil diverifikasi otomatis oleh AI',
+            'order': OrderSerializer(order).data
+        })

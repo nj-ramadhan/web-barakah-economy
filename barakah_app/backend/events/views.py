@@ -14,6 +14,8 @@ from django.utils import timezone
 from accounts import whatsapp_service
 import os
 import re
+from .ocr_service import extract_payment_proof_data
+from decimal import Decimal
 
 class EventViewSet(viewsets.ModelViewSet):
     queryset = Event.objects.all().order_by('-start_date')
@@ -178,12 +180,48 @@ class EventViewSet(viewsets.ModelViewSet):
         if errors:
             return Response({"errors": errors}, status=status.HTTP_400_BAD_REQUEST)
             
-        # 2. Payment Handling
+        # 2. Payment Handling & OCR Validation
         payment_proof = request.FILES.get('payment_proof')
         payment_amount = request.data.get('payment_amount', 0)
         
-        if event.price_type != 'free' and not payment_proof:
-            return Response({"error": "Bukti pembayaran wajib diunggah untuk event berbayar."}, status=status.HTTP_400_BAD_REQUEST)
+        ocr_verified = False
+        ocr_data = None
+
+        if event.price_type != 'free':
+            if not payment_proof:
+                return Response({"error": "Bukti pembayaran wajib diunggah untuk event berbayar."}, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Perform OCR Validation
+            expected_amount = Decimal(str(payment_amount))
+            ocr_result = extract_payment_proof_data(payment_proof, expected_amount=expected_amount)
+            
+            if '_error' in ocr_result:
+                # If AI fails completely (config error), we might want to allow but log, 
+                # or strict? User said "harus", so let's be strict but clear.
+                return Response({"error": ocr_result['_error']}, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Validate Recipient
+            if not ocr_result.get('is_to_bae', False):
+                return Response({
+                    "error": f"Penerima tidak valid (Terdeteksi: {ocr_result.get('recipient_name', 'Tidak dikenal')}). Transfer harus ditujukan ke BAE Community."
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Validate Amount
+            if not ocr_result.get('amount_match', False):
+                detected = ocr_result.get('amount', 0)
+                return Response({
+                    "error": f"Nominal transfer tidak sesuai. Diharapkan: Rp {expected_amount:,.0f}, Terdeteksi: Rp {detected:,.0f}. Silakan unggah bukti yang benar."
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Validate Date
+            if not ocr_result.get('date_match', False):
+                detected_date = ocr_result.get('transaction_date', 'Tidak terdeteksi')
+                return Response({
+                    "error": f"Tanggal transaksi tidak valid (Terdeteksi: {detected_date}). Bukti transfer harus dari hari ini atau maksimal 1 hari sebelumnya."
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            ocr_verified = True
+            ocr_data = ocr_result
 
         # 3. Create registration
         # Status defaults to 'pending' as defined in model
@@ -193,7 +231,9 @@ class EventViewSet(viewsets.ModelViewSet):
             responses=responses,
             payment_proof=payment_proof,
             payment_amount=payment_amount,
-            status='approved' # Force auto-approve
+            status='approved', # Force auto-approve if payment is verified
+            ocr_verified=ocr_verified,
+            ocr_data=ocr_data
         )
         
         # 4. Handle File Uploads for dynamic fields
@@ -256,7 +296,8 @@ class EventViewSet(viewsets.ModelViewSet):
                 f"📌 Simpan kode ini sebagai tiket masuk event. Kode ini akan di-scan saat Anda hadir.\n"
                 f"📷 QR Code tiket bisa dilihat di halaman detail event.\n\n"
                 f"📅 Waktu: {registration.event.start_date.strftime('%d %b %Y %H:%M')}\n"
-                f"📍 Lokasi: {registration.event.location}\n\n"
+                f"📍 Lokasi: {registration.event.location}\n"
+                f"🔗 Link Lokasi: {registration.event.location_url or '-'}\n\n"
                 f"Salam,\nBarakah Economy"
             )
             whatsapp_service.send_message(formatted_phone, wa_message)

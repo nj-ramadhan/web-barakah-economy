@@ -6,10 +6,9 @@ import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
 import Header from '../../components/layout/Header';
 import NavigationButton from '../../components/layout/Navigation';
+import { formatCurrency, formatNumber, parseCurrency } from '../../utils/formatters';
 
-const formatIDR = (amount) => {
-    return 'Rp ' + new Intl.NumberFormat('id-ID', { minimumFractionDigits: 0 }).format(amount || 0);
-};
+// Removed local formatIDR in favor of imported formatCurrency
 
 const ASNAF_OPTIONS = [
     'Fakir', 'Miskin', 'Amil', 'Mualaf', 'Riqab', 'Gharimin', 'Fisabilillah', 'Ibnu Sabil', 'Yatim', 'Operational', 'Bencana Alam', 'Kemanusiaan', 'Kesehatan', 'Pendidikan', 'Lingkungan', 'Pembangunan', 'Sosial', 'Masjid', 'Waqaf', 'Lainnya'
@@ -135,7 +134,7 @@ const DashboardRealizationPage = () => {
             r.description,
             r.beneficiaries,
             r.beneficiary_status,
-            formatIDR(r.nominal)
+            formatCurrency(r.nominal)
         ]);
 
         doc.autoTable({
@@ -173,7 +172,7 @@ const DashboardRealizationPage = () => {
                             >
                                 <div>
                                     <h3 className="font-bold text-gray-800">{c.title}</h3>
-                                    <p className="text-xs text-gray-500">Terkumpul: {formatIDR(c.current_amount)}</p>
+                                    <p className="text-xs text-gray-500">Terkumpul: {formatCurrency(c.current_amount)}</p>
                                 </div>
                                 <span className="material-icons text-gray-400">chevron_right</span>
                             </div>
@@ -225,7 +224,7 @@ const DashboardRealizationPage = () => {
                                                 </span>
                                             </div>
                                             <div className="flex items-center gap-3">
-                                                <span className="text-sm font-bold text-gray-900">{formatIDR(r.nominal)}</span>
+                                                <span className="text-sm font-bold text-gray-900">{formatCurrency(r.nominal)}</span>
                                                 <button
                                                     onClick={() => {
                                                         setSelectedRealization(r);
@@ -265,7 +264,7 @@ const DashboardRealizationPage = () => {
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-[10px] uppercase tracking-wider font-bold text-gray-400 mb-1">Nominal</label>
-                                    <p className="text-sm font-bold text-green-700">{formatIDR(selectedRealization.nominal)}</p>
+                                    <p className="text-sm font-bold text-green-700">{formatCurrency(selectedRealization.nominal)}</p>
                                 </div>
                                 <div>
                                     <label className="block text-[10px] uppercase tracking-wider font-bold text-gray-400 mb-1">Status (Asnaf)</label>
@@ -317,12 +316,12 @@ const DashboardRealizationPage = () => {
                                 <div>
                                     <label className="block text-xs font-medium text-gray-500 mb-1">Nominal (Rp)</label>
                                     <input
-                                        type="number"
+                                        type="text"
                                         required
-                                        value={formData.nominal}
-                                        onChange={(e) => setFormData({ ...formData, nominal: e.target.value })}
+                                        value={formatNumber(formData.nominal)}
+                                        onChange={(e) => setFormData({ ...formData, nominal: parseCurrency(e.target.value) })}
                                         className="w-full px-4 py-3 bg-gray-100 border-none rounded-xl text-sm"
-                                        placeholder="1000000"
+                                        placeholder="1.000.000"
                                     />
                                 </div>
                             </div>

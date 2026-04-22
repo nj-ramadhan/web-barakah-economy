@@ -19,6 +19,7 @@ from .serializers import (
 from django.db.models import Sum, Q, DecimalField
 from decimal import Decimal
 from courses.models import CourseEnrollment
+from events.ocr_service import extract_payment_proof_data
 import logging
 
 logger = logging.getLogger(__name__)
@@ -344,17 +345,45 @@ class DigitalOrderViewSet(viewsets.ModelViewSet):
         order.payment_proof = proof_file
         order.save()
 
-        # Set product owner
+        # Perform OCR Validation
+        expected_amount = Decimal(str(order.amount))
+        ocr_result = extract_payment_proof_data(proof_file, expected_amount=expected_amount)
+        
+        if '_error' in ocr_result:
+            return Response({"error": ocr_result['_error']}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Validate Recipient
+        if not ocr_result.get('is_to_bae', False):
+            return Response({
+                "error": f"Penerima tidak valid (Terdeteksi: {ocr_result.get('recipient_name', 'Tidak dikenal')}). Transfer harus ditujukan ke BAE Community."
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Validate Amount
+        if not ocr_result.get('amount_match', False):
+            detected = ocr_result.get('amount', 0)
+            return Response({
+                "error": f"Nominal transfer tidak sesuai. Diharapkan: Rp {expected_amount:,.0f}, Terdeteksi: Rp {detected:,.0f}. Silakan unggah bukti yang benar."
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Validate Date
+        if not ocr_result.get('date_match', False):
+            detected_date = ocr_result.get('transaction_date', 'Tidak terdeteksi')
+            return Response({
+                "error": f"Tanggal transaksi tidak valid (Terdeteksi: {detected_date}). Bukti transfer harus dari hari ini atau maksimal 1 hari sebelumnya."
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Set product owner and verify
         order.product_owner = order.digital_product.user
         order.payment_status = 'verified'
         order.ocr_verified = True
+        order.ocr_data = ocr_result
         order.save()
 
         # Send digital product link via email
         self._send_digital_product_email(order)
 
         return Response({
-            'message': 'Bukti pembayaran berhasil diupload dan diverifikasi',
+            'message': 'Bukti pembayaran berhasil diverifikasi otomatis oleh AI',
             'order': DigitalOrderSerializer(order).data
         })
 
