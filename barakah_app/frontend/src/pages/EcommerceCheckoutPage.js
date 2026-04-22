@@ -327,11 +327,6 @@ const EcommerceCheckoutPage = () => {
             >
               <option value="">- Pilih Jasa Ekspedisi -</option>
               <option value="none">Tanpa Ongkir (Ongkir terpisah / hubungi penjualk)</option>
-              <option value="jne">JNE</option>
-              <option value="pos">POS Indonesia</option>
-              <option value="tiki">TIKI</option>
-              <option value="jnt">J&T Express</option>
-              <option value="sicepat">SiCepat</option>
             </select>
 
             {isFetchingShipping && <p className="text-xs text-orange-600 mt-2 animate-pulse">Menghitung Biaya...</p>}
