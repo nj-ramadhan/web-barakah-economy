@@ -473,9 +473,61 @@ const EventSubmissionPage = () => {
                             </div>
                         </div>
 
+                        {/* PHASE: BERKAS & VISIBILITAS */}
+                        <div className="space-y-6 pt-4">
+                            <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                                <span className="w-6 h-6 bg-blue-100 text-blue-700 rounded-lg flex items-center justify-center text-xs">3</span>
+                                Berkas & Visibilitas
+                            </h3>
+                            <div className="p-6 bg-blue-50/50 rounded-[2.5rem] border border-blue-100 space-y-6">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div className="space-y-1.5 md:col-span-2">
+                                        <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Visibilitas Event *</label>
+                                        <select 
+                                            name="visibility" 
+                                            value={formData.visibility} 
+                                            onChange={handleChange} 
+                                            className="w-full px-5 py-3.5 bg-white border border-blue-100 rounded-2xl text-sm focus:ring-2 focus:ring-blue-500 transition shadow-sm"
+                                        >
+                                            <option value="public">Umum (Tampil di Beranda & Daftar)</option>
+                                            <option value="private">Privat (Hanya lewat link langsung)</option>
+                                        </select>
+                                        <p className="text-[10px] text-blue-800/60 ml-1 italic font-medium">Link event tetap bisa diakses meskipun diset Privat.</p>
+                                    </div>
+                                    
+                                    <div className="space-y-1.5">
+                                        <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Lampiran Berkas (PDF/Gambar/Dokumen)</label>
+                                        <div className="flex items-center gap-3">
+                                            <label className="flex-1 text-center py-3.5 bg-white text-blue-700 rounded-2xl text-xs font-bold cursor-pointer hover:bg-blue-50 transition shadow-sm border border-blue-100">
+                                                {files.attachment_file ? (files.attachment_file.name || 'Berkas Terpilih') : 'UNGGAH BERKAS (OPSIONAL)'}
+                                                <input type="file" name="attachment_file" onChange={(e) => setFiles(prev => ({ ...prev, attachment_file: e.target.files[0] }))} className="hidden" />
+                                            </label>
+                                            {isEdit && formData.attachment_file && (
+                                                <a href={formData.attachment_file} target="_blank" rel="noreferrer" className="w-12 h-12 bg-white text-blue-600 rounded-2xl flex items-center justify-center border border-blue-100 shadow-sm hover:bg-blue-50 transition">
+                                                    <span className="material-icons">visibility</span>
+                                                </a>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-1.5">
+                                        <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Tautan Eksternal Pendukung (Link)</label>
+                                        <input 
+                                            type="url" 
+                                            name="attachment_link" 
+                                            value={formData.attachment_link} 
+                                            onChange={handleChange} 
+                                            placeholder="https://..." 
+                                            className="w-full px-5 py-3.5 bg-white border border-blue-100 rounded-2xl text-sm focus:ring-2 focus:ring-blue-500 transition shadow-sm"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <div className="space-y-4 pt-4">
                             <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                                <span className="w-6 h-6 bg-green-100 text-green-700 rounded-lg flex items-center justify-center text-xs">3</span>
+                                <span className="w-6 h-6 bg-green-100 text-green-700 rounded-lg flex items-center justify-center text-xs">4</span>
                                 Media & Penyelenggara
                             </h3>
                             
@@ -540,7 +592,7 @@ const EventSubmissionPage = () => {
                         
                         <div className="space-y-4 pt-4">
                             <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                                <span className="w-6 h-6 bg-green-100 text-green-700 rounded-lg flex items-center justify-center text-xs">4</span>
+                                <span className="w-6 h-6 bg-green-100 text-green-700 rounded-lg flex items-center justify-center text-xs">5</span>
                                 Pengaturan Biaya (HTM)
                             </h3>
                             
@@ -592,7 +644,7 @@ const EventSubmissionPage = () => {
                         {/* PHASE: SYARAT, NARASUMBER, SESI */}
                         <div className="space-y-6 pt-4">
                             <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                                <span className="w-6 h-6 bg-green-100 text-green-700 rounded-lg flex items-center justify-center text-xs">5</span>
+                                <span className="w-6 h-6 bg-green-100 text-green-700 rounded-lg flex items-center justify-center text-xs">6</span>
                                 Kapasitas & Detail Acara
                             </h3>
                             
@@ -641,12 +693,14 @@ const EventSubmissionPage = () => {
                             </div>
                         </div>
 
-                        {/* PHASE 6: DOKUMENTASI (POST-EVENT) */}
-                            <div className="space-y-4 pt-4">
-                                <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                                    <span className="w-6 h-6 bg-purple-100 text-purple-700 rounded-lg flex items-center justify-center text-xs">6</span>
-                                    Dokumentasi (Pasca-Event)
-                                </h3>
+
+
+                        {/* PHASE 7: DOKUMENTASI (POST-EVENT) */}
+                        <div className="space-y-4 pt-4">
+                            <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                                <span className="w-6 h-6 bg-purple-100 text-purple-700 rounded-lg flex items-center justify-center text-xs">7</span>
+                                Dokumentasi (Pasca-Event)
+                            </h3>
                                 
                                 <div className="space-y-4">
                                     {isEdit && (
@@ -735,7 +789,7 @@ const EventSubmissionPage = () => {
                         {/* PHASE 7: FORM PENDAFTARAN */}
                         <div className="space-y-4 pt-4">
                             <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                                <span className="w-6 h-6 bg-green-100 text-green-700 rounded-lg flex items-center justify-center text-xs">7</span>
+                                <span className="w-6 h-6 bg-green-100 text-green-700 rounded-lg flex items-center justify-center text-xs">8</span>
                                 Formulir Pendaftaran Khusus
                             </h3>
                             <p className="text-xs text-gray-500 bg-green-50 p-3 rounded-xl border border-green-100 italic">

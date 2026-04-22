@@ -123,6 +123,7 @@ const DashboardEventPage = () => {
                                     <th className="px-4 py-4 font-bold text-gray-600 uppercase tracking-wider text-[11px]">Biaya</th>
                                     <th className="px-4 py-4 font-bold text-gray-600 uppercase tracking-wider text-[11px]">Waktu & Tempat</th>
                                     <th className="px-4 py-4 font-bold text-gray-600 uppercase tracking-wider text-[11px]">Pendaftar</th>
+                                    <th className="px-4 py-4 font-bold text-gray-600 uppercase tracking-wider text-[11px]">Visibilitas</th>
                                     <th className="px-4 py-4 font-bold text-gray-600 uppercase tracking-wider text-[11px]">Status</th>
                                     <th className="px-4 py-4 font-bold text-gray-600 uppercase tracking-wider text-[11px] text-center">Aksi</th>
                                 </tr>
@@ -144,7 +145,12 @@ const DashboardEventPage = () => {
                                                     <img src={ev.thumbnail || '/placeholder-image.jpg'} alt="" className="w-full h-full object-cover" />
                                                 </div>
                                                 <div>
-                                                    <p className="font-bold text-gray-900 line-clamp-1">{ev.title}</p>
+                                                    <div className="flex items-center gap-2">
+                                                        <p className="font-bold text-gray-900 line-clamp-1">{ev.title}</p>
+                                                        {(ev.attachment_file || ev.attachment_link) && (
+                                                            <span className="material-icons text-blue-500 text-xs" title="Memiliki Lampiran">attachment</span>
+                                                        )}
+                                                    </div>
                                                     <p className="text-[10px] text-gray-400">ID: {ev.id}</p>
                                                 </div>
                                             </div>
@@ -174,6 +180,13 @@ const DashboardEventPage = () => {
                                                 <span className="material-icons text-xs">people</span>
                                                 {ev.registration_count || 0} DATA
                                             </Link>
+                                        </td>
+                                        <td className="px-4 py-4">
+                                            <span className={`px-2 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider shadow-sm border ${
+                                                ev.visibility === 'private' ? 'bg-purple-50 text-purple-700 border-purple-100' : 'bg-gray-50 text-gray-600 border-gray-100'
+                                            }`}>
+                                                {ev.visibility === 'private' ? 'RAHASIA' : 'UMUM'}
+                                            </span>
                                         </td>
                                         <td className="px-4 py-4">
                                             <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${

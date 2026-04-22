@@ -119,7 +119,15 @@ const DashboardMyEventsPage = () => {
                                     </div>
                                     <div className="flex-1">
                                         <div className="flex flex-wrap justify-between items-start gap-2 mb-2">
-                                            <h3 className="text-lg font-black text-gray-900">{event.title}</h3>
+                                            <div className="flex items-center gap-2">
+                                                <h3 className="text-lg font-black text-gray-900">{event.title}</h3>
+                                                {event.visibility === 'private' && (
+                                                    <span className="px-2 py-0.5 bg-purple-50 text-purple-600 rounded-md text-[8px] font-black uppercase border border-purple-100 shadow-sm">Privat</span>
+                                                )}
+                                                {(event.attachment_file || event.attachment_link) && (
+                                                    <span className="material-icons text-blue-500 text-sm" title="Memiliki Lampiran">attachment</span>
+                                                )}
+                                            </div>
                                             {getStatusBadge(event.status)}
                                         </div>
                                         <div className="flex flex-wrap gap-x-4 gap-y-1 mb-4">

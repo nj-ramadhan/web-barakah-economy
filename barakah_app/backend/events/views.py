@@ -297,6 +297,13 @@ class EventViewSet(viewsets.ModelViewSet):
             except:
                 responses = {}
 
+        # Build sessions info for email/WA
+        session_list = []
+        for s in event.sessions.all().order_by('order', 'start_time'):
+            time_str = f"({s.start_time.strftime('%H:%M')} - {s.end_time.strftime('%H:%M')})" if s.start_time and s.end_time else ""
+            session_list.append(f"- {s.title} {time_str}")
+        sessions_str = "\n".join(session_list)
+
         # Create registration
         registration = EventRegistration.objects.create(
             event=event,
@@ -308,6 +315,26 @@ class EventViewSet(viewsets.ModelViewSet):
             payment_amount=0,
             ocr_verified=True
         )
+
+        # Send WhatsApp confirmation if possible
+        try:
+            whatsapp_msg = f"Halo {name},\n\nAnda telah didaftarkan secara manual untuk event *{event.title}*.\n\n*Rincian Sesi:*\n{sessions_str}\n\nKode Tiket: *{registration.unique_code}*\n\nTerima kasih!"
+            whatsapp_service.send_message(phone, whatsapp_msg)
+        except Exception as e:
+            print(f"Failed to send manual registration WA: {e}")
+
+        # Send Email
+        try:
+            if email:
+                send_status_update_email(
+                    email,
+                    event.title,
+                    'approved',
+                    is_registration=True,
+                    extra_details=f"Jadwal Sesi:\n{sessions_str}" if sessions_str else None
+                )
+        except Exception as e:
+            print(f"Failed to send manual registration email: {e}")
 
         # Handle file uploads if any (though unlikely for manual add)
         form_fields = event.form_fields.all()
@@ -486,6 +513,13 @@ class EventViewSet(viewsets.ModelViewSet):
         phone_list = []
         placeholder_data = []
         
+        # Build sessions string for placeholder
+        session_list = []
+        for s in event.sessions.all().order_by('order', 'start_time'):
+            time_str = f"({s.start_time.strftime('%H:%M')} - {s.end_time.strftime('%H:%M')})" if s.start_time and s.end_time else ""
+            session_list.append(f"- {s.title} {time_str}")
+        sessions_str = "\n".join(session_list) if session_list else "-"
+
         for reg in registrations:
             # Search for contact info
             _, phone, detected_name = self._detect_contact_info_standalone(reg)
@@ -493,7 +527,11 @@ class EventViewSet(viewsets.ModelViewSet):
                 formatted_phone = self._format_phone_number(phone)
                 if formatted_phone:
                     phone_list.append(formatted_phone)
-                    placeholder_data.append({'name': detected_name, 'event': event.title})
+                    placeholder_data.append({
+                        'name': detected_name, 
+                        'event': event.title,
+                        'sessions': sessions_str
+                    })
         
         if not phone_list:
             return Response({"error": "Tidak ada nomor WhatsApp peserta yang terdeteksi."}, status=status.HTTP_404_NOT_FOUND)
@@ -604,7 +642,7 @@ class EventViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
     def scan_attendance(self, request, slug=None):
-        """Scan QR code untuk menandai kehadiran peserta."""
+        """Scan QR code untuk menandai kehadiran peserta (per sesi)."""
         event = self.get_object()
         
         # Hanya organizer atau admin event
@@ -612,6 +650,8 @@ class EventViewSet(viewsets.ModelViewSet):
             return Response({'error': 'Hanya penyelenggara atau admin yang bisa scan kehadiran.'}, status=status.HTTP_403_FORBIDDEN)
         
         unique_code = request.data.get('unique_code', '').strip().upper()
+        session_id = request.data.get('session_id')
+        
         if not unique_code:
             return Response({'error': 'Kode unik wajib diisi.'}, status=status.HTTP_400_BAD_REQUEST)
         
@@ -620,26 +660,47 @@ class EventViewSet(viewsets.ModelViewSet):
         except EventRegistration.DoesNotExist:
             return Response({'error': 'Kode tidak valid atau tidak terdaftar di event ini.'}, status=status.HTTP_404_NOT_FOUND)
         
-        if registration.is_attended:
-            # Sudah hadir sebelumnya
-            attended_time = timezone.localtime(registration.attended_at).strftime("%d %b %Y %H:%M") if registration.attended_at else "-"
+        # Get session object if provided
+        session = None
+        if session_id:
+            try:
+                session = event.sessions.get(id=session_id)
+            except:
+                return Response({'error': 'Sesi tidak valid.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        from .models import EventAttendance
+        from django.utils import timezone
+        
+        # Check per-session attendance
+        attendance_exists = EventAttendance.objects.filter(registration=registration, session=session).exists()
+        
+        if attendance_exists:
+            session_name = session.title if session else "Umum"
+            attended_at = EventAttendance.objects.get(registration=registration, session=session).attended_at
+            attended_time = timezone.localtime(attended_at).strftime("%d %b %Y %H:%M")
             return Response({
                 'status': 'already_attended',
-                'message': f'Peserta ini sudah ditandai hadir pada {attended_time}.',
+                'message': f'Peserta sudah tercatat hadir untuk {session_name} pada {attended_time}.',
                 'registration': {
                     'id': registration.id,
                     'name': registration.user.profile.name_full if registration.user and hasattr(registration.user, 'profile') else (registration.guest_name or 'Tamu'),
                     'unique_code': registration.unique_code,
-                    'is_attended': registration.is_attended,
-                    'attended_at': registration.attended_at,
+                    'is_attended': True,
                 }
             }, status=status.HTTP_200_OK)
         
-        # Tandai hadir
-        from django.utils import timezone
-        registration.is_attended = True
-        registration.attended_at = timezone.now()
-        registration.save(update_fields=['is_attended', 'attended_at'])
+        # Record attendance
+        EventAttendance.objects.create(
+            registration=registration,
+            session=session,
+            scanned_by=request.user
+        )
+        
+        # Update general flags for backward compatibility
+        if not registration.is_attended:
+            registration.is_attended = True
+            registration.attended_at = timezone.now()
+            registration.save(update_fields=['is_attended', 'attended_at'])
         
         name = ''
         if registration.user:
@@ -647,10 +708,11 @@ class EventViewSet(viewsets.ModelViewSet):
             name = profile.name_full if profile and profile.name_full else registration.user.username
         else:
             name = registration.guest_name or 'Tamu'
-        
+            
+        session_label = session.title if session else "Acara"
         return Response({
             'status': 'success',
-            'message': f'Selamat datang, {name}! Kehadiran berhasil dicatat.',
+            'message': f'Hadir! {name} berhasil dicatat untuk {session_label}.',
             'registration': {
                 'id': registration.id,
                 'name': name,
@@ -819,6 +881,13 @@ class EventRegistrationViewSet(viewsets.ModelViewSet):
         registration.status = 'approved'
         registration.save()
         
+        # Build sessions info
+        session_list = []
+        for s in registration.event.sessions.all().order_by('order', 'start_time'):
+            time_str = f"({s.start_time.strftime('%H:%M')} - {s.end_time.strftime('%H:%M')})" if s.start_time and s.end_time else ""
+            session_list.append(f"- {s.title} {time_str}")
+        sessions_str = "\n".join(session_list)
+
         # Send email confirmation to registrant
         try:
             recipient_email = registration.guest_email if not registration.user else registration.user.email
@@ -830,7 +899,8 @@ class EventRegistrationViewSet(viewsets.ModelViewSet):
                     registration.event.title,
                     'approved',
                     None,
-                    is_registration=True # New flag to differentiate from Event submission
+                    is_registration=True, # New flag to differentiate from Event submission
+                    extra_details=f"Jadwal Sesi:\n{sessions_str}" if sessions_str else None
                 )
         except Exception as e:
             print(f"Failed to send approval email: {e}")

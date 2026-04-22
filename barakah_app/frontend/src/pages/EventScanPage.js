@@ -245,19 +245,28 @@ const EventScanPage = () => {
                     </div>
                 </div>
 
-                {/* Session Selector (If any) */}
+                {/* Session Selector - Horizontal Tabs */}
                 {event?.sessions && event.sessions.length > 0 && (
                     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 mb-4">
-                        <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Pilih Sesi</label>
-                        <select
-                            value={selectedSession}
-                            onChange={(e) => setSelectedSession(e.target.value)}
-                            className="w-full p-3 bg-gray-50 border-2 border-purple-100 rounded-xl text-sm font-bold text-gray-800 outline-none focus:border-purple-500 transition-all"
-                        >
+                        <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 px-1 flex justify-between">
+                            Pilih Sesi
+                            <span className="text-purple-600">Sesi: {event.sessions.find(s => s.id == selectedSession)?.title || 'Umum'}</span>
+                        </label>
+                        <div className="flex gap-2 overflow-x-auto pb-2 custom-scrollbar -mx-1 px-1">
                             {event.sessions.map(ses => (
-                                <option key={ses.id} value={ses.id}>{ses.title}</option>
+                                <button
+                                    key={ses.id}
+                                    onClick={() => setSelectedSession(ses.id)}
+                                    className={`px-4 py-2.5 rounded-xl text-xs font-black whitespace-nowrap transition-all border-2 ${
+                                        selectedSession == ses.id 
+                                        ? 'bg-purple-600 border-purple-600 text-white shadow-md shadow-purple-200 scale-105' 
+                                        : 'bg-gray-50 border-gray-100 text-gray-400 hover:border-purple-200'
+                                    }`}
+                                >
+                                    {ses.title}
+                                </button>
                             ))}
-                        </select>
+                        </div>
                     </div>
                 )}
 

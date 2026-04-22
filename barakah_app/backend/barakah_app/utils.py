@@ -3,7 +3,7 @@ from django.conf import settings
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 
-def send_status_update_email(user, item_name, new_status, reason=None, is_registration=False):
+def send_status_update_email(user, item_name, new_status, reason=None, is_registration=False, extra_details=None):
     """
     Centralized utility to send email notifications for status changes.
     Supports User objects or temporary objects/strings for email.
@@ -67,6 +67,8 @@ def send_status_update_email(user, item_name, new_status, reason=None, is_regist
     if new_status == 'approved':
         if is_registration:
             message += "Selamat! Pendaftaran Anda telah disetujui. Sampai jumpa di lokasi event!\n"
+            if extra_details:
+                message += f"\nBerikut Detail Tambahan:\n{extra_details}\n"
         else:
             message += "Selamat! Pengajuan Anda telah disetujui dan sekarang aktif di platform kami.\n"
     elif new_status == 'rejected':

@@ -196,19 +196,44 @@ const EventRegistrationSubmissionPage = () => {
                         <p className="text-xs font-bold text-gray-400 uppercase tracking-[0.2em] mt-1">{event?.title}</p>
                     </div>
                     <div className="flex flex-wrap gap-2">
+                        {selectedIds.length > 0 && (
+                            <div className="flex items-center gap-2 px-4 py-2 bg-green-50 rounded-xl border border-green-100 animate-in fade-in slide-in-from-left-4">
+                                <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                                <span className="text-[10px] font-black text-green-700 uppercase tracking-widest">{selectedIds.length} Terpilih</span>
+                            </div>
+                        )}
+                        <button
+                            onClick={handleBulkDelete}
+                            disabled={selectedIds.length === 0}
+                            className="bg-red-50 text-red-600 px-5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 hover:bg-red-100 transition shadow-sm border border-red-100 disabled:opacity-20"
+                            title="Hapus Data Terpilih"
+                        >
+                            <span className="material-icons text-sm">delete_sweep</span>
+                            Hapus
+                        </button>
+                        <button 
+                            onClick={handleExportCsv}
+                            disabled={isExporting}
+                            className="bg-gray-100 text-gray-700 px-5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 hover:bg-gray-200 transition shadow-sm border border-gray-200 disabled:opacity-50"
+                        >
+                            <span className={`material-icons text-sm ${isExporting ? 'animate-spin' : ''}`}>
+                                {isExporting ? 'sync' : 'cloud_download'}
+                            </span>
+                            Export CSV
+                        </button>
                         <button 
                             onClick={() => setShowManualModal(true)}
                             className="bg-green-600 text-white px-5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 hover:bg-green-700 transition shadow-lg shadow-green-100"
                         >
                             <span className="material-icons text-sm">person_add</span>
-                            Tambah Peserta Manual
+                            Tambah
                         </button>
                         <button 
                             onClick={() => setShowBlastModal(true)}
                             className="bg-purple-600 text-white px-5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 hover:bg-purple-700 transition shadow-lg shadow-purple-100"
                         >
                             <span className="material-icons text-sm">send</span>
-                            Blast WhatsApp
+                            Blast WA
                         </button>
                     </div>
                 </div>
@@ -229,6 +254,15 @@ const EventRegistrationSubmissionPage = () => {
                                     <th className="p-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Waktu</th>
                                     <th className="p-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Kode Tiket</th>
                                     <th className="p-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Identitas</th>
+                                    {event?.sessions && event.sessions.length > 0 ? (
+                                        event.sessions.map(ses => (
+                                            <th key={ses.id} className="p-5 text-[10px] font-black text-purple-600 uppercase tracking-widest min-w-[100px] text-center bg-purple-50/30">
+                                                {ses.title}
+                                            </th>
+                                        ))
+                                    ) : (
+                                        <th className="p-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Kehadiran</th>
+                                    )}
                                     {event?.form_fields?.map(field => (
                                         <th key={field.id} className="p-5 text-[10px] font-black text-gray-400 uppercase tracking-widest min-w-[150px]">{field.label}</th>
                                     ))}
@@ -241,7 +275,7 @@ const EventRegistrationSubmissionPage = () => {
                             <tbody className="divide-y divide-gray-50">
                                 {registrations.length === 0 ? (
                                     <tr>
-                                        <td colSpan={4 + (event?.form_fields?.length || 0)} className="p-12 text-center text-gray-400 italic text-sm">
+                                        <td colSpan={6 + (event?.form_fields?.length || 0) + (event?.sessions?.length || 0)} className="p-12 text-center text-gray-400 italic text-sm">
                                             Belum ada data pendaftar.
                                         </td>
                                     </tr>
@@ -276,6 +310,39 @@ const EventRegistrationSubmissionPage = () => {
                                                         {hybrid.email}
                                                     </div>
                                                 </td>
+                                                {/* Dynamic Session Attendance Columns */}
+                                                {event?.sessions && event.sessions.length > 0 ? (
+                                                    event.sessions.map(ses => {
+                                                        const attendance = reg.attendances_list?.find(att => att.session === ses.id);
+                                                        return (
+                                                            <td key={ses.id} className="p-5 text-center">
+                                                                {attendance ? (
+                                                                    <div className="flex flex-col items-center">
+                                                                        <span className="material-icons text-purple-600 text-xl">check_circle</span>
+                                                                        <span className="text-[8px] font-bold text-gray-400 uppercase">
+                                                                            {new Date(attendance.attended_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
+                                                                        </span>
+                                                                    </div>
+                                                                ) : (
+                                                                    <span className="material-icons text-gray-200 text-sm">radio_button_unchecked</span>
+                                                                )}
+                                                            </td>
+                                                        );
+                                                    })
+                                                ) : (
+                                                    <td className="p-5 text-center">
+                                                        {reg.is_attended ? (
+                                                             <div className="flex flex-col items-center">
+                                                                <span className="material-icons text-purple-600 text-xl">check_circle</span>
+                                                                <span className="text-[8px] font-bold text-gray-400 uppercase">
+                                                                    {reg.attended_at ? new Date(reg.attended_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : 'Hadir'}
+                                                                </span>
+                                                            </div>
+                                                        ) : (
+                                                            <span className="material-icons text-gray-200 text-sm">radio_button_unchecked</span>
+                                                        )}
+                                                    </td>
+                                                )}
                                                 {event?.form_fields?.map(field => {
                                                     let value = reg.responses?.[field.id];
 
@@ -354,17 +421,6 @@ const EventRegistrationSubmissionPage = () => {
                                                             }`}>
                                                             {reg.status}
                                                         </span>
-                                                        {reg.attendances_list && reg.attendances_list.length > 0 ? (
-                                                            reg.attendances_list.map((att, i) => (
-                                                                <span key={i} className="w-fit bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-wider flex items-center gap-1" title={new Date(att.attended_at).toLocaleString('id-ID')}>
-                                                                    <span className="material-icons text-[10px]">how_to_reg</span> {att.session_title || 'Hadir'}
-                                                                </span>
-                                                            ))
-                                                        ) : reg.is_attended && (
-                                                            <span className="w-fit bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider flex items-center gap-1" title={reg.attended_at ? new Date(reg.attended_at).toLocaleString('id-ID') : 'Hadir'}>
-                                                                <span className="material-icons text-[10px]">how_to_reg</span> Hadir
-                                                            </span>
-                                                        )}
                                                     </div>
                                                 </td>
                                             </tr>
@@ -376,28 +432,7 @@ const EventRegistrationSubmissionPage = () => {
                     </div>
                 </div>
 
-                {/* Modern Action Toolbar */}
-                <div className="mt-12 flex justify-center no-print px-4">
-                    <div className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 bg-white/80 backdrop-blur-xl border border-white rounded-[2rem] sm:rounded-[2.5rem] shadow-2xl shadow-green-900/10 transition-all duration-500 hover:shadow-green-900/20 max-w-full overflow-hidden">
-                        {/* Status Label (If Selected) */}
-                        {selectedIds.length > 0 && (
-                            <div className="hidden sm:flex items-center gap-2 px-4 py-2 bg-green-50 rounded-full border border-green-100 mr-2 animate-in fade-in slide-in-from-left-4">
-                                <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-                                <span className="text-[10px] font-black text-green-700 uppercase tracking-widest">{selectedIds.length} Terpilih</span>
-                            </div>
-                        )}
 
-                        <div className="flex items-center gap-1.5 sm:gap-2">
-                            {/* Delete Button */}
-                            <button
-                                onClick={handleBulkDelete}
-                                disabled={selectedIds.length === 0}
-                                className="group flex items-center gap-2 px-3.5 sm:px-5 py-2.5 sm:py-3 bg-red-50 hover:bg-red-100 text-red-600 rounded-2xl font-bold transition-all disabled:opacity-20 active:scale-95 border border-red-100"
-                                title="Hapus Data Terpilih"
-                            >
-                                <span className="material-icons text-xl group-hover:rotate-12 transition-transform">delete_sweep</span>
-                                <span className="text-[10px] uppercase tracking-widest hidden sm:inline">Hapus</span>
-                            </button>
 
                             {/* Export Button */}
                             <button
