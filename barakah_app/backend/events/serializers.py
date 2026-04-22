@@ -25,12 +25,21 @@ class EventSessionSerializer(serializers.ModelSerializer):
         fields = ['id', 'title', 'start_time', 'end_time', 'order']
 
 class EventAttendanceSerializer(serializers.ModelSerializer):
-    session_title = serializers.ReadOnlyField(source='session.title', default='Umum')
-    scanned_by_name = serializers.ReadOnlyField(source='scanned_by.name_full', default='')
+    session_title = serializers.SerializerMethodField()
+    scanned_by_name = serializers.SerializerMethodField()
     
     class Meta:
         model = EventAttendance
         fields = ['id', 'session', 'session_title', 'attended_at', 'scanned_by_name']
+
+    def get_session_title(self, obj):
+        return obj.session.title if obj.session else "Umum"
+
+    def get_scanned_by_name(self, obj):
+        if obj.scanned_by:
+            profile = getattr(obj.scanned_by, 'profile', None)
+            return profile.name_full if profile and profile.name_full else obj.scanned_by.username
+        return ""
 
 
 class EventSerializer(serializers.ModelSerializer):
