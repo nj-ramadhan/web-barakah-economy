@@ -329,6 +329,11 @@ const EventDetailPage = () => {
                                     </span>
                                 </div>
                                 <h1 className="text-2xl sm:text-5xl font-extrabold leading-tight drop-shadow-lg">{event.title}</h1>
+                                {event.capacity > 0 && !event.user_registration && !isCompleted && (event.capacity - (event.registration_count || 0) > 0) && (
+                                    <p className="text-green-400 font-bold mt-2 text-sm sm:text-base animate-pulse">
+                                        🚀 Tersisa {event.capacity - (event.registration_count || 0)} Slot Lagi
+                                    </p>
+                                )}
                             </div>
                             <div className="shrink-0 pb-2 flex items-center gap-3">
                                 {event.user_registration ? (
@@ -514,7 +519,7 @@ const EventDetailPage = () => {
                                                     <span className="material-icons text-blue-600 bg-blue-50 p-2 rounded-xl group-hover:bg-blue-100 transition">download</span>
                                                     <div className="text-left">
                                                         <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-1">Unduh Berkas</p>
-                                                        <p className="font-extrabold text-xs">LIHAT/AMBIL LAMPIRAN</p>
+                                                        <p className="font-extrabold text-xs uppercase">{event.attachment_file_title || 'LIHAT/AMBIL LAMPIRAN'}</p>
                                                     </div>
                                                 </a>
                                             )}
@@ -528,7 +533,7 @@ const EventDetailPage = () => {
                                                     <span className="material-icons text-blue-600 bg-blue-50 p-2 rounded-xl group-hover:bg-blue-100 transition">open_in_new</span>
                                                     <div className="text-left">
                                                         <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-1">Tautan Eksternal</p>
-                                                        <p className="font-extrabold text-xs">BUKA LINK PENDUKUNG</p>
+                                                        <p className="font-extrabold text-xs uppercase">{event.attachment_link_title || 'BUKA LINK PENDUKUNG'}</p>
                                                     </div>
                                                 </a>
                                             )}

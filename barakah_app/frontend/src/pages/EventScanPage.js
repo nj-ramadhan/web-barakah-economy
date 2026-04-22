@@ -157,7 +157,7 @@ const EventScanPage = () => {
                 { fps: 10, qrbox: { width: 250, height: 250 } },
                 (decodedText) => {
                     handleScan(decodedText);
-                    setIsCameraOpen(false); // Auto close on success
+                    // Removed setIsCameraOpen(false) to allow continuous scanning
                 },
                 () => {} // silent error during framing
             );
@@ -368,7 +368,14 @@ const EventScanPage = () => {
                                         {scanResult.status === 'success' ? 'Berhasil Terpindai' :
                                          scanResult.status === 'already_attended' ? 'Sudah Ada Data' : 'Gagal Verifikasi'}
                                     </p>
-                                    <p className="text-[10px] text-gray-600 font-medium leading-tight">{scanResult.message}</p>
+                                    <p className="text-[10px] text-gray-600 font-medium leading-tight">
+                                        {scanResult.message} 
+                                        {event?.sessions?.length > 0 && selectedSession && (
+                                            <span className="block mt-1 font-bold text-[9px] text-purple-700 uppercase">
+                                                Sesi: {event.sessions.find(s => Number(s.id) === Number(selectedSession))?.title}
+                                            </span>
+                                        )}
+                                    </p>
                                 </div>
                             </div>
                         </div>

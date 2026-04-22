@@ -33,6 +33,8 @@ const EventSubmissionPage = () => {
         terms_do: '',
         terms_dont: '',
         attachment_link: '',
+        attachment_file_title: '',
+        attachment_link_title: '',
         visibility: 'public',
     });
     const [speakers, setSpeakers] = useState([]);
@@ -85,6 +87,8 @@ const EventSubmissionPage = () => {
                         thumbnail_full: d.thumbnail_full,
                         documentation_frame_1_1: d.documentation_frame_1_1,
                         attachment_link: d.attachment_link || '',
+                        attachment_file_title: d.attachment_file_title || '',
+                        attachment_link_title: d.attachment_link_title || '',
                         visibility: d.visibility || 'public',
                         attachment_file: d.attachment_file,
                     });
@@ -497,29 +501,49 @@ const EventSubmissionPage = () => {
                                     
                                     <div className="space-y-1.5">
                                         <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Lampiran Berkas (PDF/Gambar/Dokumen)</label>
-                                        <div className="flex items-center gap-3">
-                                            <label className="flex-1 text-center py-3.5 bg-white text-blue-700 rounded-2xl text-xs font-bold cursor-pointer hover:bg-blue-50 transition shadow-sm border border-blue-100">
-                                                {files.attachment_file ? (files.attachment_file.name || 'Berkas Terpilih') : 'UNGGAH BERKAS (OPSIONAL)'}
-                                                <input type="file" name="attachment_file" onChange={(e) => setFiles(prev => ({ ...prev, attachment_file: e.target.files[0] }))} className="hidden" />
-                                            </label>
-                                            {isEdit && formData.attachment_file && (
-                                                <a href={formData.attachment_file} target="_blank" rel="noreferrer" className="w-12 h-12 bg-white text-blue-600 rounded-2xl flex items-center justify-center border border-blue-100 shadow-sm hover:bg-blue-50 transition">
-                                                    <span className="material-icons">visibility</span>
-                                                </a>
-                                            )}
+                                        <div className="flex flex-col gap-2">
+                                            <div className="flex items-center gap-3">
+                                                <label className="flex-1 text-center py-3.5 bg-white text-blue-700 rounded-2xl text-xs font-bold cursor-pointer hover:bg-blue-50 transition shadow-sm border border-blue-100">
+                                                    {files.attachment_file ? (files.attachment_file.name || 'Berkas Terpilih') : 'UNGGAH BERKAS (OPSIONAL)'}
+                                                    <input type="file" name="attachment_file" onChange={(e) => setFiles(prev => ({ ...prev, attachment_file: e.target.files[0] }))} className="hidden" />
+                                                </label>
+                                                {isEdit && formData.attachment_file && (
+                                                    <a href={formData.attachment_file} target="_blank" rel="noreferrer" className="w-12 h-12 bg-white text-blue-600 rounded-2xl flex items-center justify-center border border-blue-100 shadow-sm hover:bg-blue-50 transition">
+                                                        <span className="material-icons">visibility</span>
+                                                    </a>
+                                                )}
+                                            </div>
+                                            <input 
+                                                type="text" 
+                                                name="attachment_file_title" 
+                                                value={formData.attachment_file_title} 
+                                                onChange={handleChange} 
+                                                placeholder="Judul Berkas (misal: Daftar Menu)" 
+                                                className="w-full px-4 py-2.5 bg-white border border-blue-100 rounded-xl text-xs focus:ring-2 focus:ring-blue-500 transition shadow-sm"
+                                            />
                                         </div>
                                     </div>
 
                                     <div className="space-y-1.5">
                                         <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Tautan Eksternal Pendukung (Link)</label>
-                                        <input 
-                                            type="url" 
-                                            name="attachment_link" 
-                                            value={formData.attachment_link} 
-                                            onChange={handleChange} 
-                                            placeholder="https://..." 
-                                            className="w-full px-5 py-3.5 bg-white border border-blue-100 rounded-2xl text-sm focus:ring-2 focus:ring-blue-500 transition shadow-sm"
-                                        />
+                                        <div className="flex flex-col gap-2">
+                                            <input 
+                                                type="url" 
+                                                name="attachment_link" 
+                                                value={formData.attachment_link} 
+                                                onChange={handleChange} 
+                                                placeholder="https://..." 
+                                                className="w-full px-5 py-3.5 bg-white border border-blue-100 rounded-2xl text-sm focus:ring-2 focus:ring-blue-500 transition shadow-sm"
+                                            />
+                                            <input 
+                                                type="text" 
+                                                name="attachment_link_title" 
+                                                value={formData.attachment_link_title} 
+                                                onChange={handleChange} 
+                                                placeholder="Judul Link (misal: Lokasi Gmaps)" 
+                                                className="w-full px-4 py-2.5 bg-white border border-blue-100 rounded-xl text-xs focus:ring-2 focus:ring-blue-500 transition shadow-sm"
+                                            />
+                                        </div>
                                     </div>
                                 </div>
                             </div>

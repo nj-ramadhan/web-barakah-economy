@@ -60,7 +60,9 @@ class Event(models.Model):
     
     # New Fields for Attachments & Visibility
     attachment_file = models.FileField(upload_to='events/attachments/', blank=True, null=True, help_text="Lampiran berkas pendukung (PDF/Gambar/Dokumen)")
+    attachment_file_title = models.CharField(max_length=100, blank=True, null=True, help_text="Judul untuk berkas (misal: Daftar Menu)")
     attachment_link = models.URLField(blank=True, null=True, help_text="Link tautan eksternal pendukung")
+    attachment_link_title = models.CharField(max_length=100, blank=True, null=True, help_text="Judul untuk link (misal: Lokasi Gmaps)")
     VISIBILITY_CHOICES = [
         ('public', 'Umum (Tampil di Beranda)'),
         ('private', 'Privat (Hanya lewat link langsung)'),
