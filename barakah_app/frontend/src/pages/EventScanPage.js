@@ -69,6 +69,7 @@ const EventScanPage = () => {
                 getAuth()
             );
             setScanResult(res.data);
+            fetchEvent(); // Re-fetch event to update attendance counters
 
             if (res.data.status === 'success') {
                 setIsCameraOpen(false);
@@ -235,11 +236,11 @@ const EventScanPage = () => {
                     </div>
                     <div className="grid grid-cols-3 gap-2 mt-4">
                         <div className="bg-white/10 rounded-xl p-2 text-center backdrop-blur-sm border border-white/10">
-                            <p className="text-lg font-black">{recentScans.length}</p>
+                            <p className="text-lg font-black">{event?.sessions && event.sessions.length > 0 ? event.sessions.length : 1}</p>
                             <p className="text-[8px] font-bold uppercase tracking-widest opacity-70">Sesi</p>
                         </div>
                         <div className="bg-white/10 rounded-xl p-2 text-center backdrop-blur-sm border border-white/10">
-                            <p className="text-lg font-black">{recentScans.filter(r => r.scanStatus === 'success').length}</p>
+                            <p className="text-lg font-black">{selectedSession ? (event?.sessions?.find(s => s.id == selectedSession)?.attendance_count || 0) : (event?.attended_count || 0)}</p>
                             <p className="text-[8px] font-bold uppercase tracking-widest opacity-70">Hadir</p>
                         </div>
                         <div className="bg-white/10 rounded-xl p-2 text-center backdrop-blur-sm border border-white/10">

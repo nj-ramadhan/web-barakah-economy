@@ -168,6 +168,7 @@ const EventDetailPage = () => {
             setSuccess(true);
             setShowRegisterModal(false);
             window.scrollTo(0, 0);
+            fetchDetail(); // Refresh data kecil
             if (activeTab === 'participants') fetchParticipants();
         } catch (err) {
             console.error(err);

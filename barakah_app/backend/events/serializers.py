@@ -20,9 +20,13 @@ class EventSpeakerSerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'role', 'photo', 'order']
 
 class EventSessionSerializer(serializers.ModelSerializer):
+    attendance_count = serializers.SerializerMethodField()
     class Meta:
         model = EventSession
-        fields = ['id', 'title', 'start_time', 'end_time', 'order']
+        fields = ['id', 'title', 'start_time', 'end_time', 'order', 'attendance_count']
+
+    def get_attendance_count(self, obj):
+        return obj.attendances.count()
 
 class EventAttendanceSerializer(serializers.ModelSerializer):
     session = serializers.PrimaryKeyRelatedField(read_only=True)
@@ -50,11 +54,16 @@ class EventSerializer(serializers.ModelSerializer):
     speakers = EventSpeakerSerializer(many=True, required=False)
     sessions = EventSessionSerializer(many=True, required=False)
     registration_count = serializers.SerializerMethodField()
+    attended_count = serializers.SerializerMethodField()
     user_registration = serializers.SerializerMethodField()
 
     def get_registration_count(self, obj):
         # Count all registrations as they are now auto-approved
         return obj.registrations.count()
+
+    def get_attended_count(self, obj):
+        # Count registrations that have at least one attendance record or is_attended true
+        return obj.registrations.filter(is_attended=True).count()
 
     def get_user_registration(self, obj):
         request = self.context.get('request')
