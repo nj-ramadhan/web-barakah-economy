@@ -77,12 +77,29 @@ class EventSerializer(serializers.ModelSerializer):
         
         # Update fields if provided
         if fields_data is not None:
-            # Delete old fields
-            instance.form_fields.all().delete()
-            # Re-create fields (ignore IDs from frontend to avoid conflicts)
-            for field in fields_data:
-                field.pop('id', None) # Remove ID if present
-                EventFormField.objects.create(event=instance, **field)
+            # Get existing fields for this event
+            existing_fields = {f.label.lower(): f for f in instance.form_fields.all()}
+            new_field_ids = []
+            
+            for field_item in fields_data:
+                # Remove ID if present to avoid manual injection
+                field_item.pop('id', None)
+                label = field_item.get('label', '').lower()
+                
+                if label in existing_fields:
+                    # Update existing field
+                    field_obj = existing_fields[label]
+                    for attr, val in field_item.items():
+                        setattr(field_obj, attr, val)
+                    field_obj.save()
+                    new_field_ids.append(field_obj.id)
+                else:
+                    # Create new field
+                    new_field = EventFormField.objects.create(event=instance, **field_item)
+                    new_field_ids.append(new_field.id)
+            
+            # Delete fields that are no longer in the new list
+            instance.form_fields.exclude(id__in=new_field_ids).delete()
         
         # Handle new documentation images
         request = self.context.get('request')
@@ -102,8 +119,37 @@ class EventRegistrationFileSerializer(serializers.ModelSerializer):
 class EventRegistrationSerializer(serializers.ModelSerializer):
     uploaded_files = EventRegistrationFileSerializer(many=True, read_only=True)
     user_details = UserAdminSerializer(source='user', read_only=True)
+    responses_with_labels = serializers.SerializerMethodField()
 
     class Meta:
         model = EventRegistration
         fields = '__all__'
         read_only_fields = ('created_at', 'updated_at', 'status', 'unique_code', 'is_attended', 'attended_at')
+
+    def get_responses_with_labels(self, obj):
+        """Map response IDs to labels if possible, but also include orphaned data by label if we can guess it."""
+        if not obj.responses:
+            return {}
+        
+        result = {}
+        # Get all fields currently associated with this event
+        current_fields = {str(f.id): f.label for f in obj.event.form_fields.all()}
+        # Reverse mapping for easy lookup by label
+        label_to_current_id = {v: k for k, v in current_fields.items()}
+        
+        for field_id, value in obj.responses.items():
+            label = current_fields.get(str(field_id))
+            if label:
+                result[label] = value
+            else:
+                # Orphaned ID. Maybe we can map it to a current label for Event 15?
+                if obj.event_id == 15:
+                    legacy_map = {'81': 'Nama', '82': 'Email', '83': 'No HP', '84': 'Asal Instansi', '85': 'Jenis Kelamin'}
+                    mapped_label = legacy_map.get(str(field_id))
+                    if mapped_label:
+                        result[mapped_label] = value
+                    else:
+                        result[f"field_{field_id}"] = value
+                else:
+                    result[f"field_{field_id}"] = value
+        return result

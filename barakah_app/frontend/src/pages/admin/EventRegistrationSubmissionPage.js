@@ -257,10 +257,28 @@ const EventRegistrationSubmissionPage = () => {
                                                     </div>
                                                 </td>
                                                 {event?.form_fields?.map(field => {
-                                                    let value = reg.responses[field.id];
+                                                    let value = reg.responses?.[field.id];
 
-                                                    // Robust fallback: if ID mismatch (e.g. fields were deleted/recreated), 
-                                                    // try to find by label match in responses
+                                                    // Robust Fallback 1: Use labels from backend serializer
+                                                    if (!value && reg.responses_with_labels) {
+                                                        value = reg.responses_with_labels[field.label];
+                                                    }
+
+                                                    // Robust Fallback 2: Legacy ID mapping for event #15 specific orphan keys
+                                                    if (!value && reg.responses && event.id === 15) {
+                                                        const legacyMap = {
+                                                            'Nama': '81',
+                                                            'Email': '82',
+                                                            'No HP': '83',
+                                                            'WhatsApp': '83',
+                                                            'Asal Instansi': '84',
+                                                            'Jenis Kelamin': '85'
+                                                        };
+                                                        const oldId = legacyMap[field.label];
+                                                        if (oldId) value = reg.responses[oldId];
+                                                    }
+
+                                                    // Robust Fallback 3: Try to find by label key directly in responses (just in case)
                                                     if (!value && reg.responses) {
                                                         const labelKey = Object.keys(reg.responses).find(k => k.toLowerCase() === field.label?.toLowerCase());
                                                         if (labelKey) value = reg.responses[labelKey];

@@ -667,10 +667,23 @@ class EventViewSet(viewsets.ModelViewSet):
             
             # Custom Fields
             for field in form_fields:
-                value = reg.responses.get(str(field.id), "")
+                value = reg.responses.get(str(field.id))
+                
+                # Robust fallback for orphaned IDs
+                if not value and reg.responses:
+                    # If we find a key that is the label itself
+                    label_key = next((k for k in reg.responses.keys() if k.lower() == field.label.lower()), None)
+                    if label_key:
+                        value = reg.responses[label_key]
+                    # Specific legacy mapping for event #15
+                    elif reg.event.id == 15:
+                        legacy_map = {'Nama': '81', 'Email': '82', 'No HP': '83', 'WhatsApp': '83', 'Asal Instansi': '84', 'Jenis Kelamin': '85'}
+                        old_id = legacy_map.get(field.label)
+                        if old_id: value = reg.responses.get(old_id, "")
+
                 if isinstance(value, list):
                     value = ", ".join(map(str, value))
-                row.append(value)
+                row.append(value or "")
                 
             writer.writerow(row)
             
