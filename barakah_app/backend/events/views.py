@@ -211,26 +211,29 @@ class EventViewSet(viewsets.ModelViewSet):
                 extracted_amount = ocr_result.get('amount')
                 
                 # Validation logic
-                valid_names = ['bae community', 'barakah economy community', 'barakah community', 'barakah economy']
+                valid_names = ['bae community', 'deny setiawan']
                 is_name_valid = any(vn in extracted_name for vn in valid_names)
                 
                 # Amount validation
                 is_amount_valid = False
+                expected_amount_float = float(expected_amount)
+                extracted_amount_float = 0.0
                 if extracted_amount:
                     try:
+                        extracted_amount_float = float(extracted_amount)
                         # Convert both to float for comparison if they are numbers
-                        is_amount_valid = abs(float(extracted_amount) - float(expected_amount)) < 1
+                        is_amount_valid = abs(extracted_amount_float - expected_amount_float) < 1
                     except:
                         pass
                 
                 if not is_name_valid:
                     return Response({
-                        "error": f"Penerima di bukti transfer ('{ocr_result.get('recipient_name') or 'Tidak terdeteksi'}') tidak sesuai. Harus atas nama BAE Community."
+                        "error": f"Penerima di bukti transfer ('{ocr_result.get('recipient_name') or 'Tidak terdeteksi'}') tidak sesuai. Bukti transfer harus ditujukan ke 'BAE Community' atau pengurus BAE."
                     }, status=status.HTTP_400_BAD_REQUEST)
                 
                 if not is_amount_valid:
                     return Response({
-                        "error": f"Nominal di bukti transfer (Rp {float(extracted_amount or 0):,.0f}) tidak sesuai dengan total yang harus dibayar (Rp {float(expected_amount):,.0f})."
+                        "error": f"Nominal di bukti transfer (Rp {extracted_amount_float:,.0f}) tidak sesuai dengan 'Total yang Harus Ditransfer' (Rp {expected_amount_float:,.0f}). Harap periksa nominal transfer Anda."
                     }, status=status.HTTP_400_BAD_REQUEST)
                 
                 ocr_verified = True

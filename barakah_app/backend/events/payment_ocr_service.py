@@ -33,18 +33,16 @@ def extract_payment_data(image_file):
         mime_type = image_file.content_type
 
     prompt = """
-Anda adalah asisten data entry akurat (OCR AI) yang bertugas mengekstrak data dari bukti transfer bank (struk ATM, screenshot m-banking, dll).
-Tolong baca bukti transfer tersebut dan kembalikan data HANYA dalam format JSON murni yang valid, tanpa tambahan teks apapun di luar { }.
+Tolong baca data dari bukti transfer ini dan kembalikan dalam format JSON.
+Field:
+- "recipient_name": Nama penerima (harus BAE Community / Deny Setiawan)
+- "amount": Nominal angka tanpa pemisah
+- "bank_name": Nama bank
+- "date": Tanggal
 
-Struktur Field Wajib:
-- "recipient_name": (String, Nama penerima dana sesuai yang tertera di bukti transfer)
-- "amount": (Number, Total nominal yang ditransfer, angka saja tanpa pemisah ribuan)
-- "bank_name": (String, Nama bank pengirim atau penerima jika ada)
-- "date": (String, Tanggal transaksi jika ada)
-
-Aturan:
-1. Jika sebuah field sama sekali tidak terbaca/kabur, isikan dengan null untuk amount, atau string kosong "" untuk teks.
-2. JANGAN MEMAKAI MARKDOWN BLOCK ```json atau ```. Pastikan jawaban berawal dari { dan berakhir dengan }.
+Aturan Khusus:
+1. Kembalikan JSON murni.
+2. Jika tidak terbaca, gunakan null atau string kosong.
 """
 
     messages = [

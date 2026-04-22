@@ -4,25 +4,25 @@
  * @returns {string}
  */
 export const formatCurrency = (value) => {
-    if (value === null || value === undefined || value === '') return '0';
+    if (value === null || value === undefined || value === '') return '';
     const number = typeof value === 'string' ? parseFloat(value) : value;
-    if (isNaN(number)) return '0';
+    if (isNaN(number)) return '';
     
-    return new Intl.NumberFormat('id-ID', {
-        style: 'decimal',
+    // Using en-US to get commas as thousands separators (e.g. 10,000)
+    return new Intl.NumberFormat('en-US', {
         minimumFractionDigits: 0,
         maximumFractionDigits: 0,
     }).format(number);
 };
 
 /**
- * Parses a currency string back to a plain number.
+ * Parses a currency string back to a plain number, resolving both dots and commas.
  * @param {string} value 
  * @returns {number}
  */
 export const parseCurrency = (value) => {
     if (!value) return 0;
-    // Remove all non-digit characters except for maybe a sign
+    // Remove all non-digit characters
     const clean = value.toString().replace(/[^\d]/g, '');
     return parseInt(clean, 10) || 0;
 };

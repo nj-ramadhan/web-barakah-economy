@@ -7,6 +7,7 @@ import ImageCropperModal from '../components/common/ImageCropper';
 import { compressImage } from '../components/common/canvasUtils';
 import { createEvent, getEventDetail, updateEvent } from '../services/eventApi';
 import CKEditorComponent from '../components/common/CKEditor';
+import CurrencyInput from '../components/common/CurrencyInput';
 
 const EventSubmissionPage = () => {
     const navigate = useNavigate();
@@ -511,13 +512,12 @@ const EventSubmissionPage = () => {
                                 {['fixed', 'hybrid_1', 'hybrid_2'].includes(formData.price_type) && (
                                     <div className="space-y-1.5 md:col-span-2">
                                         <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Nominal Fix / Minimal (IDR) *</label>
-                                        <input 
-                                            type="number" 
+                                        <CurrencyInput
                                             name="price_fixed"
                                             value={formData.price_fixed}
                                             onChange={handleChange}
-                                            placeholder="Contoh: 20000"
-                                            className="w-full px-5 py-3.5 bg-gray-50 border-none rounded-2xl text-sm focus:ring-2 focus:ring-green-500 transition font-bold"
+                                            placeholder="Contoh: 20,000"
+                                            className="font-bold"
                                         />
                                     </div>
                                 )}
