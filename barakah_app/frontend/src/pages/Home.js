@@ -1761,20 +1761,6 @@ const Home = () => {
             </div>
           </div>
 
-          {/* Organization Structure Image */}
-          {aboutUs?.organization_structure_image && (
-            <div className="mt-20">
-              <h2 className="text-2xl font-bold text-gray-900 mb-8 text-center">Struktur Organisasi</h2>
-              <div className="rounded-[2.5rem] overflow-hidden shadow-2xl border-8 border-white bg-white">
-                <img 
-                  src={getMediaUrl(aboutUs.organization_structure_image)} 
-                  alt="Struktur Organisasi Barakah Economy" 
-                  className="w-full h-auto cursor-zoom-in"
-                  onClick={() => window.open(getMediaUrl(aboutUs.organization_structure_image), '_blank')}
-                />
-              </div>
-            </div>
-          )}
         </div>
       </section>
 

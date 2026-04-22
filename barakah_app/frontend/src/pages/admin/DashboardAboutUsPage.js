@@ -16,8 +16,7 @@ const DashboardAboutUsPage = () => {
         vision: '',
         mission: '',
         legal_description: '',
-        hero_image: null,
-        organization_structure_image: null
+        hero_image: null
     });
     
     // Personnel States
@@ -70,8 +69,7 @@ const DashboardAboutUsPage = () => {
                     vision: data.vision || '',
                     mission: data.mission || '',
                     legal_description: data.legal_description || '',
-                    hero_image: null,
-                    organization_structure_image: null
+                    hero_image: null
                 });
                 setPersonnelList(data.personnel || []);
             }
@@ -107,12 +105,12 @@ const DashboardAboutUsPage = () => {
         fd.append('vision', formData.vision);
         fd.append('mission', formData.mission);
         fd.append('legal_description', formData.legal_description);
-        
-        if (formData.hero_image instanceof File || formData.hero_image instanceof Blob) {
-            fd.append('hero_image', formData.hero_image);
-        }
-        if (formData.organization_structure_image instanceof File || formData.organization_structure_image instanceof Blob) {
-            fd.append('organization_structure_image', formData.organization_structure_image);
+        if (formData.hero_image) {
+            if (formData.hero_image instanceof File && formData.hero_image.name) {
+                fd.append('hero_image', formData.hero_image);
+            } else if (formData.hero_image instanceof Blob) {
+                fd.append('hero_image', formData.hero_image, 'hero_image.jpg');
+            }
         }
 
         try {
@@ -178,8 +176,12 @@ const DashboardAboutUsPage = () => {
         fd.append('hierarchy_code', personnelFormData.hierarchy_code);
         fd.append('order', personnelFormData.order);
         
-        if (personnelFormData.image instanceof File || personnelFormData.image instanceof Blob) {
-            fd.append('image', personnelFormData.image);
+        if (personnelFormData.image) {
+            if (personnelFormData.image instanceof File && personnelFormData.image.name) {
+                fd.append('image', personnelFormData.image);
+            } else if (personnelFormData.image instanceof Blob) {
+                fd.append('image', personnelFormData.image, 'personnel_image.jpg');
+            }
         }
 
         try {
@@ -596,7 +598,7 @@ const DashboardAboutUsPage = () => {
                                 const fd = new FormData();
                                 fd.append('about_us', aboutData.id);
                                 fd.append('title', `Doc ${aboutData?.legal_documents?.length + 1}`);
-                                fd.append('image', croppedFile);
+                                fd.append('image', croppedFile, `legal_doc_${Date.now()}.jpg`);
                                 try {
                                     await axios.post(`${API}/api/site-content/about-us-legal-docs/`, fd, {
                                         headers: { Authorization: `Bearer ${token}` }

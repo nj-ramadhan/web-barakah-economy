@@ -221,15 +221,6 @@ const AboutUs = () => {
                 </div>
               </div>
 
-              {/* Fallback Structure Image */}
-              {aboutUs?.organization_structure_image && (
-                 <div className="bg-white rounded-[3rem] p-10 md:p-16 shadow-xl shadow-gray-200/30 border border-gray-50 text-center">
-                    <h3 className="text-xl font-black text-gray-400 mb-12 uppercase tracking-[0.3em]">Full Chart View</h3>
-                    <div className="rounded-[2.5rem] overflow-hidden border-8 border-gray-50 shadow-inner cursor-zoom-in" onClick={() => window.open(getMediaUrl(aboutUs.organization_structure_image), '_blank')}>
-                      <img src={getMediaUrl(aboutUs.organization_structure_image)} className="w-full h-auto" alt="Full Chart"/>
-                    </div>
-                 </div>
-              )}
             </div>
           )}
 
