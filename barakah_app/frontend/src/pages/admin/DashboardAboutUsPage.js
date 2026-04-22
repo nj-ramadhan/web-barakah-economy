@@ -118,11 +118,11 @@ const DashboardAboutUsPage = () => {
         try {
             if (aboutData?.id) {
                 await axios.patch(`${API}/api/site-content/about-us/${aboutData.id}/`, fd, {
-                    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' }
+                    headers: { Authorization: `Bearer ${token}` }
                 });
             } else {
                 await axios.post(`${API}/api/site-content/about-us/`, fd, {
-                    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' }
+                    headers: { Authorization: `Bearer ${token}` }
                 });
             }
             alert('Berhasil! Profil organisasi telah diperbarui.');
@@ -186,11 +186,11 @@ const DashboardAboutUsPage = () => {
             let personId = editingPersonnel?.id;
             if (personId) {
                 await axios.patch(`${API}/api/site-content/personnel/${personId}/`, fd, {
-                    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' }
+                    headers: { Authorization: `Bearer ${token}` }
                 });
             } else {
                 const res = await axios.post(`${API}/api/site-content/personnel/`, fd, {
-                    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' }
+                    headers: { Authorization: `Bearer ${token}` }
                 });
                 personId = res.data.id;
             }
@@ -206,10 +206,17 @@ const DashboardAboutUsPage = () => {
             }
 
             for (const sm of personnelFormData.social_media) {
+                if (!sm.link) continue;
+                
+                let link = sm.link;
+                if (!link.startsWith('http')) {
+                    link = 'https://' + link;
+                }
+
                 await axios.post(`${API}/api/site-content/personnel-social-media/`, {
                     personnel: personId,
-                    icon: sm.icon,
-                    link: sm.link
+                    icon: sm.icon === 'website' ? 'language' : sm.icon,
+                    link: link
                 }, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
@@ -592,7 +599,7 @@ const DashboardAboutUsPage = () => {
                                 fd.append('image', croppedFile);
                                 try {
                                     await axios.post(`${API}/api/site-content/about-us-legal-docs/`, fd, {
-                                        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' }
+                                        headers: { Authorization: `Bearer ${token}` }
                                     });
                                     fetchAboutUs();
                                 } catch (err) { console.error(err); } finally { setUploadingDoc(false); }
