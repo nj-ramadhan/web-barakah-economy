@@ -204,79 +204,110 @@ const DesktopLandingPage = () => {
                         <h2 className="text-3xl font-bold text-gray-900 mb-4">Layanan Unggulan Kami</h2>
                         <div className="w-24 h-1 bg-green-600 mx-auto rounded-full"></div>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-7xl mx-auto">
-                        {/* Charity */}
-                        <div className="p-8 rounded-2xl bg-white border border-gray-100 hover:border-green-300 hover:shadow-xl transition group">
-                            <div className="w-16 h-16 bg-green-100 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-green-600 transition">
-                                <span className="material-icons text-3xl text-green-700 group-hover:text-white">volunteer_activism</span>
-                            </div>
-                            <h3 className="text-xl font-bold text-gray-900 mb-3">Charity &amp; ZISWAF</h3>
-                            <p className="text-gray-600 mb-4 text-sm">Salurkan zakat, infaq, dan sedekah Anda ke berbagai program sosial yang amanah dan transparan.</p>
-                            <Link className="text-green-700 font-semibold hover:underline text-sm" to="/charity">Lihat Program →</Link>
-                        </div>
-                        {/* Sinergy */}
-                        <div className="p-8 rounded-2xl bg-white border border-gray-100 hover:border-blue-300 hover:shadow-xl transition group">
-                            <div className="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-blue-600 transition">
-                                <span className="material-icons text-3xl text-blue-700 group-hover:text-white">shopping_bag</span>
-                            </div>
-                            <h3 className="text-xl font-bold text-gray-900 mb-3">Sinergy Halal Mart</h3>
-                            <p className="text-gray-600 mb-4 text-sm">Penuhi kebutuhan harian dengan produk halal, bermutu, dan mendukung ekonomi umat.</p>
-                            <Link className="text-blue-700 font-semibold hover:underline text-sm" to="/sinergy">Lihat Produk →</Link>
-                        </div>
-                        {/* Academy */}
-                        <div className="p-8 rounded-2xl bg-white border border-gray-100 hover:border-purple-300 hover:shadow-xl transition group">
-                            <div className="w-16 h-16 bg-purple-100 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-purple-600 transition">
-                                <span className="material-icons text-3xl text-purple-700 group-hover:text-white">school</span>
-                            </div>
-                            <h3 className="text-xl font-bold text-gray-900 mb-3">Barakah Academy</h3>
-                            <p className="text-gray-600 mb-4 text-sm">Tingkatkan ilmu dan keterampilan melalui e-course dan artikel islami bersertifikat.</p>
-                            <Link className="text-purple-700 font-semibold hover:underline text-sm" to="/academy">Lihat Kelas →</Link>
-                        </div>
-                        {/* Kegiatan / Community */}
-                        <div className="p-8 rounded-2xl bg-white border border-gray-100 hover:border-orange-300 hover:shadow-xl transition group">
-                            <div className="w-16 h-16 bg-orange-100 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-orange-600 transition">
-                                <span className="material-icons text-3xl text-orange-700 group-hover:text-white">groups</span>
-                            </div>
-                            <h3 className="text-xl font-bold text-gray-900 mb-3">Kegiatan Komunitas</h3>
-                            <p className="text-gray-600 mb-4 text-sm">Ikuti berbagai kegiatan pemberdayaan dan kolaborasi sosial bersama BAE Community.</p>
-                            <Link className="text-orange-700 font-semibold hover:underline text-sm" to="/kegiatan">Lihat Kegiatan →</Link>
-                        </div>
-                        {/* Barakah Mart (Digital Products) */}
-                        <div className="p-8 rounded-2xl bg-white border border-gray-100 hover:border-cyan-300 hover:shadow-xl transition group">
-                            <div className="w-16 h-16 bg-cyan-100 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-cyan-600 transition">
-                                <span className="material-icons text-3xl text-cyan-700 group-hover:text-white">storefront</span>
-                            </div>
-                            <h3 className="text-xl font-bold text-gray-900 mb-3">Barakah Digital Mart</h3>
-                            <p className="text-gray-600 mb-4 text-sm">Akses berbagai produk digital pilihan untuk mendukung produktivitas dan bisnis Anda.</p>
-                            <Link className="text-cyan-700 font-semibold hover:underline text-sm" to="/digital-products">Lihat Produk →</Link>
-                        </div>
-                        {/* Relawan BAE */}
-                        <div className="p-8 rounded-2xl bg-white border border-gray-100 hover:border-red-300 hover:shadow-xl transition group">
-                            <div className="w-16 h-16 bg-red-100 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-red-600 transition">
-                                <span className="material-icons text-3xl text-red-700 group-hover:text-white">volunteer_activism</span>
-                            </div>
-                            <h3 className="text-xl font-bold text-gray-900 mb-3">Relawan BAE</h3>
-                            <p className="text-gray-600 mb-4 text-sm">Jadilah bagian dari perubahan positif. Bergabunglah sebagai relawan Barakah Economy.</p>
-                            <Link className="text-red-700 font-semibold hover:underline text-sm" to="#">Daftar Relawan →</Link>
-                        </div>
-                        {/* Barakah Event */}
-                        <div className="p-8 rounded-2xl bg-white border border-gray-100 hover:border-teal-300 hover:shadow-xl transition group">
-                            <div className="w-16 h-16 bg-teal-100 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-teal-600 transition">
-                                <span className="material-icons text-3xl text-teal-700 group-hover:text-white">event</span>
-                            </div>
-                            <h3 className="text-xl font-bold text-gray-900 mb-3">Barakah Event</h3>
-                            <p className="text-gray-600 mb-4 text-sm">Ikuti berbagai event menarik, seminar, dan workshop yang diselenggarakan oleh Barakah Economy.</p>
-                            <Link className="text-teal-700 font-semibold hover:underline text-sm" to="/events">Lihat Event →</Link>
-                        </div>
-                        {/* Forum Tanya Jawab */}
-                        <div className="p-8 rounded-2xl bg-white border border-gray-100 hover:border-indigo-300 hover:shadow-xl transition group">
-                            <div className="w-16 h-16 bg-indigo-100 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-indigo-600 transition">
-                                <span className="material-icons text-3xl text-indigo-700 group-hover:text-white">forum</span>
-                            </div>
-                            <h3 className="text-xl font-bold text-gray-900 mb-3">Forum Tanya Jawab</h3>
-                            <p className="text-gray-600 mb-4 text-sm">Diskusikan topik bisnis, fiqih, dan ummat bersama para pakar.</p>
-                            <Link className="text-indigo-700 font-semibold hover:underline text-sm" to="/forum">Buka Forum →</Link>
-                        </div>
+                    <div className="max-w-7xl mx-auto services-swiper">
+                        <Swiper
+                            modules={[Navigation, Pagination, Autoplay]}
+                            spaceBetween={24}
+                            slidesPerView={3}
+                            navigation
+                            pagination={{ clickable: true }}
+                            autoplay={{ delay: 5000, disableOnInteraction: false }}
+                            breakpoints={{
+                                320: { slidesPerView: 1 },
+                                768: { slidesPerView: 2 },
+                                1280: { slidesPerView: 3 },
+                            }}
+                            className="pb-16"
+                        >
+                            {/* Charity */}
+                            <SwiperSlide>
+                                <div className="p-8 h-full rounded-2xl bg-white border border-gray-100 hover:border-green-300 hover:shadow-xl transition group">
+                                    <div className="w-16 h-16 bg-green-100 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-green-600 transition">
+                                        <span className="material-icons text-3xl text-green-700 group-hover:text-white">volunteer_activism</span>
+                                    </div>
+                                    <h3 className="text-xl font-bold text-gray-900 mb-3">Charity &amp; ZISWAF</h3>
+                                    <p className="text-gray-600 mb-4 text-sm">Salurkan zakat, infaq, dan sedekah Anda ke berbagai program sosial yang amanah dan transparan.</p>
+                                    <Link className="text-green-700 font-semibold hover:underline text-sm" to="/charity">Lihat Program →</Link>
+                                </div>
+                            </SwiperSlide>
+                            {/* Sinergy */}
+                            <SwiperSlide>
+                                <div className="p-8 h-full rounded-2xl bg-white border border-gray-100 hover:border-blue-300 hover:shadow-xl transition group">
+                                    <div className="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-blue-600 transition">
+                                        <span className="material-icons text-3xl text-blue-700 group-hover:text-white">shopping_bag</span>
+                                    </div>
+                                    <h3 className="text-xl font-bold text-gray-900 mb-3">Sinergy Halal Mart</h3>
+                                    <p className="text-gray-600 mb-4 text-sm">Penuhi kebutuhan harian dengan produk halal, bermutu, dan mendukung ekonomi umat.</p>
+                                    <Link className="text-blue-700 font-semibold hover:underline text-sm" to="/sinergy">Lihat Produk →</Link>
+                                </div>
+                            </SwiperSlide>
+                            {/* Academy */}
+                            <SwiperSlide>
+                                <div className="p-8 h-full rounded-2xl bg-white border border-gray-100 hover:border-purple-300 hover:shadow-xl transition group">
+                                    <div className="w-16 h-16 bg-purple-100 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-purple-600 transition">
+                                        <span className="material-icons text-3xl text-purple-700 group-hover:text-white">school</span>
+                                    </div>
+                                    <h3 className="text-xl font-bold text-gray-900 mb-3">Barakah Academy</h3>
+                                    <p className="text-gray-600 mb-4 text-sm">Tingkatkan ilmu dan keterampilan melalui e-course dan artikel islami bersertifikat.</p>
+                                    <Link className="text-purple-700 font-semibold hover:underline text-sm" to="/academy">Lihat Kelas →</Link>
+                                </div>
+                            </SwiperSlide>
+                            {/* Kegiatan / Community */}
+                            <SwiperSlide>
+                                <div className="p-8 h-full rounded-2xl bg-white border border-gray-100 hover:border-orange-300 hover:shadow-xl transition group">
+                                    <div className="w-16 h-16 bg-orange-100 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-orange-600 transition">
+                                        <span className="material-icons text-3xl text-orange-700 group-hover:text-white">groups</span>
+                                    </div>
+                                    <h3 className="text-xl font-bold text-gray-900 mb-3">Kegiatan Komunitas</h3>
+                                    <p className="text-gray-600 mb-4 text-sm">Ikuti berbagai kegiatan pemberdayaan dan kolaborasi sosial bersama BAE Community.</p>
+                                    <Link className="text-orange-700 font-semibold hover:underline text-sm" to="/kegiatan">Lihat Kegiatan →</Link>
+                                </div>
+                            </SwiperSlide>
+                            {/* Barakah Mart (Digital Products) */}
+                            <SwiperSlide>
+                                <div className="p-8 h-full rounded-2xl bg-white border border-gray-100 hover:border-cyan-300 hover:shadow-xl transition group">
+                                    <div className="w-16 h-16 bg-cyan-100 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-cyan-600 transition">
+                                        <span className="material-icons text-3xl text-cyan-700 group-hover:text-white">storefront</span>
+                                    </div>
+                                    <h3 className="text-xl font-bold text-gray-900 mb-3">Barakah Digital Mart</h3>
+                                    <p className="text-gray-600 mb-4 text-sm">Akses berbagai produk digital pilihan untuk mendukung produktivitas dan bisnis Anda.</p>
+                                    <Link className="text-cyan-700 font-semibold hover:underline text-sm" to="/digital-products">Lihat Produk →</Link>
+                                </div>
+                            </SwiperSlide>
+                            {/* Relawan BAE */}
+                            <SwiperSlide>
+                                <div className="p-8 h-full rounded-2xl bg-white border border-gray-100 hover:border-red-300 hover:shadow-xl transition group">
+                                    <div className="w-16 h-16 bg-red-100 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-red-600 transition">
+                                        <span className="material-icons text-3xl text-red-700 group-hover:text-white">volunteer_activism</span>
+                                    </div>
+                                    <h3 className="text-xl font-bold text-gray-900 mb-3">Relawan BAE</h3>
+                                    <p className="text-gray-600 mb-4 text-sm">Jadilah bagian dari perubahan positif. Bergabunglah sebagai relawan Barakah Economy.</p>
+                                    <Link className="text-red-700 font-semibold hover:underline text-sm" to="#">Daftar Relawan →</Link>
+                                </div>
+                            </SwiperSlide>
+                            {/* Barakah Event */}
+                            <SwiperSlide>
+                                <div className="p-8 h-full rounded-2xl bg-white border border-gray-100 hover:border-teal-300 hover:shadow-xl transition group">
+                                    <div className="w-16 h-16 bg-teal-100 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-teal-600 transition">
+                                        <span className="material-icons text-3xl text-teal-700 group-hover:text-white">event</span>
+                                    </div>
+                                    <h3 className="text-xl font-bold text-gray-900 mb-3">Barakah Event</h3>
+                                    <p className="text-gray-600 mb-4 text-sm">Ikuti berbagai event menarik, seminar, dan workshop yang diselenggarakan oleh Barakah Economy.</p>
+                                    <Link className="text-teal-700 font-semibold hover:underline text-sm" to="/events">Lihat Event →</Link>
+                                </div>
+                            </SwiperSlide>
+                            {/* Forum Tanya Jawab */}
+                            <SwiperSlide>
+                                <div className="p-8 h-full rounded-2xl bg-white border border-gray-100 hover:border-indigo-300 hover:shadow-xl transition group">
+                                    <div className="w-16 h-16 bg-indigo-100 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-indigo-600 transition">
+                                        <span className="material-icons text-3xl text-indigo-700 group-hover:text-white">forum</span>
+                                    </div>
+                                    <h3 className="text-xl font-bold text-gray-900 mb-3">Forum Tanya Jawab</h3>
+                                    <p className="text-gray-600 mb-4 text-sm">Diskusikan topik bisnis, fiqih, dan ummat bersama para pakar.</p>
+                                    <Link className="text-indigo-700 font-semibold hover:underline text-sm" to="/forum">Buka Forum →</Link>
+                                </div>
+                            </SwiperSlide>
+                        </Swiper>
                     </div>
                 </section>
 

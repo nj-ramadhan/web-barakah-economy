@@ -80,3 +80,34 @@ class Activity(models.Model):
 
     def __str__(self):
         return self.title
+
+class Personnel(models.Model):
+    about_us = models.ForeignKey(AboutUs, on_delete=models.CASCADE, related_name='personnel')
+    name = models.CharField(max_length=100)
+    job_title = models.CharField(max_length=100)
+    image = models.ImageField(upload_to='personnel/', null=True, blank=True)
+    hierarchy_code = models.CharField(max_length=50, help_text="Hierarchy numbering like 1, 1.1, 1.2, etc.")
+    order = models.PositiveIntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['hierarchy_code', 'order']
+
+    def __str__(self):
+        return f"{self.name} - {self.job_title} ({self.hierarchy_code})"
+
+class PersonnelSocialMedia(models.Model):
+    ICON_CHOICES = [
+        ('instagram', 'Instagram'),
+        ('facebook', 'Facebook'),
+        ('linkedin', 'LinkedIn'),
+        ('twitter', 'Twitter/X'),
+        ('whatsapp', 'WhatsApp'),
+        ('language', 'Website'),
+    ]
+    personnel = models.ForeignKey(Personnel, on_delete=models.CASCADE, related_name='social_media')
+    icon = models.CharField(max_length=20, choices=ICON_CHOICES)
+    link = models.URLField()
+
+    def __str__(self):
+        return f"{self.personnel.name} - {self.icon}"

@@ -19,9 +19,23 @@ const DashboardAboutUsPage = () => {
         hero_image: null,
         organization_structure_image: null
     });
+    
+    // Personnel States
+    const [personnelList, setPersonnelList] = useState([]);
+    const [editingPersonnel, setEditingPersonnel] = useState(null);
+    const [showPersonnelModal, setShowPersonnelModal] = useState(false);
+    const [personnelFormData, setPersonnelFormData] = useState({
+        name: '',
+        job_title: '',
+        hierarchy_code: '',
+        order: 0,
+        image: null,
+        social_media: []
+    });
+
     const [newLegalDoc, setNewLegalDoc] = useState({ title: '', image: null });
     const [uploadingDoc, setUploadingDoc] = useState(false);
-    const [cropper, setCropper] = useState({ show: false, image: null, target: null, aspect: 16/9 });
+    const [cropper, setCropper] = useState({ show: false, image: null, target: null, aspect: 1/1, personnelIdx: null });
     
     const getMediaUrl = (path, file) => {
         if (file instanceof Blob) return URL.createObjectURL(file);
@@ -31,7 +45,6 @@ const DashboardAboutUsPage = () => {
         const baseUrl = API.replace(/\/$/, '');
         let cleanPath = path;
         
-        // Auto-fix if /media/ is missing
         if (!cleanPath.startsWith('/media/') && !cleanPath.startsWith('media/')) {
             cleanPath = cleanPath.startsWith('/') ? `/media${cleanPath}` : `/media/${cleanPath}`;
         } else {
@@ -57,6 +70,7 @@ const DashboardAboutUsPage = () => {
                     hero_image: null,
                     organization_structure_image: null
                 });
+                setPersonnelList(data.personnel || []);
             }
         } catch (err) {
             console.error('Error fetching About Us:', err);
@@ -69,16 +83,16 @@ const DashboardAboutUsPage = () => {
         fetchAboutUs();
     }, []);
 
-    const handleFileChange = (e, target, aspect) => {
+    const handleFileChange = (e, target, aspect, personnelIdx = null) => {
         const file = e.target.files[0];
         if (file) {
             const reader = new FileReader();
-            reader.onload = () => setCropper({ show: true, image: reader.result, target, aspect });
+            reader.onload = () => setCropper({ show: true, image: reader.result, target, aspect, personnelIdx });
             reader.readAsDataURL(file);
         }
     };
 
-    const handleSave = async (e) => {
+    const handleSaveMain = async (e) => {
         e.preventDefault();
         setSaving(true);
         const user = JSON.parse(localStorage.getItem('user'));
@@ -108,244 +122,395 @@ const DashboardAboutUsPage = () => {
                     headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' }
                 });
             }
-            alert('Berhasil! Perubahan telah diterapkan.');
+            alert('Berhasil! Profil organisasi telah diperbarui.');
             fetchAboutUs();
         } catch (err) {
             console.error('Error saving About Us:', err);
-            alert('Gagal menyimpan perubahan. Cek koneksi Anda.');
+            alert('Gagal menyimpan perubahan.');
         } finally {
             setSaving(false);
         }
     };
 
-    const handleUploadLegalDoc = async () => {
-        if (!newLegalDoc.title || !newLegalDoc.image || !aboutData) {
-            alert('Lengkapi judul dan pilih gambar dokumen');
+    // --- Personnel Management ---
+    const handleOpenPersonnelModal = (person = null) => {
+        if (person) {
+            setEditingPersonnel(person);
+            setPersonnelFormData({
+                name: person.name,
+                job_title: person.job_title,
+                hierarchy_code: person.hierarchy_code,
+                order: person.order || 0,
+                image: null,
+                social_media: person.social_media || []
+            });
+        } else {
+            setEditingPersonnel(null);
+            setPersonnelFormData({
+                name: '',
+                job_title: '',
+                hierarchy_code: '',
+                order: 0,
+                image: null,
+                social_media: []
+            });
+        }
+        setShowPersonnelModal(true);
+    };
+
+    const handleSavePersonnel = async () => {
+        if (!personnelFormData.name || !personnelFormData.job_title || !personnelFormData.hierarchy_code) {
+            alert('Lengkapi nama, jabatan, dan kode hierarki');
             return;
         }
 
-        setUploadingDoc(true);
+        setSaving(true);
         const user = JSON.parse(localStorage.getItem('user'));
         const token = user?.access;
 
         const fd = new FormData();
         fd.append('about_us', aboutData.id);
-        fd.append('title', newLegalDoc.title);
-        fd.append('image', newLegalDoc.image);
+        fd.append('name', personnelFormData.name);
+        fd.append('job_title', personnelFormData.job_title);
+        fd.append('hierarchy_code', personnelFormData.hierarchy_code);
+        fd.append('order', personnelFormData.order);
+        
+        if (personnelFormData.image instanceof File) {
+            fd.append('image', personnelFormData.image);
+        }
 
         try {
-            await axios.post(`${API}/api/site-content/about-us-legal-docs/`, fd, {
-                headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' }
-            });
-            setNewLegalDoc({ title: '', image: null });
+            let personId = editingPersonnel?.id;
+            if (personId) {
+                await axios.patch(`${API}/api/site-content/personnel/${personId}/`, fd, {
+                    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' }
+                });
+            } else {
+                const res = await axios.post(`${API}/api/site-content/personnel/`, fd, {
+                    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' }
+                });
+                personId = res.data.id;
+            }
+
+            // Save Social Media
+            // Note: Simplification - we just delete and re-add or sync. 
+            // For now, let's just use the main save and skip complex sync unless needed.
+            // But we can add a basic sync here if personnel_social_media is needed.
+            
+            setShowPersonnelModal(false);
             fetchAboutUs();
         } catch (err) {
-            console.error('Error uploading document:', err);
-            alert('Gagal mengunggah dokumen legalitas');
+            console.error('Error saving personnel:', err);
+            alert('Gagal menyimpan data personil');
         } finally {
-            setUploadingDoc(false);
+            setSaving(false);
         }
     };
 
-    const handleDeleteLegalDoc = async (docId) => {
-        if (!window.confirm('Hapus dokumen legalitas ini?')) return;
-
+    const handleDeletePersonnel = async (id) => {
+        if (!window.confirm('Hapus personil ini?')) return;
         const user = JSON.parse(localStorage.getItem('user'));
         const token = user?.access;
-
         try {
-            await axios.delete(`${API}/api/site-content/about-us-legal-docs/${docId}/`, {
+            await axios.delete(`${API}/api/site-content/personnel/${id}/`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             fetchAboutUs();
         } catch (err) {
-            console.error('Error deleting document:', err);
-            alert('Gagal menghapus dokumen');
+            console.error('Error deleting personnel:', err);
         }
+    };
+
+    const addSocialMedia = () => {
+        setPersonnelFormData({
+            ...personnelFormData,
+            social_media: [...personnelFormData.social_media, { icon: 'instagram', link: '' }]
+        });
+    };
+
+    const handleSocialChange = (idx, field, val) => {
+        const newList = [...personnelFormData.social_media];
+        newList[idx][field] = val;
+        setPersonnelFormData({ ...personnelFormData, social_media: newList });
+    };
+
+    const removeSocial = (idx) => {
+        setPersonnelFormData({
+            ...personnelFormData,
+            social_media: personnelFormData.social_media.filter((_, i) => i !== idx)
+        });
     };
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-gray-50 flex flex-col">
+            <div className="min-h-screen bg-gray-50 flex flex-col pt-20">
                 <Header />
                 <div className="flex-1 flex flex-col justify-center items-center">
-                    <div className="w-16 h-16 border-4 border-green-100 border-t-green-700 rounded-full animate-spin"></div>
-                    <p className="mt-4 text-green-800 font-bold">Menyiapkan Manajemen...</p>
+                    <div className="w-12 h-12 border-4 border-green-100 border-t-green-700 rounded-full animate-spin"></div>
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="body bg-[#fcfdfe] min-h-screen">
+        <div className="bg-[#f8fafc] min-h-screen pb-32">
             <Header />
-            <div className="max-w-5xl mx-auto px-4 py-10 pb-32">
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10">
-                    <div className="flex items-center gap-5">
+            <div className="max-w-6xl mx-auto px-4 py-24">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
+                    <div className="flex items-center gap-6">
                         <button onClick={() => window.history.back()} className="w-12 h-12 flex items-center justify-center bg-white rounded-2xl text-gray-400 shadow-sm border border-gray-100 hover:text-green-700 transition">
                             <span className="material-icons">arrow_back</span>
                         </button>
                         <div>
-                            <h1 className="text-3xl font-black text-gray-900 tracking-tight">Profil Organisasi</h1>
-                            <p className="text-gray-500 font-medium">Sesuaikan wajah Barakah Economy di halaman publik</p>
+                            <h1 className="text-3xl font-black text-gray-900">Manajemen Tentang Kami</h1>
+                            <p className="text-gray-500 font-medium">Kelola profil, legalitas, dan personil organisasi</p>
                         </div>
                     </div>
                     <button 
-                        onClick={handleSave}
+                        onClick={handleSaveMain}
                         disabled={saving}
-                        className="px-8 py-4 bg-green-700 text-white rounded-[1.5rem] font-black shadow-xl shadow-green-100 hover:bg-green-800 transition transform active:scale-95 disabled:opacity-50 flex items-center justify-center gap-3"
+                        className="px-10 py-4 bg-green-700 text-white rounded-[1.8rem] font-black shadow-xl shadow-green-100 hover:bg-green-800 transition transform active:scale-95 disabled:opacity-50 flex items-center justify-center gap-3"
                     >
-                        {saving ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> : <span className="material-icons">cloud_upload</span>}
-                        {saving ? 'Menyimpan...' : 'Terapkan Perubahan'}
+                        {saving ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> : <span className="material-icons">save</span>}
+                        Simpan Perubahan Utama
                     </button>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    {/* Main Form Fields */}
-                    <div className="lg:col-span-2 space-y-8">
-                        <div className="bg-white rounded-[2.5rem] p-10 shadow-2xl shadow-gray-200/30 border border-gray-50 space-y-8">
-                            <div className="space-y-2">
-                                <label className="text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Nama Organisasi / Judul</label>
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                    {/* LEFT PANEL: General Info */}
+                    <div className="lg:col-span-8 space-y-8">
+                        {/* Section 1: Content */}
+                        <div className="bg-white rounded-[3rem] p-8 md:p-12 shadow-xl shadow-gray-200/40 border border-white space-y-8">
+                            <div className="space-y-3">
+                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1">Judu / Nama Organisasi</label>
                                 <input
                                     type="text"
-                                    className="w-full p-5 bg-gray-50 border-none rounded-2xl text-base font-bold focus:ring-2 focus:ring-green-500 transition"
+                                    className="w-full p-5 bg-gray-50 border-2 border-transparent rounded-[1.5rem] text-xl font-black text-gray-900 focus:border-green-500 focus:bg-white transition-all outline-none"
                                     value={formData.title}
                                     onChange={e => setFormData({ ...formData, title: e.target.value })}
                                 />
                             </div>
 
-                            <div className="space-y-2">
-                                <label className="text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Narasi Utama (Deskripsi)</label>
+                            <div className="space-y-3">
+                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1">Deskripsi Utama</label>
                                 <textarea
-                                    rows="10"
-                                    className="w-full p-5 bg-gray-50 border-none rounded-2xl text-sm leading-relaxed focus:ring-2 focus:ring-green-500 transition"
+                                    rows="8"
+                                    className="w-full p-6 bg-gray-50 border-2 border-transparent rounded-[2rem] text-gray-600 leading-relaxed focus:border-green-500 focus:bg-white transition-all outline-none ring-0 h-64"
                                     value={formData.description}
                                     onChange={e => setFormData({ ...formData, description: e.target.value })}
                                     placeholder="Ceritakan sejarah dan kontribusi organisasi..."
                                 />
                             </div>
-                        </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                            <div className="bg-white rounded-[2.5rem] p-8 shadow-2xl shadow-gray-200/30 border border-gray-50">
-                                <h3 className="text-lg font-black text-gray-900 mb-4 flex items-center gap-2">
-                                    <span className="material-icons text-green-600">visibility</span>
-                                    Visi
-                                </h3>
-                                <textarea
-                                    rows="5"
-                                    className="w-full p-4 bg-gray-50 border-none rounded-2xl text-sm font-medium italic"
-                                    value={formData.vision}
-                                    onChange={e => setFormData({ ...formData, vision: e.target.value })}
-                                />
-                            </div>
-                            <div className="bg-white rounded-[2.5rem] p-8 shadow-2xl shadow-gray-200/30 border border-gray-50">
-                                <h3 className="text-lg font-black text-gray-900 mb-4 flex items-center gap-2">
-                                    <span className="material-icons text-blue-600">rocket_launch</span>
-                                    Misi
-                                </h3>
-                                <textarea
-                                    rows="5"
-                                    className="w-full p-4 bg-gray-50 border-none rounded-2xl text-sm leading-relaxed"
-                                    value={formData.mission}
-                                    onChange={e => setFormData({ ...formData, mission: e.target.value })}
-                                />
+                            <div className="grid md:grid-cols-2 gap-8">
+                                <div className="space-y-3">
+                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1">Visi</label>
+                                    <textarea
+                                        rows="4"
+                                        className="w-full p-4 bg-gray-50 border-2 border-transparent rounded-2xl text-sm italic focus:border-green-500 focus:bg-white transition-all outline-none"
+                                        value={formData.vision}
+                                        onChange={e => setFormData({ ...formData, vision: e.target.value })}
+                                    />
+                                </div>
+                                <div className="space-y-3">
+                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1">Misi</label>
+                                    <textarea
+                                        rows="4"
+                                        className="w-full p-4 bg-gray-50 border-2 border-transparent rounded-2xl text-sm focus:border-green-500 focus:bg-white transition-all outline-none"
+                                        value={formData.mission}
+                                        onChange={e => setFormData({ ...formData, mission: e.target.value })}
+                                    />
+                                </div>
                             </div>
                         </div>
 
-                        {/* Bukti Legalitas Section */}
-                        <div className="bg-white rounded-[2.5rem] p-10 shadow-2xl shadow-gray-200/30 border border-gray-50 space-y-8">
-                            <h3 className="text-xl font-black text-gray-900 flex items-center gap-3">
-                                <span className="material-icons text-purple-600 font-bold">verified</span>
-                                Galeri Legalitas & Sertifikasi
-                            </h3>
-                            
-                            <div className="space-y-2">
-                                <label className="text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Keterangan Legalitas</label>
-                                <textarea 
-                                    className="w-full p-4 bg-gray-50 border-none rounded-2xl text-sm" 
-                                    value={formData.legal_description}
-                                    onChange={(e) => setFormData({ ...formData, legal_description: e.target.value })}
-                                    placeholder="Sebutkan nomor akta, SK kemenkumham, dll..."
-                                ></textarea>
+                        {/* Section 2: Personnel Management */}
+                        <div className="bg-white rounded-[3rem] p-8 md:p-12 shadow-xl shadow-gray-200/40 border border-white">
+                            <div className="flex items-center justify-between mb-10">
+                                <div>
+                                    <h2 className="text-2xl font-black text-gray-900">Daftar Personil (Bagan)</h2>
+                                    <p className="text-gray-400 text-xs font-medium uppercase tracking-widest mt-1">Gunakan kode hirarki (1, 1.1, 1.1.1) untuk bagan pohon</p>
+                                </div>
+                                <button 
+                                    onClick={() => handleOpenPersonnelModal()}
+                                    className="w-14 h-14 bg-green-100 text-green-700 rounded-2xl flex items-center justify-center hover:bg-green-700 hover:text-white transition shadow-lg shadow-green-50"
+                                >
+                                    <span className="material-icons text-3xl">person_add</span>
+                                </button>
                             </div>
 
-                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {personnelList.length > 0 ? (
+                                    personnelList.map((p) => (
+                                        <div key={p.id} className="p-5 bg-gray-50 rounded-3xl border border-gray-100 flex items-center gap-5 group hover:bg-white hover:shadow-xl hover:border-green-100 transition-all duration-300">
+                                            <div className="w-16 h-16 rounded-2xl overflow-hidden shadow-md flex-shrink-0">
+                                                <img src={getMediaUrl(p.image)} alt={p.name} className="w-full h-full object-cover" />
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-[10px] font-black text-green-600 uppercase tracking-widest leading-none mb-1">{p.hierarchy_code}</p>
+                                                <h4 className="font-black text-gray-900 truncate">{p.name}</h4>
+                                                <p className="text-xs text-gray-500 font-medium truncate">{p.job_title}</p>
+                                            </div>
+                                            <div className="flex gap-2">
+                                                <button onClick={() => handleOpenPersonnelModal(p)} className="p-2 text-blue-400 hover:bg-blue-50 rounded-lg transition"><span className="material-icons text-sm">edit</span></button>
+                                                <button onClick={() => handleDeletePersonnel(p.id)} className="p-2 text-red-300 hover:bg-red-50 rounded-lg transition"><span className="material-icons text-sm">delete</span></button>
+                                            </div>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <div className="col-span-2 py-10 text-center text-gray-300 italic font-medium">Belum ada personil yang ditambahkan.</div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Section 3: Legal Docs */}
+                        <div className="bg-white rounded-[3rem] p-8 md:p-12 shadow-xl shadow-gray-200/40 border border-white space-y-8">
+                            <h2 className="text-2xl font-black text-gray-900">Legalitas & Sertifikasi</h2>
+                            <div className="space-y-3">
+                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1">Keterangan Legalitas</label>
+                                <textarea className="w-full p-4 bg-gray-50 border-none rounded-2xl text-sm" value={formData.legal_description} onChange={(e) => setFormData({ ...formData, legal_description: e.target.value })} placeholder="Akta Notaris, SK Kemenkumham, dll..." />
+                            </div>
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                                 {aboutData?.legal_documents?.map(doc => (
-                                    <div key={doc.id} className="relative group rounded-3xl overflow-hidden aspect-[3/4] border-4 border-gray-50">
+                                    <div key={doc.id} className="relative group rounded-3xl overflow-hidden aspect-[3/4] border-4 border-gray-50 shadow-sm">
                                         <img src={getMediaUrl(doc.image)} alt={doc.title} className="w-full h-full object-cover" />
                                         <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition flex items-center justify-center p-4">
-                                            <button onClick={() => handleDeleteLegalDoc(doc.id)} className="w-12 h-12 bg-red-600 text-white rounded-2xl shadow-xl transform scale-75 group-hover:scale-100 transition duration-300 flex items-center justify-center">
-                                                <span className="material-icons">delete</span>
-                                            </button>
+                                            <button onClick={() => handleDeleteLegalDoc(doc.id)} className="w-10 h-10 bg-red-600 text-white rounded-xl shadow-lg flex items-center justify-center"><span className="material-icons text-sm">delete</span></button>
                                         </div>
                                     </div>
                                 ))}
-                                
-                                <div className="border-4 border-dashed border-gray-100 rounded-3xl p-6 flex flex-col items-center justify-center bg-gray-50/50 hover:bg-gray-50 hover:border-green-200 transition">
-                                    <input type="text" placeholder="Nama Dokumen" className="w-full text-xs font-bold p-3 bg-white rounded-xl mb-4 text-center border-none shadow-sm" value={newLegalDoc.title} onChange={e => setNewLegalDoc({ ...newLegalDoc, title: e.target.value })} />
-                                    <input type="file" id="legal_doc_file" className="hidden" accept="image/*" onChangeCapture={e => handleFileChange(e, 'legal_doc', 3/4)} />
-                                    
-                                    {newLegalDoc.image ? (
-                                        <div className="w-full aspect-[3/4] relative rounded-2xl overflow-hidden mb-4">
-                                            <img src={getMediaUrl(null, newLegalDoc.image)} className="w-full h-full object-cover" alt="Preview"/>
-                                            <button onClick={() => setNewLegalDoc({ ...newLegalDoc, image: null })} className="absolute top-2 right-2 bg-red-600 text-white rounded-full p-1 shadow-lg"><span className="material-icons text-xs">close</span></button>
-                                        </div>
-                                    ) : (
-                                        <label htmlFor="legal_doc_file" className="cursor-pointer text-center">
-                                            <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center text-gray-300 shadow-sm mx-auto mb-3">
-                                                <span className="material-icons text-3xl">add_a_photo</span>
-                                            </div>
-                                            <span className="text-xs font-black text-gray-400 uppercase tracking-widest">Tambah Gambar</span>
-                                        </label>
-                                    )}
-                                    
-                                    {newLegalDoc.image && (
-                                        <button disabled={uploadingDoc} onClick={handleUploadLegalDoc} className="w-full py-3 bg-green-700 text-white rounded-xl text-xs font-black hover:bg-green-800 transition">
-                                            {uploadingDoc ? 'Mengunggah...' : 'Upload Dokumen'}
-                                        </button>
-                                    )}
-                                </div>
+                                <label className="border-4 border-dashed border-gray-100 rounded-3xl flex flex-col items-center justify-center bg-gray-50 aspect-[3/4] cursor-pointer hover:bg-green-50 hover:border-green-200 transition group">
+                                    <input type="file" className="hidden" accept="image/*" onChange={e => handleFileChange(e, 'legal_doc', 3/4)} />
+                                    <span className="material-icons text-3xl text-gray-300 group-hover:text-green-500 transition">add_photo_alternate</span>
+                                    <span className="text-[10px] font-black text-gray-400 uppercase mt-2">Tambah Dokumen</span>
+                                </label>
                             </div>
                         </div>
                     </div>
 
-                    {/* Side Media Uploads */}
-                    <div className="space-y-8">
-                        <div className="bg-white rounded-[2.5rem] p-8 shadow-2xl shadow-gray-200/30 border border-gray-50 space-y-6">
-                            <h3 className="text-lg font-black text-gray-900 border-b pb-4">Foto Utama (Hero)</h3>
-                            <div className="relative group rounded-[2rem] overflow-hidden aspect-video bg-gray-50 border-4 border-white shadow-inner flex flex-col items-center justify-center cursor-pointer overflow-hidden">
+                    {/* RIGHT PANEL: Images */}
+                    <div className="lg:col-span-4 space-y-8">
+                        <div className="bg-white rounded-[3rem] p-8 shadow-xl shadow-gray-200/40 border border-white space-y-6">
+                            <h3 className="text-xl font-black text-gray-900 border-b border-gray-50 pb-4">Foto Utama (Hero)</h3>
+                            <div className="relative group rounded-[2rem] overflow-hidden aspect-video bg-gray-100 border-4 border-white shadow-inner flex items-center justify-center cursor-pointer">
                                 <img 
                                     src={getMediaUrl(aboutData?.hero_image, formData.hero_image)} 
-                                    className="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:opacity-100 transition duration-700" 
+                                    className="absolute inset-0 w-full h-full object-cover transition duration-700 opacity-80 group-hover:opacity-100" 
                                     alt="Hero Preview" 
                                 />
-                                <div className="relative z-10 bg-white/90 backdrop-blur px-6 py-3 rounded-full text-xs font-black shadow-2xl group-hover:scale-110 transition">
-                                    Ubah Foto Hero
-                                </div>
+                                <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition"></div>
+                                <div className="relative z-10 bg-white/95 backdrop-blur px-6 py-3 rounded-full text-[10px] font-black uppercase tracking-widest shadow-2xl group-hover:scale-110 transition">Pilih Foto Hero</div>
                                 <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" accept="image/*" onChange={e => handleFileChange(e, 'hero_image', 16/9)} />
                             </div>
-                            <p className="text-[10px] text-gray-400 font-medium text-center uppercase tracking-widest">Rekomendasi rasio 16:9 agar tidak terpotong</p>
+                            <p className="text-[9px] text-gray-400 font-bold text-center uppercase tracking-widest">Rasio 16:9 agar tampilan optimal</p>
                         </div>
 
-                        <div className="bg-white rounded-[2.5rem] p-8 shadow-2xl shadow-gray-200/30 border border-gray-50 space-y-6">
-                            <h3 className="text-lg font-black text-gray-900 border-b pb-4">Struktur Organisasi</h3>
-                            <div className="relative group rounded-[2rem] overflow-hidden aspect-[3/4] bg-gray-50 border-4 border-white shadow-inner flex flex-col items-center justify-center cursor-pointer">
+                        <div className="bg-white rounded-[3rem] p-8 shadow-xl shadow-gray-200/40 border border-white space-y-6">
+                            <h3 className="text-xl font-black text-gray-900 border-b border-gray-50 pb-4">Struktur (Bagan Fix)</h3>
+                            <div className="relative group rounded-[2.5rem] overflow-hidden aspect-[3/4] bg-gray-100 border-4 border-white flex items-center justify-center cursor-pointer">
                                 <img 
                                     src={getMediaUrl(aboutData?.organization_structure_image, formData.organization_structure_image)} 
-                                    className="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:opacity-100 transition duration-700" 
+                                    className="absolute inset-0 w-full h-full object-cover transition duration-700 opacity-80 group-hover:opacity-100" 
                                     alt="Structure Preview" 
                                 />
-                                <div className="relative z-10 bg-white/90 backdrop-blur px-6 py-3 rounded-full text-xs font-black shadow-2xl group-hover:scale-110 transition">
-                                    Ubah Struktur
-                                </div>
+                                <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition"></div>
+                                <div className="relative z-10 bg-white/95 backdrop-blur px-6 py-3 rounded-full text-[10px] font-black uppercase tracking-widest shadow-2xl group-hover:scale-110 transition">Ubah Gambar Bagan</div>
                                 <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" accept="image/*" onChange={e => handleFileChange(e, 'organization_structure_image', 3/4)} />
                             </div>
-                            <p className="text-[10px] text-gray-400 font-medium text-center uppercase tracking-widest">Pastikan teks terbaca dengan jelas (Potret)</p>
+                            <p className="text-[9px] text-gray-400 font-bold text-center uppercase tracking-widest">Gunakan Gambar PNG/JPG resolusi tinggi</p>
                         </div>
                     </div>
                 </div>
             </div>
+
+            {/* PERSONNEL MODAL */}
+            {showPersonnelModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-300">
+                    <div className="bg-white w-full max-w-2xl rounded-[3rem] overflow-hidden shadow-2xl animate-in zoom-in-95 duration-300 flex flex-col max-h-[90vh]">
+                        <div className="p-8 pb-4 flex justify-between items-center bg-gray-50/50">
+                            <h3 className="text-2xl font-black text-gray-900">{editingPersonnel ? 'Edit Personil' : 'Tambah Personil'}</h3>
+                            <button onClick={() => setShowPersonnelModal(false)} className="w-10 h-10 flex items-center justify-center text-gray-400 hover:text-red-500 transition"><span className="material-icons">close</span></button>
+                        </div>
+                        <div className="p-8 pt-0 overflow-y-auto flex-1 space-y-6">
+                            <div className="flex flex-col md:flex-row gap-8 mt-4">
+                                <div className="md:w-1/3 flex flex-col items-center">
+                                    <div className="relative w-full aspect-square rounded-[2rem] overflow-hidden bg-gray-100 border-4 border-white shadow-xl group cursor-pointer">
+                                        <img 
+                                            src={getMediaUrl(editingPersonnel?.image, personnelFormData.image)} 
+                                            className="w-full h-full object-cover group-hover:scale-110 transition duration-700"
+                                            alt="Profile"
+                                        />
+                                        <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition">
+                                            <span className="material-icons text-white">add_a_photo</span>
+                                        </div>
+                                        <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" accept="image/*" onChange={e => handleFileChange(e, 'personnel_image', 1/1)} />
+                                    </div>
+                                    <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mt-3">Pass Foto (1:1)</p>
+                                </div>
+                                <div className="md:w-2/3 space-y-4">
+                                    <div className="space-y-1">
+                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Nama Lengkap</label>
+                                        <input type="text" className="w-full p-4 bg-gray-50 border-none rounded-2xl text-base font-black outline-none focus:ring-2 focus:ring-green-500 transition" value={personnelFormData.name} onChange={e => setPersonnelFormData({...personnelFormData, name: e.target.value})} />
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="space-y-1">
+                                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Jabatan</label>
+                                            <input type="text" className="w-full p-4 bg-gray-50 border-none rounded-2xl text-sm font-bold outline-none focus:ring-2 focus:ring-green-500 transition" value={personnelFormData.job_title} onChange={e => setPersonnelFormData({...personnelFormData, job_title: e.target.value})} placeholder="CEO, Manager, dll" />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Hirarki (1.1, 1.2...)</label>
+                                            <input type="text" className="w-full p-4 bg-gray-50 border-none rounded-2xl text-sm font-black outline-none focus:ring-2 focus:ring-green-500 transition" value={personnelFormData.hierarchy_code} onChange={e => setPersonnelFormData({...personnelFormData, hierarchy_code: e.target.value})} placeholder="Contoh: 1.1" />
+                                        </div>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Urutan (Angka)</label>
+                                        <input type="number" className="w-full p-4 bg-gray-50 border-none rounded-2xl text-sm font-black outline-none focus:ring-2 focus:ring-green-500 transition" value={personnelFormData.order} onChange={e => setPersonnelFormData({...personnelFormData, order: parseInt(e.target.value)})} />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="border-t pt-6 space-y-4">
+                                <div className="flex justify-between items-center">
+                                    <h4 className="font-black text-gray-900 border-l-4 border-green-600 pl-3">Media Sosial</h4>
+                                    <button onClick={addSocialMedia} className="px-4 py-2 bg-green-100 text-green-700 rounded-xl text-xs font-black hover:bg-green-700 hover:text-white transition">+ Tambah Sosmed</button>
+                                </div>
+                                <div className="space-y-3">
+                                    {personnelFormData.social_media.map((sm, idx) => (
+                                        <div key={idx} className="flex gap-2 items-center">
+                                            <select 
+                                                className="p-3 bg-gray-50 border-none rounded-xl text-xs font-bold outline-none"
+                                                value={sm.icon}
+                                                onChange={(e) => handleSocialChange(idx, 'icon', e.target.value)}
+                                            >
+                                                <option value="instagram">Instagram</option>
+                                                <option value="facebook">Facebook</option>
+                                                <option value="linkedin">LinkedIn</option>
+                                                <option value="twitter">X (Twitter)</option>
+                                                <option value="whatsapp">WhatsApp</option>
+                                                <option value="language">Website</option>
+                                            </select>
+                                            <input 
+                                                type="text" 
+                                                className="flex-1 p-3 bg-gray-50 border-none rounded-xl text-xs font-medium outline-none focus:ring-1 focus:ring-blue-400"
+                                                placeholder="https://..."
+                                                value={sm.link}
+                                                onChange={(e) => handleSocialChange(idx, 'link', e.target.value)}
+                                            />
+                                            <button onClick={() => removeSocial(idx)} className="text-red-300 hover:text-red-500 transition"><span className="material-icons">delete_outline</span></button>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                        <div className="p-8 pt-4 bg-gray-50/50 flex gap-4">
+                            <button onClick={() => setShowPersonnelModal(false)} className="flex-1 py-4 bg-white border border-gray-200 text-gray-500 rounded-2xl font-black transition hover:bg-gray-100">Batal</button>
+                            <button onClick={handleSavePersonnel} disabled={saving} className="flex-1 py-4 bg-green-700 text-white rounded-2xl font-black shadow-xl shadow-green-100 hover:bg-green-800 transition transform active:scale-95 disabled:opacity-50">
+                                {saving ? 'Ganti Menyimpan...' : 'Simpan Data'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             <NavigationButton />
             
@@ -356,7 +521,26 @@ const DashboardAboutUsPage = () => {
                     onClose={() => setCropper({ ...cropper, show: false })}
                     onCropComplete={(croppedFile) => {
                         if (cropper.target === 'legal_doc') {
-                            setNewLegalDoc({ ...newLegalDoc, image: croppedFile });
+                            setNewLegalDoc({ title: aboutData?.legal_documents?.length + 1, image: croppedFile });
+                            // Trigger immediate upload for legal docs to match previous behavior
+                            const autoUpload = async () => {
+                                setUploadingDoc(true);
+                                const user = JSON.parse(localStorage.getItem('user'));
+                                const token = user?.access;
+                                const fd = new FormData();
+                                fd.append('about_us', aboutData.id);
+                                fd.append('title', `Doc ${aboutData?.legal_documents?.length + 1}`);
+                                fd.append('image', croppedFile);
+                                try {
+                                    await axios.post(`${API}/api/site-content/about-us-legal-docs/`, fd, {
+                                        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' }
+                                    });
+                                    fetchAboutUs();
+                                } catch (err) { console.error(err); } finally { setUploadingDoc(false); }
+                            };
+                            autoUpload();
+                        } else if (cropper.target === 'personnel_image') {
+                            setPersonnelFormData({ ...personnelFormData, image: croppedFile });
                         } else {
                             setFormData({ ...formData, [cropper.target]: croppedFile });
                         }

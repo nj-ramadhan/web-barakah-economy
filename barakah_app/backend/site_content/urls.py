@@ -2,12 +2,15 @@ from django.urls import path, include
 from rest_framework.routers import SimpleRouter
 from .views import (
     PartnerViewSet, TestimonialViewSet, ActivityViewSet, ActivityShareView, 
-    AboutUsViewSet, AboutUsLegalDocumentViewSet, ManagementStatsView
+    AboutUsViewSet, AboutUsLegalDocumentViewSet, ManagementStatsView,
+    PersonnelViewSet, PersonnelSocialMediaViewSet
 )
 
 router = SimpleRouter()
 router.register(r'about-us', AboutUsViewSet)
 router.register(r'about-us-legal-docs', AboutUsLegalDocumentViewSet)
+router.register(r'personnel', PersonnelViewSet)
+router.register(r'personnel-social-media', PersonnelSocialMediaViewSet)
 router.register(r'partners', PartnerViewSet)
 router.register(r'testimonials', TestimonialViewSet)
 router.register(r'activities', ActivityViewSet)
