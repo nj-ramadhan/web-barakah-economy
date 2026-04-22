@@ -650,7 +650,10 @@ class EventViewSet(viewsets.ModelViewSet):
             return Response({'error': 'Hanya penyelenggara atau admin yang bisa scan kehadiran.'}, status=status.HTTP_403_FORBIDDEN)
         
         unique_code = request.data.get('unique_code', '').strip().upper()
+        # Handle cases where session_id might be "null" string or empty
         session_id = request.data.get('session_id')
+        if session_id in [None, 'null', 'undefined', '']:
+            session_id = None
         
         if not unique_code:
             return Response({'error': 'Kode unik wajib diisi.'}, status=status.HTTP_400_BAD_REQUEST)
@@ -660,13 +663,20 @@ class EventViewSet(viewsets.ModelViewSet):
         except EventRegistration.DoesNotExist:
             return Response({'error': 'Kode tidak valid atau tidak terdaftar di event ini.'}, status=status.HTTP_404_NOT_FOUND)
         
-        # Get session object if provided
+        # Determine session
         session = None
         if session_id:
             try:
                 session = event.sessions.get(id=session_id)
-            except:
+            except (EventSession.DoesNotExist, ValueError, TypeError):
                 return Response({'error': 'Sesi tidak valid.'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # If event has sessions but none selected, refuse to scan or default to None (General)
+        # However, to prevent data mess, we should encourage picking a session if they exist
+        if event.sessions.exists() and not session:
+            # OPTIONAL: Uncomment if we want to FORCE session selection
+            # return Response({'error': 'Silakan pilih sesi terlebih dahulu pada menu scan.'}, status=status.HTTP_400_BAD_REQUEST)
+            pass
 
         from .models import EventAttendance
         from django.utils import timezone

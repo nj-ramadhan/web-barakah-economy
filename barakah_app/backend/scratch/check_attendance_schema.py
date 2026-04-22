@@ -16,9 +16,13 @@ def check():
     print(f"Columns in events_eventattendance: {columns}")
     
     from events.models import EventAttendance
-    print(f"Total attendance records: {EventAttendance.objects.count()}")
-    for att in EventAttendance.objects.all()[:5]:
-        print(f"ID: {att.id}, Reg: {att.registration_id}, Session: {att.session_id}")
+    count = EventAttendance.objects.count()
+    print(f"Total attendance records: {count}")
+    
+    if count > 0:
+        latest = EventAttendance.objects.latest('id')
+        print(f"Latest record session: {latest.session}")
+        print(f"Latest record registration_id: {latest.registration_id}")
 
 if __name__ == "__main__":
     check()

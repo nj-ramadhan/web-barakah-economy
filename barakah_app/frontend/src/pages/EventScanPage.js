@@ -93,7 +93,7 @@ const EventScanPage = () => {
         } finally {
             setScanning(false);
         }
-    }, [slug]);
+    }, [slug, selectedSession, fetchEvent, manualCode, API, navigate]);
 
     const handleKeyDown = (e) => {
         if (e.key === 'Enter') handleScan(manualCode);
