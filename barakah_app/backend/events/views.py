@@ -770,8 +770,9 @@ class EventViewSet(viewsets.ModelViewSet):
         if not request.user.is_staff and event.created_by != request.user:
             return Response({"error": "Unauthorized"}, status=status.HTTP_403_FORBIDDEN)
             
-        registrations = EventRegistration.objects.filter(event=event).select_related('user', 'user__profile')
+        registrations = EventRegistration.objects.filter(event=event).select_related('user', 'user__profile').prefetch_related('attendances')
         form_fields = event.form_fields.all()
+        sessions = event.sessions.all().order_by('order', 'start_time')
         
         # Create the HttpResponse object with the appropriate CSV header.
         response = HttpResponse(content_type='text/csv')
@@ -780,12 +781,18 @@ class EventViewSet(viewsets.ModelViewSet):
         writer = csv.writer(response)
         
         # CSV Header
-        header = ['Waktu Daftar', 'ID Peserta', 'Kode Tiket', 'Nama', 'Email', 'Status', 'Kehadiran']
+        header = ['Waktu Daftar', 'ID Peserta', 'Kode Tiket', 'Nama', 'Email', 'Status', 'Kehadiran Umum']
         for field in form_fields:
             header.append(field.label)
+        
+        # Add Session Headers
+        for s in sessions:
+            header.append(f"Hadir: {s.title}")
+            
         writer.writerow(header)
         
         # CSV Data
+        from django.utils import timezone
         for reg in registrations:
             row = []
             # Registration Time
@@ -810,12 +817,12 @@ class EventViewSet(viewsets.ModelViewSet):
             row.append(reg.guest_email or (reg.user.email if reg.user else "-"))
             
             # Status
-            row.append(reg.status)
+            row.append(reg.get_status_display())
 
-            # Attendance
+            # Kehadiran Umum
             row.append("Hadir" if reg.is_attended else "Belum")
             
-            # Custom Fields
+            # Custom Fields (Form Data)
             for field in form_fields:
                 value = reg.responses.get(str(field.id))
                 
@@ -834,6 +841,15 @@ class EventViewSet(viewsets.ModelViewSet):
                 if isinstance(value, list):
                     value = ", ".join(map(str, value))
                 row.append(value or "")
+            
+            # Per-Session Attendance
+            attendances = {att.session_id: att.attended_at for att in reg.attendances.all()}
+            for s in sessions:
+                attended_at = attendances.get(s.id)
+                if attended_at:
+                    row.append(timezone.localtime(attended_at).strftime('%Y-%m-%d %H:%M:%S'))
+                else:
+                    row.append("Belum Hadir")
                 
             writer.writerow(row)
             
