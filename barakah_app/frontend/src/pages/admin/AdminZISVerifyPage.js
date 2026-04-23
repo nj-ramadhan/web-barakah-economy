@@ -36,6 +36,26 @@ const AdminZISVerifyPage = () => {
         }
     };
 
+    const handleExportCSV = async () => {
+        try {
+            const user = JSON.parse(localStorage.getItem('user'));
+            const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/zis/submissions/export_csv/`, {
+                headers: { 'Authorization': `Bearer ${user?.access}` }
+            });
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'rekap_zis.csv';
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+        } catch (err) {
+            console.error(err);
+            alert("Gagal mendownload CSV");
+        }
+    };
+
     const handleReject = async (id) => {
         const reason = window.prompt("Alasan penolakan:");
         if (reason === null) return;
@@ -64,7 +84,7 @@ const AdminZISVerifyPage = () => {
                     </div>
                     <div className="flex items-center gap-3">
                         <button 
-                            onClick={() => window.open(`${process.env.REACT_APP_API_BASE_URL}/api/zis/submissions/export_csv/`, '_blank')}
+                            onClick={handleExportCSV}
                             className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 shadow-md shadow-emerald-100 transition"
                         >
                             <span className="material-icons text-sm">download</span>
