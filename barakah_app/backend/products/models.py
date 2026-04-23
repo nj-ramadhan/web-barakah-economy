@@ -78,6 +78,24 @@ class Product(models.Model):
     views_count = models.PositiveIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
 
+    def sync_variations(self):
+        """Update product stock and price based on variations."""
+        variations = self.variations.filter(is_active=True)
+        if variations.exists():
+            # Total stock is sum of variation stocks
+            self.stock = sum(v.stock for v in variations)
+            
+            # Find min and max prices
+            prices = []
+            for v in variations:
+                # If additional_price is used as absolute price (as per current view logic)
+                v_price = v.additional_price if v.additional_price > 0 else self.price
+                prices.append(v_price)
+            
+            if prices:
+                self.price = min(prices) # Base price becomes the minimum
+            self.save(update_fields=['stock', 'price'])
+
     def save(self, *args, **kwargs):
         if not self.slug:
             self.slug = generate_unique_slug(Product, self.title)

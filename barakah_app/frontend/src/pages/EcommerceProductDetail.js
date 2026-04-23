@@ -257,13 +257,20 @@ const EcommerceProductDetail = () => {
               <h1 className="text-2xl md:text-3xl font-bold mb-4 text-gray-900">{product.title}</h1>
               <div className="flex justify-between items-center mb-6">
                 <div className="flex flex-col gap-1">
-                   <p className="text-2xl font-bold text-green-700">{formatIDR(selectedVariation && selectedVariation.additional_price > 0 ? selectedVariation.additional_price : product.price)}</p>
+                   <p className="text-2xl font-bold text-green-700">
+                    {selectedVariation 
+                      ? formatIDR(selectedVariation.additional_price > 0 ? selectedVariation.additional_price : product.price)
+                      : (product.min_price && product.max_price && product.min_price !== product.max_price)
+                        ? `${formatIDR(product.min_price)} ~ ${formatIDR(product.max_price)}`
+                        : formatIDR(product.price)
+                    }
+                   </p>
                    <div className="flex items-center text-gray-400 text-xs gap-1">
                         <span className="material-icons text-sm">visibility</span>
                         {product.views_count || 0} kali dilihat
                     </div>
                 </div>
-                <p className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">Stok: {product.stock}</p>
+                <p className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">Stok: {product.total_stock || product.stock}</p>
               </div>
 
               {product?.variations && product.variations.length > 0 && (

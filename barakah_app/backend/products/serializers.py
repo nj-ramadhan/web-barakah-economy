@@ -24,6 +24,10 @@ class ProductSerializer(serializers.ModelSerializer):
     seller_city_id = serializers.SerializerMethodField()
     seller_city_name = serializers.CharField(source='seller.profile.address_city_name', read_only=True)
     seller_village_id = serializers.CharField(source='seller.profile.address_village_id', read_only=True)
+    
+    min_price = serializers.SerializerMethodField()
+    max_price = serializers.SerializerMethodField()
+    total_stock = serializers.SerializerMethodField()
 
     class Meta:
         model = Product
@@ -42,6 +46,26 @@ class ProductSerializer(serializers.ModelSerializer):
             return '3216062003' 
         except Exception:
             return '3216062003'
+
+    def get_min_price(self, obj):
+        variations = obj.variations.filter(is_active=True)
+        if not variations.exists():
+            return obj.price
+        prices = [v.additional_price if v.additional_price > 0 else obj.price for v in variations]
+        return min(prices) if prices else obj.price
+
+    def get_max_price(self, obj):
+        variations = obj.variations.filter(is_active=True)
+        if not variations.exists():
+            return obj.price
+        prices = [v.additional_price if v.additional_price > 0 else obj.price for v in variations]
+        return max(prices) if prices else obj.price
+
+    def get_total_stock(self, obj):
+        variations = obj.variations.filter(is_active=True)
+        if not variations.exists():
+            return obj.stock
+        return sum(v.stock for v in variations)
 
 class ShopVoucherSerializer(serializers.ModelSerializer):
     class Meta:

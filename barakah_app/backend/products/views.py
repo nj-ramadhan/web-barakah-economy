@@ -90,25 +90,45 @@ class ProductViewSet(viewsets.ModelViewSet):
         import uuid
         from .models import ProductVariation
         variations_data = self.request.data.get('variations')
+        
         if variations_data:
             try:
+                # Handle both JSON string and already-parsed list
                 if isinstance(variations_data, str):
                     variations = json.loads(variations_data)
                 else:
                     variations = variations_data
                 
+                # Delete old variations to ensure fresh start (or we could use IDs if frontend sends them)
                 product.variations.all().delete()
+                
                 for i, var in enumerate(variations):
+                    if not var.get('name'): continue
+                    
+                    # Ensure numeric types
+                    try:
+                        add_price = float(var.get('additional_price', 0) or 0)
+                        v_stock = int(var.get('stock', 0) or 0)
+                    except (ValueError, TypeError):
+                        add_price = 0
+                        v_stock = 0
+
                     unique_sku = f"{product.slug[:20]}-{uuid.uuid4().hex[:6]}-{i}"
                     ProductVariation.objects.create(
                         product=product,
                         sku=unique_sku,
                         name=var.get('name'),
-                        additional_price=var.get('additional_price', 0),
-                        stock=var.get('stock', 0)
+                        additional_price=add_price,
+                        stock=v_stock
                     )
+                
+                # Sync product stock and price range after variation save
+                product.sync_variations()
+                
             except Exception as e:
                 print(f"Error saving variations: {e}")
+                import traceback
+                traceback.print_exc()
 
 class ProductDetailView(APIView):
     def get(self, request, slug):

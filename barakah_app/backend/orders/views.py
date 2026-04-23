@@ -98,6 +98,27 @@ class CreateOrderView(APIView):
                     
                     price_for_item = base_price * cart_item.quantity
 
+                    # Stock reduction logic
+                    if cart_item.variation:
+                        if cart_item.variation.stock >= cart_item.quantity:
+                            cart_item.variation.stock -= cart_item.quantity
+                            cart_item.variation.save()
+                        else:
+                            # If stock is not enough, set to 0 or handle as error? 
+                            # For now, just take what's left
+                            cart_item.variation.stock = 0
+                            cart_item.variation.save()
+                        
+                        # Sync product total stock
+                        cart_item.product.sync_variations()
+                    else:
+                        if cart_item.product.stock >= cart_item.quantity:
+                            cart_item.product.stock -= cart_item.quantity
+                            cart_item.product.save()
+                        else:
+                            cart_item.product.stock = 0
+                            cart_item.product.save()
+
                     OrderItem.objects.create(
                         order=order,
                         product=cart_item.product,

@@ -165,7 +165,15 @@ const DashboardSinergySellersPage = () => {
                             <img src={p.thumbnail || p.thumbnail_url} alt={p.title} className="w-full h-32 object-cover rounded-xl bg-gray-50" />
                             <div className="flex-1">
                                 <h3 className="font-bold text-gray-800 line-clamp-1">{p.title}</h3>
-                                <p className="text-xs text-gray-500">Harga: <span className="font-semibold text-emerald-700">Rp {formatCurrency(p.price)}</span></p>
+                                <p className="text-xs text-gray-500">
+                                    Harga: <span className="font-semibold text-emerald-700">
+                                        {p.min_price && p.max_price && p.min_price !== p.max_price 
+                                            ? `Rp ${formatCurrency(p.min_price)} ~ Rp ${formatCurrency(p.max_price)}`
+                                            : `Rp ${formatCurrency(p.price)}`
+                                        }
+                                    </span>
+                                </p>
+                                <p className="text-xs text-gray-400">Total Stok: <span className="font-bold">{p.total_stock || p.stock}</span></p>
                                 <p className="text-xs text-gray-500 line-clamp-2 mt-1">{p.description}</p>
                             </div>
                             <div className="flex gap-2">
@@ -256,15 +264,30 @@ const DashboardSinergySellersPage = () => {
                         <CurrencyInput name="purchase_price" defaultValue={editingProduct?.purchase_price || ''} placeholder="0" className="!px-4 !py-3 !bg-gray-50 !border-gray-200 !rounded-xl" />
                     </div>
                     <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-1">Harga Jual (Rp)</label>
-                        <CurrencyInput name="price" defaultValue={editingProduct?.price || ''} required placeholder="0" className="!px-4 !py-3 !bg-gray-50 !border-gray-200 !rounded-xl" />
+                        <label className="block text-sm font-semibold text-gray-700 mb-1">Harga Jual (Rp) {variants.length > 0 && variants[0].name && <span className="text-[10px] text-emerald-600">(Auto dari Variasi)</span>}</label>
+                        <CurrencyInput 
+                            name="price" 
+                            value={variants.length > 0 && variants[0].name ? Math.min(...variants.map(v => v.additional_price || 0)) : (editingProduct?.price || '')} 
+                            required 
+                            placeholder="0" 
+                            className={`!px-4 !py-3 !bg-gray-50 !border-gray-200 !rounded-xl ${variants.length > 0 && variants[0].name ? 'opacity-70' : ''}`}
+                            readOnly={variants.length > 0 && variants[0].name}
+                        />
                     </div>
                 </div>
 
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                     <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-1">Stok Gudang</label>
-                        <input type="number" name="stock" defaultValue={editingProduct?.stock || ''} required placeholder="0" className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none transition" />
+                        <label className="block text-sm font-semibold text-gray-700 mb-1">Stok Gudang {variants.length > 0 && variants[0].name && <span className="text-[10px] text-emerald-600">(Auto)</span>}</label>
+                        <input 
+                            type="number" 
+                            name="stock" 
+                            value={variants.length > 0 && variants[0].name ? variants.reduce((sum, v) => sum + (parseInt(v.stock) || 0), 0) : (editingProduct?.stock || '')} 
+                            required 
+                            placeholder="0" 
+                            className={`w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none transition ${variants.length > 0 && variants[0].name ? 'opacity-70' : ''}`} 
+                            readOnly={variants.length > 0 && variants[0].name}
+                        />
                     </div>
                     <div>
                          <label className="block text-sm font-semibold text-gray-700 mb-1">Berat (gram)</label>

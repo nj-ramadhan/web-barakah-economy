@@ -297,12 +297,17 @@ const EcommerceMainPage = () => {
                       }}
                     />
                   </Link>
-                  <div className="p-3">
-                    <h3 className="text-sm font-semibold mb-2 line-clamp-2 min-h-[40px]">{product.title}</h3>
-                    <div className="flex justify-between items-center mb-1">
-                      <p className="text-green-700 font-bold text-sm">{formatIDR(product.price)}</p>
-                      <p className="text-gray-500 text-[10px]">stok: {product.stock > 0 ? product.stock : 'habis'}</p>
-                    </div>
+                    <div className="p-3">
+                      <h3 className="text-sm font-semibold mb-2 line-clamp-2 min-h-[40px]">{product.title}</h3>
+                      <div className="mb-1">
+                        <p className="text-green-700 font-bold text-sm">
+                          {product.min_price && product.max_price && product.min_price !== product.max_price
+                            ? `Rp ${formatCurrency(product.min_price)} ~ ${formatCurrency(product.max_price)}`
+                            : formatIDR(product.price)
+                          }
+                        </p>
+                        <p className="text-gray-500 text-[10px]">stok: {(product.total_stock !== undefined ? product.total_stock : product.stock) > 0 ? (product.total_stock !== undefined ? product.total_stock : product.stock) : 'habis'}</p>
+                      </div>
                     
                     <div className="flex items-center gap-2 mb-3">
                       <div className="flex items-center text-gray-400 text-[10px] gap-1">
