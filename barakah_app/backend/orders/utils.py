@@ -49,12 +49,18 @@ def send_order_invoice_to_buyer(order, alternate_phone=None):
 def send_order_notification_to_seller(order):
     """Send detailed order info to the seller."""
     if not order.seller:
+        logger.warning(f"Order {order.order_number} has no seller assigned.")
         return
         
-    phone = clean_phone(order.seller.phone)
+    # Get seller phone (prioritizing User.phone as Profile has no phone field)
+    raw_phone = order.seller.phone
+    phone = clean_phone(raw_phone)
+    
+    # Fallback to a default admin number if seller phone is missing
     if not phone:
-        logger.warning(f"Cannot send order alert to seller {order.seller.username}: No phone number.")
-        return
+        # Example default Barakah Admin number
+        phone = '628121111111' 
+        logger.warning(f"Seller {order.seller.username} has no phone number. Using default: {phone}")
 
     # Get buyer profile for full address
     try:

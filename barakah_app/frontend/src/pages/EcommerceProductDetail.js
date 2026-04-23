@@ -59,6 +59,14 @@ const EcommerceProductDetail = () => {
   const baseUrl = process.env.REACT_APP_API_BASE_URL;
 
   useEffect(() => {
+    if (!product) return;
+    const currentStock = selectedVariation ? selectedVariation.stock : (product.total_stock || product.stock);
+    if (quantity > currentStock) {
+      setQuantity(currentStock > 0 ? 1 : 0);
+    }
+  }, [selectedVariation, product]);
+
+  useEffect(() => {
     const fetchProductDetail = async () => {
       try {
         // Fetch product details
@@ -138,7 +146,8 @@ const EcommerceProductDetail = () => {
   };
 
   const handleIncrement = () => {
-    setQuantity(prevQuantity => Math.min(prevQuantity + 1, product.stock));
+    const currentStock = selectedVariation ? selectedVariation.stock : (product.total_stock || product.stock);
+    setQuantity(prevQuantity => Math.min(prevQuantity + 1, currentStock));
   };
 
   const handleDecrement = () => {
@@ -270,7 +279,9 @@ const EcommerceProductDetail = () => {
                         {product.views_count || 0} kali dilihat
                     </div>
                 </div>
-                <p className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">Stok: {product.total_stock || product.stock}</p>
+                <p className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
+                  Stok: {selectedVariation ? selectedVariation.stock : (product.total_stock || product.stock)}
+                </p>
               </div>
 
               {product?.variations && product.variations.length > 0 && (
@@ -290,59 +301,68 @@ const EcommerceProductDetail = () => {
                 </div>
               )}
 
-              <div className="flex items-center gap-4 mb-8">
-                <span className="text-sm font-medium text-gray-700">Jumlah:</span>
-                <div className="flex items-center border border-gray-200 rounded-xl px-2 py-1">
-                  <button
-                    onClick={handleDecrement}
-                    className="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-green-700 hover:bg-green-50 rounded-lg transition"
-                    disabled={quantity === 1}
-                  >
-                    <span className="material-icons text-lg">remove</span>
-                  </button>
-                  <span className="w-12 text-center font-bold text-gray-800">{quantity}</span>
-                  <button
-                    onClick={handleIncrement}
-                    className="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-green-700 hover:bg-green-50 rounded-lg transition"
-                    disabled={quantity >= product.stock}
-                  >
-                    <span className="material-icons text-lg">add</span>
-                  </button>
-                </div>
-              </div>
-            </div>
+            {(() => {
+              const currentStock = selectedVariation ? selectedVariation.stock : (product.total_stock || product.stock);
+              const isOutOfStock = currentStock <= 0;
 
-            {/* Action Buttons */}
-            <div className="flex flex-col md:flex-row gap-4">
-              <button 
-                className="flex-1 bg-green-600 hover:bg-green-700 text-white py-3 px-6 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-green-200 transition-all transform hover:-translate-y-1"
-                onClick={addToCart}
-              >
-                <span className="material-icons text-xl">shopping_cart</span>
-                Keranjang
-              </button>
-              <button 
-                className="px-6 py-3 border-2 border-green-600 text-green-700 font-bold rounded-xl flex items-center justify-center gap-2 hover:bg-green-50 transition-all whitespace-nowrap"
-                onClick={() => addToWishlist(product.id)}
-              >
-                <span className="material-icons text-xl">favorite_border</span>
-              </button>
+              return (
+                <>
+                  <div className="flex items-center gap-4 mb-8">
+                    <span className="text-sm font-medium text-gray-700">Jumlah:</span>
+                    <div className="flex items-center border border-gray-200 rounded-xl px-2 py-1">
+                      <button
+                        onClick={handleDecrement}
+                        className="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-green-700 hover:bg-green-50 rounded-lg transition"
+                        disabled={quantity <= 1 || isOutOfStock}
+                      >
+                        <span className="material-icons text-lg">remove</span>
+                      </button>
+                      <span className="w-12 text-center font-bold text-gray-800">{isOutOfStock ? 0 : quantity}</span>
+                      <button
+                        onClick={handleIncrement}
+                        className="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-green-700 hover:bg-green-50 rounded-lg transition"
+                        disabled={quantity >= currentStock || isOutOfStock}
+                      >
+                        <span className="material-icons text-lg">add</span>
+                      </button>
+                    </div>
+                  </div>
 
-              {/* BELI LANGSUNG */}
-              <button 
-                className="flex-[2] bg-emerald-500 hover:bg-emerald-600 text-white py-3 px-6 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-emerald-200 transition-all transform hover:-translate-y-1 mt-4 md:mt-0"
-                onClick={() => {
-                    addToCart();
-                    setTimeout(() => {
-                        const bubble = document.getElementById('cart-floating-bubble');
-                        if(bubble) bubble.click();
-                    }, 500);
-                }}
-              >
-                <span className="material-icons text-xl">shopping_bag</span>
-                Beli Langsung
-              </button>
-            </div>
+                  <div className="flex flex-col md:flex-row gap-4">
+                    <button 
+                      className={`flex-1 py-3 px-6 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg transition-all transform ${isOutOfStock ? 'bg-gray-100 text-gray-400 cursor-not-allowed shadow-none' : 'bg-green-600 hover:bg-green-700 text-white shadow-green-200 hover:-translate-y-1'}`}
+                      onClick={addToCart}
+                      disabled={isOutOfStock}
+                    >
+                      <span className="material-icons text-xl">{isOutOfStock ? 'remove_shopping_cart' : 'shopping_cart'}</span>
+                      {isOutOfStock ? 'Stok Habis' : 'Keranjang'}
+                    </button>
+                    <button 
+                      className="px-6 py-3 border-2 border-green-600 text-green-700 font-bold rounded-xl flex items-center justify-center gap-2 hover:bg-green-50 transition-all whitespace-nowrap"
+                      onClick={() => addToWishlist(product.id)}
+                    >
+                      <span className="material-icons text-xl">favorite_border</span>
+                    </button>
+
+                    <button 
+                      className={`flex-[2] py-3 px-6 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg transition-all transform mt-4 md:mt-0 ${isOutOfStock ? 'bg-gray-50 text-gray-300 cursor-not-allowed shadow-none' : 'bg-emerald-500 hover:bg-emerald-600 text-white shadow-emerald-200 hover:-translate-y-1'}`}
+                      onClick={() => {
+                          if (isOutOfStock) return;
+                          addToCart();
+                          setTimeout(() => {
+                              const bubble = document.getElementById('cart-floating-bubble');
+                              if(bubble) bubble.click();
+                          }, 500);
+                      }}
+                      disabled={isOutOfStock}
+                    >
+                      <span className="material-icons text-xl">{isOutOfStock ? 'block' : 'shopping_bag'}</span>
+                      {isOutOfStock ? 'Habis' : 'Beli Langsung'}
+                    </button>
+                  </div>
+                </>
+              );
+            })()}
           </div>
         </div>
       </div>

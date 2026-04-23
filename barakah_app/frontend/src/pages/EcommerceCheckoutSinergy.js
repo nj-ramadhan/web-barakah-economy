@@ -258,25 +258,44 @@ const EcommerceCheckoutSinergy = () => {
                                             { id: 'wahana', name: 'Wahana' },
                                             { id: 'ninja', name: 'Ninja' },
                                         ].filter(c => {
-                                            // Calculate intersection of supported_couriers for all items from this seller
+                                            // Intersection: courier must be supported by ALL products in this seller's group
                                             const itemsFromThisSeller = cartItems.filter(item => (item.product?.seller_id || "0") === s_id);
+                                            if (itemsFromThisSeller.length === 0) return false;
+                                            
                                             return itemsFromThisSeller.every(item => {
-                                                const supported = (item.product?.supported_couriers || 'jne,pos,tiki,jnt').split(',');
-                                                return supported.includes(c.id);
+                                                const supportedStr = item.product?.supported_couriers;
+                                                // If field is empty or missing, assume it supports all standard couriers
+                                                if (!supportedStr) return true; 
+                                                const supportedList = supportedStr.split(',').map(s => s.trim().toLowerCase());
+                                                return supportedList.includes(c.id);
                                             });
                                         }).map(c => (
                                             <option key={c.id} value={c.id}>{c.name}</option>
                                         ))}
                                     </select>
+
                                     {/* Warning if no common courier found */}
                                     {(() => {
                                         const itemsFromThisSeller = cartItems.filter(item => (item.product?.seller_id || "0") === s_id);
-                                        const common = [
-                                            'jne', 'pos', 'tiki', 'jnt', 'sicepat', 'anteraja', 'wahana', 'ninja'
-                                        ].filter(cid => itemsFromThisSeller.every(item => (item.product?.supported_couriers || 'jne,pos,tiki,jnt').split(',').includes(cid)));
+                                        const availableCouriers = [
+                                            { id: 'jne' }, { id: 'pos' }, { id: 'tiki' }, { id: 'jnt' }, 
+                                            { id: 'sicepat' }, { id: 'anteraja' }, { id: 'wahana' }, { id: 'ninja' }
+                                        ].filter(c => itemsFromThisSeller.every(item => {
+                                            const supportedStr = item.product?.supported_couriers;
+                                            if (!supportedStr) return true;
+                                            return supportedStr.split(',').map(s => s.trim().toLowerCase()).includes(c.id);
+                                        }));
                                         
-                                        if (common.length === 0 && itemsFromThisSeller.length > 0) {
-                                            return <p className="text-[10px] text-red-500 mt-2">Tidak ada kurir yang mendukung semua barang dalam pesanan ini. Mohon pisahkan pesanan.</p>;
+                                        if (availableCouriers.length === 0 && itemsFromThisSeller.length > 0) {
+                                            return (
+                                                <div className="flex items-center gap-2 p-2 bg-red-50 border border-red-100 rounded-lg mt-2">
+                                                    <span className="material-icons text-red-500 text-sm">warning</span>
+                                                    <p className="text-[10px] text-red-600 font-semibold leading-tight">
+                                                        Produk dalam pesanan ini memiliki pilihan kurir yang berbeda-beda. 
+                                                        Mohon pisahkan pesanan agar bisa dikirim.
+                                                    </p>
+                                                </div>
+                                            );
                                         }
                                         return null;
                                     })()}

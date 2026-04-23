@@ -36,7 +36,7 @@ const CurrencyInput = ({
     return (
         <div className="relative group">
             {prefix && (
-                <span className="absolute left-5 top-1/2 -translate-y-1/2 font-bold text-gray-400 text-sm pointer-events-none group-focus-within:text-green-600 transition-colors">
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-gray-400 text-[10px] pointer-events-none group-focus-within:text-green-600 transition-colors">
                     {prefix}
                 </span>
             )}
@@ -47,7 +47,7 @@ const CurrencyInput = ({
                 onChange={handleInputChange}
                 required={required}
                 placeholder={placeholder}
-                className={`w-full ${prefix ? 'pl-12' : 'px-5'} pr-5 py-3.5 bg-gray-50 border border-transparent rounded-2xl text-sm font-bold outline-none focus:bg-white focus:border-green-500 focus:ring-4 focus:ring-green-500/10 transition-all shadow-inner ${className}`}
+                className={`w-full ${prefix ? 'pl-11' : 'px-4'} pr-4 py-2.5 bg-white border border-gray-200 rounded-xl text-xs font-bold outline-none focus:border-green-500 focus:ring-4 focus:ring-green-500/10 transition-all ${className}`}
                 {...props}
             />
         </div>
