@@ -76,7 +76,11 @@ class ZISSubmissionViewSet(viewsets.ModelViewSet):
         response = HttpResponse(content_type='text/csv')
         response['Content-Disposition'] = 'attachment; filename="rekap_zis.csv"'
         
-        writer = csv.writer(response)
+        # Add BOM for Excel compatibility (Indonesian/International)
+        response.write(u'\ufeff'.encode('utf8'))
+        
+        # Use semicolon (;) as it's more compatible with Indonesian Excel defaults
+        writer = csv.writer(response, delimiter=';')
         # Header
         writer.writerow(['Tanggal Input', 'Periode Bulan', 'Username', 'Nama Lengkap', 'Kategori', 'Nominal', 'Total', 'Status'])
         

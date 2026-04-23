@@ -7,7 +7,7 @@ import { formatCurrency } from '../../utils/formatters';
 const AdminZISVerifyPage = () => {
     const [submissions, setSubmissions] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [filter, setFilter] = useState('pending');
+    const [filter, setFilter] = useState('all');
 
     useEffect(() => {
         fetchSubmissions();
