@@ -300,13 +300,14 @@ const EcommerceProductDetail = () => {
                   </div>
                 </div>
               )}
+            </div>
 
             {(() => {
               const currentStock = selectedVariation ? selectedVariation.stock : (product.total_stock || product.stock);
               const isOutOfStock = currentStock <= 0;
 
               return (
-                <>
+                <div className="mt-auto">
                   <div className="flex items-center gap-4 mb-8">
                     <span className="text-sm font-medium text-gray-700">Jumlah:</span>
                     <div className="flex items-center border border-gray-200 rounded-xl px-2 py-1">
@@ -360,7 +361,7 @@ const EcommerceProductDetail = () => {
                       {isOutOfStock ? 'Habis' : 'Beli Langsung'}
                     </button>
                   </div>
-                </>
+                </div>
               );
             })()}
           </div>
