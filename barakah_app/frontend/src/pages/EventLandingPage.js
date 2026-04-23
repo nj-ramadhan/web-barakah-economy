@@ -11,6 +11,21 @@ const getMediaUrl = (url) => {
     return `${process.env.REACT_APP_API_BASE_URL}${url}`;
 };
 
+const getEventStatus = (startStr, endStr) => {
+    const now = new Date();
+    const start = new Date(startStr);
+    // Use end_date if available, otherwise assume 4 hours duration
+    const end = endStr ? new Date(endStr) : new Date(start.getTime() + 4 * 60 * 60 * 1000);
+
+    if (now < start) {
+        return { label: 'Akan Datang', color: 'bg-blue-600' };
+    } else if (now >= start && now <= end) {
+        return { label: 'Berlangsung', color: 'bg-green-600' };
+    } else {
+        return { label: 'Selesai', color: 'bg-gray-500' };
+    }
+};
+
 const EventLandingPage = () => {
     const [events, setEvents] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -86,6 +101,17 @@ const EventLandingPage = () => {
                                 className="bg-white rounded-3xl overflow-hidden shadow-sm border border-gray-100 hover:shadow-xl transition group flex flex-col h-full"
                             >
                                 <div className="h-56 relative overflow-hidden">
+                                    {/* Diagonal Status Stamp */}
+                                    {(() => {
+                                        const status = getEventStatus(ev.start_date, ev.end_date);
+                                        return (
+                                            <div className="absolute top-0 left-0 overflow-hidden w-28 h-28 pointer-events-none z-10">
+                                                <div className={`absolute top-4 left-[-35px] -rotate-45 ${status.color} text-white text-[10px] font-black py-1.5 w-40 text-center shadow-lg uppercase tracking-wider`}>
+                                                    {status.label}
+                                                </div>
+                                            </div>
+                                        );
+                                    })()}
                                     <img
                                         src={getMediaUrl(ev.header_image || ev.thumbnail)}
                                         alt={ev.title}
