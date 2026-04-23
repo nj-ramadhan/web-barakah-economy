@@ -67,3 +67,26 @@ class ZISSubmissionViewSet(viewsets.ModelViewSet):
         submission.rejection_reason = request.data.get('reason', '')
         submission.save()
         return Response({'status': 'rejected'})
+
+    @action(detail=False, methods=['get'])
+    def export_csv(self, request):
+        import csv
+        from django.http import HttpResponse
+        
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="rekap_zis.csv"'
+        
+        writer = csv.writer(response)
+        # Header
+        writer.writerow(['Tanggal Input', 'Periode Bulan', 'Username', 'Nama Lengkap', 'Kategori', 'Nominal', 'Total', 'Status'])
+        
+        submissions = ZISSubmission.objects.all().order_by('-created_at')
+        for s in submissions:
+            created_at = s.created_at.strftime('%Y-%m-%d %H:%M')
+            full_name = s.user.get_full_name()
+            # Flatten categories for CSV
+            for cat, val in s.values.items():
+                if float(val) > 0:
+                    writer.writerow([created_at, s.month, s.user.username, full_name, cat, val, s.total_amount, s.status])
+                    
+        return response

@@ -32,6 +32,7 @@ class ZISSubmission(models.Model):
 
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='zis_submissions')
     config = models.ForeignKey(ZISConfig, on_delete=models.PROTECT, related_name='submissions')
+    month = models.CharField(max_length=50, help_text="Periode bulan setoran (e.g. Januari 2026)")
     values = models.JSONField(default=dict, help_text="Mapping of category name to nominal amount")
     total_amount = models.DecimalField(max_digits=15, decimal_places=2)
     transfer_proof = models.ImageField(upload_to=zis_proof_path)

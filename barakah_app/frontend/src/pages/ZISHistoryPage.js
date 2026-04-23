@@ -51,7 +51,7 @@ const ZISHistoryPage = () => {
                         {history.map((item) => (
                             <div key={item.id} className="bg-white rounded-[2rem] p-6 shadow-sm border border-gray-100 hover:shadow-md transition">
                                 <div className="flex justify-between items-start">
-                                    <div>
+                                        <p className="text-[10px] font-bold text-green-600 uppercase mb-1 tracking-widest">{item.month}</p>
                                         <div className="flex items-center gap-2 mb-1">
                                             <span className="text-xl font-black text-gray-900">Rp {formatCurrency(item.total_amount)}</span>
                                             <span className={`text-[9px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${getStatusColor(item.status)}`}>

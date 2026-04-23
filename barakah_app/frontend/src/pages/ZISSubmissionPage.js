@@ -15,6 +15,16 @@ const ZISSubmissionPage = () => {
     const [proof, setProof] = useState(null);
     const [preview, setPreview] = useState(null);
 
+    const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+    const currentMonth = new Date().getMonth();
+    const currentYear = new Date().getFullYear();
+    const months = [];
+    for (let i = -6; i <= 6; i++) {
+        const d = new Date(currentYear, currentMonth + i, 1);
+        months.push(`${monthNames[d.getMonth()]} ${d.getFullYear()}`);
+    }
+    const [selectedMonth, setSelectedMonth] = useState(`${monthNames[currentMonth]} ${currentYear}`);
+
     useEffect(() => {
         const fetchConfig = async () => {
             try {
@@ -67,6 +77,7 @@ const ZISSubmissionPage = () => {
         try {
             const data = new FormData();
             data.append('config', config.id);
+            data.append('month', selectedMonth);
             data.append('values', JSON.stringify(formData));
             data.append('total_amount', total);
             data.append('transfer_proof', proof);
@@ -100,13 +111,36 @@ const ZISSubmissionPage = () => {
         <div className="min-h-screen bg-gray-50 flex flex-col pt-16 pb-24">
             <Header />
             <main className="flex-1 max-w-2xl mx-auto w-full px-4 py-8">
-                <div className="mb-8">
-                    <h1 className="text-2xl font-black text-gray-900 leading-tight">ZIS Rutin</h1>
-                    <p className="text-sm text-gray-500 font-medium">Lengkapi data setoran ZIS bulanan Anda</p>
+                <div className="flex justify-between items-end mb-8">
+                    <div>
+                        <h1 className="text-2xl font-black text-gray-900 leading-tight">ZIS Rutin</h1>
+                        <p className="text-sm text-gray-500 font-medium">Lengkapi data setoran ZIS bulanan Anda</p>
+                    </div>
+                    <button 
+                        onClick={() => navigate('/dashboard/zis/history')}
+                        className="flex items-center gap-2 bg-white px-4 py-2 rounded-xl text-xs font-bold text-gray-600 shadow-sm border border-gray-100 hover:bg-gray-50 transition"
+                    >
+                        <span className="material-icons text-sm text-green-600">history</span>
+                        Riwayat
+                    </button>
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-6">
                     <div className="bg-white rounded-[2.5rem] p-8 shadow-sm border border-gray-100 space-y-6">
+                        <div className="pb-6 border-b border-gray-100">
+                            <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-3 ml-1">Periode Bulan Setoran</label>
+                            <select
+                                value={selectedMonth}
+                                onChange={(e) => setSelectedMonth(e.target.value)}
+                                className="w-full bg-gray-50 border-none rounded-2xl px-4 py-4 text-sm font-bold focus:ring-2 focus:ring-green-500"
+                                required
+                            >
+                                {months.map((m, i) => (
+                                    <option key={i} value={m}>{m}</option>
+                                ))}
+                            </select>
+                        </div>
+
                         <div className="grid grid-cols-1 gap-6">
                             {config.categories.map((cat, idx) => (
                                 <div key={idx}>

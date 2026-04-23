@@ -62,16 +62,25 @@ const AdminZISVerifyPage = () => {
                         <h1 className="text-2xl font-black text-gray-900 leading-tight">Verifikasi ZIS</h1>
                         <p className="text-sm text-gray-500 font-medium">Validasi setoran rutin dari para anggota</p>
                     </div>
-                    <select 
-                        value={filter}
-                        onChange={(e) => setFilter(e.target.value)}
-                        className="bg-white border-none rounded-xl px-4 py-2 text-xs font-bold shadow-sm"
-                    >
-                        <option value="pending">Pending</option>
-                        <option value="verified">Verified</option>
-                        <option value="rejected">Rejected</option>
-                        <option value="all">Semua</option>
-                    </select>
+                    <div className="flex items-center gap-3">
+                        <button 
+                            onClick={() => window.open(`${process.env.REACT_APP_API_BASE_URL}/api/zis/submissions/export_csv/`, '_blank')}
+                            className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 shadow-md shadow-emerald-100 transition"
+                        >
+                            <span className="material-icons text-sm">download</span>
+                            Export CSV
+                        </button>
+                        <select 
+                            value={filter}
+                            onChange={(e) => setFilter(e.target.value)}
+                            className="bg-white border-none rounded-xl px-4 py-2 text-xs font-bold shadow-sm"
+                        >
+                            <option value="pending">Pending</option>
+                            <option value="verified">Verified</option>
+                            <option value="rejected">Rejected</option>
+                            <option value="all">Semua</option>
+                        </select>
+                    </div>
                 </div>
 
                 {filtered.length === 0 ? (
@@ -104,8 +113,14 @@ const AdminZISVerifyPage = () => {
 
                                 <div className="bg-gray-50 rounded-2xl p-4 mb-4 flex-1">
                                     <div className="flex justify-between items-center mb-3">
-                                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Total Setoran</span>
-                                        <span className="text-lg font-black text-green-700">Rp {formatCurrency(item.total_amount)}</span>
+                                        <div>
+                                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block">Periode</span>
+                                            <span className="text-xs font-bold text-green-700">{item.month}</span>
+                                        </div>
+                                        <div className="text-right">
+                                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block">Total Setoran</span>
+                                            <span className="text-lg font-black text-green-700">Rp {formatCurrency(item.total_amount)}</span>
+                                        </div>
                                     </div>
                                     <div className="space-y-1.5">
                                         {Object.entries(item.values || {}).map(([name, val], idx) => val > 0 && (
