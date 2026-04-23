@@ -53,7 +53,7 @@ const EventLandingPage = () => {
         if (!query) {
             setFilteredEvents(events);
         } else {
-            const filtered = events.filter(ev => 
+            const filtered = events.filter(ev =>
                 ev.title.toLowerCase().includes(query.toLowerCase()) ||
                 ev.location.toLowerCase().includes(query.toLowerCase())
             );
@@ -75,9 +75,9 @@ const EventLandingPage = () => {
                 <title>Event Seru - Barakah Economy</title>
                 <meta name="description" content="Temukan berbagai event menarik dari komunitas Barakah Economy" />
             </Helmet>
-            
+
             <HeaderHome onSearch={handleSearch} />
-            
+
             <div className="max-w-4xl mx-auto px-4 py-8 pb-24">
                 <div className="flex justify-between items-end mb-8">
                     <div>
@@ -106,7 +106,7 @@ const EventLandingPage = () => {
                                         const status = getEventStatus(ev.start_date, ev.end_date);
                                         return (
                                             <div className="absolute top-0 left-0 overflow-hidden w-28 h-28 pointer-events-none z-10">
-                                                <div className={`absolute top-4 left-[-35px] -rotate-45 ${status.color} text-white text-[10px] font-black py-1.5 w-40 text-center shadow-lg uppercase tracking-wider`}>
+                                                <div className={`absolute top-4 left-[-35px] -rotate-45 ${status.color} text-white text-[6px] font-black py-1.5 w-40 text-center shadow-lg uppercase tracking-wider`}>
                                                     {status.label}
                                                 </div>
                                             </div>
@@ -160,7 +160,7 @@ const EventLandingPage = () => {
                     </div>
                 )}
             </div>
-            
+
             <NavigationButton />
         </div>
     );
