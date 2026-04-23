@@ -106,7 +106,7 @@ const EventLandingPage = () => {
                                         const status = getEventStatus(ev.start_date, ev.end_date);
                                         return (
                                             <div className="absolute top-0 left-0 overflow-hidden w-28 h-28 pointer-events-none z-10">
-                                                <div className={`absolute top-4 left-[-35px] -rotate-45 ${status.color} text-white text-[6px] font-black py-1.5 w-40 text-center shadow-lg uppercase tracking-wider`}>
+                                                <div className={`absolute top-6 left-[-45px] -rotate-45 ${status.color} text-white text-[8px] font-black py-1 w-44 text-center shadow-lg uppercase tracking-tight`}>
                                                     {status.label}
                                                 </div>
                                             </div>
