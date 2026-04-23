@@ -51,6 +51,7 @@ urlpatterns = [
     path('api/digital-products/', include('digital_products.urls')),
     path('api/forum/', include('forum.urls')),
     path('api/events/', include('events.urls')),
+    path('api/zis/', include('zis.urls')),
     path('ckeditor/', include('ckeditor_uploader.urls')),
     path('ckeditor/upload/', ckeditor_views.upload, name='ckeditor_upload'),
     

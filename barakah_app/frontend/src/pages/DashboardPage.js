@@ -496,6 +496,27 @@ const DashboardPage = () => {
 
                     {(() => {
                         const userRes = JSON.parse(localStorage.getItem('user'));
+                        const isStaff = userRes?.role === 'staff' || userRes?.role === 'admin';
+                        if (!isStaff) return null;
+                        return (
+                            <Link
+                                to="/dashboard/zis"
+                                className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-emerald-50 hover:shadow-md transition"
+                            >
+                                <div className="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center">
+                                    <span className="material-icons text-emerald-700">payments</span>
+                                </div>
+                                <div className="flex-1">
+                                    <h3 className="font-bold text-gray-800 text-sm">ZIS Rutin</h3>
+                                    <p className="text-[11px] text-gray-500">Setoran zakat, infaq, dan sedekah bulanan</p>
+                                </div>
+                                <span className="material-icons text-gray-400">chevron_right</span>
+                            </Link>
+                        );
+                    })()}
+
+                    {(() => {
+                        const userRes = JSON.parse(localStorage.getItem('user'));
                         const isAdmin = userRes?.username === 'admin' || userRes?.role === 'admin';
                         const accessibleMenus = userProfile?.accessible_menus || [];
                         const hasAccess = (menuKey) => isAdmin || accessibleMenus.includes(menuKey) || accessibleMenus.includes('*');
@@ -829,6 +850,37 @@ const DashboardPage = () => {
                                             <p className="text-[11px] text-gray-500">Kelola konten profil dan visi misi komunitas (Admin)</p>
                                         </div>
                                     </Link>
+                                )}
+
+                                {isAdmin && (
+                                    <>
+                                        <Link
+                                            to="/dashboard/admin/zis-config"
+                                            className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-slate-100 hover:shadow-md transition"
+                                        >
+                                            <div className="w-12 h-12 bg-slate-100 rounded-xl flex items-center justify-center">
+                                                <span className="material-icons text-slate-700">settings_applications</span>
+                                            </div>
+                                            <div className="flex-1">
+                                                <h3 className="font-bold text-gray-800 text-sm">Pengaturan ZIS</h3>
+                                                <p className="text-[11px] text-gray-500">Atur kategori pos dan rekening ZIS (Admin)</p>
+                                            </div>
+                                            <span className="material-icons text-gray-400">chevron_right</span>
+                                        </Link>
+                                        <Link
+                                            to="/dashboard/admin/zis-verify"
+                                            className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-green-100 hover:shadow-md transition"
+                                        >
+                                            <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
+                                                <span className="material-icons text-green-700">fact_check</span>
+                                            </div>
+                                            <div className="flex-1">
+                                                <h3 className="font-bold text-gray-800 text-sm">Verifikasi ZIS</h3>
+                                                <p className="text-[11px] text-gray-500">Validasi laporan setoran anggota (Admin)</p>
+                                            </div>
+                                            <span className="material-icons text-gray-400">chevron_right</span>
+                                        </Link>
+                                    </>
                                 )}
                                 {/* {isAdmin && (
                                 <Link

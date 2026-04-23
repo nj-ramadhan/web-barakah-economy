@@ -124,6 +124,7 @@ INSTALLED_APPS = [
     'chat',
     'forum',
     'django_filters',
+    'zis',
 ]
 
 MIDDLEWARE = [

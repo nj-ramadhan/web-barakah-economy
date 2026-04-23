@@ -87,6 +87,10 @@ import DashboardAdminCampaignManagementPage from './pages/admin/DashboardAdminCa
 import DashboardMyCampaignsPage from './pages/DashboardMyCampaignsPage';
 import DashboardMyEventsPage from './pages/DashboardMyEventsPage';
 import DashboardArticleEditorPage from './pages/DashboardArticleEditorPage';
+import ZISSubmissionPage from './pages/ZISSubmissionPage';
+import ZISHistoryPage from './pages/ZISHistoryPage';
+import AdminZISConfigPage from './pages/admin/AdminZISConfigPage';
+import AdminZISVerifyPage from './pages/admin/AdminZISVerifyPage';
 
 import ForumMainPage from './pages/ForumMainPage';
 import ForumThreadDetail from './pages/ForumThreadDetail';
@@ -332,6 +336,12 @@ const LayoutWrapper = ({ isDesktop }) => {
         <Route path="/dashboard/ecourses/new" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardEcourseFormPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/ecourses/:id/edit" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardEcourseFormPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/ecourses/:id/materials" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardEcourseMaterialsPage /></ResponsiveLayout></PrivateRoute>} />
+        
+        {/* ZIS Rutin Routes */}
+        <Route path="/dashboard/zis" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><ZISSubmissionPage /></ResponsiveLayout></PrivateRoute>} />
+        <Route path="/dashboard/zis/history" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><ZISHistoryPage /></ResponsiveLayout></PrivateRoute>} />
+        <Route path="/dashboard/admin/zis-config" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><AdminZISConfigPage /></ResponsiveLayout></PrivateRoute>} />
+        <Route path="/dashboard/admin/zis-verify" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><AdminZISVerifyPage /></ResponsiveLayout></PrivateRoute>} />
       </Routes>
       <FloatingCartModal />
     </div>
