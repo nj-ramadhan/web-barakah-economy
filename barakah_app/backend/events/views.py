@@ -494,7 +494,9 @@ class EventViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
     def blast_whatsapp(self, request, slug=None):
         """Blast WhatsApp messages to all participants of an event."""
+        print(f"DEBUG: blast_whatsapp called for slug: {slug}")
         event = self.get_object()
+        print(f"DEBUG: Found event ID: {event.id}, Title: {event.title}")
         
         # Check if user is the organizer or admin
         if not (request.user.is_staff or event.created_by == request.user):
@@ -506,9 +508,11 @@ class EventViewSet(viewsets.ModelViewSet):
             
         registrations_ids = request.data.get('registration_ids')
         if registrations_ids:
-            registrations = EventRegistration.objects.filter(id__in=registrations_ids, event=event).select_related('user', 'user__profile')
+            registrations = EventRegistration.objects.filter(id__in=registrations_ids, event=event).select_related('user', 'user__profile').prefetch_related('event__form_fields')
         else:
-            registrations = EventRegistration.objects.filter(event=event, status='approved').select_related('user', 'user__profile')
+            registrations = EventRegistration.objects.filter(event=event, status='approved').select_related('user', 'user__profile').prefetch_related('event__form_fields')
+        
+        print(f"DEBUG: Found {registrations.count()} registrations matching criteria.")
         
         phone_list = []
         placeholder_data = []
@@ -534,7 +538,8 @@ class EventViewSet(viewsets.ModelViewSet):
                     })
         
         if not phone_list:
-            return Response({"error": "Tidak ada nomor WhatsApp peserta yang terdeteksi."}, status=status.HTTP_404_NOT_FOUND)
+            print(f"DEBUG: No phone numbers detected for {registrations.count()} registrations.")
+            return Response({"error": "Tidak ada nomor WhatsApp peserta yang terdeteksi. Silakan periksa apakah nomor HP sudah terisi di profil atau formulir."}, status=status.HTTP_400_BAD_REQUEST)
             
         # Use blast_messages from whatsapp_service
         result = whatsapp_service.blast_messages(phone_list, custom_message, placeholder_data)
