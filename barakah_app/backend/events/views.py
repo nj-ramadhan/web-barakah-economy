@@ -506,9 +506,9 @@ class EventViewSet(viewsets.ModelViewSet):
             
         registrations_ids = request.data.get('registration_ids')
         if registrations_ids:
-            registrations = EventRegistration.objects.filter(id__in=registrations_ids, event=event)
+            registrations = EventRegistration.objects.filter(id__in=registrations_ids, event=event).select_related('user', 'user__profile')
         else:
-            registrations = EventRegistration.objects.filter(event=event, status='approved')
+            registrations = EventRegistration.objects.filter(event=event, status='approved').select_related('user', 'user__profile')
         
         phone_list = []
         placeholder_data = []
@@ -546,7 +546,7 @@ class EventViewSet(viewsets.ModelViewSet):
 
     def _detect_contact_info_standalone(self, registration):
         """Standalone helper for detecting contact info from a registration."""
-        responses = registration.responses
+        responses = registration.responses or {}
         form_fields = registration.event.form_fields.all()
         
         # Initial fallbacks
@@ -565,15 +565,28 @@ class EventViewSet(viewsets.ModelViewSet):
             elif not name:
                 name = registration.user.username
             
-            if hasattr(registration.user, 'phone'): 
+            if hasattr(registration.user, 'phone') and registration.user.phone: 
                 phone = registration.user.phone
-                if phone: is_profile_complete = True
+                is_profile_complete = True
 
         # Scan form fields for marketing data
-        # If profile is already comprehensive, we only override if form data is likely more specific
         for field in form_fields:
             field_id = str(field.id)
             value = responses.get(field_id)
+            
+            # Robust fallback: if ID doesn't match, try to find by label name in responses keys
+            if not value and responses:
+                # 1. Try case-insensitive label match (some old data might store labels as keys)
+                label_key = next((k for k in responses.keys() if k.lower() == field.label.lower()), None)
+                if label_key:
+                    value = responses[label_key]
+                
+                # 2. Try legacy mapping for Event 15
+                if not value and registration.event.id == 15:
+                    legacy_map = {'Nama': '81', 'Email': '82', 'No HP': '83', 'WhatsApp': '83', 'Asal Instansi': '84', 'Jenis Kelamin': '85'}
+                    old_id = legacy_map.get(field.label)
+                    if old_id: value = responses.get(old_id)
+
             if not value or not isinstance(value, (str, int)): continue
             
             label = field.label.lower()
