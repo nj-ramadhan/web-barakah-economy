@@ -494,9 +494,7 @@ class EventViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
     def blast_whatsapp(self, request, slug=None):
         """Blast WhatsApp messages to all participants of an event."""
-        print(f"DEBUG: blast_whatsapp called for slug: {slug}")
         event = self.get_object()
-        print(f"DEBUG: Found event ID: {event.id}, Title: {event.title}")
         
         # Check if user is the organizer or admin
         if not (request.user.is_staff or event.created_by == request.user):
@@ -538,8 +536,9 @@ class EventViewSet(viewsets.ModelViewSet):
                     })
         
         if not phone_list:
-            print(f"DEBUG: No phone numbers detected for {registrations.count()} registrations.")
-            return Response({"error": "Tidak ada nomor WhatsApp peserta yang terdeteksi. Silakan periksa apakah nomor HP sudah terisi di profil atau formulir."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({
+                "error": "Tidak ada nomor WhatsApp peserta yang terdeteksi. Pastikan data pendaftaran memiliki kolom 'No HP' atau 'WhatsApp' yang terisi."
+            }, status=status.HTTP_400_BAD_REQUEST)
             
         # Use blast_messages from whatsapp_service
         result = whatsapp_service.blast_messages(phone_list, custom_message, placeholder_data)
@@ -552,7 +551,7 @@ class EventViewSet(viewsets.ModelViewSet):
     def _detect_contact_info_standalone(self, registration):
         """Standalone helper for detecting contact info from a registration."""
         responses = registration.responses or {}
-        form_fields = registration.event.form_fields.all()
+        current_fields = {str(f.id): f.label for f in registration.event.form_fields.all()}
         
         # Initial fallbacks
         email = registration.guest_email
@@ -574,44 +573,38 @@ class EventViewSet(viewsets.ModelViewSet):
                 phone = registration.user.phone
                 is_profile_complete = True
 
-        # Scan form fields for marketing data
-        for field in form_fields:
-            field_id = str(field.id)
-            value = responses.get(field_id)
-            
-            # Robust fallback: if ID doesn't match, try to find by label name in responses keys
-            if not value and responses:
-                # 1. Try case-insensitive label match (some old data might store labels as keys)
-                label_key = next((k for k in responses.keys() if k.lower() == field.label.lower()), None)
-                if label_key:
-                    value = responses[label_key]
-                
-                # 2. Try legacy mapping for Event 15
-                if not value and registration.event.id == 15:
-                    legacy_map = {'Nama': '81', 'Email': '82', 'No HP': '83', 'WhatsApp': '83', 'Asal Instansi': '84', 'Jenis Kelamin': '85'}
-                    old_id = legacy_map.get(field.label)
-                    if old_id: value = responses.get(old_id)
-
+        # Scan all responses (including legacy/orphaned ones)
+        for field_id, value in responses.items():
             if not value or not isinstance(value, (str, int)): continue
             
-            label = field.label.lower()
+            # Try to get label from current fields or legacy map
+            label = current_fields.get(str(field_id))
+            if not label:
+                # Check legacy mapping for Event 15
+                if registration.event_id == 15:
+                    legacy_map = {'81': 'Nama', '82': 'Email', '83': 'No HP', '84': 'Asal Instansi', '85': 'Jenis Kelamin'}
+                    label = legacy_map.get(str(field_id))
+                
+                # If still no label, check if the key itself looks like a label (fallback)
+                if not label and not field_id.isdigit():
+                    label = field_id
+
+            if not label: continue
+            
+            label_lower = label.lower()
             
             # Email detection
-            if 'email' in label: 
-                # Always take from form if provided explicitly
+            if 'email' in label_lower: 
                 email = str(value)
             
             # Phone detection
-            if any(kw in label for kw in ['wa', 'whatsapp', 'nomor hp', 'telepon', 'phone', 'telepon', 'handphone']):
-                # Priority for form phone for specific event contact
+            if any(kw in label_lower for kw in ['wa', 'whatsapp', 'hp', 'telepon', 'phone', 'handphone']):
                 phone = str(value)
             
-            # Name detection - only override if profile is not "lengkap" or if it matches "Nama Lengkap" keyword
-            if any(kw in label for kw in ['nama lengkap', 'nama pendaftar', 'fullName']):
-                if not is_profile_complete or 'lengkap' in label:
+            # Name detection
+            if any(kw in label_lower for kw in ['nama', 'name', 'fullname']):
+                if not is_profile_complete or 'lengkap' in label_lower:
                     name = str(value)
-            elif not name and 'nama' in label:
-                name = str(value)
                 
         return email, phone, name
 
