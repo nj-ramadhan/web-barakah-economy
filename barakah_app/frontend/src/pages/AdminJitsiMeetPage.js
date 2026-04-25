@@ -3,7 +3,8 @@ import { Helmet } from 'react-helmet';
 import NavigationButton from '../components/layout/Navigation';
 
 const AdminJitsiMeetPage = () => {
-    const [roomName, setRoomName] = useState(`BAE_Meet_${Math.random().toString(36).substring(7).toUpperCase()}`);
+    const APP_ID = 'vpaas-magic-cookie-32c71c4a7f724965932aa0cebb974fbd';
+    const [roomName, setRoomName] = useState(`Meet_${Math.random().toString(36).substring(7).toUpperCase()}`);
     const [isMeetingStarted, setIsMeetingStarted] = useState(false);
     const jitsiContainerRef = useRef(null);
     const jitsiApiRef = useRef(null);
@@ -14,9 +15,9 @@ const AdminJitsiMeetPage = () => {
 
     useEffect(() => {
         if (isMeetingStarted && jitsiContainerRef.current && !jitsiApiRef.current) {
-            const domain = 'meet.jit.si';
+            const domain = '8x8.vc';
             const options = {
-                roomName: roomName,
+                roomName: `${APP_ID}/${roomName}`,
                 width: '100%',
                 height: 600,
                 parentNode: jitsiContainerRef.current,
@@ -32,10 +33,11 @@ const AdminJitsiMeetPage = () => {
                 },
                 configOverwrite: {
                     disableDeepLinking: true,
+                    prejoinPageEnabled: false, // Langsung masuk agar lebih cepat
                 },
             };
 
-            // Load Jitsi API script if not loaded
+            // Load Jitsi API script for 8x8
             const script = document.createElement('script');
             script.src = `https://${domain}/external_api.js`;
             script.async = true;
