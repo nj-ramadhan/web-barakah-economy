@@ -800,6 +800,22 @@ const DashboardPage = () => {
                                     </Link>
                                 )}
 
+                                {isAdmin && (
+                                    <Link
+                                        to="/admin/meet-test"
+                                        className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-emerald-100 hover:shadow-md transition"
+                                    >
+                                        <div className="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center">
+                                            <span className="material-icons text-emerald-700">videocam</span>
+                                        </div>
+                                        <div className="flex-1">
+                                            <h3 className="font-bold text-gray-800 text-sm">Live Meet Prototype</h3>
+                                            <p className="text-[11px] text-gray-500">Uji coba fitur video conference Jitsi (Admin)</p>
+                                        </div>
+                                        <span className="material-icons text-gray-400">chevron_right</span>
+                                    </Link>
+                                )}
+
                                 {hasAccess('charity') && (
                                     <Link
                                         to="/dashboard/admin/campaigns"

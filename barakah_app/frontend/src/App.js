@@ -98,6 +98,7 @@ import ForumThreadDetail from './pages/ForumThreadDetail';
 import DashboardSinergySellersPage from './pages/DashboardSinergySellersPage';
 import DashboardSinergySellerOrdersPage from './pages/DashboardSinergySellerOrdersPage';
 import DashboardSinergyAdminPage from './pages/admin/DashboardSinergyAdminPage';
+import AdminJitsiMeetPage from './pages/AdminJitsiMeetPage';
 import ExpeditionTestPage from './pages/admin/ExpeditionTestPage';
 import FloatingCartModal from './components/layout/FloatingCartModal';
 
@@ -342,6 +343,7 @@ const LayoutWrapper = ({ isDesktop }) => {
         <Route path="/dashboard/zis/history" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><ZISHistoryPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/admin/zis-config" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><AdminZISConfigPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/admin/zis-verify" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><AdminZISVerifyPage /></ResponsiveLayout></PrivateRoute>} />
+        <Route path="/admin/meet-test" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><AdminJitsiMeetPage /></ResponsiveLayout></PrivateRoute>} />
       </Routes>
       <FloatingCartModal />
     </div>
