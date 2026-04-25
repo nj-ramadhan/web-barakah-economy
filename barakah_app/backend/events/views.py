@@ -779,6 +779,8 @@ class EventViewSet(viewsets.ModelViewSet):
                 lines.append(current_line)
                 return lines
 
+            lines = wrap_text(participant_name, font, name_width_px)
+
             # Calculate total height of all lines to handle vertical alignment
             total_text_height = 0
             line_details = []
