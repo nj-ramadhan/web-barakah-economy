@@ -300,6 +300,8 @@ class EventCertificate(models.Model):
     font_size = models.IntegerField(default=40)
     font_color = models.CharField(max_length=7, default='#000000') # HEX color
     font_family = models.CharField(max_length=100, default='Roboto-Bold.ttf')
+    font_bold = models.BooleanField(default=True)
+    font_italic = models.BooleanField(default=False)
     
     # Bounding box for name (as percentage of image size)
     name_width = models.FloatField(default=80.0)

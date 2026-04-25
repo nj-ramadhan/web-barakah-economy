@@ -10,6 +10,8 @@ const CertificateEditor = ({ slug }) => {
         font_size: 60,
         font_color: '#000000',
         font_family: 'Roboto-Bold.ttf',
+        font_bold: true,
+        font_italic: false,
         text_align: 'center',
         show_unique_code: false,
         code_x: 10,
@@ -22,16 +24,22 @@ const CertificateEditor = ({ slug }) => {
     const [loading, setLoading] = useState(true);
     const imageRef = useRef(null);
 
+    // Font mapping for preview and display
     const FONT_OPTIONS = [
-        { label: 'Roboto Bold', value: 'Roboto-Bold.ttf' },
-        { label: 'Roboto Regular', value: 'Roboto-Regular.ttf' },
-        { label: 'Arial', value: 'arial.ttf' },
-        { label: 'Playfair Display', value: 'PlayfairDisplay-Bold.ttf' },
-        { label: 'Montserrat', value: 'Montserrat-SemiBold.ttf' },
+        { label: 'Roboto', value: 'Roboto-Bold.ttf', css: "'Roboto', sans-serif" },
+        { label: 'Classic Serif', value: 'PlayfairDisplay-Bold.ttf', css: "'Playfair Display', serif" },
+        { label: 'Montserrat', value: 'Montserrat-SemiBold.ttf', css: "'Montserrat', sans-serif" },
+        { label: 'Tulisan Sambung (Great Vibes)', value: 'GreatVibes-Regular.ttf', css: "'Great Vibes', cursive" },
+        { label: 'Modern Script (Dancing Script)', value: 'DancingScript-Bold.ttf', css: "'Dancing Script', cursive" },
     ];
 
     useEffect(() => {
         fetchSettings();
+        // Load fonts for preview
+        const link = document.createElement('link');
+        link.href = 'https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;700&family=Great+Vibes&family=Montserrat:wght@400;600;700&family=Playfair+Display:wght@400;700&family=Roboto:wght@400;700&display=swap';
+        link.rel = 'stylesheet';
+        document.head.appendChild(link);
     }, [slug]);
 
     const fetchSettings = async () => {
@@ -142,6 +150,11 @@ const CertificateEditor = ({ slug }) => {
         return (baseSize / 1000) * rect.height;
     };
 
+    const getCurrentFontCss = () => {
+        const font = FONT_OPTIONS.find(f => f.value === settings.font_family);
+        return font ? font.css : 'sans-serif';
+    };
+
     if (loading) return <div className="p-4 text-center">Memuat pengaturan...</div>;
 
     return (
@@ -149,7 +162,7 @@ const CertificateEditor = ({ slug }) => {
             <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-6 gap-4">
                 <div>
                     <h3 className="text-xl font-bold text-gray-800">Editor Sertifikat Pro</h3>
-                    <p className="text-xs text-gray-500 mt-1">Sesuaikan kolom nama, wrap text, dan ukuran font secara presisi.</p>
+                    <p className="text-xs text-gray-500 mt-1">Live preview dengan pilihan font estetik dan gaya teks.</p>
                 </div>
                 <div className="flex items-center space-x-2 bg-gray-50 px-4 py-2 rounded-xl">
                     <span className="text-sm font-bold text-gray-600">Status Aktif</span>
@@ -192,17 +205,18 @@ const CertificateEditor = ({ slug }) => {
                                     onMouseDown={(e) => handleDrag(e, 'name')}
                                 >
                                     <div 
-                                        className="px-2 leading-tight"
+                                        className="px-2 leading-tight transition-all duration-200"
                                         style={{ 
                                             fontSize: `${getPreviewFontSize(settings.font_size)}px`,
                                             color: settings.font_color,
-                                            fontWeight: 'bold',
-                                            fontFamily: 'sans-serif',
+                                            fontWeight: settings.font_bold ? 'bold' : 'normal',
+                                            fontStyle: settings.font_italic ? 'italic' : 'normal',
+                                            fontFamily: getCurrentFontCss(),
                                             textAlign: settings.text_align,
                                             width: '100%'
                                         }}
                                     >
-                                        NAMA LENGKAP PESERTA AKAN TAMPIL DISINI (WRAP TEXT)
+                                        Nama Lengkap Peserta Disini
                                     </div>
 
                                     {/* Resizer Handle */}
@@ -238,26 +252,14 @@ const CertificateEditor = ({ slug }) => {
                             </div>
                         )}
                     </div>
-                    <div className="mt-4 flex flex-wrap gap-4 justify-between text-[10px] font-black text-gray-400 uppercase tracking-widest px-4">
-                        <div className="flex gap-4">
-                            <span>Posisi: {settings.name_x.toFixed(1)}%, {settings.name_y.toFixed(1)}%</span>
-                            <span>Ukuran Box: {settings.name_width.toFixed(1)}% x {settings.name_height.toFixed(1)}%</span>
-                        </div>
-                        <span>Drag box biru untuk memindahkan, tarik pojok kanan bawah untuk merubah ukuran</span>
-                    </div>
                 </div>
 
                 {/* Controls Section */}
                 <div className="space-y-6 bg-gray-50 p-6 rounded-3xl border border-gray-100 h-fit">
                     <div>
-                        <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">1. Upload Template</label>
-                        <input 
-                            type="file" accept="image/*" onChange={handleImageChange} className="hidden" id="cert-upload"
-                        />
-                        <label 
-                            htmlFor="cert-upload"
-                            className="flex items-center gap-3 p-4 bg-white border border-gray-200 rounded-2xl cursor-pointer hover:border-blue-400 transition shadow-sm"
-                        >
+                        <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">1. Gambar Template</label>
+                        <input type="file" accept="image/*" onChange={handleImageChange} className="hidden" id="cert-upload" />
+                        <label htmlFor="cert-upload" className="flex items-center gap-3 p-4 bg-white border border-gray-200 rounded-2xl cursor-pointer hover:border-blue-400 transition shadow-sm">
                             <span className="material-icons text-blue-500">cloud_upload</span>
                             <span className="text-xs font-bold text-gray-600 truncate">{template ? template.name : 'Pilih Gambar...'}</span>
                         </label>
@@ -266,50 +268,65 @@ const CertificateEditor = ({ slug }) => {
                     <hr className="border-gray-200" />
 
                     <div className="space-y-6">
-                        <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">2. Konfigurasi Teks Nama</label>
+                        <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">2. Gaya Teks Nama</label>
                         
                         {/* Font Family Dropdown */}
                         <div>
-                            <label className="text-[10px] font-bold text-gray-500 block mb-2 uppercase">Jenis Font</label>
+                            <label className="text-[10px] font-bold text-gray-500 block mb-2 uppercase">Pilih Font</label>
                             <select 
                                 value={settings.font_family}
                                 onChange={(e) => setSettings({...settings, font_family: e.target.value})}
-                                className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                                style={{ fontFamily: getCurrentFontCss() }}
                             >
                                 {FONT_OPTIONS.map(opt => (
-                                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                    <option key={opt.value} value={opt.value} style={{ fontFamily: opt.css }}>{opt.label}</option>
                                 ))}
                             </select>
                         </div>
 
-                        {/* Font Size Input & Slider */}
+                        {/* Bold & Italic Toggles */}
+                        <div className="flex gap-2">
+                            <button 
+                                onClick={() => setSettings({...settings, font_bold: !settings.font_bold})}
+                                className={`flex-1 py-3 rounded-xl border flex items-center justify-center gap-2 transition-all ${settings.font_bold ? 'bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-200' : 'bg-white border-gray-200 text-gray-400 hover:bg-gray-50'}`}
+                            >
+                                <span className="material-icons text-sm">format_bold</span>
+                                <span className="text-[10px] font-black uppercase">Bold</span>
+                            </button>
+                            <button 
+                                onClick={() => setSettings({...settings, font_italic: !settings.font_italic})}
+                                className={`flex-1 py-3 rounded-xl border flex items-center justify-center gap-2 transition-all ${settings.font_italic ? 'bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-200' : 'bg-white border-gray-200 text-gray-400 hover:bg-gray-50'}`}
+                            >
+                                <span className="material-icons text-sm">format_italic</span>
+                                <span className="text-[10px] font-black uppercase">Italic</span>
+                            </button>
+                        </div>
+
+                        {/* Font Size */}
                         <div className="grid grid-cols-3 gap-2">
                             <div className="col-span-2">
-                                <label className="text-[10px] font-bold text-gray-500 block mb-2 uppercase">Ukuran (pt)</label>
-                                <input 
-                                    type="range" min="10" max="300" value={settings.font_size} 
+                                <label className="text-[10px] font-bold text-gray-500 block mb-2 uppercase">Ukuran Font</label>
+                                <input type="range" min="10" max="300" value={settings.font_size} 
                                     onChange={(e) => setSettings({...settings, font_size: parseInt(e.target.value)})}
-                                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600 mb-2"
-                                />
+                                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600" />
                             </div>
                             <div className="pt-5">
-                                <input 
-                                    type="number" value={settings.font_size}
+                                <input type="number" value={settings.font_size}
                                     onChange={(e) => setSettings({...settings, font_size: parseInt(e.target.value) || 10})}
-                                    className="w-full bg-white border border-gray-200 rounded-xl px-2 py-2.5 text-xs font-bold text-center"
-                                />
+                                    className="w-full bg-white border border-gray-200 rounded-xl px-2 py-2 text-xs font-bold text-center" />
                             </div>
                         </div>
 
-                        {/* Text Alignment */}
+                        {/* Alignment */}
                         <div>
-                            <label className="text-[10px] font-bold text-gray-500 block mb-2 uppercase">Perataan Teks</label>
+                            <label className="text-[10px] font-bold text-gray-500 block mb-2 uppercase">Perataan</label>
                             <div className="flex bg-white p-1 rounded-xl border border-gray-200">
                                 {['left', 'center', 'right'].map(align => (
                                     <button 
                                         key={align}
                                         onClick={() => setSettings({...settings, text_align: align})}
-                                        className={`flex-1 py-2 rounded-lg transition-all ${settings.text_align === align ? 'bg-blue-600 text-white shadow-md' : 'text-gray-400 hover:bg-gray-50'}`}
+                                        className={`flex-1 py-2 rounded-lg transition-all ${settings.text_align === align ? 'bg-gray-900 text-white shadow-md' : 'text-gray-400 hover:bg-gray-50'}`}
                                     >
                                         <span className="material-icons text-sm">
                                             {align === 'left' ? 'format_align_left' : (align === 'center' ? 'format_align_center' : 'format_align_right')}
@@ -319,48 +336,20 @@ const CertificateEditor = ({ slug }) => {
                             </div>
                         </div>
 
-                        {/* Font Color */}
+                        {/* Color */}
                         <div>
-                            <label className="text-[10px] font-bold text-gray-500 block mb-2 uppercase">Warna</label>
+                            <label className="text-[10px] font-bold text-gray-500 block mb-2 uppercase">Warna Teks</label>
                             <div className="flex gap-2">
-                                <input 
-                                    type="color" value={settings.font_color} 
-                                    onChange={(e) => setSettings({...settings, font_color: e.target.value})}
-                                    className="h-10 w-14 border-0 p-0 bg-transparent cursor-pointer rounded-lg overflow-hidden shadow-inner"
-                                />
-                                <input 
-                                    type="text" value={settings.font_color.toUpperCase()} 
-                                    onChange={(e) => setSettings({...settings, font_color: e.target.value})}
-                                    className="flex-grow border border-gray-200 rounded-xl px-4 text-xs font-mono font-bold"
-                                />
+                                <input type="color" value={settings.font_color} onChange={(e) => setSettings({...settings, font_color: e.target.value})} className="h-10 w-14 border-0 p-0 bg-transparent cursor-pointer rounded-lg shadow-inner" />
+                                <input type="text" value={settings.font_color.toUpperCase()} onChange={(e) => setSettings({...settings, font_color: e.target.value})} className="flex-grow border border-gray-200 rounded-xl px-4 text-xs font-mono font-bold" />
                             </div>
                         </div>
                     </div>
 
-                    <hr className="border-gray-200" />
-
-                    <div className="space-y-4">
-                        <label className="flex items-center justify-between cursor-pointer group p-3 bg-white rounded-2xl border border-gray-100 shadow-sm">
-                            <span className="text-[10px] font-black text-gray-500 uppercase tracking-wider ml-1">ID Registrasi</span>
-                            <div className="relative">
-                                <input 
-                                    type="checkbox" className="sr-only"
-                                    checked={settings.show_unique_code} 
-                                    onChange={(e) => setSettings({...settings, show_unique_code: e.target.checked})}
-                                />
-                                <div className={`block w-10 h-6 rounded-full transition-colors ${settings.show_unique_code ? 'bg-green-600' : 'bg-gray-200'}`}></div>
-                                <div className={`absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${settings.show_unique_code ? 'translate-x-4' : ''}`}></div>
-                            </div>
-                        </label>
-                    </div>
-
                     <div className="pt-4">
-                        <button 
-                            onClick={handleSave} disabled={!previewUrl}
-                            className={`w-full font-black py-5 rounded-[1.5rem] shadow-xl transition-all active:scale-95 flex items-center justify-center gap-3 ${!previewUrl ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-gray-900 text-white hover:bg-black hover:shadow-2xl'}`}
-                        >
-                            <span className="material-icons text-base">save</span>
-                            <span className="text-[11px] uppercase tracking-widest">Simpan Perubahan</span>
+                        <button onClick={handleSave} disabled={!previewUrl} className={`w-full font-black py-5 rounded-[1.5rem] shadow-xl transition-all active:scale-95 flex items-center justify-center gap-3 ${!previewUrl ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-emerald-600 text-white hover:bg-emerald-700 hover:shadow-emerald-200'}`}>
+                            <span className="material-icons text-base">verified</span>
+                            <span className="text-[11px] uppercase tracking-widest">Simpan Pengaturan</span>
                         </button>
                     </div>
                 </div>

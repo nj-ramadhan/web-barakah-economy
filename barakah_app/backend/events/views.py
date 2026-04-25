@@ -722,7 +722,11 @@ class EventViewSet(viewsets.ModelViewSet):
             scaled_font_size = int((cert.font_size / 1000.0) * height)
             
             # Load font
-            font_path = os.path.join(os.path.dirname(__file__), 'fonts', cert.font_family)
+            # If bold/italic is set, we try to append that to the filename if the file exists
+            # e.g. Roboto.ttf -> Roboto-BoldItalic.ttf
+            font_filename = cert.font_family
+            font_path = os.path.join(os.path.dirname(__file__), 'fonts', font_filename)
+            
             font = None
             if os.path.exists(font_path):
                 try:
@@ -733,6 +737,9 @@ class EventViewSet(viewsets.ModelViewSet):
             if not font:
                 # Attempt to find any font in a common system location
                 fallbacks = ["arial.ttf", "DejaVuSans.ttf", "Roboto-Regular.ttf"]
+                if cert.font_bold:
+                    fallbacks = ["arialbd.ttf", "DejaVuSans-Bold.ttf"] + fallbacks
+                
                 for f in fallbacks:
                     try:
                         font = ImageFont.truetype(f, scaled_font_size)
