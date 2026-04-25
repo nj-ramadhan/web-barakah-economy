@@ -21,8 +21,9 @@ export const formatCurrency = (value) => {
  * @returns {number}
  */
 export const parseCurrency = (value) => {
-    if (!value) return 0;
+    if (value === null || value === undefined || value === '') return '';
     // Remove all non-digit characters
     const clean = value.toString().replace(/[^\d]/g, '');
-    return parseInt(clean, 10) || 0;
+    if (clean === '') return '';
+    return parseInt(clean, 10);
 };

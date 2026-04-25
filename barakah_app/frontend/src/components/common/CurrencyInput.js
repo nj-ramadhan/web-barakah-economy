@@ -6,7 +6,7 @@ import { formatCurrency, parseCurrency } from '../../utils/formatters';
  * It's designed to feel premium and handle "nominal" input as requested.
  */
 const CurrencyInput = ({ 
-    value, 
+    value: controlledValue, 
     onChange, 
     placeholder = "0", 
     className = "", 
@@ -15,9 +15,20 @@ const CurrencyInput = ({
     required = false,
     ...props 
 }) => {
+    // Handle both controlled and uncontrolled (defaultValue) modes
+    const [uncontrolledValue, setUncontrolledValue] = React.useState(props.defaultValue || '');
+    
+    // If controlledValue is provided (not undefined), use it. Otherwise use internal state.
+    const value = controlledValue !== undefined ? controlledValue : uncontrolledValue;
+
     const handleInputChange = (e) => {
         const rawValue = e.target.value;
         const numericValue = parseCurrency(rawValue);
+        
+        // Update local state if uncontrolled
+        if (controlledValue === undefined) {
+            setUncontrolledValue(numericValue);
+        }
         
         // Pass the numeric value back to the parent
         if (onChange) {
@@ -31,7 +42,7 @@ const CurrencyInput = ({
     };
 
     // Format the current numeric value for display
-    const displayValue = value ? formatCurrency(value) : '';
+    const displayValue = (value !== undefined && value !== null && value !== '') ? formatCurrency(value) : '';
 
     return (
         <div className="relative group">
