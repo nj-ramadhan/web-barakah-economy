@@ -650,32 +650,38 @@ class EventViewSet(viewsets.ModelViewSet):
             
         from .models import EventCertificate
         from .serializers import EventCertificateSerializer
-        cert, created = EventCertificate.objects.get_or_create(event=event)
         
-        if request.method == 'POST':
-            # Handle template_image if provided in request.FILES
-            if 'template_image' in request.FILES:
-                cert.template_image = request.FILES['template_image']
+        try:
+            cert, created = EventCertificate.objects.get_or_create(event=event)
             
-            # Update other fields
-            for field in ['name_x', 'name_y', 'font_size', 'font_color', 'font_family', 'show_unique_code', 'code_x', 'code_y', 'code_font_size', 'is_active']:
-                if field in request.data:
-                    val = request.data.get(field)
-                    # Convert types if necessary
-                    try:
-                        if field in ['name_x', 'name_y', 'code_x', 'code_y']: val = float(val)
-                        if field in ['font_size', 'code_font_size']: val = int(val)
-                        if field in ['is_active', 'show_unique_code']: 
-                            val = val in [True, 'true', '1', 1]
-                        setattr(cert, field, val)
-                    except (ValueError, TypeError):
-                        pass
-            
-            cert.save()
+            if request.method == 'POST':
+                # Handle template_image if provided in request.FILES
+                if 'template_image' in request.FILES:
+                    cert.template_image = request.FILES['template_image']
+                
+                # Update other fields
+                for field in ['name_x', 'name_y', 'font_size', 'font_color', 'font_family', 'show_unique_code', 'code_x', 'code_y', 'code_font_size', 'is_active', 'font_bold', 'font_italic', 'name_width', 'name_height', 'text_align']:
+                    if field in request.data:
+                        val = request.data.get(field)
+                        try:
+                            if field in ['name_x', 'name_y', 'code_x', 'code_y', 'name_width', 'name_height']: val = float(val)
+                            if field in ['font_size', 'code_font_size']: val = int(val)
+                            if field in ['is_active', 'show_unique_code', 'font_bold', 'font_italic']: 
+                                val = val in [True, 'true', '1', 1]
+                            setattr(cert, field, val)
+                        except (ValueError, TypeError):
+                            pass
+                
+                cert.save()
+                return Response(EventCertificateSerializer(cert).data)
+                
+            # GET request
             return Response(EventCertificateSerializer(cert).data)
-            
-        # GET request
-        return Response(EventCertificateSerializer(cert).data)
+        except Exception as e:
+            return Response({
+                "error": "Gagal mengakses pengaturan sertifikat. Pastikan migrasi database sudah dijalankan.",
+                "detail": str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     @action(detail=True, methods=['get'], permission_classes=[permissions.IsAuthenticated])
     def download_certificate(self, request, slug=None):

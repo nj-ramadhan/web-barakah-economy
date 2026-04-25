@@ -62,7 +62,18 @@ class EventSerializer(serializers.ModelSerializer):
     registration_count = serializers.SerializerMethodField()
     attended_count = serializers.SerializerMethodField()
     user_registration = serializers.SerializerMethodField()
-    certificate = EventCertificateSerializer(read_only=True)
+    certificate = serializers.SerializerMethodField()
+
+    def get_certificate(self, obj):
+        try:
+            from .models import EventCertificate
+            from .serializers import EventCertificateSerializer
+            cert = EventCertificate.objects.filter(event=obj).first()
+            if cert:
+                return EventCertificateSerializer(cert, context=self.context).data
+            return None
+        except Exception:
+            return None
 
     def get_registration_count(self, obj):
         # Count all registrations as they are now auto-approved
