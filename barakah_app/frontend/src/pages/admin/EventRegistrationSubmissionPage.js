@@ -509,7 +509,7 @@ const EventRegistrationSubmissionPage = () => {
                     </thead>
                     <tbody>
                         {registrations.map((reg, idx) => {
-                            const instansi = Object.keys(reg.responses).map(key => {
+                            const instansi = Object.keys(reg.responses || {}).map(key => {
                                 const field = event?.form_fields?.find(f => f.id.toString() === key);
                                 if (field && (field.label.toLowerCase().includes('instansi') || field.label.toLowerCase().includes('asal'))) {
                                     return reg.responses[key];
