@@ -802,7 +802,7 @@ const DashboardPage = () => {
 
                                 {isAdmin && (
                                     <Link
-                                        to="/admin/meet-test"
+                                        to="/live-meet-test"
                                         className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-emerald-100 hover:shadow-md transition"
                                     >
                                         <div className="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center">

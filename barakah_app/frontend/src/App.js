@@ -343,7 +343,7 @@ const LayoutWrapper = ({ isDesktop }) => {
         <Route path="/dashboard/zis/history" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><ZISHistoryPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/admin/zis-config" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><AdminZISConfigPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/admin/zis-verify" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><AdminZISVerifyPage /></ResponsiveLayout></PrivateRoute>} />
-        <Route path="/admin/meet-test" element={<ResponsiveLayout isDesktop={isDesktop}><AdminJitsiMeetPage /></ResponsiveLayout>} />
+        <Route path="/live-meet-test" element={<ResponsiveLayout isDesktop={isDesktop}><AdminJitsiMeetPage /></ResponsiveLayout>} />
       </Routes>
       <FloatingCartModal />
     </div>

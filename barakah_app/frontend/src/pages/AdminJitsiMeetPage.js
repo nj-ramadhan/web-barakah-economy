@@ -58,7 +58,7 @@ const AdminJitsiMeetPage = () => {
     }, [isMeetingStarted, roomName]);
 
     const handleShare = () => {
-        const url = `${window.location.origin}/admin/meet-test?room=${roomName}`;
+        const url = `${window.location.origin}/live-meet-test?room=${roomName}`;
         navigator.clipboard.writeText(url);
         alert('Link meeting berhasil disalin! Kirimkan link ini ke partner uji coba Anda.');
     };
