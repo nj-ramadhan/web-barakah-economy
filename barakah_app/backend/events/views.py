@@ -729,11 +729,30 @@ class EventViewSet(viewsets.ModelViewSet):
             scaled_font_size = int((cert.font_size / 1000.0) * height)
             
             # Load font
-            # If bold/italic is set, we try to append that to the filename if the file exists
-            # e.g. Roboto.ttf -> Roboto-BoldItalic.ttf
             font_filename = cert.font_family
-            font_path = os.path.join(os.path.dirname(__file__), 'fonts', font_filename)
+            fonts_dir = os.path.join(os.path.dirname(__file__), 'fonts')
+            os.makedirs(fonts_dir, exist_ok=True)
+            font_path = os.path.join(fonts_dir, font_filename)
             
+            # Auto-download if missing
+            if not os.path.exists(font_path):
+                import requests
+                font_urls = {
+                    'DancingScript-Bold.ttf': 'https://github.com/google/fonts/raw/main/ofl/dancingscript/DancingScript%5Bwght%5D.ttf',
+                    'GreatVibes-Regular.ttf': 'https://github.com/google/fonts/raw/main/ofl/greatvibes/GreatVibes-Regular.ttf',
+                    'Roboto-Bold.ttf': 'https://github.com/google/fonts/raw/main/apache/roboto/static/Roboto-Bold.ttf',
+                    'PlayfairDisplay-Bold.ttf': 'https://github.com/google/fonts/raw/main/ofl/playfairdisplay/static/PlayfairDisplay-Bold.ttf',
+                    'Montserrat-SemiBold.ttf': 'https://github.com/google/fonts/raw/main/ofl/montserrat/static/Montserrat-SemiBold.ttf'
+                }
+                if font_filename in font_urls:
+                    try:
+                        r = requests.get(font_urls[font_filename], timeout=10)
+                        if r.status_code == 200:
+                            with open(font_path, 'wb') as f:
+                                f.write(r.content)
+                    except:
+                        pass
+
             font = None
             if os.path.exists(font_path):
                 try:
