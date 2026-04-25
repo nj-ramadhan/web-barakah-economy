@@ -779,31 +779,48 @@ class EventViewSet(viewsets.ModelViewSet):
                 lines.append(current_line)
                 return lines
 
-            lines = wrap_text(participant_name, font, name_width_px)
-            
-            # Draw each line
-            current_y = name_y_px
+            # Calculate total height of all lines to handle vertical alignment
+            total_text_height = 0
+            line_details = []
             for line in lines:
                 try:
                     left, top, right, bottom = draw.textbbox((0, 0), line, font=font)
-                    line_w = right - left
-                    line_h = bottom - top
+                    w, h = right - left, bottom - top
                 except:
-                    line_w, line_h = draw.textsize(line, font=font)
+                    w, h = draw.textsize(line, font=font)
                 
-                # Align within bounding box
+                line_spacing = int(h * 0.2)
+                line_details.append({'text': line, 'w': w, 'h': h, 'spacing': line_spacing})
+                total_text_height += h + line_spacing
+            
+            if line_details:
+                total_text_height -= line_details[-1]['spacing'] # Remove last spacing
+
+            # Calculate starting Y based on vertical alignment
+            v_align = getattr(cert, 'vertical_align', 'middle')
+            if v_align == 'middle':
+                current_y = name_y_px + (name_height_px - total_text_height) // 2
+            elif v_align == 'bottom':
+                current_y = name_y_px + name_height_px - total_text_height
+            else: # top
+                current_y = name_y_px
+
+            # Draw each line
+            for detail in line_details:
+                # Horizontal alignment
                 if cert.text_align == 'center':
-                    line_x = name_x_px + (name_width_px - line_w) // 2
+                    line_x = name_x_px + (name_width_px - detail['w']) // 2
                 elif cert.text_align == 'right':
-                    line_x = name_x_px + name_width_px - line_w
+                    line_x = name_x_px + name_width_px - detail['w']
                 else: # left
                     line_x = name_x_px
                 
-                draw.text((line_x, current_y), line, font=font, fill=cert.font_color)
-                current_y += line_h + int(line_h * 0.2) # 20% line spacing
+                draw.text((line_x, current_y), detail['text'], font=font, fill=cert.font_color)
+                current_y += detail['h'] + detail['spacing']
 
             # Draw unique code if enabled
-            if cert.show_unique_code and registration.unique_code:
+            if getattr(cert, 'show_unique_code', False):
+                code_text = f"ID: {registration.unique_code or 'N/A'}"
                 code_font_size = int((cert.code_font_size / 1000.0) * height)
                 try:
                     code_font = ImageFont.truetype(font_path, code_font_size) if os.path.exists(font_path) else ImageFont.load_default()
@@ -811,7 +828,7 @@ class EventViewSet(viewsets.ModelViewSet):
                     code_font = ImageFont.load_default()
                 
                 code_pos = (int(width * cert.code_x / 100), int(height * cert.code_y / 100))
-                draw.text(code_pos, f"ID: {registration.unique_code}", fill=cert.font_color, font=code_font)
+                draw.text(code_pos, code_text, fill=cert.font_color, font=code_font)
             
             # Return image
             buffer = BytesIO()

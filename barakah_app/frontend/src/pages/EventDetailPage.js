@@ -348,7 +348,15 @@ const EventDetailPage = () => {
                         <div className="flex sm:items-end justify-between gap-6">
                             <div className="max-w-3xl">
                                 <div className="flex items-center gap-2 mb-4">
-                                    <span className="px-3 py-1 bg-green-600 rounded-full text-[10px] font-bold uppercase tracking-widest inline-block shadow-lg shadow-green-900/40">Event</span>
+                                    <span className="px-3 py-1 bg-green-600 rounded-full text-[10px] font-bold uppercase tracking-widest inline-block shadow-lg shadow-green-900/40">
+                                        {event.category || 'Event'}
+                                    </span>
+                                    {event.has_certificate && (
+                                        <span className="px-3 py-1 bg-amber-500 rounded-full text-[10px] font-bold uppercase tracking-widest inline-block shadow-lg shadow-amber-900/40 flex items-center gap-1">
+                                            <span className="material-icons text-[12px]">verified</span>
+                                            Sertifikat
+                                        </span>
+                                    )}
                                     <span className="px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-[10px] font-bold uppercase tracking-widest inline-block">{event.status}</span>
                                     <span className="flex items-center gap-1 px-3 py-1 bg-white/10 backdrop-blur-md rounded-full text-[10px] font-bold uppercase tracking-widest inline-block ml-2">
                                         <span className="material-icons text-[12px]">visibility</span>
@@ -408,7 +416,15 @@ const EventDetailPage = () => {
                 {/* Mobile Info & Actions */}
                 <div className="sm:hidden p-6 bg-white border-b border-gray-100 shadow-sm relative z-10">
                     <div className="flex items-center gap-2 mb-3">
-                        <span className="px-3 py-1 bg-green-600 rounded-full text-[8px] font-bold uppercase tracking-widest text-white">Event</span>
+                        <span className="px-3 py-1 bg-green-600 rounded-full text-[8px] font-bold uppercase tracking-widest text-white">
+                            {event.category || 'Event'}
+                        </span>
+                        {event.has_certificate && (
+                            <span className="px-3 py-1 bg-amber-500 rounded-full text-[8px] font-bold uppercase tracking-widest text-white flex items-center gap-1">
+                                <span className="material-icons text-[10px]">verified</span>
+                                Sertifikat
+                            </span>
+                        )}
                         <span className="px-3 py-1 bg-gray-100 rounded-full text-[8px] font-bold uppercase tracking-widest text-gray-500">{event.status}</span>
                     </div>
                     <h1 className="text-2xl font-extrabold text-gray-900 leading-tight mb-6">{event.title}</h1>

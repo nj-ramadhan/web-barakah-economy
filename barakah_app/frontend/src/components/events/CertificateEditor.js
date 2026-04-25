@@ -13,6 +13,7 @@ const CertificateEditor = ({ slug }) => {
         font_bold: true,
         font_italic: false,
         text_align: 'center',
+        vertical_align: 'middle',
         show_unique_code: false,
         code_x: 10,
         code_y: 90,
@@ -162,7 +163,7 @@ const CertificateEditor = ({ slug }) => {
             <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-6 gap-4">
                 <div>
                     <h3 className="text-xl font-bold text-gray-800">Editor Sertifikat Pro</h3>
-                    <p className="text-xs text-gray-500 mt-1">Live preview dengan pilihan font estetik dan gaya teks.</p>
+                    <p className="text-xs text-gray-500 mt-1">Atur tata letak nama dan ID unik secara presisi.</p>
                 </div>
                 <div className="flex items-center space-x-2 bg-gray-50 px-4 py-2 rounded-xl">
                     <span className="text-sm font-bold text-gray-600">Status Aktif</span>
@@ -200,7 +201,7 @@ const CertificateEditor = ({ slug }) => {
                                         width: `${settings.name_width}%`,
                                         height: `${settings.name_height}%`,
                                         justifyContent: settings.text_align === 'center' ? 'center' : (settings.text_align === 'right' ? 'flex-end' : 'flex-start'),
-                                        alignItems: 'center'
+                                        alignItems: settings.vertical_align === 'middle' ? 'center' : (settings.vertical_align === 'bottom' ? 'flex-end' : 'flex-start'),
                                     }}
                                     onMouseDown={(e) => handleDrag(e, 'name')}
                                 >
@@ -268,24 +269,21 @@ const CertificateEditor = ({ slug }) => {
                     <hr className="border-gray-200" />
 
                     <div className="space-y-6">
-                        <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">2. Gaya Teks Nama</label>
+                        <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">2. Gaya Nama</label>
                         
-                        {/* Font Family Dropdown */}
                         <div>
                             <label className="text-[10px] font-bold text-gray-500 block mb-2 uppercase">Pilih Font</label>
                             <select 
                                 value={settings.font_family}
                                 onChange={(e) => setSettings({...settings, font_family: e.target.value})}
                                 className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
-                                style={{ fontFamily: getCurrentFontCss() }}
                             >
                                 {FONT_OPTIONS.map(opt => (
-                                    <option key={opt.value} value={opt.value} style={{ fontFamily: opt.css }}>{opt.label}</option>
+                                    <option key={opt.value} value={opt.value}>{opt.label}</option>
                                 ))}
                             </select>
                         </div>
 
-                        {/* Bold & Italic Toggles */}
                         <div className="flex gap-2">
                             <button 
                                 onClick={() => setSettings({...settings, font_bold: !settings.font_bold})}
@@ -303,52 +301,76 @@ const CertificateEditor = ({ slug }) => {
                             </button>
                         </div>
 
-                        {/* Font Size */}
-                        <div className="grid grid-cols-3 gap-2">
-                            <div className="col-span-2">
-                                <label className="text-[10px] font-bold text-gray-500 block mb-2 uppercase">Ukuran Font</label>
-                                <input type="range" min="10" max="300" value={settings.font_size} 
-                                    onChange={(e) => setSettings({...settings, font_size: parseInt(e.target.value)})}
-                                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600" />
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label className="text-[10px] font-bold text-gray-500 block mb-2 uppercase">Perataan Horisontal</label>
+                                <div className="flex bg-white p-1 rounded-xl border border-gray-200">
+                                    {['left', 'center', 'right'].map(align => (
+                                        <button 
+                                            key={align}
+                                            onClick={() => setSettings({...settings, text_align: align})}
+                                            className={`flex-1 py-2 rounded-lg transition-all ${settings.text_align === align ? 'bg-gray-900 text-white shadow-md' : 'text-gray-400 hover:bg-gray-50'}`}
+                                        >
+                                            <span className="material-icons text-sm">
+                                                {align === 'left' ? 'format_align_left' : (align === 'center' ? 'format_align_center' : 'format_align_right')}
+                                            </span>
+                                        </button>
+                                    ))}
+                                </div>
                             </div>
-                            <div className="pt-5">
-                                <input type="number" value={settings.font_size}
-                                    onChange={(e) => setSettings({...settings, font_size: parseInt(e.target.value) || 10})}
-                                    className="w-full bg-white border border-gray-200 rounded-xl px-2 py-2 text-xs font-bold text-center" />
+                            <div>
+                                <label className="text-[10px] font-bold text-gray-500 block mb-2 uppercase">Perataan Vertikal</label>
+                                <div className="flex bg-white p-1 rounded-xl border border-gray-200">
+                                    {['top', 'middle', 'bottom'].map(vAlign => (
+                                        <button 
+                                            key={vAlign}
+                                            onClick={() => setSettings({...settings, vertical_align: vAlign})}
+                                            className={`flex-1 py-2 rounded-lg transition-all ${settings.vertical_align === vAlign ? 'bg-gray-900 text-white shadow-md' : 'text-gray-400 hover:bg-gray-50'}`}
+                                        >
+                                            <span className="material-icons text-sm">
+                                                {vAlign === 'top' ? 'vertical_align_top' : (vAlign === 'middle' ? 'vertical_align_center' : 'vertical_align_bottom')}
+                                            </span>
+                                        </button>
+                                    ))}
+                                </div>
                             </div>
                         </div>
 
-                        {/* Alignment */}
                         <div>
-                            <label className="text-[10px] font-bold text-gray-500 block mb-2 uppercase">Perataan</label>
-                            <div className="flex bg-white p-1 rounded-xl border border-gray-200">
-                                {['left', 'center', 'right'].map(align => (
-                                    <button 
-                                        key={align}
-                                        onClick={() => setSettings({...settings, text_align: align})}
-                                        className={`flex-1 py-2 rounded-lg transition-all ${settings.text_align === align ? 'bg-gray-900 text-white shadow-md' : 'text-gray-400 hover:bg-gray-50'}`}
-                                    >
-                                        <span className="material-icons text-sm">
-                                            {align === 'left' ? 'format_align_left' : (align === 'center' ? 'format_align_center' : 'format_align_right')}
-                                        </span>
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-
-                        {/* Color */}
-                        <div>
-                            <label className="text-[10px] font-bold text-gray-500 block mb-2 uppercase">Warna Teks</label>
+                            <label className="text-[10px] font-bold text-gray-500 block mb-2 uppercase">Ukuran & Warna</label>
                             <div className="flex gap-2">
-                                <input type="color" value={settings.font_color} onChange={(e) => setSettings({...settings, font_color: e.target.value})} className="h-10 w-14 border-0 p-0 bg-transparent cursor-pointer rounded-lg shadow-inner" />
-                                <input type="text" value={settings.font_color.toUpperCase()} onChange={(e) => setSettings({...settings, font_color: e.target.value})} className="flex-grow border border-gray-200 rounded-xl px-4 text-xs font-mono font-bold" />
+                                <input type="number" value={settings.font_size} onChange={(e) => setSettings({...settings, font_size: parseInt(e.target.value) || 10})} className="w-20 bg-white border border-gray-200 rounded-xl px-2 py-2 text-xs font-bold text-center" />
+                                <input type="color" value={settings.font_color} onChange={(e) => setSettings({...settings, font_color: e.target.value})} className="h-10 w-14 border-0 p-0 bg-transparent cursor-pointer rounded-lg" />
+                                <input type="text" value={settings.font_color.toUpperCase()} onChange={(e) => setSettings({...settings, font_color: e.target.value})} className="flex-grow border border-gray-200 rounded-xl px-3 text-[10px] font-mono font-bold" />
                             </div>
+                        </div>
+
+                        <hr className="border-gray-200" />
+
+                        <div>
+                            <div className="flex justify-between items-center mb-4">
+                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">3. ID Barakah (BAE)</label>
+                                <button 
+                                    onClick={() => setSettings({...settings, show_unique_code: !settings.show_unique_code})}
+                                    className={`w-10 h-5 rounded-full transition-colors relative ${settings.show_unique_code ? 'bg-emerald-500' : 'bg-gray-300'}`}
+                                >
+                                    <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full transition-transform ${settings.show_unique_code ? 'left-5.5' : 'left-0.5'}`}></div>
+                                </button>
+                            </div>
+                            {settings.show_unique_code && (
+                                <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-inner">
+                                    <label className="text-[9px] font-bold text-gray-400 block mb-2 uppercase tracking-tighter">Ukuran ID</label>
+                                    <input type="range" min="5" max="100" value={settings.code_font_size} 
+                                        onChange={(e) => setSettings({...settings, code_font_size: parseInt(e.target.value)})}
+                                        className="w-full h-1.5 bg-gray-100 rounded-lg appearance-none cursor-pointer accent-emerald-500" />
+                                </div>
+                            )}
                         </div>
                     </div>
 
                     <div className="pt-4">
-                        <button onClick={handleSave} disabled={!previewUrl} className={`w-full font-black py-5 rounded-[1.5rem] shadow-xl transition-all active:scale-95 flex items-center justify-center gap-3 ${!previewUrl ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-emerald-600 text-white hover:bg-emerald-700 hover:shadow-emerald-200'}`}>
-                            <span className="material-icons text-base">verified</span>
+                        <button onClick={handleSave} disabled={!previewUrl} className={`w-full font-black py-5 rounded-[1.5rem] shadow-xl transition-all active:scale-95 flex items-center justify-center gap-3 ${!previewUrl ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-emerald-600 text-white hover:bg-emerald-700'}`}>
+                            <span className="material-icons text-base">save</span>
                             <span className="text-[11px] uppercase tracking-widest">Simpan Pengaturan</span>
                         </button>
                     </div>

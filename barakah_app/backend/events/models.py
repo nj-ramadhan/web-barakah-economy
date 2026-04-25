@@ -68,6 +68,10 @@ class Event(models.Model):
         ('private', 'Privat (Hanya lewat link langsung)'),
     ]
     visibility = models.CharField(max_length=10, choices=VISIBILITY_CHOICES, default='public')
+    
+    # Information fields
+    category = models.CharField(max_length=100, blank=True, null=True, help_text="Kategori event (misal: Pelatihan, Seminar, dll)")
+    has_certificate = models.BooleanField(default=False, help_text="Apakah event ini menyediakan sertifikat?")
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -302,6 +306,8 @@ class EventCertificate(models.Model):
     font_family = models.CharField(max_length=100, default='Roboto-Bold.ttf')
     font_bold = models.BooleanField(default=True)
     font_italic = models.BooleanField(default=False)
+    text_align = models.CharField(max_length=10, default='center') # left, center, right
+    vertical_align = models.CharField(max_length=10, default='middle') # top, middle, bottom
     
     # Bounding box for name (as percentage of image size)
     name_width = models.FloatField(default=80.0)

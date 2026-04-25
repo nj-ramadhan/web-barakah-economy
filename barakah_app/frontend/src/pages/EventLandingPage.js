@@ -118,12 +118,32 @@ const EventLandingPage = () => {
                                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                                         onError={(e) => { e.target.src = '/placeholder-image.jpg'; }}
                                     />
+                                    
+                                    {/* Category Label (Top Center) */}
+                                    {ev.category && (
+                                        <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-black/60 backdrop-blur-md px-4 py-1 rounded-full border border-white/20 z-10">
+                                            <p className="text-[10px] font-black text-white uppercase tracking-widest whitespace-nowrap">
+                                                {ev.category}
+                                            </p>
+                                        </div>
+                                    )}
+
+                                    {/* Certificate Badge (Bottom Center) */}
+                                    {ev.has_certificate && (
+                                        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-amber-500/90 backdrop-blur-sm px-3 py-1 rounded-lg shadow-lg flex items-center gap-1 z-10 border border-amber-400">
+                                            <span className="material-icons text-[10px] text-white">verified</span>
+                                            <p className="text-[9px] font-black text-white uppercase tracking-tighter whitespace-nowrap">
+                                                Sertifikat Tersedia
+                                            </p>
+                                        </div>
+                                    )}
+
                                     <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full shadow-sm">
                                         <p className="text-xs font-bold text-green-700">
                                             {ev.is_featured ? '⭐ UNGGULAN' : 'EVENT'}
                                         </p>
                                     </div>
-                                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-4">
+                                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-4 opacity-0 group-hover:opacity-100 transition-opacity">
                                         <div className="flex items-center gap-2 text-white/90 text-xs font-medium">
                                             <span className="material-icons text-sm">location_on</span>
                                             {ev.location}

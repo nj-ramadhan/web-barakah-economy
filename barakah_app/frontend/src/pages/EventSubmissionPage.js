@@ -36,6 +36,8 @@ const EventSubmissionPage = () => {
         attachment_file_title: '',
         attachment_link_title: '',
         visibility: 'public',
+        category: '',
+        has_certificate: false,
     });
     const [speakers, setSpeakers] = useState([]);
     const [sessions, setSessions] = useState([]);
@@ -91,6 +93,8 @@ const EventSubmissionPage = () => {
                         attachment_link_title: d.attachment_link_title || '',
                         visibility: d.visibility || 'public',
                         attachment_file: d.attachment_file,
+                        category: d.category || '',
+                        has_certificate: d.has_certificate || false,
                     });
                     
                     if (d.speakers && d.speakers.length > 0) setSpeakers(d.speakers);
@@ -411,13 +415,40 @@ const EventSubmissionPage = () => {
                                     ></textarea>
                                 </div>
 
-                                <div className="space-y-1.5">
+                                 <div className="space-y-1.5">
                                     <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Deskripsi Lengkap *</label>
                                     <div className="rounded-2xl overflow-hidden border border-gray-100">
                                         <CKEditorComponent 
                                             content={formData.description}
                                             onChange={handleDescriptionChange}
                                         />
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="space-y-1.5">
+                                        <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Kategori Event</label>
+                                        <input 
+                                            type="text" 
+                                            name="category"
+                                            value={formData.category}
+                                            onChange={handleChange}
+                                            placeholder="Contoh: Pelatihan, Seminar, Webinar..."
+                                            className="w-full px-5 py-3.5 bg-gray-50 border-none rounded-2xl text-sm focus:ring-2 focus:ring-green-500 transition"
+                                        />
+                                    </div>
+                                    <div className="space-y-1.5 flex flex-col justify-center">
+                                        <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1 mb-2">Tersedia Sertifikat?</label>
+                                        <div className="flex items-center gap-3">
+                                            <button 
+                                                type="button"
+                                                onClick={() => setFormData(prev => ({ ...prev, has_certificate: !prev.has_certificate }))}
+                                                className={`w-12 h-6 rounded-full transition-colors relative ${formData.has_certificate ? 'bg-green-500' : 'bg-gray-300'}`}
+                                            >
+                                                <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${formData.has_certificate ? 'left-7' : 'left-1'}`}></div>
+                                            </button>
+                                            <span className="text-xs font-bold text-gray-600">{formData.has_certificate ? 'Ya, Ada Sertifikat' : 'Tidak Ada'}</span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
