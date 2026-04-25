@@ -20,6 +20,12 @@ const CertificateEditor = ({ slug, courseId, customFetch, customUpdate }) => {
         code_font_size: 30,
         code_font_family: 'Roboto-Bold.ttf',
         code_font_color: '#000000',
+        show_date: false,
+        date_x: 10,
+        date_y: 80,
+        date_font_size: 30,
+        date_font_family: 'Roboto-Bold.ttf',
+        date_font_color: '#000000',
         is_active: true
     });
     const [template, setTemplate] = useState(null);
@@ -88,8 +94,10 @@ const CertificateEditor = ({ slug, courseId, customFetch, customUpdate }) => {
 
             if (type === 'name') {
                 setSettings(prev => ({ ...prev, name_x: x, name_y: y }));
-            } else {
+            } else if (type === 'code') {
                 setSettings(prev => ({ ...prev, code_x: x, code_y: y }));
+            } else if (type === 'date') {
+                setSettings(prev => ({ ...prev, date_x: x, date_y: y }));
             }
         };
 
@@ -254,6 +262,23 @@ const CertificateEditor = ({ slug, courseId, customFetch, customUpdate }) => {
                                         ID: BAE-XXXXX
                                     </div>
                                 )}
+
+                                {/* Date Placeholder */}
+                                {settings.show_date && (
+                                    <div 
+                                        className="absolute bg-amber-500 bg-opacity-10 border border-amber-500 border-dashed px-2 py-0.5 cursor-move whitespace-nowrap flex items-center justify-center"
+                                        style={{ 
+                                            left: `${settings.date_x}%`, 
+                                            top: `${settings.date_y}%`,
+                                            fontSize: `${getPreviewFontSize(settings.date_font_size)}px`,
+                                            color: settings.date_font_color,
+                                            fontFamily: getCurrentFontCss(settings.date_font_family)
+                                        }}
+                                        onMouseDown={(e) => handleDrag(e, 'date')}
+                                    >
+                                        25 April 2026
+                                    </div>
+                                )}
                             </div>
                         ) : (
                             <div className="text-center p-12">
@@ -396,6 +421,53 @@ const CertificateEditor = ({ slug, courseId, customFetch, customUpdate }) => {
                                     <input type="range" min="5" max="100" value={settings.code_font_size} 
                                         onChange={(e) => setSettings({...settings, code_font_size: parseInt(e.target.value)})}
                                         className="w-full h-1.5 bg-gray-100 rounded-lg appearance-none cursor-pointer accent-emerald-500" />
+                                </div>
+                            )}
+
+                            {/* Date Settings (E-Course Only) */}
+                            {courseId && (
+                                <div className="mt-6 border-t pt-6">
+                                    <div className="flex justify-between items-center mb-4">
+                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">4. Tanggal Selesai</label>
+                                        <button 
+                                            onClick={() => setSettings({...settings, show_date: !settings.show_date})}
+                                            className={`w-10 h-5 rounded-full transition-colors relative ${settings.show_date ? 'bg-amber-500' : 'bg-gray-300'}`}
+                                        >
+                                            <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full transition-transform ${settings.show_date ? 'left-5.5' : 'left-0.5'}`}></div>
+                                        </button>
+                                    </div>
+                                    {settings.show_date && (
+                                        <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-inner space-y-4">
+                                            <div>
+                                                <label className="text-[9px] font-bold text-gray-400 block mb-2 uppercase tracking-tighter">Font Tanggal</label>
+                                                <select 
+                                                    value={settings.date_font_family}
+                                                    onChange={(e) => setSettings({...settings, date_font_family: e.target.value})}
+                                                    className="w-full bg-gray-50 border border-gray-100 rounded-lg px-3 py-2 text-[10px] font-bold focus:outline-none"
+                                                >
+                                                    {FONT_OPTIONS.map(opt => (
+                                                        <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                            <div className="grid grid-cols-2 gap-2">
+                                                <div>
+                                                    <label className="text-[9px] font-bold text-gray-400 block mb-2 uppercase tracking-tighter">Ukuran</label>
+                                                    <input type="number" value={settings.date_font_size} onChange={(e) => setSettings({...settings, date_font_size: parseInt(e.target.value) || 10})} className="w-full bg-gray-50 border border-gray-100 rounded-lg px-2 py-1.5 text-[10px] font-bold text-center" />
+                                                </div>
+                                                <div>
+                                                    <label className="text-[9px] font-bold text-gray-400 block mb-2 uppercase tracking-tighter">Warna</label>
+                                                    <div className="flex gap-1">
+                                                        <input type="color" value={settings.date_font_color} onChange={(e) => setSettings({...settings, date_font_color: e.target.value})} className="h-8 w-8 border-0 p-0 bg-transparent cursor-pointer" />
+                                                        <input type="text" value={settings.date_font_color.toUpperCase()} onChange={(e) => setSettings({...settings, date_font_color: e.target.value})} className="flex-grow border border-gray-100 rounded-lg px-1 text-[8px] font-mono font-bold" />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <input type="range" min="5" max="100" value={settings.date_font_size} 
+                                                onChange={(e) => setSettings({...settings, date_font_size: parseInt(e.target.value)})}
+                                                className="w-full h-1.5 bg-gray-100 rounded-lg appearance-none cursor-pointer accent-amber-500" />
+                                        </div>
+                                    )}
                                 </div>
                             )}
                         </div>
