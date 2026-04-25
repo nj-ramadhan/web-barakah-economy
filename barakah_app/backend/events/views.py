@@ -723,6 +723,7 @@ class EventViewSet(viewsets.ModelViewSet):
             name_x_px = int(width * cert.name_x / 100)
             name_y_px = int(height * cert.name_y / 100)
             name_width_px = int(width * cert.name_width / 100)
+            name_height_px = int(height * cert.name_height / 100)
             
             # Scale font size relative to image height (reference: 1000px height)
             scaled_font_size = int((cert.font_size / 1000.0) * height)
