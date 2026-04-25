@@ -5,7 +5,7 @@ import Header from '../components/layout/Header';
 import NavigationButton from '../components/layout/Navigation';
 import { Link } from 'react-router-dom';
 import CurrencyInput from '../components/common/CurrencyInput';
-import { formatCurrency } from '../utils/formatters';
+import { formatCurrency, parseCurrency } from '../utils/formatters';
 
 const DashboardSinergySellersPage = () => {
     const [products, setProducts] = useState([]);
@@ -74,15 +74,20 @@ const DashboardSinergySellersPage = () => {
         try {
             const formData = new FormData();
             formData.append('title', e.target.title.value);
-            formData.append('purchase_price', e.target.purchase_price.value);
-            formData.append('price', e.target.price.value);
+            formData.append('purchase_price', parseCurrency(e.target.purchase_price.value));
+            formData.append('price', parseCurrency(e.target.price.value));
             formData.append('stock', e.target.stock.value);
             formData.append('weight', e.target.weight.value);
             formData.append('category', e.target.category.value);
             formData.append('supported_couriers', selectedCouriers.join(','));
             formData.append('is_cod_available', isCodAvailable);
             formData.append('purchase_instructions', e.target.purchase_instructions.value);
-            formData.append('variations', JSON.stringify(variants));
+            
+            const sanitizedVariants = variants.map(v => ({
+                ...v,
+                additional_price: parseCurrency(v.additional_price)
+            }));
+            formData.append('variations', JSON.stringify(sanitizedVariants));
 
 
             if (editingProduct) {
@@ -110,7 +115,7 @@ const DashboardSinergySellersPage = () => {
         try {
             await axios.post(`${process.env.REACT_APP_API_BASE_URL}/api/products/vouchers/`, {
                 code: e.target.code.value,
-                nominal: e.target.nominal.value,
+                nominal: parseCurrency(e.target.nominal.value),
                 quantity: e.target.quantity.value,
                 is_active: true
             }, { headers: { Authorization: `Bearer ${user.access}` } });
