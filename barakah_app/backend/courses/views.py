@@ -8,7 +8,7 @@ from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from rest_framework.decorators import action
 from .models import Course, CourseEnrollment, CourseMaterial, UserCourseProgress, CertificateRequest, CourseCertificate
-from .serializers import CourseSerializer, CourseEnrollmentSerializer, CourseMaterialSerializer, UserCourseProgressSerializer, CertificateRequestSerializer
+from .serializers import CourseSerializer, CourseEnrollmentSerializer, CourseMaterialSerializer, UserCourseProgressSerializer, CertificateRequestSerializer, CourseCertificateSerializer
 from django.conf import settings
 from django.shortcuts import render
 
