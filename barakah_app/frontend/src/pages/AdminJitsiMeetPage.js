@@ -4,8 +4,11 @@ import NavigationButton from '../components/layout/Navigation';
 
 const AdminJitsiMeetPage = () => {
     const APP_ID = 'vpaas-magic-cookie-32c71c4a7f724965932aa0cebb974fbd';
-    const [roomName, setRoomName] = useState(`Meet_${Math.random().toString(36).substring(7).toUpperCase()}`);
-    const [isMeetingStarted, setIsMeetingStarted] = useState(false);
+    const queryParams = new URLSearchParams(window.location.search);
+    const initialRoom = queryParams.get('room');
+    
+    const [roomName, setRoomName] = useState(initialRoom || `Meet_${Math.random().toString(36).substring(7).toUpperCase()}`);
+    const [isMeetingStarted, setIsMeetingStarted] = useState(!!initialRoom);
     const jitsiContainerRef = useRef(null);
     const jitsiApiRef = useRef(null);
 
@@ -55,7 +58,7 @@ const AdminJitsiMeetPage = () => {
     }, [isMeetingStarted, roomName]);
 
     const handleShare = () => {
-        const url = `${window.location.origin}/meet-test?room=${roomName}`;
+        const url = `${window.location.origin}/admin/meet-test?room=${roomName}`;
         navigator.clipboard.writeText(url);
         alert('Link meeting berhasil disalin! Kirimkan link ini ke partner uji coba Anda.');
     };
