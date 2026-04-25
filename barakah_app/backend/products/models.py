@@ -65,6 +65,8 @@ class Product(models.Model):
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
     weight = models.PositiveIntegerField(default=1000, help_text="Berat dalam gram")
     supported_couriers = models.CharField(max_length=255, default='jne,pos,tiki,jnt', blank=True, help_text="Comma separated active courier codes for this product")
+    is_cod_available = models.BooleanField(default=False, help_text="Apakah produk ini mendukung COD")
+    purchase_instructions = models.TextField(blank=True, null=True, help_text="Informasi khusus pengambilan atau teknis setelah pembelian")
 
 
     purchase_price = models.DecimalField(max_digits=12, decimal_places=2, default=0, help_text="Harga Beli")

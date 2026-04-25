@@ -28,6 +28,7 @@ const DashboardUserPage = () => {
     const [totalCount, setTotalCount] = useState(0);
     const [searchQuery, setSearchQuery] = useState('');
     const [filterRole, setFilterRole] = useState('');
+    const [filterCustomRole, setFilterCustomRole] = useState('');
     const [filterLabel, setFilterLabel] = useState('');
     const [filterDateFrom, setFilterDateFrom] = useState('');
     const [filterDateTo, setFilterDateTo] = useState('');
@@ -67,6 +68,7 @@ const DashboardUserPage = () => {
             const params = { page };
             if (searchQuery) params.search = searchQuery;
             if (filterRole) params.role = filterRole;
+            if (filterCustomRole) params.custom_role = filterCustomRole;
             if (filterLabel) params.label = filterLabel;
             if (filterDateFrom) params.date_from = filterDateFrom;
             if (filterDateTo) params.date_to = filterDateTo;
@@ -315,6 +317,11 @@ const DashboardUserPage = () => {
                             <option value="user">User</option><option value="admin">Admin</option>
                             <option value="seller">Seller</option><option value="staff">Staff</option>
                         </select>
+                        <select value={filterCustomRole} onChange={e => { setFilterCustomRole(e.target.value); setCurrentPage(1); }}
+                            className="bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none">
+                            <option value="">Semua Custom Role</option>
+                            {allRoles.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
+                        </select>
                         <select value={filterLabel} onChange={e => { setFilterLabel(e.target.value); setCurrentPage(1); }}
                             className="bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none">
                             <option value="">Semua Label</option>
@@ -528,6 +535,7 @@ const DashboardUserPage = () => {
                                         <FI label="Username" value={editFormData.username} onChange={v => setEditFormData(f=>({...f, username:v}))} />
                                         <FI label="Email" value={editFormData.email} onChange={v => setEditFormData(f=>({...f, email:v}))} />
                                         <FI label="No. Telepon" value={editFormData.phone} onChange={v => setEditFormData(f=>({...f, phone:v}))} />
+                                        <FI label="Jabatan BAE" value={editFormData.position} onChange={v => setEditFormData(f=>({...f, position:v}))} />
                                         <FS label="Role" value={editFormData.role} onChange={v => setEditFormData(f=>({...f, role:v}))} options={[['user','User'],['admin','Admin'],['seller','Seller'],['staff','Staff']]} />
                                         <div className="flex items-center gap-2 mt-2">
                                             <input type="checkbox" id="is_v" checked={editFormData.is_verified_member} onChange={e => setEditFormData(f=>({...f, is_verified_member:e.target.checked}))} className="w-4 h-4 text-blue-600 rounded" />

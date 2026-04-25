@@ -6,6 +6,9 @@ class ProfileSerializer(serializers.ModelSerializer):
     username = serializers.CharField(source='user.username', read_only=True)
     email = serializers.EmailField(source='user.email', read_only=True)
     phone = serializers.CharField(source='user.phone', required=False, allow_blank=True)
+    position = serializers.CharField(source='user.position', read_only=True)
+    is_verified_member = serializers.BooleanField(source='user.is_verified_member', read_only=True)
+    labels = serializers.SerializerMethodField(read_only=True)
     accessible_menus = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
@@ -15,6 +18,9 @@ class ProfileSerializer(serializers.ModelSerializer):
 
     def get_accessible_menus(self, obj):
         return obj.user.get_all_accessible_menus()
+
+    def get_labels(self, obj):
+        return [label.name for label in obj.user.labels.all()]
 
     def update(self, instance, validated_data):
         # Extract phone from user source if present in validated_data

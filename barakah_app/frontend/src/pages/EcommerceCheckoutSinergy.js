@@ -62,7 +62,7 @@ const EcommerceCheckoutSinergy = () => {
                 items.forEach(item => {
                     const s_id = item.product?.seller_id || "0";
                     if (!initialConfigs[s_id]) {
-                        initialConfigs[s_id] = { shipping_cost: 0, shipping_courier: '', shipping_service: '', voucher_code: '', voucher_nominal: 0, payment_method: 'manual' };
+                        initialConfigs[s_id] = { shipping_cost: 0, shipping_courier: '', shipping_service: '', voucher_code: '', voucher_nominal: 0, payment_method: 'manual', buyer_note: '' };
                     }
                 });
                 setCheckoutConfigs(initialConfigs);
@@ -338,14 +338,31 @@ const EcommerceCheckoutSinergy = () => {
                                 <div className="border border-gray-100 rounded-xl p-3">
                                     <label className="block text-xs font-bold text-gray-700 mb-2">Metode Pembayaran</label>
                                     <select 
-                                        className="w-full text-sm bg-gray-50 border-none rounded-lg p-2"
+                                        className="w-full text-sm bg-gray-50 border-none rounded-lg p-2 font-bold"
                                         value={config?.payment_method || 'manual'}
                                         onChange={(e) => handleConfigChange(s_id, 'payment_method', e.target.value)}
                                     >
                                         <option value="manual">Transfer Bank Manual (OCR)</option>
                                         <option value="qris">QRIS Otomatis Dinamis</option>
+                                        {group.items.every(item => item.product?.is_cod_available) && (
+                                            <option value="cod">Bayar di Tempat (COD)</option>
+                                        )}
                                     </select>
+                                    {group.items.some(item => !item.product?.is_cod_available) && (
+                                        <p className="text-[9px] text-gray-400 mt-1 italic leading-tight">Metode COD tidak tersedia karena salah satu produk tidak mendukung COD.</p>
+                                    )}
                                 </div>
+                            </div>
+
+                            {/* Buyer Note Input */}
+                            <div className="mt-4">
+                                <label className="block text-xs font-bold text-gray-700 mb-2">Catatan untuk Penjual (Opsional)</label>
+                                <textarea 
+                                    placeholder="Tulis pesan atau instruksi khusus untuk penjual..." 
+                                    className="w-full text-sm bg-gray-50 border border-gray-100 rounded-xl p-3 focus:ring-1 focus:ring-emerald-500 outline-none h-20"
+                                    value={config?.buyer_note || ''}
+                                    onChange={(e) => handleConfigChange(s_id, 'buyer_note', e.target.value)}
+                                ></textarea>
                             </div>
 
                             <div className="mt-4 pt-4 border-t border-gray-100 flex justify-between items-center">

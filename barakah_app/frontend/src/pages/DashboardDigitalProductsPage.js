@@ -59,6 +59,9 @@ const DashboardDigitalProductsPage = () => {
     const [thumbnailPreview, setThumbnailPreview] = useState(null);
     const [visibility, setVisibility] = useState('global');
     const [cropper, setCropper] = useState({ active: false, image: null });
+    const [showBuyersModal, setShowBuyersModal] = useState(false);
+    const [selectedProductBuyers, setSelectedProductBuyers] = useState([]);
+    const [buyersLoading, setBuyersLoading] = useState(false);
 
     const fetchDashboardData = useCallback(async () => {
         try {
@@ -128,6 +131,24 @@ const DashboardDigitalProductsPage = () => {
         } catch (err) {
             console.error(err);
             alert('Gagal mengubah status produk');
+        }
+    };
+
+    const handleViewBuyers = async (product) => {
+        setBuyersLoading(true);
+        setShowBuyersModal(true);
+        try {
+            const user = JSON.parse(localStorage.getItem('user'));
+            const res = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/digital-products/${product.slug}/buyers/`, {
+                headers: { Authorization: `Bearer ${user.access}` }
+            });
+            setSelectedProductBuyers(res.data);
+        } catch (err) {
+            console.error(err);
+            alert('Gagal mengambil data pembeli');
+            setShowBuyersModal(false);
+        } finally {
+            setBuyersLoading(false);
         }
     };
 
@@ -389,6 +410,13 @@ const DashboardDigitalProductsPage = () => {
                                             </span>
                                         </button>
                                         <button
+                                            onClick={() => handleViewBuyers(product)}
+                                            className="w-8 h-8 flex items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition"
+                                            title="Lihat Pembeli"
+                                        >
+                                            <span className="material-icons text-lg">group</span>
+                                        </button>
+                                        <button
                                             onClick={() => handleEdit(product)}
                                             className="w-8 h-8 flex items-center justify-center rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition"
                                             title="Edit"
@@ -409,6 +437,56 @@ const DashboardDigitalProductsPage = () => {
                     </div>
                 )}
             </div>
+
+            {/* Buyers Modal */}
+            {showBuyersModal && (
+                <div className="fixed inset-0 bg-black/50 z-[110] flex items-center justify-center p-4">
+                    <div className="bg-white w-full max-w-2xl rounded-2xl p-6 shadow-2xl animate-slide-up max-h-[80vh] flex flex-col">
+                        <div className="flex justify-between items-center mb-4">
+                            <h3 className="text-lg font-bold">Data Pembeli</h3>
+                            <button onClick={() => setShowBuyersModal(false)} className="material-icons text-gray-400">close</button>
+                        </div>
+                        
+                        <div className="flex-1 overflow-y-auto">
+                            {buyersLoading ? (
+                                <div className="flex justify-center py-10"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div></div>
+                            ) : selectedProductBuyers.length === 0 ? (
+                                <div className="text-center py-10 text-gray-500">Belum ada pembeli untuk produk ini.</div>
+                            ) : (
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-sm text-left">
+                                        <thead className="bg-gray-50 text-gray-600 uppercase text-[10px] font-bold">
+                                            <tr>
+                                                <th className="px-4 py-3">Nama</th>
+                                                <th className="px-4 py-3">Email</th>
+                                                <th className="px-4 py-3">WhatsApp</th>
+                                                <th className="px-4 py-3">Tanggal</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-gray-100">
+                                            {selectedProductBuyers.map((b) => (
+                                                <tr key={b.id}>
+                                                    <td className="px-4 py-3 font-medium">{b.buyer_name}</td>
+                                                    <td className="px-4 py-3 text-gray-500">{b.buyer_email}</td>
+                                                    <td className="px-4 py-3">
+                                                        <a href={`https://wa.me/${b.buyer_phone.replace(/\D/g,'')}`} target="_blank" rel="noreferrer" className="text-green-600 font-bold hover:underline">
+                                                            {b.buyer_phone}
+                                                        </a>
+                                                    </td>
+                                                    <td className="px-4 py-3 text-gray-400 text-xs">
+                                                        {new Date(b.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            )}
+                        </div>
+                        <button onClick={() => setShowBuyersModal(false)} className="w-full mt-4 py-3 bg-gray-100 text-gray-600 rounded-xl text-sm font-bold">Tutup</button>
+                    </div>
+                </div>
+            )}
 
             {cropper.active && (
                 <ImageCropperModal 

@@ -15,6 +15,7 @@ const DashboardSinergySellersPage = () => {
     const [editingProduct, setEditingProduct] = useState(null);
     const [variants, setVariants] = useState([{name: '', additional_price: 0, stock: 0}]);
     const [selectedCouriers, setSelectedCouriers] = useState(['jne', 'pos', 'tiki', 'jnt']);
+    const [isCodAvailable, setIsCodAvailable] = useState(false);
 
 
     const fetchDashboardData = async () => {
@@ -46,6 +47,7 @@ const DashboardSinergySellersPage = () => {
         setEditingProduct(product);
         setVariants(product.variations && product.variations.length > 0 ? product.variations : [{name: '', additional_price: 0, stock: 0}]);
         setSelectedCouriers(product.supported_couriers ? product.supported_couriers.split(',') : ['jne', 'pos', 'tiki', 'jnt']);
+        setIsCodAvailable(product.is_cod_available || false);
         setActiveTab('edit');
     };
 
@@ -78,6 +80,8 @@ const DashboardSinergySellersPage = () => {
             formData.append('weight', e.target.weight.value);
             formData.append('category', e.target.category.value);
             formData.append('supported_couriers', selectedCouriers.join(','));
+            formData.append('is_cod_available', isCodAvailable);
+            formData.append('purchase_instructions', e.target.purchase_instructions.value);
             formData.append('variations', JSON.stringify(variants));
 
 
@@ -185,6 +189,7 @@ const DashboardSinergySellersPage = () => {
                                         setVariants([{name: '', additional_price: 0, stock: 0}]);
                                     }
                                     setSelectedCouriers(p.supported_couriers ? p.supported_couriers.split(',') : ['jne', 'pos', 'tiki', 'jnt']);
+                                    setIsCodAvailable(p.is_cod_available || false);
                                     setActiveTab('edit');
                                 }} className="flex-1 py-2 text-xs font-bold text-emerald-700 bg-emerald-50 rounded-xl hover:bg-emerald-100 border border-emerald-100 transition">Edit & Variasi</button>
 
@@ -308,8 +313,33 @@ const DashboardSinergySellersPage = () => {
                 </div>
 
                 <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Layanan Ekspedisi yang Didukung</label>
-                    <p className="text-[10px] text-gray-500 mb-3">Pilih kurir yang tersedia untuk pengiriman produk ini.</p>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1">Informasi Pengambilan / Teknis (Opsional)</label>
+                    <textarea 
+                        name="purchase_instructions" 
+                        defaultValue={editingProduct?.purchase_instructions || ''} 
+                        placeholder="Contoh: Pengambilan dilakukan di lokasi kandang, atau teknis pengiriman hewan qurban..." 
+                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none transition h-24"
+                    ></textarea>
+                </div>
+
+                <div className="bg-emerald-50 p-6 rounded-3xl border border-emerald-100">
+                    <div className="flex items-center justify-between mb-4">
+                        <div>
+                            <label className="block text-sm font-bold text-emerald-800">Layanan Ekspedisi & COD</label>
+                            <p className="text-[10px] text-emerald-600">Pilih kurir dan aktifkan fitur Bayar di Tempat (COD)</p>
+                        </div>
+                        <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-2xl shadow-sm border border-emerald-200">
+                            <span className="text-[11px] font-bold text-gray-600 uppercase tracking-tight">Aktifkan COD</span>
+                            <button
+                                type="button"
+                                onClick={() => setIsCodAvailable(!isCodAvailable)}
+                                className={`w-12 h-6 rounded-full transition-all relative ${isCodAvailable ? 'bg-emerald-500' : 'bg-gray-300'}`}
+                            >
+                                <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow-sm transition-all ${isCodAvailable ? 'left-7' : 'left-1'}`}></div>
+                            </button>
+                        </div>
+                    </div>
+                    
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                         {[
                             { id: 'jne', name: 'JNE' },

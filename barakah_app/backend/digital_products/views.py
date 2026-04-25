@@ -275,6 +275,19 @@ class DigitalProductViewSet(viewsets.ModelViewSet):
         except Exception as e:
             logger.exception(f"Error in my_product_detail action: {e}")
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    @action(detail=True, methods=['get'], url_path='buyers')
+    def buyers(self, request, slug=None):
+        try:
+            product = self.get_object()
+            if product.user != request.user:
+                return Response({'error': 'Unauthorized'}, status=status.HTTP_403_FORBIDDEN)
+            
+            orders = DigitalOrder.objects.filter(digital_product=product, payment_status='verified')
+            serializer = DigitalOrderSerializer(orders, many=True)
+            return Response(serializer.data)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class DigitalOrderViewSet(viewsets.ModelViewSet):

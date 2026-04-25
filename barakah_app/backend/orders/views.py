@@ -32,21 +32,10 @@ class CreateOrderView(APIView):
         logger = logging.getLogger('accounts')
         
         try:
-            # Extract and validate inputs
-            def clean_decimal(val):
-                try:
-                    if val is None or str(val).strip() == "":
-                        return Decimal('0')
-                    return Decimal(str(val))
-                except:
-                    return Decimal('0')
-
-            shipping_cost = clean_decimal(request.data.get('shipping_cost', 0))
-            shipping_courier = request.data.get('shipping_courier', '')
-            voucher_code = request.data.get('voucher_code', '')
-            voucher_nominal = clean_decimal(request.data.get('voucher_nominal', 0))
-            payment_method = request.data.get('payment_method', 'manual')
-            proof_file = request.FILES.get('proof_file')
+            # Extract list of checkout configurations (one per seller)
+            checkouts_data = request.data.get('checkouts', [])
+            # Map configurations by seller_id for easy access
+            configs_by_seller = {str(c.get('seller_id')): c for c in checkouts_data}
 
             # Fetch only selected cart items for the user
             cart_items = Cart.objects.filter(user=user, is_selected=True)
@@ -63,14 +52,31 @@ class CreateOrderView(APIView):
                 seller_carts[seller_id].append(item)
 
             created_orders = []
+            payment_proof = request.FILES.get('proof_file')
 
             for s_id, items in seller_carts.items():
+                # Get config for this seller
+                config = configs_by_seller.get(s_id, {})
+                
+                def clean_decimal(val):
+                    try:
+                        if val is None or str(val).strip() == "": return Decimal('0')
+                        return Decimal(str(val))
+                    except: return Decimal('0')
+
+                shipping_cost = clean_decimal(config.get('shipping_cost', 0))
+                shipping_courier = config.get('shipping_courier', '')
+                shipping_service = config.get('shipping_service', '')
+                voucher_code = config.get('voucher_code', '')
+                voucher_nominal = clean_decimal(config.get('voucher_nominal', 0))
+                payment_method = config.get('payment_method') or request.data.get('payment_method', 'manual')
+                buyer_note = config.get('buyer_note') or request.data.get('buyer_note', '')
+
                 seller_user = None
                 if s_id != "0":
                     from accounts.models import User
                     seller_user = User.objects.filter(id=s_id).first()
                 
-                # Fallback to first superuser if product has no seller (Official BAE products)
                 if not seller_user:
                     from accounts.models import User
                     seller_user = User.objects.filter(is_superuser=True).first()
@@ -80,36 +86,33 @@ class CreateOrderView(APIView):
                     user=user,
                     seller=seller_user,
                     total_price=Decimal('0'),
-                    shipping_cost=shipping_cost if not created_orders else Decimal('0'),
+                    shipping_cost=shipping_cost,
                     shipping_courier=shipping_courier,
+                    shipping_service=shipping_service,
                     voucher_code=voucher_code,
-                    voucher_nominal=voucher_nominal if not created_orders else Decimal('0'),
-                    status='paid' if proof_file else 'pending',
+                    voucher_nominal=voucher_nominal,
+                    status='paid' if payment_proof else 'pending',
                     payment_method=payment_method,
-                    payment_proof=proof_file
+                    payment_proof=payment_proof,
+                    buyer_note=buyer_note
                 )
                 
                 total_price = Decimal('0')
                 for cart_item in items:
-                    # Variation price replaces product price if set
                     base_price = cart_item.product.price
                     if cart_item.variation and cart_item.variation.additional_price and cart_item.variation.additional_price > 0:
                         base_price = cart_item.variation.additional_price
                     
                     price_for_item = base_price * cart_item.quantity
 
-                    # Stock reduction logic
+                    # Stock reduction
                     if cart_item.variation:
                         if cart_item.variation.stock >= cart_item.quantity:
                             cart_item.variation.stock -= cart_item.quantity
                             cart_item.variation.save()
                         else:
-                            # If stock is not enough, set to 0 or handle as error? 
-                            # For now, just take what's left
                             cart_item.variation.stock = 0
                             cart_item.variation.save()
-                        
-                        # Sync product total stock
                         cart_item.product.sync_variations()
                     else:
                         if cart_item.product.stock >= cart_item.quantity:
@@ -129,9 +132,8 @@ class CreateOrderView(APIView):
                     total_price += price_for_item
 
                 order.total_price = total_price
-                order.grand_total = total_price + Decimal(str(order.shipping_cost)) - Decimal(str(order.voucher_nominal))
-                if order.grand_total < 0:
-                    order.grand_total = Decimal('0')
+                order.grand_total = total_price + shipping_cost - voucher_nominal
+                if order.grand_total < 0: order.grand_total = Decimal('0')
                 order.save() 
                 created_orders.append(order)
 

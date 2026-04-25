@@ -14,6 +14,10 @@ class ProfileViewSet(viewsets.ModelViewSet):
     serializer_class = ProfileSerializer
     lookup_field = 'user_id'
 
+    def perform_update(self, serializer):
+        profile = serializer.save()
+        profile.check_auto_roles()
+
     @action(detail=False, methods=['get'])
     def me(self, request):
         try:
@@ -126,39 +130,8 @@ def profile_update(request, user_id):
 
     serializer = ProfileSerializer(profile, data=request.data, partial=True)
     if serializer.is_valid():
-        serializer.save()
-        
-        # Auto-role assignment check
-        user = profile.user
-        from accounts.models import Role
-        
-        active_roles = Role.objects.filter(is_active=True)
-        assigned_new_role = False
-        
-        for role_obj in active_roles:
-            required_fields = set(role_obj.required_profile_fields or [])
-            if not required_fields:
-                continue # Skip roles with no requirements to avoid auto-assigning everything
-                
-            missing = []
-            for field in required_fields:
-                val = getattr(profile, field, None)
-                if not val or (isinstance(val, str) and not val.strip()):
-                    missing.append(field)
-            
-            if not missing:
-                if role_obj not in user.custom_roles.all():
-                    user.custom_roles.add(role_obj)
-                    assigned_new_role = True
-                    
-        if assigned_new_role or user.role == 'user':
-            # Optionally set as verified member if they met at least one role's reqs
-            # We'll just check if they got anggota_bae or similar, but generally any auto-role might mean verified
-            if user.role == 'user' and assigned_new_role:
-                 user.is_verified_member = True
-                 user.role = 'seller'
-                 user.save()
-                    
+        profile = serializer.save()
+        profile.check_auto_roles()
         return Response(serializer.data)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 

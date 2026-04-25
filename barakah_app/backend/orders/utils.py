@@ -41,8 +41,20 @@ def send_order_invoice_to_buyer(order, alternate_phone=None):
         f"Voucher: -{format_idr(order.voucher_nominal)}\n"
         f"*Total Bayar: {format_idr(order.grand_total)}*\n\n"
         f"Status: *{order.status}*\n\n"
-        f"Terima kasih telah berbelanja! Pesanan Anda akan segera diproses oleh penjual."
     )
+
+    if order.buyer_note:
+        message += f"*Catatan Anda:* {order.buyer_note}\n\n"
+
+    # Add instructions from products
+    instr_list = [i.product.purchase_instructions for i in order.items.all() if i.product.purchase_instructions]
+    if instr_list:
+        message += f"*INFORMASI PENTING (INSTRUKSI):*\n"
+        for instr in instr_list:
+            message += f"- {instr}\n"
+        message += "\n"
+
+    message += f"Terima kasih telah berbelanja! Pesanan Anda akan segera diproses oleh penjual."
     
     return send_message(phone, message)
 
@@ -91,8 +103,12 @@ def send_order_notification_to_seller(order):
         f"*Daftar Produk:*\n"
         f"{items_str}\n"
         f"Total Transaksi: {format_idr(order.grand_total)}\n\n"
-        f"Silakan segera diproses dan didaftarkan ke ekspedisi sesuai kurir pilihan ({order.shipping_courier})."
     )
+
+    if order.buyer_note:
+        message += f"*Catatan Pembeli:* {order.buyer_note}\n\n"
+
+    message += f"Silakan segera diproses dan didaftarkan ke ekspedisi sesuai kurir pilihan ({order.shipping_courier})."
     
     return send_message(phone, message)
 

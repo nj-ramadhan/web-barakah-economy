@@ -52,6 +52,7 @@ class User(AbstractUser):
     # Dynamic role & label system
     custom_roles = models.ManyToManyField(Role, blank=True, related_name='users')
     labels = models.ManyToManyField(UserLabel, blank=True, related_name='users')
+    position = models.CharField(max_length=100, blank=True, null=True, help_text="Jabatan di BAE")
 
     def __str__(self):
         return f"{self.username} ({self.get_role_display()})"

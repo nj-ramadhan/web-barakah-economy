@@ -373,7 +373,7 @@ const ProfileEditPage = () => {
       const user = JSON.parse(localStorage.getItem('user'));
       if (user && user.id) {
         const formData = new FormData();
-        const numericFields = ['study_semester', 'study_start_year', 'study_finish_year', 'address_latitude', 'address_longitude'];
+        const numericFields = ['study_semester', 'study_start_year', 'study_finish_year', 'address_latitude', 'address_longitude', 'work_salary'];
 
         for (const key in profile) {
           if (profile[key] !== null && profile[key] !== undefined) {
@@ -384,16 +384,20 @@ const ProfileEditPage = () => {
                 formData.append(key, profile[key]);
               }
             }
-            // Fix 2: Skip empty strings for numeric fields, but allow '0'
+            // Fix 2: Clean salary and other numeric fields
+            else if (key === 'work_salary' && typeof profile[key] === 'string') {
+              const cleanValue = profile[key].replace(/[^0-9]/g, '');
+              if (cleanValue) formData.append(key, cleanValue);
+            }
+            // Fix 3: Skip empty strings for numeric fields, but allow '0'
             else if (numericFields.includes(key) && profile[key] === '') {
               // Skip
             }
-            // Fix 3: Handle all other fields, ensuring even strings of numbers are sent
+            // Fix 4: Handle all other fields, ensuring even strings of numbers are sent
             else if (profile[key] !== '') {
               formData.append(key, profile[key]);
             }
           }
-
         }
 
         // Debug: Log FormData keys

@@ -8,8 +8,8 @@ export const formatCurrency = (value) => {
     const number = typeof value === 'string' ? parseFloat(value) : value;
     if (isNaN(number)) return '';
     
-    // Using en-US to get commas as thousands separators (e.g. 10,000)
-    return new Intl.NumberFormat('en-US', {
+    // Using id-ID to get dots as thousands separators (e.g. 10.000)
+    return new Intl.NumberFormat('id-ID', {
         minimumFractionDigits: 0,
         maximumFractionDigits: 0,
     }).format(number);

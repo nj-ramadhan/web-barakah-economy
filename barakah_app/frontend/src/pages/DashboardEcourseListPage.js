@@ -25,6 +25,10 @@ const DashboardEcourseListPage = () => {
     const [courses, setCourses] = useState([]);
     const [loading, setLoading] = useState(true);
     const [selectedCourseForCert, setSelectedCourseForCert] = useState(null);
+    const [showStudentsModal, setShowStudentsModal] = useState(false);
+    const [selectedCourseStudents, setSelectedCourseStudents] = useState([]);
+    const [studentsLoading, setStudentsLoading] = useState(false);
+    const [activeCourseTitle, setActiveCourseTitle] = useState('');
 
     const fetchCourses = useCallback(async () => {
         try {
@@ -62,6 +66,26 @@ const DashboardEcourseListPage = () => {
         } catch (err) {
             console.error(err);
             alert('Gagal menghapus kursus');
+        }
+    };
+
+    const handleViewStudents = async (course) => {
+        setStudentsLoading(true);
+        setShowStudentsModal(true);
+        setActiveCourseTitle(course.title);
+        try {
+            const user = JSON.parse(localStorage.getItem('user'));
+            const axios = (await import('axios')).default;
+            const res = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/courses/${course.id}/buyers/`, {
+                headers: { Authorization: `Bearer ${user.access}` }
+            });
+            setSelectedCourseStudents(res.data);
+        } catch (err) {
+            console.error(err);
+            alert('Gagal mengambil data siswa');
+            setShowStudentsModal(false);
+        } finally {
+            setStudentsLoading(false);
         }
     };
 
@@ -179,6 +203,13 @@ const DashboardEcourseListPage = () => {
                                                     <span className="material-icons text-lg">auto_stories</span>
                                                 </Link>
                                                 <button
+                                                    onClick={() => handleViewStudents(course)}
+                                                    className="w-9 h-9 flex items-center justify-center rounded-xl bg-purple-50 text-purple-600 hover:bg-purple-100 transition"
+                                                    title="Riwayat Siswa"
+                                                >
+                                                    <span className="material-icons text-lg">group</span>
+                                                </button>
+                                                <button
                                                     onClick={() => handleDelete(course.id)}
                                                     className="w-9 h-9 flex items-center justify-center rounded-xl bg-red-50 text-red-600 hover:bg-red-100 transition"
                                                     title="Hapus"
@@ -225,6 +256,59 @@ const DashboardEcourseListPage = () => {
                                 customUpdate={updateCourseCertificateSettings}
                             />
                         </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Students Modal */}
+            {showStudentsModal && (
+                <div className="fixed inset-0 bg-black/50 z-[110] flex items-center justify-center p-4">
+                    <div className="bg-white w-full max-w-2xl rounded-2xl p-6 shadow-2xl animate-slide-up max-h-[80vh] flex flex-col">
+                        <div className="flex justify-between items-center mb-4">
+                            <div>
+                                <h3 className="text-lg font-bold">Data Siswa Terdaftar</h3>
+                                <p className="text-xs text-gray-500">{activeCourseTitle}</p>
+                            </div>
+                            <button onClick={() => setShowStudentsModal(false)} className="material-icons text-gray-400">close</button>
+                        </div>
+                        
+                        <div className="flex-1 overflow-y-auto">
+                            {studentsLoading ? (
+                                <div className="flex justify-center py-10"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div></div>
+                            ) : selectedCourseStudents.length === 0 ? (
+                                <div className="text-center py-10 text-gray-500">Belum ada siswa yang terdaftar di kelas ini.</div>
+                            ) : (
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-sm text-left">
+                                        <thead className="bg-gray-50 text-gray-600 uppercase text-[10px] font-bold">
+                                            <tr>
+                                                <th className="px-4 py-3">Nama</th>
+                                                <th className="px-4 py-3">Email</th>
+                                                <th className="px-4 py-3">WhatsApp</th>
+                                                <th className="px-4 py-3">Tanggal</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-gray-100">
+                                            {selectedCourseStudents.map((b) => (
+                                                <tr key={b.id}>
+                                                    <td className="px-4 py-3 font-medium">{b.buyer_name}</td>
+                                                    <td className="px-4 py-3 text-gray-500">{b.buyer_email}</td>
+                                                    <td className="px-4 py-3">
+                                                        <a href={`https://wa.me/${b.buyer_phone.replace(/\D/g,'')}`} target="_blank" rel="noreferrer" className="text-green-600 font-bold hover:underline">
+                                                            {b.buyer_phone}
+                                                        </a>
+                                                    </td>
+                                                    <td className="px-4 py-3 text-gray-400 text-xs">
+                                                        {new Date(b.enrolled_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            )}
+                        </div>
+                        <button onClick={() => setShowStudentsModal(false)} className="w-full mt-4 py-3 bg-gray-100 text-gray-600 rounded-xl text-sm font-bold">Tutup</button>
                     </div>
                 </div>
             )}

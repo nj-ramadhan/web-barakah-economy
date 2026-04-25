@@ -6,10 +6,11 @@ from profiles.models import Profile
 class OrderItemSerializer(serializers.ModelSerializer):
     product_name = serializers.CharField(source='product.title', read_only=True)
     variation_name = serializers.CharField(source='variation.name', read_only=True)
+    purchase_instructions = serializers.CharField(source='product.purchase_instructions', read_only=True)
 
     class Meta:
         model = OrderItem
-        fields = ['id', 'product', 'product_name', 'variation', 'variation_name', 'quantity', 'price']
+        fields = ['id', 'product', 'product_name', 'variation', 'variation_name', 'quantity', 'price', 'purchase_instructions']
 
 class BuyerProfileSerializer(serializers.ModelSerializer):
     username = serializers.CharField(source='user.username', read_only=True)
@@ -28,7 +29,7 @@ class OrderSerializer(serializers.ModelSerializer):
         model = Order
         fields = ['id', 'order_number', 'user', 'buyer_details', 'seller', 'seller_name', 'created_at', 'updated_at', 
                   'total_price', 'shipping_cost', 'shipping_courier', 'shipping_service', 
-                  'voucher_code', 'voucher_nominal', 'grand_total', 'status', 'resi_number', 'payment_proof', 'items', 'qris_payload']
+                  'voucher_code', 'voucher_nominal', 'grand_total', 'status', 'resi_number', 'payment_proof', 'items', 'qris_payload', 'buyer_note']
 
 
 

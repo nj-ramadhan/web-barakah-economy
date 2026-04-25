@@ -92,6 +92,19 @@ class CourseViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(courses, many=True)
         return Response(serializer.data)
 
+    @action(detail=True, methods=['get'], url_path='buyers')
+    def buyers(self, request, pk=None):
+        try:
+            course = self.get_object()
+            if course.instructor != request.user:
+                return Response({'error': 'Unauthorized'}, status=status.HTTP_403_FORBIDDEN)
+            
+            enrollments = CourseEnrollment.objects.filter(course=course, payment_status__in=['paid', 'verified'])
+            serializer = CourseEnrollmentSerializer(enrollments, many=True)
+            return Response(serializer.data)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
     @action(detail=True, methods=['get', 'post'], url_path='certificate_settings')
     def certificate_settings(self, request, pk=None):
         course = self.get_object()

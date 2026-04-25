@@ -11,7 +11,8 @@ def get_seo_response(request, metadata):
         'description': 'Page Description',
         'image_url': 'https://...',
         'type': 'website' or 'article' or 'product',
-        'canonical_url': 'https://...'
+        'canonical_url': 'https://...',
+        'body_content': 'Optional HTML/Text content for body'
     }
     """
     try:
@@ -20,6 +21,7 @@ def get_seo_response(request, metadata):
         image_url = metadata.get('image_url', '')
         current_url = metadata.get('canonical_url', request.build_absolute_uri())
         page_type = metadata.get('type', 'website')
+        body_content = metadata.get('body_content', '')
 
         # Fallback image
         if not image_url:
@@ -58,6 +60,13 @@ def get_seo_response(request, metadata):
         content = re.sub(r'<meta name="description".*?>', '', content)
         
         content = content.replace('</head>', f'{meta_tags}\n</head>')
+
+        # Inject body content if provided for crawler indexing
+        if body_content:
+            # We'll put it in a hidden div or an article tag at the start of body
+            # This is standard practice for SSR-lite with React
+            seo_body = f'<div id="seo-content" style="display:none;"><article><h1>{title}</h1>{body_content}</article></div>'
+            content = content.replace('<body>', f'<body>\n{seo_body}')
         
         return HttpResponse(content)
 

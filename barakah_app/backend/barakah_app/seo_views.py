@@ -38,7 +38,8 @@ def seo_campaign_detail(request, slug):
         'title': campaign.title,
         'description': clean_html(campaign.description),
         'image_url': campaign.thumbnail.url if campaign.thumbnail else '',
-        'type': 'article'
+        'type': 'article',
+        'body_content': campaign.description
     }
     return get_seo_response(request, metadata)
 
@@ -53,7 +54,8 @@ def seo_article_detail(request, slug):
         'title': article.title,
         'description': clean_html(article.content),
         'image_url': image_url,
-        'type': 'article'
+        'type': 'article',
+        'body_content': article.content
     }
     return get_seo_response(request, metadata)
 

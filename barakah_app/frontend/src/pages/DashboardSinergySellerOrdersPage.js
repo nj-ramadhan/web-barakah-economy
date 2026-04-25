@@ -168,6 +168,12 @@ const DashboardSinergySellerOrdersPage = () => {
                                                     {order.buyer_details?.address_postal_code}
                                                 </p>
                                             </div>
+                                            {order.buyer_note && (
+                                                <div className="mt-3 p-3 bg-orange-50 rounded-xl border border-orange-100">
+                                                    <p className="text-[10px] font-bold text-orange-800 uppercase mb-1">Catatan dari Pembeli</p>
+                                                    <p className="text-xs text-orange-900 italic">"{order.buyer_note}"</p>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
 
@@ -186,6 +192,11 @@ const DashboardSinergySellerOrdersPage = () => {
                                                         <p className="text-xs font-bold text-gray-800 line-clamp-1">{item.product_name}</p>
                                                         {item.variation_name && <p className="text-[10px] text-emerald-600 font-medium">Varian: {item.variation_name}</p>}
                                                         <p className="text-[10px] text-gray-500">{item.quantity} x {formatIDR(item.price / item.quantity)}</p>
+                                                        {item.purchase_instructions && (
+                                                            <p className="text-[9px] text-blue-600 bg-blue-50 px-2 py-0.5 rounded mt-1 border border-blue-100">
+                                                                <span className="font-bold">Info Produk:</span> {item.purchase_instructions}
+                                                            </p>
+                                                        )}
                                                     </div>
                                                 </div>
                                             ))}

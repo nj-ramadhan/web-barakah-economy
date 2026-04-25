@@ -42,6 +42,7 @@ class UserAdminSerializer(serializers.ModelSerializer):
         model = User
         fields = (
             'id', 'username', 'email', 'phone', 'role', 'is_verified_member',
+            'position',
             'profile', 'date_joined',
             'custom_roles', 'custom_role_ids',
             'labels', 'label_ids',
@@ -102,6 +103,12 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
             profile, _ = Profile.objects.get_or_create(user=user)
             profile.name_full = name_full
             profile.save()
+            
+        # Beri label Simpatisan otomatis
+        from .models import UserLabel
+        label_simpatisan, _ = UserLabel.objects.get_or_create(name='Simpatisan')
+        user.labels.add(label_simpatisan)
+            
         return user
 
     def validate_email(self, value):

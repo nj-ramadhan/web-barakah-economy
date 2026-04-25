@@ -26,6 +26,7 @@ class Campaign(models.Model):
         ('lingkungan', 'Bantuan Lingkungan'),
         ('pembangunan', 'Bantuan Pembangunan'),
         ('sosial', 'Bantuan Sosial'),
+        ('duafa', 'Bantuan Duafa'),
         ('lainnya', 'Lainnya'),       
     ]
 

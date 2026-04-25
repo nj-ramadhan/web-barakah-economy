@@ -86,25 +86,24 @@ const DigitalProductPaymentPage = () => {
 
             const numericTotal = Math.floor(Number(order.amount));
             const totalStr = String(numericTotal);
-            const totalFormatted = formatCurrency(numericTotal);
+            const totalFormatted = new Intl.NumberFormat('id-ID').format(numericTotal);
 
-            const scrubbedText = lowerText.replace(/rp/g, '').replace(/\./g, '').replace(/,/g, '').replace(/\s+/g, '');
+            const scrubbedOCR = lowerText.replace(/rp/g, '').replace(/\./g, '').replace(/,/g, '').replace(/\s+/g, '');
 
             const isAmountPresent =
                 text.includes(totalStr) ||
                 text.includes(totalFormatted) ||
-                scrubbedText.includes(totalStr) ||
-                scrubbedText.includes(totalStr + '00');
+                scrubbedOCR.includes(totalStr);
 
             if (!isBaeCommunityPresent && !isDenySetiawanPresent) {
-                setOcrError('Validasi Gagal: Struk tidak mencantumkan nama "BAE Community" atau "DENY SETIAWAN".');
+                setOcrError('Validasi Gagal: Struk tidak mencantumkan nama "BAE Community" atau "DENY SETIAWAN". Pastikan Anda transfer ke rekening yang benar.');
                 setUploading(false);
                 setOcrLoading(false);
                 return;
             }
 
             if (!isAmountPresent) {
-                setOcrError(`Validasi Gagal: Nominal struk tidak sesuai dengan total tagihan (Rp ${totalFormatted}).`);
+                setOcrError(`Validasi Gagal: Nominal struk tidak sesuai dengan total tagihan (Rp ${totalFormatted}). Pastikan nominal transfer pas.`);
                 setUploading(false);
                 setOcrLoading(false);
                 return;
@@ -223,20 +222,47 @@ const DigitalProductPaymentPage = () => {
                     <div className="border-t border-gray-200 my-4"></div>
 
                     {/* BSI */}
-                    <div className="bg-white rounded-lg p-4 border border-gray-200">
-                        <p className="text-xs font-bold text-gray-400 mb-2 uppercase tracking-wider">TRANSFER BANK BSI</p>
-                        <div className="flex justify-between items-center bg-blue-50 p-3 rounded-lg">
+                    <div className="bg-white rounded-lg p-4 border border-gray-200 mb-4">
+                        <div className="flex items-center gap-2 mb-2">
+                            <img src="/images/bsi-logo.png" alt="BSI" className="h-4" onError={(e) => e.target.style.display='none'} />
+                            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">TRANSFER BANK BSI</p>
+                        </div>
+                        <div className="flex justify-between items-center bg-emerald-50 p-3 rounded-lg border border-emerald-100">
                             <div>
-                                <p className="text-xs text-blue-600">No. Rekening BSI</p>
-                                <p className="font-bold text-blue-900">1040497408</p>
-                                <p className="text-xs text-blue-700">an. DENY SETIAWAN</p>
+                                <p className="text-xs text-emerald-600">No. Rekening BSI</p>
+                                <p className="font-bold text-emerald-900">1040497408</p>
+                                <p className="text-xs text-emerald-700">an. DENY SETIAWAN</p>
                             </div>
                             <button
                                 onClick={() => {
                                     navigator.clipboard.writeText('1040497408');
                                     alert('No. Rekening berhasil disalin!');
                                 }}
-                                className="bg-blue-600 text-white text-[10px] px-3 py-1 rounded-full font-bold"
+                                className="bg-emerald-600 text-white text-[10px] px-3 py-1 rounded-full font-bold shadow-sm"
+                            >
+                                SALIN
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* BJB */}
+                    <div className="bg-white rounded-lg p-4 border border-gray-200">
+                        <div className="flex items-center gap-2 mb-2">
+                            <img src="/images/bjb-logo.png" alt="BJB" className="h-4" onError={(e) => e.target.style.display='none'} />
+                            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">TRANSFER BANK BJB SYARIAH</p>
+                        </div>
+                        <div className="flex justify-between items-center bg-blue-50 p-3 rounded-lg border border-blue-100">
+                            <div>
+                                <p className="text-xs text-blue-600">No. Rekening BJB</p>
+                                <p className="font-bold text-blue-900">5130102001161</p>
+                                <p className="text-xs text-blue-700">an. DENY SETIAWAN</p>
+                            </div>
+                            <button
+                                onClick={() => {
+                                    navigator.clipboard.writeText('5130102001161');
+                                    alert('No. Rekening berhasil disalin!');
+                                }}
+                                className="bg-blue-600 text-white text-[10px] px-3 py-1 rounded-full font-bold shadow-sm"
                             >
                                 SALIN
                             </button>

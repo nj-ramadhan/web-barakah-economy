@@ -149,8 +149,8 @@ class Profile(models.Model):
     study_department = models.CharField(max_length=100, blank=True, null=True)
     study_program = models.CharField(max_length=100, blank=True, null=True)
     study_semester = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(15)], blank=True, null=True)
-    study_start_year = models.IntegerField(validators=[MinValueValidator(1900), MaxValueValidator(2025)], blank=True, null=True)
-    study_finish_year = models.IntegerField(validators=[MinValueValidator(1900), MaxValueValidator(2025)], blank=True, null=True)
+    study_start_year = models.IntegerField(validators=[MinValueValidator(1900), MaxValueValidator(2100)], blank=True, null=True)
+    study_finish_year = models.IntegerField(validators=[MinValueValidator(1900), MaxValueValidator(2100)], blank=True, null=True)
     address = models.CharField(max_length=255, blank=True, null=True)
     job = models.CharField(max_length=100, choices=JOB_CHOICES, blank=True, null=True)  
     work_field = models.CharField(max_length=100, choices=WORK_FIELD_CHOICES, blank=True, null=True)    
@@ -188,6 +188,38 @@ class Profile(models.Model):
         if self.nik and self.name_full and not self.user.is_verified_member:
             self.user.is_verified_member = True
             self.user.save(update_fields=['is_verified_member'])
+        
+        # Trigger auto-role check
+        self.check_auto_roles()
+
+    def check_auto_roles(self):
+        """Logic to automatically assign custom roles and verify user based on profile completeness."""
+        user = self.user
+        from accounts.models import Role
+        
+        active_roles = Role.objects.filter(is_active=True)
+        assigned_new_role = False
+        
+        for role_obj in active_roles:
+            required_fields = set(role_obj.required_profile_fields or [])
+            if not required_fields:
+                continue 
+                
+            missing = []
+            for field in required_fields:
+                val = getattr(self, field, None)
+                if not val or (isinstance(val, str) and not val.strip()):
+                    missing.append(field)
+            
+            if not missing:
+                if role_obj not in user.custom_roles.all():
+                    user.custom_roles.add(role_obj)
+                    assigned_new_role = True
+                    
+        if assigned_new_role and user.role == 'user':
+            user.is_verified_member = True
+            user.role = 'seller'
+            user.save()
 
     def __str__(self):
         return f'{self.user.username} Profile'

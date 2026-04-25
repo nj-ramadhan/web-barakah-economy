@@ -153,10 +153,23 @@ const EcommerceOrderHistoryPage = () => {
                                                 <div className="flex-1 min-w-0">
                                                     <h4 className="text-xs font-bold text-gray-900 truncate">{item.product_name}</h4>
                                                     <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{item.quantity} Unit • {formatIDR(item.price)}</p>
+                                                    {item.purchase_instructions && (
+                                                        <div className="mt-2 p-2 bg-emerald-100/50 rounded-lg border border-emerald-100 text-[9px] text-emerald-800 leading-relaxed italic">
+                                                            <span className="font-bold uppercase tracking-tighter block mb-0.5">ℹ️ Instruksi:</span>
+                                                            {item.purchase_instructions}
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </div>
                                         ))}
                                     </div>
+
+                                    {order.buyer_note && (
+                                        <div className="p-4 bg-orange-50 rounded-2xl border border-orange-100 text-xs text-orange-800">
+                                            <span className="font-black uppercase tracking-widest text-[9px] block mb-1">Catatan Anda ke Penjual:</span>
+                                            "{order.buyer_note}"
+                                        </div>
+                                    )}
 
                                     <div className="pt-4 border-t border-gray-50 mt-4">
                                         <div className="flex justify-between items-center bg-emerald-50/50 p-4 rounded-2xl border border-emerald-100/50">
@@ -166,6 +179,30 @@ const EcommerceOrderHistoryPage = () => {
                                             </span>
                                         </div>
                                     </div>
+
+                                    {order.resi_number && (
+                                        <div className="p-4 bg-indigo-50/50 rounded-2xl border border-indigo-100 flex justify-between items-center group/resi hover:bg-indigo-50 transition-colors">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm border border-indigo-100 text-indigo-600">
+                                                    <span className="material-icons">local_shipping</span>
+                                                </div>
+                                                <div>
+                                                    <span className="text-[10px] font-black text-indigo-800 uppercase tracking-widest block mb-0.5">Nomor Resi {order.shipping_courier ? `(${order.shipping_courier})` : ''}</span>
+                                                    <p className="font-mono font-black text-indigo-900 text-sm">{order.resi_number}</p>
+                                                </div>
+                                            </div>
+                                            <button 
+                                                onClick={() => {
+                                                    navigator.clipboard.writeText(order.resi_number);
+                                                    alert('Nomor resi berhasil disalin!');
+                                                }}
+                                                className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-indigo-600 shadow-sm border border-indigo-100 hover:bg-indigo-600 hover:text-white transition-all"
+                                                title="Salin Resi"
+                                            >
+                                                <span className="material-icons text-sm">content_copy</span>
+                                            </button>
+                                        </div>
+                                    )}
 
                                     {order.payment_proof && (
                                         <a 
