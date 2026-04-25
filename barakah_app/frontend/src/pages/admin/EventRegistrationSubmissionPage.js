@@ -260,7 +260,6 @@ const EventRegistrationSubmissionPage = () => {
                             Blast WA
                         </button>
                     </div>
-                    </div>
                 </div>
 
                 {activeTab === 'participants' ? (
@@ -459,6 +458,7 @@ const EventRegistrationSubmissionPage = () => {
                             </tbody>
                         </table>
                     </div>
+                </div>
                 ) : (
                     <CertificateEditor slug={slug} />
                 )}
