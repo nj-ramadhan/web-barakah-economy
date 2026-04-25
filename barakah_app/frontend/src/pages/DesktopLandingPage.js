@@ -165,7 +165,12 @@ const DesktopLandingPage = () => {
                                         {/* Dynamic Carousel Items Picker */}
                                         {[
                                             activities[0] && { type: 'Kegiatan', title: activities[0].title, img: activities[0].header_image, link: `/kegiatan/${activities[0].id}` },
-                                            events[0] && { type: 'Event', title: events[0].title, img: events[0].header_image || events[0].thumbnail, link: `/event/${events[0].slug}` },
+                                            events.find(e => e.visibility === 'public') && { 
+                                                type: 'Event', 
+                                                title: events.find(e => e.visibility === 'public').title, 
+                                                img: events.find(e => e.visibility === 'public').header_image || events.find(e => e.visibility === 'public').thumbnail, 
+                                                link: `/event/${events.find(e => e.visibility === 'public').slug}` 
+                                            },
                                             articles[0] && { type: 'Artikel', title: articles[0].title, img: articles[0].images?.[0]?.path, link: `/articles/${articles[0].id}` },
                                             campaigns[0] && { type: 'Charity', title: campaigns[0].title, img: campaigns[0].thumbnail, link: `/kampanye/${campaigns[0].slug || campaigns[0].id}` },
                                             courses[0] && { type: 'Academy', title: courses[0].title, img: courses[0].thumbnail, link: `/kelas/${courses[0].slug || courses[0].id}` },

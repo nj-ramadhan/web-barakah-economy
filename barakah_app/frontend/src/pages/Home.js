@@ -791,7 +791,7 @@ const Home = () => {
             modules={[Navigation, Autoplay]}
             autoplay={{ delay: 5000, disableOnInteraction: false }}
           >
-            {events.slice(0, 5).map((event) => (
+            {events.filter(e => e.visibility === 'public').slice(0, 5).map((event) => (
               <SwiperSlide key={event.id}>
                 <Link to={`/event/${event.slug || event.id}`} className="block bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100">
                   <div className="relative h-40">
