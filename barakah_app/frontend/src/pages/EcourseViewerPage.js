@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
 import Header from '../components/layout/Header';
 import NavigationButton from '../components/layout/Navigation';
-import { getCourseDetail, getCourseMaterials, getMyEnrolledCourses } from '../services/ecourseApi'; // Assuming progress can be derived or fetched similarly
+import { getCourseDetail, getCourseMaterials, getMyEnrolledCourses, downloadCourseCertificate } from '../services/ecourseApi'; // Assuming progress can be derived or fetched similarly
 import api from '../services/api';
 import '../styles/Body.css';
 
@@ -124,26 +124,20 @@ const EcourseViewerPage = () => {
         }
     };
 
-    const handleCertSubmit = async (e) => {
-        e.preventDefault();
-        const user = JSON.parse(localStorage.getItem('user'));
-        if (!user) return;
-
-        setSubmittingCert(true);
+    const handleDownloadCert = async () => {
         try {
-            const res = await api.post('/courses/certificate-requests/', {
-                course: course.id,
-                full_name: certName,
-                email: certEmail,
-                whatsapp: certWhatsapp
-            });
-            setCertRequest(res.data);
-            alert('Permintaan sertifikat berhasil dikirim!');
+            const response = await downloadCourseCertificate(course.id);
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `Sertifikat_${course.slug}.jpg`);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
         } catch (err) {
-            console.error('Error submitting cert request:', err);
-            alert('Gagal mengirim permintaan sertifikat. Pastikan semua field terisi.');
-        } finally {
-            setSubmittingCert(false);
+            console.error('Error downloading cert:', err);
+            const errorMsg = err.response?.data?.error || 'Gagal mendownload sertifikat. Pastikan Anda telah menyelesaikan semua materi.';
+            alert(errorMsg);
         }
     };
 
@@ -336,64 +330,39 @@ const EcourseViewerPage = () => {
                                                     Klaim Sertifikat Anda
                                                 </h3>
 
-                                                {certRequest ? (
-                                                    <div className="bg-green-50 border border-green-100 rounded-2xl p-6 text-center">
-                                                        <div className="w-12 h-12 bg-green-600 text-white rounded-full flex items-center justify-center mx-auto mb-3">
-                                                            <span className="material-icons">history</span>
+                                                {course.certificate_design ? (
+                                                    <div className="space-y-6">
+                                                        <div className="bg-amber-50 border border-amber-100 rounded-2xl p-6 flex items-start gap-4 shadow-sm">
+                                                            <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm">
+                                                                <span className="material-icons text-amber-500">info</span>
+                                                            </div>
+                                                            <div>
+                                                                <p className="text-sm font-black text-amber-900 mb-1">Penting Sebelum Download!</p>
+                                                                <p className="text-xs text-amber-800 leading-relaxed">
+                                                                    Nama pada sertifikat diambil dari **Nama Lengkap** di profil Anda. Pastikan nama profil Anda sudah benar sebelum mendownload.
+                                                                </p>
+                                                                <button 
+                                                                    onClick={() => navigate('/profile/edit')}
+                                                                    className="mt-2 text-[10px] font-black text-amber-900 underline uppercase tracking-widest"
+                                                                >
+                                                                    Cek/Edit Profil
+                                                                </button>
+                                                            </div>
                                                         </div>
-                                                        <p className="font-black text-green-800">Permintaan Sertifikat: {certRequest.status === 'pending' ? 'Menunggu Antrian' : certRequest.status === 'processed' ? 'Sedang Diproses' : 'Sudah Dikirim'}</p>
-                                                        <p className="text-xs text-green-600 mt-2 leading-relaxed">
-                                                            {course.certificate_info || "Sertifikat Anda akan dikirimkan secara manual oleh pengajar melalui email atau WhatsApp segera sedalam 1x24 jam."}
-                                                        </p>
+
+                                                        <button
+                                                            onClick={handleDownloadCert}
+                                                            className="w-full bg-green-600 text-white font-black py-5 rounded-[1.5rem] shadow-xl hover:bg-green-700 transition transform hover:-translate-y-1 active:scale-95 flex items-center justify-center gap-3"
+                                                        >
+                                                            <span className="material-icons text-xl">download</span>
+                                                            <span className="text-sm uppercase tracking-widest">DOWNLOAD SERTIFIKAT SEKARANG</span>
+                                                        </button>
                                                     </div>
                                                 ) : (
-                                                    <form onSubmit={handleCertSubmit} className="space-y-4">
-                                                        <p className="text-xs text-gray-500 mb-4 leading-relaxed">
-                                                            {course.certificate_info || "Sertifikat akan dikirimkan manual. Silakan isi detail di bawah dengan benar agar tidak ada kesalahan penulisan nama."}
-                                                        </p>
-                                                        <div>
-                                                            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">Nama Lengkap (Sertifikat)</label>
-                                                            <input
-                                                                type="text"
-                                                                required
-                                                                value={certName}
-                                                                onChange={(e) => setCertName(e.target.value)}
-                                                                className="w-full bg-gray-50 border-none rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-green-500"
-                                                                placeholder="Masukkan nama lengkap Anda..."
-                                                            />
-                                                        </div>
-                                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                                            <div>
-                                                                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">Email</label>
-                                                                <input
-                                                                    type="email"
-                                                                    required
-                                                                    value={certEmail}
-                                                                    onChange={(e) => setCertEmail(e.target.value)}
-                                                                    className="w-full bg-gray-50 border-none rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-green-500"
-                                                                    placeholder="email@anda.com"
-                                                                />
-                                                            </div>
-                                                            <div>
-                                                                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">WhatsApp</label>
-                                                                <input
-                                                                    type="text"
-                                                                    required
-                                                                    value={certWhatsapp}
-                                                                    onChange={(e) => setCertWhatsapp(e.target.value)}
-                                                                    className="w-full bg-gray-50 border-none rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-green-500"
-                                                                    placeholder="0812xxxx"
-                                                                />
-                                                            </div>
-                                                        </div>
-                                                        <button
-                                                            type="submit"
-                                                            disabled={submittingCert}
-                                                            className="w-full bg-green-600 text-white font-black py-4 rounded-2xl shadow-lg hover:bg-green-700 transition transform hover:-translate-y-1 active:scale-95 disabled:opacity-50"
-                                                        >
-                                                            {submittingCert ? 'Sedang Mengirim...' : 'KIRIM PERMINTAAN SERTIFIKAT'}
-                                                        </button>
-                                                    </form>
+                                                    <div className="bg-gray-50 border border-gray-100 rounded-2xl p-6 text-center">
+                                                        <span className="material-icons text-gray-300 text-4xl mb-2">pending_actions</span>
+                                                        <p className="text-sm font-bold text-gray-500 italic">Sertifikat otomatis sedang dipersiapkan oleh instruktur.</p>
+                                                    </div>
                                                 )}
                                             </div>
                                         ) : (

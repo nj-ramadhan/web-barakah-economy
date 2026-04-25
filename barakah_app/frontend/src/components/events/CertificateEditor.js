@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { getCertificateSettings, updateCertificateSettings } from '../../services/eventApi';
 
-const CertificateEditor = ({ slug }) => {
+const CertificateEditor = ({ slug, courseId, customFetch, customUpdate }) => {
     const [settings, setSettings] = useState({
         name_x: 10,
         name_y: 45,
@@ -41,11 +41,14 @@ const CertificateEditor = ({ slug }) => {
         link.href = 'https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;700&family=Great+Vibes&family=Montserrat:wght@400;600;700&family=Playfair+Display:wght@400;700&family=Roboto:wght@400;700&display=swap';
         link.rel = 'stylesheet';
         document.head.appendChild(link);
-    }, [slug]);
+    }, [slug, courseId]);
 
     const fetchSettings = async () => {
         try {
-            const response = await getCertificateSettings(slug);
+            const response = customFetch 
+                ? await customFetch(courseId)
+                : await getCertificateSettings(slug);
+                
             if (response.data) {
                 setSettings({
                     ...settings,
@@ -137,7 +140,11 @@ const CertificateEditor = ({ slug }) => {
         });
 
         try {
-            await updateCertificateSettings(slug, formData);
+            if (customUpdate) {
+                await customUpdate(courseId, formData);
+            } else {
+                await updateCertificateSettings(slug, formData);
+            }
             alert("Pengaturan sertifikat berhasil disimpan!");
         } catch (error) {
             console.error("Save error", error);

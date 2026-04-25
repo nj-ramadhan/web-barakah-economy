@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Course, CourseEnrollment, CourseMaterial, UserCourseProgress, Certificate, CertificateRequest
+from .models import Course, CourseEnrollment, CourseMaterial, UserCourseProgress, Certificate, CertificateRequest, CourseCertificate
 from django.contrib.auth import get_user_model
 
 class CourseMaterialSerializer(serializers.ModelSerializer):
@@ -22,6 +22,11 @@ class CertificateRequestSerializer(serializers.ModelSerializer):
         model = CertificateRequest
         fields = ['id', 'user', 'course', 'full_name', 'email', 'whatsapp', 'notes', 'status', 'created_at']
         read_only_fields = ['user', 'status']
+
+class CourseCertificateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CourseCertificate
+        fields = '__all__'
 
 class CourseEnrollmentSerializer(serializers.ModelSerializer):
     course_title = serializers.ReadOnlyField(source='course.title')
@@ -56,6 +61,7 @@ class CourseSerializer(serializers.ModelSerializer):
     student_count = serializers.SerializerMethodField()
     material_count = serializers.SerializerMethodField()
     instructor_name = serializers.ReadOnlyField(source='instructor.username')
+    certificate_design = serializers.SerializerMethodField()
 
     class Meta:
         model = Course
@@ -63,7 +69,7 @@ class CourseSerializer(serializers.ModelSerializer):
             'id', 'title', 'slug', 'description', 'instructor', 'instructor_name',
             'thumbnail', 'price', 'discount', 'is_active', 'is_featured', 'category',
             'duration', 'has_certificate', 'certificate_info', 'view_count', 'created_at', 
-            'materials', 'student_count', 'material_count', 'students'
+            'materials', 'student_count', 'material_count', 'students', 'certificate_design'
         ]
         read_only_fields = ['instructor']
 
@@ -99,5 +105,14 @@ class CourseSerializer(serializers.ModelSerializer):
             students_list.append(student_data)
             
         return students_list
+
+    def get_certificate_design(self, obj):
+        try:
+            design = getattr(obj, 'certificate_design', None)
+            if design:
+                return CourseCertificateSerializer(design).data
+            return None
+        except Exception:
+            return None
 
 

@@ -76,3 +76,16 @@ export const getAdminAllCourses = () =>
 export const deleteAdminCourse = (id) =>
     api.delete(`${API_BASE}/admin-courses/${id}/`);
 
+// Certificates
+export const getCourseCertificateSettings = (courseId) =>
+    api.get(`${API_BASE}/${courseId}/certificate_settings/`);
+
+export const updateCourseCertificateSettings = (courseId, formData) =>
+    api.post(`${API_BASE}/${courseId}/certificate_settings/`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+    });
+
+export const downloadCourseCertificate = (courseId) =>
+    api.get(`${API_BASE}/${courseId}/download_certificate/`, {
+        responseType: 'blob'
+    });

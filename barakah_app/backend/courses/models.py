@@ -155,3 +155,35 @@ class CertificateRequest(models.Model):
 
     def __str__(self):
         return f"Cert Request: {self.full_name} - {self.course.title}"
+
+class CourseCertificate(models.Model):
+    course = models.OneToOneField(Course, on_delete=models.CASCADE, related_name='certificate_design')
+    template_image = models.ImageField(upload_to='courses/certificates/templates/', blank=True, null=True)
+    
+    # Text positioning for name
+    name_x = models.FloatField(default=10.0) # Percentage from left
+    name_y = models.FloatField(default=45.0) # Percentage from top
+    name_width = models.FloatField(default=80.0)
+    name_height = models.FloatField(default=10.0)
+    
+    # Styling for name
+    font_size = models.IntegerField(default=60)
+    font_color = models.CharField(max_length=20, default='#000000')
+    font_family = models.CharField(max_length=100, default='Roboto-Bold.ttf')
+    font_bold = models.BooleanField(default=True)
+    font_italic = models.BooleanField(default=False)
+    text_align = models.CharField(max_length=10, default='center')
+    vertical_align = models.CharField(max_length=10, default='middle')
+
+    # Unique Code (Optional)
+    show_unique_code = models.BooleanField(default=False)
+    code_x = models.FloatField(default=10.0)
+    code_y = models.FloatField(default=90.0)
+    code_font_size = models.IntegerField(default=30)
+
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Certificate Design for {self.course.title}"

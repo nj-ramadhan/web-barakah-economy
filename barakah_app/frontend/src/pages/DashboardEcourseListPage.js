@@ -5,7 +5,8 @@ import { Helmet } from 'react-helmet';
 import Header from '../components/layout/Header';
 import BackButton from '../components/global/BackButton';
 import NavigationButton from '../components/layout/Navigation';
-import { getMyCourses, updateCourse, deleteCourse } from '../services/ecourseApi';
+import { getMyCourses, updateCourse, deleteCourse, getCourseCertificateSettings, updateCourseCertificateSettings } from '../services/ecourseApi';
+import CertificateEditor from '../components/events/CertificateEditor';
 import '../styles/Body.css';
 
 const formatIDR = (amount) => {
@@ -23,6 +24,7 @@ const DashboardEcourseListPage = () => {
     const navigate = useNavigate();
     const [courses, setCourses] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [selectedCourseForCert, setSelectedCourseForCert] = useState(null);
 
     const fetchCourses = useCallback(async () => {
         try {
@@ -183,6 +185,13 @@ const DashboardEcourseListPage = () => {
                                                 >
                                                     <span className="material-icons text-lg">delete</span>
                                                 </button>
+                                                <button
+                                                    onClick={() => setSelectedCourseForCert(course)}
+                                                    className="w-9 h-9 flex items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition"
+                                                    title="Pengaturan Sertifikat"
+                                                >
+                                                    <span className="material-icons text-lg">workspace_premium</span>
+                                                </button>
                                             </div>
                                         </div>
                                     </div>
@@ -192,6 +201,33 @@ const DashboardEcourseListPage = () => {
                     </div>
                 )}
             </div>
+
+            {/* Certificate Editor Modal */}
+            {selectedCourseForCert && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+                    <div className="bg-white rounded-3xl w-full max-w-6xl max-h-[90vh] overflow-y-auto shadow-2xl">
+                        <div className="sticky top-0 bg-white p-6 border-b border-gray-100 flex justify-between items-center z-10">
+                            <div>
+                                <h2 className="text-xl font-bold text-gray-900">Pengaturan Sertifikat</h2>
+                                <p className="text-xs text-gray-500">{selectedCourseForCert.title}</p>
+                            </div>
+                            <button 
+                                onClick={() => setSelectedCourseForCert(null)}
+                                className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 hover:bg-gray-100 transition"
+                            >
+                                <span className="material-icons">close</span>
+                            </button>
+                        </div>
+                        <div className="p-6">
+                            <CertificateEditor 
+                                courseId={selectedCourseForCert.id}
+                                customFetch={getCourseCertificateSettings}
+                                customUpdate={updateCourseCertificateSettings}
+                            />
+                        </div>
+                    </div>
+                </div>
+            )}
 
             <NavigationButton />
         </div>

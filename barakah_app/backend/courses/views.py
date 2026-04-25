@@ -7,7 +7,7 @@ from rest_framework import status
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from rest_framework.decorators import action
-from .models import Course, CourseEnrollment, CourseMaterial, UserCourseProgress, CertificateRequest
+from .models import Course, CourseEnrollment, CourseMaterial, UserCourseProgress, CertificateRequest, CourseCertificate
 from .serializers import CourseSerializer, CourseEnrollmentSerializer, CourseMaterialSerializer, UserCourseProgressSerializer, CertificateRequestSerializer
 from django.conf import settings
 from django.shortcuts import render
@@ -91,6 +91,231 @@ class CourseViewSet(viewsets.ModelViewSet):
         courses = self.get_queryset()
         serializer = self.get_serializer(courses, many=True)
         return Response(serializer.data)
+
+    @action(detail=True, methods=['get', 'post'], url_path='certificate_settings')
+    def certificate_settings(self, request, pk=None):
+        course = self.get_object()
+        
+        # Check if user is instructor or admin
+        if not (request.user == course.instructor or request.user.is_staff):
+            return Response({'detail': 'Hanya instruktur yang bisa mengubah pengaturan sertifikat.'}, status=403)
+            
+        cert, created = CourseCertificate.objects.get_or_create(course=course)
+        
+        if request.method == 'POST':
+            # Handle template image upload separately
+            template_image = request.FILES.get('template_image')
+            if template_image:
+                cert.template_image = template_image
+            
+            # Use serializer for other fields
+            serializer = CourseCertificateSerializer(cert, data=request.data, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data)
+            return Response(serializer.errors, status=400)
+            
+        serializer = CourseCertificateSerializer(cert)
+        return Response(serializer.data)
+
+    @action(detail=True, methods=['get'], url_path='download_certificate')
+    def download_certificate(self, request, pk=None):
+        course = self.get_object()
+        user = request.user
+        
+        # Check if user is enrolled
+        is_enrolled = CourseEnrollment.objects.filter(
+            user=user, 
+            course=course, 
+            payment_status__in=['paid', 'verified']
+        ).exists()
+        
+        if not is_enrolled and not user.is_staff and user != course.instructor:
+            return Response({'error': 'Anda belum terdaftar di kelas ini.'}, status=403)
+            
+        # Check if course is completed
+        total_materials = course.materials.count()
+        completed_materials = UserCourseProgress.objects.filter(user=user, course=course, is_completed=True).count()
+        
+        if total_materials > 0 and completed_materials < total_materials and not user.is_staff:
+             return Response({'error': 'Silakan selesaikan semua materi kelas terlebih dahulu.'}, status=400)
+
+        try:
+            cert = course.certificate_design
+        except:
+            return Response({'error': 'Sertifikat belum dikonfigurasi untuk kelas ini.'}, status=404)
+            
+        if not cert.template_image:
+            return Response({'error': 'Template sertifikat belum diunggah.'}, status=404)
+
+        # Get participant name from profile
+        profile = getattr(user, 'profile', None)
+        participant_name = (profile.name_full if profile else user.username) or user.username
+        
+        if not participant_name:
+            return Response({'error': 'Nama lengkap belum diisi di profil Anda.'}, status=400)
+
+        # Generate image using Pillow
+        from PIL import Image, ImageDraw, ImageFont
+        import os
+        from django.http import HttpResponse
+        from io import BytesIO
+        
+        try:
+            # Open template
+            img = Image.open(cert.template_image.path).convert("RGB")
+            draw = ImageDraw.Draw(img)
+            width, height = img.size
+            
+            # Position calculations (percentages to pixels)
+            name_x_px = int(width * cert.name_x / 100)
+            name_y_px = int(height * cert.name_y / 100)
+            name_width_px = int(width * cert.name_width / 100)
+            name_height_px = int(height * cert.name_height / 100)
+            
+            # Scale font size relative to image height (reference: 1000px height)
+            scaled_font_size = int((cert.font_size / 1000.0) * height)
+            
+            # Load font
+            font_filename = cert.font_family
+            fonts_dir = os.path.join(os.path.dirname(__file__), 'fonts')
+            os.makedirs(fonts_dir, exist_ok=True)
+            font_path = os.path.join(fonts_dir, font_filename)
+            
+            # Auto-download if missing
+            if not os.path.exists(font_path):
+                import requests
+                font_urls = {
+                    'DancingScript-Bold.ttf': 'https://github.com/google/fonts/raw/main/ofl/dancingscript/DancingScript%5Bwght%5D.ttf',
+                    'GreatVibes-Regular.ttf': 'https://github.com/google/fonts/raw/main/ofl/greatvibes/GreatVibes-Regular.ttf',
+                    'Roboto-Bold.ttf': 'https://github.com/google/fonts/raw/main/apache/roboto/static/Roboto-Bold.ttf',
+                    'PlayfairDisplay-Bold.ttf': 'https://github.com/google/fonts/raw/main/ofl/playfairdisplay/static/PlayfairDisplay-Bold.ttf',
+                    'Montserrat-SemiBold.ttf': 'https://github.com/google/fonts/raw/main/ofl/montserrat/static/Montserrat-SemiBold.ttf'
+                }
+                if font_filename in font_urls:
+                    try:
+                        r = requests.get(font_urls[font_filename], timeout=10)
+                        if r.status_code == 200:
+                            with open(font_path, 'wb') as f:
+                                f.write(r.content)
+                    except:
+                        pass
+
+            font = None
+            if os.path.exists(font_path):
+                try:
+                    font = ImageFont.truetype(font_path, scaled_font_size)
+                except:
+                    pass
+            
+            if not font:
+                # Attempt to find any font in a common system location
+                fallbacks = ["arial.ttf", "DejaVuSans.ttf", "Roboto-Regular.ttf"]
+                if cert.font_bold:
+                    fallbacks = ["arialbd.ttf", "DejaVuSans-Bold.ttf"] + fallbacks
+                
+                for f_name in fallbacks:
+                    try:
+                        font = ImageFont.truetype(f_name, scaled_font_size)
+                        break
+                    except:
+                        continue
+            
+            if not font:
+                font = ImageFont.load_default()
+
+            # Prepare text drawing
+            color = cert.font_color if cert.font_color.startswith('#') else '#000000'
+            
+            # Word Wrap Logic
+            def wrap_text(text, font, max_width):
+                lines = []
+                words = text.split()
+                if not words: return []
+                
+                current_line = words[0]
+                for word in words[1:]:
+                    test_line = current_line + " " + word
+                    try:
+                        left, top, right, bottom = draw.textbbox((0, 0), test_line, font=font)
+                        w = right - left
+                    except:
+                        w, _ = draw.textsize(test_line, font=font)
+                    
+                    if w <= max_width:
+                        current_line = test_line
+                    else:
+                        lines.append(current_line)
+                        current_line = word
+                lines.append(current_line)
+                return lines
+
+            lines = wrap_text(participant_name, font, name_width_px)
+
+            # Calculate total height of all lines to handle vertical alignment
+            total_text_height = 0
+            line_details = []
+            for line in lines:
+                try:
+                    left, top, right, bottom = draw.textbbox((0, 0), line, font=font)
+                    w, h = right - left, bottom - top
+                except:
+                    w, h = draw.textsize(line, font=font)
+                
+                line_spacing = int(h * 0.2)
+                line_details.append({'text': line, 'w': w, 'h': h, 'spacing': line_spacing})
+                total_text_height += h + line_spacing
+            
+            if line_details:
+                total_text_height -= line_details[-1]['spacing'] # Remove last spacing
+
+            # Calculate starting Y based on vertical alignment
+            v_align = getattr(cert, 'vertical_align', 'middle')
+            if v_align == 'top':
+                start_y = name_y_px
+            elif v_align == 'bottom':
+                start_y = name_y_px + name_height_px - total_text_height
+            else: # middle
+                start_y = name_y_px + (name_height_px - total_text_height) // 2
+
+            # Draw lines
+            current_y = start_y
+            for detail in line_details:
+                # Horizontal Align
+                if cert.text_align == 'left':
+                    line_x = name_x_px
+                elif cert.text_align == 'right':
+                    line_x = name_x_px + name_width_px - detail['w']
+                else: # center
+                    line_x = name_x_px + (name_width_px - detail['w']) // 2
+                
+                draw.text((line_x, current_y), detail['text'], font=font, fill=color)
+                current_y += detail['h'] + detail['spacing']
+
+            # Draw Unique Code if active
+            if cert.show_unique_code:
+                code_x_px = int(width * cert.code_x / 100)
+                code_y_px = int(height * cert.code_y / 100)
+                code_font_size = int((cert.code_font_size / 1000.0) * height)
+                
+                # Use a standard font for code if possible
+                try:
+                    code_font = ImageFont.truetype("arial.ttf", code_font_size)
+                except:
+                    code_font = font # Fallback to name font if scaled appropriately
+                
+                # Generate unique code (e.g. EC-COURSEID-USERID)
+                unique_code = f"BAE-EC-{course.id}-{user.id}"
+                draw.text((code_x_px, code_y_px), unique_code, font=code_font, fill=color)
+
+            # Save to response
+            response = HttpResponse(content_type="image/jpeg")
+            img.save(response, "JPEG", quality=95)
+            response['Content-Disposition'] = f'attachment; filename="Certificate_{course.slug}.jpg"'
+            return response
+
+        except Exception as e:
+            return Response({'error': f'Gagal membuat sertifikat: {str(e)}'}, status=500)
 
 class CourseDetailViewSet(APIView):
     def get(self, request, slug):
