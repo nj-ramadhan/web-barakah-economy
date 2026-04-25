@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { getCertificateSettings, updateCertificateSettings } from '../../services/eventApi';
-import { toast } from 'react-toastify';
 
 const CertificateEditor = ({ slug }) => {
     const [settings, setSettings] = useState({
@@ -130,10 +129,10 @@ const CertificateEditor = ({ slug }) => {
 
         try {
             await updateCertificateSettings(slug, formData);
-            toast.success("Pengaturan sertifikat berhasil disimpan!");
+            alert("Pengaturan sertifikat berhasil disimpan!");
         } catch (error) {
             console.error("Save error", error);
-            toast.error("Gagal menyimpan pengaturan.");
+            alert("Gagal menyimpan pengaturan.");
         }
     };
 
