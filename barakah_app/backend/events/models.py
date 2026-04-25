@@ -288,3 +288,32 @@ class EventRegistrationFile(models.Model):
 
     def __str__(self):
         return f"File for {self.field.label} - {self.registration.id}"
+
+class EventCertificate(models.Model):
+    event = models.OneToOneField(Event, on_delete=models.CASCADE, related_name='certificate')
+    template_image = models.ImageField(upload_to='events/certificates/templates/')
+    
+    # Position in percentage (0-100) for better responsiveness
+    name_x = models.FloatField(default=50.0)
+    name_y = models.FloatField(default=50.0)
+    
+    font_size = models.IntegerField(default=40)
+    font_color = models.CharField(max_length=7, default='#000000') # HEX color
+    font_family = models.CharField(max_length=100, default='Roboto-Bold.ttf')
+    
+    # Bounding box for name (as percentage of image size)
+    name_width = models.FloatField(default=80.0)
+    name_height = models.FloatField(default=10.0)
+    text_align = models.CharField(max_length=20, default='center') # left, center, right
+
+    show_unique_code = models.BooleanField(default=False)
+    code_x = models.FloatField(default=10.0)
+    code_y = models.FloatField(default=90.0)
+    code_font_size = models.IntegerField(default=20)
+    
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Certificate for {self.event.title}"

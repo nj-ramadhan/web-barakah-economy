@@ -4,7 +4,7 @@ import { Helmet } from 'react-helmet';
 import { QRCodeSVG } from 'qrcode.react';
 import Header from '../components/layout/Header';
 import NavigationButton from '../components/layout/Navigation';
-import { getEventDetail, registerForEvent, getEventParticipants } from '../services/eventApi';
+import { getEventDetail, registerForEvent, getEventParticipants, downloadCertificate } from '../services/eventApi';
 import authService from '../services/auth';
 import Footer from '../components/layout/Footer';
 import CurrencyInput from '../components/common/CurrencyInput';
@@ -213,6 +213,32 @@ const EventDetailPage = () => {
             // Fallback: WhatsApp share link
             const waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(`${shareTitle}\n\n${shareText}\n\nCek selengkapnya di: ${shareUrl}`)}`;
             window.open(waUrl, '_blank');
+        }
+    };
+
+    const handleDownloadCertificate = async () => {
+        try {
+            const res = await downloadCertificate(slug);
+            const url = window.URL.createObjectURL(new Blob([res.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `Sertifikat_${event.title}.jpg`);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+        } catch (err) {
+            console.error(err);
+            // Handle error response blob
+            if (err.response?.data instanceof Blob) {
+                const reader = new FileReader();
+                reader.onload = () => {
+                    const errorMsg = JSON.parse(reader.result).error;
+                    alert(errorMsg || 'Gagal mengunduh sertifikat.');
+                };
+                reader.readAsText(err.response.data);
+            } else {
+                alert(err.response?.data?.error || 'Gagal mengunduh sertifikat. Pastikan Anda telah terdaftar dan hadir di event ini.');
+            }
         }
     };
 
@@ -670,26 +696,47 @@ const EventDetailPage = () => {
                                         </h2>
 
                                         {/* Link Download - Private */}
-                                        {event.documentation_link && (
-                                            <div className="shrink-0">
-                                                {event.user_registration && event.user_registration.status === 'approved' ? (
-                                                    <a
-                                                        href={event.documentation_link}
-                                                        target="_blank"
-                                                        rel="noreferrer"
-                                                        className="bg-purple-100 text-purple-700 px-5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 hover:bg-purple-200 transition"
-                                                    >
-                                                        <span className="material-icons text-sm">download</span>
-                                                        Download Materi & Sertifikat
-                                                    </a>
-                                                ) : (
-                                                    <div className="bg-gray-50 text-gray-400 px-5 py-2.5 rounded-xl text-[10px] font-bold flex items-center gap-2 italic">
-                                                        <span className="material-icons text-sm">lock</span>
-                                                        Link tersedia bagi peserta terdaftar
-                                                    </div>
-                                                )}
-                                            </div>
-                                        )}
+                                        <div className="flex flex-wrap gap-3 shrink-0">
+                                            {event.certificate && event.certificate.is_active && (
+                                                <>
+                                                    {event.user_registration && event.user_registration.status === 'approved' ? (
+                                                        <button
+                                                            onClick={handleDownloadCertificate}
+                                                            className="bg-green-600 text-white px-5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 hover:bg-green-700 transition shadow-lg shadow-green-100"
+                                                        >
+                                                            <span className="material-icons text-sm">workspace_premium</span>
+                                                            Download Sertifikat
+                                                        </button>
+                                                    ) : (
+                                                        <div className="bg-gray-50 text-gray-400 px-5 py-2.5 rounded-xl text-[10px] font-bold flex items-center gap-2 italic border border-gray-100">
+                                                            <span className="material-icons text-sm">lock</span>
+                                                            Sertifikat tersedia bagi peserta
+                                                        </div>
+                                                    )}
+                                                </>
+                                            )}
+
+                                            {event.documentation_link && (
+                                                <>
+                                                    {event.user_registration && event.user_registration.status === 'approved' ? (
+                                                        <a
+                                                            href={event.documentation_link}
+                                                            target="_blank"
+                                                            rel="noreferrer"
+                                                            className="bg-purple-100 text-purple-700 px-5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 hover:bg-purple-200 transition"
+                                                        >
+                                                            <span className="material-icons text-sm">download</span>
+                                                            Download Materi
+                                                        </a>
+                                                    ) : (
+                                                        <div className="bg-gray-50 text-gray-400 px-5 py-2.5 rounded-xl text-[10px] font-bold flex items-center gap-2 italic">
+                                                            <span className="material-icons text-sm">lock</span>
+                                                            Materi tersedia bagi peserta
+                                                        </div>
+                                                    )}
+                                                </>
+                                            )}
+                                        </div>
                                     </div>
 
                                     {/* Photo Grid 3x3 */}

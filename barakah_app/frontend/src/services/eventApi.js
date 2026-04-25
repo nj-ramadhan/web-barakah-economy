@@ -131,3 +131,25 @@ export const deleteDocumentationImage = (slug, imageId) => {
         headers: getAuthHeaders()
     });
 };
+
+export const getCertificateSettings = (slug) => {
+    return axios.get(`${API_BASE_URL}/api/events/${slug}/certificate_settings/`, {
+        headers: getAuthHeaders()
+    });
+};
+
+export const updateCertificateSettings = (slug, formData) => {
+    return axios.post(`${API_BASE_URL}/api/events/${slug}/certificate_settings/`, formData, {
+        headers: {
+            ...getAuthHeaders(),
+            'Content-Type': 'multipart/form-data',
+        }
+    });
+};
+
+export const downloadCertificate = (slug) => {
+    return axios.get(`${API_BASE_URL}/api/events/${slug}/download_certificate/`, {
+        headers: getAuthHeaders(),
+        responseType: 'blob'
+    });
+};

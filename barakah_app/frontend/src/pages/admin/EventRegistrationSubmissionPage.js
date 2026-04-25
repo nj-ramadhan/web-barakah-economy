@@ -1,14 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useLocation } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
 import Header from '../../components/layout/Header';
 import NavigationButton from '../../components/layout/Navigation';
 import { getEventRegistrations, getEventDetail, exportRegistrationsCsv, blastEventWhatsapp, bulkDeleteRegistrations } from '../../services/eventApi';
 import EventManualRegistrationModal from '../../components/admin/EventManualRegistrationModal';
+import CertificateEditor from '../../components/events/CertificateEditor';
 import '../../styles/Body.css';
 
 const EventRegistrationSubmissionPage = () => {
     const { slug } = useParams();
+    const location = useLocation();
+    const queryParams = new URLSearchParams(location.search);
+    const initialTab = queryParams.get('tab') || 'participants';
+
     const [event, setEvent] = useState(null);
     const [registrations, setRegistrations] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -20,6 +25,7 @@ const EventRegistrationSubmissionPage = () => {
     const [selectedPaymentProof, setSelectedPaymentProof] = useState(null);
     const [selectedIds, setSelectedIds] = useState([]);
     const [showManualModal, setShowManualModal] = useState(false);
+    const [activeTab, setActiveTab] = useState(initialTab); // 'participants' or 'certificate'
 
     useEffect(() => {
         fetchData();
@@ -195,7 +201,25 @@ const EventRegistrationSubmissionPage = () => {
                         <h1 className="text-3xl font-black text-gray-900 tracking-tight">Daftar Pendaftar</h1>
                         <p className="text-xs font-bold text-gray-400 uppercase tracking-[0.2em] mt-1">{event?.title}</p>
                     </div>
-                    <div className="flex flex-wrap gap-2">
+                    </div>
+                    <div className="flex flex-col md:flex-row items-center gap-4">
+                        {/* Tab Switcher */}
+                        <div className="flex bg-gray-100 p-1 rounded-2xl border border-gray-200">
+                            <button 
+                                onClick={() => setActiveTab('participants')}
+                                className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'participants' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+                            >
+                                Pendaftar
+                            </button>
+                            <button 
+                                onClick={() => setActiveTab('certificate')}
+                                className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'certificate' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+                            >
+                                Sertifikat
+                            </button>
+                        </div>
+
+                        <div className="flex flex-wrap gap-2">
                         {selectedIds.length > 0 && (
                             <div className="flex items-center gap-2 px-4 py-2 bg-green-50 rounded-xl border border-green-100 animate-in fade-in slide-in-from-left-4">
                                 <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
@@ -236,9 +260,11 @@ const EventRegistrationSubmissionPage = () => {
                             Blast WA
                         </button>
                     </div>
+                    </div>
                 </div>
 
-                <div className="bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden">
+                {activeTab === 'participants' ? (
+                    <div className="bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden">
                     <div className="overflow-x-auto">
                         <table className="w-full text-left border-collapse">
                             <thead>
@@ -433,7 +459,9 @@ const EventRegistrationSubmissionPage = () => {
                             </tbody>
                         </table>
                     </div>
-                </div>
+                ) : (
+                    <CertificateEditor slug={slug} />
+                )}
             </div>
 
             {/* PRINT COMPONENT (Hidden in Browser) */}

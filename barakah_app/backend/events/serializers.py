@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Event, EventFormField, EventRegistration, EventRegistrationFile, EventDocumentationImage
+from .models import Event, EventFormField, EventRegistration, EventRegistrationFile, EventDocumentationImage, EventCertificate
 from accounts.serializers import UserAdminSerializer
 
 class EventFormFieldSerializer(serializers.ModelSerializer):
@@ -47,6 +47,12 @@ class EventAttendanceSerializer(serializers.ModelSerializer):
         return ""
 
 
+class EventCertificateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EventCertificate
+        fields = '__all__'
+
+
 class EventSerializer(serializers.ModelSerializer):
     created_by_details = UserAdminSerializer(source='created_by', read_only=True)
     form_fields = EventFormFieldSerializer(many=True, required=False)
@@ -56,6 +62,7 @@ class EventSerializer(serializers.ModelSerializer):
     registration_count = serializers.SerializerMethodField()
     attended_count = serializers.SerializerMethodField()
     user_registration = serializers.SerializerMethodField()
+    certificate = EventCertificateSerializer(read_only=True)
 
     def get_registration_count(self, obj):
         # Count all registrations as they are now auto-approved

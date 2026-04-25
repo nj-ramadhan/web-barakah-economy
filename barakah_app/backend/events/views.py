@@ -641,6 +641,175 @@ class EventViewSet(viewsets.ModelViewSet):
         except EventDocumentationImage.DoesNotExist:
             return Response({"error": "Image not found"}, status=status.HTTP_404_NOT_FOUND)
 
+    @action(detail=True, methods=['post', 'get'], permission_classes=[permissions.IsAuthenticated])
+    def certificate_settings(self, request, slug=None):
+        """Manage certificate settings for an event."""
+        event = self.get_object()
+        if not (request.user.is_staff or event.created_by == request.user):
+            return Response({"error": "Hanya penyelenggara yang bisa mengelola sertifikat."}, status=status.HTTP_403_FORBIDDEN)
+            
+        from .models import EventCertificate
+        from .serializers import EventCertificateSerializer
+        cert, created = EventCertificate.objects.get_or_create(event=event)
+        
+        if request.method == 'POST':
+            # Handle template_image if provided in request.FILES
+            if 'template_image' in request.FILES:
+                cert.template_image = request.FILES['template_image']
+            
+            # Update other fields
+            for field in ['name_x', 'name_y', 'font_size', 'font_color', 'font_family', 'show_unique_code', 'code_x', 'code_y', 'code_font_size', 'is_active']:
+                if field in request.data:
+                    val = request.data.get(field)
+                    # Convert types if necessary
+                    try:
+                        if field in ['name_x', 'name_y', 'code_x', 'code_y']: val = float(val)
+                        if field in ['font_size', 'code_font_size']: val = int(val)
+                        if field in ['is_active', 'show_unique_code']: 
+                            val = val in [True, 'true', '1', 1]
+                        setattr(cert, field, val)
+                    except (ValueError, TypeError):
+                        pass
+            
+            cert.save()
+            return Response(EventCertificateSerializer(cert).data)
+            
+        # GET request
+        return Response(EventCertificateSerializer(cert).data)
+
+    @action(detail=True, methods=['get'], permission_classes=[permissions.IsAuthenticated])
+    def download_certificate(self, request, slug=None):
+        """Download personalized certificate for the user."""
+        event = self.get_object()
+        
+        from .models import EventCertificate, EventRegistration
+        try:
+            cert = event.certificate
+            if not cert.is_active or not cert.template_image:
+                return Response({"error": "Sertifikat belum diaktifkan oleh penyelenggara."}, status=status.HTTP_400_BAD_REQUEST)
+        except EventCertificate.DoesNotExist:
+            return Response({"error": "Sertifikat tidak tersedia untuk event ini."}, status=status.HTTP_404_NOT_FOUND)
+            
+        # Verify registration
+        registration = EventRegistration.objects.filter(event=event, user=request.user, status='approved').first()
+        if not registration:
+            return Response({"error": "Hanya peserta terdaftar yang bisa mengunduh sertifikat."}, status=status.HTTP_403_FORBIDDEN)
+            
+        # Get name from responses
+        _, _, participant_name = self._detect_contact_info_standalone(registration)
+        if not participant_name:
+            profile = getattr(request.user, 'profile', None)
+            participant_name = profile.name_full if profile and profile.name_full else request.user.username
+
+        # Generate image using Pillow
+        from PIL import Image, ImageDraw, ImageFont
+        import os
+        from django.http import HttpResponse
+        from io import BytesIO
+        
+        try:
+            # Open template
+            img = Image.open(cert.template_image.path).convert("RGB")
+            draw = ImageDraw.Draw(img)
+            width, height = img.size
+            
+            # Position calculations (percentages to pixels)
+            name_x_px = int(width * cert.name_x / 100)
+            name_y_px = int(height * cert.name_y / 100)
+            name_width_px = int(width * cert.name_width / 100)
+            
+            # Scale font size relative to image height (reference: 1000px height)
+            scaled_font_size = int((cert.font_size / 1000.0) * height)
+            
+            # Load font
+            font_path = os.path.join(os.path.dirname(__file__), 'fonts', cert.font_family)
+            font = None
+            if os.path.exists(font_path):
+                try:
+                    font = ImageFont.truetype(font_path, scaled_font_size)
+                except:
+                    pass
+            
+            if not font:
+                # Attempt to find any font in a common system location
+                fallbacks = ["arial.ttf", "DejaVuSans.ttf", "Roboto-Regular.ttf"]
+                for f in fallbacks:
+                    try:
+                        font = ImageFont.truetype(f, scaled_font_size)
+                        if font: break
+                    except:
+                        continue
+            
+            if not font:
+                font = ImageFont.load_default()
+                
+            # Word Wrap Logic
+            def wrap_text(text, font, max_width):
+                lines = []
+                words = text.split()
+                if not words: return [text]
+                
+                current_line = words[0]
+                for word in words[1:]:
+                    test_line = current_line + " " + word
+                    try:
+                        left, top, right, bottom = draw.textbbox((0, 0), test_line, font=font)
+                        w = right - left
+                    except:
+                        w, _ = draw.textsize(test_line, font=font)
+                    
+                    if w <= max_width:
+                        current_line = test_line
+                    else:
+                        lines.append(current_line)
+                        current_line = word
+                lines.append(current_line)
+                return lines
+
+            lines = wrap_text(participant_name, font, name_width_px)
+            
+            # Draw each line
+            current_y = name_y_px
+            for line in lines:
+                try:
+                    left, top, right, bottom = draw.textbbox((0, 0), line, font=font)
+                    line_w = right - left
+                    line_h = bottom - top
+                except:
+                    line_w, line_h = draw.textsize(line, font=font)
+                
+                # Align within bounding box
+                if cert.text_align == 'center':
+                    line_x = name_x_px + (name_width_px - line_w) // 2
+                elif cert.text_align == 'right':
+                    line_x = name_x_px + name_width_px - line_w
+                else: # left
+                    line_x = name_x_px
+                
+                draw.text((line_x, current_y), line, font=font, fill=cert.font_color)
+                current_y += line_h + int(line_h * 0.2) # 20% line spacing
+
+            # Draw unique code if enabled
+            if cert.show_unique_code and registration.unique_code:
+                code_font_size = int((cert.code_font_size / 1000.0) * height)
+                try:
+                    code_font = ImageFont.truetype(font_path, code_font_size) if os.path.exists(font_path) else ImageFont.load_default()
+                except:
+                    code_font = ImageFont.load_default()
+                
+                code_pos = (int(width * cert.code_x / 100), int(height * cert.code_y / 100))
+                draw.text(code_pos, f"ID: {registration.unique_code}", fill=cert.font_color, font=code_font)
+            
+            # Return image
+            buffer = BytesIO()
+            img.save(buffer, format="JPEG", quality=95)
+            response = HttpResponse(buffer.getvalue(), content_type="image/jpeg")
+            response['Content-Disposition'] = f'attachment; filename="Sertifikat_{registration.unique_code}.jpg"'
+            return response
+            
+        except Exception as e:
+            return Response({"error": f"Gagal membuat sertifikat: {str(e)}"}, status=500)
+
     @action(detail=True, methods=['get'], permission_classes=[permissions.IsAuthenticated])
     def my_registration(self, request, slug=None):
         """Get current user's registration detail for this event."""
