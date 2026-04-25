@@ -18,6 +18,8 @@ const CertificateEditor = ({ slug, courseId, customFetch, customUpdate }) => {
         code_x: 10,
         code_y: 90,
         code_font_size: 30,
+        code_font_family: 'Roboto-Bold.ttf',
+        code_font_color: '#000000',
         is_active: true
     });
     const [template, setTemplate] = useState(null);
@@ -158,8 +160,8 @@ const CertificateEditor = ({ slug, courseId, customFetch, customUpdate }) => {
         return (baseSize / 1000) * rect.height;
     };
 
-    const getCurrentFontCss = () => {
-        const font = FONT_OPTIONS.find(f => f.value === settings.font_family);
+    const getCurrentFontCss = (fontFamily) => {
+        const font = FONT_OPTIONS.find(f => f.value === fontFamily);
         return font ? font.css : 'sans-serif';
     };
 
@@ -219,7 +221,7 @@ const CertificateEditor = ({ slug, courseId, customFetch, customUpdate }) => {
                                             color: settings.font_color,
                                             fontWeight: settings.font_bold ? 'bold' : 'normal',
                                             fontStyle: settings.font_italic ? 'italic' : 'normal',
-                                            fontFamily: getCurrentFontCss(),
+                                            fontFamily: getCurrentFontCss(settings.font_family),
                                             textAlign: settings.text_align,
                                             width: '100%'
                                         }}
@@ -244,8 +246,8 @@ const CertificateEditor = ({ slug, courseId, customFetch, customUpdate }) => {
                                             left: `${settings.code_x}%`, 
                                             top: `${settings.code_y}%`,
                                             fontSize: `${getPreviewFontSize(settings.code_font_size)}px`,
-                                            color: settings.font_color,
-                                            fontFamily: 'monospace'
+                                            color: settings.code_font_color,
+                                            fontFamily: getCurrentFontCss(settings.code_font_family)
                                         }}
                                         onMouseDown={(e) => handleDrag(e, 'code')}
                                     >
@@ -365,8 +367,32 @@ const CertificateEditor = ({ slug, courseId, customFetch, customUpdate }) => {
                                 </button>
                             </div>
                             {settings.show_unique_code && (
-                                <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-inner">
-                                    <label className="text-[9px] font-bold text-gray-400 block mb-2 uppercase tracking-tighter">Ukuran ID</label>
+                                <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-inner space-y-4">
+                                    <div>
+                                        <label className="text-[9px] font-bold text-gray-400 block mb-2 uppercase tracking-tighter">Font ID</label>
+                                        <select 
+                                            value={settings.code_font_family}
+                                            onChange={(e) => setSettings({...settings, code_font_family: e.target.value})}
+                                            className="w-full bg-gray-50 border border-gray-100 rounded-lg px-3 py-2 text-[10px] font-bold focus:outline-none"
+                                        >
+                                            {FONT_OPTIONS.map(opt => (
+                                                <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-2">
+                                        <div>
+                                            <label className="text-[9px] font-bold text-gray-400 block mb-2 uppercase tracking-tighter">Ukuran ID</label>
+                                            <input type="number" value={settings.code_font_size} onChange={(e) => setSettings({...settings, code_font_size: parseInt(e.target.value) || 10})} className="w-full bg-gray-50 border border-gray-100 rounded-lg px-2 py-1.5 text-[10px] font-bold text-center" />
+                                        </div>
+                                        <div>
+                                            <label className="text-[9px] font-bold text-gray-400 block mb-2 uppercase tracking-tighter">Warna ID</label>
+                                            <div className="flex gap-1">
+                                                <input type="color" value={settings.code_font_color} onChange={(e) => setSettings({...settings, code_font_color: e.target.value})} className="h-8 w-8 border-0 p-0 bg-transparent cursor-pointer" />
+                                                <input type="text" value={settings.code_font_color.toUpperCase()} onChange={(e) => setSettings({...settings, code_font_color: e.target.value})} className="flex-grow border border-gray-100 rounded-lg px-1 text-[8px] font-mono font-bold" />
+                                            </div>
+                                        </div>
+                                    </div>
                                     <input type="range" min="5" max="100" value={settings.code_font_size} 
                                         onChange={(e) => setSettings({...settings, code_font_size: parseInt(e.target.value)})}
                                         className="w-full h-1.5 bg-gray-100 rounded-lg appearance-none cursor-pointer accent-emerald-500" />

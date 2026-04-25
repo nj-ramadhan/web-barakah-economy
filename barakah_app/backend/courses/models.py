@@ -179,7 +179,9 @@ class CourseCertificate(models.Model):
     show_unique_code = models.BooleanField(default=False)
     code_x = models.FloatField(default=10.0)
     code_y = models.FloatField(default=90.0)
-    code_font_size = models.IntegerField(default=30)
+    code_font_size = models.IntegerField(default=14)
+    code_font_family = models.CharField(max_length=100, default='Roboto-Bold.ttf')
+    code_font_color = models.CharField(max_length=20, default='#000000')
 
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)

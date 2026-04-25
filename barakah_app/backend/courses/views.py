@@ -297,16 +297,43 @@ class CourseViewSet(viewsets.ModelViewSet):
                 code_x_px = int(width * cert.code_x / 100)
                 code_y_px = int(height * cert.code_y / 100)
                 code_font_size = int((cert.code_font_size / 1000.0) * height)
+                code_font_family = getattr(cert, 'code_font_family', 'Roboto-Bold.ttf')
+                code_font_color = getattr(cert, 'code_font_color', color)
                 
-                # Use a standard font for code if possible
-                try:
-                    code_font = ImageFont.truetype("arial.ttf", code_font_size)
-                except:
-                    code_font = font # Fallback to name font if scaled appropriately
+                code_font_path = os.path.join(fonts_dir, code_font_family)
                 
+                # Auto-download code font if missing
+                if not os.path.exists(code_font_path):
+                    try:
+                        font_urls = {
+                            'DancingScript-Bold.ttf': 'https://github.com/google/fonts/raw/main/ofl/dancingscript/DancingScript%5Bwght%5D.ttf',
+                            'GreatVibes-Regular.ttf': 'https://github.com/google/fonts/raw/main/ofl/greatvibes/GreatVibes-Regular.ttf',
+                            'Roboto-Bold.ttf': 'https://github.com/google/fonts/raw/main/apache/roboto/static/Roboto-Bold.ttf',
+                            'PlayfairDisplay-Bold.ttf': 'https://github.com/google/fonts/raw/main/ofl/playfairdisplay/static/PlayfairDisplay-Bold.ttf',
+                            'Montserrat-SemiBold.ttf': 'https://github.com/google/fonts/raw/main/ofl/montserrat/static/Montserrat-SemiBold.ttf'
+                        }
+                        if code_font_family in font_urls:
+                            import requests
+                            r = requests.get(font_urls[code_font_family], timeout=10)
+                            if r.status_code == 200:
+                                with open(code_font_path, 'wb') as f:
+                                    f.write(r.content)
+                    except:
+                        pass
+
+                code_font = None
+                if os.path.exists(code_font_path):
+                    try:
+                        code_font = ImageFont.truetype(code_font_path, code_font_size)
+                    except:
+                        pass
+                
+                if not code_font:
+                    code_font = font # Fallback
+
                 # Generate unique code (e.g. EC-COURSEID-USERID)
                 unique_code = f"BAE-EC-{course.id}-{user.id}"
-                draw.text((code_x_px, code_y_px), unique_code, font=code_font, fill=color)
+                draw.text((code_x_px, code_y_px), unique_code, font=code_font, fill=code_font_color)
 
             # Save to response
             response = HttpResponse(content_type="image/jpeg")

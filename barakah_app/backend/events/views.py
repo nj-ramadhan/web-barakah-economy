@@ -844,13 +844,46 @@ class EventViewSet(viewsets.ModelViewSet):
             if getattr(cert, 'show_unique_code', False):
                 code_text = f"ID: {registration.unique_code or 'N/A'}"
                 code_font_size = int((cert.code_font_size / 1000.0) * height)
-                try:
-                    code_font = ImageFont.truetype(font_path, code_font_size) if os.path.exists(font_path) else ImageFont.load_default()
-                except:
-                    code_font = ImageFont.load_default()
+                code_font_family = getattr(cert, 'code_font_family', 'Roboto-Bold.ttf')
+                code_font_color = getattr(cert, 'code_font_color', cert.font_color)
                 
-                code_pos = (int(width * cert.code_x / 100), int(height * cert.code_y / 100))
-                draw.text(code_pos, code_text, fill=cert.font_color, font=code_font)
+                code_font_path = os.path.join(fonts_dir, code_font_family)
+                
+                # Auto-download code font if missing
+                if not os.path.exists(code_font_path):
+                    try:
+                        font_urls = {
+                            'DancingScript-Bold.ttf': 'https://github.com/google/fonts/raw/main/ofl/dancingscript/DancingScript%5Bwght%5D.ttf',
+                            'GreatVibes-Regular.ttf': 'https://github.com/google/fonts/raw/main/ofl/greatvibes/GreatVibes-Regular.ttf',
+                            'Roboto-Bold.ttf': 'https://github.com/google/fonts/raw/main/apache/roboto/static/Roboto-Bold.ttf',
+                            'PlayfairDisplay-Bold.ttf': 'https://github.com/google/fonts/raw/main/ofl/playfairdisplay/static/PlayfairDisplay-Bold.ttf',
+                            'Montserrat-SemiBold.ttf': 'https://github.com/google/fonts/raw/main/ofl/montserrat/static/Montserrat-SemiBold.ttf'
+                        }
+                        if code_font_family in font_urls:
+                            import requests
+                            r = requests.get(font_urls[code_font_family], timeout=10)
+                            if r.status_code == 200:
+                                with open(code_font_path, 'wb') as f:
+                                    f.write(r.content)
+                    except:
+                        pass
+
+                code_font = None
+                if os.path.exists(code_font_path):
+                    try:
+                        code_font = ImageFont.truetype(code_font_path, code_font_size)
+                    except:
+                        pass
+                
+                if not code_font:
+                    code_font = font # Fallback to name font but with code size
+
+                draw.text(
+                    (int(width * cert.code_x / 100), int(height * cert.code_y / 100)), 
+                    code_text, 
+                    font=code_font, 
+                    fill=code_font_color
+                )
             
             # Return image
             buffer = BytesIO()
