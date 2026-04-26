@@ -800,6 +800,22 @@ const DashboardPage = () => {
                                     </Link>
                                 )}
 
+                                {hasAccess('admin_events') && (
+                                    <Link
+                                        to="/dashboard/admin/event-recap"
+                                        className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-emerald-100 hover:shadow-md transition"
+                                    >
+                                        <div className="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center">
+                                            <span className="material-icons text-emerald-700">groups</span>
+                                        </div>
+                                        <div className="flex-1">
+                                            <h3 className="font-bold text-gray-800 text-sm">Rekap Peserta Global</h3>
+                                            <p className="text-[11px] text-gray-500">Data seluruh peserta event & CRM Blast WA</p>
+                                        </div>
+                                        <span className="material-icons text-gray-400">chevron_right</span>
+                                    </Link>
+                                )}
+
                                 {hasAccess('photo_framer') && (
                                     <Link
                                         to="/dashboard/admin/photo-framer"

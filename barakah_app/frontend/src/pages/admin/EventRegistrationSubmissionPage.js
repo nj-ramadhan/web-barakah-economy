@@ -142,6 +142,19 @@ const EventRegistrationSubmissionPage = () => {
         }
     };
 
+    const [blastImage, setBlastImage] = useState(null);
+
+    const handleImageChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setBlastImage(reader.result);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
     const handleBlast = async () => {
         if (!blastMessage.trim() || isBlasting) return;
 
@@ -150,9 +163,10 @@ const EventRegistrationSubmissionPage = () => {
         setIsBlasting(true);
         try {
             // Only sent selected IDs if specifically selected, otherwise backend defaults to all approved
-            const res = await blastEventWhatsapp(slug, blastMessage, selectedIds.length > 0 ? selectedIds : null);
+            const res = await blastEventWhatsapp(slug, blastMessage, selectedIds.length > 0 ? selectedIds : null, blastImage);
             alert(`Berhasil! ${res.data.message}`);
             setShowBlastModal(false);
+            setBlastImage(null);
         } catch (err) {
             console.error(err);
             alert('Gagal mengirim blast: ' + (err.response?.data?.error || err.message));
@@ -585,7 +599,7 @@ const EventRegistrationSubmissionPage = () => {
                                 </p>
                             </div>
 
-                            <div className="mb-8">
+                            <div className="mb-4">
                                 <div className="flex justify-between items-center mb-2 px-1">
                                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Isi Pesan</label>
                                     <div className="flex gap-1.5">
@@ -594,11 +608,46 @@ const EventRegistrationSubmissionPage = () => {
                                     </div>
                                 </div>
                                 <textarea
-                                    className="w-full h-40 p-5 bg-gray-50 border border-gray-100 rounded-3xl text-sm focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500/30 outline-none transition-all resize-none shadow-inner"
+                                    className="w-full h-32 p-5 bg-gray-50 border border-gray-100 rounded-3xl text-sm focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500/30 outline-none transition-all resize-none shadow-inner"
                                     value={blastMessage}
                                     onChange={(e) => setBlastMessage(e.target.value)}
                                     placeholder="Tulis pesan pengingat..."
                                 />
+                            </div>
+
+                            <div className="mb-8">
+                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block ml-1">Lampiran Gambar (Opsional)</label>
+                                <div className="flex items-center gap-3">
+                                    <div className="flex-1">
+                                        <input 
+                                            type="file" 
+                                            accept="image/*" 
+                                            id="blast-image-file" 
+                                            className="hidden" 
+                                            onChange={handleImageChange}
+                                        />
+                                        <label 
+                                            htmlFor="blast-image-file" 
+                                            className="flex items-center justify-center gap-2 w-full p-3 border-2 border-dashed border-gray-200 rounded-2xl cursor-pointer hover:bg-gray-50 hover:border-emerald-300 transition group"
+                                        >
+                                            <span className="material-icons text-gray-400 group-hover:text-emerald-500 text-lg transition">image</span>
+                                            <span className="text-[11px] font-bold text-gray-500 group-hover:text-emerald-700 transition">
+                                                {blastImage ? 'Ganti' : 'Lampirkan Gambar'}
+                                            </span>
+                                        </label>
+                                    </div>
+                                    {blastImage && (
+                                        <div className="relative w-14 h-14 rounded-xl overflow-hidden border border-gray-100 shadow-sm shrink-0">
+                                            <img src={blastImage} className="w-full h-full object-cover" alt="prev" />
+                                            <button 
+                                                onClick={() => setBlastImage(null)}
+                                                className="absolute top-0 right-0 w-4 h-4 bg-black/50 text-white rounded-full flex items-center justify-center hover:bg-red-500 transition"
+                                            >
+                                                <span className="material-icons text-[10px]">close</span>
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
 
                             <button

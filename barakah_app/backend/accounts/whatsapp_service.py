@@ -133,7 +133,7 @@ def send_file(phone, caption, file_data_base64, filename='document.pdf'):
         }
 
 
-def blast_messages(phone_list, message_template, placeholder_data_list=None):
+def blast_messages(phone_list, message_template, placeholder_data_list=None, file_data_base64=None, filename='image.jpg'):
     """
     Send WhatsApp messages to multiple recipients.
     
@@ -141,6 +141,8 @@ def blast_messages(phone_list, message_template, placeholder_data_list=None):
         phone_list: list of phone numbers
         message_template: message string with optional placeholders like {name}, {username}
         placeholder_data_list: list of dicts with placeholder values per recipient
+        file_data_base64: Optional base64 encoded file data to send as attachment
+        filename: Optional filename for the attachment
     
     Returns:
         dict with success/fail counts and details
@@ -155,7 +157,12 @@ def blast_messages(phone_list, message_template, placeholder_data_list=None):
             for key, value in data.items():
                 msg = msg.replace(f'{{{key}}}', str(value or ''))
 
-        result = send_message(phone, msg)
+        if file_data_base64:
+            # If image/file is provided, we send it with the message as caption
+            result = send_file(phone, msg, file_data_base64, filename)
+        else:
+            result = send_message(phone, msg)
+            
         if result.get('success'):
             results['success'] += 1
         else:

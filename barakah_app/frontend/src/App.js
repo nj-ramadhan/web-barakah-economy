@@ -100,6 +100,7 @@ import DashboardSinergySellerOrdersPage from './pages/DashboardSinergySellerOrde
 import DashboardSinergyAdminPage from './pages/admin/DashboardSinergyAdminPage';
 import AdminJitsiMeetPage from './pages/AdminJitsiMeetPage';
 import AdminPhotoFramerPage from './pages/admin/AdminPhotoFramerPage';
+import DashboardEventRecapPage from './pages/admin/DashboardEventRecapPage';
 import ExpeditionTestPage from './pages/admin/ExpeditionTestPage';
 import FloatingCartModal from './components/layout/FloatingCartModal';
 
@@ -326,6 +327,7 @@ const LayoutWrapper = ({ isDesktop }) => {
         <Route path="/dashboard/admin/articles" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardAdminArticleManagementPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/admin/campaigns" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardAdminCampaignManagementPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/admin/photo-framer" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><AdminPhotoFramerPage /></ResponsiveLayout></PrivateRoute>} />
+        <Route path="/dashboard/admin/event-recap" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardEventRecapPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/my-events" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardMyEventsPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/my-campaigns" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardMyCampaignsPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/articles" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardArticleEditorPage /></ResponsiveLayout></PrivateRoute>} />

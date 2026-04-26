@@ -501,6 +501,8 @@ class EventViewSet(viewsets.ModelViewSet):
             return Response({"error": "Hanya admin atau penyelenggara yang bisa mengirim blast."}, status=status.HTTP_403_FORBIDDEN)
             
         custom_message = request.data.get('message')
+        image_base64 = request.data.get('image_base64') # Optional
+        
         if not custom_message:
             return Response({"error": "Pesan tidak boleh kosong."}, status=status.HTTP_400_BAD_REQUEST)
             
@@ -509,8 +511,6 @@ class EventViewSet(viewsets.ModelViewSet):
             registrations = EventRegistration.objects.filter(id__in=registrations_ids, event=event).select_related('user', 'user__profile').prefetch_related('event__form_fields')
         else:
             registrations = EventRegistration.objects.filter(event=event, status='approved').select_related('user', 'user__profile').prefetch_related('event__form_fields')
-        
-        print(f"DEBUG: Found {registrations.count()} registrations matching criteria.")
         
         phone_list = []
         placeholder_data = []
@@ -523,7 +523,6 @@ class EventViewSet(viewsets.ModelViewSet):
         sessions_str = "\n".join(session_list) if session_list else "-"
 
         for reg in registrations:
-            # Search for contact info
             _, phone, detected_name = self._detect_contact_info_standalone(reg)
             if phone:
                 formatted_phone = self._format_phone_number(phone)
@@ -537,14 +536,80 @@ class EventViewSet(viewsets.ModelViewSet):
         
         if not phone_list:
             return Response({
-                "error": "Tidak ada nomor WhatsApp peserta yang terdeteksi. Pastikan data pendaftaran memiliki kolom 'No HP' atau 'WhatsApp' yang terisi."
+                "error": "Tidak ada nomor WhatsApp peserta yang terdeteksi."
             }, status=status.HTTP_400_BAD_REQUEST)
             
-        # Use blast_messages from whatsapp_service
-        result = whatsapp_service.blast_messages(phone_list, custom_message, placeholder_data)
+        result = whatsapp_service.blast_messages(phone_list, custom_message, placeholder_data, file_data_base64=image_base64)
         
         return Response({
             "message": f"Blast selesai dikirim ke {result['success']} peserta.",
+            "details": result
+        })
+
+    @action(detail=False, methods=['get'], permission_classes=[permissions.IsAuthenticated])
+    def global_registrations(self, request):
+        """Get all registrations across all events for CRM recap."""
+        if not (request.user.is_staff or request.user.has_menu_access('admin_events')):
+            return Response({"error": "Unauthorized"}, status=status.HTTP_403_FORBIDDEN)
+        
+        event_id = request.query_params.get('event_id')
+        regs = EventRegistration.objects.all().select_related('event', 'user', 'user__profile').prefetch_related('event__form_fields')
+        
+        if event_id:
+            regs = regs.filter(event_id=event_id)
+            
+        data = []
+        for reg in regs:
+            email, phone, name = self._detect_contact_info_standalone(reg)
+            data.append({
+                'id': reg.id,
+                'event_title': reg.event.title,
+                'event_id': reg.event.id,
+                'name': name,
+                'email': email,
+                'phone': phone,
+                'status': reg.status,
+                'created_at': reg.created_at,
+                'unique_code': reg.unique_code
+            })
+        return Response(data)
+
+    @action(detail=False, methods=['post'], permission_classes=[permissions.IsAuthenticated])
+    def global_blast_whatsapp(self, request):
+        """Blast WhatsApp to selected participants from the global recap list."""
+        if not (request.user.is_staff or request.user.has_menu_access('admin_events')):
+            return Response({"error": "Unauthorized"}, status=status.HTTP_403_FORBIDDEN)
+            
+        custom_message = request.data.get('message')
+        image_base64 = request.data.get('image_base64')
+        registration_ids = request.data.get('registration_ids')
+        
+        if not custom_message or not registration_ids:
+            return Response({"error": "Pesan dan Peserta wajib dipilih."}, status=status.HTTP_400_BAD_REQUEST)
+            
+        registrations = EventRegistration.objects.filter(id__in=registration_ids).select_related('event', 'user', 'user__profile').prefetch_related('event__form_fields')
+        
+        phone_list = []
+        placeholder_data = []
+        
+        for reg in registrations:
+            _, phone, detected_name = self._detect_contact_info_standalone(reg)
+            if phone:
+                formatted_phone = self._format_phone_number(phone)
+                if formatted_phone:
+                    phone_list.append(formatted_phone)
+                    placeholder_data.append({
+                        'name': detected_name, 
+                        'event': reg.event.title
+                    })
+        
+        if not phone_list:
+            return Response({"error": "Tidak ada nomor WA valid."}, status=status.HTTP_400_BAD_REQUEST)
+            
+        result = whatsapp_service.blast_messages(phone_list, custom_message, placeholder_data, file_data_base64=image_base64)
+        
+        return Response({
+            "message": f"Blast global selesai dikirim ke {result['success']} peserta.",
             "details": result
         })
 

@@ -107,10 +107,28 @@ export const exportRegistrationsCsv = (slug) => {
     });
 };
 
-export const blastEventWhatsapp = (slug, message, registrationIds = null) => {
+export const blastEventWhatsapp = (slug, message, registrationIds = null, imageBase64 = null) => {
     return axios.post(`${API_BASE_URL}/api/events/${slug}/blast_whatsapp/`, { 
         message,
-        registration_ids: registrationIds 
+        registration_ids: registrationIds,
+        image_base64: imageBase64
+    }, {
+        headers: getAuthHeaders()
+    });
+};
+
+export const getGlobalRegistrations = (params = {}) => {
+    return axios.get(`${API_BASE_URL}/api/events/global_registrations/`, {
+        params,
+        headers: getAuthHeaders()
+    });
+};
+
+export const globalBlastWhatsapp = (message, registrationIds, imageBase64 = null) => {
+    return axios.post(`${API_BASE_URL}/api/events/global_blast_whatsapp/`, { 
+        message,
+        registration_ids: registrationIds,
+        image_base64: imageBase64
     }, {
         headers: getAuthHeaders()
     });
