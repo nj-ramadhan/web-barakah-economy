@@ -995,10 +995,10 @@ const DashboardPage = () => {
                                         <p className="text-[11px] text-gray-500">Test koneksi dan ambil data provinsi (Admin)</p>
                                     </div>
                                     <span className="material-icons text-gray-400">chevron_right</span>
-                                </Link>
-                            )} */}
-                            </>
-                        );
+                                )}
+                            </div>
+                        </>
+                    );
                     })()}
                 </div>
             </div>
