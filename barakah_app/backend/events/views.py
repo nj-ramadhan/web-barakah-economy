@@ -561,6 +561,12 @@ class EventViewSet(viewsets.ModelViewSet):
         data = []
         for reg in regs:
             email, phone, name = self._detect_contact_info_standalone(reg)
+            
+            # Use serializer for responses_with_labels logic
+            from .serializers import EventRegistrationSerializer
+            serializer = EventRegistrationSerializer(reg)
+            responses_with_labels = serializer.data.get('responses_with_labels', {})
+            
             data.append({
                 'id': reg.id,
                 'event_title': reg.event.title,
@@ -570,7 +576,8 @@ class EventViewSet(viewsets.ModelViewSet):
                 'phone': phone,
                 'status': reg.status,
                 'created_at': reg.created_at,
-                'unique_code': reg.unique_code
+                'unique_code': reg.unique_code,
+                'responses_with_labels': responses_with_labels
             })
         return Response(data)
 

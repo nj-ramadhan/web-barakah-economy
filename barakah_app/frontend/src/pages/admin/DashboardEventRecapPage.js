@@ -39,6 +39,33 @@ const DashboardEventRecapPage = () => {
         }
     };
 
+    const [dynamicLabels, setDynamicLabels] = useState([]);
+
+    useEffect(() => {
+        if (registrations.length > 0) {
+            const labels = new Set();
+            const commonFields = [
+                'nama', 'name', 'email', 'alamat email', 
+                'no hp', 'hp', 'whatsapp', 'wa', 'telepon', 'phone', 'no. hp', 'no. whatsapp', 'handphone'
+            ];
+            
+            registrations.forEach(reg => {
+                if (reg.responses_with_labels) {
+                    Object.keys(reg.responses_with_labels).forEach(label => {
+                        const lowLabel = label.toLowerCase().trim();
+                        // Only add if it's not one of the common fields we already display
+                        if (!commonFields.includes(lowLabel) && !commonFields.some(cf => lowLabel === cf)) {
+                            // Secondary check: if it's "Nama Lengkap" and we already have "Nama", etc.
+                            // But let's just use a whitelist/blacklist approach
+                            labels.add(label);
+                        }
+                    });
+                }
+            });
+            setDynamicLabels(Array.from(labels).sort());
+        }
+    }, [registrations]);
+
     const handleSelectAll = (e) => {
         if (e.target.checked) {
             setSelectedIds(filteredRegistrations.map(r => r.id));
@@ -55,16 +82,27 @@ const DashboardEventRecapPage = () => {
 
     const exportToCSV = () => {
         const dataToExport = filteredRegistrations;
-        const headers = ['ID', 'Event', 'Nama', 'Email', 'No HP', 'Status', 'Tanggal'];
-        const rows = dataToExport.map(r => [
-            r.id,
-            `"${r.event_title}"`,
-            `"${r.name}"`,
-            `"${r.email || ''}"`,
-            `"${r.phone || ''}"`,
-            r.status,
-            new Date(r.created_at).toLocaleDateString()
-        ]);
+        const baseHeaders = ['ID', 'Event', 'Nama', 'Email', 'No HP'];
+        const headers = [...baseHeaders, ...dynamicLabels, 'Status', 'Tanggal'];
+        
+        const rows = dataToExport.map(r => {
+            const dynamicValues = dynamicLabels.map(label => {
+                let val = r.responses_with_labels?.[label] || '';
+                if (Array.isArray(val)) val = val.join(', ');
+                return `"${String(val).replace(/"/g, '""')}"`;
+            });
+
+            return [
+                r.id,
+                `"${r.event_title.replace(/"/g, '""')}"`,
+                `"${r.name.replace(/"/g, '""')}"`,
+                `"${(r.email || '').replace(/"/g, '""')}"`,
+                `"${(r.phone || '').replace(/"/g, '""')}"`,
+                ...dynamicValues,
+                r.status,
+                new Date(r.created_at).toLocaleDateString()
+            ];
+        });
 
         const csvContent = [
             headers.join(';'),
@@ -204,20 +242,23 @@ const DashboardEventRecapPage = () => {
                                     <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Peserta</th>
                                     <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Kontak</th>
                                     <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Event</th>
-                                    <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Tgl Daftar</th>
+                                    {dynamicLabels.map(label => (
+                                        <th key={label} className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest min-w-[120px]">{label}</th>
+                                    ))}
+                                    <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-right">Tgl Daftar</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-50">
                                 {loading ? (
                                     <tr>
-                                        <td colSpan="5" className="px-6 py-10 text-center">
+                                        <td colSpan={5 + dynamicLabels.length} className="px-6 py-10 text-center">
                                             <div className="animate-spin w-6 h-6 border-2 border-emerald-500 border-t-transparent rounded-full mx-auto mb-2"></div>
                                             <p className="text-xs text-gray-400 font-bold">Memuat Data...</p>
                                         </td>
                                     </tr>
                                 ) : filteredRegistrations.length === 0 ? (
                                     <tr>
-                                        <td colSpan="5" className="px-6 py-10 text-center text-gray-400 text-xs italic">Data tidak ditemukan</td>
+                                        <td colSpan={5 + dynamicLabels.length} className="px-6 py-10 text-center text-gray-400 text-xs italic">Data tidak ditemukan</td>
                                     </tr>
                                 ) : (
                                     filteredRegistrations.map(reg => (
@@ -243,7 +284,16 @@ const DashboardEventRecapPage = () => {
                                                     {reg.event_title}
                                                 </span>
                                             </td>
-                                            <td className="px-6 py-4">
+                                            {dynamicLabels.map(label => {
+                                                let val = reg.responses_with_labels?.[label] || '-';
+                                                if (Array.isArray(val)) val = val.join(', ');
+                                                return (
+                                                    <td key={label} className="px-6 py-4">
+                                                        <p className="text-[10px] text-gray-600 font-medium line-clamp-2 italic">{val}</p>
+                                                    </td>
+                                                );
+                                            })}
+                                            <td className="px-6 py-4 text-right">
                                                 <p className="text-[10px] font-bold text-gray-400">{new Date(reg.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
                                             </td>
                                         </tr>
