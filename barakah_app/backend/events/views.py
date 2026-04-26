@@ -532,9 +532,16 @@ class EventViewSet(viewsets.ModelViewSet):
         for reg in registrations:
             _, phone, detected_name = self._detect_contact_info_standalone(reg)
             if phone:
+                # Robust normalization for deduplication (anchor at '8')
+                raw_digits = ''.join(filter(str.isdigit, str(phone)))
+                if raw_digits.startswith('620'): core_number = raw_digits[3:]
+                elif raw_digits.startswith('62'): core_number = raw_digits[2:]
+                elif raw_digits.startswith('0'): core_number = raw_digits[1:]
+                else: core_number = raw_digits
+                
                 formatted_phone = self._format_phone_number(phone)
-                if formatted_phone and formatted_phone not in seen_phones:
-                    seen_phones.add(formatted_phone)
+                if formatted_phone and core_number not in seen_phones:
+                    seen_phones.add(core_number)
                     phone_list.append(formatted_phone)
                     placeholder_data.append({
                         'name': detected_name, 
@@ -611,9 +618,16 @@ class EventViewSet(viewsets.ModelViewSet):
         for reg in registrations:
             _, phone, detected_name = self._detect_contact_info_standalone(reg)
             if phone:
+                # Robust normalization for deduplication (anchor at '8')
+                raw_digits = ''.join(filter(str.isdigit, str(phone)))
+                if raw_digits.startswith('620'): core_number = raw_digits[3:]
+                elif raw_digits.startswith('62'): core_number = raw_digits[2:]
+                elif raw_digits.startswith('0'): core_number = raw_digits[1:]
+                else: core_number = raw_digits
+
                 formatted_phone = self._format_phone_number(phone)
-                if formatted_phone and formatted_phone not in seen_phones:
-                    seen_phones.add(formatted_phone)
+                if formatted_phone and core_number not in seen_phones:
+                    seen_phones.add(core_number)
                     phone_list.append(formatted_phone)
                     placeholder_data.append({
                         'name': detected_name, 
@@ -673,10 +687,13 @@ class EventViewSet(viewsets.ModelViewSet):
             # Try to get label from current fields or legacy map
             label = current_fields.get(str(field_id))
             if not label:
-                # Check legacy mapping for Event 15
-                if registration.event_id == 15:
-                    legacy_map = {'81': 'Nama', '82': 'Email', '83': 'No HP', '84': 'Asal Instansi', '85': 'Jenis Kelamin'}
-                    label = legacy_map.get(str(field_id))
+                # Manual fallback for known orphaned IDs across all events
+                legacy_map = {
+                    '81': 'Nama', '82': 'Email', '83': 'No HP', '84': 'Asal Instansi', '85': 'Jenis Kelamin',
+                    '56': 'Domisili/Kota', '57': 'Profesi/Pekerjaan', '58': 'Alasan Mengikuti', 
+                    '59': 'Ekspektasi/Harapan', '60': 'Sumber Informasi', '71': 'WhatsApp', '72': 'No. Telp'
+                }
+                label = legacy_map.get(str(field_id))
                 
                 # If still no label, check if the key itself looks like a label (fallback)
                 if not label and not field_id.isdigit():

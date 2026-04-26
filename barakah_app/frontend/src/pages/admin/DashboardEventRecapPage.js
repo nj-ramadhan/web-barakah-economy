@@ -4,28 +4,6 @@ import NavigationButton from '../../components/layout/Navigation';
 import { getGlobalRegistrations, getEvents, globalBlastWhatsapp } from '../../services/eventApi';
 import { Helmet } from 'react-helmet';
 
-const LABEL_MAPPINGS = {
-    'Instansi/Organisasi': ['instansi', 'organisasi', 'perusahaan', 'asal', 'lembaga', 'komunitas', 'office', 'company', 'unit kerja', 'tempat kerja', 'bisnis'],
-    'Jabatan/Profesi': ['jabatan', 'profesi', 'pekerjaan', 'posisi', 'occupation', 'job', 'position', 'status', 'aktivitas', 'kegiatan'],
-    'Alamat/Domisili': ['alamat', 'kota', 'domisili', 'tempat tinggal', 'kecamatan', 'kabupaten', 'provinsi', 'address', 'city', 'residence', 'daerah', 'area', 'tinggal'],
-    'Jenis Kelamin': ['jenis kelamin', 'gender', 'sex', 'pria/wanita', 'laki-laki/perempuan', 'gender'],
-    'Pendidikan': ['pendidikan', 'sekolah', 'universitas', 'kampus', 'jurusan', 'major', 'education', 'school', 'university', 'angkatan', 'nim', 'studi', 'semester', 'kelas'],
-    'Sumber Info': ['tahu dari mana', 'sumber informasi', 'informasi event', 'info event', 'source', 'how did you know', 'referral', 'mendapat info'],
-    'Alasan Daftar': ['alasan', 'motivasi', 'tujuan', 'reason', 'motivation', 'goal', 'ekspektasi', 'harapan', 'minat', 'tertarik'],
-    'Umur/Usia': ['umur', 'usia', 'tanggal lahir', 'age', 'birth'],
-    'Sosial Media': ['instagram', 'facebook', 'twitter', 'linkedin', 'tiktok', 'social media', 'sosmed', 'ig', 'fb']
-};
-
-const normalizeLabel = (label) => {
-    const lowLabel = label.toLowerCase().trim();
-    for (const [canonical, keywords] of Object.entries(LABEL_MAPPINGS)) {
-        if (keywords.some(k => lowLabel.includes(k))) {
-            return canonical;
-        }
-    }
-    return label; // Keep original if no match
-};
-
 const DashboardEventRecapPage = () => {
     const [registrations, setRegistrations] = useState([]);
     const [events, setEvents] = useState([]);
@@ -40,9 +18,6 @@ const DashboardEventRecapPage = () => {
     const [blastImage, setBlastImage] = useState(null);
     const [isBlasting, setIsBlasting] = useState(false);
     const [blastResult, setBlastResult] = useState(null);
-
-    const [dynamicLabels, setDynamicLabels] = useState([]);
-    const [labelMapping, setLabelMapping] = useState({});
 
     useEffect(() => {
         fetchData();
@@ -64,48 +39,6 @@ const DashboardEventRecapPage = () => {
         }
     };
 
-    useEffect(() => {
-        if (registrations.length > 0) {
-            const normalizedMap = {}; // Canonical -> Set of original labels
-            const commonFields = [
-                'nama', 'name', 'email', 'alamat email', 
-                'no hp', 'hp', 'whatsapp', 'wa', 'telepon', 'phone', 'no. hp', 'no. whatsapp', 'handphone', 'contact'
-            ];
-            
-            registrations.forEach(reg => {
-                if (reg.responses_with_labels) {
-                    Object.keys(reg.responses_with_labels).forEach(label => {
-                        const lowLabel = label.toLowerCase().trim();
-                        // Check if it's NOT a common field
-                        if (!commonFields.some(cf => lowLabel === cf || lowLabel.includes(cf))) {
-                            const canonical = normalizeLabel(label);
-                            if (!normalizedMap[canonical]) normalizedMap[canonical] = new Set();
-                            normalizedMap[canonical].add(label);
-                        }
-                    });
-                }
-            });
-            
-            setLabelMapping(normalizedMap);
-            setDynamicLabels(Object.keys(normalizedMap).sort());
-        }
-    }, [registrations]);
-
-    const getNormalizedValue = (reg, canonical) => {
-        const originalLabels = labelMapping[canonical];
-        if (!originalLabels) return '';
-        
-        const values = [];
-        originalLabels.forEach(label => {
-            const val = reg.responses_with_labels?.[label];
-            if (val) {
-                values.push(Array.isArray(val) ? val.join(', ') : val);
-            }
-        });
-        
-        return values.length > 0 ? values.join(' | ') : '';
-    };
-
     const handleSelectAll = (e) => {
         if (e.target.checked) {
             setSelectedIds(filteredRegistrations.map(r => r.id));
@@ -122,22 +55,15 @@ const DashboardEventRecapPage = () => {
 
     const exportToCSV = () => {
         const dataToExport = filteredRegistrations;
-        const baseHeaders = ['ID', 'Event', 'Nama', 'Email', 'No HP'];
-        const headers = [...baseHeaders, ...dynamicLabels, 'Status', 'Tanggal'];
+        const headers = ['ID', 'Event', 'Nama', 'Email', 'No HP', 'Status', 'Tanggal'];
         
         const rows = dataToExport.map(r => {
-            const dynamicValues = dynamicLabels.map(label => {
-                const val = getNormalizedValue(r, label);
-                return `"${String(val).replace(/"/g, '""')}"`;
-            });
-
             return [
                 r.id,
                 `"${r.event_title.replace(/"/g, '""')}"`,
                 `"${r.name.replace(/"/g, '""')}"`,
                 `"${(r.email || '').replace(/"/g, '""')}"`,
                 `"${(r.phone || '').replace(/"/g, '""')}"`,
-                ...dynamicValues,
                 r.status,
                 new Date(r.created_at).toLocaleDateString()
             ];
@@ -179,7 +105,7 @@ const DashboardEventRecapPage = () => {
         try {
             const res = await globalBlastWhatsapp(blastMessage, selectedIds, blastImage);
             setBlastResult(res.data.details);
-            alert(`Blast berhasil dikirim ke ${res.data.details.success} peserta.`);
+            alert(`Blast berhasil dikirim ke ${res.data.details.success} nomor unik.`);
             if (res.data.details.failed === 0) {
                 setShowBlastModal(false);
             }
@@ -270,7 +196,7 @@ const DashboardEventRecapPage = () => {
                         <table className="w-full text-left">
                             <thead>
                                 <tr className="bg-gray-50 border-b border-gray-100">
-                                    <th className="px-6 py-4">
+                                    <th className="px-6 py-4 w-12">
                                         <input 
                                             type="checkbox" 
                                             className="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
@@ -281,23 +207,20 @@ const DashboardEventRecapPage = () => {
                                     <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Peserta</th>
                                     <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Kontak</th>
                                     <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Event</th>
-                                    {dynamicLabels.map(label => (
-                                        <th key={label} className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest min-w-[120px]">{label}</th>
-                                    ))}
                                     <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-right">Tgl Daftar</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-50">
                                 {loading ? (
                                     <tr>
-                                        <td colSpan={5 + dynamicLabels.length} className="px-6 py-10 text-center">
+                                        <td colSpan={5} className="px-6 py-10 text-center">
                                             <div className="animate-spin w-6 h-6 border-2 border-emerald-500 border-t-transparent rounded-full mx-auto mb-2"></div>
                                             <p className="text-xs text-gray-400 font-bold">Memuat Data...</p>
                                         </td>
                                     </tr>
                                 ) : filteredRegistrations.length === 0 ? (
                                     <tr>
-                                        <td colSpan={5 + dynamicLabels.length} className="px-6 py-10 text-center text-gray-400 text-xs italic">Data tidak ditemukan</td>
+                                        <td colSpan={5} className="px-6 py-10 text-center text-gray-400 text-xs italic">Data tidak ditemukan</td>
                                     </tr>
                                 ) : (
                                     filteredRegistrations.map(reg => (
@@ -319,18 +242,10 @@ const DashboardEventRecapPage = () => {
                                                 <p className="text-[10px] font-black text-emerald-600 mt-0.5">{reg.phone || '-'}</p>
                                             </td>
                                             <td className="px-6 py-4">
-                                                <span className="text-[10px] font-black text-white bg-indigo-500 px-2 py-1 rounded-lg uppercase tracking-tighter line-clamp-1 max-w-[150px]">
+                                                <span className="text-[10px] font-black text-white bg-indigo-500 px-2 py-1 rounded-lg uppercase tracking-tighter line-clamp-1 max-w-[200px]">
                                                     {reg.event_title}
                                                 </span>
                                             </td>
-                                            {dynamicLabels.map(label => {
-                                                const val = getNormalizedValue(reg, label);
-                                                return (
-                                                    <td key={label} className="px-6 py-4">
-                                                        <p className="text-[10px] text-gray-600 font-medium line-clamp-2 italic">{val || '-'}</p>
-                                                    </td>
-                                                );
-                                            })}
                                             <td className="px-6 py-4 text-right">
                                                 <p className="text-[10px] font-bold text-gray-400">{new Date(reg.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
                                             </td>
