@@ -1,8 +1,8 @@
 from django.urls import path, include
-from rest_framework.routers import DefaultRouter
+from rest_framework.routers import SimpleRouter
 from .views import DonationView, CampaignDonationsView, CreateDonationView, UpdateDonationView, AdminDonationViewSet
 
-router = DefaultRouter()
+router = SimpleRouter()
 router.register('admin-management', AdminDonationViewSet, basename='admin-donation')
 
 urlpatterns = [
