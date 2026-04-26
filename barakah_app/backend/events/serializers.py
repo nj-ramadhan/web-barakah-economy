@@ -253,17 +253,34 @@ class EventRegistrationSerializer(serializers.ModelSerializer):
             fid_str = str(field_id)
             label = current_fields.get(fid_str) or extra_labels.get(fid_str)
             
+            if not label:
+                # Manual fallback for known orphaned IDs from previous event versions
+                manual_map = {
+                    '56': 'Domisili/Kota',
+                    '57': 'Profesi/Pekerjaan',
+                    '58': 'Alasan Mengikuti',
+                    '59': 'Ekspektasi/Harapan',
+                    '60': 'Sumber Informasi',
+                    '66': 'LinkedIn',
+                    '67': 'Instagram',
+                    '68': 'Facebook',
+                    '69': 'TikTok',
+                    '70': 'Website',
+                    '71': 'WhatsApp',
+                    '72': 'Email Cadangan',
+                    '73': 'Nama Panggilan',
+                    '74': 'Hobi',
+                    '75': 'Catatan Khusus',
+                    '81': 'Nama', 
+                    '82': 'Email', 
+                    '83': 'No HP', 
+                    '84': 'Asal Instansi', 
+                    '85': 'Jenis Kelamin'
+                }
+                label = manual_map.get(fid_str)
+
             if label:
                 result[label] = value
             else:
-                # Orphaned ID. Maybe we can map it to a current label for Event 15?
-                if obj.event_id == 15:
-                    legacy_map = {'81': 'Nama', '82': 'Email', '83': 'No HP', '84': 'Asal Instansi', '85': 'Jenis Kelamin'}
-                    mapped_label = legacy_map.get(fid_str)
-                    if mapped_label:
-                        result[mapped_label] = value
-                    else:
-                        result[f"field_{field_id}"] = value
-                else:
-                    result[f"field_{field_id}"] = value
+                result[f"field_{field_id}"] = value
         return result

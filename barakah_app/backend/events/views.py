@@ -260,7 +260,10 @@ class EventViewSet(viewsets.ModelViewSet):
                     file=request.FILES[str(field.id)]
                 )
         
-        # 5. Automated Notifications
+        # 5. Auto-update user phone if missing
+        self._update_user_phone_if_missing(registration)
+        
+        # 6. Automated Notifications
         try:
             self._send_registration_notifications(registration)
         except Exception as e:
@@ -522,11 +525,16 @@ class EventViewSet(viewsets.ModelViewSet):
             session_list.append(f"- {s.title} {time_str}")
         sessions_str = "\n".join(session_list) if session_list else "-"
 
+        phone_list = []
+        placeholder_data = []
+        seen_phones = set()
+        
         for reg in registrations:
             _, phone, detected_name = self._detect_contact_info_standalone(reg)
             if phone:
                 formatted_phone = self._format_phone_number(phone)
-                if formatted_phone:
+                if formatted_phone and formatted_phone not in seen_phones:
+                    seen_phones.add(formatted_phone)
                     phone_list.append(formatted_phone)
                     placeholder_data.append({
                         'name': detected_name, 
@@ -598,12 +606,14 @@ class EventViewSet(viewsets.ModelViewSet):
         
         phone_list = []
         placeholder_data = []
+        seen_phones = set()
         
         for reg in registrations:
             _, phone, detected_name = self._detect_contact_info_standalone(reg)
             if phone:
                 formatted_phone = self._format_phone_number(phone)
-                if formatted_phone:
+                if formatted_phone and formatted_phone not in seen_phones:
+                    seen_phones.add(formatted_phone)
                     phone_list.append(formatted_phone)
                     placeholder_data.append({
                         'name': detected_name, 
@@ -616,9 +626,20 @@ class EventViewSet(viewsets.ModelViewSet):
         result = whatsapp_service.blast_messages(phone_list, custom_message, placeholder_data, file_data_base64=image_base64)
         
         return Response({
-            "message": f"Blast global selesai dikirim ke {result['success']} peserta.",
+            "message": f"Blast global selesai dikirim ke {result['success']} nomor unik.",
             "details": result
         })
+
+    def _update_user_phone_if_missing(self, registration):
+        """Update user profile phone if registration response contains a phone and user profile phone is empty."""
+        user = registration.user
+        if not user or (user.phone and user.phone.strip() and user.phone != '-'):
+            return
+            
+        _, phone, _ = self._detect_contact_info_standalone(registration)
+        if phone:
+            user.phone = phone
+            user.save(update_fields=['phone'])
 
     def _detect_contact_info_standalone(self, registration):
         """Standalone helper for detecting contact info from a registration."""
