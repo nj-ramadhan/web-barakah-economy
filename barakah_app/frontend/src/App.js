@@ -101,6 +101,7 @@ import DashboardSinergyAdminPage from './pages/admin/DashboardSinergyAdminPage';
 import AdminJitsiMeetPage from './pages/AdminJitsiMeetPage';
 import AdminPhotoFramerPage from './pages/admin/AdminPhotoFramerPage';
 import DashboardEventRecapPage from './pages/admin/DashboardEventRecapPage';
+import DashboardDonationManagementPage from './pages/admin/DashboardDonationManagementPage';
 import ExpeditionTestPage from './pages/admin/ExpeditionTestPage';
 import FloatingCartModal from './components/layout/FloatingCartModal';
 
@@ -309,6 +310,7 @@ const LayoutWrapper = ({ isDesktop }) => {
         <Route path="/dashboard/shop-settings" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardShopSettingsPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/admin/withdrawals" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardAdminWithdrawalsPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/admin/charity" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardRealizationPage /></ResponsiveLayout></PrivateRoute>} />
+        <Route path="/dashboard/admin/donations" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardDonationManagementPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/admin/partners" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardPartnersPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/admin/testimonials" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardTestimonialsPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/admin/activities" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardActivitiesPage /></ResponsiveLayout></PrivateRoute>} />

@@ -1,10 +1,14 @@
-# donations/urls.py
-from django.urls import path
-from .views import DonationView, CampaignDonationsView, CreateDonationView, UpdateDonationView 
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
+from .views import DonationView, CampaignDonationsView, CreateDonationView, UpdateDonationView, AdminDonationViewSet
+
+router = DefaultRouter()
+router.register('admin-management', AdminDonationViewSet, basename='admin-donation')
 
 urlpatterns = [
     path('donation/', DonationView.as_view(), name='donation'),
     path('campaign/<slug:slug>/donations/', CampaignDonationsView.as_view(), name='campaign-donations'),
     path('<str:campaign_slug>/create-donation/', CreateDonationView.as_view(), name='create-donation'),
     path('<int:donation_id>/update-donation/', UpdateDonationView.as_view(), name='update-donation'),
+    path('', include(router.urls)),
 ]

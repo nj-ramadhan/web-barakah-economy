@@ -198,3 +198,80 @@ class CreateDonationView(APIView):
             return Response({
                 'error': str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class AdminDonationViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated]
+    serializer_class = DonationSerializer
+    queryset = Donation.objects.all().order_by('-created_at')
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.role != 'admin' and user.username != 'admin':
+            return Donation.objects.none()
+        
+        queryset = Donation.objects.all().order_by('-created_at')
+        
+        campaign_slug = self.request.query_params.get('campaign_slug')
+        if campaign_slug:
+            queryset = queryset.filter(campaign__slug=campaign_slug)
+            
+        status_filter = self.request.query_params.get('status')
+        if status_filter:
+            queryset = queryset.filter(payment_status=status_filter)
+            
+        search = self.request.query_params.get('search')
+        if search:
+            queryset = queryset.filter(
+                Q(donor_name__icontains=search) |
+                Q(donor_phone__icontains=search) |
+                Q(donor_email__icontains=search) |
+                Q(campaign__title__icontains=search)
+            )
+            
+        return queryset
+
+    @action(detail=True, methods=['post'])
+    def verify(self, request, pk=None):
+        donation = self.get_object()
+        donation.payment_status = 'verified'
+        donation.save()
+        return Response({'status': 'verified'})
+
+    @action(detail=True, methods=['post'])
+    def reject(self, request, pk=None):
+        donation = self.get_object()
+        donation.payment_status = 'rejected'
+        donation.save()
+        return Response({'status': 'rejected'})
+
+    @action(detail=False, methods=['get'])
+    def export_csv(self, request):
+        import csv
+        from django.http import HttpResponse
+        
+        queryset = self.get_queryset()
+        
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="data_donatur.csv"'
+        
+        # Add BOM for Excel
+        response.write(u'\ufeff'.encode('utf8'))
+        
+        writer = csv.writer(response, delimiter=';')
+        writer.writerow([
+            'ID', 'Tanggal', 'Kampanye', 'Nama Donatur', 'WhatsApp', 
+            'Email', 'Nominal', 'Metode', 'Status', 'Bukti Transfer'
+        ])
+        
+        for d in queryset:
+            created_at = d.created_at.strftime('%Y-%m-%d %H:%M')
+            proof_url = ""
+            if d.proof_file:
+                proof_url = request.build_absolute_uri(d.proof_file.url)
+            
+            writer.writerow([
+                d.id, created_at, d.campaign.title, d.donor_name, d.donor_phone,
+                d.donor_email, d.amount, d.payment_method, d.payment_status, proof_url
+            ])
+            
+        return response

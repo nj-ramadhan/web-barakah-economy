@@ -175,6 +175,12 @@ const DashboardAdminCampaignManagementPage = () => {
                                             Detail
                                         </button>
                                         <button
+                                            onClick={() => navigate(`/dashboard/admin/donations?campaign=${c.slug}`)}
+                                            className="px-4 py-1.5 bg-green-50 text-green-600 text-[11px] font-bold rounded-lg hover:bg-green-100 transition"
+                                        >
+                                            Donatur
+                                        </button>
+                                        <button
                                             onClick={() => navigate(`/dashboard/admin/charity?campaign=${c.slug}`)}
                                             className="px-4 py-1.5 bg-orange-50 text-orange-600 text-[11px] font-bold rounded-lg hover:bg-orange-100 transition"
                                         >

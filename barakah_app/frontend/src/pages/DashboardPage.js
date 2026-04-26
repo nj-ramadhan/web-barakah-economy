@@ -586,19 +586,40 @@ const DashboardPage = () => {
                                     </Link>
                                 )}
                                 {hasAccess('charity') && (
-                                    <Link
-                                        to="/dashboard/admin/charity"
-                                        className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-red-100 hover:shadow-md transition"
-                                    >
-                                        <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center">
-                                            <span className="material-icons text-red-700">volunteer_activism</span>
-                                        </div>
-                                        <div className="flex-1">
-                                            <h3 className="font-bold text-gray-800 text-sm">Manajemen Charity</h3>
-                                            <p className="text-[11px] text-gray-500">Kelola realisasi kampanye sosial (Admin)</p>
-                                        </div>
-                                        <span className="material-icons text-gray-400">chevron_right</span>
-                                    </Link>
+                                    <>
+                                        <Link
+                                            to="/dashboard/admin/donations"
+                                            className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-emerald-100 hover:shadow-md transition relative"
+                                        >
+                                            {managementStats.pending_donations > 0 && (
+                                                <div className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center border-2 border-white shadow-sm z-10 animate-bounce">
+                                                    {managementStats.pending_donations}
+                                                </div>
+                                            )}
+                                            <div className="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center">
+                                                <span className="material-icons text-emerald-700">payments</span>
+                                            </div>
+                                            <div className="flex-1">
+                                                <h3 className="font-bold text-gray-800 text-sm">Donatur Charity</h3>
+                                                <p className="text-[11px] text-gray-500">Kelola dan verifikasi donasi masuk (Admin)</p>
+                                            </div>
+                                            <span className="material-icons text-gray-400">chevron_right</span>
+                                        </Link>
+
+                                        <Link
+                                            to="/dashboard/admin/charity"
+                                            className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-red-100 hover:shadow-md transition"
+                                        >
+                                            <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center">
+                                                <span className="material-icons text-red-700">volunteer_activism</span>
+                                            </div>
+                                            <div className="flex-1">
+                                                <h3 className="font-bold text-gray-800 text-sm">Realisasi Charity</h3>
+                                                <p className="text-[11px] text-gray-500">Kelola realisasi kampanye sosial (Admin)</p>
+                                            </div>
+                                            <span className="material-icons text-gray-400">chevron_right</span>
+                                        </Link>
+                                    </>
                                 )}
                                 {hasAccess('partners') && (
                                     <Link
