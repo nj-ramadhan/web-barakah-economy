@@ -800,6 +800,22 @@ const DashboardPage = () => {
                                     </Link>
                                 )}
 
+                                {hasAccess('photo_framer') && (
+                                    <Link
+                                        to="/dashboard/admin/photo-framer"
+                                        className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-pink-100 hover:shadow-md transition"
+                                    >
+                                        <div className="w-12 h-12 bg-pink-100 rounded-xl flex items-center justify-center">
+                                            <span className="material-icons text-pink-700">filter_frames</span>
+                                        </div>
+                                        <div className="flex-1">
+                                            <h3 className="font-bold text-gray-800 text-sm">Bingkai Foto Otomatis</h3>
+                                            <p className="text-[11px] text-gray-500">Pasang bingkai ke banyak foto sekaligus (Batch)</p>
+                                        </div>
+                                        <span className="material-icons text-gray-400">chevron_right</span>
+                                    </Link>
+                                )}
+
                                 {isAdmin && (
                                     <Link
                                         to="/live-meet-test"
