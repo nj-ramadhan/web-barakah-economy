@@ -5,13 +5,15 @@ import { getGlobalRegistrations, getEvents, globalBlastWhatsapp } from '../../se
 import { Helmet } from 'react-helmet';
 
 const LABEL_MAPPINGS = {
-    'Instansi/Organisasi': ['instansi', 'organisasi', 'perusahaan', 'asal', 'lembaga', 'komunitas', 'office', 'company', 'unit kerja', 'tempat kerja'],
-    'Jabatan/Profesi': ['jabatan', 'profesi', 'pekerjaan', 'posisi', 'occupation', 'job', 'position', 'status'],
-    'Alamat/Domisili': ['alamat', 'kota', 'domisili', 'tempat tinggal', 'kecamatan', 'kabupaten', 'provinsi', 'address', 'city', 'residence', 'daerah'],
+    'Instansi/Organisasi': ['instansi', 'organisasi', 'perusahaan', 'asal', 'lembaga', 'komunitas', 'office', 'company', 'unit kerja', 'tempat kerja', 'bisnis'],
+    'Jabatan/Profesi': ['jabatan', 'profesi', 'pekerjaan', 'posisi', 'occupation', 'job', 'position', 'status', 'aktivitas', 'kegiatan'],
+    'Alamat/Domisili': ['alamat', 'kota', 'domisili', 'tempat tinggal', 'kecamatan', 'kabupaten', 'provinsi', 'address', 'city', 'residence', 'daerah', 'area', 'tinggal'],
     'Jenis Kelamin': ['jenis kelamin', 'gender', 'sex', 'pria/wanita', 'laki-laki/perempuan', 'gender'],
-    'Pendidikan': ['pendidikan', 'sekolah', 'universitas', 'kampus', 'jurusan', 'major', 'education', 'school', 'university', 'angkatan', 'nim'],
-    'Sumber Info': ['tahu dari mana', 'sumber informasi', 'informasi event', 'info event', 'source', 'how did you know', 'referral'],
-    'Alasan Daftar': ['alasan', 'motivasi', 'tujuan', 'reason', 'motivation', 'goal', 'ekspektasi']
+    'Pendidikan': ['pendidikan', 'sekolah', 'universitas', 'kampus', 'jurusan', 'major', 'education', 'school', 'university', 'angkatan', 'nim', 'studi', 'semester', 'kelas'],
+    'Sumber Info': ['tahu dari mana', 'sumber informasi', 'informasi event', 'info event', 'source', 'how did you know', 'referral', 'mendapat info'],
+    'Alasan Daftar': ['alasan', 'motivasi', 'tujuan', 'reason', 'motivation', 'goal', 'ekspektasi', 'harapan', 'minat', 'tertarik'],
+    'Umur/Usia': ['umur', 'usia', 'tanggal lahir', 'age', 'birth'],
+    'Sosial Media': ['instagram', 'facebook', 'twitter', 'linkedin', 'tiktok', 'social media', 'sosmed', 'ig', 'fb']
 };
 
 const normalizeLabel = (label) => {
@@ -67,7 +69,7 @@ const DashboardEventRecapPage = () => {
             const normalizedMap = {}; // Canonical -> Set of original labels
             const commonFields = [
                 'nama', 'name', 'email', 'alamat email', 
-                'no hp', 'hp', 'whatsapp', 'wa', 'telepon', 'phone', 'no. hp', 'no. whatsapp', 'handphone'
+                'no hp', 'hp', 'whatsapp', 'wa', 'telepon', 'phone', 'no. hp', 'no. whatsapp', 'handphone', 'contact'
             ];
             
             registrations.forEach(reg => {

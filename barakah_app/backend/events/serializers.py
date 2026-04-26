@@ -236,18 +236,30 @@ class EventRegistrationSerializer(serializers.ModelSerializer):
         result = {}
         # Get all fields currently associated with this event
         current_fields = {str(f.id): f.label for f in obj.event.form_fields.all()}
-        # Reverse mapping for easy lookup by label
-        label_to_current_id = {v: k for k, v in current_fields.items()}
         
+        # Collect unknown IDs to query them globally
+        unknown_ids = [fid for fid in obj.responses.keys() if str(fid) not in current_fields]
+        extra_labels = {}
+        if unknown_ids:
+            try:
+                # Try to find these IDs globally in case they were orphaned/moved
+                from .models import EventFormField
+                extra_fields = EventFormField.objects.filter(id__in=unknown_ids)
+                extra_labels = {str(f.id): f.label for f in extra_fields}
+            except:
+                pass
+
         for field_id, value in obj.responses.items():
-            label = current_fields.get(str(field_id))
+            fid_str = str(field_id)
+            label = current_fields.get(fid_str) or extra_labels.get(fid_str)
+            
             if label:
                 result[label] = value
             else:
                 # Orphaned ID. Maybe we can map it to a current label for Event 15?
                 if obj.event_id == 15:
                     legacy_map = {'81': 'Nama', '82': 'Email', '83': 'No HP', '84': 'Asal Instansi', '85': 'Jenis Kelamin'}
-                    mapped_label = legacy_map.get(str(field_id))
+                    mapped_label = legacy_map.get(fid_str)
                     if mapped_label:
                         result[mapped_label] = value
                     else:
