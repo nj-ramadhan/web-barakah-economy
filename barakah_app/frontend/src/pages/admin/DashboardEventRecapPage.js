@@ -4,6 +4,26 @@ import NavigationButton from '../../components/layout/Navigation';
 import { getGlobalRegistrations, getEvents, globalBlastWhatsapp } from '../../services/eventApi';
 import { Helmet } from 'react-helmet';
 
+const LABEL_MAPPINGS = {
+    'Instansi/Organisasi': ['instansi', 'organisasi', 'perusahaan', 'asal', 'lembaga', 'komunitas', 'office', 'company', 'unit kerja', 'tempat kerja'],
+    'Jabatan/Profesi': ['jabatan', 'profesi', 'pekerjaan', 'posisi', 'occupation', 'job', 'position', 'status'],
+    'Alamat/Domisili': ['alamat', 'kota', 'domisili', 'tempat tinggal', 'kecamatan', 'kabupaten', 'provinsi', 'address', 'city', 'residence', 'daerah'],
+    'Jenis Kelamin': ['jenis kelamin', 'gender', 'sex', 'pria/wanita', 'laki-laki/perempuan', 'gender'],
+    'Pendidikan': ['pendidikan', 'sekolah', 'universitas', 'kampus', 'jurusan', 'major', 'education', 'school', 'university', 'angkatan', 'nim'],
+    'Sumber Info': ['tahu dari mana', 'sumber informasi', 'informasi event', 'info event', 'source', 'how did you know', 'referral'],
+    'Alasan Daftar': ['alasan', 'motivasi', 'tujuan', 'reason', 'motivation', 'goal', 'ekspektasi']
+};
+
+const normalizeLabel = (label) => {
+    const lowLabel = label.toLowerCase().trim();
+    for (const [canonical, keywords] of Object.entries(LABEL_MAPPINGS)) {
+        if (keywords.some(k => lowLabel.includes(k))) {
+            return canonical;
+        }
+    }
+    return label; // Keep original if no match
+};
+
 const DashboardEventRecapPage = () => {
     const [registrations, setRegistrations] = useState([]);
     const [events, setEvents] = useState([]);
@@ -18,6 +38,9 @@ const DashboardEventRecapPage = () => {
     const [blastImage, setBlastImage] = useState(null);
     const [isBlasting, setIsBlasting] = useState(false);
     const [blastResult, setBlastResult] = useState(null);
+
+    const [dynamicLabels, setDynamicLabels] = useState([]);
+    const [labelMapping, setLabelMapping] = useState({});
 
     useEffect(() => {
         fetchData();
@@ -39,11 +62,9 @@ const DashboardEventRecapPage = () => {
         }
     };
 
-    const [dynamicLabels, setDynamicLabels] = useState([]);
-
     useEffect(() => {
         if (registrations.length > 0) {
-            const labels = new Set();
+            const normalizedMap = {}; // Canonical -> Set of original labels
             const commonFields = [
                 'nama', 'name', 'email', 'alamat email', 
                 'no hp', 'hp', 'whatsapp', 'wa', 'telepon', 'phone', 'no. hp', 'no. whatsapp', 'handphone'
@@ -53,18 +74,35 @@ const DashboardEventRecapPage = () => {
                 if (reg.responses_with_labels) {
                     Object.keys(reg.responses_with_labels).forEach(label => {
                         const lowLabel = label.toLowerCase().trim();
-                        // Only add if it's not one of the common fields we already display
-                        if (!commonFields.includes(lowLabel) && !commonFields.some(cf => lowLabel === cf)) {
-                            // Secondary check: if it's "Nama Lengkap" and we already have "Nama", etc.
-                            // But let's just use a whitelist/blacklist approach
-                            labels.add(label);
+                        // Check if it's NOT a common field
+                        if (!commonFields.some(cf => lowLabel === cf || lowLabel.includes(cf))) {
+                            const canonical = normalizeLabel(label);
+                            if (!normalizedMap[canonical]) normalizedMap[canonical] = new Set();
+                            normalizedMap[canonical].add(label);
                         }
                     });
                 }
             });
-            setDynamicLabels(Array.from(labels).sort());
+            
+            setLabelMapping(normalizedMap);
+            setDynamicLabels(Object.keys(normalizedMap).sort());
         }
     }, [registrations]);
+
+    const getNormalizedValue = (reg, canonical) => {
+        const originalLabels = labelMapping[canonical];
+        if (!originalLabels) return '';
+        
+        const values = [];
+        originalLabels.forEach(label => {
+            const val = reg.responses_with_labels?.[label];
+            if (val) {
+                values.push(Array.isArray(val) ? val.join(', ') : val);
+            }
+        });
+        
+        return values.length > 0 ? values.join(' | ') : '';
+    };
 
     const handleSelectAll = (e) => {
         if (e.target.checked) {
@@ -87,8 +125,7 @@ const DashboardEventRecapPage = () => {
         
         const rows = dataToExport.map(r => {
             const dynamicValues = dynamicLabels.map(label => {
-                let val = r.responses_with_labels?.[label] || '';
-                if (Array.isArray(val)) val = val.join(', ');
+                const val = getNormalizedValue(r, label);
                 return `"${String(val).replace(/"/g, '""')}"`;
             });
 
@@ -285,11 +322,10 @@ const DashboardEventRecapPage = () => {
                                                 </span>
                                             </td>
                                             {dynamicLabels.map(label => {
-                                                let val = reg.responses_with_labels?.[label] || '-';
-                                                if (Array.isArray(val)) val = val.join(', ');
+                                                const val = getNormalizedValue(reg, label);
                                                 return (
                                                     <td key={label} className="px-6 py-4">
-                                                        <p className="text-[10px] text-gray-600 font-medium line-clamp-2 italic">{val}</p>
+                                                        <p className="text-[10px] text-gray-600 font-medium line-clamp-2 italic">{val || '-'}</p>
                                                     </td>
                                                 );
                                             })}
