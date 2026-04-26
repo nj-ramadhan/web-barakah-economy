@@ -373,8 +373,8 @@ const DashboardPage = () => {
                 </div>
 
                 {/* Menu */}
-                <h2 className="font-semibold text-gray-700 mb-3 px-1">Manajemen Bisnis</h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <h2 className="font-semibold text-gray-700 mb-3 px-1">Manajemen Bisnis & Personal</h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-10">
                     <Link
                         to="/dashboard/digital-products"
                         className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-gray-50 hover:shadow-md transition"
@@ -451,7 +451,6 @@ const DashboardPage = () => {
                         <span className="material-icons text-gray-400">{myTestimonial ? 'edit' : 'add'}</span>
                     </div>
 
-                    {/* User-accessible menus */}
                     <Link
                         to="/dashboard/my-campaigns"
                         className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-red-50 hover:shadow-md transition"
@@ -521,30 +520,62 @@ const DashboardPage = () => {
                         const accessibleMenus = userProfile?.accessible_menus || [];
                         const hasAccess = (menuKey) => isAdmin || accessibleMenus.includes(menuKey) || accessibleMenus.includes('*');
 
-                        if (!isAdmin && accessibleMenus.length === 0) return null;
+                        if (hasAccess('sinergy_products')) {
+                            return (
+                                <Link
+                                    to="/dashboard/sinergy/seller"
+                                    className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-green-100 hover:shadow-md transition relative"
+                                >
+                                    {sinergyPendingCount > 0 && (
+                                        <div className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center border-2 border-white shadow-sm z-10 animate-bounce">
+                                            {sinergyPendingCount}
+                                        </div>
+                                    )}
+                                    <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
+                                        <span className="material-icons text-green-700">inventory</span>
+                                    </div>
+                                    <div className="flex-1">
+                                        <h3 className="font-bold text-gray-800 text-sm">Pembuatan Produk (Sinergy)</h3>
+                                        <p className="text-[11px] text-gray-500">Kelola dan tambah produk fisik Anda</p>
+                                    </div>
+                                    <span className="material-icons text-gray-400">chevron_right</span>
+                                </Link>
+                            );
+                        }
+                        return null;
+                    })()}
+                </div>
 
-                        return (
-                            <>
-                                {hasAccess('sinergy_products') && (
-                                    <Link
-                                        to="/dashboard/sinergy/seller"
-                                        className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-green-100 hover:shadow-md transition relative"
-                                    >
-                                        {sinergyPendingCount > 0 && (
-                                            <div className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center border-2 border-white shadow-sm z-10 animate-bounce">
-                                                {sinergyPendingCount}
-                                            </div>
-                                        )}
-                                        <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
-                                            <span className="material-icons text-green-700">inventory</span>
-                                        </div>
-                                        <div className="flex-1">
-                                            <h3 className="font-bold text-gray-800 text-sm">Pembuatan Produk (Sinergy)</h3>
-                                            <p className="text-[11px] text-gray-500">Kelola dan tambah produk fisik Anda</p>
-                                        </div>
-                                        <span className="material-icons text-gray-400">chevron_right</span>
-                                    </Link>
-                                )}
+                {/* Admin Management Section */}
+                {(() => {
+                    const userRes = JSON.parse(localStorage.getItem('user'));
+                    const isAdmin = userRes?.username === 'admin' || userRes?.role === 'admin';
+                    const accessibleMenus = userProfile?.accessible_menus || [];
+                    const hasAccess = (menuKey) => isAdmin || accessibleMenus.includes(menuKey) || accessibleMenus.includes('*');
+
+                    const adminMenus = [
+                        'admin_sinergy', 'withdrawals', 'charity', 'partners', 'testimonials', 
+                        'activities', 'users', 'all_products', 'all_courses', 'consultants', 
+                        'transactions', 'forum', 'roles', 'campaign_approval', 'articles', 
+                        'admin_events', 'photo_framer'
+                    ];
+
+                    const canSeeAnyAdminMenu = adminMenus.some(menu => hasAccess(menu));
+
+                    if (!canSeeAnyAdminMenu) return null;
+
+                    return (
+                        <>
+                            <div className="relative py-4 mb-6">
+                                <div className="absolute inset-0 flex items-center" aria-hidden="true">
+                                    <div className="w-full border-t border-gray-200"></div>
+                                </div>
+                                <div className="relative flex justify-center">
+                                    <span className="px-4 bg-gray-50 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Administrasi Sistem</span>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                                 {hasAccess('admin_sinergy') && (
                                     <Link
                                         to="/dashboard/admin/sinergy"

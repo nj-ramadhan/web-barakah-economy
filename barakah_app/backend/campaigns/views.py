@@ -50,11 +50,10 @@ class CampaignViewSet(viewsets.ModelViewSet):
     parser_classes = [MultiPartParser, FormParser]
 
     def get_queryset(self):
-        queryset = Campaign.objects.filter(is_active=True)
-        
-        # Public users see only approved campaigns
-        if not self.request.user.is_staff:
-            queryset = queryset.filter(approval_status='approved')
+        if self.request.user.is_staff:
+            queryset = Campaign.objects.all()
+        else:
+            queryset = Campaign.objects.filter(is_active=True, approval_status='approved')
         
         search = self.request.query_params.get('search', None)
         if search:
