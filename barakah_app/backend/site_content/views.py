@@ -149,6 +149,7 @@ from products.models import Product
 from campaigns.models import Campaign
 from digital_products.models import WithdrawalRequest
 from events.models import Event
+from donations.models import Donation
 
 class ManagementStatsView(APIView):
     permission_classes = [permissions.IsAuthenticated]
@@ -161,5 +162,6 @@ class ManagementStatsView(APIView):
             'withdrawals': WithdrawalRequest.objects.filter(status='pending').count(),
             'testimonials': Testimonial.objects.filter(is_approved=False).count(),
             'admin_events': Event.objects.filter(status='pending').count(),
+            'pending_donations': Donation.objects.filter(payment_status='pending').count(),
         }
         return Response(stats)
