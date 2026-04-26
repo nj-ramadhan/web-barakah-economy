@@ -1001,7 +1001,6 @@ const DashboardPage = () => {
                     );
                     })()}
                 </div>
-            </div>
 
             {/* Testimonial Modal */}
             {showTestimonialModal && (
