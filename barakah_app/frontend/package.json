@@ -20,6 +20,7 @@
     "dompurify": "^2.4.7",
     "formik": "^2.4.6",
     "html2canvas": "^1.4.1",
+    "html5-qrcode": "^2.3.8",
     "jspdf": "^2.5.1",
     "jspdf-autotable": "^3.8.1",
     "jszip": "^3.10.1",
