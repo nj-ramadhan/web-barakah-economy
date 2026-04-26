@@ -404,6 +404,7 @@ class UserViewSet(viewsets.ModelViewSet):
 
         user_ids = request.data.get('user_ids', [])
         message_template = request.data.get('message', '')
+        image_base64 = request.data.get('image_base64')
 
         if not user_ids or not message_template:
             return Response(
@@ -415,15 +416,36 @@ class UserViewSet(viewsets.ModelViewSet):
         
         phone_list = []
         placeholder_data_list = []
+        seen_phones = set()
+        
         for u in users:
-            phone_list.append(u.phone)
-            profile = getattr(u, 'profile', None)
-            placeholder_data_list.append({
-                'name': profile.name_full if profile else u.username,
-                'username': u.username,
-                'email': u.email,
-                'phone': u.phone,
-            })
+            phone = u.phone
+            # Robust normalization for deduplication (anchor at '8')
+            raw_digits = ''.join(filter(str.isdigit, str(phone)))
+            if not raw_digits: continue
+            
+            if raw_digits.startswith('620'): core_number = raw_digits[3:]
+            elif raw_digits.startswith('62'): core_number = raw_digits[2:]
+            elif raw_digits.startswith('0'): core_number = raw_digits[1:]
+            else: core_number = raw_digits
+            
+            if core_number not in seen_phones:
+                seen_phones.add(core_number)
+                
+                # Format for sending
+                formatted = phone
+                if raw_digits.startswith('0'): formatted = "+62" + raw_digits[1:]
+                elif raw_digits.startswith('8'): formatted = "+62" + raw_digits
+                elif not formatted.startswith('+'): formatted = "+" + raw_digits
+                
+                phone_list.append(formatted)
+                profile = getattr(u, 'profile', None)
+                placeholder_data_list.append({
+                    'name': profile.name_full if profile and profile.name_full else u.username,
+                    'username': u.username,
+                    'email': u.email,
+                    'phone': u.phone,
+                })
 
         if not phone_list:
             return Response(
@@ -431,8 +453,11 @@ class UserViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        result = blast_messages(phone_list, message_template, placeholder_data_list)
-        return Response(result)
+        result = blast_messages(phone_list, message_template, placeholder_data_list, file_data_base64=image_base64)
+        return Response({
+            "message": f"Blast selesai dikirim ke {result['success']} nomor unik.",
+            "details": result
+        })
 
     @action(detail=False, methods=['get'])
     def roles_list(self, request):

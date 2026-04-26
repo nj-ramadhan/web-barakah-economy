@@ -216,12 +216,31 @@ const DashboardUserPage = () => {
         }
     };
 
+    const [blastImage, setBlastImage] = useState(null);
+
+    const handleImageChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setBlastImage(reader.result);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
     const handleBlast = async () => {
         if (!blastMessage.trim()) { alert('Tulis pesan terlebih dahulu'); return; }
         setBlasting(true);
         try {
-            const res = await axios.post(`${API}/api/auth/users/blast_whatsapp/`, { user_ids: selectedUserIds, message: blastMessage }, getAuth());
-            setBlastResult(res.data);
+            const payload = { 
+                user_ids: selectedUserIds, 
+                message: blastMessage,
+                image_base64: blastImage // Send image if attached
+            };
+            const res = await axios.post(`${API}/api/auth/users/blast_whatsapp/`, payload, getAuth());
+            setBlastResult(res.data.details);
+            alert(`Blast berhasil dikirim ke ${res.data.details.success} nomor unik.`);
         } catch (err) { alert('Gagal mengirim blast'); }
         setBlasting(false);
     };
@@ -624,8 +643,36 @@ const DashboardUserPage = () => {
                         <div className="p-6 space-y-4">
                             <p className="text-sm text-gray-600">Kirim pesan ke <b>{selectedUserIds.length}</b> user terpilih</p>
                             <div className="bg-blue-50 border border-blue-100 rounded-xl p-3 text-xs text-blue-700"><b>Placeholder:</b> {'{name}'}, {'{username}'}, {'{email}'}, {'{phone}'}</div>
-                            <textarea rows="5" value={blastMessage} onChange={e => setBlastMessage(e.target.value)}
-                                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-green-500" placeholder="Assalamualaikum {name}, ..." />
+                            
+                            <div>
+                                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1 block ml-1">Pesan</label>
+                                <textarea rows="5" value={blastMessage} onChange={e => setBlastMessage(e.target.value)}
+                                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-green-500" placeholder="Assalamualaikum {name}, ..." />
+                            </div>
+
+                            <div>
+                                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1 block ml-1">Lampiran Gambar (Opsional)</label>
+                                <div className="flex items-center gap-3">
+                                    <div className="flex-1">
+                                        <input type="file" accept="image/*" id="user-blast-image" className="hidden" onChange={handleImageChange} />
+                                        <label htmlFor="user-blast-image" className="flex items-center justify-center gap-2 w-full p-3 border-2 border-dashed border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 hover:border-green-300 transition group">
+                                            <span className="material-icons text-gray-400 group-hover:text-green-500 transition">image</span>
+                                            <span className="text-xs font-bold text-gray-500 group-hover:text-green-700 transition">
+                                                {blastImage ? 'Ganti Gambar' : 'Pilih Gambar...'}
+                                            </span>
+                                        </label>
+                                    </div>
+                                    {blastImage && (
+                                        <div className="relative w-16 h-16 rounded-xl overflow-hidden border border-gray-100">
+                                            <img src={blastImage} className="w-full h-full object-cover" alt="prev" />
+                                            <button onClick={() => setBlastImage(null)} className="absolute top-0 right-0 w-5 h-5 bg-black/50 text-white flex items-center justify-center hover:bg-red-500 transition">
+                                                <span className="material-icons text-[12px]">close</span>
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
                             {blastResult && (
                                 <div className={`p-4 rounded-xl text-sm ${blastResult.failed > 0 ? 'bg-orange-50 border border-orange-100' : 'bg-green-50 border border-green-100'}`}>
                                     <p className="font-bold">Hasil: {blastResult.success} berhasil, {blastResult.failed} gagal dari {blastResult.total} total</p>

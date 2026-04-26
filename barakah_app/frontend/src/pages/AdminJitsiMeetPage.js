@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Helmet } from 'react-helmet';
+import axios from 'axios';
 import NavigationButton from '../components/layout/Navigation';
 
 const AdminJitsiMeetPage = () => {
@@ -16,14 +17,50 @@ const AdminJitsiMeetPage = () => {
         setIsMeetingStarted(true);
     };
 
+    const [currentUser, setCurrentUser] = useState(null);
+
+    useEffect(() => {
+        try {
+            const user = JSON.parse(localStorage.getItem('user'));
+            setCurrentUser(user);
+        } catch (e) { console.error(e); }
+    }, []);
+
+    // Periodic token refresh for logged-in host/creator
+    useEffect(() => {
+        if (!currentUser || !currentUser.refresh) return;
+
+        const refreshInterval = setInterval(async () => {
+            try {
+                const res = await axios.post(`${process.env.REACT_APP_API_BASE_URL}/api/auth/token/refresh/`, {
+                    refresh: currentUser.refresh
+                });
+                const newAccess = res.data.access;
+                const updatedUser = { ...currentUser, access: newAccess };
+                localStorage.setItem('user', JSON.stringify(updatedUser));
+                setCurrentUser(updatedUser);
+                console.log("Session refreshed successfully during meeting.");
+            } catch (err) {
+                console.error("Failed to refresh session during meeting:", err);
+            }
+        }, 10 * 60 * 1000); // Every 10 minutes
+
+        return () => clearInterval(refreshInterval);
+    }, [currentUser]);
+
     useEffect(() => {
         if (isMeetingStarted && jitsiContainerRef.current && !jitsiApiRef.current) {
             const domain = '8x8.vc';
+            const displayName = currentUser?.profile?.name_full || currentUser?.username || 'Guest';
+            
             const options = {
                 roomName: `${APP_ID}/${roomName}`,
                 width: '100%',
                 height: 600,
                 parentNode: jitsiContainerRef.current,
+                userInfo: {
+                    displayName: displayName
+                },
                 interfaceConfigOverwrite: {
                     TOOLBAR_BUTTONS: [
                         'microphone', 'camera', 'closedcaptions', 'desktop', 'embedmeeting', 'fullscreen',
