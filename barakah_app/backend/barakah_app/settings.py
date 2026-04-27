@@ -127,6 +127,7 @@ INSTALLED_APPS = [
     'forum',
     'django_filters',
     'zis',
+    'tracking',
 ]
 
 MIDDLEWARE = [

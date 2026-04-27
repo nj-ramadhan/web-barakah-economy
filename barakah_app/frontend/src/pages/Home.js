@@ -826,6 +826,43 @@ const Home = () => {
         </div>
       )}
 
+      {/* BAE RUN Promotion Banner */}
+      <div className="px-4 py-8">
+        <div className="relative bg-gradient-to-r from-slate-900 to-slate-800 rounded-3xl overflow-hidden shadow-2xl border border-white/5">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-green-500/10 blur-3xl rounded-full translate-x-10 -translate-y-10"></div>
+          <div className="p-6 flex items-center justify-between gap-4">
+            <div className="flex-1">
+              <div className="inline-flex items-center gap-1.5 px-2 py-0.5 bg-green-500/20 border border-green-500/20 rounded-full mb-3">
+                <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
+                <span className="text-[10px] font-black uppercase tracking-widest text-green-400">Barakah Activity</span>
+              </div>
+              <h2 className="text-2xl font-black text-white tracking-tighter italic uppercase leading-none mb-2">
+                BAE <span className="text-green-500">RUN</span>
+              </h2>
+              <p className="text-xs text-slate-400 leading-tight mb-4 max-w-[200px]">
+                Mulai hidup sehat & berkah. Lacak lari Anda dan kumpulkan poin keberkahan.
+              </p>
+              <Link 
+                to="/bae-run" 
+                className="inline-flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-green-700 transition shadow-lg shadow-green-900/20"
+              >
+                Cek Aplikasi 
+                <span className="material-icons text-[14px]">arrow_forward</span>
+              </Link>
+            </div>
+            <div className="relative w-28 h-40 transform rotate-6 translate-y-4">
+              <div className="absolute inset-0 bg-slate-950 rounded-2xl border-4 border-slate-700 shadow-xl overflow-hidden">
+                <img 
+                  src="/media/bae_run_app_mockup_1777304049543.png" 
+                  alt="BAE RUN Mockup" 
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Activities Carousel */}
       {activities.length > 0 && (
         <div className="px-4 pt-4">

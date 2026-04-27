@@ -98,6 +98,7 @@ import ForumThreadDetail from './pages/ForumThreadDetail';
 import DashboardSinergySellersPage from './pages/DashboardSinergySellersPage';
 import DashboardSinergySellerOrdersPage from './pages/DashboardSinergySellerOrdersPage';
 import DashboardSinergyAdminPage from './pages/admin/DashboardSinergyAdminPage';
+import BaeRunLandingPage from './pages/BaeRunLandingPage';
 import AdminJitsiMeetPage from './pages/AdminJitsiMeetPage';
 import AdminPhotoFramerPage from './pages/admin/AdminPhotoFramerPage';
 import DashboardEventRecapPage from './pages/admin/DashboardEventRecapPage';
@@ -220,6 +221,7 @@ const LayoutWrapper = ({ isDesktop }) => {
         <Route path="/dashboard/admin/about-us" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardAboutUsPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/admin/role-management" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardRoleManagementPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/login" element={<MobileContainer><LoginPage /></MobileContainer>} />
+        <Route path="/bae-run" element={<BaeRunLandingPage />} />
         <Route path="/register" element={<MobileContainer><RegisterPage /></MobileContainer>} />
         <Route path="/lupa-password" element={<MobileContainer><ForgotPasswordPage /></MobileContainer>} />
         <Route path="/reset-password" element={<MobileContainer><ResetPasswordPage /></MobileContainer>} />
