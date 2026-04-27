@@ -8,6 +8,7 @@ import base64
 import tempfile
 import os
 import logging
+import uuid
 from django.conf import settings
 
 logger = logging.getLogger('accounts')
@@ -67,16 +68,18 @@ def send_message(phone, message):
 
 
 def send_file(phone, caption, file_data_base64, filename='document.pdf'):
-    """Send a file via WhatsApp API."""
+    """Send a file via WhatsApp API from base64 data."""
     if not phone:
         return {'success': False, 'message': 'No HP kosong'}
 
-    api_url = f"{WA_API_URL}/send/file"
-
     try:
-        # Separate header from base64 data
+        # Detect MIME type and separate payload
+        mime_type = 'application/pdf'
         if ',' in file_data_base64:
-            payload = file_data_base64.split(',')[1]
+            header, payload = file_data_base64.split(',', 1)
+            try:
+                mime_type = header.split(':')[1].split(';')[0]
+            except: pass
         else:
             payload = file_data_base64
 
@@ -85,17 +88,39 @@ def send_file(phone, caption, file_data_base64, filename='document.pdf'):
 
         # Decode base64
         file_decoded = base64.b64decode(payload)
-        if len(file_decoded) < 100:
-            return {'success': False, 'message': 'Gagal decode file'}
+        if len(file_decoded) < 10: # Min size reduced to 10 bytes
+            return {'success': False, 'message': 'Gagal decode file (terlalu kecil)'}
 
-        # Save to temp file
-        temp_path = os.path.join(tempfile.gettempdir(), f'wa_{filename}')
+        # Save to unique temp file to prevent collisions
+        temp_filename = f"wa_{uuid.uuid4().hex}_{filename}"
+        temp_path = os.path.join(tempfile.gettempdir(), temp_filename)
+        
         with open(temp_path, 'wb') as f:
             f.write(file_decoded)
 
-        # Send via multipart
-        with open(temp_path, 'rb') as f:
-            files = {'file': (filename, f, 'application/pdf')}
+        result = _send_file_internal(phone, caption, temp_path, filename, mime_type)
+
+        # Cleanup
+        if os.path.exists(temp_path):
+            os.unlink(temp_path)
+
+        return result
+
+    except Exception as e:
+        logger.error(f"WhatsApp send_file error: {e}")
+        return {
+            'success': False,
+            'message': f'Gagal mengirim file WhatsApp: {str(e)}'
+        }
+
+
+def _send_file_internal(phone, caption, file_path, filename, mime_type):
+    """Internal helper to send a file from a local path."""
+    api_url = f"{WA_API_URL}/send/file"
+    
+    try:
+        with open(file_path, 'rb') as f:
+            files = {'file': (filename, f, mime_type)}
             data = {'phone': phone, 'caption': caption}
             
             response = requests.post(
@@ -107,70 +132,94 @@ def send_file(phone, caption, file_data_base64, filename='document.pdf'):
                 verify=False
             )
 
-        # Cleanup
-        if os.path.exists(temp_path):
-            os.unlink(temp_path)
-
         if 200 <= response.status_code < 300:
             return {
                 'success': True,
                 'data': {
                     'mode': 'file',
+                    'mime': mime_type,
                     'api_response': response.json() if response.text else None
                 }
             }
         else:
             # Fallback to text message
-            logger.warning(f"WA file send failed (HTTP {response.status_code}), falling back to text")
-            fallback_msg = f"{caption}\n\n*[System]* Gagal lampirkan file."
+            logger.warning(f"WA file send failed (HTTP {response.status_code}, MIME: {mime_type}), falling back to text")
+            fallback_msg = f"{caption}\n\n*[System]* Gagal lampirkan file ({mime_type})."
             return send_message(phone, fallback_msg)
 
     except Exception as e:
-        logger.error(f"WhatsApp send_file error: {e}")
-        return {
-            'success': False,
-            'message': f'Gagal mengirim file WhatsApp: {str(e)}'
-        }
+        logger.error(f"WhatsApp _send_file_internal error: {e}")
+        return {'success': False, 'message': f'Internal error sending file: {str(e)}'}
 
 
 def blast_messages(phone_list, message_template, placeholder_data_list=None, file_data_base64=None, filename='image.jpg'):
     """
-    Send WhatsApp messages to multiple recipients.
-    
-    Args:
-        phone_list: list of phone numbers
-        message_template: message string with optional placeholders like {name}, {username}
-        placeholder_data_list: list of dicts with placeholder values per recipient
-        file_data_base64: Optional base64 encoded file data to send as attachment
-        filename: Optional filename for the attachment
-    
-    Returns:
-        dict with success/fail counts and details
+    Send WhatsApp messages to multiple recipients efficiently.
     """
     results = {'total': len(phone_list), 'success': 0, 'failed': 0, 'details': []}
-
-    for i, phone in enumerate(phone_list):
-        # Replace placeholders if data provided
-        msg = message_template
-        if placeholder_data_list and i < len(placeholder_data_list):
-            data = placeholder_data_list[i]
-            for key, value in data.items():
-                msg = msg.replace(f'{{{key}}}', str(value or ''))
-
-        if file_data_base64:
-            # If image/file is provided, we send it with the message as caption
-            result = send_file(phone, msg, file_data_base64, filename)
-        else:
-            result = send_message(phone, msg)
+    
+    # Pre-process file once if provided
+    file_info = None
+    if file_data_base64:
+        try:
+            mime_type = 'application/pdf'
+            if ',' in file_data_base64:
+                header, payload = file_data_base64.split(',', 1)
+                try:
+                    mime_type = header.split(':')[1].split(';')[0]
+                except: pass
+            else:
+                payload = file_data_base64
             
-        if result.get('success'):
-            results['success'] += 1
-        else:
-            results['failed'] += 1
-        results['details'].append({
-            'phone': phone,
-            'success': result.get('success', False),
-            'message': result.get('message', '')
-        })
+            payload = payload.replace(' ', '+')
+            file_decoded = base64.b64decode(payload)
+            
+            if len(file_decoded) > 10:
+                temp_filename = f"blast_{uuid.uuid4().hex}_{filename}"
+                temp_path = os.path.join(tempfile.gettempdir(), temp_filename)
+                with open(temp_path, 'wb') as f:
+                    f.write(file_decoded)
+                
+                file_info = {
+                    'path': temp_path,
+                    'mime': mime_type,
+                    'filename': filename
+                }
+        except Exception as e:
+            logger.error(f"Blast file preparation error: {e}")
+
+    try:
+        for i, phone in enumerate(phone_list):
+            # Replace placeholders if data provided
+            msg = message_template
+            if placeholder_data_list and i < len(placeholder_data_list):
+                data = placeholder_data_list[i]
+                for key, value in data.items():
+                    msg = msg.replace(f'{{{key}}}', str(value or ''))
+
+            if file_info:
+                # Reuse the prepared temp file
+                result = _send_file_internal(phone, msg, file_info['path'], file_info['filename'], file_info['mime'])
+            elif file_data_base64:
+                # Fallback if file_info failed but base64 was provided (should not happen normally)
+                result = send_file(phone, msg, file_data_base64, filename)
+            else:
+                result = send_message(phone, msg)
+                
+            if result.get('success'):
+                results['success'] += 1
+            else:
+                results['failed'] += 1
+            results['details'].append({
+                'phone': phone,
+                'success': result.get('success', False),
+                'message': result.get('message', '')
+            })
+    finally:
+        # Final cleanup of blast temp file
+        if file_info and os.path.exists(file_info['path']):
+            try:
+                os.unlink(file_info['path'])
+            except: pass
 
     return results

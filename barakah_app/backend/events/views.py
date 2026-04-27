@@ -1112,8 +1112,18 @@ class EventViewSet(viewsets.ModelViewSet):
         """Public list of approved participants for this event."""
         event = self.get_object()
         # Remove status='approved' filter to show everyone who registered
-        registrations = EventRegistration.objects.filter(event=event)
+        registrations = EventRegistration.objects.filter(event=event).prefetch_related('user', 'user__profile')
         
+        # Identify team-related fields
+        team_field_ids = list(event.form_fields.filter(
+            models.Q(label__icontains='team') | 
+            models.Q(label__icontains='tim') | 
+            models.Q(label__icontains='kelompok')
+        ).values_list('id', flat=True))
+        
+        # Convert IDs to strings since JSON keys are strings
+        team_field_ids = [str(fid) for fid in team_field_ids]
+
         data = []
         for reg in registrations:
             name = ""
@@ -1126,11 +1136,21 @@ class EventViewSet(viewsets.ModelViewSet):
                     name = reg.user.username
             else:
                 name = reg.guest_name or "Tamu"
+            
+            # Find team value
+            team = None
+            if reg.responses:
+                for fid in team_field_ids:
+                    val = reg.responses.get(fid)
+                    if val:
+                        team = str(val)
+                        break
                 
             data.append({
                 "id": reg.id,
                 "name": name,
                 "status": reg.status,
+                "team": team,
                 "created_at": reg.created_at,
             })
             

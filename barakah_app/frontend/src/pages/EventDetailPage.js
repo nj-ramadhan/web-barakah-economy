@@ -691,13 +691,88 @@ const EventDetailPage = () => {
                                             <p className="text-gray-500 max-w-xs text-sm">Jadilah yang pertama mengikuti event seru ini!</p>
                                         </div>
                                     ) : (
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                                            {(Array.isArray(participants) ? participants : []).map((p) => (
-                                                <div key={p.id} className="bg-gray-50 px-5 py-3 rounded-2xl border border-gray-100 flex items-center gap-3 hover:border-blue-200 transition">
-                                                    <span className="w-2 h-2 rounded-full bg-blue-500 shrink-0"></span>
-                                                    <p className="font-bold text-gray-700 truncate">{p.name || 'Peserta'}</p>
-                                                </div>
-                                            ))}
+                                        <div className="space-y-12">
+                                            {(() => {
+                                                const getTeamColor = (teamName) => {
+                                                    if (!teamName) return { bg: 'bg-white', border: 'border-gray-100', text: 'text-gray-700', bullet: 'bg-blue-500', headerBg: 'bg-gray-100', headerText: 'text-gray-600' };
+                                                    
+                                                    const colors = [
+                                                        { bg: 'bg-blue-50', border: 'border-blue-100', text: 'text-blue-700', bullet: 'bg-blue-600', headerBg: 'bg-blue-600', headerText: 'text-white' },
+                                                        { bg: 'bg-emerald-50', border: 'border-emerald-100', text: 'text-emerald-700', bullet: 'bg-emerald-600', headerBg: 'bg-emerald-600', headerText: 'text-white' },
+                                                        { bg: 'bg-purple-50', border: 'border-purple-100', text: 'text-purple-700', bullet: 'bg-purple-600', headerBg: 'bg-purple-600', headerText: 'text-white' },
+                                                        { bg: 'bg-amber-50', border: 'border-amber-100', text: 'text-amber-700', bullet: 'bg-amber-600', headerBg: 'bg-amber-600', headerText: 'text-white' },
+                                                        { bg: 'bg-rose-50', border: 'border-rose-100', text: 'text-rose-700', bullet: 'bg-rose-600', headerBg: 'bg-rose-600', headerText: 'text-white' },
+                                                        { bg: 'bg-indigo-50', border: 'border-indigo-100', text: 'text-indigo-700', bullet: 'bg-indigo-600', headerBg: 'bg-indigo-600', headerText: 'text-white' },
+                                                        { bg: 'bg-cyan-50', border: 'border-cyan-100', text: 'text-cyan-700', bullet: 'bg-cyan-600', headerBg: 'bg-cyan-600', headerText: 'text-white' },
+                                                        { bg: 'bg-teal-50', border: 'border-teal-100', text: 'text-teal-700', bullet: 'bg-teal-600', headerBg: 'bg-teal-600', headerText: 'text-white' },
+                                                    ];
+                                                    
+                                                    let hash = 0;
+                                                    for (let i = 0; i < teamName.length; i++) {
+                                                        hash = teamName.charCodeAt(i) + ((hash << 5) - hash);
+                                                    }
+                                                    const index = Math.abs(hash) % colors.length;
+                                                    return colors[index];
+                                                };
+
+                                                // Group participants by team
+                                                const grouped = (participants || []).reduce((acc, p) => {
+                                                    const teamName = p.team || 'Individu';
+                                                    if (!acc[teamName]) acc[teamName] = [];
+                                                    acc[teamName].push(p);
+                                                    return acc;
+                                                }, {});
+
+                                                // Sort teams (Individu first, then alphabetically)
+                                                const teamNames = Object.keys(grouped).sort((a, b) => {
+                                                    if (a === 'Individu') return -1;
+                                                    if (b === 'Individu') return 1;
+                                                    return a.localeCompare(b);
+                                                });
+
+                                                return teamNames.map(teamName => {
+                                                    const color = getTeamColor(teamName === 'Individu' ? null : teamName);
+                                                    const members = grouped[teamName];
+                                                    
+                                                    return (
+                                                        <div key={teamName} className="animate-fade-in">
+                                                            {/* Team Header */}
+                                                            <div className="flex items-center gap-4 mb-6">
+                                                                <div className={`px-4 py-1.5 rounded-full ${color.headerBg} ${color.headerText} text-[10px] sm:text-xs font-black uppercase tracking-[0.2em] shadow-sm flex items-center gap-2`}>
+                                                                    <span className="material-icons text-sm sm:text-base">
+                                                                        {teamName === 'Individu' ? 'person' : 'groups'}
+                                                                    </span>
+                                                                    {teamName === 'Individu' ? 'Peserta Individu' : `TIM: ${teamName}`}
+                                                                    <span className="opacity-50 ml-1">({members.length})</span>
+                                                                </div>
+                                                                <div className="flex-1 h-[1px] bg-gray-100"></div>
+                                                            </div>
+
+                                                            {/* Members Grid */}
+                                                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                                                                {members.map((p) => (
+                                                                    <div key={p.id} className={`${color.bg} px-5 py-4 rounded-2xl border ${color.border} flex items-center gap-4 hover:shadow-lg transition-all duration-300 group relative overflow-hidden`}>
+                                                                        {/* Subtle Accent Line */}
+                                                                        <div className={`absolute left-0 top-0 bottom-0 w-1 ${color.bullet} opacity-20`}></div>
+                                                                        
+                                                                        <div className={`w-8 h-8 rounded-xl ${color.bullet} text-white flex items-center justify-center font-black text-xs shadow-sm shrink-0`}>
+                                                                            {p.name?.charAt(0).toUpperCase()}
+                                                                        </div>
+                                                                        <div className="min-w-0">
+                                                                            <p className={`font-extrabold ${color.text} truncate text-sm sm:text-base`}>
+                                                                                {p.name || 'Peserta'}
+                                                                            </p>
+                                                                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mt-0.5">
+                                                                                Terdaftar
+                                                                            </p>
+                                                                        </div>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                });
+                                            })()}
                                         </div>
                                     )}
                                 </div>
