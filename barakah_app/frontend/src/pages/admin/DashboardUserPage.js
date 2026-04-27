@@ -50,6 +50,11 @@ const DashboardUserPage = () => {
     const [showResetPasswordModal, setShowResetPasswordModal] = useState(false);
     const [resetPasswordResult, setResetPasswordResult] = useState(null);
     const [resettingPassword, setResettingPassword] = useState(false);
+    // Batch edit state
+    const [showBatchModal, setShowBatchModal] = useState(false);
+    const [batchField, setBatchField] = useState('');
+    const [batchValue, setBatchValue] = useState('');
+    const [batching, setBatching] = useState(false);
 
     const fetchMeta = useCallback(async () => {
         try {
@@ -244,6 +249,22 @@ const DashboardUserPage = () => {
         } catch (err) { alert('Gagal mengirim blast'); }
         setBlasting(false);
     };
+    const handleBatchUpdate = async () => {
+        if (!batchField || batchValue === '') { alert('Pilih kolom dan nilai yang ingin diubah.'); return; }
+        if (!window.confirm(`Anda yakin ingin mengubah ${batchField} untuk ${selectedUserIds.length} user terpilih?`)) return;
+        setBatching(true);
+        try {
+            const payload = { user_ids: selectedUserIds, field: batchField, value: batchValue };
+            await axios.post(`${API}/api/auth/users/batch_update/`, payload, getAuth());
+            alert('Batch update berhasil!');
+            setShowBatchModal(false);
+            setBatchField('');
+            setBatchValue('');
+            fetchUsers(currentPage);
+            setSelectedUserIds([]);
+        } catch (err) { alert('Gagal update: ' + JSON.stringify(err.response?.data || err.message)); }
+        setBatching(false);
+    };
 
     const setP = (key, val) => setEditFormData(f => ({ ...f, profile: { ...f.profile, [key]: val } }));
 
@@ -307,10 +328,16 @@ const DashboardUserPage = () => {
                             <span className="material-icons text-sm">person_add</span> Tambah User
                         </button>
                         {selectedUserIds.length > 0 && (
-                            <button onClick={() => { setBlastResult(null); setShowBlastModal(true); }}
-                                className="bg-green-600 text-white px-4 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 shadow-lg hover:bg-green-700 transition">
-                                <span className="material-icons text-sm">chat</span> Blast WA ({selectedUserIds.length})
-                            </button>
+                            <>
+                                <button onClick={() => { setBatchField(''); setBatchValue(''); setShowBatchModal(true); }}
+                                    className="bg-blue-600 text-white px-4 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 shadow-lg hover:bg-blue-700 transition">
+                                    <span className="material-icons text-sm">edit</span> Edit ({selectedUserIds.length})
+                                </button>
+                                <button onClick={() => { setBlastResult(null); setShowBlastModal(true); }}
+                                    className="bg-green-600 text-white px-4 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 shadow-lg hover:bg-green-700 transition">
+                                    <span className="material-icons text-sm">chat</span> Blast WA ({selectedUserIds.length})
+                                </button>
+                            </>
                         )}
                         <button onClick={handleExportCsv}
                             className="bg-green-700 text-white px-5 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 shadow-lg shadow-green-100 hover:bg-green-800 transition">
@@ -370,6 +397,11 @@ const DashboardUserPage = () => {
                                     <th className="px-3 py-4 text-gray-600 font-bold uppercase tracking-wider text-[11px]">Label</th>
                                     <SH label="Nama" field="profile__name_full" {...{sortField,sortDir,handleSort,getSortIcon}} />
                                     <SH label="Join" field="date_joined" {...{sortField,sortDir,handleSort,getSortIcon}} />
+                                    <th className="px-3 py-4 text-gray-600 font-bold uppercase tracking-wider text-[11px]">Charity</th>
+                                    <th className="px-3 py-4 text-gray-600 font-bold uppercase tracking-wider text-[11px]">Event</th>
+                                    <th className="px-3 py-4 text-gray-600 font-bold uppercase tracking-wider text-[11px]">Sinergy</th>
+                                    <th className="px-3 py-4 text-gray-600 font-bold uppercase tracking-wider text-[11px]">E-Course</th>
+                                    <th className="px-3 py-4 text-gray-600 font-bold uppercase tracking-wider text-[11px]">Digital</th>
                                     <th className="px-3 py-4 text-gray-600 font-bold uppercase tracking-wider text-[11px]">V</th>
                                     <th className="px-3 py-4 text-gray-600 font-bold uppercase tracking-wider text-[11px] text-center">Aksi</th>
                                 </tr>
@@ -412,6 +444,11 @@ const DashboardUserPage = () => {
                                         <td className="px-3 py-3 text-gray-500 text-[10px] whitespace-nowrap">
                                             {new Date(u.date_joined).toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'})}
                                         </td>
+                                        <td className="px-3 py-3"><ActivityList items={u.activities?.charity} /></td>
+                                        <td className="px-3 py-3"><ActivityList items={u.activities?.events} /></td>
+                                        <td className="px-3 py-3"><ActivityList items={u.activities?.sinergy} /></td>
+                                        <td className="px-3 py-3"><ActivityList items={u.activities?.courses} /></td>
+                                        <td className="px-3 py-3"><ActivityList items={u.activities?.digital_products} /></td>
                                         <td className="px-3 py-3 text-center">
                                             {u.is_verified_member ? <span className="material-icons text-green-600 text-sm">verified</span> : <span className="material-icons text-gray-200 text-sm">cancel</span>}
                                         </td>
@@ -722,6 +759,106 @@ const DashboardUserPage = () => {
                     </div>
                 </div>
             )}
+            {/* ============ BATCH EDIT MODAL ============ */}
+            {showBatchModal && (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[140] flex items-center justify-center p-4">
+                    <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl">
+                        <div className="p-6 border-b border-gray-100 flex justify-between items-center">
+                            <h2 className="text-xl font-bold text-gray-900"><span className="material-icons text-blue-600 align-middle mr-2">edit_note</span>Batch Edit User</h2>
+                            <button onClick={() => setShowBatchModal(false)} className="text-gray-400 hover:text-gray-600"><span className="material-icons">close</span></button>
+                        </div>
+                        <div className="p-6 space-y-4">
+                            <p className="text-sm text-gray-600">Mengedit <b>{selectedUserIds.length}</b> user sekaligus.</p>
+                            
+                            <div>
+                                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1 block ml-1">Pilih Kolom</label>
+                                <select value={batchField} onChange={e => { setBatchField(e.target.value); setBatchValue(''); }}
+                                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                                    <option value="">-- Pilih Kolom --</option>
+                                    <optgroup label="Akun">
+                                        <option value="role">Role</option>
+                                        <option value="is_verified_member">Status Verified</option>
+                                        <option value="custom_role_ids">Custom Role</option>
+                                        <option value="label_ids">Label</option>
+                                    </optgroup>
+                                    <optgroup label="Profil Dasar">
+                                        <option value="gender">Jenis Kelamin</option>
+                                        <option value="marital_status">Status Pernikahan</option>
+                                        <option value="segment">Segmen</option>
+                                        <option value="address_province">Provinsi</option>
+                                    </optgroup>
+                                    <optgroup label="Pendidikan & Kerja">
+                                        <option value="study_level">Pendidikan Terakhir</option>
+                                        <option value="job">Pekerjaan</option>
+                                        <option value="work_field">Bidang Kerja</option>
+                                    </optgroup>
+                                </select>
+                            </div>
+
+                            {batchField && (
+                                <div>
+                                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1 block ml-1">Nilai Baru</label>
+                                    {batchField === 'is_verified_member' ? (
+                                        <select value={batchValue} onChange={e => setBatchValue(e.target.value === 'true')}
+                                            className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                                            <option value="">-- Pilih --</option>
+                                            <option value="true">Verified</option>
+                                            <option value="false">Not Verified</option>
+                                        </select>
+                                    ) : batchField === 'role' ? (
+                                        <select value={batchValue} onChange={e => setBatchValue(e.target.value)}
+                                            className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                                            <option value="">-- Pilih --</option>
+                                            <option value="user">User</option><option value="admin">Admin</option>
+                                            <option value="seller">Seller</option><option value="staff">Staff</option>
+                                        </select>
+                                    ) : batchField === 'custom_role_ids' ? (
+                                        <div className="flex flex-wrap gap-1 p-3 bg-gray-50 rounded-xl border border-gray-200">
+                                            {allRoles.map(r => (
+                                                <label key={r.id} className={`flex items-center gap-1 px-2 py-1 rounded-lg border cursor-pointer text-xs transition ${(batchValue || []).includes(r.id) ? 'bg-green-50 border-green-200 text-green-800' : 'bg-white border-gray-100 text-gray-500'}`}>
+                                                    <input type="checkbox" checked={(batchValue || []).includes(r.id)}
+                                                        onChange={() => { const ids = Array.isArray(batchValue) ? batchValue : []; setBatchValue(ids.includes(r.id)?ids.filter(x=>x!==r.id):[...ids,r.id]); }} className="w-3 h-3 text-green-600 rounded" />
+                                                    {r.name}
+                                                </label>
+                                            ))}
+                                        </div>
+                                    ) : batchField === 'label_ids' ? (
+                                        <div className="flex flex-wrap gap-1 p-3 bg-gray-50 rounded-xl border border-gray-200">
+                                            {allLabels.map(l => (
+                                                <label key={l.id} className={`flex items-center gap-1 px-2 py-1 rounded-lg border cursor-pointer text-xs transition ${(batchValue || []).includes(l.id) ? 'bg-purple-50 border-purple-200 text-purple-800' : 'bg-white border-gray-100 text-gray-500'}`}>
+                                                    <input type="checkbox" checked={(batchValue || []).includes(l.id)}
+                                                        onChange={() => { const ids = Array.isArray(batchValue) ? batchValue : []; setBatchValue(ids.includes(l.id)?ids.filter(x=>x!==l.id):[...ids,l.id]); }} className="w-3 h-3 text-purple-600 rounded" />
+                                                    {l.name}
+                                                </label>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <select value={batchValue} onChange={e => setBatchValue(e.target.value)}
+                                            className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                                            <option value="">-- Pilih --</option>
+                                            {(batchField === 'gender' ? GENDER_CHOICES :
+                                              batchField === 'marital_status' ? MARITAL_CHOICES :
+                                              batchField === 'segment' ? SEGMENT_CHOICES :
+                                              batchField === 'address_province' ? PROVINCE_CHOICES :
+                                              batchField === 'study_level' ? STUDY_LEVEL_CHOICES :
+                                              batchField === 'job' ? JOB_CHOICES :
+                                              batchField === 'work_field' ? WORK_FIELD_CHOICES : []
+                                            ).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+                                        </select>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                        <div className="p-6 bg-gray-50 border-t flex justify-end gap-3 rounded-b-3xl">
+                            <button onClick={() => setShowBatchModal(false)} className="px-6 py-2.5 rounded-xl text-sm font-bold text-gray-500 hover:bg-gray-200 transition">Batal</button>
+                            <button onClick={handleBatchUpdate} disabled={batching || !batchField || (Array.isArray(batchValue) ? batchValue.length === 0 : batchValue === '')}
+                                className="bg-blue-600 text-white px-8 py-2.5 rounded-xl text-sm font-bold shadow-lg hover:bg-blue-700 transition disabled:opacity-50">
+                                {batching ? 'Memproses...' : 'Simpan Perubahan'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             <NavigationButton />
         </div>
@@ -760,5 +897,17 @@ const SH = ({ label, field, sortField, sortDir, handleSort, getSortIcon }) => (
         <div className="flex items-center gap-1">{label}<span className="material-icons text-[14px]">{getSortIcon(field)}</span></div>
     </th>
 );
+const ActivityList = ({ items }) => {
+    if (!items || items.length === 0) return <span className="text-gray-300 text-[10px]">-</span>;
+    return (
+        <div className="flex flex-col gap-0.5">
+            {items.map((item, i) => (
+                <div key={i} className="text-[9px] leading-tight text-gray-600 bg-gray-50 px-1 py-0.5 rounded border border-gray-100 line-clamp-2">
+                    {item}
+                </div>
+            ))}
+        </div>
+    );
+};
 
 export default DashboardUserPage;

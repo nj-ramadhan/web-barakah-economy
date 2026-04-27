@@ -32,11 +32,55 @@ class UserAdminSerializer(serializers.ModelSerializer):
         many=True, queryset=UserLabel.objects.all(), write_only=True, required=False, source='labels'
     )
     accessible_menus = serializers.SerializerMethodField()
+    activities = serializers.SerializerMethodField()
 
     def get_accessible_menus(self, obj):
         if not obj:
             return []
         return obj.get_all_accessible_menus()
+
+    def get_activities(self, obj):
+        from donations.models import Donation
+        from events.models import EventRegistration
+        from orders.models import OrderItem
+        from courses.models import CourseEnrollment
+        from digital_products.models import DigitalOrder
+        
+        # Charity
+        donations = Donation.objects.filter(donor=obj, payment_status='verified').values('campaign__title', 'amount')
+        charity_list = [f"{d['campaign__title']} (Rp {int(d['amount']):,})" for d in donations]
+        
+        # Events
+        events = EventRegistration.objects.filter(user=obj, status='approved').values_list('event__title', flat=True)
+        event_list = list(events)
+        
+        # Sinergy
+        # Exclude Pending and Batal statuses to show only active/completed activities
+        sinergy_items = OrderItem.objects.filter(
+            order__user=obj
+        ).exclude(
+            order__status__in=['Pending', 'pending', 'Batal', 'batal', 'Rejected', 'rejected']
+        ).select_related('product', 'variation')
+        sinergy_list = []
+        for item in sinergy_items:
+            var_str = f" ({item.variation.name})" if item.variation else ""
+            sinergy_list.append(f"{item.product.title}{var_str} x{item.quantity}")
+            
+        # E-Course
+        courses = CourseEnrollment.objects.filter(user=obj, payment_status__in=['verified', 'paid']).values_list('course__title', flat=True)
+        course_list = list(courses)
+        
+        # Digital Products
+        digital = DigitalOrder.objects.filter(buyer=obj, payment_status='verified').values_list('digital_product__title', flat=True)
+        digital_list = list(digital)
+        
+        return {
+            'charity': charity_list,
+            'events': event_list,
+            'sinergy': sinergy_list,
+            'courses': course_list,
+            'digital_products': digital_list
+        }
 
     class Meta:
         model = User
@@ -47,6 +91,7 @@ class UserAdminSerializer(serializers.ModelSerializer):
             'custom_roles', 'custom_role_ids',
             'labels', 'label_ids',
             'accessible_menus',
+            'activities',
         )
 
     def update(self, instance, validated_data):

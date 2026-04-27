@@ -10,6 +10,7 @@ from .serializers import (
 from .models import Role, UserLabel
 from rest_framework.decorators import action
 from barakah_app.utils import send_email
+from django.db import Q, transaction
 from django.http import HttpResponse
 import csv
 import random
@@ -341,7 +342,8 @@ class UserViewSet(viewsets.ModelViewSet):
             'Marital Status', 'Segment', 'Study Level', 'Study Campus', 'Study Faculty',
             'Study Department', 'Study Program', 'Semester', 'Start Year', 'Finish Year',
             'Address', 'Job', 'Work Field', 'Work Institution', 'Work Position', 'Salary', 'Province',
-            'Custom Roles', 'Labels'
+            'Custom Roles', 'Labels',
+            'Aktivitas Charity', 'Aktivitas Event', 'Aktivitas Sinergy', 'Aktivitas E-Course', 'Aktivitas Digital Produk'
         ]
         writer.writerow(headers)
 
@@ -394,6 +396,32 @@ class UserViewSet(viewsets.ModelViewSet):
             # Add custom roles and labels
             row.append(', '.join([r.name for r in user.custom_roles.all()]))
             row.append(', '.join([l.name for l in user.labels.all()]))
+
+            # Activities (Real-time)
+            from donations.models import Donation
+            from events.models import EventRegistration
+            from orders.models import OrderItem
+            from courses.models import CourseEnrollment
+            from digital_products.models import DigitalOrder
+
+            charity_acts = Donation.objects.filter(donor=user, payment_status='verified').values('campaign__title', 'amount')
+            row.append('; '.join([f"{d['campaign__title']} (Rp {int(d['amount']):,})" for d in charity_acts]))
+
+            event_acts = EventRegistration.objects.filter(user=user, status='approved').values_list('event__title', flat=True)
+            row.append('; '.join(event_acts))
+
+            sinergy_acts = OrderItem.objects.filter(
+                order__user=user
+            ).exclude(
+                order__status__in=['Pending', 'pending', 'Batal', 'batal', 'Rejected', 'rejected']
+            ).select_related('product', 'variation')
+            row.append('; '.join([f"{item.product.title}{' ('+item.variation.name+')' if item.variation else ''} x{item.quantity}" for item in sinergy_acts]))
+
+            course_acts = CourseEnrollment.objects.filter(user=user, payment_status__in=['verified', 'paid']).values_list('course__title', flat=True)
+            row.append('; '.join(course_acts))
+
+            digital_acts = DigitalOrder.objects.filter(buyer=user, payment_status='verified').values_list('digital_product__title', flat=True)
+            row.append('; '.join(digital_acts))
             
             writer.writerow(row)
 
@@ -488,3 +516,42 @@ class UserViewSet(viewsets.ModelViewSet):
             'temp_password': temp_password,
             'username': user.username,
         }, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=['post'])
+    def batch_update(self, request):
+        """Batch update selected users."""
+        user_ids = request.data.get('user_ids', [])
+        field = request.data.get('field')
+        value = request.data.get('value')
+
+        if not user_ids or not field:
+            return Response({'error': 'user_ids and field are required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        with transaction.atomic():
+            users = User.objects.filter(id__in=user_ids)
+            
+            # User model fields
+            if field in ['role', 'is_verified_member']:
+                users.update(**{field: value})
+            
+            # ManyToMany fields
+            elif field == 'custom_role_ids':
+                for user in users:
+                    user.custom_roles.set(value)
+            elif field == 'label_ids':
+                for user in users:
+                    user.labels.set(value)
+            
+            # Profile model fields
+            else:
+                from profiles.models import Profile
+                profile_fields = [f.name for f in Profile._meta.get_fields()]
+                if field in profile_fields:
+                    for user in users:
+                        profile, _ = Profile.objects.get_or_create(user=user)
+                        setattr(profile, field, value)
+                        profile.save()
+                else:
+                    return Response({'error': f'Invalid field: {field}'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        return Response({'message': f'Successfully updated {users.count()} users.'})
