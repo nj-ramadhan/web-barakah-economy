@@ -808,7 +808,7 @@ const DashboardPage = () => {
                         }
                     ];
 
-                    const canSeeAnyAdminMenu = adminMenus.some(menu => hasAccess(menu));
+                    const canSeeAnyAdminMenu = adminSections.some(section => section.items.some(item => item.access));
                     if (!canSeeAnyAdminMenu) return null;
 
                     return (
