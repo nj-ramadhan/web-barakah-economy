@@ -1,5 +1,4 @@
 import React from 'react';
-import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 
 const BaeRunLandingPage = () => {
@@ -29,12 +28,7 @@ const BaeRunLandingPage = () => {
 
             {/* Hero Section */}
             <section className="relative z-10 pt-20 pb-40 px-6 max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
-                <motion.div 
-                    initial={{ opacity: 0, x: -50 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.8 }}
-                    className="space-y-8"
-                >
+                <div className="space-y-8 animate-in fade-in slide-in-from-left duration-1000">
                     <div className="inline-flex items-center gap-2 px-4 py-2 bg-green-500/10 border border-green-500/20 rounded-full">
                         <span className="flex h-2 w-2 rounded-full bg-green-500 animate-ping"></span>
                         <span className="text-[10px] font-black uppercase tracking-[0.2em] text-green-500">New Experience</span>
@@ -55,14 +49,9 @@ const BaeRunLandingPage = () => {
                             App Store
                         </div>
                     </div>
-                </motion.div>
+                </div>
 
-                <motion.div 
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ duration: 1, delay: 0.2 }}
-                    className="relative flex justify-center lg:justify-end"
-                >
+                <div className="relative flex justify-center lg:justify-end animate-in fade-in zoom-in duration-1000">
                     <div className="relative w-72 h-[600px] md:w-80 md:h-[650px] bg-slate-900 rounded-[3rem] border-[8px] border-slate-800 shadow-[0_0_80px_rgba(0,0,0,0.5)] overflow-hidden">
                         {/* Mockup Image */}
                         <img 
@@ -75,23 +64,15 @@ const BaeRunLandingPage = () => {
                         <div className="absolute bottom-0 inset-x-0 h-40 bg-gradient-to-t from-slate-950/80 to-transparent"></div>
                     </div>
                     {/* Floating Stats */}
-                    <motion.div 
-                        animate={{ y: [0, -20, 0] }}
-                        transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-                        className="absolute -left-10 top-1/4 p-6 bg-slate-900/80 backdrop-blur-xl border border-white/10 rounded-3xl shadow-2xl"
-                    >
+                    <div className="absolute -left-10 top-1/4 p-6 bg-slate-900/80 backdrop-blur-xl border border-white/10 rounded-3xl shadow-2xl animate-bounce duration-[3000ms]">
                         <div className="text-3xl font-black text-green-400">12.4 <span className="text-xs uppercase text-slate-500">Km</span></div>
                         <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Total Distance</div>
-                    </motion.div>
-                    <motion.div 
-                        animate={{ y: [0, 20, 0] }}
-                        transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-                        className="absolute -right-10 bottom-1/4 p-6 bg-slate-900/80 backdrop-blur-xl border border-white/10 rounded-3xl shadow-2xl"
-                    >
+                    </div>
+                    <div className="absolute -right-10 bottom-1/4 p-6 bg-slate-900/80 backdrop-blur-xl border border-white/10 rounded-3xl shadow-2xl animate-bounce duration-[4000ms]">
                         <div className="text-3xl font-black text-blue-400">5:24 <span className="text-xs uppercase text-slate-500">Min</span></div>
                         <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Avg Pace</div>
-                    </motion.div>
-                </motion.div>
+                    </div>
+                </div>
             </section>
 
             {/* Features Section */}
