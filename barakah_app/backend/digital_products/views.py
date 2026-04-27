@@ -22,6 +22,7 @@ from courses.models import CourseEnrollment
 import logging
 
 logger = logging.getLogger(__name__)
+from barakah_app.utils import send_email
 
 
 from rest_framework_simplejwt.authentication import JWTAuthentication
@@ -373,25 +374,6 @@ class DigitalOrderViewSet(viewsets.ModelViewSet):
 
     def _send_digital_product_email(self, order):
         try:
-            from .models import EmailSettings
-            from django.core.mail import EmailMessage
-            from django.core.mail.backends.smtp import EmailBackend
-
-            email_settings = EmailSettings.get_settings()
-            if not email_settings.email_host_user or not email_settings.email_host_password:
-                logger.warning(f'Email settings not configured. Skipping email for order {order.order_number}')
-                return
-
-            # Create SMTP backend with settings from DB
-            backend = EmailBackend(
-                host=email_settings.email_host,
-                port=email_settings.email_port,
-                username=email_settings.email_host_user,
-                password=email_settings.email_host_password,
-                use_tls=email_settings.email_use_tls,
-                fail_silently=False,
-            )
-
             subject = f'Produk Digital Anda - {order.digital_product.title}'
             message = (
                 f'Assalamu\'alaikum {order.buyer_name},\n\n'
@@ -406,21 +388,13 @@ class DigitalOrderViewSet(viewsets.ModelViewSet):
                 f'Tim Barakah Economy'
             )
 
-            from_email = f'{email_settings.sender_name} <{email_settings.email_host_user}>'
-
-            email = EmailMessage(
-                subject=subject,
-                body=message,
-                from_email=from_email,
-                to=[order.buyer_email],
-                connection=backend,
-            )
-            email.send()
-
-            order.email_sent = True
-            order.email_sent_at = timezone.now()
-            order.save()
-            logger.info(f'Email sent to {order.buyer_email} for order {order.order_number}')
+            if send_email(subject, message, [order.buyer_email]):
+                order.email_sent = True
+                order.email_sent_at = timezone.now()
+                order.save()
+                logger.info(f'Email sent to {order.buyer_email} for order {order.order_number}')
+            else:
+                logger.error(f'Failed to send email for order {order.order_number} (send_email returned False)')
         except Exception as e:
             logger.error(f'Failed to send email for order {order.order_number}: {e}')
 

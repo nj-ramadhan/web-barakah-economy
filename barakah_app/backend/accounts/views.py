@@ -9,6 +9,7 @@ from .serializers import (
 )
 from .models import Role, UserLabel
 from rest_framework.decorators import action
+from barakah_app.utils import send_email
 from django.http import HttpResponse
 import csv
 import random
@@ -166,11 +167,12 @@ class PasswordResetRequestView(APIView):
             frontend_url = request.data.get('frontend_url', settings.FRONTEND_URL if hasattr(settings, 'FRONTEND_URL') else 'http://localhost:3000')
             reset_url = f"{frontend_url}/reset-password?uid={user.pk}&token={token}"
             try:
-                from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@barakaheconomy.com')
-                send_mail(
-                    subject='[Barakah App] Reset Password Anda',
-                    message=f'Klik tautan berikut untuk mengatur ulang kata sandi Anda:\n\n{reset_url}\n\nTautan ini akan kedaluwarsa dalam 24 jam.\n\nJika Anda tidak meminta reset password, abaikan email ini.',
-                    from_email=from_email,
+                subject = '[Barakah App] Reset Password Anda'
+                message = f'Klik tautan berikut untuk mengatur ulang kata sandi Anda:\n\n{reset_url}\n\nTautan ini akan kedaluwarsa dalam 24 jam.\n\nJika Anda tidak meminta reset password, abaikan email ini.'
+                
+                send_email(
+                    subject=subject,
+                    message=message,
                     recipient_list=[email],
                     fail_silently=False,
                 )

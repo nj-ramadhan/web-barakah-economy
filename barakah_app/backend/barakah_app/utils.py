@@ -3,6 +3,60 @@ from django.conf import settings
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 
+def send_email(subject, message, recipient_list, from_email=None, fail_silently=False):
+    """
+    Generic utility to send email using database settings if available,
+    falling back to settings.py configuration.
+    """
+    try:
+        from digital_products.models import EmailSettings
+        from django.core.mail.backends.smtp import EmailBackend
+        from django.core.mail import EmailMessage
+        
+        email_settings = EmailSettings.get_settings()
+        if email_settings.email_host_user and email_settings.email_host_password:
+            backend = EmailBackend(
+                host=email_settings.email_host,
+                port=email_settings.email_port,
+                username=email_settings.email_host_user,
+                password=email_settings.email_host_password,
+                use_tls=email_settings.email_use_tls,
+                fail_silently=fail_silently,
+            )
+            final_from_email = from_email or f"{email_settings.sender_name} <{email_settings.email_host_user}>"
+            
+            # Use EmailMessage for more control if needed later (e.g. attachments)
+            email = EmailMessage(
+                subject=subject,
+                body=message,
+                from_email=final_from_email,
+                to=recipient_list,
+                connection=backend,
+            )
+            email.send(fail_silently=fail_silently)
+            return True
+    except Exception as e:
+        # Log error but don't crash, try fallback
+        import logging
+        logger = logging.getLogger('barakah_app')
+        logger.error(f"Error sending email via custom backend: {e}")
+        
+    # Fallback to standard Django send_mail
+    try:
+        send_mail(
+            subject,
+            message,
+            from_email or settings.DEFAULT_FROM_EMAIL,
+            recipient_list,
+            fail_silently=fail_silently,
+        )
+        return True
+    except Exception as e:
+        import logging
+        logger = logging.getLogger('barakah_app')
+        logger.error(f"Error sending email via fallback: {e}")
+        return False
+
 def send_status_update_email(user, item_name, new_status, reason=None, is_registration=False, extra_details=None):
     """
     Centralized utility to send email notifications for status changes.
@@ -22,30 +76,6 @@ def send_status_update_email(user, item_name, new_status, reason=None, is_regist
     if not user_email:
         return False
 
-    # Try to get custom email settings from digital_products app
-    try:
-        from digital_products.models import EmailSettings
-        from django.core.mail.backends.smtp import EmailBackend
-        from django.core.mail import EmailMessage
-        
-        email_settings = EmailSettings.get_settings()
-        if email_settings.email_host_user and email_settings.email_host_password:
-            backend = EmailBackend(
-                host=email_settings.email_host,
-                port=email_settings.email_port,
-                username=email_settings.email_host_user,
-                password=email_settings.email_host_password,
-                use_tls=email_settings.email_use_tls,
-                fail_silently=False,
-            )
-            from_email = f"{email_settings.sender_name} <{email_settings.email_host_user}>"
-        else:
-            backend = None
-            from_email = settings.DEFAULT_FROM_EMAIL
-    except Exception:
-        backend = None
-        from_email = settings.DEFAULT_FROM_EMAIL
-        
     if is_registration:
         subject = f"Status Pendaftaran Event: {item_name}"
         header_text = f"Pendaftaran Anda untuk event '{item_name}'"
@@ -80,25 +110,4 @@ def send_status_update_email(user, item_name, new_status, reason=None, is_regist
             
     message += "\nTerima kasih,\nTim Barakah Economy"
     
-    try:
-        if backend:
-            email = EmailMessage(
-                subject=subject,
-                body=message,
-                from_email=from_email,
-                to=[user_email],
-                connection=backend,
-            )
-            email.send(fail_silently=True)
-        else:
-            send_mail(
-                subject,
-                message,
-                from_email,
-                [user_email],
-                fail_silently=True,
-            )
-        return True
-    except Exception as e:
-        print(f"Error sending email: {e}")
-        return False
+    return send_email(subject, message, [user_email], fail_silently=True)
