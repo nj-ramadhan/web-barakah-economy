@@ -10,7 +10,8 @@ from .serializers import (
 from .models import Role, UserLabel
 from rest_framework.decorators import action
 from barakah_app.utils import send_email
-from django.db import Q, transaction
+from django.db import transaction
+from django.db.models import Q
 from django.http import HttpResponse
 import csv
 import random
