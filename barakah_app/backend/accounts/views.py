@@ -349,7 +349,7 @@ class UserViewSet(viewsets.ModelViewSet):
             response = HttpResponse(content_type='text/csv')
             response['Content-Disposition'] = 'attachment; filename="users_full_data.csv"'
 
-            writer = csv.writer(response)
+            writer = csv.writer(response, delimiter=';')
             headers = [
                 'ID', 'Username', 'Email', 'Phone', 'Role', 'Verified Member', 'Date Joined',
                 'Full Name', 'Gender', 'Birth Place', 'Birth Date', 'Registration Date',
@@ -408,28 +408,28 @@ class UserViewSet(viewsets.ModelViewSet):
                     row.extend([''] * 22)
                 
                 # Add custom roles and labels
-                row.append(', '.join([r.name for r in user.custom_roles.all()]))
-                row.append(', '.join([l.name for l in user.labels.all()]))
+                row.append(' | '.join([r.name for r in user.custom_roles.all()]))
+                row.append(' | '.join([l.name for l in user.labels.all()]))
 
                 # Activities (Real-time)
                 charity_acts = Donation.objects.filter(donor=user).exclude(payment_status='rejected').values('campaign__title', 'amount')
-                row.append('; '.join([f"{d.get('campaign__title') or 'Tanpa Judul'} (Rp {int(d.get('amount') or 0):,})" for d in charity_acts]))
+                row.append(' | '.join([f"{d.get('campaign__title') or 'Tanpa Judul'} (Rp {int(d.get('amount') or 0):,})" for d in charity_acts]))
 
                 event_acts = EventRegistration.objects.filter(user=user).exclude(status='rejected').values_list('event__title', flat=True)
-                row.append('; '.join([str(t) for t in event_acts]))
+                row.append(' | '.join([str(t) for t in event_acts]))
 
                 sinergy_acts = OrderItem.objects.filter(
                     order__user=user
                 ).exclude(
                     order__status__in=['Batal', 'batal', 'Rejected', 'rejected']
                 ).select_related('product', 'variation')
-                row.append('; '.join([f"{item.product.title}{' ('+item.variation.name+')' if item.variation else ''} x{item.quantity}" for item in sinergy_acts]))
+                row.append(' | '.join([f"{item.product.title}{' ('+item.variation.name+')' if item.variation else ''} x{item.quantity}" for item in sinergy_acts]))
 
                 course_acts = CourseEnrollment.objects.filter(user=user, payment_status__in=['verified', 'paid']).values_list('course__title', flat=True)
-                row.append('; '.join([str(t) for t in course_acts]))
+                row.append(' | '.join([str(t) for t in course_acts]))
 
                 digital_acts = DigitalOrder.objects.filter(buyer=user, payment_status='verified').values_list('digital_product__title', flat=True)
-                row.append('; '.join([str(t) for t in digital_acts]))
+                row.append(' | '.join([str(t) for t in digital_acts]))
                 
                 writer.writerow(row)
 
