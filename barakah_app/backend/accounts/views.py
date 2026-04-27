@@ -335,98 +335,108 @@ class UserViewSet(viewsets.ModelViewSet):
     def export_csv(self, request):
         import csv
         from django.http import HttpResponse
-        from donations.models import Donation
-        from events.models import EventRegistration
-        from orders.models import OrderItem
-        from courses.models import CourseEnrollment
-        from digital_products.models import DigitalOrder
-        from profiles.models import Profile
+        import logging
+        logger = logging.getLogger(__name__)
 
-        response = HttpResponse(content_type='text/csv')
-        response['Content-Disposition'] = 'attachment; filename="users_full_data.csv"'
+        try:
+            from donations.models import Donation
+            from events.models import EventRegistration
+            from orders.models import OrderItem
+            from courses.models import CourseEnrollment
+            from digital_products.models import DigitalOrder
+            from profiles.models import Profile
 
-        writer = csv.writer(response)
-        headers = [
-            'ID', 'Username', 'Email', 'Phone', 'Role', 'Verified Member', 'Date Joined',
-            'Full Name', 'Gender', 'Birth Place', 'Birth Date', 'Registration Date',
-            'Marital Status', 'Segment', 'Study Level', 'Study Campus', 'Study Faculty',
-            'Study Department', 'Study Program', 'Semester', 'Start Year', 'Finish Year',
-            'Address', 'Job', 'Work Field', 'Work Institution', 'Work Position', 'Salary', 'Province',
-            'Custom Roles', 'Labels',
-            'Aktivitas Charity', 'Aktivitas Event', 'Aktivitas Sinergy', 'Aktivitas E-Course', 'Aktivitas Digital Produk'
-        ]
-        writer.writerow(headers)
+            response = HttpResponse(content_type='text/csv')
+            response['Content-Disposition'] = 'attachment; filename="users_full_data.csv"'
 
-        province_map = dict(Profile.PROVINCE_CHOICES)
-
-        for user in self.get_queryset():
-            profile = getattr(user, 'profile', None)
-            row = [
-                user.id,
-                user.username,
-                user.email,
-                user.phone,
-                user.role,
-                user.is_verified_member,
-                user.date_joined.strftime('%Y-%m-%d %H:%M:%S') if user.date_joined else '',
+            writer = csv.writer(response)
+            headers = [
+                'ID', 'Username', 'Email', 'Phone', 'Role', 'Verified Member', 'Date Joined',
+                'Full Name', 'Gender', 'Birth Place', 'Birth Date', 'Registration Date',
+                'Marital Status', 'Segment', 'Study Level', 'Study Campus', 'Study Faculty',
+                'Study Department', 'Study Program', 'Semester', 'Start Year', 'Finish Year',
+                'Address', 'Job', 'Work Field', 'Work Institution', 'Work Position', 'Salary', 'Province',
+                'Custom Roles', 'Labels',
+                'Aktivitas Charity', 'Aktivitas Event', 'Aktivitas Sinergy', 'Aktivitas E-Course', 'Aktivitas Digital Produk'
             ]
-            if profile:
-                province_display = province_map.get(profile.address_province, profile.address_province) if profile.address_province else ''
+            writer.writerow(headers)
 
-                row.extend([
-                    profile.name_full or '',
-                    profile.get_gender_display() if profile.gender else '',
-                    profile.birth_place or '',
-                    profile.birth_date or '',
-                    profile.registration_date or '',
-                    profile.get_marital_status_display() if profile.marital_status else '',
-                    profile.get_segment_display() if profile.segment else '',
-                    profile.get_study_level_display() if profile.study_level else '',
-                    profile.study_campus or '',
-                    profile.study_faculty or '',
-                    profile.study_department or '',
-                    profile.study_program or '',
-                    profile.study_semester or '',
-                    profile.study_start_year or '',
-                    profile.study_finish_year or '',
-                    profile.address or '',
-                    profile.get_job_display() if profile.job else '',
-                    profile.get_work_field_display() if profile.work_field else '',
-                    profile.work_institution or '',
-                    profile.work_position or '',
-                    profile.work_salary or '',
-                    province_display,
-                ])
-            else:
-                row.extend([''] * 22)
+            province_map = dict(Profile.PROVINCE_CHOICES)
+
+            # Get all users without pagination
+            queryset = self.get_queryset()
             
-            # Add custom roles and labels
-            row.append(', '.join([r.name for r in user.custom_roles.all()]))
-            row.append(', '.join([l.name for l in user.labels.all()]))
+            for user in queryset:
+                profile = getattr(user, 'profile', None)
+                row = [
+                    user.id,
+                    user.username,
+                    user.email,
+                    user.phone,
+                    user.role,
+                    user.is_verified_member,
+                    user.date_joined.strftime('%Y-%m-%d %H:%M:%S') if user.date_joined else '',
+                ]
+                if profile:
+                    province_display = province_map.get(profile.address_province, profile.address_province) if profile.address_province else ''
 
-            # Activities (Real-time)
-            charity_acts = Donation.objects.filter(donor=user, payment_status='verified').values('campaign__title', 'amount')
-            row.append('; '.join([f"{d['campaign__title']} (Rp {int(d['amount'] or 0):,})" for d in charity_acts]))
+                    row.extend([
+                        profile.name_full or '',
+                        profile.get_gender_display() if profile.gender else '',
+                        profile.birth_place or '',
+                        profile.birth_date or '',
+                        profile.registration_date or '',
+                        profile.get_marital_status_display() if profile.marital_status else '',
+                        profile.get_segment_display() if profile.segment else '',
+                        profile.get_study_level_display() if profile.study_level else '',
+                        profile.study_campus or '',
+                        profile.study_faculty or '',
+                        profile.study_department or '',
+                        profile.study_program or '',
+                        profile.study_semester or '',
+                        profile.study_start_year or '',
+                        profile.study_finish_year or '',
+                        profile.address or '',
+                        profile.get_job_display() if profile.job else '',
+                        profile.get_work_field_display() if profile.work_field else '',
+                        profile.work_institution or '',
+                        profile.work_position or '',
+                        profile.work_salary or '',
+                        province_display,
+                    ])
+                else:
+                    row.extend([''] * 22)
+                
+                # Add custom roles and labels
+                row.append(', '.join([r.name for r in user.custom_roles.all()]))
+                row.append(', '.join([l.name for l in user.labels.all()]))
 
-            event_acts = EventRegistration.objects.filter(user=user, status='approved').values_list('event__title', flat=True)
-            row.append('; '.join(event_acts))
+                # Activities (Real-time)
+                charity_acts = Donation.objects.filter(donor=user, payment_status='verified').values('campaign__title', 'amount')
+                row.append('; '.join([f"{d.get('campaign__title') or 'Tanpa Judul'} (Rp {int(d.get('amount') or 0):,})" for d in charity_acts]))
 
-            sinergy_acts = OrderItem.objects.filter(
-                order__user=user
-            ).exclude(
-                order__status__in=['Pending', 'pending', 'Batal', 'batal', 'Rejected', 'rejected']
-            ).select_related('product', 'variation')
-            row.append('; '.join([f"{item.product.title}{' ('+item.variation.name+')' if item.variation else ''} x{item.quantity}" for item in sinergy_acts]))
+                event_acts = EventRegistration.objects.filter(user=user, status='approved').values_list('event__title', flat=True)
+                row.append('; '.join([str(t) for t in event_acts]))
 
-            course_acts = CourseEnrollment.objects.filter(user=user, payment_status__in=['verified', 'paid']).values_list('course__title', flat=True)
-            row.append('; '.join(course_acts))
+                sinergy_acts = OrderItem.objects.filter(
+                    order__user=user
+                ).exclude(
+                    order__status__in=['Pending', 'pending', 'Batal', 'batal', 'Rejected', 'rejected']
+                ).select_related('product', 'variation')
+                row.append('; '.join([f"{item.product.title}{' ('+item.variation.name+')' if item.variation else ''} x{item.quantity}" for item in sinergy_acts]))
 
-            digital_acts = DigitalOrder.objects.filter(buyer=user, payment_status='verified').values_list('digital_product__title', flat=True)
-            row.append('; '.join(digital_acts))
-            
-            writer.writerow(row)
+                course_acts = CourseEnrollment.objects.filter(user=user, payment_status__in=['verified', 'paid']).values_list('course__title', flat=True)
+                row.append('; '.join([str(t) for t in course_acts]))
 
-        return response
+                digital_acts = DigitalOrder.objects.filter(buyer=user, payment_status='verified').values_list('digital_product__title', flat=True)
+                row.append('; '.join([str(t) for t in digital_acts]))
+                
+                writer.writerow(row)
+
+            return response
+        except Exception as e:
+            logger.error(f"Error in export_csv: {str(e)}", exc_info=True)
+            return HttpResponse(f"Error generating CSV: {str(e)}", status=500)
 
     @action(detail=False, methods=['post'])
     def blast_whatsapp(self, request):
