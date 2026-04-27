@@ -1,10 +1,19 @@
-from django.urls import path, include
-from rest_framework.routers import DefaultRouter
+from django.urls import path
 from .views import ActivityViewSet
 
-router = DefaultRouter()
-router.register(r'activities', ActivityViewSet, basename='activity')
+# Manual action mapping to avoid 'drf_format_suffix' registration conflict
+activity_list = ActivityViewSet.as_view({
+    'get': 'list',
+    'post': 'create'
+})
+activity_detail = ActivityViewSet.as_view({
+    'get': 'retrieve',
+    'put': 'update',
+    'patch': 'partial_update',
+    'delete': 'destroy'
+})
 
 urlpatterns = [
-    path('', include(router.urls)),
+    path('activities/', activity_list, name='activity-list'),
+    path('activities/<int:pk>/', activity_detail, name='activity-detail'),
 ]
