@@ -393,8 +393,8 @@ const DashboardUserPage = () => {
                                         <SH label="User" field="username" {...{ sortField, sortDir, handleSort, getSortIcon }} />
                                         <th className="px-3 py-4 text-gray-600 font-bold uppercase tracking-wider text-[11px] min-w-[120px]">Kontak</th>
                                         <th className="px-3 py-4 text-gray-600 font-bold uppercase tracking-wider text-[11px] min-w-[80px]">Role</th>
-                                        <th className="px-3 py-4 text-gray-600 font-bold uppercase tracking-wider text-[11px] min-w-[80px]">Custom Role</th>
-                                        <th className="px-3 py-4 text-gray-600 font-bold uppercase tracking-wider text-[11px] min-w-[120px]">Akses/Label</th>
+                                        <th className="px-3 py-4 text-gray-600 font-bold uppercase tracking-wider text-[11px] min-w-[100px]">Custom Role</th>
+                                        <th className="px-3 py-4 text-gray-600 font-bold uppercase tracking-wider text-[11px] min-w-[100px]">Label</th>
                                         <SH label="Nama" field="profile__name_full" {...{ sortField, sortDir, handleSort, getSortIcon }} />
                                         <SH label="Join" field="date_joined" {...{ sortField, sortDir, handleSort, getSortIcon }} />
                                         <th className="px-3 py-4 text-gray-600 font-bold uppercase tracking-wider text-[11px] min-w-[150px]">Charity</th>
@@ -422,10 +422,15 @@ const DashboardUserPage = () => {
                                                 <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase ${u.role === 'admin' ? 'bg-red-50 text-red-600' : u.role === 'seller' ? 'bg-orange-50 text-orange-600' : 'bg-blue-50 text-blue-600'}`}>{u.role}</span>
                                             </td>
                                             <td className="px-3 py-3">
-                                                <div className="max-w-[150px] flex flex-wrap gap-0.5">
+                                                <div className="max-w-[120px] flex flex-wrap gap-0.5">
                                                     {(u.custom_roles || []).map(r => <span key={r.id} className="px-1.5 py-0.5 rounded bg-green-50 text-green-700 border border-green-100 text-[9px] font-bold">{r.name}</span>)}
+                                                    {(u.custom_roles || []).length === 0 && <span className="text-gray-300 text-[10px]">-</span>}
+                                                </div>
+                                            </td>
+                                            <td className="px-3 py-3">
+                                                <div className="max-w-[120px] flex flex-wrap gap-0.5">
                                                     {(u.labels || []).map(l => <span key={l.id} className="px-1.5 py-0.5 rounded bg-purple-50 text-purple-700 border border-purple-100 text-[9px] font-bold">{l.name}</span>)}
-                                                    {(u.custom_roles || []).length === 0 && (u.labels || []).length === 0 && <span className="text-gray-300 text-[10px]">-</span>}
+                                                    {(u.labels || []).length === 0 && <span className="text-gray-300 text-[10px]">-</span>}
                                                 </div>
                                             </td>
                                             <td className="px-3 py-3">
