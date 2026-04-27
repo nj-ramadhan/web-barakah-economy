@@ -412,16 +412,16 @@ class UserViewSet(viewsets.ModelViewSet):
                 row.append(', '.join([l.name for l in user.labels.all()]))
 
                 # Activities (Real-time)
-                charity_acts = Donation.objects.filter(donor=user, payment_status='verified').values('campaign__title', 'amount')
+                charity_acts = Donation.objects.filter(donor=user).exclude(payment_status='rejected').values('campaign__title', 'amount')
                 row.append('; '.join([f"{d.get('campaign__title') or 'Tanpa Judul'} (Rp {int(d.get('amount') or 0):,})" for d in charity_acts]))
 
-                event_acts = EventRegistration.objects.filter(user=user, status='approved').values_list('event__title', flat=True)
+                event_acts = EventRegistration.objects.filter(user=user).exclude(status='rejected').values_list('event__title', flat=True)
                 row.append('; '.join([str(t) for t in event_acts]))
 
                 sinergy_acts = OrderItem.objects.filter(
                     order__user=user
                 ).exclude(
-                    order__status__in=['Pending', 'pending', 'Batal', 'batal', 'Rejected', 'rejected']
+                    order__status__in=['Batal', 'batal', 'Rejected', 'rejected']
                 ).select_related('product', 'variation')
                 row.append('; '.join([f"{item.product.title}{' ('+item.variation.name+')' if item.variation else ''} x{item.quantity}" for item in sinergy_acts]))
 

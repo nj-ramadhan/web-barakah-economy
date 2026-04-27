@@ -46,12 +46,12 @@ class UserAdminSerializer(serializers.ModelSerializer):
         from courses.models import CourseEnrollment
         from digital_products.models import DigitalOrder
         
-        # Charity
-        donations = Donation.objects.filter(donor=obj, payment_status='verified').values('campaign__title', 'amount')
-        charity_list = [f"{d['campaign__title']} (Rp {int(d['amount']):,})" for d in donations]
+        # Charity - Show verified and pending
+        donations = Donation.objects.filter(donor=obj).exclude(payment_status='rejected').values('campaign__title', 'amount')
+        charity_list = [f"{d.get('campaign__title') or 'Tanpa Judul'} (Rp {int(d.get('amount') or 0):,})" for d in donations]
         
-        # Events
-        events = EventRegistration.objects.filter(user=obj, status='approved').values_list('event__title', flat=True)
+        # Events - Show both approved and pending
+        events = EventRegistration.objects.filter(user=obj).exclude(status='rejected').values_list('event__title', flat=True)
         event_list = list(events)
         
         # Sinergy
@@ -59,7 +59,7 @@ class UserAdminSerializer(serializers.ModelSerializer):
         sinergy_items = OrderItem.objects.filter(
             order__user=obj
         ).exclude(
-            order__status__in=['Pending', 'pending', 'Batal', 'batal', 'Rejected', 'rejected']
+            order__status__in=['Batal', 'batal', 'Rejected', 'rejected']
         ).select_related('product', 'variation')
         sinergy_list = []
         for item in sinergy_items:
