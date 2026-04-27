@@ -1121,8 +1121,7 @@ class EventViewSet(viewsets.ModelViewSet):
             Q(label__icontains='tim') | 
             Q(label__icontains='kelompok') |
             Q(label__icontains='regu') |
-            Q(label__icontains='group') |
-            Q(label__icontains='instansi')
+            Q(label__icontains='group')
         ).values_list('id', flat=True))
         
         # Convert IDs to strings since JSON keys are strings
