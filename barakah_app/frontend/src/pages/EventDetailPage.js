@@ -550,12 +550,12 @@ const EventDetailPage = () => {
                                             </h3>
                                             <p className="text-blue-700/60 text-xs font-bold mt-1 uppercase tracking-wider ml-8">Unduh berkas di bawah ini untuk informasi lebih lanjut</p>
                                         </div>
-                                        
+
                                         <div className="flex flex-wrap gap-4">
                                             {event.attachment_file && (
-                                                <a 
-                                                    href={event.attachment_file} 
-                                                    target="_blank" 
+                                                <a
+                                                    href={event.attachment_file}
+                                                    target="_blank"
                                                     rel="noreferrer"
                                                     className="inline-flex items-center gap-3 px-6 py-4 bg-white text-blue-700 rounded-3xl border border-blue-200 shadow-sm hover:shadow-md hover:border-blue-300 transition group"
                                                 >
@@ -567,9 +567,9 @@ const EventDetailPage = () => {
                                                 </a>
                                             )}
                                             {event.attachment_link && (
-                                                <a 
-                                                    href={event.attachment_link} 
-                                                    target="_blank" 
+                                                <a
+                                                    href={event.attachment_link}
+                                                    target="_blank"
                                                     rel="noreferrer"
                                                     className="inline-flex items-center gap-3 px-6 py-4 bg-white text-blue-700 rounded-3xl border border-blue-200 shadow-sm hover:shadow-md hover:border-blue-300 transition group"
                                                 >
@@ -633,13 +633,13 @@ const EventDetailPage = () => {
                                             {event.sessions.map((ses, idx) => (
                                                 <div key={idx} className="bg-gray-50 border border-gray-100 p-5 rounded-2xl flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 group hover:border-purple-200 transition">
                                                     <div className="flex items-center gap-4">
-                                                        <div className="w-10 h-10 rounded-full bg-purple-100 text-purple-700 font-black text-sm flex items-center justify-center shrink-0 shadow-inner">{idx+1}</div>
+                                                        <div className="w-10 h-10 rounded-full bg-purple-100 text-purple-700 font-black text-sm flex items-center justify-center shrink-0 shadow-inner">{idx + 1}</div>
                                                         <p className="font-bold text-base text-gray-800 break-words">{ses.title}</p>
                                                     </div>
                                                     <div className="text-xs font-bold text-gray-500 bg-white px-4 py-2 rounded-xl border border-gray-100 shrink-0 text-center sm:text-right">
                                                         <span className="material-icons text-xs align-middle mr-1 text-purple-500">schedule</span>
-                                                        {ses.start_time ? new Date(ses.start_time).toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'}) : ''} 
-                                                        {ses.end_time ? ` - ${new Date(ses.end_time).toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'})} WIB` : ' WIB'}
+                                                        {ses.start_time ? new Date(ses.start_time).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : ''}
+                                                        {ses.end_time ? ` - ${new Date(ses.end_time).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })} WIB` : ' WIB'}
                                                     </div>
                                                 </div>
                                             ))}
@@ -712,7 +712,7 @@ const EventDetailPage = () => {
                                             {(() => {
                                                 const getTeamColor = (teamName) => {
                                                     if (!teamName) return { bg: 'bg-white', border: 'border-gray-100', text: 'text-gray-700', bullet: 'bg-blue-500', headerBg: 'bg-gray-100', headerText: 'text-gray-600' };
-                                                    
+
                                                     const colors = [
                                                         { bg: 'bg-blue-50', border: 'border-blue-100', text: 'text-blue-700', bullet: 'bg-blue-600', headerBg: 'bg-blue-600', headerText: 'text-white' },
                                                         { bg: 'bg-emerald-50', border: 'border-emerald-100', text: 'text-emerald-700', bullet: 'bg-emerald-600', headerBg: 'bg-emerald-600', headerText: 'text-white' },
@@ -723,7 +723,7 @@ const EventDetailPage = () => {
                                                         { bg: 'bg-cyan-50', border: 'border-cyan-100', text: 'text-cyan-700', bullet: 'bg-cyan-600', headerBg: 'bg-cyan-600', headerText: 'text-white' },
                                                         { bg: 'bg-teal-50', border: 'border-teal-100', text: 'text-teal-700', bullet: 'bg-teal-600', headerBg: 'bg-teal-600', headerText: 'text-white' },
                                                     ];
-                                                    
+
                                                     let hash = 0;
                                                     for (let i = 0; i < teamName.length; i++) {
                                                         hash = teamName.charCodeAt(i) + ((hash << 5) - hash);
@@ -734,7 +734,7 @@ const EventDetailPage = () => {
 
                                                 // Group participants by team
                                                 const hasTeams = (participants || []).some(p => p.team);
-                                                
+
                                                 if (!hasTeams) {
                                                     return (
                                                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -775,7 +775,7 @@ const EventDetailPage = () => {
                                                 return teamNames.map(teamName => {
                                                     const color = getTeamColor(teamName === 'Individu' ? null : teamName);
                                                     const members = grouped[teamName];
-                                                    
+
                                                     return (
                                                         <div key={teamName} className="animate-fade-in">
                                                             {/* Team Header */}
@@ -796,7 +796,7 @@ const EventDetailPage = () => {
                                                                     <div key={p.id} className={`${color.bg} px-5 py-4 rounded-2xl border ${color.border} flex items-center gap-4 hover:shadow-lg transition-all duration-300 group relative overflow-hidden`}>
                                                                         {/* Subtle Accent Line */}
                                                                         <div className={`absolute left-0 top-0 bottom-0 w-1 ${color.bullet} opacity-20`}></div>
-                                                                        
+
                                                                         <div className={`w-8 h-8 rounded-xl ${color.bullet} text-white flex items-center justify-center font-black text-xs shadow-sm shrink-0`}>
                                                                             {p.name?.charAt(0).toUpperCase()}
                                                                         </div>
@@ -859,12 +859,12 @@ const EventDetailPage = () => {
                                                             className="bg-purple-100 text-purple-700 px-5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 hover:bg-purple-200 transition"
                                                         >
                                                             <span className="material-icons text-sm">download</span>
-                                                            Download Materi
+                                                            Download Berkas
                                                         </a>
                                                     ) : (
                                                         <div className="bg-gray-50 text-gray-400 px-5 py-2.5 rounded-xl text-[10px] font-bold flex items-center gap-2 italic">
                                                             <span className="material-icons text-sm">lock</span>
-                                                            Materi tersedia bagi peserta
+                                                            Berkas tersedia bagi peserta
                                                         </div>
                                                     )}
                                                 </>
@@ -961,17 +961,17 @@ const EventDetailPage = () => {
                                     KUOTA PENUH
                                 </div>
                             ) : (
-                            <button
-                                onClick={() => setShowRegisterModal(true)}
-                                className="w-full bg-white text-gray-900 py-4 rounded-2xl text-xs font-extrabold uppercase tracking-widest hover:bg-green-50 transition shadow-xl relative z-10 flex flex-col items-center justify-center gap-1"
-                            >
-                                <span>Daftar Sekarang</span>
-                                {event.capacity > 0 && (
-                                    <span className="text-[9px] text-green-600 opacity-80 normal-case font-bold tracking-normal italic">
-                                        Tersisa {event.capacity - (event.registration_count || 0)} Slot Lagi
-                                    </span>
-                                )}
-                            </button>
+                                <button
+                                    onClick={() => setShowRegisterModal(true)}
+                                    className="w-full bg-white text-gray-900 py-4 rounded-2xl text-xs font-extrabold uppercase tracking-widest hover:bg-green-50 transition shadow-xl relative z-10 flex flex-col items-center justify-center gap-1"
+                                >
+                                    <span>Daftar Sekarang</span>
+                                    {event.capacity > 0 && (
+                                        <span className="text-[9px] text-green-600 opacity-80 normal-case font-bold tracking-normal italic">
+                                            Tersisa {event.capacity - (event.registration_count || 0)} Slot Lagi
+                                        </span>
+                                    )}
+                                </button>
                             )}
                         </div>
                     </div>
