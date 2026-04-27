@@ -553,438 +553,313 @@ const DashboardPage = () => {
                     const accessibleMenus = userProfile?.accessible_menus || [];
                     const hasAccess = (menuKey) => isAdmin || accessibleMenus.includes(menuKey) || accessibleMenus.includes('*');
 
-                    const adminMenus = [
-                        'admin_sinergy', 'withdrawals', 'charity', 'partners', 'testimonials', 
-                        'activities', 'users', 'all_products', 'all_courses', 'consultants', 
-                        'transactions', 'forum', 'roles', 'campaign_approval', 'articles', 
-                        'admin_events', 'photo_framer'
+                    const adminSections = [
+                        {
+                            title: 'Admin Keuangan & Bisnis',
+                            items: [
+                                {
+                                    id: 'withdrawals',
+                                    access: hasAccess('withdrawals'),
+                                    to: '/dashboard/admin/withdrawals',
+                                    icon: 'payments',
+                                    color: 'orange',
+                                    title: 'Manajemen Penarikan',
+                                    desc: 'Proses pengajuan dana dari user (Admin)',
+                                    badge: managementStats.withdrawals
+                                },
+                                {
+                                    id: 'donations',
+                                    access: hasAccess('charity'),
+                                    to: '/dashboard/admin/donations',
+                                    icon: 'payments',
+                                    color: 'emerald',
+                                    title: 'Donatur Charity',
+                                    desc: 'Kelola dan verifikasi donasi masuk (Admin)',
+                                    badge: managementStats.pending_donations
+                                },
+                                {
+                                    id: 'charity_realization',
+                                    access: hasAccess('charity'),
+                                    to: '/dashboard/admin/charity',
+                                    icon: 'volunteer_activism',
+                                    color: 'red',
+                                    title: 'Realisasi Charity',
+                                    desc: 'Kelola realisasi kampanye sosial (Admin)'
+                                },
+                                {
+                                    id: 'transactions',
+                                    access: hasAccess('transactions'),
+                                    to: '/dashboard/admin/transactions',
+                                    icon: 'receipt_long',
+                                    color: 'green',
+                                    title: 'Riwayat Transaksi',
+                                    desc: 'Pantau semua transaksi (Digital & Course)'
+                                },
+                                {
+                                    id: 'zis_config',
+                                    access: isAdmin,
+                                    to: '/dashboard/admin/zis-config',
+                                    icon: 'settings_applications',
+                                    color: 'slate',
+                                    title: 'Pengaturan ZIS',
+                                    desc: 'Atur kategori pos dan rekening ZIS (Admin)'
+                                },
+                                {
+                                    id: 'zis_verify',
+                                    access: isAdmin,
+                                    to: '/dashboard/admin/zis-verify',
+                                    icon: 'fact_check',
+                                    color: 'green',
+                                    title: 'Verifikasi ZIS',
+                                    desc: 'Validasi laporan setoran anggota (Admin)'
+                                }
+                            ]
+                        },
+                        {
+                            title: 'Admin Bisnis',
+                            items: [
+                                {
+                                    id: 'admin_sinergy',
+                                    access: hasAccess('admin_sinergy'),
+                                    to: '/dashboard/admin/sinergy',
+                                    icon: 'storefront',
+                                    color: 'emerald',
+                                    title: 'Manajemen Produk',
+                                    desc: 'Persetujuan dan manajemen seluruh produk fisik (Admin)',
+                                    badge: managementStats.admin_sinergy
+                                },
+                                {
+                                    id: 'testimonials',
+                                    access: hasAccess('testimonials'),
+                                    to: '/dashboard/admin/testimonials',
+                                    icon: 'rate_review',
+                                    color: 'orange',
+                                    title: 'Manajemen Testimoni',
+                                    desc: 'Moderasi dan tambah testimoni (Admin)',
+                                    badge: managementStats.testimonials
+                                },
+                                {
+                                    id: 'all_products',
+                                    access: hasAccess('all_products'),
+                                    to: '/dashboard/admin/all-products',
+                                    icon: 'inventory',
+                                    color: 'emerald',
+                                    title: 'Semua Produk Digital',
+                                    desc: 'Pantau dan kelola produk semua user (Admin)'
+                                },
+                                {
+                                    id: 'all_courses',
+                                    access: hasAccess('all_courses'),
+                                    to: '/dashboard/admin/all-courses',
+                                    icon: 'video_library',
+                                    color: 'blue',
+                                    title: 'Semua E-Course',
+                                    desc: 'Pantau dan kelola course semua user (Admin)'
+                                }
+                            ]
+                        },
+                        {
+                            title: 'Admin Event',
+                            items: [
+                                {
+                                    id: 'activities',
+                                    access: hasAccess('activities'),
+                                    to: '/dashboard/admin/activities',
+                                    icon: 'event_note',
+                                    color: 'green',
+                                    title: 'Manajemen Kegiatan',
+                                    desc: 'Kelola berita dan kegiatan komunitas (Admin)'
+                                },
+                                {
+                                    id: 'events',
+                                    access: hasAccess('admin_events') || hasAccess('event'),
+                                    to: '/dashboard/admin/events',
+                                    icon: 'event',
+                                    color: 'teal',
+                                    title: 'Manajemen Event',
+                                    desc: 'Kelola pendaftaran dan detail event (Admin)',
+                                    badge: managementStats.admin_events
+                                },
+                                {
+                                    id: 'photo_framer',
+                                    access: hasAccess('photo_framer'),
+                                    to: '/dashboard/admin/photo-framer',
+                                    icon: 'filter_frames',
+                                    color: 'pink',
+                                    title: 'Bingkai Otomatis',
+                                    desc: 'Pasang bingkai ke banyak foto sekaligus (Batch)'
+                                },
+                                {
+                                    id: 'event_recap',
+                                    access: hasAccess('admin_events'),
+                                    to: '/dashboard/admin/event-recap',
+                                    icon: 'groups',
+                                    color: 'emerald',
+                                    title: 'Rekap Global',
+                                    desc: 'Data seluruh peserta event & CRM Blast WA'
+                                }
+                            ]
+                        },
+                        {
+                            title: 'Admin User',
+                            items: [
+                                {
+                                    id: 'users',
+                                    access: hasAccess('users'),
+                                    to: '/dashboard/admin/users',
+                                    icon: 'people',
+                                    color: 'indigo',
+                                    title: 'Manajemen User',
+                                    desc: 'Kelola data user dan lihat profile lengkap (Admin)'
+                                },
+                                {
+                                    id: 'roles',
+                                    access: hasAccess('roles'),
+                                    to: '/dashboard/admin/roles',
+                                    icon: 'admin_panel_settings',
+                                    color: 'violet',
+                                    title: 'Manajemen Role & Label',
+                                    desc: 'Kelola role, akses menu, dan label pengguna (Admin)'
+                                }
+                            ]
+                        },
+                        {
+                            title: 'Admin Kampanye & Artikel',
+                            items: [
+                                {
+                                    id: 'articles',
+                                    access: hasAccess('articles'),
+                                    to: '/dashboard/admin/articles',
+                                    icon: 'article',
+                                    color: 'orange',
+                                    title: 'Manajemen Artikel',
+                                    desc: 'Kelola semua artikel yang terbit (Admin)'
+                                },
+                                {
+                                    id: 'admin_campaigns',
+                                    access: hasAccess('charity'),
+                                    to: '/dashboard/admin/campaigns',
+                                    icon: 'campaign',
+                                    color: 'red',
+                                    title: 'Manajemen Kampanye',
+                                    desc: 'Kelola semua kampanye yang aktif (Admin)'
+                                },
+                                {
+                                    id: 'campaign_approval',
+                                    access: hasAccess('campaign_approval'),
+                                    to: '/dashboard/admin/campaign-approval',
+                                    icon: 'assignment_turned_in',
+                                    color: 'amber',
+                                    title: 'Persetujuan Kampanye',
+                                    desc: 'Verifikasi pengajuan kampanye dari user (Admin)',
+                                    badge: managementStats.campaign_approval
+                                }
+                            ]
+                        },
+                        {
+                            title: 'Lainnya',
+                            items: [
+                                {
+                                    id: 'forum',
+                                    access: hasAccess('forum'),
+                                    to: '/dashboard/admin/forum',
+                                    icon: 'forum',
+                                    color: 'cyan',
+                                    title: 'Manajemen Forum',
+                                    desc: 'Moderasi diskusi dan balasan postingan (Admin)'
+                                },
+                                {
+                                    id: 'live_meet',
+                                    access: isAdmin,
+                                    to: '/live-meet-test',
+                                    icon: 'videocam',
+                                    color: 'emerald',
+                                    title: 'Live Meet Prototype',
+                                    desc: 'Uji coba fitur video conference Jitsi (Admin)'
+                                },
+                                {
+                                    id: 'about_us',
+                                    access: hasAccess('about_us'),
+                                    to: '/dashboard/admin/about-us',
+                                    icon: 'info',
+                                    color: 'pink',
+                                    title: 'Manajemen Tentang Kami',
+                                    desc: 'Kelola konten profil dan visi misi komunitas (Admin)'
+                                },
+                                {
+                                    id: 'partners',
+                                    access: hasAccess('partners'),
+                                    to: '/dashboard/admin/partners',
+                                    icon: 'handshake',
+                                    color: 'blue',
+                                    title: 'Manajemen Partner',
+                                    desc: 'Kelola logo partner di landing page (Admin)'
+                                },
+                                {
+                                    id: 'consultants',
+                                    access: hasAccess('consultants'),
+                                    to: '/dashboard/admin/consultants',
+                                    icon: 'psychology',
+                                    color: 'purple',
+                                    title: 'Pengaturan Konsultasi',
+                                    desc: 'Atur kategori dan pakar konsultasi (Admin)'
+                                }
+                            ]
+                        }
                     ];
 
                     const canSeeAnyAdminMenu = adminMenus.some(menu => hasAccess(menu));
-
                     if (!canSeeAnyAdminMenu) return null;
 
                     return (
-                        <>
-                            <div className="relative py-4 mb-6">
-                                <div className="absolute inset-0 flex items-center" aria-hidden="true">
-                                    <div className="w-full border-t border-gray-200"></div>
-                                </div>
-                                <div className="relative flex justify-center">
-                                    <span className="px-4 bg-gray-50 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Administrasi Sistem</span>
-                                </div>
-                            </div>
+                        <div className="space-y-10">
+                            {adminSections.map((section, idx) => {
+                                const visibleItems = section.items.filter(item => item.access);
+                                if (visibleItems.length === 0) return null;
 
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                                {hasAccess('admin_sinergy') && (
-                                    <Link
-                                        to="/dashboard/admin/sinergy"
-                                        className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-emerald-100 hover:shadow-md transition relative"
-                                    >
-                                        {managementStats.admin_sinergy > 0 && (
-                                            <div className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center border-2 border-white shadow-sm z-10 animate-bounce">
-                                                {managementStats.admin_sinergy}
+                                return (
+                                    <div key={idx} className="admin-category-section">
+                                        <div className="relative py-4 mb-4">
+                                            <div className="absolute inset-0 flex items-center" aria-hidden="true">
+                                                <div className="w-full border-t border-gray-200"></div>
                                             </div>
-                                        )}
-                                        <div className="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center">
-                                            <span className="material-icons text-emerald-700">storefront</span>
-                                        </div>
-                                        <div className="flex-1">
-                                            <h3 className="font-bold text-gray-800 text-sm">Manajemen Produk (Sinergy)</h3>
-                                            <p className="text-[11px] text-gray-500">Persetujuan dan manajemen seluruh produk fisik (Admin)</p>
-                                        </div>
-                                        <span className="material-icons text-gray-400">chevron_right</span>
-                                    </Link>
-                                )}
-                                {hasAccess('withdrawals') && (
-                                    <Link
-                                        to="/dashboard/admin/withdrawals"
-                                        className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-orange-100 hover:shadow-md transition relative"
-                                    >
-                                        {managementStats.withdrawals > 0 && (
-                                            <div className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center border-2 border-white shadow-sm z-10 animate-bounce">
-                                                {managementStats.withdrawals}
+                                            <div className="relative flex justify-start">
+                                                <span className="pr-4 bg-gray-50 text-[11px] font-black text-green-700 uppercase tracking-[0.15em] flex items-center gap-2">
+                                                    <div className="w-1.5 h-1.5 rounded-full bg-green-500"></div>
+                                                    {section.title}
+                                                </span>
                                             </div>
-                                        )}
-                                        <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center">
-                                            <span className="material-icons text-orange-700">payments</span>
                                         </div>
-                                        <div className="flex-1">
-                                            <h3 className="font-bold text-gray-800 text-sm">Manajemen Penarikan</h3>
-                                            <p className="text-[11px] text-gray-500">Proses pengajuan dana dari user (Admin)</p>
-                                        </div>
-                                        <span className="material-icons text-gray-400">chevron_right</span>
-                                    </Link>
-                                )}
-                                {hasAccess('charity') && (
-                                    <>
-                                        <Link
-                                            to="/dashboard/admin/donations"
-                                            className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-emerald-100 hover:shadow-md transition relative"
-                                        >
-                                            {managementStats.pending_donations > 0 && (
-                                                <div className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center border-2 border-white shadow-sm z-10 animate-bounce">
-                                                    {managementStats.pending_donations}
-                                                </div>
-                                            )}
-                                            <div className="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center">
-                                                <span className="material-icons text-emerald-700">payments</span>
-                                            </div>
-                                            <div className="flex-1">
-                                                <h3 className="font-bold text-gray-800 text-sm">Donatur Charity</h3>
-                                                <p className="text-[11px] text-gray-500">Kelola dan verifikasi donasi masuk (Admin)</p>
-                                            </div>
-                                            <span className="material-icons text-gray-400">chevron_right</span>
-                                        </Link>
 
-                                        <Link
-                                            to="/dashboard/admin/charity"
-                                            className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-red-100 hover:shadow-md transition"
-                                        >
-                                            <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center">
-                                                <span className="material-icons text-red-700">volunteer_activism</span>
-                                            </div>
-                                            <div className="flex-1">
-                                                <h3 className="font-bold text-gray-800 text-sm">Realisasi Charity</h3>
-                                                <p className="text-[11px] text-gray-500">Kelola realisasi kampanye sosial (Admin)</p>
-                                            </div>
-                                            <span className="material-icons text-gray-400">chevron_right</span>
-                                        </Link>
-                                    </>
-                                )}
-                                {hasAccess('partners') && (
-                                    <Link
-                                        to="/dashboard/admin/partners"
-                                        className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-blue-100 hover:shadow-md transition"
-                                    >
-                                        <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-                                            <span className="material-icons text-blue-700">handshake</span>
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                            {visibleItems.map((item) => (
+                                                <Link
+                                                    key={item.id}
+                                                    to={item.to}
+                                                    className={`flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-${item.color}-50 hover:shadow-md transition relative`}
+                                                >
+                                                    {item.badge > 0 && (
+                                                        <div className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center border-2 border-white shadow-sm z-10 animate-bounce">
+                                                            {item.badge}
+                                                        </div>
+                                                    )}
+                                                    <div className={`w-12 h-12 bg-${item.color}-100 rounded-xl flex items-center justify-center`}>
+                                                        <span className={`material-icons text-${item.color}-700`}>{item.icon}</span>
+                                                    </div>
+                                                    <div className="flex-1">
+                                                        <h3 className="font-bold text-gray-800 text-sm">{item.title}</h3>
+                                                        <p className="text-[11px] text-gray-500">{item.desc}</p>
+                                                    </div>
+                                                    <span className="material-icons text-gray-400">chevron_right</span>
+                                                </Link>
+                                            ))}
                                         </div>
-                                        <div className="flex-1">
-                                            <h3 className="font-bold text-gray-800 text-sm">Manajemen Partner</h3>
-                                            <p className="text-[11px] text-gray-500">Kelola logo partner di landing page (Admin)</p>
-                                        </div>
-                                        <span className="material-icons text-gray-400">chevron_right</span>
-                                    </Link>
-                                )}
-                                {hasAccess('testimonials') && (
-                                    <Link
-                                        to="/dashboard/admin/testimonials"
-                                        className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-orange-100 hover:shadow-md transition relative"
-                                    >
-                                        {managementStats.testimonials > 0 && (
-                                            <div className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center border-2 border-white shadow-sm z-10 animate-bounce">
-                                                {managementStats.testimonials}
-                                            </div>
-                                        )}
-                                        <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center">
-                                            <span className="material-icons text-orange-700">rate_review</span>
-                                        </div>
-                                        <div className="flex-1">
-                                            <h3 className="font-bold text-gray-800 text-sm">Manajemen Testimoni</h3>
-                                            <p className="text-[11px] text-gray-500">Moderasi dan tambah testimoni (Admin)</p>
-                                        </div>
-                                        <span className="material-icons text-gray-400">chevron_right</span>
-                                    </Link>
-                                )}
-                                {hasAccess('activities') && (
-                                    <Link
-                                        to="/dashboard/admin/activities"
-                                        className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-green-100 hover:shadow-md transition"
-                                    >
-                                        <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
-                                            <span className="material-icons text-green-700">event_note</span>
-                                        </div>
-                                        <div className="flex-1">
-                                            <h3 className="font-bold text-gray-800 text-sm">Manajemen Kegiatan</h3>
-                                            <p className="text-[11px] text-gray-500">Kelola berita dan kegiatan komunitas (Admin)</p>
-                                        </div>
-                                        <span className="material-icons text-gray-400">chevron_right</span>
-                                    </Link>
-                                )}
-
-                                {hasAccess('users') && (
-                                    <Link
-                                        to="/dashboard/admin/users"
-                                        className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-indigo-100 hover:shadow-md transition"
-                                    >
-                                        <div className="w-12 h-12 bg-indigo-100 rounded-xl flex items-center justify-center">
-                                            <span className="material-icons text-indigo-700">people</span>
-                                        </div>
-                                        <div className="flex-1">
-                                            <h3 className="font-bold text-gray-800 text-sm">Manajemen User</h3>
-                                            <p className="text-[11px] text-gray-500">Kelola data user dan lihat profile lengkap (Admin)</p>
-                                        </div>
-                                        <span className="material-icons text-gray-400">chevron_right</span>
-                                    </Link>
-                                )}
-
-                                {hasAccess('all_products') && (
-                                    <Link
-                                        to="/dashboard/admin/all-products"
-                                        className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-emerald-100 hover:shadow-md transition"
-                                    >
-                                        <div className="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center">
-                                            <span className="material-icons text-emerald-700">inventory</span>
-                                        </div>
-                                        <div className="flex-1">
-                                            <h3 className="font-bold text-gray-800 text-sm">Semua Produk Digital</h3>
-                                            <p className="text-[11px] text-gray-500">Pantau dan kelola produk semua user (Admin)</p>
-                                        </div>
-                                        <span className="material-icons text-gray-400">chevron_right</span>
-                                    </Link>
-                                )}
-
-                                {hasAccess('all_courses') && (
-                                    <Link
-                                        to="/dashboard/admin/all-courses"
-                                        className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-blue-100 hover:shadow-md transition"
-                                    >
-                                        <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-                                            <span className="material-icons text-blue-700">video_library</span>
-                                        </div>
-                                        <div className="flex-1">
-                                            <h3 className="font-bold text-gray-800 text-sm">Semua E-Course</h3>
-                                            <p className="text-[11px] text-gray-500">Pantau dan kelola course semua user (Admin)</p>
-                                        </div>
-                                        <span className="material-icons text-gray-400">chevron_right</span>
-                                    </Link>
-                                )}
-
-                                {hasAccess('consultants') && (
-                                    <Link
-                                        to="/dashboard/admin/consultants"
-                                        className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-purple-100 hover:shadow-md transition"
-                                    >
-                                        <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
-                                            <span className="material-icons text-purple-700">psychology</span>
-                                        </div>
-                                        <div className="flex-1">
-                                            <h3 className="font-bold text-gray-800 text-sm">Pengaturan Konsultasi</h3>
-                                            <p className="text-[11px] text-gray-500">Atur kategori dan pakar konsultasi (Admin)</p>
-                                        </div>
-                                        <span className="material-icons text-gray-400">chevron_right</span>
-                                    </Link>
-                                )}
-
-                                {hasAccess('transactions') && (
-                                    <Link
-                                        to="/dashboard/admin/transactions"
-                                        className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-green-100 hover:shadow-md transition"
-                                    >
-                                        <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
-                                            <span className="material-icons text-green-700">receipt_long</span>
-                                        </div>
-                                        <div className="flex-1">
-                                            <h3 className="font-bold text-gray-800 text-sm">Riwayat Transaksi</h3>
-                                            <p className="text-[11px] text-gray-500">Pantau semua transaksi (Digital & Course) untuk CRM</p>
-                                        </div>
-                                        <span className="material-icons text-gray-400">chevron_right</span>
-                                    </Link>
-                                )}
-
-                                {hasAccess('forum') && (
-                                    <Link
-                                        to="/dashboard/admin/forum"
-                                        className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-cyan-100 hover:shadow-md transition"
-                                    >
-                                        <div className="w-12 h-12 bg-cyan-100 rounded-xl flex items-center justify-center">
-                                            <span className="material-icons text-cyan-700">forum</span>
-                                        </div>
-                                        <div className="flex-1">
-                                            <h3 className="font-bold text-gray-800 text-sm">Manajemen Forum</h3>
-                                            <p className="text-[11px] text-gray-500">Moderasi diskusi dan balasan postingan (Admin)</p>
-                                        </div>
-                                        <span className="material-icons text-gray-400">chevron_right</span>
-                                    </Link>
-                                )}
-
-                                {hasAccess('roles') && (
-                                    <Link
-                                        to="/dashboard/admin/roles"
-                                        className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-violet-100 hover:shadow-md transition"
-                                    >
-                                        <div className="w-12 h-12 bg-violet-100 rounded-xl flex items-center justify-center">
-                                            <span className="material-icons text-violet-700">admin_panel_settings</span>
-                                        </div>
-                                        <div className="flex-1">
-                                            <h3 className="font-bold text-gray-800 text-sm">Manajemen Role & Label</h3>
-                                            <p className="text-[11px] text-gray-500">Kelola role, akses menu, dan label pengguna (Admin)</p>
-                                        </div>
-                                        <span className="material-icons text-gray-400">chevron_right</span>
-                                    </Link>
-                                )}
-
-                                {hasAccess('campaign_approval') && (
-                                    <Link
-                                        to="/dashboard/admin/campaign-approval"
-                                        className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-amber-100 hover:shadow-md transition relative"
-                                    >
-                                        {managementStats.campaign_approval > 0 && (
-                                            <div className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center border-2 border-white shadow-sm z-10 animate-bounce">
-                                                {managementStats.campaign_approval}
-                                            </div>
-                                        )}
-                                        <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center">
-                                            <span className="material-icons text-amber-700">assignment_turned_in</span>
-                                        </div>
-                                        <div className="flex-1">
-                                            <h3 className="font-bold text-gray-800 text-sm">Persetujuan Kampanye</h3>
-                                            <p className="text-[11px] text-gray-500">Verifikasi pengajuan kampanye dari user (Admin)</p>
-                                        </div>
-                                        <span className="material-icons text-gray-400">chevron_right</span>
-                                    </Link>
-                                )}
-
-                                {hasAccess('articles') && (
-                                    <Link
-                                        to="/dashboard/admin/articles"
-                                        className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-orange-100 hover:shadow-md transition"
-                                    >
-                                        <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center">
-                                            <span className="material-icons text-orange-700">article</span>
-                                        </div>
-                                        <div className="flex-1">
-                                            <h3 className="font-bold text-gray-800 text-sm">Manajemen Artikel</h3>
-                                            <p className="text-[11px] text-gray-500">Kelola semua artikel yang terbit (Admin)</p>
-                                        </div>
-                                        <span className="material-icons text-gray-400">chevron_right</span>
-                                    </Link>
-                                )}
-
-                                {hasAccess('admin_events') && (
-                                    <Link
-                                        to="/dashboard/admin/event-recap"
-                                        className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-emerald-100 hover:shadow-md transition"
-                                    >
-                                        <div className="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center">
-                                            <span className="material-icons text-emerald-700">groups</span>
-                                        </div>
-                                        <div className="flex-1">
-                                            <h3 className="font-bold text-gray-800 text-sm">Rekap Peserta Global</h3>
-                                            <p className="text-[11px] text-gray-500">Data seluruh peserta event & CRM Blast WA</p>
-                                        </div>
-                                        <span className="material-icons text-gray-400">chevron_right</span>
-                                    </Link>
-                                )}
-
-                                {hasAccess('photo_framer') && (
-                                    <Link
-                                        to="/dashboard/admin/photo-framer"
-                                        className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-pink-100 hover:shadow-md transition"
-                                    >
-                                        <div className="w-12 h-12 bg-pink-100 rounded-xl flex items-center justify-center">
-                                            <span className="material-icons text-pink-700">filter_frames</span>
-                                        </div>
-                                        <div className="flex-1">
-                                            <h3 className="font-bold text-gray-800 text-sm">Bingkai Foto Otomatis</h3>
-                                            <p className="text-[11px] text-gray-500">Pasang bingkai ke banyak foto sekaligus (Batch)</p>
-                                        </div>
-                                        <span className="material-icons text-gray-400">chevron_right</span>
-                                    </Link>
-                                )}
-
-                                {isAdmin && (
-                                    <Link
-                                        to="/live-meet-test"
-                                        className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-emerald-100 hover:shadow-md transition"
-                                    >
-                                        <div className="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center">
-                                            <span className="material-icons text-emerald-700">videocam</span>
-                                        </div>
-                                        <div className="flex-1">
-                                            <h3 className="font-bold text-gray-800 text-sm">Live Meet Prototype</h3>
-                                            <p className="text-[11px] text-gray-500">Uji coba fitur video conference Jitsi (Admin)</p>
-                                        </div>
-                                        <span className="material-icons text-gray-400">chevron_right</span>
-                                    </Link>
-                                )}
-
-                                {hasAccess('charity') && (
-                                    <Link
-                                        to="/dashboard/admin/campaigns"
-                                        className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-red-100 hover:shadow-xl transition"
-                                    >
-                                        <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center">
-                                            <span className="material-icons text-red-700">campaign</span>
-                                        </div>
-                                        <div className="flex-1">
-                                            <h3 className="font-bold text-gray-800 text-sm">Manajemen Kampanye</h3>
-                                            <p className="text-[11px] text-gray-500">Kelola semua kampanye yang aktif (Admin)</p>
-                                        </div>
-                                        <span className="material-icons text-gray-400">chevron_right</span>
-                                    </Link>
-                                )}
-
-                                {(hasAccess('admin_events') || hasAccess('event')) && (
-                                    <Link
-                                        to="/dashboard/admin/events"
-                                        className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-teal-100 hover:shadow-xl transition relative"
-                                    >
-                                        {managementStats.admin_events > 0 && (
-                                            <div className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center border-2 border-white shadow-sm z-10 animate-bounce">
-                                                {managementStats.admin_events}
-                                            </div>
-                                        )}
-                                        <div className="w-12 h-12 bg-teal-100 rounded-xl flex items-center justify-center">
-                                            <span className="material-icons text-teal-700">event</span>
-                                        </div>
-                                        <div className="flex-1">
-                                            <h3 className="font-bold text-gray-800 text-sm">Manajemen Event</h3>
-                                            <p className="text-[11px] text-gray-500">Kelola pendaftaran dan detail event (Admin)</p>
-                                        </div>
-                                        <span className="material-icons text-gray-400">chevron_right</span>
-                                    </Link>
-                                )}
-
-                                {hasAccess('about_us') && (
-                                    <Link
-                                        to="/dashboard/admin/about-us"
-                                        className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-pink-100 hover:shadow-md transition"
-                                    >
-                                        <div className="w-12 h-12 bg-pink-100 rounded-xl flex items-center justify-center">
-                                            <span className="material-icons text-pink-700">info</span>
-                                        </div>
-                                        <div className="flex-1">
-                                            <h3 className="font-bold text-gray-800 text-sm">Manajemen Tentang Kami</h3>
-                                            <p className="text-[11px] text-gray-500">Kelola konten profil dan visi misi komunitas (Admin)</p>
-                                        </div>
-                                    </Link>
-                                )}
-
-                                {isAdmin && (
-                                    <>
-                                        <Link
-                                            to="/dashboard/admin/zis-config"
-                                            className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-slate-100 hover:shadow-md transition"
-                                        >
-                                            <div className="w-12 h-12 bg-slate-100 rounded-xl flex items-center justify-center">
-                                                <span className="material-icons text-slate-700">settings_applications</span>
-                                            </div>
-                                            <div className="flex-1">
-                                                <h3 className="font-bold text-gray-800 text-sm">Pengaturan ZIS</h3>
-                                                <p className="text-[11px] text-gray-500">Atur kategori pos dan rekening ZIS (Admin)</p>
-                                            </div>
-                                            <span className="material-icons text-gray-400">chevron_right</span>
-                                        </Link>
-                                        <Link
-                                            to="/dashboard/admin/zis-verify"
-                                            className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-green-100 hover:shadow-md transition"
-                                        >
-                                            <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
-                                                <span className="material-icons text-green-700">fact_check</span>
-                                            </div>
-                                            <div className="flex-1">
-                                                <h3 className="font-bold text-gray-800 text-sm">Verifikasi ZIS</h3>
-                                                <p className="text-[11px] text-gray-500">Validasi laporan setoran anggota (Admin)</p>
-                                            </div>
-                                            <span className="material-icons text-gray-400">chevron_right</span>
-                                        </Link>
-                                    </>
-                                )}
-                            </div>
-                        </>
+                                    </div>
+                                );
+                            })}
+                        </div>
                     );
+
                 })()}
             </div>
 
