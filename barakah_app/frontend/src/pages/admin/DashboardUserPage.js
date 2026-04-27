@@ -11,13 +11,13 @@ const getAuth = () => {
     return { headers: { Authorization: `Bearer ${user?.access}` } };
 };
 
-const GENDER_CHOICES = [['l','Laki-laki'],['p','Perempuan']];
-const MARITAL_CHOICES = [['bn','Belum Nikah'],['n','Nikah'],['d','Duda'],['j','Janda']];
-const SEGMENT_CHOICES = [['mahasiswa','Mahasiswa'],['pelajar','Pelajar'],['santri','Santri'],['karyawan','Karyawan'],['umum','Umum']];
-const STUDY_LEVEL_CHOICES = [['sd','SD/Setara'],['smp','SMP/Setara'],['sma','SMA/SMK/Setara'],['s1','Sarjana'],['s2','Magister'],['s3','Doktor']];
-const JOB_CHOICES = [['mahasiswa','Mahasiswa'],['asn','ASN'],['karyawan_swasta','Karyawan Swasta'],['guru','Guru'],['dosen','Dosen'],['dokter','Dokter'],['perawat','Perawat'],['apoteker','Apoteker'],['programmer','Programmer'],['data_scientist','Data Scientist'],['desainer_grafis','Desainer Grafis'],['marketing','Marketing'],['hrd','HRD'],['akuntan','Akuntan'],['konsultan','Konsultan'],['arsitek','Arsitek'],['insinyur','Insinyur'],['peneliti','Peneliti'],['jurnalis','Jurnalis'],['penulis','Penulis'],['penerjemah','Penerjemah'],['pilot','Pilot'],['pramugari','Pramugari'],['chef','Chef'],['pengusaha','Pengusaha'],['petani','Petani'],['nelayan','Nelayan'],['pengrajin','Pengrajin'],['teknisi','Teknisi'],['seniman','Seniman'],['musisi','Musisi'],['atlet','Atlet'],['polisi','Polisi'],['tentara','Tentara'],['pengacara','Pengacara'],['notaris','Notaris'],['psikolog','Psikolog'],['sopir','Sopir'],['kurir','Kurir'],['barista','Barista'],['freelancer','Freelancer']];
-const WORK_FIELD_CHOICES = [['pendidikan','Pendidikan'],['kesehatan','Kesehatan'],['ekobis','Ekonomi Bisnis'],['agrotek','Agrotek'],['herbal','Herbal-Farmasi'],['it','IT'],['manufaktur','Manufaktur'],['energi','Energi-Mineral'],['sains','Sains'],['teknologi','Teknologi'],['polhuk','Politik-Hukum'],['humaniora','Humaniora'],['media','Media-Literasi'],['sejarah','Sejarah']];
-const PROVINCE_CHOICES = [['aceh','Aceh'],['sumatera_utara','Sumatera Utara'],['sumatera_barat','Sumatera Barat'],['riau','Riau'],['jambi','Jambi'],['sumatera_selatan','Sumatera Selatan'],['bengkulu','Bengkulu'],['lampung','Lampung'],['kepulauan_bangka_belitung','Kep. Bangka Belitung'],['kepulauan_riau','Kepulauan Riau'],['dki_jakarta','DKI Jakarta'],['jawa_barat','Jawa Barat'],['jawa_tengah','Jawa Tengah'],['di_yogyakarta','DI Yogyakarta'],['jawa_timur','Jawa Timur'],['banten','Banten'],['bali','Bali'],['nusa_tenggara_barat','NTB'],['nusa_tenggara_timur','NTT'],['kalimantan_barat','Kalimantan Barat'],['kalimantan_tengah','Kalimantan Tengah'],['kalimantan_selatan','Kalimantan Selatan'],['kalimantan_timur','Kalimantan Timur'],['kalimantan_utara','Kalimantan Utara'],['sulawesi_utara','Sulawesi Utara'],['sulawesi_tengah','Sulawesi Tengah'],['sulawesi_selatan','Sulawesi Selatan'],['sulawesi_tenggara','Sulawesi Tenggara'],['gorontalo','Gorontalo'],['sulawesi_barat','Sulawesi Barat'],['maluku','Maluku'],['maluku_utara','Maluku Utara'],['papua','Papua'],['papua_barat','Papua Barat']];
+const GENDER_CHOICES = [['l', 'Laki-laki'], ['p', 'Perempuan']];
+const MARITAL_CHOICES = [['bn', 'Belum Nikah'], ['n', 'Nikah'], ['d', 'Duda'], ['j', 'Janda']];
+const SEGMENT_CHOICES = [['mahasiswa', 'Mahasiswa'], ['pelajar', 'Pelajar'], ['santri', 'Santri'], ['karyawan', 'Karyawan'], ['umum', 'Umum']];
+const STUDY_LEVEL_CHOICES = [['sd', 'SD/Setara'], ['smp', 'SMP/Setara'], ['sma', 'SMA/SMK/Setara'], ['s1', 'Sarjana'], ['s2', 'Magister'], ['s3', 'Doktor']];
+const JOB_CHOICES = [['mahasiswa', 'Mahasiswa'], ['asn', 'ASN'], ['karyawan_swasta', 'Karyawan Swasta'], ['guru', 'Guru'], ['dosen', 'Dosen'], ['dokter', 'Dokter'], ['perawat', 'Perawat'], ['apoteker', 'Apoteker'], ['programmer', 'Programmer'], ['data_scientist', 'Data Scientist'], ['desainer_grafis', 'Desainer Grafis'], ['marketing', 'Marketing'], ['hrd', 'HRD'], ['akuntan', 'Akuntan'], ['konsultan', 'Konsultan'], ['arsitek', 'Arsitek'], ['insinyur', 'Insinyur'], ['peneliti', 'Peneliti'], ['jurnalis', 'Jurnalis'], ['penulis', 'Penulis'], ['penerjemah', 'Penerjemah'], ['pilot', 'Pilot'], ['pramugari', 'Pramugari'], ['chef', 'Chef'], ['pengusaha', 'Pengusaha'], ['petani', 'Petani'], ['nelayan', 'Nelayan'], ['pengrajin', 'Pengrajin'], ['teknisi', 'Teknisi'], ['seniman', 'Seniman'], ['musisi', 'Musisi'], ['atlet', 'Atlet'], ['polisi', 'Polisi'], ['tentara', 'Tentara'], ['pengacara', 'Pengacara'], ['notaris', 'Notaris'], ['psikolog', 'Psikolog'], ['sopir', 'Sopir'], ['kurir', 'Kurir'], ['barista', 'Barista'], ['freelancer', 'Freelancer']];
+const WORK_FIELD_CHOICES = [['pendidikan', 'Pendidikan'], ['kesehatan', 'Kesehatan'], ['ekobis', 'Ekonomi Bisnis'], ['agrotek', 'Agrotek'], ['herbal', 'Herbal-Farmasi'], ['it', 'IT'], ['manufaktur', 'Manufaktur'], ['energi', 'Energi-Mineral'], ['sains', 'Sains'], ['teknologi', 'Teknologi'], ['polhuk', 'Politik-Hukum'], ['humaniora', 'Humaniora'], ['media', 'Media-Literasi'], ['sejarah', 'Sejarah']];
+const PROVINCE_CHOICES = [['aceh', 'Aceh'], ['sumatera_utara', 'Sumatera Utara'], ['sumatera_barat', 'Sumatera Barat'], ['riau', 'Riau'], ['jambi', 'Jambi'], ['sumatera_selatan', 'Sumatera Selatan'], ['bengkulu', 'Bengkulu'], ['lampung', 'Lampung'], ['kepulauan_bangka_belitung', 'Kep. Bangka Belitung'], ['kepulauan_riau', 'Kepulauan Riau'], ['dki_jakarta', 'DKI Jakarta'], ['jawa_barat', 'Jawa Barat'], ['jawa_tengah', 'Jawa Tengah'], ['di_yogyakarta', 'DI Yogyakarta'], ['jawa_timur', 'Jawa Timur'], ['banten', 'Banten'], ['bali', 'Bali'], ['nusa_tenggara_barat', 'NTB'], ['nusa_tenggara_timur', 'NTT'], ['kalimantan_barat', 'Kalimantan Barat'], ['kalimantan_tengah', 'Kalimantan Tengah'], ['kalimantan_selatan', 'Kalimantan Selatan'], ['kalimantan_timur', 'Kalimantan Timur'], ['kalimantan_utara', 'Kalimantan Utara'], ['sulawesi_utara', 'Sulawesi Utara'], ['sulawesi_tengah', 'Sulawesi Tengah'], ['sulawesi_selatan', 'Sulawesi Selatan'], ['sulawesi_tenggara', 'Sulawesi Tenggara'], ['gorontalo', 'Gorontalo'], ['sulawesi_barat', 'Sulawesi Barat'], ['maluku', 'Maluku'], ['maluku_utara', 'Maluku Utara'], ['papua', 'Papua'], ['papua_barat', 'Papua Barat']];
 
 const DashboardUserPage = () => {
     const navigate = useNavigate();
@@ -238,8 +238,8 @@ const DashboardUserPage = () => {
         if (!blastMessage.trim()) { alert('Tulis pesan terlebih dahulu'); return; }
         setBlasting(true);
         try {
-            const payload = { 
-                user_ids: selectedUserIds, 
+            const payload = {
+                user_ids: selectedUserIds,
                 message: blastMessage,
                 image_base64: blastImage // Send image if attached
             };
@@ -384,95 +384,89 @@ const DashboardUserPage = () => {
                 {loading && users.length === 0 ? (
                     <UserSkeleton />
                 ) : (
-                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left text-sm">
-                            <thead className="bg-gray-50 border-b border-gray-100">
-                                <tr>
-                                    <th className="px-3 py-4"><input type="checkbox" checked={selectedUserIds.length === users.length && users.length > 0} onChange={toggleSelectAll} className="w-4 h-4 text-green-600 rounded" /></th>
-                                    <SH label="User" field="username" {...{sortField,sortDir,handleSort,getSortIcon}} />
-                                    <th className="px-3 py-4 text-gray-600 font-bold uppercase tracking-wider text-[11px] min-w-[120px]">Email/Phone</th>
-                                    <th className="px-3 py-4 text-gray-600 font-bold uppercase tracking-wider text-[11px] min-w-[80px]">Role</th>
-                                    <th className="px-3 py-4 text-gray-600 font-bold uppercase tracking-wider text-[11px] min-w-[100px]">Label</th>
-                                    <SH label="Nama" field="profile__name_full" {...{sortField,sortDir,handleSort,getSortIcon}} />
-                                    <SH label="Join" field="date_joined" {...{sortField,sortDir,handleSort,getSortIcon}} />
-                                    <th className="px-3 py-4 text-gray-600 font-bold uppercase tracking-wider text-[11px] min-w-[150px]">Charity</th>
-                                    <th className="px-3 py-4 text-gray-600 font-bold uppercase tracking-wider text-[11px] min-w-[150px]">Event</th>
-                                    <th className="px-3 py-4 text-gray-600 font-bold uppercase tracking-wider text-[11px] min-w-[150px]">Sinergy</th>
-                                    <th className="px-3 py-4 text-gray-600 font-bold uppercase tracking-wider text-[11px] min-w-[150px]">E-Course</th>
-                                    <th className="px-3 py-4 text-gray-600 font-bold uppercase tracking-wider text-[11px] min-w-[150px]">Digital</th>
-                                    <th className="px-3 py-4 text-gray-600 font-bold uppercase tracking-wider text-[11px] text-center">V</th>
-                                    <th className="px-3 py-4 text-gray-600 font-bold uppercase tracking-wider text-[11px] text-center">Aksi</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-50">
-                                {users.map(u => (
-                                    <tr key={u.id} className="hover:bg-green-50/30 transition">
-                                        <td className="px-3 py-3"><input type="checkbox" checked={selectedUserIds.includes(u.id)} onChange={() => toggleSelectUser(u.id)} className="w-4 h-4 text-green-600 rounded" /></td>
-                                        <td className="px-3 py-3">
-                                            <div className="bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded font-black text-[9px] inline-block mb-1">ID: {u.id}</div>
-                                            <div className="font-bold text-gray-900 text-[11px] leading-tight">{u.username}</div>
-                                            <div className="text-[10px] text-gray-400 truncate max-w-[120px]">{u.email}</div>
-                                        </td>
-                                        <td className="px-3 py-3 text-gray-600 text-[11px] whitespace-nowrap">
-                                            {u.phone || <span className="text-gray-300 italic">None</span>}
-                                        </td>
-                                        <td className="px-3 py-3">
-                                            <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase ${u.role === 'admin' ? 'bg-red-50 text-red-600' : u.role === 'seller' ? 'bg-orange-50 text-orange-600' : 'bg-blue-50 text-blue-600'}`}>{u.role}</span>
-                                        </td>
-                                        <td className="px-3 py-3">
-                                            <div className="max-w-[150px] flex flex-wrap gap-0.5">
-                                                {(u.custom_roles||[]).length > 0
-                                                    ? (u.custom_roles||[]).map(r => <span key={r.id} className="px-1.5 py-0.5 rounded bg-green-50 text-green-700 border border-green-100 text-[9px] font-bold">{r.name}</span>)
-                                                    : <span className="text-gray-300 text-[10px]">-</span>}
-                                            </div>
-                                        </td>
-                                        <td className="px-3 py-3">
-                                            <div className="max-w-[150px] flex flex-wrap gap-0.5">
-                                                {(u.labels||[]).length > 0
-                                                    ? (u.labels||[]).map(l => <span key={l.id} className="px-1.5 py-0.5 rounded bg-purple-50 text-purple-700 border border-purple-100 text-[9px] font-bold">{l.name}</span>)
-                                                    : <span className="text-gray-300 text-[10px]">-</span>}
-                                            </div>
-                                        </td>
-                                        <td className="px-3 py-3">
-                                            <div className="text-gray-900 font-bold text-[11px] line-clamp-1">{u.profile?.name_full || '-'}</div>
-                                            <div className="text-[10px] text-gray-400 mt-0.5">
-                                                {PROVINCE_CHOICES.find(p => p[0] === u.profile?.address_province)?.[1] || '-'}
-                                            </div>
-                                        </td>
-                                        <td className="px-3 py-3 text-gray-500 text-[10px] whitespace-nowrap">
-                                            {new Date(u.date_joined).toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'})}
-                                        </td>
-                                        <td className="px-3 py-3"><ActivityList items={u.activities?.charity} /></td>
-                                        <td className="px-3 py-3"><ActivityList items={u.activities?.events} /></td>
-                                        <td className="px-3 py-3"><ActivityList items={u.activities?.sinergy} /></td>
-                                        <td className="px-3 py-3"><ActivityList items={u.activities?.courses} /></td>
-                                        <td className="px-3 py-3"><ActivityList items={u.activities?.digital_products} /></td>
-                                        <td className="px-3 py-3 text-center">
-                                            {u.is_verified_member ? <span className="material-icons text-green-600 text-sm">verified</span> : <span className="material-icons text-gray-200 text-sm">cancel</span>}
-                                        </td>
-                                        <td className="px-3 py-3">
-                                            <div className="flex items-center justify-center gap-1">
-                                                <button onClick={() => { setSelectedUser(u); setShowDetailModal(true); }} className="w-6 h-6 bg-white border border-gray-100 rounded text-gray-400 hover:text-green-700 hover:bg-green-50 transition flex items-center justify-center" title="Detail">
-                                                    <span className="material-icons text-[14px]">visibility</span>
-                                                </button>
-                                                <button onClick={() => openEditModal(u)} className="w-6 h-6 bg-white border border-gray-100 rounded text-gray-400 hover:text-blue-700 hover:bg-blue-50 transition flex items-center justify-center" title="Edit">
-                                                    <span className="material-icons text-[14px]">edit</span>
-                                                </button>
-                                                <button onClick={() => handleResetPassword(u)} disabled={resettingPassword} className="w-6 h-6 bg-white border border-gray-100 rounded text-gray-400 hover:text-orange-700 hover:bg-orange-50 transition flex items-center justify-center" title="Reset Password">
-                                                    <span className="material-icons text-[14px]">lock_reset</span>
-                                                </button>
-                                                <button onClick={() => handleDelete(u.id)} className="w-6 h-6 bg-white border border-gray-100 rounded text-gray-400 hover:text-red-700 hover:bg-red-50 transition flex items-center justify-center" title="Hapus">
-                                                    <span className="material-icons text-[14px]">delete</span>
-                                                </button>
-                                            </div>
-                                        </td>
+                    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-left text-sm">
+                                <thead className="bg-gray-50 border-b border-gray-100">
+                                    <tr>
+                                        <th className="px-3 py-4"><input type="checkbox" checked={selectedUserIds.length === users.length && users.length > 0} onChange={toggleSelectAll} className="w-4 h-4 text-green-600 rounded" /></th>
+                                        <SH label="User" field="username" {...{ sortField, sortDir, handleSort, getSortIcon }} />
+                                        <th className="px-3 py-4 text-gray-600 font-bold uppercase tracking-wider text-[11px] min-w-[120px]">Kontak</th>
+                                        <th className="px-3 py-4 text-gray-600 font-bold uppercase tracking-wider text-[11px] min-w-[80px]">Role</th>
+                                        <th className="px-3 py-4 text-gray-600 font-bold uppercase tracking-wider text-[11px] min-w-[80px]">Custom Role</th>
+                                        <th className="px-3 py-4 text-gray-600 font-bold uppercase tracking-wider text-[11px] min-w-[120px]">Akses/Label</th>
+                                        <SH label="Nama" field="profile__name_full" {...{ sortField, sortDir, handleSort, getSortIcon }} />
+                                        <SH label="Join" field="date_joined" {...{ sortField, sortDir, handleSort, getSortIcon }} />
+                                        <th className="px-3 py-4 text-gray-600 font-bold uppercase tracking-wider text-[11px] min-w-[150px]">Charity</th>
+                                        <th className="px-3 py-4 text-gray-600 font-bold uppercase tracking-wider text-[11px] min-w-[150px]">Event</th>
+                                        <th className="px-3 py-4 text-gray-600 font-bold uppercase tracking-wider text-[11px] min-w-[150px]">Sinergy</th>
+                                        <th className="px-3 py-4 text-gray-600 font-bold uppercase tracking-wider text-[11px] min-w-[150px]">E-Course</th>
+                                        <th className="px-3 py-4 text-gray-600 font-bold uppercase tracking-wider text-[11px] min-w-[150px]">Digital</th>
+                                        <th className="px-3 py-4 text-gray-600 font-bold uppercase tracking-wider text-[11px] text-center">V</th>
+                                        <th className="px-3 py-4 text-gray-600 font-bold uppercase tracking-wider text-[11px] text-center">Aksi</th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody className="divide-y divide-gray-50">
+                                    {users.map(u => (
+                                        <tr key={u.id} className="hover:bg-green-50/30 transition">
+                                            <td className="px-3 py-3"><input type="checkbox" checked={selectedUserIds.includes(u.id)} onChange={() => toggleSelectUser(u.id)} className="w-4 h-4 text-green-600 rounded" /></td>
+                                            <td className="px-3 py-3">
+                                                <div className="bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded font-black text-[9px] inline-block mb-1">ID: {u.id}</div>
+                                                <div className="font-bold text-gray-900 text-[11px] leading-tight">{u.username}</div>
+                                                <div className="text-[10px] text-gray-400 truncate max-w-[120px]">{u.email}</div>
+                                            </td>
+                                            <td className="px-3 py-3 text-gray-600 text-[11px] whitespace-nowrap">
+                                                {u.phone || <span className="text-gray-300 italic">None</span>}
+                                            </td>
+                                            <td className="px-3 py-3">
+                                                <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase ${u.role === 'admin' ? 'bg-red-50 text-red-600' : u.role === 'seller' ? 'bg-orange-50 text-orange-600' : 'bg-blue-50 text-blue-600'}`}>{u.role}</span>
+                                            </td>
+                                            <td className="px-3 py-3">
+                                                <div className="max-w-[150px] flex flex-wrap gap-0.5">
+                                                    {(u.custom_roles || []).map(r => <span key={r.id} className="px-1.5 py-0.5 rounded bg-green-50 text-green-700 border border-green-100 text-[9px] font-bold">{r.name}</span>)}
+                                                    {(u.labels || []).map(l => <span key={l.id} className="px-1.5 py-0.5 rounded bg-purple-50 text-purple-700 border border-purple-100 text-[9px] font-bold">{l.name}</span>)}
+                                                    {(u.custom_roles || []).length === 0 && (u.labels || []).length === 0 && <span className="text-gray-300 text-[10px]">-</span>}
+                                                </div>
+                                            </td>
+                                            <td className="px-3 py-3">
+                                                <div className="text-gray-900 font-bold text-[11px] line-clamp-1">{u.profile?.name_full || '-'}</div>
+                                                <div className="text-[10px] text-gray-400 mt-0.5">
+                                                    {PROVINCE_CHOICES.find(p => p[0] === u.profile?.address_province)?.[1] || '-'}
+                                                </div>
+                                            </td>
+                                            <td className="px-3 py-3 text-gray-500 text-[10px] whitespace-nowrap">
+                                                {new Date(u.date_joined).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                            </td>
+                                            <td className="px-3 py-3"><ActivityList items={u.activities?.charity} /></td>
+                                            <td className="px-3 py-3"><ActivityList items={u.activities?.events} /></td>
+                                            <td className="px-3 py-3"><ActivityList items={u.activities?.sinergy} /></td>
+                                            <td className="px-3 py-3"><ActivityList items={u.activities?.courses} /></td>
+                                            <td className="px-3 py-3"><ActivityList items={u.activities?.digital_products} /></td>
+                                            <td className="px-3 py-3 text-center">
+                                                {u.is_verified_member ? <span className="material-icons text-green-600 text-sm">verified</span> : <span className="material-icons text-gray-200 text-sm">cancel</span>}
+                                            </td>
+                                            <td className="px-3 py-3">
+                                                <div className="flex items-center justify-center gap-1">
+                                                    <button onClick={() => { setSelectedUser(u); setShowDetailModal(true); }} className="w-6 h-6 bg-white border border-gray-100 rounded text-gray-400 hover:text-green-700 hover:bg-green-50 transition flex items-center justify-center" title="Detail">
+                                                        <span className="material-icons text-[14px]">visibility</span>
+                                                    </button>
+                                                    <button onClick={() => openEditModal(u)} className="w-6 h-6 bg-white border border-gray-100 rounded text-gray-400 hover:text-blue-700 hover:bg-blue-50 transition flex items-center justify-center" title="Edit">
+                                                        <span className="material-icons text-[14px]">edit</span>
+                                                    </button>
+                                                    <button onClick={() => handleResetPassword(u)} disabled={resettingPassword} className="w-6 h-6 bg-white border border-gray-100 rounded text-gray-400 hover:text-orange-700 hover:bg-orange-50 transition flex items-center justify-center" title="Reset Password">
+                                                        <span className="material-icons text-[14px]">lock_reset</span>
+                                                    </button>
+                                                    <button onClick={() => handleDelete(u.id)} className="w-6 h-6 bg-white border border-gray-100 rounded text-gray-400 hover:text-red-700 hover:bg-red-50 transition flex items-center justify-center" title="Hapus">
+                                                        <span className="material-icons text-[14px]">delete</span>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
-                </div>
                 )}
 
                 {/* Pagination */}
@@ -511,17 +505,17 @@ const DashboardUserPage = () => {
                                     <h2 className="text-2xl font-bold text-gray-900">{selectedUser.profile?.name_full || selectedUser.username}</h2>
                                     <p className="text-gray-500 font-medium">@{selectedUser.username} • {selectedUser.role.toUpperCase()}</p>
                                     <div className="flex flex-wrap gap-1 mt-2">
-                                        {(selectedUser.custom_roles||[]).map(r => <span key={r.id} className="px-2 py-0.5 bg-green-50 text-green-700 rounded-full text-[10px] font-bold">{r.name}</span>)}
-                                        {(selectedUser.labels||[]).map(l => <span key={l.id} className="px-2 py-0.5 bg-purple-50 text-purple-700 rounded-full text-[10px] font-bold">{l.name}</span>)}
+                                        {(selectedUser.custom_roles || []).map(r => <span key={r.id} className="px-2 py-0.5 bg-green-50 text-green-700 rounded-full text-[10px] font-bold">{r.name}</span>)}
+                                        {(selectedUser.labels || []).map(l => <span key={l.id} className="px-2 py-0.5 bg-purple-50 text-purple-700 rounded-full text-[10px] font-bold">{l.name}</span>)}
                                     </div>
                                 </div>
                                 <div className="text-right">
                                     <p className="text-[10px] text-gray-400 uppercase tracking-widest font-bold">Terdaftar</p>
-                                    <p className="text-gray-900 font-bold text-sm">{new Date(selectedUser.date_joined).toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'})}</p>
+                                    <p className="text-gray-900 font-bold text-sm">{new Date(selectedUser.date_joined).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
                                     <p className="mt-1">{selectedUser.is_verified_member ? <span className="text-green-600 text-[10px] font-bold flex items-center gap-1 justify-end"><span className="material-icons text-sm">verified</span>Verified</span> : <span className="text-red-400 text-[10px] font-bold">Belum Verified</span>}</p>
                                 </div>
                             </div>
-                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                 <div className="space-y-3">
                                     <h3 className="text-xs font-bold text-green-700 uppercase tracking-widest border-b border-green-100 pb-2 flex items-center gap-2">
                                         <span className="material-icons text-sm">person_outline</span> Info Dasar
@@ -614,14 +608,14 @@ const DashboardUserPage = () => {
                                 {/* Jika tambah user baru, hanya tampilkan field dasar */}
                                 {!editingUser ? (
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <FI label="Nama Lengkap" value={editFormData.name_full} onChange={v => setEditFormData(f=>({...f, name_full:v}))} />
-                                        <FI label="Username" value={editFormData.username} onChange={v => setEditFormData(f=>({...f, username:v}))} />
-                                        <FI label="Email" value={editFormData.email} onChange={v => setEditFormData(f=>({...f, email:v}))} />
-                                        <FI label="No. Telepon" value={editFormData.phone} onChange={v => setEditFormData(f=>({...f, phone:v}))} />
-                                        <FI label="Password (wajib)*" value={editFormData.password} onChange={v => setEditFormData(f=>({...f, password:v}))} type="password" />
-                                        <FS label="Role" value={editFormData.role} onChange={v => setEditFormData(f=>({...f, role:v}))} options={[['user','User'],['admin','Admin'],['seller','Seller'],['staff','Staff']]} />
+                                        <FI label="Nama Lengkap" value={editFormData.name_full} onChange={v => setEditFormData(f => ({ ...f, name_full: v }))} />
+                                        <FI label="Username" value={editFormData.username} onChange={v => setEditFormData(f => ({ ...f, username: v }))} />
+                                        <FI label="Email" value={editFormData.email} onChange={v => setEditFormData(f => ({ ...f, email: v }))} />
+                                        <FI label="No. Telepon" value={editFormData.phone} onChange={v => setEditFormData(f => ({ ...f, phone: v }))} />
+                                        <FI label="Password (wajib)*" value={editFormData.password} onChange={v => setEditFormData(f => ({ ...f, password: v }))} type="password" />
+                                        <FS label="Role" value={editFormData.role} onChange={v => setEditFormData(f => ({ ...f, role: v }))} options={[['user', 'User'], ['admin', 'Admin'], ['seller', 'Seller'], ['staff', 'Staff']]} />
                                         <div className="flex items-center gap-2 col-span-2">
-                                            <input type="checkbox" id="is_v_new" checked={editFormData.is_verified_member} onChange={e => setEditFormData(f=>({...f, is_verified_member:e.target.checked}))} className="w-4 h-4 text-blue-600 rounded" />
+                                            <input type="checkbox" id="is_v_new" checked={editFormData.is_verified_member} onChange={e => setEditFormData(f => ({ ...f, is_verified_member: e.target.checked }))} className="w-4 h-4 text-blue-600 rounded" />
                                             <label htmlFor="is_v_new" className="text-sm font-medium text-gray-700">Verified Member</label>
                                         </div>
                                     </div>
@@ -629,77 +623,77 @@ const DashboardUserPage = () => {
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                         {/* Col 1: Account */}
                                         <div className="space-y-3">
-                                        <h3 className="text-[10px] font-bold text-blue-700 uppercase tracking-widest border-b border-blue-100 pb-2 mb-2">Data Akun</h3>
-                                        <FI label="Username" value={editFormData.username} onChange={v => setEditFormData(f=>({...f, username:v}))} />
-                                        <FI label="Email" value={editFormData.email} onChange={v => setEditFormData(f=>({...f, email:v}))} />
-                                        <FI label="No. Telepon" value={editFormData.phone} onChange={v => setEditFormData(f=>({...f, phone:v}))} />
-                                        <FI label="Jabatan BAE" value={editFormData.position} onChange={v => setEditFormData(f=>({...f, position:v}))} />
-                                        <FS label="Role" value={editFormData.role} onChange={v => setEditFormData(f=>({...f, role:v}))} options={[['user','User'],['admin','Admin'],['seller','Seller'],['staff','Staff']]} />
-                                        <div className="flex items-center gap-2 mt-2">
-                                            <input type="checkbox" id="is_v" checked={editFormData.is_verified_member} onChange={e => setEditFormData(f=>({...f, is_verified_member:e.target.checked}))} className="w-4 h-4 text-blue-600 rounded" />
-                                            <label htmlFor="is_v" className="text-sm font-medium text-gray-700">Verified Member</label>
-                                        </div>
-                                        <div className="space-y-1 mt-3">
-                                            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Custom Roles</label>
-                                            <div className="flex flex-wrap gap-1">
-                                                {allRoles.map(r => (
-                                                    <label key={r.id} className={`flex items-center gap-1 px-2 py-1 rounded-lg border cursor-pointer text-xs transition ${(editFormData.custom_role_ids||[]).includes(r.id) ? 'bg-green-50 border-green-200 text-green-800' : 'bg-white border-gray-100 text-gray-500'}`}>
-                                                        <input type="checkbox" checked={(editFormData.custom_role_ids||[]).includes(r.id)}
-                                                            onChange={() => { const ids = editFormData.custom_role_ids||[]; setEditFormData(f=>({...f, custom_role_ids: ids.includes(r.id)?ids.filter(x=>x!==r.id):[...ids,r.id]})); }} className="w-3 h-3 text-green-600 rounded" />
-                                                        {r.name}
-                                                    </label>
-                                                ))}
+                                            <h3 className="text-[10px] font-bold text-blue-700 uppercase tracking-widest border-b border-blue-100 pb-2 mb-2">Data Akun</h3>
+                                            <FI label="Username" value={editFormData.username} onChange={v => setEditFormData(f => ({ ...f, username: v }))} />
+                                            <FI label="Email" value={editFormData.email} onChange={v => setEditFormData(f => ({ ...f, email: v }))} />
+                                            <FI label="No. Telepon" value={editFormData.phone} onChange={v => setEditFormData(f => ({ ...f, phone: v }))} />
+                                            <FI label="Jabatan BAE" value={editFormData.position} onChange={v => setEditFormData(f => ({ ...f, position: v }))} />
+                                            <FS label="Role" value={editFormData.role} onChange={v => setEditFormData(f => ({ ...f, role: v }))} options={[['user', 'User'], ['admin', 'Admin'], ['seller', 'Seller'], ['staff', 'Staff']]} />
+                                            <div className="flex items-center gap-2 mt-2">
+                                                <input type="checkbox" id="is_v" checked={editFormData.is_verified_member} onChange={e => setEditFormData(f => ({ ...f, is_verified_member: e.target.checked }))} className="w-4 h-4 text-blue-600 rounded" />
+                                                <label htmlFor="is_v" className="text-sm font-medium text-gray-700">Verified Member</label>
+                                            </div>
+                                            <div className="space-y-1 mt-3">
+                                                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Custom Roles</label>
+                                                <div className="flex flex-wrap gap-1">
+                                                    {allRoles.map(r => (
+                                                        <label key={r.id} className={`flex items-center gap-1 px-2 py-1 rounded-lg border cursor-pointer text-xs transition ${(editFormData.custom_role_ids || []).includes(r.id) ? 'bg-green-50 border-green-200 text-green-800' : 'bg-white border-gray-100 text-gray-500'}`}>
+                                                            <input type="checkbox" checked={(editFormData.custom_role_ids || []).includes(r.id)}
+                                                                onChange={() => { const ids = editFormData.custom_role_ids || []; setEditFormData(f => ({ ...f, custom_role_ids: ids.includes(r.id) ? ids.filter(x => x !== r.id) : [...ids, r.id] })); }} className="w-3 h-3 text-green-600 rounded" />
+                                                            {r.name}
+                                                        </label>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                            <div className="space-y-1 mt-3">
+                                                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Labels</label>
+                                                <div className="flex flex-wrap gap-1">
+                                                    {allLabels.map(l => (
+                                                        <label key={l.id} className={`flex items-center gap-1 px-2 py-1 rounded-lg border cursor-pointer text-xs transition ${(editFormData.label_ids || []).includes(l.id) ? 'bg-purple-50 border-purple-200 text-purple-800' : 'bg-white border-gray-100 text-gray-500'}`}>
+                                                            <input type="checkbox" checked={(editFormData.label_ids || []).includes(l.id)}
+                                                                onChange={() => { const ids = editFormData.label_ids || []; setEditFormData(f => ({ ...f, label_ids: ids.includes(l.id) ? ids.filter(x => x !== l.id) : [...ids, l.id] })); }} className="w-3 h-3 rounded" />
+                                                            {l.name}
+                                                        </label>
+                                                    ))}
+                                                </div>
                                             </div>
                                         </div>
-                                        <div className="space-y-1 mt-3">
-                                            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Labels</label>
-                                            <div className="flex flex-wrap gap-1">
-                                                {allLabels.map(l => (
-                                                    <label key={l.id} className={`flex items-center gap-1 px-2 py-1 rounded-lg border cursor-pointer text-xs transition ${(editFormData.label_ids||[]).includes(l.id) ? 'bg-purple-50 border-purple-200 text-purple-800' : 'bg-white border-gray-100 text-gray-500'}`}>
-                                                        <input type="checkbox" checked={(editFormData.label_ids||[]).includes(l.id)}
-                                                            onChange={() => { const ids = editFormData.label_ids||[]; setEditFormData(f=>({...f, label_ids: ids.includes(l.id)?ids.filter(x=>x!==l.id):[...ids,l.id]})); }} className="w-3 h-3 rounded" />
-                                                        {l.name}
-                                                    </label>
-                                                ))}
+
+                                        {/* Col 2: Personal Info */}
+                                        <div className="space-y-3">
+                                            <h3 className="text-[10px] font-bold text-green-700 uppercase tracking-widest border-b border-green-100 pb-2 mb-2">Data Diri</h3>
+                                            <FI label="Nama Lengkap" value={editFormData.profile?.name_full} onChange={v => setP('name_full', v)} />
+                                            <FI label="NIK (No. KTP)" value={editFormData.profile?.nik} onChange={v => setP('nik', v)} />
+                                            <FS label="Jenis Kelamin" value={editFormData.profile?.gender} onChange={v => setP('gender', v)} options={GENDER_CHOICES} />
+                                            <FI label="Tempat Lahir" value={editFormData.profile?.birth_place} onChange={v => setP('birth_place', v)} />
+                                            <FI label="Tanggal Lahir" value={editFormData.profile?.birth_date} onChange={v => setP('birth_date', v)} type="date" />
+                                            <FI label="Tgl Registrasi" value={editFormData.profile?.registration_date} onChange={v => setP('registration_date', v)} type="date" />
+                                            <FS label="Status Pernikahan" value={editFormData.profile?.marital_status} onChange={v => setP('marital_status', v)} options={MARITAL_CHOICES} />
+                                            <FS label="Segmen" value={editFormData.profile?.segment} onChange={v => setP('segment', v)} options={SEGMENT_CHOICES} />
+                                            <FI label="Alamat" value={editFormData.profile?.address} onChange={v => setP('address', v)} />
+                                            <FS label="Provinsi" value={editFormData.profile?.address_province} onChange={v => setP('address_province', v)} options={PROVINCE_CHOICES} />
+                                        </div>
+
+                                        {/* Col 3: Education & Work */}
+                                        <div className="space-y-3">
+                                            <h3 className="text-[10px] font-bold text-orange-700 uppercase tracking-widest border-b border-orange-100 pb-2 mb-2">Pendidikan & Pekerjaan</h3>
+                                            <FS label="Pendidikan Terakhir" value={editFormData.profile?.study_level} onChange={v => setP('study_level', v)} options={STUDY_LEVEL_CHOICES} />
+                                            <FI label="Kampus / Sekolah" value={editFormData.profile?.study_campus} onChange={v => setP('study_campus', v)} />
+                                            <FI label="Fakultas" value={editFormData.profile?.study_faculty} onChange={v => setP('study_faculty', v)} />
+                                            <FI label="Jurusan" value={editFormData.profile?.study_department} onChange={v => setP('study_department', v)} />
+                                            <FI label="Program Studi" value={editFormData.profile?.study_program} onChange={v => setP('study_program', v)} />
+                                            <div className="grid grid-cols-3 gap-2">
+                                                <FI label="Semester" value={editFormData.profile?.study_semester} onChange={v => setP('study_semester', v)} type="number" />
+                                                <FI label="Thn Masuk" value={editFormData.profile?.study_start_year} onChange={v => setP('study_start_year', v)} type="number" />
+                                                <FI label="Thn Lulus" value={editFormData.profile?.study_finish_year} onChange={v => setP('study_finish_year', v)} type="number" />
                                             </div>
+                                            <FS label="Pekerjaan" value={editFormData.profile?.job} onChange={v => setP('job', v)} options={JOB_CHOICES} />
+                                            <FS label="Bidang Kerja" value={editFormData.profile?.work_field} onChange={v => setP('work_field', v)} options={WORK_FIELD_CHOICES} />
+                                            <FI label="Instansi" value={editFormData.profile?.work_institution} onChange={v => setP('work_institution', v)} />
+                                            <FI label="Jabatan" value={editFormData.profile?.work_position} onChange={v => setP('work_position', v)} />
+                                            <FI label="Gaji (Rp)" value={editFormData.profile?.work_salary} onChange={v => setP('work_salary', v)} type="number" />
                                         </div>
                                     </div>
-
-                                    {/* Col 2: Personal Info */}
-                                    <div className="space-y-3">
-                                        <h3 className="text-[10px] font-bold text-green-700 uppercase tracking-widest border-b border-green-100 pb-2 mb-2">Data Diri</h3>
-                                        <FI label="Nama Lengkap" value={editFormData.profile?.name_full} onChange={v => setP('name_full',v)} />
-                                        <FI label="NIK (No. KTP)" value={editFormData.profile?.nik} onChange={v => setP('nik',v)} />
-                                        <FS label="Jenis Kelamin" value={editFormData.profile?.gender} onChange={v => setP('gender',v)} options={GENDER_CHOICES} />
-                                        <FI label="Tempat Lahir" value={editFormData.profile?.birth_place} onChange={v => setP('birth_place',v)} />
-                                        <FI label="Tanggal Lahir" value={editFormData.profile?.birth_date} onChange={v => setP('birth_date',v)} type="date" />
-                                        <FI label="Tgl Registrasi" value={editFormData.profile?.registration_date} onChange={v => setP('registration_date',v)} type="date" />
-                                        <FS label="Status Pernikahan" value={editFormData.profile?.marital_status} onChange={v => setP('marital_status',v)} options={MARITAL_CHOICES} />
-                                        <FS label="Segmen" value={editFormData.profile?.segment} onChange={v => setP('segment',v)} options={SEGMENT_CHOICES} />
-                                        <FI label="Alamat" value={editFormData.profile?.address} onChange={v => setP('address',v)} />
-                                        <FS label="Provinsi" value={editFormData.profile?.address_province} onChange={v => setP('address_province',v)} options={PROVINCE_CHOICES} />
-                                    </div>
-
-                                    {/* Col 3: Education & Work */}
-                                    <div className="space-y-3">
-                                        <h3 className="text-[10px] font-bold text-orange-700 uppercase tracking-widest border-b border-orange-100 pb-2 mb-2">Pendidikan & Pekerjaan</h3>
-                                        <FS label="Pendidikan Terakhir" value={editFormData.profile?.study_level} onChange={v => setP('study_level',v)} options={STUDY_LEVEL_CHOICES} />
-                                        <FI label="Kampus / Sekolah" value={editFormData.profile?.study_campus} onChange={v => setP('study_campus',v)} />
-                                        <FI label="Fakultas" value={editFormData.profile?.study_faculty} onChange={v => setP('study_faculty',v)} />
-                                        <FI label="Jurusan" value={editFormData.profile?.study_department} onChange={v => setP('study_department',v)} />
-                                        <FI label="Program Studi" value={editFormData.profile?.study_program} onChange={v => setP('study_program',v)} />
-                                        <div className="grid grid-cols-3 gap-2">
-                                            <FI label="Semester" value={editFormData.profile?.study_semester} onChange={v => setP('study_semester',v)} type="number" />
-                                            <FI label="Thn Masuk" value={editFormData.profile?.study_start_year} onChange={v => setP('study_start_year',v)} type="number" />
-                                            <FI label="Thn Lulus" value={editFormData.profile?.study_finish_year} onChange={v => setP('study_finish_year',v)} type="number" />
-                                        </div>
-                                        <FS label="Pekerjaan" value={editFormData.profile?.job} onChange={v => setP('job',v)} options={JOB_CHOICES} />
-                                        <FS label="Bidang Kerja" value={editFormData.profile?.work_field} onChange={v => setP('work_field',v)} options={WORK_FIELD_CHOICES} />
-                                        <FI label="Instansi" value={editFormData.profile?.work_institution} onChange={v => setP('work_institution',v)} />
-                                        <FI label="Jabatan" value={editFormData.profile?.work_position} onChange={v => setP('work_position',v)} />
-                                        <FI label="Gaji (Rp)" value={editFormData.profile?.work_salary} onChange={v => setP('work_salary',v)} type="number" />
-                                    </div>
-                                </div>
                                 )} {/* end if editingUser else */}
                             </div>
                             <div className="p-6 bg-gray-50 border-t flex justify-end gap-3 rounded-b-3xl">
@@ -722,7 +716,7 @@ const DashboardUserPage = () => {
                         <div className="p-6 space-y-4">
                             <p className="text-sm text-gray-600">Kirim pesan ke <b>{selectedUserIds.length}</b> user terpilih</p>
                             <div className="bg-blue-50 border border-blue-100 rounded-xl p-3 text-xs text-blue-700"><b>Placeholder:</b> {'{name}'}, {'{username}'}, {'{email}'}, {'{phone}'}</div>
-                            
+
                             <div>
                                 <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1 block ml-1">Pesan</label>
                                 <textarea rows="5" value={blastMessage} onChange={e => setBlastMessage(e.target.value)}
@@ -811,7 +805,7 @@ const DashboardUserPage = () => {
                         </div>
                         <div className="p-6 space-y-4">
                             <p className="text-sm text-gray-600">Mengedit <b>{selectedUserIds.length}</b> user sekaligus.</p>
-                            
+
                             <div>
                                 <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1 block ml-1">Pilih Kolom</label>
                                 <select value={batchField} onChange={e => { setBatchField(e.target.value); setBatchValue(''); }}
@@ -859,7 +853,7 @@ const DashboardUserPage = () => {
                                             {allRoles.map(r => (
                                                 <label key={r.id} className={`flex items-center gap-1 px-2 py-1 rounded-lg border cursor-pointer text-xs transition ${(batchValue || []).includes(r.id) ? 'bg-green-50 border-green-200 text-green-800' : 'bg-white border-gray-100 text-gray-500'}`}>
                                                     <input type="checkbox" checked={(batchValue || []).includes(r.id)}
-                                                        onChange={() => { const ids = Array.isArray(batchValue) ? batchValue : []; setBatchValue(ids.includes(r.id)?ids.filter(x=>x!==r.id):[...ids,r.id]); }} className="w-3 h-3 text-green-600 rounded" />
+                                                        onChange={() => { const ids = Array.isArray(batchValue) ? batchValue : []; setBatchValue(ids.includes(r.id) ? ids.filter(x => x !== r.id) : [...ids, r.id]); }} className="w-3 h-3 text-green-600 rounded" />
                                                     {r.name}
                                                 </label>
                                             ))}
@@ -869,7 +863,7 @@ const DashboardUserPage = () => {
                                             {allLabels.map(l => (
                                                 <label key={l.id} className={`flex items-center gap-1 px-2 py-1 rounded-lg border cursor-pointer text-xs transition ${(batchValue || []).includes(l.id) ? 'bg-purple-50 border-purple-200 text-purple-800' : 'bg-white border-gray-100 text-gray-500'}`}>
                                                     <input type="checkbox" checked={(batchValue || []).includes(l.id)}
-                                                        onChange={() => { const ids = Array.isArray(batchValue) ? batchValue : []; setBatchValue(ids.includes(l.id)?ids.filter(x=>x!==l.id):[...ids,l.id]); }} className="w-3 h-3 text-purple-600 rounded" />
+                                                        onChange={() => { const ids = Array.isArray(batchValue) ? batchValue : []; setBatchValue(ids.includes(l.id) ? ids.filter(x => x !== l.id) : [...ids, l.id]); }} className="w-3 h-3 text-purple-600 rounded" />
                                                     {l.name}
                                                 </label>
                                             ))}
@@ -879,12 +873,12 @@ const DashboardUserPage = () => {
                                             className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-blue-500">
                                             <option value="">-- Pilih --</option>
                                             {(batchField === 'gender' ? GENDER_CHOICES :
-                                              batchField === 'marital_status' ? MARITAL_CHOICES :
-                                              batchField === 'segment' ? SEGMENT_CHOICES :
-                                              batchField === 'address_province' ? PROVINCE_CHOICES :
-                                              batchField === 'study_level' ? STUDY_LEVEL_CHOICES :
-                                              batchField === 'job' ? JOB_CHOICES :
-                                              batchField === 'work_field' ? WORK_FIELD_CHOICES : []
+                                                batchField === 'marital_status' ? MARITAL_CHOICES :
+                                                    batchField === 'segment' ? SEGMENT_CHOICES :
+                                                        batchField === 'address_province' ? PROVINCE_CHOICES :
+                                                            batchField === 'study_level' ? STUDY_LEVEL_CHOICES :
+                                                                batchField === 'job' ? JOB_CHOICES :
+                                                                    batchField === 'work_field' ? WORK_FIELD_CHOICES : []
                                             ).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
                                         </select>
                                     )}
@@ -930,7 +924,7 @@ const FS = ({ label, value, onChange, options }) => (
         <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{label}</label>
         <select className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 transition" value={value || ''} onChange={e => onChange(e.target.value)}>
             <option value="">Pilih</option>
-            {options.map(([v,l]) => <option key={v} value={v}>{l}</option>)}
+            {options.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
         </select>
     </div>
 );
