@@ -720,9 +720,12 @@ const EventSubmissionPage = () => {
                                     <button type="button" onClick={addSpeaker} className="text-[10px] font-black text-green-700 bg-green-100 px-3 py-1.5 rounded-full hover:bg-green-200 uppercase flex items-center gap-1">Tambah Narasumber</button>
                                 </div>
                                 {speakers.map((spk, idx) => (
-                                    <div key={idx} className="flex gap-2 items-center bg-gray-50 p-2 rounded-2xl border border-gray-100 relative">
-                                        <input type="text" placeholder="Nama Narasumber" value={spk.name} onChange={e => updateSpeaker(idx, {name: e.target.value})} className="flex-1 px-4 py-2 border border-gray-100 rounded-xl text-sm" />
-                                        <input type="text" placeholder="Gelar/Role (Opsional)" value={spk.role} onChange={e => updateSpeaker(idx, {role: e.target.value})} className="flex-1 px-4 py-2 border border-gray-100 rounded-xl text-sm" />
+                                    <div key={idx} className="bg-gray-50 p-4 rounded-2xl border border-gray-100 relative space-y-3">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                            <input type="text" placeholder="Nama Narasumber" value={spk.name} onChange={e => updateSpeaker(idx, {name: e.target.value})} className="w-full px-4 py-2.5 bg-white border border-gray-100 rounded-xl text-sm focus:ring-2 focus:ring-green-500 transition" />
+                                            <input type="text" placeholder="Gelar/Role (Opsional)" value={spk.role} onChange={e => updateSpeaker(idx, {role: e.target.value})} className="w-full px-4 py-2.5 bg-white border border-gray-100 rounded-xl text-sm focus:ring-2 focus:ring-green-500 transition" />
+                                        </div>
+                                        <input type="url" placeholder="Link Profil/Website (Opsional - https://...)" value={spk.link || ''} onChange={e => updateSpeaker(idx, {link: e.target.value})} className="w-full px-4 py-2.5 bg-white border border-gray-100 rounded-xl text-sm focus:ring-2 focus:ring-green-500 transition" />
                                         <button type="button" onClick={() => removeSpeaker(idx)} className="absolute -right-3 -top-3 w-6 h-6 rounded-full bg-red-500 text-white flex items-center justify-center shadow-lg hover:scale-110 transition shrink-0"><span className="material-icons text-[10px]">close</span></button>
                                     </div>
                                 ))}

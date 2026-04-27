@@ -156,6 +156,7 @@ class EventSpeaker(models.Model):
     name = models.CharField(max_length=255)
     role = models.CharField(max_length=255, blank=True, help_text="Misal: Pemateri Ahli")
     photo = models.ImageField(upload_to='events/speakers/', blank=True, null=True)
+    link = models.URLField(blank=True, null=True, help_text="Link profil atau website narasumber")
     order = models.PositiveIntegerField(default=0)
 
     class Meta:

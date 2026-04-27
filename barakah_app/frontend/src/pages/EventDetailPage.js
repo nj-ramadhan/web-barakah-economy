@@ -592,15 +592,32 @@ const EventDetailPage = () => {
                                             Narasumber
                                         </h2>
                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                            {event.speakers.map(spk => (
-                                                <div key={spk.id} className="flex items-center gap-4 bg-gray-50 border border-gray-100 p-4 rounded-3xl group hover:border-blue-200 transition">
-                                                    <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-700 text-white rounded-full flex items-center justify-center font-bold text-2xl shadow-lg shrink-0 aspect-square overflow-hidden">{spk.name.charAt(0)}</div>
-                                                    <div>
-                                                        <p className="font-extrabold text-gray-900 text-base">{spk.name}</p>
-                                                        {spk.role && <p className="text-xs text-blue-600 font-bold uppercase tracking-wider mt-1">{spk.role}</p>}
+                                            {event.speakers.map(spk => {
+                                                const SpeakerContent = (
+                                                    <div className="flex items-center gap-4 bg-gray-50 border border-gray-100 p-4 rounded-3xl group hover:border-blue-200 transition h-full">
+                                                        <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-700 text-white rounded-full flex items-center justify-center font-bold text-2xl shadow-lg shrink-0 aspect-square overflow-hidden">{spk.name.charAt(0)}</div>
+                                                        <div className="min-w-0">
+                                                            <div className="flex items-center gap-1">
+                                                                <p className={`font-extrabold text-gray-900 text-base truncate ${spk.link ? 'group-hover:text-blue-700 transition-colors' : ''}`}>
+                                                                    {spk.name}
+                                                                </p>
+                                                                {spk.link && <span className="material-icons text-blue-400 text-sm opacity-0 group-hover:opacity-100 transition-opacity">open_in_new</span>}
+                                                            </div>
+                                                            {spk.role && <p className="text-xs text-blue-600 font-bold uppercase tracking-wider mt-1 truncate">{spk.role}</p>}
+                                                        </div>
                                                     </div>
-                                                </div>
-                                            ))}
+                                                );
+
+                                                return spk.link ? (
+                                                    <a key={spk.id} href={spk.link} target="_blank" rel="noopener noreferrer" className="block focus:outline-none">
+                                                        {SpeakerContent}
+                                                    </a>
+                                                ) : (
+                                                    <div key={spk.id}>
+                                                        {SpeakerContent}
+                                                    </div>
+                                                );
+                                            })}
                                         </div>
                                     </div>
                                 )}
@@ -716,6 +733,31 @@ const EventDetailPage = () => {
                                                 };
 
                                                 // Group participants by team
+                                                const hasTeams = (participants || []).some(p => p.team);
+                                                
+                                                if (!hasTeams) {
+                                                    return (
+                                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                                                            {(participants || []).map((p) => (
+                                                                <div key={p.id} className="bg-white px-5 py-4 rounded-2xl border border-gray-100 flex items-center gap-4 hover:shadow-lg transition-all duration-300 group relative overflow-hidden">
+                                                                    <div className="absolute left-0 top-0 bottom-0 w-1 bg-blue-500 opacity-20"></div>
+                                                                    <div className="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center font-black text-xs shadow-sm shrink-0">
+                                                                        {p.name?.charAt(0).toUpperCase()}
+                                                                    </div>
+                                                                    <div className="min-w-0">
+                                                                        <p className="font-extrabold text-gray-900 truncate text-sm sm:text-base">
+                                                                            {p.name || 'Peserta'}
+                                                                        </p>
+                                                                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mt-0.5">
+                                                                            Terdaftar
+                                                                        </p>
+                                                                    </div>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    );
+                                                }
+
                                                 const grouped = (participants || []).reduce((acc, p) => {
                                                     const teamName = p.team || 'Individu';
                                                     if (!acc[teamName]) acc[teamName] = [];

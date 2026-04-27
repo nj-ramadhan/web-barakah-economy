@@ -17,7 +17,7 @@ from .models import EventSpeaker, EventSession, EventAttendance
 class EventSpeakerSerializer(serializers.ModelSerializer):
     class Meta:
         model = EventSpeaker
-        fields = ['id', 'name', 'role', 'photo', 'order']
+        fields = ['id', 'name', 'role', 'photo', 'link', 'order']
 
 class EventSessionSerializer(serializers.ModelSerializer):
     attendance_count = serializers.SerializerMethodField()

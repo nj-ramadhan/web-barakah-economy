@@ -3,6 +3,7 @@ from rest_framework.response import Response
 from rest_framework.decorators import action
 from django.core.mail import send_mail, EmailMessage
 from django.conf import settings
+from django.db.models import Q
 from django.http import HttpResponse
 import csv
 from .models import Event, EventFormField, EventRegistration, EventRegistrationFile
@@ -1116,9 +1117,12 @@ class EventViewSet(viewsets.ModelViewSet):
         
         # Identify team-related fields
         team_field_ids = list(event.form_fields.filter(
-            models.Q(label__icontains='team') | 
-            models.Q(label__icontains='tim') | 
-            models.Q(label__icontains='kelompok')
+            Q(label__icontains='team') | 
+            Q(label__icontains='tim') | 
+            Q(label__icontains='kelompok') |
+            Q(label__icontains='regu') |
+            Q(label__icontains='group') |
+            Q(label__icontains='instansi')
         ).values_list('id', flat=True))
         
         # Convert IDs to strings since JSON keys are strings
