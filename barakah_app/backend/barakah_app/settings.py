@@ -44,6 +44,7 @@ MIDTRANS_SANDBOX = env('MIDTRANS_SANDBOX', cast=bool, default=True)
 EXPEDITION_API_KEY = env('EXPEDITION_API_KEY', default='q4joEsDR64zm4Bz4yl7C5lhFVU7ZytkUC4nJcDPRrNo8AtP5mc')
 QRISLY_API_KEY = env('QRISLY_API_KEY', default='')
 
+DEBUG = env.bool('DEBUG', default=False)
 FRONTEND_URL = env('FRONTEND_URL', default='https://barakah-economy.com' if not DEBUG else 'http://localhost:3000')
 
 
@@ -61,7 +62,6 @@ FRONTEND_URL = env('FRONTEND_URL', default='https://barakah-economy.com' if not 
 SECRET_KEY = 'django-insecure-4ch6(*qpo)!6)c4^^-+cth=)9*kfr9n)@wxez$*%a)*^^@$h+_'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
 if DEBUG:
     ALLOWED_HOSTS = ['*']
 else:
