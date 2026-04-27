@@ -333,6 +333,15 @@ class UserViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get'])
     def export_csv(self, request):
+        import csv
+        from django.http import HttpResponse
+        from donations.models import Donation
+        from events.models import EventRegistration
+        from orders.models import OrderItem
+        from courses.models import CourseEnrollment
+        from digital_products.models import DigitalOrder
+        from profiles.models import Profile
+
         response = HttpResponse(content_type='text/csv')
         response['Content-Disposition'] = 'attachment; filename="users_full_data.csv"'
 
@@ -348,6 +357,8 @@ class UserViewSet(viewsets.ModelViewSet):
         ]
         writer.writerow(headers)
 
+        province_map = dict(Profile.PROVINCE_CHOICES)
+
         for user in self.get_queryset():
             profile = getattr(user, 'profile', None)
             row = [
@@ -360,12 +371,7 @@ class UserViewSet(viewsets.ModelViewSet):
                 user.date_joined.strftime('%Y-%m-%d %H:%M:%S') if user.date_joined else '',
             ]
             if profile:
-                # Robustly get province display name
-                province_display = profile.address_province
-                if profile.address_province:
-                    from profiles.models import Profile
-                    province_map = dict(Profile.PROVINCE_CHOICES)
-                    province_display = province_map.get(profile.address_province, profile.address_province)
+                province_display = province_map.get(profile.address_province, profile.address_province) if profile.address_province else ''
 
                 row.extend([
                     profile.name_full or '',
@@ -389,7 +395,7 @@ class UserViewSet(viewsets.ModelViewSet):
                     profile.work_institution or '',
                     profile.work_position or '',
                     profile.work_salary or '',
-                    province_display or '',
+                    province_display,
                 ])
             else:
                 row.extend([''] * 22)
@@ -399,14 +405,8 @@ class UserViewSet(viewsets.ModelViewSet):
             row.append(', '.join([l.name for l in user.labels.all()]))
 
             # Activities (Real-time)
-            from donations.models import Donation
-            from events.models import EventRegistration
-            from orders.models import OrderItem
-            from courses.models import CourseEnrollment
-            from digital_products.models import DigitalOrder
-
             charity_acts = Donation.objects.filter(donor=user, payment_status='verified').values('campaign__title', 'amount')
-            row.append('; '.join([f"{d['campaign__title']} (Rp {int(d['amount']):,})" for d in charity_acts]))
+            row.append('; '.join([f"{d['campaign__title']} (Rp {int(d['amount'] or 0):,})" for d in charity_acts]))
 
             event_acts = EventRegistration.objects.filter(user=user, status='approved').values_list('event__title', flat=True)
             row.append('; '.join(event_acts))
@@ -432,7 +432,6 @@ class UserViewSet(viewsets.ModelViewSet):
     def blast_whatsapp(self, request):
         """Send WhatsApp message blast to selected users."""
         from .whatsapp_service import blast_messages
-
         user_ids = request.data.get('user_ids', [])
         message_template = request.data.get('message', '')
         image_base64 = request.data.get('image_base64')

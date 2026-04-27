@@ -391,18 +391,17 @@ const DashboardUserPage = () => {
                                 <tr>
                                     <th className="px-3 py-4"><input type="checkbox" checked={selectedUserIds.length === users.length && users.length > 0} onChange={toggleSelectAll} className="w-4 h-4 text-green-600 rounded" /></th>
                                     <SH label="User" field="username" {...{sortField,sortDir,handleSort,getSortIcon}} />
-                                    <th className="px-3 py-4 text-gray-600 font-bold uppercase tracking-wider text-[11px]">Kontak</th>
-                                    <SH label="Role" field="role" {...{sortField,sortDir,handleSort,getSortIcon}} />
-                                    <th className="px-3 py-4 text-gray-600 font-bold uppercase tracking-wider text-[11px]">Custom Role</th>
-                                    <th className="px-3 py-4 text-gray-600 font-bold uppercase tracking-wider text-[11px]">Label</th>
+                                    <th className="px-3 py-4 text-gray-600 font-bold uppercase tracking-wider text-[11px] min-w-[120px]">Email/Phone</th>
+                                    <th className="px-3 py-4 text-gray-600 font-bold uppercase tracking-wider text-[11px] min-w-[80px]">Role</th>
+                                    <th className="px-3 py-4 text-gray-600 font-bold uppercase tracking-wider text-[11px] min-w-[100px]">Label</th>
                                     <SH label="Nama" field="profile__name_full" {...{sortField,sortDir,handleSort,getSortIcon}} />
                                     <SH label="Join" field="date_joined" {...{sortField,sortDir,handleSort,getSortIcon}} />
-                                    <th className="px-3 py-4 text-gray-600 font-bold uppercase tracking-wider text-[11px]">Charity</th>
-                                    <th className="px-3 py-4 text-gray-600 font-bold uppercase tracking-wider text-[11px]">Event</th>
-                                    <th className="px-3 py-4 text-gray-600 font-bold uppercase tracking-wider text-[11px]">Sinergy</th>
-                                    <th className="px-3 py-4 text-gray-600 font-bold uppercase tracking-wider text-[11px]">E-Course</th>
-                                    <th className="px-3 py-4 text-gray-600 font-bold uppercase tracking-wider text-[11px]">Digital</th>
-                                    <th className="px-3 py-4 text-gray-600 font-bold uppercase tracking-wider text-[11px]">V</th>
+                                    <th className="px-3 py-4 text-gray-600 font-bold uppercase tracking-wider text-[11px] min-w-[150px]">Charity</th>
+                                    <th className="px-3 py-4 text-gray-600 font-bold uppercase tracking-wider text-[11px] min-w-[150px]">Event</th>
+                                    <th className="px-3 py-4 text-gray-600 font-bold uppercase tracking-wider text-[11px] min-w-[150px]">Sinergy</th>
+                                    <th className="px-3 py-4 text-gray-600 font-bold uppercase tracking-wider text-[11px] min-w-[150px]">E-Course</th>
+                                    <th className="px-3 py-4 text-gray-600 font-bold uppercase tracking-wider text-[11px] min-w-[150px]">Digital</th>
+                                    <th className="px-3 py-4 text-gray-600 font-bold uppercase tracking-wider text-[11px] text-center">V</th>
                                     <th className="px-3 py-4 text-gray-600 font-bold uppercase tracking-wider text-[11px] text-center">Aksi</th>
                                 </tr>
                             </thead>
@@ -495,7 +494,7 @@ const DashboardUserPage = () => {
             {/* ============ DETAIL MODAL ============ */}
             {showDetailModal && selectedUser && (
                 <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4 overflow-y-auto">
-                    <div className="bg-white w-full max-w-2xl rounded-3xl shadow-2xl my-auto">
+                    <div className="bg-white w-full max-w-4xl rounded-3xl shadow-2xl my-auto">
                         <div className="relative h-24 bg-gradient-to-r from-green-600 to-green-800 rounded-t-3xl">
                             <button onClick={() => setShowDetailModal(false)} className="absolute top-4 right-4 w-10 h-10 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center text-white transition backdrop-blur-md">
                                 <span className="material-icons">close</span>
@@ -522,25 +521,68 @@ const DashboardUserPage = () => {
                                     <p className="mt-1">{selectedUser.is_verified_member ? <span className="text-green-600 text-[10px] font-bold flex items-center gap-1 justify-end"><span className="material-icons text-sm">verified</span>Verified</span> : <span className="text-red-400 text-[10px] font-bold">Belum Verified</span>}</p>
                                 </div>
                             </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                 <div className="space-y-3">
-                                    <h3 className="text-xs font-bold text-green-700 uppercase tracking-widest border-b border-green-100 pb-2">Info Dasar</h3>
+                                    <h3 className="text-xs font-bold text-green-700 uppercase tracking-widest border-b border-green-100 pb-2 flex items-center gap-2">
+                                        <span className="material-icons text-sm">person_outline</span> Info Dasar
+                                    </h3>
                                     <DI icon="alternate_email" label="Email" value={selectedUser.email} />
                                     <DI icon="phone" label="No. Telepon" value={selectedUser.phone} />
                                     <DI icon="wc" label="Jenis Kelamin" value={selectedUser.profile?.gender === 'l' ? 'Laki-laki' : selectedUser.profile?.gender === 'p' ? 'Perempuan' : '-'} />
                                     <DI icon="cake" label="TTL" value={`${selectedUser.profile?.birth_place || '-'}, ${selectedUser.profile?.birth_date || '-'}`} />
                                     <DI icon="favorite" label="Status" value={selectedUser.profile?.marital_status || '-'} />
                                     <DI icon="category" label="Segmen" value={selectedUser.profile?.segment || '-'} />
+                                    <DI icon="badge" label="Jabatan BAE" value={selectedUser.position || '-'} />
                                 </div>
                                 <div className="space-y-3">
-                                    <h3 className="text-xs font-bold text-green-700 uppercase tracking-widest border-b border-green-100 pb-2">Alamat & Pekerjaan</h3>
-                                    <DI icon="location_on" label="Alamat" value={selectedUser.profile?.address || '-'} />
-                                    <DI icon="map" label="Provinsi" value={selectedUser.profile?.address_province || '-'} />
-                                    <DI icon="school" label="Pendidikan" value={selectedUser.profile?.study_level || '-'} />
+                                    <h3 className="text-xs font-bold text-blue-700 uppercase tracking-widest border-b border-blue-100 pb-2 flex items-center gap-2">
+                                        <span className="material-icons text-sm">school</span> Pendidikan
+                                    </h3>
+                                    <DI icon="history_edu" label="Level" value={selectedUser.profile?.study_level || '-'} />
                                     <DI icon="account_balance" label="Kampus" value={selectedUser.profile?.study_campus || '-'} />
+                                    <DI icon="domain" label="Fakultas" value={selectedUser.profile?.study_faculty || '-'} />
+                                    <DI icon="class" label="Prodi" value={selectedUser.profile?.study_program || '-'} />
+                                    <DI icon="event_available" label="Tahun" value={`${selectedUser.profile?.study_start_year || '-'} s/d ${selectedUser.profile?.study_finish_year || '-'}`} />
+                                    <DI icon="tag" label="Semester" value={selectedUser.profile?.study_semester || '-'} />
+                                </div>
+                                <div className="space-y-3">
+                                    <h3 className="text-xs font-bold text-orange-700 uppercase tracking-widest border-b border-orange-100 pb-2 flex items-center gap-2">
+                                        <span className="material-icons text-sm">work_outline</span> Pekerjaan & Alamat
+                                    </h3>
                                     <DI icon="work" label="Pekerjaan" value={selectedUser.profile?.job || '-'} />
                                     <DI icon="business" label="Instansi" value={selectedUser.profile?.work_institution || '-'} />
-                                    <DI icon="badge" label="Jabatan" value={selectedUser.profile?.work_position || '-'} />
+                                    <DI icon="payments" label="Gaji" value={selectedUser.profile?.work_salary || '-'} />
+                                    <DI icon="location_on" label="Alamat" value={selectedUser.profile?.address || '-'} />
+                                    <DI icon="map" label="Provinsi" value={selectedUser.profile?.address_province || '-'} />
+                                </div>
+                            </div>
+
+                            {/* Activities in Detail */}
+                            <div className="mt-8 pt-6 border-t border-gray-100">
+                                <h3 className="text-xs font-bold text-gray-800 uppercase tracking-widest mb-4 flex items-center gap-2">
+                                    <span className="material-icons text-sm">history</span> Riwayat Aktivitas
+                                </h3>
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100">
+                                        <p className="text-[10px] font-bold text-green-700 uppercase mb-2">Charity</p>
+                                        <ActivityList items={selectedUser.activities?.charity} />
+                                    </div>
+                                    <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100">
+                                        <p className="text-[10px] font-bold text-blue-700 uppercase mb-2">Events</p>
+                                        <ActivityList items={selectedUser.activities?.events} />
+                                    </div>
+                                    <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100">
+                                        <p className="text-[10px] font-bold text-orange-700 uppercase mb-2">Sinergy</p>
+                                        <ActivityList items={selectedUser.activities?.sinergy} />
+                                    </div>
+                                    <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100">
+                                        <p className="text-[10px] font-bold text-indigo-700 uppercase mb-2">E-Course</p>
+                                        <ActivityList items={selectedUser.activities?.courses} />
+                                    </div>
+                                    <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100">
+                                        <p className="text-[10px] font-bold text-purple-700 uppercase mb-2">Digital Product</p>
+                                        <ActivityList items={selectedUser.activities?.digital_products} />
+                                    </div>
                                 </div>
                             </div>
                             {selectedUser.profile?.ktp_image && (
