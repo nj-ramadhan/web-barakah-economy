@@ -51,7 +51,8 @@ class SellerShareView(APIView):
         if settings.DEBUG:
             frontend_url = 'http://localhost:3000'
         else:
-            frontend_url = 'https://barakah-economy.com'
+            # frontend_url = 'https://barakah-economy.com'
+            frontend_url = 'https://bae.barakah-economy.com'
 
         # Build absolute thumbnail URL (Shop Thumbnail / Header)
         thumbnail_url = None
@@ -101,7 +102,8 @@ class DigitalProductShareView(APIView):
         if settings.DEBUG:
             frontend_url = 'http://localhost:3000'
         else:
-            frontend_url = 'https://barakah-economy.com'
+            # frontend_url = 'https://barakah-economy.com'
+            frontend_url = 'https://bae.barakah-economy.com'
 
         # Build absolute thumbnail URL
         thumbnail_url = None

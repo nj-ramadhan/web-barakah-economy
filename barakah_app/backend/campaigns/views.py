@@ -152,7 +152,8 @@ class CampaignShareView(APIView):
         if settings.DEBUG:
             frontend_url = 'http://localhost:3000'
         else:
-            frontend_url = 'https://barakah-economy.com'
+            # frontend_url = 'https://barakah-economy.com'
+            frontend_url = 'https://bae.barakah-economy.com'
         
         thumbnail_url = None
         if campaign.thumbnail:

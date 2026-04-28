@@ -45,7 +45,8 @@ EXPEDITION_API_KEY = env('EXPEDITION_API_KEY', default='q4joEsDR64zm4Bz4yl7C5lhF
 QRISLY_API_KEY = env('QRISLY_API_KEY', default='')
 
 DEBUG = env.bool('DEBUG', default=False)
-FRONTEND_URL = env('FRONTEND_URL', default='https://barakah-economy.com' if not DEBUG else 'http://localhost:3000')
+# FRONTEND_URL = env('FRONTEND_URL', default='https://barakah-economy.com' if not DEBUG else 'http://localhost:3000')
+FRONTEND_URL = env('FRONTEND_URL', default='https://bae.barakah-economy.com' if not DEBUG else 'http://localhost:3000')
 
 
 
@@ -67,17 +68,23 @@ if DEBUG:
 else:
     ALLOWED_HOSTS = [
         '82.29.162.244',
-        'barakah-economy.com',
-        'www.barakah-economy.com'
+        # 'barakah-economy.com',
+        # 'www.barakah-economy.com'
+        'bae.barakah-economy.com',
+        'www.bae.barakah-economy.com'
         ]
     
     CSRF_TRUSTED_ORIGINS = [
         'http://localhost:3000',
         'https://localhost:3000',
-        'http://barakah-economy.com', 
-        'https://barakah-economy.com', 
-        'http://www.barakah-economy.com',
-        'https://www.barakah-economy.com'
+        # 'http://barakah-economy.com', 
+        # 'https://barakah-economy.com', 
+        # 'http://www.barakah-economy.com',
+        # 'https://www.barakah-economy.com'
+        'http://bae.barakah-economy.com', 
+        'https://bae.barakah-economy.com', 
+        'http://www.bae.barakah-economy.com',
+        'https://www.bae.barakah-economy.com'
         ]
 
 # Application definition
@@ -260,10 +267,14 @@ else:
     CORS_ALLOWED_ORIGINS = [
         'http://localhost:3000',
         'https://localhost:3000',
-        'http://barakah-economy.com', 
-        'https://barakah-economy.com', 
-        'http://www.barakah-economy.com',
-        'https://www.barakah-economy.com'
+        # 'http://barakah-economy.com', 
+        # 'https://barakah-economy.com', 
+        # 'http://www.barakah-economy.com',
+        # 'https://www.barakah-economy.com'
+        'http://bae.barakah-economy.com', 
+        'https://bae.barakah-economy.com', 
+        'http://www.bae.barakah-economy.com',
+        'https://www.bae.barakah-economy.com'
     ]
 
 CORS_ALLOW_METHODS = [
