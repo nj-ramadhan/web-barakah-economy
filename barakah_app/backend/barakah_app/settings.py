@@ -67,7 +67,8 @@ if DEBUG:
     ALLOWED_HOSTS = ['*']
 else:
     ALLOWED_HOSTS = [
-        '82.29.162.244',
+        # '82.29.162.244',
+        '217.216.110.149',
         # 'barakah-economy.com',
         # 'www.barakah-economy.com'
         'bae.barakah-economy.com',
