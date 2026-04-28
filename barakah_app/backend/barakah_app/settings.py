@@ -195,14 +195,24 @@ else:
     #         'PORT': '5432',
     #     }
     # }
+    # DATABASES = {
+    #     'default': {
+    #         'ENGINE': 'django.db.backends.postgresql',
+    #             'NAME': 'bae_db',
+    #         'USER': 'bae_user',
+    #             'PASSWORD': 'BarakahEconomy2025!',
+    #         'HOST': 'localhost',
+    #         'PORT': '5432',
+    #     }
+    # }
     DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-                'NAME': 'bae_db',
-            'USER': 'bae_user',
-                'PASSWORD': 'BarakahEconomy2025!',
-            'HOST': 'localhost',
-            'PORT': '5432',
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": "bae_db",
+            "USER": "postgres",
+            "PASSWORD": "BarakahEconomy2025!",
+            "HOST": "bae_postgres-bae",
+            "PORT": "5432",
         }
     }
 
