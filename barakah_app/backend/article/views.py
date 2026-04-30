@@ -132,7 +132,7 @@ class ArticleShareView(APIView):
             frontend_url = 'http://localhost:3000'
         else:
             # frontend_url = 'https://barakah-economy.com'
-            frontend_url = 'https://bae.barakah-economy.com'
+            frontend_url = 'https://barakah-economy.com'
 
         return render(request, 'article/article_share.html', {
             'article': article,

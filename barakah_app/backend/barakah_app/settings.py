@@ -46,7 +46,7 @@ QRISLY_API_KEY = env('QRISLY_API_KEY', default='')
 
 DEBUG = env.bool('DEBUG', default=False)
 # FRONTEND_URL = env('FRONTEND_URL', default='https://barakah-economy.com' if not DEBUG else 'http://localhost:3000')
-FRONTEND_URL = env('FRONTEND_URL', default='https://bae.barakah-economy.com' if not DEBUG else 'http://localhost:3000')
+FRONTEND_URL = env('FRONTEND_URL', default='https://barakah-economy.com' if not DEBUG else 'http://localhost:3000')
 
 
 
@@ -71,8 +71,8 @@ else:
         '217.216.110.149',
         # 'barakah-economy.com',
         # 'www.barakah-economy.com'
-        'bae.barakah-economy.com',
-        'www.bae.barakah-economy.com'
+        'barakah-economy.com',
+        'www.barakah-economy.com'
         ]
     
     CSRF_TRUSTED_ORIGINS = [
@@ -82,10 +82,10 @@ else:
         # 'https://barakah-economy.com', 
         # 'http://www.barakah-economy.com',
         # 'https://www.barakah-economy.com'
-        'http://bae.barakah-economy.com', 
-        'https://bae.barakah-economy.com', 
-        'http://www.bae.barakah-economy.com',
-        'https://www.bae.barakah-economy.com'
+        'http://barakah-economy.com', 
+        'https://barakah-economy.com', 
+        'http://www.barakah-economy.com',
+        'https://www.barakah-economy.com'
         ]
 
 # Application definition
@@ -272,10 +272,10 @@ else:
         # 'https://barakah-economy.com', 
         # 'http://www.barakah-economy.com',
         # 'https://www.barakah-economy.com'
-        'http://bae.barakah-economy.com', 
-        'https://bae.barakah-economy.com', 
-        'http://www.bae.barakah-economy.com',
-        'https://www.bae.barakah-economy.com'
+        'http://barakah-economy.com', 
+        'https://barakah-economy.com', 
+        'http://www.barakah-economy.com',
+        'https://www.barakah-economy.com'
     ]
 
 CORS_ALLOW_METHODS = [

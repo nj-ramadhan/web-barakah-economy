@@ -324,11 +324,11 @@ const DashboardShopSettingsPage = () => {
                                         decoration={profile.shop_decoration}
                                         layout={profile.shop_layout || 'default'}
                                         products={[
-                                            { title: 'Produk Digital 1', price: 50000, thumbnail: 'https://bae.barakah-economy.com/media/products/course_social_media.jpg', category: 'Marketing' },
-                                            { title: 'Produk Digital 2', price: 75000, thumbnail: 'https://bae.barakah-economy.com/media/products/design_bundle.jpg', category: 'Design' }
+                                            { title: 'Produk Digital 1', price: 50000, thumbnail: 'https://barakah-economy.com/media/products/course_social_media.jpg', category: 'Marketing' },
+                                            { title: 'Produk Digital 2', price: 75000, thumbnail: 'https://barakah-economy.com/media/products/design_bundle.jpg', category: 'Design' }
                                         ]}
                                         courses={[
-                                            { title: 'E-Course Premium', price: 150000, thumbnail: 'https://bae.barakah-economy.com/media/courses/digital_marketing.jpg', student_count: 120 }
+                                            { title: 'E-Course Premium', price: 150000, thumbnail: 'https://barakah-economy.com/media/courses/digital_marketing.jpg', student_count: 120 }
                                         ]}
                                     />
                                 ) : (

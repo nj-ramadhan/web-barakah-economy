@@ -610,7 +610,7 @@ class CourseShareView(APIView):
             frontend_url = 'http://localhost:3000'
         else:
             # frontend_url = 'https://barakah-economy.com'    
-            frontend_url = 'https://bae.barakah-economy.com'
+            frontend_url = 'https://barakah-economy.com'
 
         # Build absolute thumbnail URL
         thumbnail_url = None

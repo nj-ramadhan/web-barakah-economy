@@ -93,24 +93,16 @@ const DesktopLandingPage = () => {
 
                 const [campRes, prodRes, courseRes, articleRes, digiRes, sellerRes, testRes, actRes, partnerRes, eventRes] = results;
 
-                const getResults = (res) => {
-                    if (!res || !res.data) return [];
-                    const data = res.data;
-                    if (Array.isArray(data)) return data;
-                    if (data.results && Array.isArray(data.results)) return data.results;
-                    return [];
-                };
-
-                setCampaigns(getResults(campRes).slice(0, 8));
-                setProducts(getResults(prodRes).slice(0, 8));
-                setCourses(getResults(courseRes).slice(0, 8));
-                setArticles(getResults(articleRes).slice(0, 8));
-                setDigitalProducts(getResults(digiRes).slice(0, 8));
-                setPopularSellers(getResults(sellerRes));
-                setTestimonials(getResults(testRes).filter(t => t.is_approved));
-                setActivities(getResults(actRes).slice(0, 3));
-                setPartners(getResults(partnerRes));
-                setEvents(getResults(eventRes));
+                setCampaigns(campRes.data.results ? campRes.data.results.slice(0, 8) : campRes.data.slice(0, 8));
+                setProducts(prodRes.data.results ? prodRes.data.results.slice(0, 8) : prodRes.data.slice(0, 8));
+                setCourses(courseRes.data.results ? courseRes.data.results.slice(0, 8) : courseRes.data.slice(0, 8));
+                setArticles(articleRes.data.results ? articleRes.data.results.slice(0, 8) : articleRes.data.slice(0, 8));
+                setDigitalProducts(Array.isArray(digiRes.data) ? digiRes.data.slice(0, 8) : []);
+                setPopularSellers(Array.isArray(sellerRes.data) ? sellerRes.data : []);
+                setTestimonials(Array.isArray(testRes.data) ? testRes.data.filter(t => t.is_approved) : []);
+                setActivities(Array.isArray(actRes.data) ? actRes.data.slice(0, 3) : []);
+                setPartners(Array.isArray(partnerRes.data) ? partnerRes.data : []);
+                setEvents(Array.isArray(eventRes.data) ? eventRes.data : []);
                 
                 // Fetch About Us explicitly
                 const aboutDataRes = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/site-content/about-us/`).catch(() => ({ data: [] }));
