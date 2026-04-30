@@ -41,6 +41,8 @@ const getStatusStyles = (status) => {
     case 'pending':
     case 'menunggu':
       return 'bg-amber-50 text-amber-700 border-amber-100';
+    case 'cod':
+      return 'bg-violet-50 text-violet-700 border-violet-100';
     case 'failed':
     case 'gagal':
     case 'cancelled':
@@ -137,9 +139,15 @@ const EcommerceOrderHistoryPage = () => {
                                             {order.status || 'Pending'}
                                         </div>
                                     </div>
-                                    <div className="flex items-center gap-2 text-gray-500">
-                                        <span className="material-icons text-sm">calendar_today</span>
-                                        <span className="text-xs font-bold">{formatDate(order.created_at)}</span>
+                                    <div className="flex items-center gap-4 text-gray-500">
+                                        <div className="flex items-center gap-1.5">
+                                            <span className="material-icons text-sm">calendar_today</span>
+                                            <span className="text-[10px] font-bold">{formatDate(order.created_at)}</span>
+                                        </div>
+                                        <div className="flex items-center gap-1.5">
+                                            <span className="material-icons text-sm text-emerald-600">storefront</span>
+                                            <span className="text-[10px] font-bold text-gray-700 uppercase tracking-tight">{order.seller_name || 'BAE Store'}</span>
+                                        </div>
                                     </div>
                                 </div>
 
@@ -171,7 +179,11 @@ const EcommerceOrderHistoryPage = () => {
                                         </div>
                                     )}
 
-                                    <div className="pt-4 border-t border-gray-50 mt-4">
+                                    <div className="pt-4 border-t border-gray-50 mt-4 space-y-3">
+                                        <div className="flex justify-between items-center text-[10px] px-2">
+                                            <span className="font-bold text-gray-400 uppercase tracking-widest">Metode Bayar</span>
+                                            <span className="font-bold text-gray-700 uppercase tracking-widest">{order.payment_method || 'Manual'}</span>
+                                        </div>
                                         <div className="flex justify-between items-center bg-emerald-50/50 p-4 rounded-2xl border border-emerald-100/50">
                                             <span className="text-xs font-black text-emerald-800 uppercase tracking-widest">Total Bayar</span>
                                             <span className="text-base font-black text-emerald-600">
@@ -204,17 +216,34 @@ const EcommerceOrderHistoryPage = () => {
                                         </div>
                                     )}
 
-                                    {order.payment_proof && (
-                                        <a 
-                                            href={order.payment_proof.startsWith('http') ? order.payment_proof : `${process.env.REACT_APP_API_BASE_URL}${order.payment_proof}`}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="flex items-center justify-center gap-2 w-full py-3 bg-gray-50 hover:bg-gray-100 text-gray-600 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all border border-gray-100"
-                                        >
-                                            <span className="material-icons text-base">receipt_long</span>
-                                            Lihat Bukti Transfer
-                                        </a>
-                                    )}
+                                    <div className="flex gap-2">
+                                        {order.seller_phone && (
+                                            <button 
+                                                onClick={() => {
+                                                    const cleanPhone = order.seller_phone.replace(/\D/g, '');
+                                                    const finalPhone = cleanPhone.startsWith('0') ? '62' + cleanPhone.slice(1) : cleanPhone;
+                                                    const msg = encodeURIComponent(`Halo ${order.seller_name}, saya ingin tanya tentang pesanan saya #${order.order_number}`);
+                                                    window.open(`https://wa.me/${finalPhone}?text=${msg}`, '_blank');
+                                                }}
+                                                className="flex-1 flex items-center justify-center gap-2 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all shadow-lg shadow-emerald-100"
+                                            >
+                                                <span className="material-icons text-base">chat</span>
+                                                Hubungi Penjual
+                                            </button>
+                                        )}
+                                        
+                                        {order.payment_proof && (
+                                            <a 
+                                                href={order.payment_proof.startsWith('http') ? order.payment_proof : `${process.env.REACT_APP_API_BASE_URL}${order.payment_proof}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="flex-1 flex items-center justify-center gap-2 py-3 bg-gray-50 hover:bg-gray-100 text-gray-600 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all border border-gray-100"
+                                            >
+                                                <span className="material-icons text-base">receipt_long</span>
+                                                Bukti Transfer
+                                            </a>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                         ))}

@@ -40,7 +40,8 @@ def send_order_invoice_to_buyer(order, alternate_phone=None):
         f"Ongkir: {format_idr(order.shipping_cost)} ({order.shipping_courier})\n"
         f"Voucher: -{format_idr(order.voucher_nominal)}\n"
         f"*Total Bayar: {format_idr(order.grand_total)}*\n\n"
-        f"Status: *{order.status}*\n\n"
+        f"Status: *{order.status}*\n"
+        f"{'Metode: *COD (Bayar di Tempat)*' if order.payment_method == 'COD' else ''}\n\n"
     )
 
     if order.buyer_note:
@@ -53,6 +54,9 @@ def send_order_invoice_to_buyer(order, alternate_phone=None):
         for instr in instr_list:
             message += f"- {instr}\n"
         message += "\n"
+
+    if order.seller and order.seller.phone:
+        message += f"*KONTAK PENJUAL:* wa.me/{clean_phone(order.seller.phone)}\n\n"
 
     message += f"Terima kasih telah berbelanja! Pesanan Anda akan segera diproses oleh penjual."
     
@@ -97,16 +101,21 @@ def send_order_notification_to_seller(order):
         f"No. Pesanan: {order.order_number}\n\n"
         f"*Data Pemesan:*\n"
         f"Nama: {buyer_name}\n"
-        f"No. HP: {order.user.phone}\n\n"
+        f"No. HP: {order.user.phone}\n"
+        f"Chat Pembeli: wa.me/{clean_phone(order.user.phone)}\n\n"
         f"*Alamat Kirim:*\n"
         f"{address}\n\n"
         f"*Daftar Produk:*\n"
         f"{items_str}\n"
-        f"Total Transaksi: {format_idr(order.grand_total)}\n\n"
+        f"Total Transaksi: {format_idr(order.grand_total)}\n"
+        f"Metode Bayar: *{order.payment_method}*\n\n"
     )
 
     if order.buyer_note:
         message += f"*Catatan Pembeli:* {order.buyer_note}\n\n"
+
+    if order.payment_method == 'COD':
+        message += "⚠️ *PESANAN COD:* Harap hubungi pembeli untuk konfirmasi pengiriman dan pembayaran di tempat.\n\n"
 
     message += f"Silakan segera diproses dan didaftarkan ke ekspedisi sesuai kurir pilihan ({order.shipping_courier})."
     

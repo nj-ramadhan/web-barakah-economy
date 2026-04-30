@@ -23,13 +23,14 @@ class BuyerProfileSerializer(serializers.ModelSerializer):
 class OrderSerializer(serializers.ModelSerializer):
     items = OrderItemSerializer(many=True, read_only=True)
     seller_name = serializers.CharField(source='seller.username', read_only=True)
+    seller_phone = serializers.CharField(source='seller.phone', read_only=True)
     buyer_details = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Order
-        fields = ['id', 'order_number', 'user', 'buyer_details', 'seller', 'seller_name', 'created_at', 'updated_at', 
+        fields = ['id', 'order_number', 'user', 'buyer_details', 'seller', 'seller_name', 'seller_phone', 'created_at', 'updated_at', 
                   'total_price', 'shipping_cost', 'shipping_courier', 'shipping_service', 
-                  'voucher_code', 'voucher_nominal', 'grand_total', 'status', 'resi_number', 'payment_proof', 'items', 'qris_payload', 'buyer_note']
+                  'voucher_code', 'voucher_nominal', 'grand_total', 'status', 'resi_number', 'payment_proof', 'items', 'qris_payload', 'buyer_note', 'payment_method']
 
 
 

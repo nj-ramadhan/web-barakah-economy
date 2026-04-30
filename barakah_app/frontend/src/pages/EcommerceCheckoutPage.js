@@ -31,6 +31,7 @@ const EcommerceCheckoutPage = () => {
   const [shippingOptions, setShippingOptions] = useState([]);
   const [selectedShipping, setSelectedShipping] = useState(0);
   const [isFetchingShipping, setIsFetchingShipping] = useState(false);
+  const [isCodAvailable, setIsCodAvailable] = useState(false);
 
   // Voucher States
   const [voucherCode, setVoucherCode] = useState('');
@@ -43,6 +44,7 @@ const EcommerceCheckoutPage = () => {
     email: '',
     message: ''
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     // Check if Snap.js is already loaded
@@ -73,6 +75,10 @@ const EcommerceCheckoutPage = () => {
         }
         setProfile(p);
         setFormData(prev => ({ ...prev, fullName: p.name_full || user.username, phone: p.phone_number || '' }));
+        
+        // CHECK COD AVAILABILITY
+        const codSupported = cartItems.some(item => item.product.is_cod_available);
+        setIsCodAvailable(codSupported);
 
         // AUTO SHIPPING CHECK
         // If some products don't have couriers specified, default to 'none'
@@ -211,7 +217,66 @@ const EcommerceCheckoutPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!selectedBank) { alert('pilih metode pembayaran'); return; }
-    if (courier !== 'none' && (!courier || selectedShipping === 0)) { alert('Pilih kurir dan ongkir terlebih dahulu'); return; }
+    if (courier !== 'none' && courier !== 'cod' && (!courier || selectedShipping === 0)) { alert('Pilih kurir dan ongkir terlebih dahulu'); return; }
+
+    const isCod = courier === 'cod';
+
+    if (isCod) {
+      setIsSubmitting(true);
+      try {
+        const paymentData = new FormData();
+        paymentData.append('amount', grandTotal);
+        paymentData.append('customer_name', formData.fullName);
+        paymentData.append('customer_phone', formData.phone);
+        paymentData.append('payment_method', 'COD');
+        paymentData.append('shipping_cost', selectedShipping || 0);
+        paymentData.append('shipping_courier', courier || '');
+        paymentData.append('buyer_note', formData.message || '');
+
+        const userData = localStorage.getItem('user');
+        const headers = { 'X-CSRFToken': getCsrfToken() };
+        if (userData) headers['Authorization'] = `Bearer ${JSON.parse(userData).access}`;
+
+        const response = await axios.post(
+          `${process.env.REACT_APP_API_BASE_URL}/api/orders/create-order/`,
+          paymentData,
+          { headers }
+        );
+
+        if (response.status === 201) {
+          const orders = response.data;
+          const mainOrder = orders[0];
+          
+          // Construct WA Message
+          let itemsStr = "";
+          cartItems.forEach(item => {
+            itemsStr += `- ${item.product.title} x${item.quantity}\n`;
+          });
+
+          const waMessage = 
+            `*PESANAN BARU (COD)*\n` +
+            `No. Pesanan: ${mainOrder.order_number}\n` +
+            `Nama: ${formData.fullName}\n` +
+            `Total: ${formatIDR(grandTotal)}\n\n` +
+            `*Produk:*\n${itemsStr}\n` +
+            `Alamat: ${profile.address}, ${profile.address_city_name}\n\n` +
+            `Mohon segera diproses ya kak. Terima kasih!`;
+
+          const sellerPhone = mainOrder.seller_phone || '628123456789'; // Fallback
+          const cleanSellerPhone = sellerPhone.replace(/\D/g, '');
+          const finalPhone = cleanSellerPhone.startsWith('0') ? '62' + cleanSellerPhone.slice(1) : cleanSellerPhone;
+          
+          window.open(`https://wa.me/${finalPhone}?text=${encodeURIComponent(waMessage)}`, '_blank');
+          navigate('/riwayat-belanja');
+        }
+      } catch (err) {
+        console.error(err);
+        alert('Gagal memproses pesanan COD.');
+      } finally {
+        setIsSubmitting(false);
+      }
+      return;
+    }
 
     const paymentData = {
       amount: grandTotal,
@@ -314,8 +379,8 @@ const EcommerceCheckoutPage = () => {
               value={courier}
               onChange={(e) => {
                 const val = e.target.value;
-                if (val === 'none') {
-                  setCourier('none');
+                if (val === 'none' || val === 'cod') {
+                  setCourier(val);
                   setSelectedShipping(0);
                   setShippingOptions([]);
                 } else {
@@ -326,7 +391,8 @@ const EcommerceCheckoutPage = () => {
               className="w-full text-sm bg-white border-none rounded-xl p-3 focus:ring-2 focus:ring-orange-500 outline-none"
             >
               <option value="">- Pilih Jasa Ekspedisi -</option>
-              <option value="none">Tanpa Ongkir (Ongkir terpisah / hubungi penjualk)</option>
+              {isCodAvailable && <option value="cod">COD (Bayar di Tempat / Langsung WA)</option>}
+              <option value="none">Tanpa Ongkir (Ongkir terpisah / hubungi penjual)</option>
             </select>
 
             {isFetchingShipping && <p className="text-xs text-orange-600 mt-2 animate-pulse">Menghitung Biaya...</p>}
@@ -384,8 +450,8 @@ const EcommerceCheckoutPage = () => {
           <input type="email" name="email" placeholder="Email Anda (opsional)" className="w-full p-3 rounded-xl bg-gray-50 text-sm outline-none" value={formData.email} onChange={handleInputChange} />
           <textarea name="message" placeholder="Catatan ke penjual (opsional)" className="w-full p-3 rounded-xl bg-gray-50 text-sm outline-none h-20" value={formData.message} onChange={handleInputChange} />
 
-          <button type="submit" disabled={!selectedBank || (courier !== 'none' && selectedShipping === 0)} className="w-full mt-4 bg-gradient-to-r from-emerald-600 to-teal-700 text-white font-bold py-4 rounded-xl hover:shadow-lg hover:shadow-emerald-200 hover:scale-[1.01] transition-all disabled:opacity-50 disabled:cursor-not-allowed">
-            BAYAR {formatIDR(grandTotal)}
+          <button type="submit" disabled={isSubmitting || !selectedBank || (courier !== 'none' && courier !== 'cod' && selectedShipping === 0)} className="w-full mt-4 bg-gradient-to-r from-emerald-600 to-teal-700 text-white font-bold py-4 rounded-xl hover:shadow-lg hover:shadow-emerald-200 hover:scale-[1.01] transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+            {isSubmitting ? 'MEMPROSES...' : courier === 'cod' ? `PESAN SEKARANG (WA) - ${formatIDR(grandTotal)}` : `BAYAR ${formatIDR(grandTotal)}`}
           </button>
         </form>
       </div>
