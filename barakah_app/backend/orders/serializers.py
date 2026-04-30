@@ -6,11 +6,18 @@ from profiles.models import Profile
 class OrderItemSerializer(serializers.ModelSerializer):
     product_name = serializers.CharField(source='product.title', read_only=True)
     variation_name = serializers.CharField(source='variation.name', read_only=True)
+    product_image = serializers.SerializerMethodField(read_only=True)
     purchase_instructions = serializers.CharField(source='product.purchase_instructions', read_only=True)
 
     class Meta:
         model = OrderItem
-        fields = ['id', 'product', 'product_name', 'variation', 'variation_name', 'quantity', 'price', 'purchase_instructions']
+        fields = ['id', 'product', 'product_name', 'product_image', 'variation', 'variation_name', 'quantity', 'price', 'purchase_instructions']
+
+    def get_product_image(self, obj):
+        if obj.product.thumbnail:
+            # Construct full URL if needed, or just relative
+            return obj.product.thumbnail.url
+        return None
 
 class BuyerProfileSerializer(serializers.ModelSerializer):
     username = serializers.CharField(source='user.username', read_only=True)

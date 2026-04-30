@@ -189,6 +189,15 @@ const DashboardSinergySellerOrdersPage = () => {
                                         <p className="text-[11px] text-gray-400 font-medium">
                                             {new Date(order.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
                                         </p>
+                                        {isAdmin && (
+                                            <button 
+                                                onClick={() => handleDeleteOrder(order.id)}
+                                                className="w-8 h-8 flex items-center justify-center bg-red-50 text-red-600 rounded-full hover:bg-red-600 hover:text-white transition shadow-sm border border-red-100"
+                                                title="Hapus Pesanan (Admin Only)"
+                                            >
+                                                <span className="material-icons text-sm">delete</span>
+                                            </button>
+                                        )}
                                     </div>
                                 </div>
 
@@ -228,8 +237,12 @@ const DashboardSinergySellerOrdersPage = () => {
                                         <div className="space-y-3">
                                             {order.items?.map(item => (
                                                 <div key={item.id} className="flex gap-3">
-                                                    <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                                                        <span className="material-icons text-gray-400">image</span>
+                                                    <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden border border-gray-100">
+                                                        {item.product_image ? (
+                                                            <img src={`${process.env.REACT_APP_API_BASE_URL}${item.product_image}`} alt={item.product_name} className="w-full h-full object-cover" />
+                                                        ) : (
+                                                            <span className="material-icons text-gray-400">image</span>
+                                                        )}
                                                     </div>
                                                     <div>
                                                         <p className="text-xs font-bold text-gray-800 line-clamp-1">{item.product_name}</p>
@@ -326,15 +339,6 @@ const DashboardSinergySellerOrdersPage = () => {
                                                 </p>
                                             </div>
 
-                                            {isAdmin && (
-                                                <button 
-                                                    onClick={() => handleDeleteOrder(order.id)}
-                                                    className="w-full bg-red-50 text-red-600 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 border border-red-100 hover:bg-red-600 hover:text-white transition"
-                                                >
-                                                    <span className="material-icons text-sm">delete_forever</span>
-                                                    Hapus Pesanan (Admin Only)
-                                                </button>
-                                            )}
                                         </div>
                                     </div>
                                 </div>

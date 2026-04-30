@@ -40,9 +40,9 @@ def send_order_invoice_to_buyer(order, alternate_phone=None):
         f"Ongkir: {format_idr(order.shipping_cost)} ({order.shipping_courier})\n"
         f"Voucher: -{format_idr(order.voucher_nominal)}\n"
         f"*Total Bayar: {format_idr(order.grand_total)}*\n\n"
-        f"Metode: *COD (Bayar di Tempat)*\n" if order.payment_method == 'COD' else ''
-        f"*Kontak Pembeli:* {order.user.phone}\n"
-        f"*Kontak Penjual:* {order.seller.phone if order.seller else '-'}\n\n"
+        f"Metode: *COD (Bayar di Tempat)*\n" if order.payment_method == 'COD' else f"Metode: *{order.payment_method}*\n"
+        f"*Kontak Pembeli:* {raw_phone or '-'}\n"
+        f"*Kontak Penjual:* {order.seller.phone if order.seller and order.seller.phone else '-'}\n\n"
     )
 
     if order.buyer_note:
@@ -107,7 +107,9 @@ def send_order_notification_to_seller(order):
         f"*Daftar Produk:*\n"
         f"{items_str}\n"
         f"Total Transaksi: {format_idr(order.grand_total)}\n"
-        f"Metode Bayar: *{order.payment_method}*\n\n"
+        f"Metode Bayar: *{order.payment_method}*\n"
+        f"*Kontak Pembeli:* {order.user.phone or '-'}\n"
+        f"*Kontak Penjual:* {raw_phone or '-'}\n\n"
     )
 
     if order.buyer_note:

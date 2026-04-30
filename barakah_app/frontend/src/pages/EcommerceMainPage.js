@@ -6,6 +6,7 @@ import { Helmet } from 'react-helmet';
 import HeaderHome from '../components/layout/HeaderHome'; // Import the Header component
 import NavigationButton from '../components/layout/Navigation'; // Import the Navigation component
 import { formatCurrency } from '../utils/formatters';
+import FloatingCartModal from '../components/layout/FloatingCartModal';
 
 function getCsrfToken() {
   const cookies = document.cookie.split(';');
@@ -146,7 +147,8 @@ const EcommerceMainPage = () => {
         }
       });
 
-      alert('Berhasil menambahkan ke Keranjang Belanja!');
+      window.dispatchEvent(new Event('cartUpdated'));
+      // Removed alert to use visual feedback from bubble
     } catch (error) {
       console.error('Error adding product to cart:', error);
       alert('Gagal menambahkan ke Keranjang Belanja');
@@ -381,6 +383,7 @@ const EcommerceMainPage = () => {
 
       {/* Bottom Navigation */}
       <NavigationButton />
+      <FloatingCartModal />
     </div>
   );
 };

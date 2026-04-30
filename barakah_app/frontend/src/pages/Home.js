@@ -10,6 +10,7 @@ import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Pagination, Scrollbar, Autoplay } from 'swiper/modules';
 import ShareButton from '../components/campaigns/ShareButton';
 import { getDigitalProducts, getPopularSellers } from '../services/digitalProductApi';
+import FloatingCartModal from '../components/layout/FloatingCartModal';
 
 function getCsrfToken() {
   const cookies = document.cookie.split(';');
@@ -431,7 +432,8 @@ const Home = () => {
         }
       });
 
-      alert('Berhasil menambahkan ke Keranjang Belanja!');
+      window.dispatchEvent(new Event('cartUpdated'));
+      // Removed alert
     } catch (error) {
       console.error('Error adding product to cart:', error);
       alert('Gagal menambahkan ke Keranjang Belanja');
@@ -1820,6 +1822,7 @@ const Home = () => {
 
       {/* Bottom Navigation */}
       <NavigationButton />
+      <FloatingCartModal />
     </div>
   );
 };

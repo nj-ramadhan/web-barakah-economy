@@ -6,6 +6,7 @@ import { Helmet } from 'react-helmet';
 import Header from '../components/layout/Header';
 import NavigationButton from '../components/layout/Navigation';
 import { formatCurrency } from '../utils/formatters';
+import FloatingCartModal from '../components/layout/FloatingCartModal';
 import '../styles/Body.css';
 
 function getCsrfToken() {
@@ -468,6 +469,7 @@ const EcommerceProductDetail = () => {
       </div>
 
       <NavigationButton />
+      <FloatingCartModal />
     </div>
   );
 };

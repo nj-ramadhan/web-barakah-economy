@@ -76,8 +76,8 @@ const EcommerceCheckoutPage = () => {
         setProfile(p);
         setFormData(prev => ({ ...prev, fullName: p.name_full || user.username, phone: p.phone_number || '' }));
         
-        // CHECK COD AVAILABILITY
-        const codSupported = cartItems.some(item => item.product.is_cod_available);
+        // CHECK COD AVAILABILITY - All items must support COD
+        const codSupported = cartItems.length > 0 && cartItems.every(item => item.product.is_cod_available);
         setIsCodAvailable(codSupported);
 
         // AUTO SHIPPING CHECK

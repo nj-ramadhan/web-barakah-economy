@@ -212,6 +212,19 @@ class SellerOrderViewSet(viewsets.ModelViewSet):
     def destroy(self, request, *args, **kwargs):
         if not request.user.is_superuser:
             return Response({'error': 'Hanya admin yang dapat menghapus pesanan'}, status=status.HTTP_403_FORBIDDEN)
+        
+        instance = self.get_object()
+        
+        # Return stock before deleting
+        for item in instance.items.all():
+            if item.variation:
+                item.variation.stock += item.quantity
+                item.variation.save()
+                item.product.sync_variations()
+            else:
+                item.product.stock += item.quantity
+                item.product.save()
+        
         return super().destroy(request, *args, **kwargs)
 
     @action(detail=True, methods=['post'], url_path='send-wa-update')
