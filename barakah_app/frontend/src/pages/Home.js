@@ -827,6 +827,7 @@ const Home = () => {
       )}
 
       {/* BAE RUN Promotion Banner */}
+      {/* BAE RUN SECTION - HIDE FOR NOW AS NOT FINISHED 
       <div className="px-4 py-8">
         <div className="relative bg-gradient-to-r from-slate-900 to-slate-800 rounded-3xl overflow-hidden shadow-2xl border border-white/5">
           <div className="absolute top-0 right-0 w-32 h-32 bg-green-500/10 blur-3xl rounded-full translate-x-10 -translate-y-10"></div>
@@ -862,6 +863,7 @@ const Home = () => {
           </div>
         </div>
       </div>
+      */}
 
       {/* Activities Carousel */}
       {activities.length > 0 && (
