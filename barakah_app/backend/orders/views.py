@@ -193,7 +193,7 @@ from rest_framework import viewsets
 class SellerOrderViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     serializer_class = OrderSerializer
-    http_method_names = ['get', 'patch', 'head', 'options']
+    http_method_names = ['get', 'patch', 'delete', 'head', 'options']
 
     def get_queryset(self):
         user = self.request.user
@@ -208,6 +208,11 @@ class SellerOrderViewSet(viewsets.ModelViewSet):
     def partial_update(self, request, *args, **kwargs):
         # Simply update without auto-sending WA
         return super().partial_update(request, *args, **kwargs)
+
+    def destroy(self, request, *args, **kwargs):
+        if not request.user.is_superuser:
+            return Response({'error': 'Hanya admin yang dapat menghapus pesanan'}, status=status.HTTP_403_FORBIDDEN)
+        return super().destroy(request, *args, **kwargs)
 
     @action(detail=True, methods=['post'], url_path='send-wa-update')
     def send_wa_update(self, request, pk=None):
@@ -231,4 +236,44 @@ class SellerOrderViewSet(viewsets.ModelViewSet):
         return Response({
             'pending_count': pending_count
         })
+
+    @action(detail=False, methods=['get'], url_path='export-csv')
+    def export_csv(self, request):
+        import csv
+        from django.http import HttpResponse
+        
+        queryset = self.get_queryset()
+        
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="rekap_pesanan_sinergy.csv"'
+        
+        # BOM for Excel UTF-8 support
+        response.write(u'\ufeff'.encode('utf8'))
+        
+        writer = csv.writer(response)
+        writer.writerow([
+            'Order Number', 'Tanggal', 'Nama Pembeli', 'HP Pembeli', 
+            'Penjual', 'Produk', 'Total Harga', 'Ongkir', 
+            'Diskon Voucher', 'Grand Total', 'Status', 'Metode Bayar', 'Catatan'
+        ])
+        
+        for order in queryset:
+            items_desc = ", ".join([f"{item.product.title} (x{item.quantity})" for item in order.items.all()])
+            writer.writerow([
+                order.order_number,
+                order.created_at.strftime('%Y-%m-%d %H:%M'),
+                order.user.username,
+                order.user.phone or '-',
+                order.seller.username if order.seller else '-',
+                items_desc,
+                order.total_price,
+                order.shipping_cost,
+                order.voucher_nominal,
+                order.grand_total,
+                order.status,
+                order.payment_method,
+                order.buyer_note or '-'
+            ])
+            
+        return response
 

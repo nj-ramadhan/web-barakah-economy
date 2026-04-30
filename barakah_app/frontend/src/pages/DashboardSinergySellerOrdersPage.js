@@ -14,8 +14,10 @@ const DashboardSinergySellerOrdersPage = () => {
 
     const statusOptions = ['Pending', 'Proses', 'Dikirim', 'Selesai', 'Batal'];
 
+    const user = JSON.parse(localStorage.getItem('user'));
+    const isAdmin = user?.is_superuser || false;
+
     const fetchOrders = async () => {
-        const user = JSON.parse(localStorage.getItem('user'));
         if (!user) return;
         setLoading(true);
         try {
@@ -34,8 +36,40 @@ const DashboardSinergySellerOrdersPage = () => {
         fetchOrders();
     }, []);
 
+    const handleExportCSV = async () => {
+        if (!user) return;
+        try {
+            const response = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/orders/seller-orders/export-csv/`, {
+                headers: { Authorization: `Bearer ${user.access}` },
+                responseType: 'blob',
+            });
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', 'rekap_pesanan_sinergy.csv');
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+        } catch (error) {
+            alert('Gagal mengekspor CSV');
+        }
+    };
+
+    const handleDeleteOrder = async (orderId) => {
+        if (!window.confirm('Apakah Anda yakin ingin menghapus pesanan ini?')) return;
+        if (!user) return;
+        try {
+            await axios.delete(`${process.env.REACT_APP_API_BASE_URL}/api/orders/seller-orders/${orderId}/`, {
+                headers: { Authorization: `Bearer ${user.access}` }
+            });
+            setOrders(orders.filter(o => o.id !== orderId));
+            alert('Pesanan berhasil dihapus');
+        } catch (error) {
+            alert(error.response?.data?.error || 'Gagal menghapus pesanan');
+        }
+    };
+
     const handleUpdateStatus = async (orderId, newStatus) => {
-        const user = JSON.parse(localStorage.getItem('user'));
         if (!user) return;
         
         const resiToSave = localResi[orderId] !== undefined ? localResi[orderId] : orders.find(o => o.id === orderId)?.resi_number;
@@ -101,14 +135,23 @@ const DashboardSinergySellerOrdersPage = () => {
             <Header />
             
             <div className="max-w-5xl mx-auto px-4 py-8 pb-24">
-                <div className="flex items-center gap-4 mb-8">
-                    <Link to="/dashboard/sinergy/seller" className="w-10 h-10 flex items-center justify-center bg-white rounded-full shadow-sm text-gray-500 hover:text-emerald-600 transition">
-                        <span className="material-icons">arrow_back</span>
-                    </Link>
-                    <div>
-                        <h1 className="text-2xl font-black text-gray-800 tracking-tight">Manajemen Pesanan Masuk</h1>
-                        <p className="text-sm text-gray-500">Proses pemesanan produk fisik Sinergy Anda</p>
+                <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
+                    <div className="flex items-center gap-4">
+                        <Link to="/dashboard/sinergy/seller" className="w-10 h-10 flex items-center justify-center bg-white rounded-full shadow-sm text-gray-500 hover:text-emerald-600 transition">
+                            <span className="material-icons">arrow_back</span>
+                        </Link>
+                        <div>
+                            <h1 className="text-2xl font-black text-gray-800 tracking-tight">Manajemen Pesanan Masuk</h1>
+                            <p className="text-sm text-gray-500">Proses pemesanan produk fisik Sinergy Anda</p>
+                        </div>
                     </div>
+                    <button 
+                        onClick={handleExportCSV}
+                        className="flex items-center gap-2 bg-white border border-gray-200 px-4 py-2.5 rounded-xl text-xs font-bold text-gray-700 hover:bg-gray-50 transition shadow-sm"
+                    >
+                        <span className="material-icons text-sm text-emerald-600">file_download</span>
+                        EKSPOR CSV
+                    </button>
                 </div>
 
                 {loading ? (
@@ -282,6 +325,16 @@ const DashboardSinergySellerOrdersPage = () => {
                                                     <span className="font-bold">Info:</span> Klik <span className="font-bold italic">Simpan</span> untuk update status & resi. Klik <span className="font-bold italic text-emerald-700">Kirim Notifikasi WA</span> untuk mengirim update manual ke pembeli.
                                                 </p>
                                             </div>
+
+                                            {isAdmin && (
+                                                <button 
+                                                    onClick={() => handleDeleteOrder(order.id)}
+                                                    className="w-full bg-red-50 text-red-600 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 border border-red-100 hover:bg-red-600 hover:text-white transition"
+                                                >
+                                                    <span className="material-icons text-sm">delete_forever</span>
+                                                    Hapus Pesanan (Admin Only)
+                                                </button>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
