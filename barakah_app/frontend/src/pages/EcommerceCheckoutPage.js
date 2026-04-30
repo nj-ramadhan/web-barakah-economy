@@ -216,7 +216,7 @@ const EcommerceCheckoutPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!selectedBank) { alert('pilih metode pembayaran'); return; }
+    if (courier !== 'cod' && !selectedBank) { alert('pilih metode pembayaran'); return; }
     if (courier !== 'none' && courier !== 'cod' && (!courier || selectedShipping === 0)) { alert('Pilih kurir dan ongkir terlebih dahulu'); return; }
 
     const isCod = courier === 'cod';
@@ -244,29 +244,6 @@ const EcommerceCheckoutPage = () => {
         );
 
         if (response.status === 201) {
-          const orders = response.data;
-          const mainOrder = orders[0];
-          
-          // Construct WA Message
-          let itemsStr = "";
-          cartItems.forEach(item => {
-            itemsStr += `- ${item.product.title} x${item.quantity}\n`;
-          });
-
-          const waMessage = 
-            `*PESANAN BARU (COD)*\n` +
-            `No. Pesanan: ${mainOrder.order_number}\n` +
-            `Nama: ${formData.fullName}\n` +
-            `Total: ${formatIDR(grandTotal)}\n\n` +
-            `*Produk:*\n${itemsStr}\n` +
-            `Alamat: ${profile.address}, ${profile.address_city_name}\n\n` +
-            `Mohon segera diproses ya kak. Terima kasih!`;
-
-          const sellerPhone = mainOrder.seller_phone || '628123456789'; // Fallback
-          const cleanSellerPhone = sellerPhone.replace(/\D/g, '');
-          const finalPhone = cleanSellerPhone.startsWith('0') ? '62' + cleanSellerPhone.slice(1) : cleanSellerPhone;
-          
-          window.open(`https://wa.me/${finalPhone}?text=${encodeURIComponent(waMessage)}`, '_blank');
           navigate('/riwayat-belanja');
         }
       } catch (err) {
@@ -431,16 +408,20 @@ const EcommerceCheckoutPage = () => {
         </div>
 
         {/* Metode Pembayaran */}
-        <h3 className="font-bold text-gray-800 mb-3">Metode Bayar</h3>
-        <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-200 mb-6 space-y-3">
-          {banks.map((bank) => (
-            <label key={bank.id} className={`flex items-center p-4 rounded-xl cursor-pointer transition-all border-2 ${selectedBank === bank.id ? 'bg-green-50 border-green-500' : 'bg-gray-50 border-transparent hover:bg-gray-100'}`}>
-              <input type="radio" name="bank" value={bank.id} checked={selectedBank === bank.id} onChange={(e) => setSelectedBank(e.target.value)} className="mr-3 accent-green-600" />
-              <img src={bank.logo} alt={bank.name} className="h-6 mr-3 mix-blend-multiply" />
-              <span className="font-semibold text-sm text-gray-700">{bank.name}</span>
-            </label>
-          ))}
-        </div>
+        {courier !== 'cod' && (
+          <>
+            <h3 className="font-bold text-gray-800 mb-3">Metode Bayar</h3>
+            <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-200 mb-6 space-y-3">
+              {banks.map((bank) => (
+                <label key={bank.id} className={`flex items-center p-4 rounded-xl cursor-pointer transition-all border-2 ${selectedBank === bank.id ? 'bg-green-50 border-green-500' : 'bg-gray-50 border-transparent hover:bg-gray-100'}`}>
+                  <input type="radio" name="bank" value={bank.id} checked={selectedBank === bank.id} onChange={(e) => setSelectedBank(e.target.value)} className="mr-3 accent-green-600" />
+                  <img src={bank.logo} alt={bank.name} className="h-6 mr-3 mix-blend-multiply" />
+                  <span className="font-semibold text-sm text-gray-700">{bank.name}</span>
+                </label>
+              ))}
+            </div>
+          </>
+        )}
 
         {/* Form Pembeli & Tombol Checkout */}
         <h3 className="font-bold text-gray-800 mb-3">Konfirmasi Kontak</h3>

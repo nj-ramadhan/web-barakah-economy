@@ -40,8 +40,9 @@ def send_order_invoice_to_buyer(order, alternate_phone=None):
         f"Ongkir: {format_idr(order.shipping_cost)} ({order.shipping_courier})\n"
         f"Voucher: -{format_idr(order.voucher_nominal)}\n"
         f"*Total Bayar: {format_idr(order.grand_total)}*\n\n"
-        f"Status: *{order.status}*\n"
-        f"{'Metode: *COD (Bayar di Tempat)*' if order.payment_method == 'COD' else ''}\n\n"
+        f"Metode: *COD (Bayar di Tempat)*\n" if order.payment_method == 'COD' else ''
+        f"*Kontak Pembeli:* {order.user.phone}\n"
+        f"*Kontak Penjual:* {order.seller.phone if order.seller else '-'}\n\n"
     )
 
     if order.buyer_note:
@@ -54,9 +55,6 @@ def send_order_invoice_to_buyer(order, alternate_phone=None):
         for instr in instr_list:
             message += f"- {instr}\n"
         message += "\n"
-
-    if order.seller and order.seller.phone:
-        message += f"*KONTAK PENJUAL:* wa.me/{clean_phone(order.seller.phone)}\n\n"
 
     message += f"Terima kasih telah berbelanja! Pesanan Anda akan segera diproses oleh penjual."
     
@@ -101,7 +99,8 @@ def send_order_notification_to_seller(order):
         f"No. Pesanan: {order.order_number}\n\n"
         f"*Data Pemesan:*\n"
         f"Nama: {buyer_name}\n"
-        f"No. HP: {order.user.phone}\n"
+        f"No. HP Pembeli: {order.user.phone}\n"
+        f"No. HP Penjual: {order.seller.phone if order.seller else '-'}\n"
         f"Chat Pembeli: wa.me/{clean_phone(order.user.phone)}\n\n"
         f"*Alamat Kirim:*\n"
         f"{address}\n\n"
