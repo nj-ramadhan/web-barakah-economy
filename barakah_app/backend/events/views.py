@@ -53,6 +53,10 @@ class EventViewSet(viewsets.ModelViewSet):
         # Check for menu access 'admin_events' or role 'admin'
         if self.request.user.has_menu_access('admin_events'):
             return [permissions.IsAuthenticated()]
+
+        # Regular users can create/update their own events
+        if self.action in ['create', 'update', 'partial_update', 'my_events']:
+            return [permissions.IsAuthenticated()]
             
         # Deny others
         return [permissions.IsAdminUser()]
@@ -109,6 +113,13 @@ class EventViewSet(viewsets.ModelViewSet):
         data = self._get_parsed_data(request)
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
+
+        # Authorization check: Admin OR Owner
+        is_admin = request.user.has_menu_access('admin_events') or request.user.is_staff
+        is_owner = instance.created_by == request.user
+        
+        if not (is_admin or is_owner):
+            return Response({"error": "Anda tidak memiliki izin untuk mengedit event ini."}, status=status.HTTP_403_FORBIDDEN)
         
         # Check if status is changing to trigger email
         old_status = instance.status
@@ -1272,7 +1283,7 @@ class EventRegistrationViewSet(viewsets.ModelViewSet):
         registrations = EventRegistration.objects.filter(id__in=ids)
         
         # Check permissions for each registration (ensure they belong to events managed by searcher)
-        if not request.user.is_staff:
+        if not (request.user.is_staff or request.user.has_menu_access('admin_events')):
             managed_events = Event.objects.filter(created_by=request.user)
             unauthorized_count = registrations.exclude(event__in=managed_events).count()
             if unauthorized_count > 0:
@@ -1283,25 +1294,39 @@ class EventRegistrationViewSet(viewsets.ModelViewSet):
         
         return Response({"message": f"Successfully deleted {count} registrations."}, status=status.HTTP_200_OK)
 
+    def get_queryset(self):
+        user = self.request.user
+        if not user or not user.is_authenticated:
+            return EventRegistration.objects.none()
+            
+        if user.is_staff or user.has_menu_access('admin_events'):
+            return EventRegistration.objects.all()
+        
+        # Event owners can see registrations for their events
+        user_events = Event.objects.filter(created_by=user)
+        return EventRegistration.objects.filter(event__in=user_events)
+
     def get_permissions(self):
         # Registration management only for authenticated users (Staff/Creators)
         return [permissions.IsAuthenticated()]
 
     def list(self, request, *args, **kwargs):
-        # List only registrations for events owned by user OR if staff
-        if request.user.is_staff:
-            return super().list(request, *args, **kwargs)
-        
-        user_events = Event.objects.filter(created_by=request.user)
-        queryset = self.queryset.filter(event__in=user_events)
-        serializer = self.get_serializer(queryset, many=True)
-        return Response(serializer.data)
+        # Already filtered by get_queryset
+        return super().list(request, *args, **kwargs)
+
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        is_admin = request.user.has_menu_access('admin_events') or request.user.is_staff
+        if not (is_admin or instance.event.created_by == request.user):
+            return Response({"error": "Unauthorized"}, status=status.HTTP_403_FORBIDDEN)
+        return super().update(request, *args, **kwargs)
 
     @action(detail=True, methods=['post'])
     def approve(self, request, pk=None):
         registration = self.get_object()
-        # Verify ownership
-        if not request.user.is_staff and registration.event.created_by != request.user:
+        # Verify ownership: Admin OR Event Creator
+        is_admin = request.user.has_menu_access('admin_events') or request.user.is_staff
+        if not (is_admin or registration.event.created_by == request.user):
             return Response({"error": "Unauthorized"}, status=status.HTTP_403_FORBIDDEN)
             
         registration.status = 'approved'
@@ -1336,7 +1361,8 @@ class EventRegistrationViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['post'])
     def reject(self, request, pk=None):
         registration = self.get_object()
-        if not request.user.is_staff and registration.event.created_by != request.user:
+        is_admin = request.user.has_menu_access('admin_events') or request.user.is_staff
+        if not (is_admin or registration.event.created_by == request.user):
             return Response({"error": "Unauthorized"}, status=status.HTTP_403_FORBIDDEN)
             
         registration.status = 'rejected'

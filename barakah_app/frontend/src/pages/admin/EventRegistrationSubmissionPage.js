@@ -5,6 +5,7 @@ import Header from '../../components/layout/Header';
 import NavigationButton from '../../components/layout/Navigation';
 import { getEventRegistrations, getEventDetail, exportRegistrationsCsv, blastEventWhatsapp, bulkDeleteRegistrations } from '../../services/eventApi';
 import EventManualRegistrationModal from '../../components/admin/EventManualRegistrationModal';
+import EventRegistrationEditModal from '../../components/admin/EventRegistrationEditModal';
 import CertificateEditor from '../../components/events/CertificateEditor';
 import '../../styles/Body.css';
 
@@ -25,6 +26,8 @@ const EventRegistrationSubmissionPage = () => {
     const [selectedPaymentProof, setSelectedPaymentProof] = useState(null);
     const [selectedIds, setSelectedIds] = useState([]);
     const [showManualModal, setShowManualModal] = useState(false);
+    const [showEditModal, setShowEditModal] = useState(false);
+    const [editingRegistration, setEditingRegistration] = useState(null);
     const [activeTab, setActiveTab] = useState(initialTab); // 'participants' or 'certificate'
 
     useEffect(() => {
@@ -197,6 +200,11 @@ const EventRegistrationSubmissionPage = () => {
         }
     };
 
+    const handleEditClick = (reg) => {
+        setEditingRegistration(reg);
+        setShowEditModal(true);
+    };
+
     if (loading) return <div className="body flex items-center justify-center min-h-screen text-green-700">Memuat data pendaftaran...</div>;
 
     return (
@@ -309,6 +317,7 @@ const EventRegistrationSubmissionPage = () => {
                                         <th className="p-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Pembayaran</th>
                                     )}
                                     <th className="p-5 text-[10px] font-black text-gray-400 uppercase tracking-widest text-right">Status</th>
+                                    <th className="p-5 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-50">
@@ -464,6 +473,15 @@ const EventRegistrationSubmissionPage = () => {
                                                             {reg.status}
                                                         </span>
                                                     </div>
+                                                </td>
+                                                <td className="p-5 text-center">
+                                                    <button
+                                                        onClick={() => handleEditClick(reg)}
+                                                        className="w-8 h-8 rounded-lg bg-gray-50 text-gray-400 flex items-center justify-center hover:bg-gray-900 hover:text-white transition group"
+                                                        title="Edit Data Peserta"
+                                                    >
+                                                        <span className="material-icons text-sm group-hover:scale-110 transition">edit</span>
+                                                    </button>
                                                 </td>
                                             </tr>
                                         );
@@ -717,6 +735,17 @@ const EventRegistrationSubmissionPage = () => {
                 isOpen={showManualModal}
                 onClose={() => setShowManualModal(false)}
                 event={event}
+                onSuccess={() => fetchData()}
+            />
+
+            <EventRegistrationEditModal
+                isOpen={showEditModal}
+                onClose={() => {
+                    setShowEditModal(false);
+                    setEditingRegistration(null);
+                }}
+                event={event}
+                registration={editingRegistration}
                 onSuccess={() => fetchData()}
             />
 

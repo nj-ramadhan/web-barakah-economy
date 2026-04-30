@@ -94,6 +94,12 @@ export const rejectRegistration = (id) => {
     });
 };
 
+export const updateEventRegistration = (id, data) => {
+    return axios.patch(`${API_BASE_URL}/api/events/registrations/${id}/`, data, {
+        headers: getAuthHeaders()
+    });
+};
+
 export const bulkDeleteRegistrations = (ids) => {
     return axios.post(`${API_BASE_URL}/api/events/registrations/bulk_delete/`, { ids }, {
         headers: getAuthHeaders()
