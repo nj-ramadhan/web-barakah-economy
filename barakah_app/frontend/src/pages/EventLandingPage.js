@@ -33,6 +33,8 @@ const EventLandingPage = () => {
     const [filteredEvents, setFilteredEvents] = useState([]);
     const [categories, setCategories] = useState([]);
     const [selectedCategory, setSelectedCategory] = useState('Semua');
+    const [isExpanded, setIsExpanded] = useState(false);
+    const CATEGORY_LIMIT = 6;
 
     useEffect(() => {
         const fetchEvents = async () => {
@@ -103,20 +105,39 @@ const EventLandingPage = () => {
 
                 {/* Category Filter Chips */}
                 {categories.length > 1 && (
-                    <div className="flex overflow-x-auto pb-4 mb-6 gap-2 no-scrollbar -mx-4 px-4 scroll-smooth">
-                        {categories.map((cat) => (
-                            <button
-                                key={cat}
-                                onClick={() => setSelectedCategory(cat)}
-                                className={`px-5 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all duration-300 border ${
-                                    selectedCategory === cat
-                                        ? 'bg-green-600 text-white border-green-600 shadow-md shadow-green-100 scale-105'
-                                        : 'bg-white text-gray-600 border-gray-100 hover:border-green-200 hover:bg-green-50/50'
-                                }`}
-                            >
-                                {cat.toUpperCase()}
-                            </button>
-                        ))}
+                    <div className="mb-8">
+                        <div className={`flex ${isExpanded ? 'flex-wrap' : 'overflow-x-auto no-scrollbar'} gap-2 -mx-4 px-4 pb-2 scroll-smooth transition-all duration-500`}>
+                            {(isExpanded ? categories : categories.slice(0, CATEGORY_LIMIT)).map((cat) => (
+                                <button
+                                    key={cat}
+                                    onClick={() => setSelectedCategory(cat)}
+                                    className={`px-5 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all duration-300 border ${
+                                        selectedCategory === cat
+                                            ? 'bg-green-600 text-white border-green-600 shadow-md shadow-green-100 scale-105'
+                                            : 'bg-white text-gray-600 border-gray-100 hover:border-green-200 hover:bg-green-50/50'
+                                    }`}
+                                >
+                                    {cat.toUpperCase()}
+                                </button>
+                            ))}
+                            
+                            {categories.length > CATEGORY_LIMIT && (
+                                <button
+                                    onClick={() => setIsExpanded(!isExpanded)}
+                                    className={`px-5 py-2 rounded-full text-xs font-black whitespace-nowrap transition-all duration-300 flex items-center gap-1 ${
+                                        isExpanded 
+                                            ? 'bg-gray-100 text-gray-800 border-gray-200' 
+                                            : 'bg-green-50 text-green-700 border-green-100 hover:bg-green-100'
+                                    } border`}
+                                >
+                                    {isExpanded ? (
+                                        <>SEMBUNYIKAN <span className="material-icons text-sm">expand_less</span></>
+                                    ) : (
+                                        <>{`+${categories.length - CATEGORY_LIMIT} LAINNYA`} <span className="material-icons text-sm">expand_more</span></>
+                                    )}
+                                </button>
+                            )}
+                        </div>
                     </div>
                 )}
 
