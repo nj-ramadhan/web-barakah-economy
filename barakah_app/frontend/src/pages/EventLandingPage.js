@@ -31,6 +31,8 @@ const EventLandingPage = () => {
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
     const [filteredEvents, setFilteredEvents] = useState([]);
+    const [categories, setCategories] = useState([]);
+    const [selectedCategory, setSelectedCategory] = useState('Semua');
 
     useEffect(() => {
         const fetchEvents = async () => {
@@ -39,6 +41,10 @@ const EventLandingPage = () => {
                 const data = Array.isArray(res.data) ? res.data : (res.data.results || []);
                 setEvents(data);
                 setFilteredEvents(data);
+                
+                // Extract unique categories
+                const cats = ['Semua', ...new Set(data.map(ev => ev.category).filter(Boolean))];
+                setCategories(cats);
             } catch (err) {
                 console.error(err);
             } finally {
@@ -48,17 +54,26 @@ const EventLandingPage = () => {
         fetchEvents();
     }, []);
 
+    useEffect(() => {
+        let result = events;
+        
+        if (searchQuery) {
+            const query = searchQuery.toLowerCase();
+            result = result.filter(ev =>
+                ev.title.toLowerCase().includes(query) ||
+                ev.location.toLowerCase().includes(query)
+            );
+        }
+        
+        if (selectedCategory !== 'Semua') {
+            result = result.filter(ev => ev.category === selectedCategory);
+        }
+        
+        setFilteredEvents(result);
+    }, [searchQuery, selectedCategory, events]);
+
     const handleSearch = (query) => {
         setSearchQuery(query);
-        if (!query) {
-            setFilteredEvents(events);
-        } else {
-            const filtered = events.filter(ev =>
-                ev.title.toLowerCase().includes(query.toLowerCase()) ||
-                ev.location.toLowerCase().includes(query.toLowerCase())
-            );
-            setFilteredEvents(filtered);
-        }
     };
 
     if (loading) {
@@ -79,12 +94,31 @@ const EventLandingPage = () => {
             <HeaderHome onSearch={handleSearch} />
 
             <div className="max-w-4xl mx-auto px-4 py-8 pb-24">
-                <div className="flex justify-between items-end mb-8">
+                <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4">
                     <div>
                         <h1 className="text-3xl font-bold text-gray-900 mb-1">Event Seru</h1>
                         <p className="text-gray-500 text-sm">Ikuti berbagai kegiatan positif untuk bekal akhirat</p>
                     </div>
                 </div>
+
+                {/* Category Filter Chips */}
+                {categories.length > 1 && (
+                    <div className="flex overflow-x-auto pb-4 mb-6 gap-2 no-scrollbar -mx-4 px-4 scroll-smooth">
+                        {categories.map((cat) => (
+                            <button
+                                key={cat}
+                                onClick={() => setSelectedCategory(cat)}
+                                className={`px-5 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all duration-300 border ${
+                                    selectedCategory === cat
+                                        ? 'bg-green-600 text-white border-green-600 shadow-md shadow-green-100 scale-105'
+                                        : 'bg-white text-gray-600 border-gray-100 hover:border-green-200 hover:bg-green-50/50'
+                                }`}
+                            >
+                                {cat.toUpperCase()}
+                            </button>
+                        ))}
+                    </div>
+                )}
 
                 {filteredEvents.length === 0 ? (
                     <div className="text-center py-20 bg-gray-50 rounded-3xl border border-dashed border-gray-200 text-gray-400">

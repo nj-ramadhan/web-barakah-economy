@@ -152,9 +152,26 @@ class EventViewSet(viewsets.ModelViewSet):
         """Public list for landing page (only approved)."""
         self._auto_complete_expired_events()
         # Include both approved and completed events in the public list, filtering for public visibility
-        events = self.queryset.filter(status__in=['approved', 'completed'], visibility='public')
+        now = timezone.now()
+        base_query = Event.objects.filter(status__in=['approved', 'completed', 'ongoing'], visibility='public')
+        
+        # Sort logic:
+        # 1. Upcoming/Ongoing events (start_date >= now or end_date >= now) sorted by start_date ASC
+        # 2. Past events (end_date < now) sorted by start_date DESC
+        
+        upcoming_events = base_query.filter(
+            Q(start_date__gte=now) | Q(end_date__gte=now)
+        ).order_by('start_date')
+        
+        past_events = base_query.filter(
+            Q(end_date__lt=now) | Q(end_date__isnull=True, start_date__lt=now)
+        ).exclude(id__in=upcoming_events).order_by('-start_date')
+        
+        events = list(upcoming_events) + list(past_events)
+        
         serializer = self.get_serializer(events, many=True)
         return Response(serializer.data)
+
 
     @action(detail=False, methods=['get'], permission_classes=[permissions.IsAuthenticated])
     def my_events(self, request):
