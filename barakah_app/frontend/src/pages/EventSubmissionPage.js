@@ -36,6 +36,8 @@ const EventSubmissionPage = () => {
         attachment_file_title: '',
         attachment_link_title: '',
         visibility: 'public',
+        visible_at: '',
+        registration_start_at: '',
         category: '',
         has_certificate: false,
     });
@@ -92,6 +94,8 @@ const EventSubmissionPage = () => {
                         attachment_file_title: d.attachment_file_title || '',
                         attachment_link_title: d.attachment_link_title || '',
                         visibility: d.visibility || 'public',
+                        visible_at: d.visible_at ? d.visible_at.substring(0, 16) : '',
+                        registration_start_at: d.registration_start_at ? d.registration_start_at.substring(0, 16) : '',
                         attachment_file: d.attachment_file,
                         category: d.category || '',
                         has_certificate: d.has_certificate || false,
@@ -528,6 +532,30 @@ const EventSubmissionPage = () => {
                                             <option value="private">Privat (Hanya lewat link langsung)</option>
                                         </select>
                                         <p className="text-[10px] text-blue-800/60 ml-1 italic font-medium">Link event tetap bisa diakses meskipun diset Privat.</p>
+                                    </div>
+
+                                    <div className="space-y-1.5">
+                                        <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Kapan Event Tampil di Publik? (Visibility Countdown)</label>
+                                        <input 
+                                            type="datetime-local" 
+                                            name="visible_at"
+                                            value={formData.visible_at}
+                                            onChange={handleChange}
+                                            className="w-full px-5 py-3.5 bg-white border border-blue-100 rounded-2xl text-sm focus:ring-2 focus:ring-blue-500 transition shadow-sm"
+                                        />
+                                        <p className="text-[10px] text-blue-800/60 ml-1 italic font-medium">Kosongkan jika ingin langsung tampil.</p>
+                                    </div>
+
+                                    <div className="space-y-1.5">
+                                        <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Kapan Pendaftaran Dibuka? (Registration Countdown)</label>
+                                        <input 
+                                            type="datetime-local" 
+                                            name="registration_start_at"
+                                            value={formData.registration_start_at}
+                                            onChange={handleChange}
+                                            className="w-full px-5 py-3.5 bg-white border border-blue-100 rounded-2xl text-sm focus:ring-2 focus:ring-blue-500 transition shadow-sm"
+                                        />
+                                        <p className="text-[10px] text-blue-800/60 ml-1 italic font-medium">Kosongkan jika ingin langsung dibuka.</p>
                                     </div>
                                     
                                     <div className="space-y-1.5">

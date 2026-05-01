@@ -68,6 +68,8 @@ class Event(models.Model):
         ('private', 'Privat (Hanya lewat link langsung)'),
     ]
     visibility = models.CharField(max_length=10, choices=VISIBILITY_CHOICES, default='public')
+    visible_at = models.DateTimeField(blank=True, null=True, help_text="Waktu event mulai ditampilkan di publik (kosongkan jika langsung tampil)")
+    registration_start_at = models.DateTimeField(blank=True, null=True, help_text="Waktu pendaftaran mulai dibuka (kosongkan jika langsung dibuka)")
     
     # Information fields
     category = models.CharField(max_length=100, blank=True, null=True, help_text="Kategori event (misal: Pelatihan, Seminar, dll)")

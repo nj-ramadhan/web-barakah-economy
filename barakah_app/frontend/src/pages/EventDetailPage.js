@@ -31,6 +31,50 @@ const EventDetailPage = () => {
     const [showRegisterModal, setShowRegisterModal] = useState(false);
     const [isSharing, setIsSharing] = useState(false);
     const [registeredCode, setRegisteredCode] = useState(null); // kode unik QR setelah daftar
+    const [registrationTimeLeft, setRegistrationTimeLeft] = useState(null);
+    const [visibilityTimeLeft, setVisibilityTimeLeft] = useState(null);
+
+    const calculateTimeLeft = (targetDate) => {
+        if (!targetDate) return { total: 0 };
+        const difference = +new Date(targetDate) - +new Date();
+        if (difference > 0) {
+            return {
+                days: Math.floor(difference / (1000 * 60 * 60 * 24)),
+                hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
+                minutes: Math.floor((difference / 1000 / 60) % 60),
+                seconds: Math.floor((difference / 1000) % 60),
+                total: difference
+            };
+        }
+        return { total: 0 };
+    };
+
+    const formatCountdown = (timeLeft) => {
+        if (!timeLeft || timeLeft.total <= 0) return "";
+        const { days, hours, minutes, seconds } = timeLeft;
+        const parts = [];
+        if (days > 0) parts.push(`${days}h`);
+        if (hours > 0 || days > 0) parts.push(`${hours}j`);
+        parts.push(`${minutes}m`);
+        parts.push(`${seconds}s`);
+        return parts.join(' ');
+    };
+
+    useEffect(() => {
+        const timer = setInterval(() => {
+            if (event?.registration_start_at) {
+                setRegistrationTimeLeft(calculateTimeLeft(event.registration_start_at));
+            }
+            if (event?.visible_at) {
+                setVisibilityTimeLeft(calculateTimeLeft(event.visible_at));
+            }
+        }, 1000);
+
+        setRegistrationTimeLeft(calculateTimeLeft(event?.registration_start_at));
+        setVisibilityTimeLeft(calculateTimeLeft(event?.visible_at));
+
+        return () => clearInterval(timer);
+    }, [event]);
 
     const API = process.env.REACT_APP_API_BASE_URL;
 
@@ -323,6 +367,42 @@ const EventDetailPage = () => {
                 </script>
             </Helmet>
             <Header />
+            
+            {/* Visibility Lock Overlay */}
+            {visibilityTimeLeft?.total > 0 && (
+                <div className="fixed inset-0 z-[300] bg-white/95 backdrop-blur-xl flex flex-col items-center justify-center p-8 text-center animate-fade-in">
+                    <div className="max-w-md w-full space-y-8">
+                        <div className="w-24 h-24 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto shadow-inner animate-bounce">
+                            <span className="material-icons text-5xl">lock_clock</span>
+                        </div>
+                        <div className="space-y-3">
+                            <h2 className="text-3xl font-black text-gray-900 leading-tight">Event Masih Terkunci</h2>
+                            <p className="text-gray-500 font-medium">Sabar ya! Event ini akan segera dibuka untuk publik dalam waktu:</p>
+                        </div>
+                        
+                        <div className="grid grid-cols-4 gap-4">
+                            {[
+                                { label: 'Hari', value: visibilityTimeLeft.days },
+                                { label: 'Jam', value: visibilityTimeLeft.hours },
+                                { label: 'Menit', value: visibilityTimeLeft.minutes },
+                                { label: 'Detik', value: visibilityTimeLeft.seconds },
+                            ].map((item, idx) => (
+                                <div key={idx} className="bg-gray-50 p-4 rounded-2xl border border-gray-100 shadow-sm">
+                                    <p className="text-2xl font-black text-green-700">{item.value}</p>
+                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{item.label}</p>
+                                </div>
+                            ))}
+                        </div>
+
+                        <div className="pt-8">
+                            <Link to="/event" className="inline-flex items-center gap-2 text-sm font-bold text-gray-400 hover:text-green-600 transition uppercase tracking-widest">
+                                <span className="material-icons text-sm">arrow_back</span>
+                                Kembali ke Daftar Event
+                            </Link>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Back Navigation Bar */}
             <div className="max-w-6xl mx-auto px-4 pt-6 flex items-center justify-between relative z-20">
@@ -380,6 +460,14 @@ const EventDetailPage = () => {
                                     <div className="bg-white/10 backdrop-blur-md border border-white/20 text-gray-300 px-8 py-4 rounded-2xl font-extrabold text-sm uppercase tracking-wider flex items-center gap-3 justify-center cursor-not-allowed shadow-lg">
                                         <span className="material-icons text-xl">event_busy</span>
                                         Event Selesai
+                                    </div>
+                                ) : registrationTimeLeft?.total > 0 ? (
+                                    <div className="bg-amber-500/20 backdrop-blur-md border border-amber-500/40 text-amber-500 px-8 py-4 rounded-2xl font-extrabold text-sm uppercase tracking-wider flex flex-col items-center justify-center cursor-wait shadow-lg min-w-[200px]">
+                                        <div className="flex items-center gap-2">
+                                            <span className="material-icons text-xl animate-spin-slow">history</span>
+                                            Pendaftaran Dibuka Dalam:
+                                        </div>
+                                        <span className="text-lg font-black tracking-widest mt-1">{formatCountdown(registrationTimeLeft)}</span>
                                     </div>
                                 ) : (
                                     <button
@@ -439,6 +527,14 @@ const EventDetailPage = () => {
                             <div className="w-full bg-gray-50 text-gray-400 py-3.5 rounded-xl font-bold text-xs uppercase tracking-widest flex items-center gap-3 justify-center border border-gray-100">
                                 <span className="material-icons text-lg">event_busy</span>
                                 Event Telah Selesai
+                            </div>
+                        ) : registrationTimeLeft?.total > 0 ? (
+                            <div className="w-full bg-amber-50 text-amber-700 py-4 rounded-2xl font-extrabold text-xs uppercase tracking-wider flex flex-col items-center justify-center gap-1 border border-amber-100 shadow-sm">
+                                <div className="flex items-center gap-2">
+                                    <span className="material-icons text-lg animate-spin-slow">history</span>
+                                    Daftar Dibuka Dalam:
+                                </div>
+                                <span className="text-base font-black tracking-widest">{formatCountdown(registrationTimeLeft)}</span>
                             </div>
                         ) : (
                             <button

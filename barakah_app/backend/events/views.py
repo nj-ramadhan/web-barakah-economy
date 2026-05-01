@@ -153,7 +153,12 @@ class EventViewSet(viewsets.ModelViewSet):
         self._auto_complete_expired_events()
         # Include both approved and completed events in the public list, filtering for public visibility
         now = timezone.now()
-        base_query = Event.objects.filter(status__in=['approved', 'completed', 'ongoing'], visibility='public')
+        base_query = Event.objects.filter(
+            status__in=['approved', 'completed', 'ongoing'], 
+            visibility='public'
+        ).filter(
+            Q(visible_at__isnull=True) | Q(visible_at__lte=now)
+        )
         
         # Sort logic:
         # 1. Upcoming/Ongoing events (start_date >= now or end_date >= now) sorted by start_date ASC
@@ -185,6 +190,20 @@ class EventViewSet(viewsets.ModelViewSet):
         """Authenticated registration for an event."""
         event = self.get_object()
         user = request.user
+        now = timezone.now()
+        
+        # Check if event is visible
+        if event.visible_at and now < event.visible_at:
+            return Response({
+                "error": "Event ini belum tersedia."
+            }, status=status.HTTP_403_FORBIDDEN)
+
+        # Check if registration is open
+        if event.registration_start_at and now < event.registration_start_at:
+            time_str = timezone.localtime(event.registration_start_at).strftime('%d %b %Y %H:%M')
+            return Response({
+                "error": f"Pendaftaran belum dibuka. Pendaftaran akan dibuka pada {time_str} WIB."
+            }, status=status.HTTP_400_BAD_REQUEST)
         
         # Check if already registered
         if EventRegistration.objects.filter(event=event, user=user).exists():
