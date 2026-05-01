@@ -340,7 +340,37 @@ const EventSubmissionPage = () => {
             }, 2000);
         } catch (err) {
             console.error(err);
-            setError(err.response?.data?.message || `Gagal ${isEdit ? 'memperbarui' : 'mengajukan'} event. Mohon cek kembali data Anda.`);
+            const errorData = err.response?.data;
+            let errorMessage = `Gagal ${isEdit ? 'memperbarui' : 'mengajukan'} event.`;
+            
+            const fieldLabels = {
+                title: 'Judul',
+                start_date: 'Waktu Mulai',
+                end_date: 'Waktu Selesai',
+                location: 'Lokasi',
+                description: 'Deskripsi',
+                short_description: 'Ringkasan',
+                organizer_name: 'Penyelenggara',
+                organizer_contact: 'Kontak',
+                form_fields: 'Field Pendaftaran',
+                capacity: 'Kapasitas',
+                price_fixed: 'Harga',
+                visible_at: 'Jadwal Visibilitas',
+                registration_start_at: 'Jadwal Pendaftaran'
+            };
+
+            if (errorData && typeof errorData === 'object') {
+                const details = Object.entries(errorData)
+                    .map(([key, val]) => {
+                        const label = fieldLabels[key] || key;
+                        return `${label}: ${Array.isArray(val) ? val.join(', ') : val}`;
+                    })
+                    .join(' | ');
+                if (details) errorMessage = details;
+            }
+            
+            setError(errorMessage);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         } finally {
             setLoading(false);
         }
@@ -380,9 +410,23 @@ const EventSubmissionPage = () => {
                     
                     <form onSubmit={handleSubmit} className="p-8 space-y-6">
                         {error && (
-                            <div className="bg-red-50 text-red-600 p-4 rounded-2xl text-sm font-medium flex items-center gap-3 border border-red-100">
-                                <span className="material-icons text-lg">error</span>
-                                {error}
+                            <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[1000] w-[90%] max-w-xl animate-bounce-in">
+                                <div className="bg-red-600 text-white p-5 rounded-[2rem] shadow-2xl shadow-red-900/40 flex items-start gap-4 border border-red-500/50 backdrop-blur-md">
+                                    <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center shrink-0">
+                                        <span className="material-icons text-xl">error_outline</span>
+                                    </div>
+                                    <div className="flex-1">
+                                        <h4 className="font-black text-sm uppercase tracking-widest mb-1">Terjadi Kesalahan</h4>
+                                        <p className="text-xs font-medium text-red-50 leading-relaxed">
+                                            {error.split(' | ').map((err, i) => (
+                                                <span key={i} className="block">• {err}</span>
+                                            ))}
+                                        </p>
+                                    </div>
+                                    <button onClick={() => setError(null)} className="w-8 h-8 hover:bg-white/10 rounded-full flex items-center justify-center transition">
+                                        <span className="material-icons text-sm">close</span>
+                                    </button>
+                                </div>
                             </div>
                         )}
 
