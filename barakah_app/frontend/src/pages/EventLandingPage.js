@@ -34,9 +34,8 @@ const EventLandingPage = () => {
     const [filteredEvents, setFilteredEvents] = useState([]);
     const [categories, setCategories] = useState([]);
     const [selectedCategory, setSelectedCategory] = useState('Semua');
-    const [selectedStatus, setSelectedStatus] = useState('Semua'); // 'Semua', 'Aktif', 'Selesai'
     const [isExpanded, setIsExpanded] = useState(false);
-    const CATEGORY_LIMIT = 6;
+    const CATEGORY_LIMIT = 1; // Show only 'Semua' initially
 
     useEffect(() => {
         const fetchEvents = async () => {
@@ -72,16 +71,9 @@ const EventLandingPage = () => {
         if (selectedCategory !== 'Semua') {
             result = result.filter(ev => ev.category === selectedCategory);
         }
-
-        if (selectedStatus !== 'Semua') {
-            result = result.filter(ev => {
-                const { isFinished } = getEventStatus(ev.start_date, ev.end_date);
-                return selectedStatus === 'Selesai' ? isFinished : !isFinished;
-            });
-        }
         
         setFilteredEvents(result);
-    }, [searchQuery, selectedCategory, selectedStatus, events]);
+    }, [searchQuery, selectedCategory, events]);
 
     const handleSearch = (query) => {
         setSearchQuery(query);
@@ -151,24 +143,6 @@ const EventLandingPage = () => {
                         )}
                     </div>
                 )}
-
-                {/* Status Filter Chips */}
-                <div className="mb-10 flex flex-wrap items-center gap-3 bg-gray-50/50 p-2 rounded-2xl border border-gray-100 w-fit">
-                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-2">Status:</span>
-                    {['Semua', 'Aktif', 'Selesai'].map((stat) => (
-                        <button
-                            key={stat}
-                            onClick={() => setSelectedStatus(stat)}
-                            className={`px-6 py-2 rounded-xl text-[10px] font-black transition-all duration-300 ${
-                                selectedStatus === stat
-                                    ? 'bg-gray-900 text-white shadow-lg scale-105'
-                                    : 'bg-transparent text-gray-500 hover:bg-white hover:text-gray-900'
-                            } uppercase tracking-widest`}
-                        >
-                            {stat}
-                        </button>
-                    ))}
-                </div>
 
                 {filteredEvents.length === 0 ? (
                     <div className="text-center py-20 bg-gray-50 rounded-3xl border border-dashed border-gray-200 text-gray-400">
