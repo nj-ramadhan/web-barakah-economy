@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Event, EventFormField, EventRegistration, EventRegistrationFile, EventDocumentationImage, EventCertificate
+from .models import Event, EventFormField, EventRegistration, EventRegistrationFile, EventDocumentationImage, EventGalleryImage, EventCertificate
 from accounts.serializers import UserAdminSerializer
 
 class EventFormFieldSerializer(serializers.ModelSerializer):
@@ -10,6 +10,11 @@ class EventFormFieldSerializer(serializers.ModelSerializer):
 class EventDocumentationImageSerializer(serializers.ModelSerializer):
     class Meta:
         model = EventDocumentationImage
+        fields = ['id', 'image', 'created_at']
+
+class EventGalleryImageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EventGalleryImage
         fields = ['id', 'image', 'created_at']
 
 from .models import EventSpeaker, EventSession, EventAttendance
@@ -57,6 +62,7 @@ class EventSerializer(serializers.ModelSerializer):
     created_by_details = UserAdminSerializer(source='created_by', read_only=True)
     form_fields = EventFormFieldSerializer(many=True, required=False)
     documentation_images = EventDocumentationImageSerializer(many=True, read_only=True)
+    gallery_images = EventGalleryImageSerializer(many=True, read_only=True)
     speakers = EventSpeakerSerializer(many=True, required=False)
     sessions = EventSessionSerializer(many=True, required=False)
     registration_count = serializers.SerializerMethodField()
@@ -131,6 +137,7 @@ class EventSerializer(serializers.ModelSerializer):
         
         request = self.context.get('request')
         doc_images = request.FILES.getlist('documentation_images_upload') if request else []
+        gallery_images = request.FILES.getlist('gallery_images_upload') if request else []
         
         event = Event.objects.create(**validated_data)
         
@@ -143,9 +150,12 @@ class EventSerializer(serializers.ModelSerializer):
         for ses in sessions_data:
             EventSession.objects.create(event=event, **ses)
             
-        from .models import EventDocumentationImage
+        from .models import EventDocumentationImage, EventGalleryImage
         for img in doc_images:
             EventDocumentationImage.objects.create(event=event, image=img)
+            
+        for img in gallery_images:
+            EventGalleryImage.objects.create(event=event, image=img)
             
         return event
 
@@ -206,9 +216,12 @@ class EventSerializer(serializers.ModelSerializer):
         request = self.context.get('request')
         if request:
             doc_images = request.FILES.getlist('documentation_images_upload')
-            from .models import EventDocumentationImage
+            gallery_images = request.FILES.getlist('gallery_images_upload')
+            from .models import EventDocumentationImage, EventGalleryImage
             for img in doc_images:
                 EventDocumentationImage.objects.create(event=instance, image=img)
+            for img in gallery_images:
+                EventGalleryImage.objects.create(event=instance, image=img)
         
         return instance
 

@@ -156,6 +156,22 @@ export const deleteDocumentationImage = (slug, imageId) => {
     });
 };
 
+export const addGalleryImages = (slug, formData) => {
+    return axios.post(`${API_BASE_URL}/api/events/${slug}/add_gallery_images/`, formData, {
+        headers: {
+            ...getAuthHeaders(),
+            'Content-Type': 'multipart/form-data',
+        }
+    });
+};
+
+export const deleteGalleryImage = (slug, imageId) => {
+    return axios.delete(`${API_BASE_URL}/api/events/${slug}/delete_gallery_image/`, {
+        data: { image_id: imageId },
+        headers: getAuthHeaders()
+    });
+};
+
 export const getCertificateSettings = (slug) => {
     return axios.get(`${API_BASE_URL}/api/events/${slug}/certificate_settings/`, {
         headers: getAuthHeaders()

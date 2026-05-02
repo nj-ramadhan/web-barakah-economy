@@ -107,12 +107,12 @@ const EventLandingPage = () => {
                 {/* Category Filter Chips */}
                 {categories.length > 1 && (
                     <div className="mb-8">
-                        <div className={`flex ${isExpanded ? 'flex-wrap' : 'overflow-x-auto no-scrollbar'} gap-2 -mx-4 px-4 pb-2 scroll-smooth transition-all duration-500`}>
+                        <div className="flex flex-wrap gap-2 transition-all duration-500 mb-4">
                             {(isExpanded ? categories : categories.slice(0, CATEGORY_LIMIT)).map((cat) => (
                                 <button
                                     key={cat}
                                     onClick={() => setSelectedCategory(cat)}
-                                    className={`px-5 py-2 rounded-full text-[10px] font-black whitespace-nowrap transition-all duration-300 border ${
+                                    className={`px-5 py-2 rounded-none text-[10px] font-black transition-all duration-300 border ${
                                         selectedCategory === cat
                                             ? 'bg-green-600 text-white border-green-600 shadow-md shadow-green-100 scale-105'
                                             : 'bg-white text-gray-600 border-gray-100 hover:border-green-200 hover:bg-green-50/50'
@@ -121,24 +121,26 @@ const EventLandingPage = () => {
                                     {cat}
                                 </button>
                             ))}
-                            
-                            {categories.length > CATEGORY_LIMIT && (
+                        </div>
+                        
+                        {categories.length > CATEGORY_LIMIT && (
+                            <div className="flex justify-center md:justify-start">
                                 <button
                                     onClick={() => setIsExpanded(!isExpanded)}
-                                    className={`px-5 py-2 rounded-full text-[10px] font-black whitespace-nowrap transition-all duration-300 flex items-center gap-1 ${
+                                    className={`px-8 py-2 rounded-none text-[10px] font-black transition-all duration-300 flex items-center gap-2 ${
                                         isExpanded 
                                             ? 'bg-gray-100 text-gray-800 border-gray-200' 
-                                            : 'bg-green-50 text-green-700 border-green-100 hover:bg-green-100'
-                                    } border uppercase tracking-widest`}
+                                            : 'bg-white text-green-700 border-green-600 hover:bg-green-50'
+                                    } border uppercase tracking-widest shadow-sm`}
                                 >
                                     {isExpanded ? (
-                                        <>SEMBUNYIKAN <span className="material-icons text-sm">expand_less</span></>
+                                        <>SEMBUNYIKAN KATEGORI <span className="material-icons text-sm">expand_less</span></>
                                     ) : (
-                                        <>{`LIHAT SEMUA (${categories.length})`} <span className="material-icons text-sm">expand_more</span></>
+                                        <>{`LIHAT SEMUA KATEGORI (${categories.length})`} <span className="material-icons text-sm">expand_more</span></>
                                     )}
                                 </button>
-                            )}
-                        </div>
+                            </div>
+                        )}
                     </div>
                 )}
 
@@ -149,7 +151,7 @@ const EventLandingPage = () => {
                         <p className="text-sm mt-1">Coba cari dengan kata kunci lain atau silakan kembali nanti untuk melihat update terbaru</p>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-8">
+                    <div className="grid grid-cols-1 gap-12 max-w-sm mx-auto">
                         {filteredEvents.map((ev) => {
                             const status = getEventStatus(ev.start_date, ev.end_date);
                             return (
@@ -158,7 +160,7 @@ const EventLandingPage = () => {
                                     to={`/event/${ev.slug}`}
                                     className="block group"
                                 >
-                                    <div className="event-poster-container aspect-[4/5] rounded-[2rem] shadow-xl border border-gray-100">
+                                    <div className="event-poster-container aspect-[4/5] rounded-none shadow-xl border border-gray-100">
                                         <img
                                             src={getMediaUrl(ev.header_image || ev.thumbnail)}
                                             alt={ev.title}
@@ -173,9 +175,9 @@ const EventLandingPage = () => {
                                             </div>
                                         )}
 
-                                        {/* Status Label (Top Right) */}
+                                        {/* Status Label (Bottom Right) */}
                                         {!status.isFinished && (
-                                            <div className="absolute top-4 right-4 z-10">
+                                            <div className="absolute bottom-4 right-4 z-10 group-hover:opacity-0 transition-opacity duration-300">
                                                 <div className={`${status.color} text-white text-[8px] font-black px-3 py-1 rounded-full shadow-lg uppercase tracking-widest backdrop-blur-sm bg-opacity-90`}>
                                                     {status.label}
                                                 </div>
@@ -184,9 +186,9 @@ const EventLandingPage = () => {
 
                                         {/* Category Label (Top Left) */}
                                         {ev.category && (
-                                            <div className="absolute top-4 left-4 z-10">
-                                                <div className="bg-black/40 backdrop-blur-md px-3 py-1 rounded-full border border-white/20">
-                                                    <p className="text-[8px] font-black text-white uppercase tracking-widest whitespace-nowrap">
+                                            <div className="absolute top-4 left-4 z-10 max-w-[80%]">
+                                                <div className="bg-black/40 backdrop-blur-md px-3 py-1 rounded-lg border border-white/20">
+                                                    <p className="text-[8px] font-black text-white uppercase tracking-widest whitespace-normal break-words leading-tight">
                                                         {ev.category}
                                                     </p>
                                                 </div>
@@ -202,15 +204,18 @@ const EventLandingPage = () => {
                                             </div>
                                         )}
 
-                                        {/* Title Gradient Overlay */}
-                                        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-6">
-                                            <h3 className="text-white font-black text-sm md:text-base leading-tight mb-2 uppercase tracking-tight">
+                                        {/* Cinema Info Overlay */}
+                                        <div className="cinema-info-overlay">
+                                            <h3 className="text-white font-black text-sm md:text-base leading-tight mb-1 uppercase tracking-tight line-clamp-1">
                                                 {ev.title}
                                             </h3>
-                                            <div className="flex items-center gap-2 text-white/70 text-[10px] font-bold">
-                                                <span className="material-icons text-[12px]">calendar_today</span>
-                                                {new Date(ev.start_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                            <div className="flex items-center gap-1.5 text-white/70 text-[10px] md:text-xs font-bold mb-1">
+                                                <span className="material-icons text-xs">calendar_today</span>
+                                                {new Date(ev.start_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
                                             </div>
+                                            <p className="text-white/60 text-[9px] md:text-xs line-clamp-2 leading-tight">
+                                                {ev.short_description || ev.description?.replace(/<[^>]*>?/gm, '').substring(0, 80)}
+                                            </p>
                                         </div>
                                     </div>
                                 </Link>

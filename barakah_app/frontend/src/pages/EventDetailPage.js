@@ -9,6 +9,12 @@ import authService from '../services/auth';
 import Footer from '../components/layout/Footer';
 import CurrencyInput from '../components/common/CurrencyInput';
 import { formatCurrency } from '../utils/formatters';
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { Navigation, Pagination, Autoplay, EffectFade } from 'swiper/modules';
+import 'swiper/css';
+import 'swiper/css/navigation';
+import 'swiper/css/pagination';
+import 'swiper/css/effect-fade';
 import '../styles/Body.css';
 
 const EventDetailPage = () => {
@@ -412,14 +418,44 @@ const EventDetailPage = () => {
                 </Link>
             </div>
             <div className="relative w-full max-w-6xl mx-auto sm:px-4">
-                {/* Image Container */}
-                <div className="relative h-auto sm:h-[500px] w-full overflow-hidden bg-gray-100 flex items-center justify-center sm:rounded-[3rem] shadow-2xl border border-gray-100">
-                    <img
-                        src={event.header_image || event.thumbnail || '/images/event-header-default.jpg'}
-                        alt={event.title}
-                        className="w-full h-auto sm:h-full sm:object-cover"
-                        onError={(e) => { e.target.onerror = null; e.target.src = '/images/event-header-default.jpg'; }}
-                    />
+                {/* Image Container with Carousel */}
+                <div className="relative h-auto sm:h-[500px] w-full overflow-hidden bg-gray-100 sm:rounded-none shadow-2xl border border-gray-100">
+                    <Swiper
+                        modules={[Navigation, Pagination, Autoplay, EffectFade]}
+                        effect="fade"
+                        navigation
+                        pagination={{ clickable: true }}
+                        autoplay={{ delay: 5000, disableOnInteraction: false }}
+                        className="h-full w-full"
+                    >
+                        {/* Combine all available images into the carousel */}
+                        {[
+                            event.header_image,
+                            event.thumbnail,
+                            ...(event.gallery_images?.map(img => img.image) || []),
+                            ...(event.documentation_images?.map(img => img.image) || [])
+                        ].filter(img => img).map((img, idx) => (
+                            <SwiperSlide key={idx} className="h-full w-full">
+                                <img
+                                    src={img}
+                                    alt={`${event.title} - ${idx + 1}`}
+                                    className="w-full h-auto sm:h-full sm:object-cover"
+                                    onError={(e) => { e.target.onerror = null; e.target.src = '/images/event-header-default.jpg'; }}
+                                />
+                            </SwiperSlide>
+                        ))}
+                        
+                        {/* Fallback if no images at all */}
+                        {![event.header_image, event.thumbnail, ...(event.gallery_images || []), ...(event.documentation_images || [])].some(i => i) && (
+                            <SwiperSlide>
+                                <img
+                                    src="/images/event-header-default.jpg"
+                                    alt={event.title}
+                                    className="w-full h-auto sm:h-full sm:object-cover"
+                                />
+                            </SwiperSlide>
+                        )}
+                    </Swiper>
                     {/* Desktop Overlay Gradient */}
                     <div className="hidden sm:block absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent"></div>
 

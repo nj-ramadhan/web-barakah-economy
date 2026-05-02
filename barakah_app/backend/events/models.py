@@ -153,6 +153,14 @@ class EventDocumentationImage(models.Model):
                 import logging
                 logging.getLogger(__name__).error(f"Error processing doc frame overlay: {str(e)}")
 
+class EventGalleryImage(models.Model):
+    event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name='gallery_images')
+    image = models.ImageField(upload_to='events/gallery/')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Gallery for {self.event.title}"
+
 class EventSpeaker(models.Model):
     event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name='speakers')
     name = models.CharField(max_length=255)

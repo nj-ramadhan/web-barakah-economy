@@ -799,6 +799,39 @@ class EventViewSet(viewsets.ModelViewSet):
         except EventDocumentationImage.DoesNotExist:
             return Response({"error": "Image not found"}, status=status.HTTP_404_NOT_FOUND)
 
+    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
+    def add_gallery_images(self, request, slug=None):
+        """Upload supporting gallery images."""
+        event = self.get_object()
+        if not request.user.is_staff and event.created_by != request.user:
+            return Response({"error": "Unauthorized"}, status=status.HTTP_403_FORBIDDEN)
+            
+        images = request.FILES.getlist('images')
+        if not images:
+            return Response({"error": "No images provided"}, status=status.HTTP_400_BAD_REQUEST)
+            
+        from .models import EventGalleryImage
+        for img in images:
+            EventGalleryImage.objects.create(event=event, image=img)
+            
+        return Response({"message": f"Successfully uploaded {len(images)} gallery images."})
+
+    @action(detail=True, methods=['delete'], permission_classes=[permissions.IsAuthenticated])
+    def delete_gallery_image(self, request, slug=None):
+        """Delete a gallery image."""
+        event = self.get_object()
+        if not request.user.is_staff and event.created_by != request.user:
+            return Response({"error": "Unauthorized"}, status=status.HTTP_403_FORBIDDEN)
+            
+        image_id = request.data.get('image_id')
+        from .models import EventGalleryImage
+        try:
+            img = EventGalleryImage.objects.get(id=image_id, event=event)
+            img.delete()
+            return Response({"message": "Gallery image deleted."})
+        except EventGalleryImage.DoesNotExist:
+            return Response({"error": "Image not found"}, status=status.HTTP_404_NOT_FOUND)
+
     @action(detail=True, methods=['post', 'get'], permission_classes=[permissions.IsAuthenticated])
     def certificate_settings(self, request, slug=None):
         """Manage certificate settings for an event."""
