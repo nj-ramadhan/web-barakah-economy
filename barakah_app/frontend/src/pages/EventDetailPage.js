@@ -515,7 +515,27 @@ const EventDetailPage = () => {
                         )}
                         <span className="px-3 py-1 bg-gray-100 rounded-full text-[8px] font-bold uppercase tracking-widest text-gray-500">{event.status}</span>
                     </div>
-                    <h1 className="text-2xl font-extrabold text-gray-900 leading-tight mb-6">{event.title}</h1>
+                    <h1 className="text-2xl font-extrabold text-gray-900 leading-tight mb-4">{event.title}</h1>
+                    
+                    {event.capacity > 0 && (
+                        <div className="mb-6 p-4 bg-blue-50 rounded-2xl border border-blue-100 flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-blue-600 shadow-sm border border-blue-100">
+                                    <span className="material-icons text-xl">event_seat</span>
+                                </div>
+                                <div>
+                                    <p className="text-[10px] font-bold text-blue-400 uppercase tracking-widest">Sisa Kuota</p>
+                                    <p className="text-sm font-black text-blue-900">{event.capacity - (event.registration_count || 0)} Slot <span className="text-[10px] text-blue-400 font-bold">/ {event.capacity}</span></p>
+                                </div>
+                            </div>
+                            <div className="h-2 w-24 bg-blue-200 rounded-full overflow-hidden">
+                                <div 
+                                    className="h-full bg-blue-600 rounded-full"
+                                    style={{ width: `${Math.min(100, ((event.registration_count || 0) / event.capacity) * 100)}%` }}
+                                ></div>
+                            </div>
+                        </div>
+                    )}
 
                     <div className="flex flex-col gap-3">
                         {event.user_registration ? (
@@ -535,6 +555,11 @@ const EventDetailPage = () => {
                                     Daftar Dibuka Dalam:
                                 </div>
                                 <span className="text-base font-black tracking-widest">{formatCountdown(registrationTimeLeft)}</span>
+                            </div>
+                        ) : (event.capacity > 0 && (event.registration_count || 0) >= event.capacity) ? (
+                            <div className="w-full bg-red-50 text-red-600 py-4 rounded-2xl font-extrabold text-xs uppercase tracking-widest flex items-center gap-3 justify-center border border-red-100 shadow-sm">
+                                <span className="material-icons text-lg">block</span>
+                                Kuota Penuh
                             </div>
                         ) : (
                             <button
@@ -1028,13 +1053,38 @@ const EventDetailPage = () => {
 
                         {/* Capacity Card */}
                         {event.capacity > 0 && (
-                            <div className="bg-white p-8 rounded-[2.5rem] shadow-xl border border-gray-100 flex items-center justify-between">
-                                <div>
-                                    <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-1">Kapasitas Maksimal</h3>
-                                    <p className="text-2xl font-extrabold text-gray-900">{event.capacity} <span className="text-sm font-bold text-gray-500">Kuota</span></p>
+                            <div className="bg-white p-8 rounded-[2.5rem] shadow-xl border border-gray-100 overflow-hidden relative group">
+                                <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/5 rounded-full -mr-8 -mt-8 transition-transform group-hover:scale-110"></div>
+                                
+                                <div className="flex items-center justify-between mb-6">
+                                    <div>
+                                        <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-1">Status Kuota</h3>
+                                        <p className="text-2xl font-black text-gray-900">
+                                            {event.capacity - (event.registration_count || 0)} 
+                                            <span className="text-xs font-bold text-gray-400 uppercase tracking-widest ml-2">Slot Tersisa</span>
+                                        </p>
+                                    </div>
+                                    <div className="w-14 h-14 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 shadow-inner">
+                                        <span className="material-icons text-2xl">event_seat</span>
+                                    </div>
                                 </div>
-                                <div className="w-14 h-14 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
-                                    <span className="material-icons text-2xl">event_seat</span>
+
+                                <div className="space-y-2">
+                                    <div className="flex justify-between text-[10px] font-black uppercase tracking-widest">
+                                        <span className="text-blue-600">{event.registration_count || 0} Terisi</span>
+                                        <span className="text-gray-400">{event.capacity} Total</span>
+                                    </div>
+                                    <div className="w-full h-3 bg-gray-100 rounded-full overflow-hidden p-0.5 border border-gray-50">
+                                        <div 
+                                            className="h-full bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full transition-all duration-1000 ease-out"
+                                            style={{ width: `${Math.min(100, ((event.registration_count || 0) / event.capacity) * 100)}%` }}
+                                        ></div>
+                                    </div>
+                                    { (event.capacity - (event.registration_count || 0) <= 10 && event.capacity - (event.registration_count || 0) > 0) && (
+                                        <p className="text-[10px] text-amber-600 font-bold italic animate-pulse">
+                                            ⚠️ Sisa sedikit lagi, buruan daftar!
+                                        </p>
+                                    )}
                                 </div>
                             </div>
                         )}
