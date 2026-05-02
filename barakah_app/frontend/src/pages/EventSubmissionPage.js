@@ -51,8 +51,10 @@ const EventSubmissionPage = () => {
         documentation_frame_1_1: null,
         attachment_file: null,
         documentation_images: [], // New images to upload
+        gallery_images: [], // Supporting photos for carousel
     });
     const [existingDocImages, setExistingDocImages] = useState([]); // Images already on server
+    const [existingGalleryImages, setExistingGalleryImages] = useState([]); // Existing gallery photos
     const [cropper, setCropper] = useState({ active: false, image: null, type: null });
 
     useEffect(() => {
@@ -121,6 +123,11 @@ const EventSubmissionPage = () => {
                     // Populate existing documentation images
                     if (d.documentation_images) {
                         setExistingDocImages(d.documentation_images);
+                    }
+
+                    // Populate existing gallery images
+                    if (d.gallery_images) {
+                        setExistingGalleryImages(d.gallery_images);
                     }
                 } catch (err) {
                     setError('Gagal memuat detail event untuk diedit.');
@@ -252,8 +259,6 @@ const EventSubmissionPage = () => {
 
     const removeDocImage = (index, isExisting = false, imageId = null) => {
         if (isExisting) {
-            // If it's an existing image, we might want to delete it from server immediately 
-            // or mark it for deletion. For simplicity, let's just use the API if we have imageId.
             if (window.confirm('Hapus foto dokumentasi ini?')) {
                 const { deleteDocumentationImage } = require('../services/eventApi');
                 deleteDocumentationImage(slug, imageId).then(() => {
@@ -264,6 +269,41 @@ const EventSubmissionPage = () => {
             setFiles(prev => ({
                 ...prev,
                 documentation_images: prev.documentation_images.filter((_, i) => i !== index)
+            }));
+        }
+    };
+
+    const handleGalleryImageUpload = async (e) => {
+        const uploadedFiles = Array.from(e.target.files);
+        setLoading(true);
+        try {
+            const compressedFiles = await Promise.all(
+                uploadedFiles.map(file => compressImage(file))
+            );
+            setFiles(prev => ({ 
+                ...prev, 
+                gallery_images: [...prev.gallery_images, ...compressedFiles] 
+            }));
+        } catch (err) {
+            console.error("Gallery compression failed:", err);
+            setError("Gagal memproses beberapa foto pendukung.");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const removeGalleryImage = (index, isExisting = false, imageId = null) => {
+        if (isExisting) {
+            if (window.confirm('Hapus foto pendukung ini?')) {
+                const { deleteGalleryImage } = require('../services/eventApi');
+                deleteGalleryImage(slug, imageId).then(() => {
+                    setExistingGalleryImages(prev => prev.filter(img => img.id !== imageId));
+                });
+            }
+        } else {
+            setFiles(prev => ({
+                ...prev,
+                gallery_images: prev.gallery_images.filter((_, i) => i !== index)
             }));
         }
     };
@@ -325,6 +365,13 @@ const EventSubmissionPage = () => {
         if (files.documentation_images.length > 0) {
             files.documentation_images.forEach(img => {
                 data.append('documentation_images_upload', img);
+            });
+        }
+
+        // Append gallery images if any
+        if (files.gallery_images.length > 0) {
+            files.gallery_images.forEach(img => {
+                data.append('gallery_images_upload', img);
             });
         }
 
@@ -689,6 +736,56 @@ const EventSubmissionPage = () => {
                                         />
                                         <label htmlFor="thumb-upload" className="w-full text-center py-4 bg-green-50 text-green-700 rounded-2xl text-xs font-black cursor-pointer hover:bg-green-100 transition shadow-sm border border-green-100 uppercase tracking-widest">PILIH & POTONG FOTO POSTER</label>
                                     </div>
+                                </div>
+
+                                <div className="space-y-1.5 md:col-span-2 mt-4">
+                                    <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Foto Galeri Pendukung (Akan jadi Carousel di Detail)</label>
+                                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                                        {/* Existing Gallery Images */}
+                                        {existingGalleryImages.map((img) => (
+                                            <div key={img.id} className="relative aspect-video rounded-xl overflow-hidden border border-gray-100 shadow-sm group">
+                                                <img 
+                                                    src={img.image} 
+                                                    className="w-full h-full object-cover cursor-pointer" 
+                                                    alt="Gallery" 
+                                                    onClick={() => openPreview(img.image)}
+                                                />
+                                                <button 
+                                                    type="button" 
+                                                    onClick={(e) => { e.stopPropagation(); removeGalleryImage(null, true, img.id); }}
+                                                    className="absolute top-1 right-1 w-6 h-6 bg-red-600/80 text-white rounded-full opacity-0 group-hover:opacity-100 transition flex items-center justify-center shadow-lg"
+                                                >
+                                                    <span className="material-icons text-xs">delete</span>
+                                                </button>
+                                            </div>
+                                        ))}
+                                        
+                                        {/* New Gallery Uploads */}
+                                        {files.gallery_images.map((img, idx) => (
+                                            <div key={idx} className="relative aspect-video rounded-xl overflow-hidden border border-green-100 shadow-sm group">
+                                                <img 
+                                                    src={URL.createObjectURL(img)} 
+                                                    className="w-full h-full object-cover cursor-pointer" 
+                                                    alt="New Gallery" 
+                                                    onClick={() => openPreview(img)}
+                                                />
+                                                <button 
+                                                    type="button" 
+                                                    onClick={(e) => { e.stopPropagation(); removeGalleryImage(idx, false); }}
+                                                    className="absolute top-1 right-1 bg-red-500/80 text-white rounded-full w-6 h-6 shadow-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition"
+                                                >
+                                                    <span className="material-icons text-xs">close</span>
+                                                </button>
+                                            </div>
+                                        ))}
+                                        
+                                        <label className="aspect-video rounded-xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center cursor-pointer hover:border-green-500 hover:bg-green-50 text-gray-400 hover:text-green-600 transition-all">
+                                            <span className="material-icons text-2xl">add_photo_alternate</span>
+                                            <span className="text-[9px] font-black mt-1 uppercase tracking-widest">TAMBAH FOTO</span>
+                                            <input type="file" accept="image/*" className="hidden" onChange={handleGalleryImageUpload} multiple />
+                                        </label>
+                                    </div>
+                                    <p className="text-[10px] text-gray-400 ml-1 italic mt-2">Gambar-gambar ini akan muncul sebagai slide (carousel) di bagian atas halaman detail event.</p>
                                 </div>
                                 <div className="space-y-1.5">
                                     <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Nama Penyelenggara *</label>
