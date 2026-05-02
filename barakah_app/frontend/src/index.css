@@ -77,3 +77,24 @@ body {
 .animate-fade-in {
   animation: fade-in 0.3s ease-out forwards;
 }
+
+/* Event Cinema Style */
+.event-finished-overlay {
+  @apply absolute inset-0 bg-gray-900/60 backdrop-blur-[2px] flex items-center justify-center z-20;
+}
+
+.event-finished-text {
+  @apply text-white font-black text-xl tracking-widest uppercase border-2 border-white/50 px-4 py-1 rounded-sm rotate-[-15deg] shadow-2xl;
+}
+
+.event-poster-container {
+  @apply relative overflow-hidden transition-all duration-500;
+}
+
+.event-poster-image {
+  @apply w-full h-full object-cover transition-transform duration-700;
+}
+
+.event-poster-container:hover .event-poster-image {
+  @apply scale-110;
+}

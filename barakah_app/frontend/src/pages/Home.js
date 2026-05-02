@@ -64,6 +64,13 @@ const getMediaUrl = (url) => {
   return `${process.env.REACT_APP_API_BASE_URL}${url}`;
 };
 
+const getEventStatus = (startStr, endStr) => {
+  const now = new Date();
+  const start = new Date(startStr);
+  const end = endStr ? new Date(endStr) : new Date(start.getTime() + 4 * 60 * 60 * 1000);
+  return { isFinished: now > end };
+};
+
 const getButtonLabel = (title = '') => {
   const lowerTitle = title.toLowerCase();
   if (lowerTitle.includes('infak')) return 'INFAK SEKARANG';
@@ -788,42 +795,44 @@ const Home = () => {
           </div>
           <Swiper
             spaceBetween={12}
-            slidesPerView={1.2}
+            slidesPerView={2.5}
             navigation
             modules={[Navigation, Autoplay]}
             autoplay={{ delay: 5000, disableOnInteraction: false }}
           >
-            {events.filter(e => e.visibility === 'public').slice(0, 5).map((event) => (
-              <SwiperSlide key={event.id}>
-                <Link to={`/event/${event.slug || event.id}`} className="block bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100">
-                  <div className="relative h-40">
-                    <img
-                      src={getMediaUrl(event.thumbnail || event.header_image) || '/placeholder-image.jpg'}
-                      alt={event.title}
-                      className="w-full h-full object-cover"
-                      onError={(e) => { e.target.src = 'https://placehold.co/600x400?text=Barakah+Event'; }}
-                    />
-                    <div className="absolute top-2 left-2 bg-indigo-600 text-white px-2 py-0.5 rounded-full text-[10px] font-bold">
-                      EVENT
-                    </div>
-                  </div>
-                  <div className="p-3">
-                    <h3 className="font-bold text-sm text-gray-900 line-clamp-2 mb-1">{event.title}</h3>
-                    <div className="flex items-center gap-1 text-gray-500 text-[10px]">
-                      <span className="material-icons text-[12px]">calendar_today</span>
-                      {new Date(event.start_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
-                      {event.location && (
-                        <span className="flex items-center gap-1">
-                          <span className="mx-1">•</span>
-                          <span className="material-icons text-[12px]">location_on</span>
-                          <span className="line-clamp-1">{event.location}</span>
-                        </span>
+            {events.filter(e => e.visibility === 'public').slice(0, 5).map((event) => {
+              const { isFinished } = getEventStatus(event.start_date, event.end_date);
+              return (
+                <SwiperSlide key={event.id}>
+                  <Link to={`/event/${event.slug || event.id}`} className="block group">
+                    <div className="event-poster-container aspect-[4/5] rounded-2xl shadow-lg">
+                      <img
+                        src={getMediaUrl(event.thumbnail || event.header_image) || '/placeholder-image.jpg'}
+                        alt={event.title}
+                        className="event-poster-image"
+                        onError={(e) => { e.target.src = 'https://placehold.co/600x400?text=Barakah+Event'; }}
+                      />
+                      
+                      {/* Finished Overlay */}
+                      {isFinished && (
+                        <div className="event-finished-overlay">
+                          <div className="event-finished-text">Selesai</div>
+                        </div>
                       )}
+
+                      {/* Poster Info Overlay (Gradient) */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-3">
+                         <h3 className="text-white font-bold text-xs line-clamp-2">{event.title}</h3>
+                      </div>
+
+                      <div className="absolute top-2 left-2 bg-indigo-600/90 backdrop-blur-sm text-white px-2 py-0.5 rounded-full text-[8px] font-black tracking-widest uppercase">
+                        EVENT
+                      </div>
                     </div>
-                  </div>
-                </Link>
-              </SwiperSlide>
-            ))}
+                  </Link>
+                </SwiperSlide>
+              );
+            })}
           </Swiper>
         </div>
       )}

@@ -14,15 +14,16 @@ const getMediaUrl = (url) => {
 const getEventStatus = (startStr, endStr) => {
     const now = new Date();
     const start = new Date(startStr);
-    // Use end_date if available, otherwise assume 4 hours duration
     const end = endStr ? new Date(endStr) : new Date(start.getTime() + 4 * 60 * 60 * 1000);
 
+    const isFinished = now > end;
+    
     if (now < start) {
-        return { label: 'Akan Datang', color: 'bg-blue-600' };
+        return { label: 'Akan Datang', color: 'bg-blue-600', isFinished };
     } else if (now >= start && now <= end) {
-        return { label: 'Berlangsung', color: 'bg-green-600' };
+        return { label: 'Berlangsung', color: 'bg-green-600', isFinished };
     } else {
-        return { label: 'Selesai', color: 'bg-gray-500' };
+        return { label: 'Selesai', color: 'bg-gray-500', isFinished };
     }
 };
 
@@ -111,29 +112,29 @@ const EventLandingPage = () => {
                                 <button
                                     key={cat}
                                     onClick={() => setSelectedCategory(cat)}
-                                    className={`px-5 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all duration-300 border ${
+                                    className={`px-5 py-2 rounded-full text-[10px] font-black whitespace-nowrap transition-all duration-300 border ${
                                         selectedCategory === cat
                                             ? 'bg-green-600 text-white border-green-600 shadow-md shadow-green-100 scale-105'
                                             : 'bg-white text-gray-600 border-gray-100 hover:border-green-200 hover:bg-green-50/50'
-                                    }`}
+                                    } uppercase tracking-widest`}
                                 >
-                                    {cat.toUpperCase()}
+                                    {cat}
                                 </button>
                             ))}
                             
                             {categories.length > CATEGORY_LIMIT && (
                                 <button
                                     onClick={() => setIsExpanded(!isExpanded)}
-                                    className={`px-5 py-2 rounded-full text-xs font-black whitespace-nowrap transition-all duration-300 flex items-center gap-1 ${
+                                    className={`px-5 py-2 rounded-full text-[10px] font-black whitespace-nowrap transition-all duration-300 flex items-center gap-1 ${
                                         isExpanded 
                                             ? 'bg-gray-100 text-gray-800 border-gray-200' 
                                             : 'bg-green-50 text-green-700 border-green-100 hover:bg-green-100'
-                                    } border`}
+                                    } border uppercase tracking-widest`}
                                 >
                                     {isExpanded ? (
                                         <>SEMBUNYIKAN <span className="material-icons text-sm">expand_less</span></>
                                     ) : (
-                                        <>{`+${categories.length - CATEGORY_LIMIT} LAINNYA`} <span className="material-icons text-sm">expand_more</span></>
+                                        <>{`LIHAT SEMUA (${categories.length})`} <span className="material-icons text-sm">expand_more</span></>
                                     )}
                                 </button>
                             )}
@@ -148,90 +149,73 @@ const EventLandingPage = () => {
                         <p className="text-sm mt-1">Coba cari dengan kata kunci lain atau silakan kembali nanti untuk melihat update terbaru</p>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        {filteredEvents.map((ev) => (
-                            <Link
-                                key={ev.id}
-                                to={`/event/${ev.slug}`}
-                                className="bg-white rounded-3xl overflow-hidden shadow-sm border border-gray-100 hover:shadow-xl transition group flex flex-col h-full"
-                            >
-                                <div className="h-56 relative overflow-hidden">
-                                    {/* Diagonal Status Stamp */}
-                                    {(() => {
-                                        const status = getEventStatus(ev.start_date, ev.end_date);
-                                        return (
-                                            <div className="absolute top-0 left-0 overflow-hidden w-28 h-28 pointer-events-none z-10">
-                                                <div className={`absolute top-6 left-[-45px] -rotate-45 ${status.color} text-white text-[8px] font-black py-1 w-44 text-center shadow-lg uppercase tracking-tight`}>
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-8">
+                        {filteredEvents.map((ev) => {
+                            const status = getEventStatus(ev.start_date, ev.end_date);
+                            return (
+                                <Link
+                                    key={ev.id}
+                                    to={`/event/${ev.slug}`}
+                                    className="block group"
+                                >
+                                    <div className="event-poster-container aspect-[4/5] rounded-[2rem] shadow-xl border border-gray-100">
+                                        <img
+                                            src={getMediaUrl(ev.header_image || ev.thumbnail)}
+                                            alt={ev.title}
+                                            className="event-poster-image"
+                                            onError={(e) => { e.target.src = '/placeholder-image.jpg'; }}
+                                        />
+                                        
+                                        {/* Finished Overlay */}
+                                        {status.isFinished && (
+                                            <div className="event-finished-overlay">
+                                                <div className="event-finished-text">Selesai</div>
+                                            </div>
+                                        )}
+
+                                        {/* Status Label (Top Right) */}
+                                        {!status.isFinished && (
+                                            <div className="absolute top-4 right-4 z-10">
+                                                <div className={`${status.color} text-white text-[8px] font-black px-3 py-1 rounded-full shadow-lg uppercase tracking-widest backdrop-blur-sm bg-opacity-90`}>
                                                     {status.label}
                                                 </div>
                                             </div>
-                                        );
-                                    })()}
-                                    <img
-                                        src={getMediaUrl(ev.header_image || ev.thumbnail)}
-                                        alt={ev.title}
-                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                                        onError={(e) => { e.target.src = '/placeholder-image.jpg'; }}
-                                    />
-                                    
-                                    {/* Category Label (Top Center) */}
-                                    {ev.category && (
-                                        <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-black/60 backdrop-blur-md px-4 py-1 rounded-full border border-white/20 z-10">
-                                            <p className="text-[10px] font-black text-white uppercase tracking-widest whitespace-nowrap">
-                                                {ev.category}
-                                            </p>
-                                        </div>
-                                    )}
+                                        )}
 
-                                    {/* Certificate Badge (Bottom Center) */}
-                                    {ev.has_certificate && (
-                                        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-amber-500/90 backdrop-blur-sm px-3 py-1 rounded-lg shadow-lg flex items-center gap-1 z-10 border border-amber-400">
-                                            <span className="material-icons text-[10px] text-white">verified</span>
-                                            <p className="text-[9px] font-black text-white uppercase tracking-tighter whitespace-nowrap">
-                                                Sertifikat Tersedia
-                                            </p>
-                                        </div>
-                                    )}
-
-                                    <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full shadow-sm">
-                                        <p className="text-xs font-bold text-green-700">
-                                            {ev.is_featured ? '⭐ UNGGULAN' : 'EVENT'}
-                                        </p>
-                                    </div>
-                                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <div className="flex items-center gap-2 text-white/90 text-xs font-medium">
-                                            <span className="material-icons text-sm">location_on</span>
-                                            {ev.location}
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="p-6 flex flex-col flex-1">
-                                    <h3 className="font-bold text-gray-900 text-xl group-hover:text-green-700 transition-colors line-clamp-2 mb-3">
-                                        {ev.title}
-                                    </h3>
-                                    <div className="flex items-center justify-between mb-4 flex-1">
-                                        <p className="text-gray-500 text-sm line-clamp-2">
-                                            {ev.short_description || ev.description?.replace(/<[^>]*>?/gm, '').substring(0, 100)}...
-                                        </p>
-                                        <div className="flex items-center gap-1 opacity-40 ml-2">
-                                            <span className="material-icons text-[14px]">visibility</span>
-                                            <span className="text-[10px] font-bold">{ev.view_count || 0}</span>
-                                        </div>
-                                    </div>
-                                    <div className="flex items-center justify-between mt-auto pt-4 border-t border-gray-50">
-                                        <div className="flex items-center gap-2 text-xs font-bold text-gray-700">
-                                            <div className="w-8 h-8 bg-green-50 rounded-full flex items-center justify-center text-green-700">
-                                                <span className="material-icons text-xs">calendar_today</span>
+                                        {/* Category Label (Top Left) */}
+                                        {ev.category && (
+                                            <div className="absolute top-4 left-4 z-10">
+                                                <div className="bg-black/40 backdrop-blur-md px-3 py-1 rounded-full border border-white/20">
+                                                    <p className="text-[8px] font-black text-white uppercase tracking-widest whitespace-nowrap">
+                                                        {ev.category}
+                                                    </p>
+                                                </div>
                                             </div>
-                                            {new Date(ev.start_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
+                                        )}
+
+                                        {/* Certificate Badge */}
+                                        {ev.has_certificate && (
+                                            <div className="absolute bottom-4 left-4 z-10">
+                                                <div className="bg-amber-500/90 backdrop-blur-sm p-1.5 rounded-full shadow-lg border border-amber-400">
+                                                    <span className="material-icons text-[12px] text-white block">verified</span>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* Title Gradient Overlay */}
+                                        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-6">
+                                            <h3 className="text-white font-black text-sm md:text-base leading-tight mb-2 uppercase tracking-tight">
+                                                {ev.title}
+                                            </h3>
+                                            <div className="flex items-center gap-2 text-white/70 text-[10px] font-bold">
+                                                <span className="material-icons text-[12px]">calendar_today</span>
+                                                {new Date(ev.start_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                            </div>
                                         </div>
-                                        <span className="text-green-700 text-xs font-bold group-hover:translate-x-1 transition-transform flex items-center gap-1">
-                                            LIHAT DETAIL <span className="material-icons text-sm">arrow_forward</span>
-                                        </span>
                                     </div>
-                                </div>
-                            </Link>
-                        ))}
+                                </Link>
+                            );
+                        })}
                     </div>
                 )}
             </div>
