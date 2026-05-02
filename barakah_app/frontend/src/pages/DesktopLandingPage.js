@@ -410,58 +410,59 @@ const DesktopLandingPage = () => {
                                 </Link>
                             </div>
                             <Swiper
-                                spaceBetween={24}
-                                slidesPerView={4}
+                                spaceBetween={20}
+                                slidesPerView={5}
                                 navigation
                                 pagination={{ clickable: true }}
                                 autoplay={{ delay: 5000, disableOnInteraction: false }}
                                 modules={[Navigation, Pagination, Autoplay]}
                                 breakpoints={{
-                                    320: { slidesPerView: 1 },
-                                    640: { slidesPerView: 2 },
+                                    768: { slidesPerView: 3 },
                                     1024: { slidesPerView: 4 },
+                                    1280: { slidesPerView: 5 },
                                 }}
                             >
                                 {events.filter(e => e.visibility === 'public').slice(0, 10).map((event) => {
                                     const status = getEventStatus(event.start_date, event.end_date);
                                     return (
                                         <SwiperSlide key={event.id}>
-                                            <div className="bg-white rounded-2xl overflow-hidden shadow-md border border-gray-100 hover:shadow-xl transition group">
-                                                <Link to={`/event/${event.slug || event.id}`}>
-                                                    <div className="relative h-48 overflow-hidden">
-                                                        <img
-                                                            src={getMediaUrl(event.thumbnail || event.header_image) || '/placeholder-image.jpg'}
-                                                            alt={event.title}
-                                                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                                                            onError={(e) => { e.target.src = 'https://placehold.co/600x400?text=Barakah+Event'; }}
-                                                        />
-                                                        {status.isFinished && (
-                                                            <div className="absolute inset-0 bg-gray-900/60 flex items-center justify-center">
-                                                                <span className="text-white font-bold text-sm uppercase tracking-widest border-2 border-white/50 px-3 py-1 rounded rotate-[-10deg]">Selesai</span>
-                                                            </div>
-                                                        )}
-                                                        <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-2.5 py-1 rounded-lg shadow-sm">
-                                                            <p className="text-[10px] font-bold text-green-700">
-                                                                {new Date(event.start_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
-                                                            </p>
+                                            <Link to={`/event/${event.slug || event.id}`} className="block group">
+                                                <div className="relative aspect-[4/5] rounded-2xl overflow-hidden shadow-md border border-gray-100 group-hover:shadow-xl transition">
+                                                    <img
+                                                        src={getMediaUrl(event.thumbnail || event.header_image) || '/placeholder-image.jpg'}
+                                                        alt={event.title}
+                                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                                        onError={(e) => { e.target.src = 'https://placehold.co/600x400?text=Barakah+Event'; }}
+                                                    />
+                                                    {/* Finished Overlay */}
+                                                    {status.isFinished && (
+                                                        <div className="absolute inset-0 bg-gray-900/60 flex items-center justify-center">
+                                                            <span className="text-white font-bold text-sm uppercase tracking-widest border-2 border-white/50 px-3 py-1 rounded rotate-[-10deg]">Selesai</span>
                                                         </div>
-                                                        {!status.isFinished && (
-                                                            <div className="absolute top-3 right-3">
-                                                                <span className={`${status.color} text-white text-[9px] font-bold px-2.5 py-1 rounded-lg uppercase tracking-wider`}>
-                                                                    {status.label}
-                                                                </span>
-                                                            </div>
-                                                        )}
+                                                    )}
+                                                    {/* Date Badge */}
+                                                    <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-2.5 py-1 rounded-lg shadow-sm">
+                                                        <p className="text-[10px] font-bold text-green-700">
+                                                            {new Date(event.start_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
+                                                        </p>
                                                     </div>
-                                                </Link>
-                                                <div className="p-4">
-                                                    <h3 className="font-bold text-gray-900 text-sm mb-1 line-clamp-2 min-h-[40px]">{event.title}</h3>
-                                                    <div className="flex items-center gap-1 text-gray-400 text-xs">
-                                                        <span className="material-icons text-[14px]">location_on</span>
-                                                        <span className="line-clamp-1">{event.location || 'Online'}</span>
+                                                    {/* Status Badge */}
+                                                    {!status.isFinished && (
+                                                        <div className="absolute top-3 right-3">
+                                                            <span className={`${status.color} text-white text-[9px] font-bold px-2.5 py-1 rounded-lg uppercase tracking-wider`}>
+                                                                {status.label}
+                                                            </span>
+                                                        </div>
+                                                    )}
+                                                    {/* Bottom Gradient Overlay with Title & Description */}
+                                                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-4 pt-16">
+                                                        <h3 className="text-white font-bold text-sm leading-tight line-clamp-1 mb-1">{event.title}</h3>
+                                                        <p className="text-white/70 text-[10px] line-clamp-2 leading-tight">
+                                                            {event.short_description || event.description?.replace(/<[^>]*>?/gm, '').substring(0, 80)}
+                                                        </p>
                                                     </div>
                                                 </div>
-                                            </div>
+                                            </Link>
                                         </SwiperSlide>
                                     );
                                 })}

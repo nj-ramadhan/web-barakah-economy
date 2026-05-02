@@ -418,8 +418,8 @@ const EventDetailPage = () => {
                 </Link>
             </div>
             <div className="relative w-full max-w-6xl mx-auto sm:px-4">
-                {/* Image Container with Carousel */}
-                <div className="relative h-auto min-h-[300px] sm:min-h-[500px] w-full overflow-hidden bg-gray-900 rounded-3xl shadow-2xl border border-white/10">
+                {/* Image Container with Carousel - Square 1:1 */}
+                <div className="relative aspect-square w-full overflow-hidden bg-gray-900 rounded-3xl shadow-2xl border border-white/10">
                     <Swiper
                         modules={[Navigation, Pagination, Autoplay, EffectFade]}
                         effect="fade"

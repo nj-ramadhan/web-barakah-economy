@@ -804,8 +804,8 @@ const Home = () => {
               const { isFinished } = getEventStatus(event.start_date, event.end_date);
               return (
                 <SwiperSlide key={event.id}>
-                  <Link to={`/event/${event.slug || event.id}`} className="block bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100">
-                    <div className="relative h-32">
+                  <Link to={`/event/${event.slug || event.id}`} className="block group">
+                    <div className="relative aspect-[4/5] rounded-xl overflow-hidden shadow-sm border border-gray-100">
                       <img
                         src={getMediaUrl(event.thumbnail || event.header_image) || '/placeholder-image.jpg'}
                         alt={event.title}
@@ -824,9 +824,13 @@ const Home = () => {
                           {new Date(event.start_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
                         </p>
                       </div>
-                    </div>
-                    <div className="p-3">
-                      <h3 className="font-semibold text-sm text-gray-900 line-clamp-2">{event.title}</h3>
+                      {/* Bottom Gradient Overlay with Title & Description */}
+                      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-3 pt-10">
+                        <h3 className="text-white font-bold text-sm leading-tight line-clamp-1 mb-0.5">{event.title}</h3>
+                        <p className="text-white/70 text-[10px] line-clamp-2 leading-tight">
+                          {event.short_description || event.description?.replace(/<[^>]*>?/gm, '').substring(0, 80)}
+                        </p>
+                      </div>
                     </div>
                   </Link>
                 </SwiperSlide>

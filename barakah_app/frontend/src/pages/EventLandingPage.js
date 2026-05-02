@@ -151,7 +151,7 @@ const EventLandingPage = () => {
                         <p className="text-sm mt-1">Coba cari dengan kata kunci lain atau silakan kembali nanti untuk melihat update terbaru</p>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
                         {filteredEvents.map((ev) => {
                             const status = getEventStatus(ev.start_date, ev.end_date);
                             return (
@@ -160,46 +160,49 @@ const EventLandingPage = () => {
                                     to={`/event/${ev.slug}`}
                                     className="block group"
                                 >
-                                    <div className="bg-white rounded-2xl overflow-hidden shadow-md border border-gray-100 hover:shadow-xl transition">
-                                        <div className="relative h-48 overflow-hidden">
-                                            <img
-                                                src={getMediaUrl(ev.header_image || ev.thumbnail)}
-                                                alt={ev.title}
-                                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                                                onError={(e) => { e.target.src = '/placeholder-image.jpg'; }}
-                                            />
-                                            {status.isFinished && (
-                                                <div className="absolute inset-0 bg-gray-900/60 flex items-center justify-center">
-                                                    <span className="text-white font-bold text-sm uppercase tracking-widest border-2 border-white/50 px-3 py-1 rounded rotate-[-10deg]">Selesai</span>
-                                                </div>
-                                            )}
-                                            <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-2.5 py-1 rounded-lg shadow-sm">
-                                                <p className="text-[10px] font-bold text-green-700">
-                                                    {new Date(ev.start_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
-                                                </p>
+                                    <div className="relative aspect-[4/5] rounded-2xl overflow-hidden shadow-md border border-gray-100 group-hover:shadow-xl transition">
+                                        <img
+                                            src={getMediaUrl(ev.header_image || ev.thumbnail)}
+                                            alt={ev.title}
+                                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                            onError={(e) => { e.target.src = '/placeholder-image.jpg'; }}
+                                        />
+                                        {/* Finished Overlay */}
+                                        {status.isFinished && (
+                                            <div className="absolute inset-0 bg-gray-900/60 flex items-center justify-center">
+                                                <span className="text-white font-bold text-sm uppercase tracking-widest border-2 border-white/50 px-3 py-1 rounded rotate-[-10deg]">Selesai</span>
                                             </div>
-                                            {!status.isFinished && (
-                                                <div className="absolute top-3 right-3">
-                                                    <span className={`${status.color} text-white text-[9px] font-bold px-2.5 py-1 rounded-lg uppercase tracking-wider`}>
-                                                        {status.label}
-                                                    </span>
-                                                </div>
-                                            )}
-                                            {ev.has_certificate && (
-                                                <div className="absolute bottom-3 right-3">
-                                                    <div className="bg-amber-500/90 backdrop-blur-sm p-1.5 rounded-full shadow-lg border border-amber-400">
-                                                        <span className="material-icons text-[12px] text-white block">verified</span>
-                                                    </div>
-                                                </div>
-                                            )}
+                                        )}
+                                        {/* Date Badge */}
+                                        <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-2.5 py-1 rounded-lg shadow-sm">
+                                            <p className="text-[10px] font-bold text-green-700">
+                                                {new Date(ev.start_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
+                                            </p>
                                         </div>
-                                        <div className="p-4">
+                                        {/* Status Badge */}
+                                        {!status.isFinished && (
+                                            <div className="absolute top-3 right-3">
+                                                <span className={`${status.color} text-white text-[9px] font-bold px-2.5 py-1 rounded-lg uppercase tracking-wider`}>
+                                                    {status.label}
+                                                </span>
+                                            </div>
+                                        )}
+                                        {/* Certificate Badge */}
+                                        {ev.has_certificate && (
+                                            <div className="absolute top-3 right-3 mt-7">
+                                                <div className="bg-amber-500/90 backdrop-blur-sm p-1.5 rounded-full shadow-lg border border-amber-400">
+                                                    <span className="material-icons text-[12px] text-white block">verified</span>
+                                                </div>
+                                            </div>
+                                        )}
+                                        {/* Bottom Gradient Overlay */}
+                                        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-3 md:p-4 pt-12 md:pt-16">
                                             {ev.category && (
-                                                <span className="inline-block text-[10px] bg-green-50 text-green-700 px-2.5 py-0.5 rounded-full mb-2 font-semibold">{ev.category}</span>
+                                                <span className="inline-block text-[8px] bg-white/20 backdrop-blur-sm text-white px-2 py-0.5 rounded-full mb-1.5 font-bold uppercase tracking-wider">{ev.category}</span>
                                             )}
-                                            <h3 className="font-bold text-gray-900 text-sm mb-1 line-clamp-2 min-h-[40px]">{ev.title}</h3>
-                                            <div className="flex items-center gap-1 text-gray-400 text-xs">
-                                                <span className="material-icons text-[14px]">location_on</span>
+                                            <h3 className="text-white font-bold text-xs md:text-sm leading-tight line-clamp-2 mb-0.5">{ev.title}</h3>
+                                            <div className="flex items-center gap-1 text-white/60 text-[10px]">
+                                                <span className="material-icons text-[12px]">location_on</span>
                                                 <span className="line-clamp-1">{ev.location || 'Online'}</span>
                                             </div>
                                         </div>
