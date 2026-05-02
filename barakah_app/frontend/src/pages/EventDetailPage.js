@@ -480,7 +480,6 @@ const EventDetailPage = () => {
                                 <h1 className="text-2xl sm:text-4xl font-extrabold leading-tight drop-shadow-lg">{event.title}</h1>
                                 </div>
                             </div>
-                        </div>
                     </div>
                 </div>
 
@@ -569,6 +568,7 @@ const EventDetailPage = () => {
                             Bagikan Event
                         </button>
                     </div>
+                </div>
             </div>
 
             <div className="max-w-6xl mx-auto px-4 -mt-10 relative z-10 pb-20">

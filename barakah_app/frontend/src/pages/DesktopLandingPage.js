@@ -21,6 +21,22 @@ const stripHtml = (html) => {
     return doc.body.textContent || "";
 };
 
+const getEventStatus = (startStr, endStr) => {
+    const now = new Date();
+    const start = new Date(startStr);
+    const end = endStr ? new Date(endStr) : new Date(start.getTime() + 4 * 60 * 60 * 1000);
+
+    const isFinished = now > end;
+    
+    if (now < start) {
+        return { label: 'Akan Datang', color: 'bg-blue-600', isFinished };
+    } else if (now >= start && now <= end) {
+        return { label: 'Berlangsung', color: 'bg-green-600', isFinished };
+    } else {
+        return { label: 'Selesai', color: 'bg-gray-500', isFinished };
+    }
+};
+
 const getMediaUrl = (url) => {
     if (!url) return '';
     if (url.startsWith('http')) return url;
@@ -375,6 +391,87 @@ const DesktopLandingPage = () => {
                                         </div>
                                     </SwiperSlide>
                                 ))}
+                            </Swiper>
+                        </div>
+                    </section>
+                )}
+
+                {/* ============ BARAKAH EVENTS CAROUSEL ============ */}
+                {events.length > 0 && (
+                    <section id="events" className="py-20 px-8 lg:px-24 bg-white border-t border-gray-100">
+                        <div className="max-w-6xl mx-auto">
+                            <div className="flex justify-between items-end mb-10">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-2 h-10 bg-green-600 rounded-full"></div>
+                                    <div>
+                                        <h2 className="text-3xl font-black text-gray-900 tracking-tighter uppercase italic">Barakah Event</h2>
+                                        <p className="text-xs text-gray-500 font-bold uppercase tracking-widest mt-1">Temukan Keberkahan dalam Setiap Pertemuan</p>
+                                    </div>
+                                </div>
+                                <Link to="/events" className="px-6 py-2 border border-green-600 text-green-700 font-bold rounded-xl hover:bg-green-50 transition flex items-center gap-2 text-sm uppercase tracking-wider">
+                                    Lihat Semua <span className="material-icons text-sm">arrow_forward</span>
+                                </Link>
+                            </div>
+
+                            <Swiper
+                                modules={[Navigation, Pagination, Autoplay]}
+                                spaceBetween={24}
+                                slidesPerView={4.2}
+                                navigation
+                                pagination={{ clickable: true }}
+                                autoplay={{ delay: 5000, disableOnInteraction: false }}
+                                breakpoints={{
+                                    1024: { slidesPerView: 4.2 },
+                                    1280: { slidesPerView: 5.2 },
+                                }}
+                                className="pb-16 event-swiper"
+                            >
+                                {events.filter(e => e.visibility === 'public').slice(0, 10).map((event) => {
+                                    const status = getEventStatus(event.start_date, event.end_date);
+                                    return (
+                                        <SwiperSlide key={event.id}>
+                                            <Link to={`/event/${event.slug || event.id}`} className="block group">
+                                                <div className="event-poster-container aspect-[4/5] rounded-xl shadow-xl border border-gray-100">
+                                                    <img
+                                                        src={getMediaUrl(event.thumbnail || event.header_image) || '/placeholder-image.jpg'}
+                                                        alt={event.title}
+                                                        className="event-poster-image"
+                                                        onError={(e) => { e.target.src = 'https://placehold.co/600x400?text=Barakah+Event'; }}
+                                                    />
+
+                                                    {/* Finished Overlay */}
+                                                    {status.isFinished && (
+                                                        <div className="event-finished-overlay">
+                                                            <div className="event-finished-text text-lg">Selesai</div>
+                                                        </div>
+                                                    )}
+
+                                                    {/* Status & Date Label (Bottom Right) */}
+                                                    <div className="absolute bottom-4 right-4 z-10 group-hover:opacity-0 transition-opacity duration-300 flex items-center gap-2">
+                                                        <div className="bg-white/90 backdrop-blur-md px-2.5 py-1 rounded-full shadow-lg border border-white/20">
+                                                            <p className="text-[9px] font-black text-gray-900 uppercase tracking-widest">
+                                                                {new Date(event.start_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
+                                                            </p>
+                                                        </div>
+                                                        {!status.isFinished && (
+                                                            <div className={`${status.color} text-white text-[9px] font-black px-2.5 py-1 rounded-full shadow-lg uppercase tracking-widest backdrop-blur-sm bg-opacity-90`}>
+                                                                {status.label}
+                                                            </div>
+                                                        )}
+                                                    </div>
+
+                                                    {/* Cinema Info Overlay */}
+                                                    <div className="cinema-info-overlay">
+                                                        <h3 className="text-white font-black text-sm leading-tight line-clamp-1 mb-1 uppercase tracking-tight">{event.title}</h3>
+                                                        <p className="text-white/70 text-[10px] line-clamp-2 leading-tight">
+                                                            {event.short_description || event.description?.replace(/<[^>]*>?/gm, '').substring(0, 80)}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </Link>
+                                        </SwiperSlide>
+                                    );
+                                })}
                             </Swiper>
                         </div>
                     </section>

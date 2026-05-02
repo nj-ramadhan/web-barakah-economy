@@ -160,7 +160,7 @@ const EventLandingPage = () => {
                                     to={`/event/${ev.slug}`}
                                     className="block group"
                                 >
-                                    <div className="event-poster-container aspect-[4/5] rounded-2xl shadow-xl border border-gray-100">
+                                    <div className="event-poster-container aspect-[4/5] rounded-xl shadow-xl border border-gray-100">
                                         <img
                                             src={getMediaUrl(ev.header_image || ev.thumbnail)}
                                             alt={ev.title}
