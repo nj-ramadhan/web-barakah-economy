@@ -34,6 +34,7 @@ const EventLandingPage = () => {
     const [filteredEvents, setFilteredEvents] = useState([]);
     const [categories, setCategories] = useState([]);
     const [selectedCategory, setSelectedCategory] = useState('Semua');
+    const [selectedStatus, setSelectedStatus] = useState('Semua'); // 'Semua', 'Aktif', 'Selesai'
     const [isExpanded, setIsExpanded] = useState(false);
     const CATEGORY_LIMIT = 6;
 
@@ -71,9 +72,16 @@ const EventLandingPage = () => {
         if (selectedCategory !== 'Semua') {
             result = result.filter(ev => ev.category === selectedCategory);
         }
+
+        if (selectedStatus !== 'Semua') {
+            result = result.filter(ev => {
+                const { isFinished } = getEventStatus(ev.start_date, ev.end_date);
+                return selectedStatus === 'Selesai' ? isFinished : !isFinished;
+            });
+        }
         
         setFilteredEvents(result);
-    }, [searchQuery, selectedCategory, events]);
+    }, [searchQuery, selectedCategory, selectedStatus, events]);
 
     const handleSearch = (query) => {
         setSearchQuery(query);
@@ -112,7 +120,7 @@ const EventLandingPage = () => {
                                 <button
                                     key={cat}
                                     onClick={() => setSelectedCategory(cat)}
-                                    className={`px-5 py-2 rounded-none text-[10px] font-black transition-all duration-300 border ${
+                                    className={`px-5 py-2 rounded-xl text-[10px] font-black transition-all duration-300 border ${
                                         selectedCategory === cat
                                             ? 'bg-green-600 text-white border-green-600 shadow-md shadow-green-100 scale-105'
                                             : 'bg-white text-gray-600 border-gray-100 hover:border-green-200 hover:bg-green-50/50'
@@ -127,7 +135,7 @@ const EventLandingPage = () => {
                             <div className="flex justify-center md:justify-start">
                                 <button
                                     onClick={() => setIsExpanded(!isExpanded)}
-                                    className={`px-8 py-2 rounded-none text-[10px] font-black transition-all duration-300 flex items-center gap-2 ${
+                                    className={`px-8 py-2 rounded-xl text-[10px] font-black transition-all duration-300 flex items-center gap-2 ${
                                         isExpanded 
                                             ? 'bg-gray-100 text-gray-800 border-gray-200' 
                                             : 'bg-white text-green-700 border-green-600 hover:bg-green-50'
@@ -143,6 +151,24 @@ const EventLandingPage = () => {
                         )}
                     </div>
                 )}
+
+                {/* Status Filter Chips */}
+                <div className="mb-10 flex flex-wrap items-center gap-3 bg-gray-50/50 p-2 rounded-2xl border border-gray-100 w-fit">
+                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-2">Status:</span>
+                    {['Semua', 'Aktif', 'Selesai'].map((stat) => (
+                        <button
+                            key={stat}
+                            onClick={() => setSelectedStatus(stat)}
+                            className={`px-6 py-2 rounded-xl text-[10px] font-black transition-all duration-300 ${
+                                selectedStatus === stat
+                                    ? 'bg-gray-900 text-white shadow-lg scale-105'
+                                    : 'bg-transparent text-gray-500 hover:bg-white hover:text-gray-900'
+                            } uppercase tracking-widest`}
+                        >
+                            {stat}
+                        </button>
+                    ))}
+                </div>
 
                 {filteredEvents.length === 0 ? (
                     <div className="text-center py-20 bg-gray-50 rounded-3xl border border-dashed border-gray-200 text-gray-400">

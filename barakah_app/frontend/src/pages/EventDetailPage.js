@@ -417,9 +417,9 @@ const EventDetailPage = () => {
                     Kembali
                 </Link>
             </div>
-            <div className="relative w-full max-w-6xl mx-auto sm:px-4">
+            <div className="relative w-full">
                 {/* Image Container with Carousel */}
-                <div className="relative h-auto sm:h-[500px] w-full overflow-hidden bg-gray-100 sm:rounded-none shadow-2xl border border-gray-100">
+                <div className="relative h-[250px] sm:h-[400px] md:h-[500px] lg:h-[600px] w-full overflow-hidden bg-gray-100 shadow-2xl border-b border-gray-100">
                     <Swiper
                         modules={[Navigation, Pagination, Autoplay, EffectFade]}
                         effect="fade"
@@ -428,18 +428,18 @@ const EventDetailPage = () => {
                         autoplay={{ delay: 5000, disableOnInteraction: false }}
                         className="h-full w-full"
                     >
-                        {/* Combine all available images into the carousel */}
-                        {[
+                        {/* Combine all available images into the carousel and remove duplicates */}
+                        {Array.from(new Set([
                             event.header_image,
                             event.thumbnail,
                             ...(event.gallery_images?.map(img => img.image) || []),
                             ...(event.documentation_images?.map(img => img.image) || [])
-                        ].filter(img => img).map((img, idx) => (
+                        ].filter(img => img))).map((img, idx) => (
                             <SwiperSlide key={idx} className="h-full w-full">
                                 <img
                                     src={img}
                                     alt={`${event.title} - ${idx + 1}`}
-                                    className="w-full h-auto sm:h-full sm:object-cover"
+                                    className="w-full h-full object-cover"
                                     onError={(e) => { e.target.onerror = null; e.target.src = '/images/event-header-default.jpg'; }}
                                 />
                             </SwiperSlide>
@@ -461,68 +461,70 @@ const EventDetailPage = () => {
 
                     {/* Desktop Info Overlay */}
                     <div className="hidden sm:block absolute bottom-0 left-0 w-full p-12 text-white">
-                        <div className="flex sm:items-end justify-between gap-6">
-                            <div className="max-w-3xl">
-                                <div className="flex items-center gap-2 mb-4">
-                                    <span className="px-3 py-1 bg-green-600 rounded-full text-[10px] font-bold uppercase tracking-widest inline-block shadow-lg shadow-green-900/40">
-                                        {event.category || 'Event'}
-                                    </span>
-                                    {event.has_certificate && (
-                                        <span className="px-3 py-1 bg-amber-500 rounded-full text-[10px] font-bold uppercase tracking-widest inline-block shadow-lg shadow-amber-900/40 flex items-center gap-1">
-                                            <span className="material-icons text-[12px]">verified</span>
-                                            Sertifikat
+                        <div className="max-w-6xl mx-auto">
+                            <div className="flex sm:items-end justify-between gap-6">
+                                <div className="max-w-3xl">
+                                    <div className="flex items-center gap-2 mb-4">
+                                        <span className="px-3 py-1 bg-green-600 rounded-full text-[10px] font-bold uppercase tracking-widest inline-block shadow-lg shadow-green-900/40">
+                                            {event.category || 'Event'}
                                         </span>
+                                        {event.has_certificate && (
+                                            <span className="px-3 py-1 bg-amber-500 rounded-full text-[10px] font-bold uppercase tracking-widest inline-block shadow-lg shadow-amber-900/40 flex items-center gap-1">
+                                                <span className="material-icons text-[12px]">verified</span>
+                                                Sertifikat
+                                            </span>
+                                        )}
+                                        <span className="px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-[10px] font-bold uppercase tracking-widest inline-block">{event.status}</span>
+                                        <span className="flex items-center gap-1 px-3 py-1 bg-white/10 backdrop-blur-md rounded-full text-[10px] font-bold uppercase tracking-widest inline-block ml-2">
+                                            <span className="material-icons text-[12px]">visibility</span>
+                                            {event.view_count || 0} Kali Dilihat
+                                        </span>
+                                    </div>
+                                    <h1 className="text-2xl sm:text-5xl font-extrabold leading-tight drop-shadow-lg">{event.title}</h1>
+                                    {event.capacity > 0 && !event.user_registration && !isCompleted && (event.capacity - (event.registration_count || 0) > 0) && (
+                                        <p className="text-green-400 font-bold mt-2 text-sm sm:text-base animate-pulse">
+                                            🚀 Tersisa {event.capacity - (event.registration_count || 0)} Slot Lagi
+                                        </p>
                                     )}
-                                    <span className="px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-[10px] font-bold uppercase tracking-widest inline-block">{event.status}</span>
-                                    <span className="flex items-center gap-1 px-3 py-1 bg-white/10 backdrop-blur-md rounded-full text-[10px] font-bold uppercase tracking-widest inline-block ml-2">
-                                        <span className="material-icons text-[12px]">visibility</span>
-                                        {event.view_count || 0} Kali Dilihat
-                                    </span>
                                 </div>
-                                <h1 className="text-2xl sm:text-5xl font-extrabold leading-tight drop-shadow-lg">{event.title}</h1>
-                                {event.capacity > 0 && !event.user_registration && !isCompleted && (event.capacity - (event.registration_count || 0) > 0) && (
-                                    <p className="text-green-400 font-bold mt-2 text-sm sm:text-base animate-pulse">
-                                        🚀 Tersisa {event.capacity - (event.registration_count || 0)} Slot Lagi
-                                    </p>
-                                )}
-                            </div>
-                            <div className="shrink-0 pb-2 flex items-center gap-3">
-                                {event.user_registration ? (
-                                    <div className="bg-white/20 backdrop-blur-md border border-white/30 text-white px-8 py-4 rounded-2xl font-extrabold text-sm uppercase tracking-wider flex items-center gap-3 justify-center cursor-default shadow-lg">
-                                        <span className="material-icons text-xl text-green-400">check_circle</span>
-                                        Sudah Daftar
-                                    </div>
-                                ) : isCompleted ? (
-                                    <div className="bg-white/10 backdrop-blur-md border border-white/20 text-gray-300 px-8 py-4 rounded-2xl font-extrabold text-sm uppercase tracking-wider flex items-center gap-3 justify-center cursor-not-allowed shadow-lg">
-                                        <span className="material-icons text-xl">event_busy</span>
-                                        Event Selesai
-                                    </div>
-                                ) : registrationTimeLeft?.total > 0 ? (
-                                    <div className="bg-amber-500/20 backdrop-blur-md border border-amber-500/40 text-amber-500 px-8 py-4 rounded-2xl font-extrabold text-sm uppercase tracking-wider flex flex-col items-center justify-center cursor-wait shadow-lg min-w-[200px]">
-                                        <div className="flex items-center gap-2">
-                                            <span className="material-icons text-xl animate-spin-slow">history</span>
-                                            Pendaftaran Dibuka Dalam:
+                                <div className="shrink-0 pb-2 flex items-center gap-3">
+                                    {event.user_registration ? (
+                                        <div className="bg-white/20 backdrop-blur-md border border-white/30 text-white px-8 py-4 rounded-2xl font-extrabold text-sm uppercase tracking-wider flex items-center gap-3 justify-center cursor-default shadow-lg">
+                                            <span className="material-icons text-xl text-green-400">check_circle</span>
+                                            Sudah Daftar
                                         </div>
-                                        <span className="text-lg font-black tracking-widest mt-1">{formatCountdown(registrationTimeLeft)}</span>
-                                    </div>
-                                ) : (
-                                    <button
-                                        onClick={() => setShowRegisterModal(true)}
-                                        className="bg-green-600 hover:bg-green-700 text-white px-8 py-4 rounded-2xl font-extrabold text-sm uppercase tracking-wider shadow-xl shadow-green-900/30 transition active:scale-[0.97] flex items-center gap-3 justify-center"
-                                    >
-                                        <span className="material-icons text-xl">person_add</span>
-                                        Ikuti Event Ini
-                                    </button>
-                                )}
+                                    ) : isCompleted ? (
+                                        <div className="bg-white/10 backdrop-blur-md border border-white/20 text-gray-300 px-8 py-4 rounded-2xl font-extrabold text-sm uppercase tracking-wider flex items-center gap-3 justify-center cursor-not-allowed shadow-lg">
+                                            <span className="material-icons text-xl">event_busy</span>
+                                            Event Selesai
+                                        </div>
+                                    ) : registrationTimeLeft?.total > 0 ? (
+                                        <div className="bg-amber-500/20 backdrop-blur-md border border-amber-500/40 text-amber-500 px-8 py-4 rounded-2xl font-extrabold text-sm uppercase tracking-wider flex flex-col items-center justify-center cursor-wait shadow-lg min-w-[200px]">
+                                            <div className="flex items-center gap-2">
+                                                <span className="material-icons text-xl animate-spin-slow">history</span>
+                                                Pendaftaran Dibuka Dalam:
+                                            </div>
+                                            <span className="text-lg font-black tracking-widest mt-1">{formatCountdown(registrationTimeLeft)}</span>
+                                        </div>
+                                    ) : (
+                                        <button
+                                            onClick={() => setShowRegisterModal(true)}
+                                            className="bg-green-600 hover:bg-green-700 text-white px-8 py-4 rounded-2xl font-extrabold text-sm uppercase tracking-wider shadow-xl shadow-green-900/30 transition active:scale-[0.97] flex items-center gap-3 justify-center"
+                                        >
+                                            <span className="material-icons text-xl">person_add</span>
+                                            Ikuti Event Ini
+                                        </button>
+                                    )}
 
-                                <button
-                                    onClick={handleShare}
-                                    className="bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/30 text-white px-6 py-4 rounded-2xl font-extrabold text-sm uppercase tracking-wider transition active:scale-[0.97] flex items-center gap-3 justify-center group"
-                                    title="Bagikan Event"
-                                >
-                                    <span className={`material-icons text-xl transition-transform group-hover:rotate-12 ${isSharing ? 'animate-pulse' : ''}`}>share</span>
-                                    {isSharing ? 'Berbagi...' : 'Bagikan'}
-                                </button>
+                                    <button
+                                        onClick={handleShare}
+                                        className="bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/30 text-white px-6 py-4 rounded-2xl font-extrabold text-sm uppercase tracking-wider transition active:scale-[0.97] flex items-center gap-3 justify-center group"
+                                        title="Bagikan Event"
+                                    >
+                                        <span className={`material-icons text-xl transition-transform group-hover:rotate-12 ${isSharing ? 'animate-pulse' : ''}`}>share</span>
+                                        {isSharing ? 'Berbagi...' : 'Bagikan'}
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
