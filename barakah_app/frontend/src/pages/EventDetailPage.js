@@ -439,16 +439,16 @@ const EventDetailPage = () => {
                                 <img
                                     src={img}
                                     alt={`${event.title} - ${idx + 1}`}
-                                    className="max-w-full max-h-full object-contain"
+                                    className="w-full h-full object-cover"
                                     onError={(e) => { e.target.onerror = null; e.target.src = '/images/event-header-default.jpg'; }}
                                 />
-                                {/* View Full Image Button - Inside Slide */}
+                                {/* View Full Image Button */}
                                 <button
-                                    onClick={() => window.open(img, '_blank')}
-                                    className="absolute bottom-6 right-6 bg-black/60 hover:bg-black/80 backdrop-blur-md text-white px-4 py-2 rounded-xl border border-white/20 flex items-center gap-2 text-[10px] font-black uppercase tracking-widest transition-all shadow-xl opacity-0 group-hover:opacity-100"
+                                    onClick={(e) => { e.stopPropagation(); window.open(img, '_blank'); }}
+                                    className="absolute bottom-6 right-6 bg-black/60 hover:bg-black/80 backdrop-blur-md text-white px-4 py-2.5 rounded-xl border border-white/20 flex items-center gap-2 text-xs font-bold transition-all shadow-xl z-20"
                                 >
                                     <span className="material-icons text-sm">zoom_out_map</span>
-                                    Lihat Full
+                                    Lihat Ukuran Penuh
                                 </button>
                             </SwiperSlide>
                         ))}

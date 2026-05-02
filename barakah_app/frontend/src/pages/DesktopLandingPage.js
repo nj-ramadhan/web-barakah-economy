@@ -398,73 +398,70 @@ const DesktopLandingPage = () => {
 
                 {/* ============ BARAKAH EVENTS CAROUSEL ============ */}
                 {events.length > 0 && (
-                    <section id="events" className="py-20 px-8 lg:px-24 bg-white border-t border-gray-100">
+                    <section id="events" className="py-20 px-8 lg:px-24 bg-gray-50">
                         <div className="max-w-6xl mx-auto">
                             <div className="flex justify-between items-center mb-8">
-                                <div className="mb-8">
-                                    <h2 className="text-3xl font-bold text-gray-900 mb-2">Barakah Event</h2>
-                                    <div className="w-20 h-1 bg-green-600 rounded-full"></div>
+                                <div>
+                                    <h2 className="text-3xl font-bold text-gray-900">Barakah Event</h2>
+                                    <p className="text-gray-500 mt-2">Ikuti berbagai kegiatan seru dan bermanfaat</p>
                                 </div>
                                 <Link to="/events" className="px-6 py-2 border border-green-600 text-green-700 font-semibold rounded-lg hover:bg-green-50 transition">
                                     Lihat Semua
                                 </Link>
                             </div>
-
                             <Swiper
-                                modules={[Navigation, Pagination, Autoplay]}
                                 spaceBetween={24}
-                                slidesPerView={4.2}
+                                slidesPerView={4}
                                 navigation
                                 pagination={{ clickable: true }}
                                 autoplay={{ delay: 5000, disableOnInteraction: false }}
+                                modules={[Navigation, Pagination, Autoplay]}
                                 breakpoints={{
-                                    1024: { slidesPerView: 4.2 },
-                                    1280: { slidesPerView: 5.2 },
+                                    320: { slidesPerView: 1 },
+                                    640: { slidesPerView: 2 },
+                                    1024: { slidesPerView: 4 },
                                 }}
-                                className="pb-16 event-swiper"
                             >
                                 {events.filter(e => e.visibility === 'public').slice(0, 10).map((event) => {
                                     const status = getEventStatus(event.start_date, event.end_date);
                                     return (
                                         <SwiperSlide key={event.id}>
-                                            <Link to={`/event/${event.slug || event.id}`} className="block group">
-                                                <div className="event-poster-container aspect-[4/5] rounded-xl shadow-xl border border-gray-100">
-                                                    <img
-                                                        src={getMediaUrl(event.thumbnail || event.header_image) || '/placeholder-image.jpg'}
-                                                        alt={event.title}
-                                                        className="event-poster-image"
-                                                        onError={(e) => { e.target.src = 'https://placehold.co/600x400?text=Barakah+Event'; }}
-                                                    />
-
-                                                    {/* Finished Overlay */}
-                                                    {status.isFinished && (
-                                                        <div className="event-finished-overlay">
-                                                            <div className="event-finished-text text-lg">Selesai</div>
-                                                        </div>
-                                                    )}
-
-                                                    {/* Status & Date Label (Bottom Left) */}
-                                                    <div className="absolute bottom-4 left-4 z-10 group-hover:opacity-0 transition-opacity duration-300 flex items-center gap-2">
-                                                        <div className="bg-white px-2.5 py-1 rounded-xl shadow-lg border border-gray-100 flex flex-col items-center justify-center min-w-[45px]">
-                                                            <span className="text-gray-900 font-black text-sm leading-none">{new Date(event.start_date).getDate()}</span>
-                                                            <span className="text-gray-500 font-bold text-[8px] uppercase tracking-tighter">{new Date(event.start_date).toLocaleDateString('id-ID', { month: 'short' })}</span>
+                                            <div className="bg-white rounded-2xl overflow-hidden shadow-md border border-gray-100 hover:shadow-xl transition group">
+                                                <Link to={`/event/${event.slug || event.id}`}>
+                                                    <div className="relative h-48 overflow-hidden">
+                                                        <img
+                                                            src={getMediaUrl(event.thumbnail || event.header_image) || '/placeholder-image.jpg'}
+                                                            alt={event.title}
+                                                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                                            onError={(e) => { e.target.src = 'https://placehold.co/600x400?text=Barakah+Event'; }}
+                                                        />
+                                                        {status.isFinished && (
+                                                            <div className="absolute inset-0 bg-gray-900/60 flex items-center justify-center">
+                                                                <span className="text-white font-bold text-sm uppercase tracking-widest border-2 border-white/50 px-3 py-1 rounded rotate-[-10deg]">Selesai</span>
+                                                            </div>
+                                                        )}
+                                                        <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-2.5 py-1 rounded-lg shadow-sm">
+                                                            <p className="text-[10px] font-bold text-green-700">
+                                                                {new Date(event.start_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
+                                                            </p>
                                                         </div>
                                                         {!status.isFinished && (
-                                                            <div className={`${status.color} text-white text-[9px] font-black px-3 py-2 rounded-xl shadow-lg uppercase tracking-widest backdrop-blur-sm bg-opacity-90`}>
-                                                                {status.label}
+                                                            <div className="absolute top-3 right-3">
+                                                                <span className={`${status.color} text-white text-[9px] font-bold px-2.5 py-1 rounded-lg uppercase tracking-wider`}>
+                                                                    {status.label}
+                                                                </span>
                                                             </div>
                                                         )}
                                                     </div>
-
-                                                    {/* Cinema Info Overlay */}
-                                                    <div className="cinema-info-overlay">
-                                                        <h3 className="text-white font-black text-sm leading-tight line-clamp-1 mb-1 uppercase tracking-tight">{event.title}</h3>
-                                                        <p className="text-white/70 text-[10px] line-clamp-2 leading-tight">
-                                                            {event.short_description || event.description?.replace(/<[^>]*>?/gm, '').substring(0, 80)}
-                                                        </p>
+                                                </Link>
+                                                <div className="p-4">
+                                                    <h3 className="font-bold text-gray-900 text-sm mb-1 line-clamp-2 min-h-[40px]">{event.title}</h3>
+                                                    <div className="flex items-center gap-1 text-gray-400 text-xs">
+                                                        <span className="material-icons text-[14px]">location_on</span>
+                                                        <span className="line-clamp-1">{event.location || 'Online'}</span>
                                                     </div>
                                                 </div>
-                                            </Link>
+                                            </div>
                                         </SwiperSlide>
                                     );
                                 })}

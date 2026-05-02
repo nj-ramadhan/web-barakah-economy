@@ -151,7 +151,7 @@ const EventLandingPage = () => {
                         <p className="text-sm mt-1">Coba cari dengan kata kunci lain atau silakan kembali nanti untuk melihat update terbaru</p>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-10">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                         {filteredEvents.map((ev) => {
                             const status = getEventStatus(ev.start_date, ev.end_date);
                             return (
@@ -160,66 +160,48 @@ const EventLandingPage = () => {
                                     to={`/event/${ev.slug}`}
                                     className="block group"
                                 >
-                                    <div className="event-poster-container aspect-[4/5] rounded-xl shadow-xl border border-gray-100">
-                                        <img
-                                            src={getMediaUrl(ev.header_image || ev.thumbnail)}
-                                            alt={ev.title}
-                                            className="event-poster-image"
-                                            onError={(e) => { e.target.src = '/placeholder-image.jpg'; }}
-                                        />
-                                        
-                                        {/* Finished Overlay */}
-                                        {status.isFinished && (
-                                            <div className="event-finished-overlay">
-                                                <div className="event-finished-text">Selesai</div>
-                                            </div>
-                                        )}
-
-                                        {/* Status & Date Label (Bottom Left) */}
-                                        <div className="absolute bottom-4 left-4 z-10 group-hover:opacity-0 transition-opacity duration-300 flex items-center gap-2">
-                                            <div className="bg-white px-2.5 py-1 rounded-xl shadow-lg border border-gray-100 flex flex-col items-center justify-center min-w-[45px]">
-                                                <span className="text-gray-900 font-black text-sm leading-none">{new Date(ev.start_date).getDate()}</span>
-                                                <span className="text-gray-500 font-bold text-[8px] uppercase tracking-tighter">{new Date(ev.start_date).toLocaleDateString('id-ID', { month: 'short' })}</span>
+                                    <div className="bg-white rounded-2xl overflow-hidden shadow-md border border-gray-100 hover:shadow-xl transition">
+                                        <div className="relative h-48 overflow-hidden">
+                                            <img
+                                                src={getMediaUrl(ev.header_image || ev.thumbnail)}
+                                                alt={ev.title}
+                                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                                onError={(e) => { e.target.src = '/placeholder-image.jpg'; }}
+                                            />
+                                            {status.isFinished && (
+                                                <div className="absolute inset-0 bg-gray-900/60 flex items-center justify-center">
+                                                    <span className="text-white font-bold text-sm uppercase tracking-widest border-2 border-white/50 px-3 py-1 rounded rotate-[-10deg]">Selesai</span>
+                                                </div>
+                                            )}
+                                            <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-2.5 py-1 rounded-lg shadow-sm">
+                                                <p className="text-[10px] font-bold text-green-700">
+                                                    {new Date(ev.start_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
+                                                </p>
                                             </div>
                                             {!status.isFinished && (
-                                                <div className={`${status.color} text-white text-[9px] font-black px-3 py-2 rounded-xl shadow-lg uppercase tracking-widest backdrop-blur-sm bg-opacity-90`}>
-                                                    {status.label}
+                                                <div className="absolute top-3 right-3">
+                                                    <span className={`${status.color} text-white text-[9px] font-bold px-2.5 py-1 rounded-lg uppercase tracking-wider`}>
+                                                        {status.label}
+                                                    </span>
+                                                </div>
+                                            )}
+                                            {ev.has_certificate && (
+                                                <div className="absolute bottom-3 right-3">
+                                                    <div className="bg-amber-500/90 backdrop-blur-sm p-1.5 rounded-full shadow-lg border border-amber-400">
+                                                        <span className="material-icons text-[12px] text-white block">verified</span>
+                                                    </div>
                                                 </div>
                                             )}
                                         </div>
-
-                                        {/* Category Label (Top Left) */}
-                                        {ev.category && (
-                                            <div className="absolute top-4 left-4 z-10 max-w-[80%]">
-                                                <div className="bg-black/40 backdrop-blur-md px-3 py-1 rounded-lg border border-white/20">
-                                                    <p className="text-[8px] font-black text-white uppercase tracking-widest whitespace-normal break-words leading-tight">
-                                                        {ev.category}
-                                                    </p>
-                                                </div>
+                                        <div className="p-4">
+                                            {ev.category && (
+                                                <span className="inline-block text-[10px] bg-green-50 text-green-700 px-2.5 py-0.5 rounded-full mb-2 font-semibold">{ev.category}</span>
+                                            )}
+                                            <h3 className="font-bold text-gray-900 text-sm mb-1 line-clamp-2 min-h-[40px]">{ev.title}</h3>
+                                            <div className="flex items-center gap-1 text-gray-400 text-xs">
+                                                <span className="material-icons text-[14px]">location_on</span>
+                                                <span className="line-clamp-1">{ev.location || 'Online'}</span>
                                             </div>
-                                        )}
-
-                                        {/* Certificate Badge */}
-                                        {ev.has_certificate && (
-                                            <div className="absolute bottom-4 left-4 z-10">
-                                                <div className="bg-amber-500/90 backdrop-blur-sm p-1.5 rounded-full shadow-lg border border-amber-400">
-                                                    <span className="material-icons text-[12px] text-white block">verified</span>
-                                                </div>
-                                            </div>
-                                        )}
-
-                                        {/* Cinema Info Overlay */}
-                                        <div className="cinema-info-overlay">
-                                            <h3 className="text-white font-black text-sm md:text-base leading-tight mb-1 uppercase tracking-tight line-clamp-1">
-                                                {ev.title}
-                                            </h3>
-                                            <div className="flex items-center gap-1.5 text-white/70 text-[10px] md:text-xs font-bold mb-1">
-                                                <span className="material-icons text-xs">calendar_today</span>
-                                                {new Date(ev.start_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
-                                            </div>
-                                            <p className="text-white/60 text-[9px] md:text-xs line-clamp-2 leading-tight">
-                                                {ev.short_description || ev.description?.replace(/<[^>]*>?/gm, '').substring(0, 80)}
-                                            </p>
                                         </div>
                                     </div>
                                 </Link>
