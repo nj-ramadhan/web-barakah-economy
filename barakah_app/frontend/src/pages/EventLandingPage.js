@@ -151,7 +151,7 @@ const EventLandingPage = () => {
                         <p className="text-sm mt-1">Coba cari dengan kata kunci lain atau silakan kembali nanti untuk melihat update terbaru</p>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
                         {filteredEvents.map((ev) => {
                             const status = getEventStatus(ev.start_date, ev.end_date);
                             return (
