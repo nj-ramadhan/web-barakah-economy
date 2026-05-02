@@ -837,13 +837,12 @@ const Home = () => {
                       </div>
 
                       {/* Labels */}
-                      <div className="absolute bottom-4 right-4 z-10 group-hover:opacity-0 transition-opacity duration-300 flex items-center gap-2">
-                        <div className="bg-white/90 backdrop-blur-md px-2 py-0.5 rounded-full shadow-lg border border-white/20">
-                          <p className="text-[8px] font-black text-gray-900 uppercase tracking-widest">
-                            {new Date(event.start_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
-                          </p>
+                      <div className="absolute bottom-4 left-4 z-10 group-hover:opacity-0 transition-opacity duration-300 flex items-center gap-2">
+                        <div className="bg-white px-2.5 py-1 rounded-xl shadow-lg border border-gray-100 flex flex-col items-center justify-center min-w-[45px]">
+                          <span className="text-gray-900 font-black text-sm leading-none">{new Date(event.start_date).getDate()}</span>
+                          <span className="text-gray-500 font-bold text-[8px] uppercase tracking-tighter">{new Date(event.start_date).toLocaleDateString('id-ID', { month: 'short' })}</span>
                         </div>
-                        <div className="bg-green-600/90 backdrop-blur-sm text-white px-2 py-0.5 rounded-full text-[8px] font-black tracking-widest uppercase shadow-lg">
+                        <div className="bg-green-600/90 backdrop-blur-sm text-white px-2.5 py-1.5 rounded-xl text-[8px] font-black tracking-widest uppercase shadow-lg">
                           EVENT
                         </div>
                       </div>

@@ -400,16 +400,13 @@ const DesktopLandingPage = () => {
                 {events.length > 0 && (
                     <section id="events" className="py-20 px-8 lg:px-24 bg-white border-t border-gray-100">
                         <div className="max-w-6xl mx-auto">
-                            <div className="flex justify-between items-end mb-10">
-                                <div className="flex items-center gap-4">
-                                    <div className="w-2 h-10 bg-green-600 rounded-full"></div>
-                                    <div>
-                                        <h2 className="text-3xl font-black text-gray-900 tracking-tighter uppercase italic">Barakah Event</h2>
-                                        <p className="text-xs text-gray-500 font-bold uppercase tracking-widest mt-1">Temukan Keberkahan dalam Setiap Pertemuan</p>
-                                    </div>
+                            <div className="flex justify-between items-center mb-8">
+                                <div className="mb-8">
+                                    <h2 className="text-3xl font-bold text-gray-900 mb-2">Barakah Event</h2>
+                                    <div className="w-20 h-1 bg-green-600 rounded-full"></div>
                                 </div>
-                                <Link to="/events" className="px-6 py-2 border border-green-600 text-green-700 font-bold rounded-xl hover:bg-green-50 transition flex items-center gap-2 text-sm uppercase tracking-wider">
-                                    Lihat Semua <span className="material-icons text-sm">arrow_forward</span>
+                                <Link to="/events" className="px-6 py-2 border border-green-600 text-green-700 font-semibold rounded-lg hover:bg-green-50 transition">
+                                    Lihat Semua
                                 </Link>
                             </div>
 
@@ -446,15 +443,14 @@ const DesktopLandingPage = () => {
                                                         </div>
                                                     )}
 
-                                                    {/* Status & Date Label (Bottom Right) */}
-                                                    <div className="absolute bottom-4 right-4 z-10 group-hover:opacity-0 transition-opacity duration-300 flex items-center gap-2">
-                                                        <div className="bg-white/90 backdrop-blur-md px-2.5 py-1 rounded-full shadow-lg border border-white/20">
-                                                            <p className="text-[9px] font-black text-gray-900 uppercase tracking-widest">
-                                                                {new Date(event.start_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
-                                                            </p>
+                                                    {/* Status & Date Label (Bottom Left) */}
+                                                    <div className="absolute bottom-4 left-4 z-10 group-hover:opacity-0 transition-opacity duration-300 flex items-center gap-2">
+                                                        <div className="bg-white px-2.5 py-1 rounded-xl shadow-lg border border-gray-100 flex flex-col items-center justify-center min-w-[45px]">
+                                                            <span className="text-gray-900 font-black text-sm leading-none">{new Date(event.start_date).getDate()}</span>
+                                                            <span className="text-gray-500 font-bold text-[8px] uppercase tracking-tighter">{new Date(event.start_date).toLocaleDateString('id-ID', { month: 'short' })}</span>
                                                         </div>
                                                         {!status.isFinished && (
-                                                            <div className={`${status.color} text-white text-[9px] font-black px-2.5 py-1 rounded-full shadow-lg uppercase tracking-widest backdrop-blur-sm bg-opacity-90`}>
+                                                            <div className={`${status.color} text-white text-[9px] font-black px-3 py-2 rounded-xl shadow-lg uppercase tracking-widest backdrop-blur-sm bg-opacity-90`}>
                                                                 {status.label}
                                                             </div>
                                                         )}

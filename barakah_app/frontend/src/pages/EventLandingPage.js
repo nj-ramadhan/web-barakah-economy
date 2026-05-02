@@ -175,15 +175,14 @@ const EventLandingPage = () => {
                                             </div>
                                         )}
 
-                                        {/* Status & Date Label (Bottom Right) */}
-                                        <div className="absolute bottom-4 right-4 z-10 group-hover:opacity-0 transition-opacity duration-300 flex items-center gap-2">
-                                            <div className="bg-white/90 backdrop-blur-md px-3 py-1 rounded-full shadow-lg border border-white/20">
-                                                <p className="text-[9px] font-black text-gray-900 uppercase tracking-widest">
-                                                    {new Date(ev.start_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
-                                                </p>
+                                        {/* Status & Date Label (Bottom Left) */}
+                                        <div className="absolute bottom-4 left-4 z-10 group-hover:opacity-0 transition-opacity duration-300 flex items-center gap-2">
+                                            <div className="bg-white px-2.5 py-1 rounded-xl shadow-lg border border-gray-100 flex flex-col items-center justify-center min-w-[45px]">
+                                                <span className="text-gray-900 font-black text-sm leading-none">{new Date(ev.start_date).getDate()}</span>
+                                                <span className="text-gray-500 font-bold text-[8px] uppercase tracking-tighter">{new Date(ev.start_date).toLocaleDateString('id-ID', { month: 'short' })}</span>
                                             </div>
                                             {!status.isFinished && (
-                                                <div className={`${status.color} text-white text-[9px] font-black px-3 py-1 rounded-full shadow-lg uppercase tracking-widest backdrop-blur-sm bg-opacity-90`}>
+                                                <div className={`${status.color} text-white text-[9px] font-black px-3 py-2 rounded-xl shadow-lg uppercase tracking-widest backdrop-blur-sm bg-opacity-90`}>
                                                     {status.label}
                                                 </div>
                                             )}
