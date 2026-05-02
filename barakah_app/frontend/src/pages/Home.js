@@ -782,35 +782,38 @@ const Home = () => {
       </div>
 
       {/* Barakah Events Carousel */}
-      {events.length > 0 && (
-        <div className="px-4 pt-4">
-          <div className="flex justify-between items-center mb-2">
+      {events.length > 0 && !searchQuery && (
+        <div className="max-w-7xl mx-auto px-4 pt-8 pb-4">
+          <div className="flex justify-between items-center mb-6">
             <div>
-              <h1 className="text-lg font-medium line-clamp-2">Barakah Event</h1>
-              <h2 className="text-sm font-medium text-gray-500">Ikuti berbagai kegiatan seru dari BAE</h2>
+              <h1 className="text-xl md:text-2xl font-black text-gray-900 uppercase tracking-tight">Barakah Event</h1>
+              <p className="text-sm text-gray-500 mt-1">Ikuti berbagai kegiatan seru dari BAE</p>
             </div>
-            <Link to="/event" className="text-green-700 text-xs font-semibold hover:underline whitespace-nowrap">
-              Lihat Semua →
+            <Link to="/event" className="bg-green-600 text-white px-4 py-2 rounded-none text-[10px] font-black uppercase tracking-widest hover:bg-green-700 transition shadow-lg shadow-green-100">
+              Lihat Semua
             </Link>
           </div>
-          <Swiper
-            spaceBetween={12}
-            slidesPerView={2.2}
-            breakpoints={{
-              640: { slidesPerView: 3.2 },
-              768: { slidesPerView: 4.2 },
-              1024: { slidesPerView: 5.2 },
-            }}
-            navigation
-            modules={[Navigation, Autoplay]}
-            autoplay={{ delay: 5000, disableOnInteraction: false }}
-          >
-            {events.filter(e => e.visibility === 'public').slice(0, 10).map((event) => {
-              const { isFinished } = getEventStatus(event.start_date, event.end_date);
-              return (
-                <SwiperSlide key={event.id}>
-                  <Link to={`/event/${event.slug || event.id}`} className="block group">
-                    <div className="event-poster-container aspect-[4/5] rounded-none shadow-lg">
+          <div className="relative">
+            <Swiper
+              spaceBetween={20}
+              slidesPerView={1.5}
+              breakpoints={{
+                480: { slidesPerView: 2.2 },
+                768: { slidesPerView: 3.2 },
+                1024: { slidesPerView: 4.2 },
+                1280: { slidesPerView: 5.2 },
+              }}
+              navigation
+              modules={[Navigation, Autoplay]}
+              autoplay={{ delay: 5000, disableOnInteraction: false }}
+              className="event-swiper"
+            >
+              {events.filter(e => e.visibility === 'public').slice(0, 10).map((event) => {
+                const { isFinished } = getEventStatus(event.start_date, event.end_date);
+                return (
+                  <SwiperSlide key={event.id}>
+                    <Link to={`/event/${event.slug || event.id}`} className="block group">
+                    <div className="event-poster-container aspect-[4/5] rounded-2xl shadow-xl border border-gray-100">
                       <img
                         src={getMediaUrl(event.thumbnail || event.header_image) || '/placeholder-image.jpg'}
                         alt={event.title}
@@ -827,21 +830,30 @@ const Home = () => {
 
                       {/* Poster Info Overlay (Cinema Style) */}
                       <div className="cinema-info-overlay">
-                        <h3 className="text-white font-bold text-xs line-clamp-1 mb-1">{event.title}</h3>
-                        <p className="text-white/70 text-[9px] line-clamp-2 leading-tight">
-                          {event.short_description || event.description?.replace(/<[^>]*>?/gm, '').substring(0, 60)}
+                        <h3 className="text-white font-black text-sm leading-tight line-clamp-1 mb-1 uppercase tracking-tight">{event.title}</h3>
+                        <p className="text-white/70 text-[10px] line-clamp-2 leading-tight">
+                          {event.short_description || event.description?.replace(/<[^>]*>?/gm, '').substring(0, 80)}
                         </p>
                       </div>
 
-                      <div className="absolute bottom-2 left-2 z-10 bg-indigo-600/90 backdrop-blur-sm text-white px-2 py-0.5 rounded-full text-[8px] font-black tracking-widest uppercase group-hover:opacity-0 transition-opacity duration-300">
-                        EVENT
+                      {/* Labels */}
+                      <div className="absolute bottom-4 right-4 z-10 group-hover:opacity-0 transition-opacity duration-300 flex items-center gap-2">
+                        <div className="bg-white/90 backdrop-blur-md px-2 py-0.5 rounded-full shadow-lg border border-white/20">
+                          <p className="text-[8px] font-black text-gray-900 uppercase tracking-widest">
+                            {new Date(event.start_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
+                          </p>
+                        </div>
+                        <div className="bg-green-600/90 backdrop-blur-sm text-white px-2 py-0.5 rounded-full text-[8px] font-black tracking-widest uppercase shadow-lg">
+                          EVENT
+                        </div>
                       </div>
                     </div>
-                  </Link>
-                </SwiperSlide>
-              );
-            })}
-          </Swiper>
+                    </Link>
+                  </SwiperSlide>
+                );
+              })}
+            </Swiper>
+          </div>
         </div>
       )}
 

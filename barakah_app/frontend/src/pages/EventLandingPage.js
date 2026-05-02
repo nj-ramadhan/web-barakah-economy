@@ -96,7 +96,7 @@ const EventLandingPage = () => {
 
             <HeaderHome onSearch={handleSearch} />
 
-            <div className="max-w-4xl mx-auto px-4 py-8 pb-24">
+            <div className="max-w-6xl mx-auto px-4 py-8 pb-24">
                 <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4">
                     <div>
                         <h1 className="text-3xl font-bold text-gray-900 mb-1">Event Seru</h1>
@@ -151,7 +151,7 @@ const EventLandingPage = () => {
                         <p className="text-sm mt-1">Coba cari dengan kata kunci lain atau silakan kembali nanti untuk melihat update terbaru</p>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 gap-12 max-w-sm mx-auto">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-10">
                         {filteredEvents.map((ev) => {
                             const status = getEventStatus(ev.start_date, ev.end_date);
                             return (
@@ -160,7 +160,7 @@ const EventLandingPage = () => {
                                     to={`/event/${ev.slug}`}
                                     className="block group"
                                 >
-                                    <div className="event-poster-container aspect-[4/5] rounded-none shadow-xl border border-gray-100">
+                                    <div className="event-poster-container aspect-[4/5] rounded-2xl shadow-xl border border-gray-100">
                                         <img
                                             src={getMediaUrl(ev.header_image || ev.thumbnail)}
                                             alt={ev.title}
@@ -175,14 +175,19 @@ const EventLandingPage = () => {
                                             </div>
                                         )}
 
-                                        {/* Status Label (Bottom Right) */}
-                                        {!status.isFinished && (
-                                            <div className="absolute bottom-4 right-4 z-10 group-hover:opacity-0 transition-opacity duration-300">
-                                                <div className={`${status.color} text-white text-[8px] font-black px-3 py-1 rounded-full shadow-lg uppercase tracking-widest backdrop-blur-sm bg-opacity-90`}>
+                                        {/* Status & Date Label (Bottom Right) */}
+                                        <div className="absolute bottom-4 right-4 z-10 group-hover:opacity-0 transition-opacity duration-300 flex items-center gap-2">
+                                            <div className="bg-white/90 backdrop-blur-md px-3 py-1 rounded-full shadow-lg border border-white/20">
+                                                <p className="text-[9px] font-black text-gray-900 uppercase tracking-widest">
+                                                    {new Date(ev.start_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
+                                                </p>
+                                            </div>
+                                            {!status.isFinished && (
+                                                <div className={`${status.color} text-white text-[9px] font-black px-3 py-1 rounded-full shadow-lg uppercase tracking-widest backdrop-blur-sm bg-opacity-90`}>
                                                     {status.label}
                                                 </div>
-                                            </div>
-                                        )}
+                                            )}
+                                        </div>
 
                                         {/* Category Label (Top Left) */}
                                         {ev.category && (
