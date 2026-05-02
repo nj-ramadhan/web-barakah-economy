@@ -478,12 +478,10 @@ const EventDetailPage = () => {
                                     <span className="px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-[10px] font-bold uppercase tracking-widest inline-block">{event.status}</span>
                                 </div>
                                 <h1 className="text-2xl sm:text-4xl font-extrabold leading-tight drop-shadow-lg">{event.title}</h1>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            </div>
-
                 </div>
 
                 {/* Mobile Info & Actions */}
@@ -571,7 +569,6 @@ const EventDetailPage = () => {
                             Bagikan Event
                         </button>
                     </div>
-                </div>
             </div>
 
             <div className="max-w-6xl mx-auto px-4 -mt-10 relative z-10 pb-20">
