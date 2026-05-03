@@ -21,7 +21,7 @@ const root = createRoot(container);
 
 root.render(
   <React.StrictMode>
-    <GoogleOAuthProvider clientId="786832881211-423qd0vq8sl72e844l697rkop4j32nho.apps.googleusercontent.com">
+    <GoogleOAuthProvider clientId="264534800705-qp3cfogvfv3q2rg35036lhpa6coajt6v.apps.googleusercontent.com">
       <App />
     </GoogleOAuthProvider>
   </React.StrictMode>
