@@ -12,7 +12,8 @@ const FloatingBubble = ({ show, link, label, icon }) => {
   const hasMoved = useRef(false);
 
   // --- Defaults ---
-  const DEFAULT_LINK = 'https://barakah-economy.com/produk/kalender-barakah';
+  // const DEFAULT_LINK = 'https://barakah-economy.com/produk/kalender-barakah';
+  const DEFAULT_LINK = 'https://barakah.cloud/produk/kalender-barakah';
   const DEFAULT_LABEL = 'Pesan Kalender Disini';
   const DEFAULT_ICON = 'https://res.cloudinary.com/dfvsam6fi/image/upload/v1764136196/kalender_logo_xlrx5e.png';
 

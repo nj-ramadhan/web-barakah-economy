@@ -159,7 +159,7 @@ class ProductShareView(APIView):
                 'title': 'Barakah Cookies',
                 'description': 'Kue Kering Premium persembahan Barakah Economy. Cek detail dan variasinya sekarang!',
                 # 'thumbnail_url': 'https://barakah-economy.com/images/Barakah-Cookies.jpg',
-                'thumbnail_url': 'https://barakah-economy.com/images/Barakah-Cookies.jpg',
+                'thumbnail_url': 'https://barakah.cloud/images/Barakah-Cookies.jpg',
                 'thumbnail_type': 'image/jpeg',
             }
         else:
@@ -170,7 +170,7 @@ class ProductShareView(APIView):
                 'title': 'Barakah Cookies',
                 'description': 'Temukan produk unggulan dan berkualitas dari Barakah Economy.',
                 # 'thumbnail_url': 'https://barakah-economy.com/images/Barakah-Cookies.jpg',
-                'thumbnail_url': 'https://barakah-economy.com/images/Barakah-Cookies.jpg',
+                'thumbnail_url': 'https://barakah.cloud/images/Barakah-Cookies.jpg',
                 'thumbnail_type': 'image/jpeg',
             }
             

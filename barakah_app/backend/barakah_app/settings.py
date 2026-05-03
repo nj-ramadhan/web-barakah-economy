@@ -46,7 +46,7 @@ QRISLY_API_KEY = env('QRISLY_API_KEY', default='')
 
 DEBUG = env.bool('DEBUG', default=False)
 # FRONTEND_URL = env('FRONTEND_URL', default='https://barakah-economy.com' if not DEBUG else 'http://localhost:3000')
-FRONTEND_URL = env('FRONTEND_URL', default='https://barakah-economy.com' if not DEBUG else 'http://localhost:3000')
+FRONTEND_URL = env('FRONTEND_URL', default='https://barakah.cloud' if not DEBUG else 'http://localhost:3000')
 
 
 
@@ -67,12 +67,12 @@ if DEBUG:
     ALLOWED_HOSTS = ['*']
 else:
     ALLOWED_HOSTS = [
-        # '82.29.162.244',
         '217.216.110.149',
         # 'barakah-economy.com',
-        # 'www.barakah-economy.com'
-        'barakah-economy.com',
-        'www.barakah-economy.com'
+        # 'www.barakah-economy.com',
+        'barakah.cloud',
+        'www.barakah.cloud',
+        'api.barakah.cloud',
         ]
     
     CSRF_TRUSTED_ORIGINS = [
@@ -81,11 +81,13 @@ else:
         # 'http://barakah-economy.com', 
         # 'https://barakah-economy.com', 
         # 'http://www.barakah-economy.com',
-        # 'https://www.barakah-economy.com'
-        'http://barakah-economy.com', 
-        'https://barakah-economy.com', 
-        'http://www.barakah-economy.com',
-        'https://www.barakah-economy.com'
+        # 'https://www.barakah-economy.com',
+        'http://barakah.cloud',
+        'https://barakah.cloud',
+        'http://www.barakah.cloud',
+        'https://www.barakah.cloud',
+        'http://api.barakah.cloud',
+        'https://api.barakah.cloud',
         ]
 
 # Application definition
@@ -203,14 +205,24 @@ else:
     #         'PORT': '5432',
     #     }
     # }
+    # DATABASES = {
+    #     'default': {
+    #         'ENGINE': 'django.db.backends.postgresql',
+    #         'NAME': 'bae_db',
+    #         'USER': 'bae_user',
+    #         'PASSWORD': 'BarakahEconomy2025!',
+    #         'HOST': 'localhost',
+    #         'PORT': '5432',
+    #     }
+    # }
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
-            'NAME': 'bae_db',
-            'USER': 'bae_user',
-            'PASSWORD': 'BarakahEconomy2025!',
-            'HOST': 'localhost',
-            'PORT': '5432',
+            'NAME': env('DB_NAME', default='bae_db'),
+            'USER': env('DB_USER', default='postgres'),
+            'PASSWORD': env('DB_PASSWORD', default='BarakahEconomy2025!'),
+            'HOST': env('DB_HOST', default='bae_postgres'),
+            'PORT': env('DB_PORT', default='5432'),
         }
     }
     # DATABASES = {
@@ -271,11 +283,11 @@ else:
         # 'http://barakah-economy.com', 
         # 'https://barakah-economy.com', 
         # 'http://www.barakah-economy.com',
-        # 'https://www.barakah-economy.com'
-        'http://barakah-economy.com', 
-        'https://barakah-economy.com', 
-        'http://www.barakah-economy.com',
-        'https://www.barakah-economy.com'
+        # 'https://www.barakah-economy.com',
+        'http://barakah.cloud',
+        'https://barakah.cloud',
+        'http://www.barakah.cloud',
+        'https://www.barakah.cloud',
     ]
 
 CORS_ALLOW_METHODS = [
@@ -327,8 +339,10 @@ if DEBUG:
     # STATIC_ROOT = BASE_DIR / 'static'
     MEDIA_ROOT = BASE_DIR / 'media'
 else:
-    STATIC_ROOT = '/var/www/barakah-economy/barakah_app/backend/static/'
-    MEDIA_ROOT = '/var/www/barakah-economy/barakah_app/backend/media/'
+    # STATIC_ROOT = '/var/www/barakah-economy/barakah_app/backend/static/'
+    # MEDIA_ROOT = '/var/www/barakah-economy/barakah_app/backend/media/'
+    STATIC_ROOT = env('STATIC_ROOT', default='/app/static/')
+    MEDIA_ROOT = env('MEDIA_ROOT', default='/app/media/')
 
 # File upload settings
 FILE_UPLOAD_MAX_MEMORY_SIZE = 100 * 1024 * 1024  # 100MB limit
