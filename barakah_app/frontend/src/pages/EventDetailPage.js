@@ -430,8 +430,8 @@ const EventDetailPage = () => {
                     >
                         {/* Combine all available images into the carousel and remove duplicates */}
                         {Array.from(new Set([
-                            event.header_image,
                             event.thumbnail,
+                            event.header_image,
                             ...(event.gallery_images?.map(img => img.image) || []),
                             ...(event.documentation_images?.map(img => img.image) || [])
                         ].filter(img => img))).map((img, idx) => (

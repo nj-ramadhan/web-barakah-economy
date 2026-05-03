@@ -162,7 +162,7 @@ const EventLandingPage = () => {
                                 >
                                     <div className="relative aspect-[4/5] rounded-2xl overflow-hidden shadow-md border border-gray-100 group-hover:shadow-xl transition">
                                         <img
-                                            src={getMediaUrl(ev.header_image || ev.thumbnail)}
+                                            src={getMediaUrl(ev.thumbnail || ev.header_image)}
                                             alt={ev.title}
                                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                                             onError={(e) => { e.target.src = '/placeholder-image.jpg'; }}

@@ -184,7 +184,7 @@ const DesktopLandingPage = () => {
                                             events.find(e => e.visibility === 'public') && { 
                                                 type: 'Event', 
                                                 title: events.find(e => e.visibility === 'public').title, 
-                                                img: events.find(e => e.visibility === 'public').header_image || events.find(e => e.visibility === 'public').thumbnail, 
+                                                img: events.find(e => e.visibility === 'public').thumbnail || events.find(e => e.visibility === 'public').header_image, 
                                                 link: `/event/${events.find(e => e.visibility === 'public').slug}` 
                                             },
                                             articles[0] && { type: 'Artikel', title: articles[0].title, img: articles[0].images?.[0]?.path, link: `/articles/${articles[0].id}` },
