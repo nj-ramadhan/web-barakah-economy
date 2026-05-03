@@ -67,17 +67,19 @@ if DEBUG:
     ALLOWED_HOSTS = ['*']
 else:
     ALLOWED_HOSTS = [
-        '217.216.110.149',
-        # 'barakah-economy.com',
-        # 'www.barakah-economy.com',
         'barakah.cloud',
         'www.barakah.cloud',
         'api.barakah.cloud',
+        '217.216.110.149',
+        'localhost',
+        '127.0.0.1',
         ]
     
     CSRF_TRUSTED_ORIGINS = [
         'http://localhost:3000',
         'https://localhost:3000',
+        'http://localhost:3001',
+        'https://localhost:3001',
         # 'http://barakah-economy.com', 
         # 'https://barakah-economy.com', 
         # 'http://www.barakah-economy.com',
@@ -186,7 +188,8 @@ WSGI_APPLICATION = 'barakah_app.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
-DEBUG = False
+# DEBUG = env.bool('DEBUG', default=False) - already set above
+
 if DEBUG:
     DATABASES = {
         'default': {

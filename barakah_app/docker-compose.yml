@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: bae_postgres
+    restart: always
+    environment:
+      POSTGRES_DB: bae_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: BarakahEconomy2025!
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - bae_network
+
+  backend:
+    build: ./backend
+    container_name: bae_backend
+    restart: always
+    env_file:
+      - ./backend/.env
+    environment:
+      - DB_HOST=db
+      - DB_NAME=bae_db
+      - DB_USER=postgres
+      - DB_PASSWORD=BarakahEconomy2025!
+      - DB_PORT=5432
+      - DEBUG=False
+    depends_on:
+      - db
+    ports:
+      - "8000:8000"
+    networks:
+      - bae_network
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        - REACT_APP_API_BASE_URL=https://api.barakah.cloud
+    container_name: bae_frontend
+    restart: always
+    ports:
+      - "3001:3001"
+    networks:
+      - bae_network
+
+networks:
+  bae_network:
+    driver: bridge
+
+volumes:
+  postgres_data:
