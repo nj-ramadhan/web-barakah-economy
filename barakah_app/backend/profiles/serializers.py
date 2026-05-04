@@ -1,3 +1,4 @@
+from rest_framework import serializers
 from .models import Profile, BusinessProfile
 
 class BusinessProfileSerializer(serializers.ModelSerializer):

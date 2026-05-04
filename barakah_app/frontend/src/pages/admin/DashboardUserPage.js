@@ -30,6 +30,8 @@ const DashboardUserPage = () => {
     const [filterRole, setFilterRole] = useState('');
     const [filterCustomRole, setFilterCustomRole] = useState('');
     const [filterLabel, setFilterLabel] = useState('');
+    const [filterLingkup, setFilterLingkup] = useState('');
+    const [filterBidang, setFilterBidang] = useState('');
     const [filterDateFrom, setFilterDateFrom] = useState('');
     const [filterDateTo, setFilterDateTo] = useState('');
     const [sortField, setSortField] = useState('');
@@ -46,6 +48,8 @@ const DashboardUserPage = () => {
     const [blastResult, setBlastResult] = useState(null);
     const [allRoles, setAllRoles] = useState([]);
     const [allLabels, setAllLabels] = useState([]);
+    const [allLingkup, setAllLingkup] = useState([]);
+    const [allBidang, setAllBidang] = useState([]);
     // Reset password state
     const [showResetPasswordModal, setShowResetPasswordModal] = useState(false);
     const [resetPasswordResult, setResetPasswordResult] = useState(null);
@@ -58,12 +62,16 @@ const DashboardUserPage = () => {
 
     const fetchMeta = useCallback(async () => {
         try {
-            const [rolesRes, labelsRes] = await Promise.all([
+            const [rolesRes, labelsRes, lingkupRes, bidangRes] = await Promise.all([
                 axios.get(`${API}/api/auth/roles/`, getAuth()),
                 axios.get(`${API}/api/auth/labels/`, getAuth()),
+                axios.get(`${API}/api/auth/lingkup-tugas/`, getAuth()),
+                axios.get(`${API}/api/auth/bidang-tugas/`, getAuth()),
             ]);
             setAllRoles(rolesRes.data.results || rolesRes.data);
             setAllLabels(labelsRes.data.results || labelsRes.data);
+            setAllLingkup(lingkupRes.data.results || lingkupRes.data);
+            setAllBidang(bidangRes.data.results || bidangRes.data);
         } catch (err) { console.error(err); }
     }, []);
 
@@ -75,6 +83,8 @@ const DashboardUserPage = () => {
             if (filterRole) params.role = filterRole;
             if (filterCustomRole) params.custom_role = filterCustomRole;
             if (filterLabel) params.label = filterLabel;
+            if (filterLingkup) params.lingkup_tugas = filterLingkup;
+            if (filterBidang) params.bidang_tugas = filterBidang;
             if (filterDateFrom) params.date_from = filterDateFrom;
             if (filterDateTo) params.date_to = filterDateTo;
             if (sortField && sortDir) params.ordering = sortDir === 'desc' ? `-${sortField}` : sortField;
@@ -90,7 +100,7 @@ const DashboardUserPage = () => {
             }
         } catch (err) { console.error(err); }
         setLoading(false);
-    }, [searchQuery, filterRole, filterLabel, filterDateFrom, filterDateTo, sortField, sortDir]);
+    }, [searchQuery, filterRole, filterCustomRole, filterLabel, filterLingkup, filterBidang, filterDateFrom, filterDateTo, sortField, sortDir]);
 
     useEffect(() => {
         const user = JSON.parse(localStorage.getItem('user'));
@@ -140,6 +150,8 @@ const DashboardUserPage = () => {
             role: user.role, is_verified_member: user.is_verified_member,
             custom_role_ids: (user.custom_roles || []).map(r => r.id),
             label_ids: (user.labels || []).map(l => l.id),
+            lingkup_tugas_ids: (user.lingkup_tugas || []).map(l => l.id),
+            bidang_tugas_ids: (user.bidang_tugas || []).map(b => b.id),
             profile: {
                 name_full: p.name_full || '', nik: p.nik || '', gender: p.gender || '', birth_place: p.birth_place || '',
                 birth_date: p.birth_date || '', registration_date: p.registration_date || '',
@@ -187,6 +199,8 @@ const DashboardUserPage = () => {
                 is_verified_member: editFormData.is_verified_member,
                 custom_role_ids: editFormData.custom_role_ids || [],
                 label_ids: editFormData.label_ids || [],
+                lingkup_tugas_ids: editFormData.lingkup_tugas_ids || [],
+                bidang_tugas_ids: editFormData.bidang_tugas_ids || [],
                 profile: cleanProfile,
             };
             await axios.put(`${API}/api/auth/users/${editingUser.id}/`, payload, getAuth());
@@ -373,6 +387,16 @@ const DashboardUserPage = () => {
                             <option value="">Semua Label</option>
                             {allLabels.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
                         </select>
+                        <select value={filterLingkup} onChange={e => { setFilterLingkup(e.target.value); setCurrentPage(1); }}
+                            className="bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none">
+                            <option value="">Semua Lingkup Tugas</option>
+                            {allLingkup.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
+                        </select>
+                        <select value={filterBidang} onChange={e => { setFilterBidang(e.target.value); setCurrentPage(1); }}
+                            className="bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none">
+                            <option value="">Semua Bidang Tugas</option>
+                            {allBidang.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
+                        </select>
                         <input type="date" value={filterDateFrom} onChange={e => { setFilterDateFrom(e.target.value); setCurrentPage(1); }}
                             className="bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none" />
                         <input type="date" value={filterDateTo} onChange={e => { setFilterDateTo(e.target.value); setCurrentPage(1); }}
@@ -395,6 +419,8 @@ const DashboardUserPage = () => {
                                         <th className="px-3 py-4 text-gray-600 font-bold uppercase tracking-wider text-[11px] min-w-[80px]">Role</th>
                                         <th className="px-3 py-4 text-gray-600 font-bold uppercase tracking-wider text-[11px] min-w-[100px]">Custom Role</th>
                                         <th className="px-3 py-4 text-gray-600 font-bold uppercase tracking-wider text-[11px] min-w-[100px]">Label</th>
+                                        <th className="px-3 py-4 text-gray-600 font-bold uppercase tracking-wider text-[11px] min-w-[100px]">Lingkup Tugas</th>
+                                        <th className="px-3 py-4 text-gray-600 font-bold uppercase tracking-wider text-[11px] min-w-[100px]">Bidang Tugas</th>
                                         <SH label="Nama" field="profile__name_full" {...{ sortField, sortDir, handleSort, getSortIcon }} />
                                         <SH label="Join" field="date_joined" {...{ sortField, sortDir, handleSort, getSortIcon }} />
                                         <th className="px-3 py-4 text-gray-600 font-bold uppercase tracking-wider text-[11px] min-w-[150px]">Charity</th>
@@ -431,6 +457,18 @@ const DashboardUserPage = () => {
                                                 <div className="max-w-[120px] flex flex-wrap gap-0.5">
                                                     {(u.labels || []).map(l => <span key={l.id} className="px-1.5 py-0.5 rounded bg-purple-50 text-purple-700 border border-purple-100 text-[9px] font-bold">{l.name}</span>)}
                                                     {(u.labels || []).length === 0 && <span className="text-gray-300 text-[10px]">-</span>}
+                                                </div>
+                                            </td>
+                                            <td className="px-3 py-3">
+                                                <div className="max-w-[120px] flex flex-wrap gap-0.5">
+                                                    {(u.lingkup_tugas || []).map(l => <span key={l.id} className="px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-100 text-[9px] font-bold">{l.name}</span>)}
+                                                    {(u.lingkup_tugas || []).length === 0 && <span className="text-gray-300 text-[10px]">-</span>}
+                                                </div>
+                                            </td>
+                                            <td className="px-3 py-3">
+                                                <div className="max-w-[120px] flex flex-wrap gap-0.5">
+                                                    {(u.bidang_tugas || []).map(l => <span key={l.id} className="px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-100 text-[9px] font-bold">{l.name}</span>)}
+                                                    {(u.bidang_tugas || []).length === 0 && <span className="text-gray-300 text-[10px]">-</span>}
                                                 </div>
                                             </td>
                                             <td className="px-3 py-3">
@@ -512,6 +550,8 @@ const DashboardUserPage = () => {
                                     <div className="flex flex-wrap gap-1 mt-2">
                                         {(selectedUser.custom_roles || []).map(r => <span key={r.id} className="px-2 py-0.5 bg-green-50 text-green-700 rounded-full text-[10px] font-bold">{r.name}</span>)}
                                         {(selectedUser.labels || []).map(l => <span key={l.id} className="px-2 py-0.5 bg-purple-50 text-purple-700 rounded-full text-[10px] font-bold">{l.name}</span>)}
+                                        {(selectedUser.lingkup_tugas || []).map(l => <span key={l.id} className="px-2 py-0.5 bg-blue-50 text-blue-700 rounded-full text-[10px] font-bold">{l.name}</span>)}
+                                        {(selectedUser.bidang_tugas || []).map(l => <span key={l.id} className="px-2 py-0.5 bg-emerald-50 text-emerald-700 rounded-full text-[10px] font-bold">{l.name}</span>)}
                                     </div>
                                 </div>
                                 <div className="text-right">
@@ -657,6 +697,30 @@ const DashboardUserPage = () => {
                                                         <label key={l.id} className={`flex items-center gap-1 px-2 py-1 rounded-lg border cursor-pointer text-xs transition ${(editFormData.label_ids || []).includes(l.id) ? 'bg-purple-50 border-purple-200 text-purple-800' : 'bg-white border-gray-100 text-gray-500'}`}>
                                                             <input type="checkbox" checked={(editFormData.label_ids || []).includes(l.id)}
                                                                 onChange={() => { const ids = editFormData.label_ids || []; setEditFormData(f => ({ ...f, label_ids: ids.includes(l.id) ? ids.filter(x => x !== l.id) : [...ids, l.id] })); }} className="w-3 h-3 rounded" />
+                                                            {l.name}
+                                                        </label>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                            <div className="space-y-1 mt-3">
+                                                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Lingkup Tugas</label>
+                                                <div className="flex flex-wrap gap-1">
+                                                    {allLingkup.map(l => (
+                                                        <label key={l.id} className={`flex items-center gap-1 px-2 py-1 rounded-lg border cursor-pointer text-xs transition ${(editFormData.lingkup_tugas_ids || []).includes(l.id) ? 'bg-blue-50 border-blue-200 text-blue-800' : 'bg-white border-gray-100 text-gray-500'}`}>
+                                                            <input type="checkbox" checked={(editFormData.lingkup_tugas_ids || []).includes(l.id)}
+                                                                onChange={() => { const ids = editFormData.lingkup_tugas_ids || []; setEditFormData(f => ({ ...f, lingkup_tugas_ids: ids.includes(l.id) ? ids.filter(x => x !== l.id) : [...ids, l.id] })); }} className="w-3 h-3 rounded" />
+                                                            {l.name}
+                                                        </label>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                            <div className="space-y-1 mt-3">
+                                                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Bidang Tugas</label>
+                                                <div className="flex flex-wrap gap-1">
+                                                    {allBidang.map(l => (
+                                                        <label key={l.id} className={`flex items-center gap-1 px-2 py-1 rounded-lg border cursor-pointer text-xs transition ${(editFormData.bidang_tugas_ids || []).includes(l.id) ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-white border-gray-100 text-gray-500'}`}>
+                                                            <input type="checkbox" checked={(editFormData.bidang_tugas_ids || []).includes(l.id)}
+                                                                onChange={() => { const ids = editFormData.bidang_tugas_ids || []; setEditFormData(f => ({ ...f, bidang_tugas_ids: ids.includes(l.id) ? ids.filter(x => x !== l.id) : [...ids, l.id] })); }} className="w-3 h-3 rounded" />
                                                             {l.name}
                                                         </label>
                                                     ))}
@@ -821,6 +885,8 @@ const DashboardUserPage = () => {
                                         <option value="is_verified_member">Status Verified</option>
                                         <option value="custom_role_ids">Custom Role</option>
                                         <option value="label_ids">Label</option>
+                                        <option value="lingkup_tugas_ids">Lingkup Tugas</option>
+                                        <option value="bidang_tugas_ids">Bidang Tugas</option>
                                     </optgroup>
                                     <optgroup label="Profil Dasar">
                                         <option value="gender">Jenis Kelamin</option>
@@ -869,6 +935,26 @@ const DashboardUserPage = () => {
                                                 <label key={l.id} className={`flex items-center gap-1 px-2 py-1 rounded-lg border cursor-pointer text-xs transition ${(batchValue || []).includes(l.id) ? 'bg-purple-50 border-purple-200 text-purple-800' : 'bg-white border-gray-100 text-gray-500'}`}>
                                                     <input type="checkbox" checked={(batchValue || []).includes(l.id)}
                                                         onChange={() => { const ids = Array.isArray(batchValue) ? batchValue : []; setBatchValue(ids.includes(l.id) ? ids.filter(x => x !== l.id) : [...ids, l.id]); }} className="w-3 h-3 text-purple-600 rounded" />
+                                                    {l.name}
+                                                </label>
+                                            ))}
+                                        </div>
+                                    ) : batchField === 'lingkup_tugas_ids' ? (
+                                        <div className="flex flex-wrap gap-1 p-3 bg-gray-50 rounded-xl border border-gray-200">
+                                            {allLingkup.map(l => (
+                                                <label key={l.id} className={`flex items-center gap-1 px-2 py-1 rounded-lg border cursor-pointer text-xs transition ${(batchValue || []).includes(l.id) ? 'bg-blue-50 border-blue-200 text-blue-800' : 'bg-white border-gray-100 text-gray-500'}`}>
+                                                    <input type="checkbox" checked={(batchValue || []).includes(l.id)}
+                                                        onChange={() => { const ids = Array.isArray(batchValue) ? batchValue : []; setBatchValue(ids.includes(l.id) ? ids.filter(x => x !== l.id) : [...ids, l.id]); }} className="w-3 h-3 text-blue-600 rounded" />
+                                                    {l.name}
+                                                </label>
+                                            ))}
+                                        </div>
+                                    ) : batchField === 'bidang_tugas_ids' ? (
+                                        <div className="flex flex-wrap gap-1 p-3 bg-gray-50 rounded-xl border border-gray-200">
+                                            {allBidang.map(l => (
+                                                <label key={l.id} className={`flex items-center gap-1 px-2 py-1 rounded-lg border cursor-pointer text-xs transition ${(batchValue || []).includes(l.id) ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-white border-gray-100 text-gray-500'}`}>
+                                                    <input type="checkbox" checked={(batchValue || []).includes(l.id)}
+                                                        onChange={() => { const ids = Array.isArray(batchValue) ? batchValue : []; setBatchValue(ids.includes(l.id) ? ids.filter(x => x !== l.id) : [...ids, l.id]); }} className="w-3 h-3 text-emerald-600 rounded" />
                                                     {l.name}
                                                 </label>
                                             ))}

@@ -5,13 +5,16 @@ from .views import (
     RegisterView, LoginView, LogoutView, GoogleLoginView,
     PasswordResetRequestView, PasswordResetConfirmView,
     ChangePasswordView,
-    UserViewSet, RoleViewSet, UserLabelViewSet
+    UserViewSet, RoleViewSet, UserLabelViewSet,
+    LingkupTugasViewSet, BidangTugasViewSet
 )
 
 router = SimpleRouter()
 router.register(r'users', UserViewSet, basename='user')
 router.register(r'roles', RoleViewSet, basename='role')
 router.register(r'labels', UserLabelViewSet, basename='label')
+router.register(r'lingkup-tugas', LingkupTugasViewSet, basename='lingkup-tugas')
+router.register(r'bidang-tugas', BidangTugasViewSet, basename='bidang-tugas')
 
 urlpatterns = [
     path('register/', RegisterView.as_view(), name='register'),

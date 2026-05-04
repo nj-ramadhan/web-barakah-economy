@@ -4,7 +4,7 @@ from django.contrib.auth.password_validation import validate_password
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 from profiles.serializers import ProfileSerializer
-from .models import Role, UserLabel
+from .models import Role, UserLabel, LingkupTugas, BidangTugas
 
 User = get_user_model()
 
@@ -21,6 +21,18 @@ class UserLabelSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
+class LingkupTugasSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = LingkupTugas
+        fields = '__all__'
+
+
+class BidangTugasSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = BidangTugas
+        fields = '__all__'
+
+
 class UserAdminSerializer(serializers.ModelSerializer):
     profile = ProfileSerializer(required=False)
     custom_roles = RoleSerializer(many=True, read_only=True)
@@ -30,6 +42,14 @@ class UserAdminSerializer(serializers.ModelSerializer):
     labels = UserLabelSerializer(many=True, read_only=True)
     label_ids = serializers.PrimaryKeyRelatedField(
         many=True, queryset=UserLabel.objects.all(), write_only=True, required=False, source='labels'
+    )
+    lingkup_tugas = LingkupTugasSerializer(many=True, read_only=True)
+    lingkup_tugas_ids = serializers.PrimaryKeyRelatedField(
+        many=True, queryset=LingkupTugas.objects.all(), write_only=True, required=False, source='lingkup_tugas'
+    )
+    bidang_tugas = BidangTugasSerializer(many=True, read_only=True)
+    bidang_tugas_ids = serializers.PrimaryKeyRelatedField(
+        many=True, queryset=BidangTugas.objects.all(), write_only=True, required=False, source='bidang_tugas'
     )
     accessible_menus = serializers.SerializerMethodField()
     activities = serializers.SerializerMethodField()
@@ -90,6 +110,8 @@ class UserAdminSerializer(serializers.ModelSerializer):
             'profile', 'date_joined',
             'custom_roles', 'custom_role_ids',
             'labels', 'label_ids',
+            'lingkup_tugas', 'lingkup_tugas_ids',
+            'bidang_tugas', 'bidang_tugas_ids',
             'accessible_menus',
             'activities',
         )
@@ -99,6 +121,8 @@ class UserAdminSerializer(serializers.ModelSerializer):
         # PrimaryKeyRelatedField(source='custom_roles') resolves to validated_data['custom_roles']
         custom_roles = validated_data.pop('custom_roles', None)
         labels = validated_data.pop('labels', None)
+        lingkup_tugas = validated_data.pop('lingkup_tugas', None)
+        bidang_tugas = validated_data.pop('bidang_tugas', None)
         
         # Update User fields
         for attr, value in validated_data.items():
@@ -118,6 +142,10 @@ class UserAdminSerializer(serializers.ModelSerializer):
             instance.custom_roles.set(custom_roles)
         if labels is not None:
             instance.labels.set(labels)
+        if lingkup_tugas is not None:
+            instance.lingkup_tugas.set(lingkup_tugas)
+        if bidang_tugas is not None:
+            instance.bidang_tugas.set(bidang_tugas)
             
         instance.save() 
         instance.refresh_from_db() # Ensure M2M and other changes are fully loaded for response

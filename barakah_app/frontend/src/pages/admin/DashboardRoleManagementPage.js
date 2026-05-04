@@ -76,6 +76,18 @@ const DashboardRoleManagementPage = () => {
     const [editingLabel, setEditingLabel] = useState(null);
     const [labelForm, setLabelForm] = useState({ name: '', code: '', color: 'gray' });
 
+    // === LINGKUP TUGAS STATE ===
+    const [lingkupTugas, setLingkupTugas] = useState([]);
+    const [showLingkupTugasModal, setShowLingkupTugasModal] = useState(false);
+    const [editingLingkupTugas, setEditingLingkupTugas] = useState(null);
+    const [lingkupTugasForm, setLingkupTugasForm] = useState({ name: '', code: '', color: 'blue' });
+
+    // === BIDANG TUGAS STATE ===
+    const [bidangTugas, setBidangTugas] = useState([]);
+    const [showBidangTugasModal, setShowBidangTugasModal] = useState(false);
+    const [editingBidangTugas, setEditingBidangTugas] = useState(null);
+    const [bidangTugasForm, setBidangTugasForm] = useState({ name: '', code: '', color: 'emerald' });
+
     const fetchRoles = useCallback(async () => {
         try {
             const res = await axios.get(`${API}/api/auth/roles/`, getAuth());
@@ -90,12 +102,28 @@ const DashboardRoleManagementPage = () => {
         } catch (err) { console.error(err); }
     }, []);
 
+    const fetchLingkupTugas = useCallback(async () => {
+        try {
+            const res = await axios.get(`${API}/api/auth/lingkup-tugas/`, getAuth());
+            setLingkupTugas(res.data.results || res.data);
+        } catch (err) { console.error(err); }
+    }, []);
+
+    const fetchBidangTugas = useCallback(async () => {
+        try {
+            const res = await axios.get(`${API}/api/auth/bidang-tugas/`, getAuth());
+            setBidangTugas(res.data.results || res.data);
+        } catch (err) { console.error(err); }
+    }, []);
+
     useEffect(() => {
         const user = JSON.parse(localStorage.getItem('user'));
         if (!user || user.role !== 'admin') { navigate('/dashboard'); return; }
         fetchRoles();
         fetchLabels();
-    }, [navigate, fetchRoles, fetchLabels]);
+        fetchLingkupTugas();
+        fetchBidangTugas();
+    }, [navigate, fetchRoles, fetchLabels, fetchLingkupTugas, fetchBidangTugas]);
 
     // === ROLE HANDLERS ===
     const openRoleModal = (role = null) => {
@@ -192,7 +220,79 @@ const DashboardRoleManagementPage = () => {
         } catch (err) { alert('Gagal menghapus'); }
     };
 
-    const LABEL_COLORS = ['gray', 'red', 'orange', 'yellow', 'green', 'blue', 'indigo', 'purple', 'pink'];
+    // === LINGKUP TUGAS HANDLERS ===
+    const openLingkupTugasModal = (item = null) => {
+        if (item) {
+            setEditingLingkupTugas(item);
+            setLingkupTugasForm({ name: item.name, code: item.code, color: item.color || 'blue' });
+        } else {
+            setEditingLingkupTugas(null);
+            setLingkupTugasForm({ name: '', code: '', color: 'blue' });
+        }
+        setShowLingkupTugasModal(true);
+    };
+
+    const handleLingkupTugasSave = async (e) => {
+        e.preventDefault();
+        try {
+            if (editingLingkupTugas) {
+                await axios.put(`${API}/api/auth/lingkup-tugas/${editingLingkupTugas.id}/`, lingkupTugasForm, getAuth());
+            } else {
+                await axios.post(`${API}/api/auth/lingkup-tugas/`, lingkupTugasForm, getAuth());
+            }
+            setShowLingkupTugasModal(false);
+            fetchLingkupTugas();
+        } catch (err) {
+            console.error(err);
+            alert(err.response?.data?.detail || 'Gagal menyimpan lingkup tugas');
+        }
+    };
+
+    const handleLingkupTugasDelete = async (id) => {
+        if (!window.confirm('Hapus lingkup tugas ini?')) return;
+        try {
+            await axios.delete(`${API}/api/auth/lingkup-tugas/${id}/`, getAuth());
+            fetchLingkupTugas();
+        } catch (err) { alert('Gagal menghapus'); }
+    };
+
+    // === BIDANG TUGAS HANDLERS ===
+    const openBidangTugasModal = (item = null) => {
+        if (item) {
+            setEditingBidangTugas(item);
+            setBidangTugasForm({ name: item.name, code: item.code, color: item.color || 'emerald' });
+        } else {
+            setEditingBidangTugas(null);
+            setBidangTugasForm({ name: '', code: '', color: 'emerald' });
+        }
+        setShowBidangTugasModal(true);
+    };
+
+    const handleBidangTugasSave = async (e) => {
+        e.preventDefault();
+        try {
+            if (editingBidangTugas) {
+                await axios.put(`${API}/api/auth/bidang-tugas/${editingBidangTugas.id}/`, bidangTugasForm, getAuth());
+            } else {
+                await axios.post(`${API}/api/auth/bidang-tugas/`, bidangTugasForm, getAuth());
+            }
+            setShowBidangTugasModal(false);
+            fetchBidangTugas();
+        } catch (err) {
+            console.error(err);
+            alert(err.response?.data?.detail || 'Gagal menyimpan bidang tugas');
+        }
+    };
+
+    const handleBidangTugasDelete = async (id) => {
+        if (!window.confirm('Hapus bidang tugas ini?')) return;
+        try {
+            await axios.delete(`${API}/api/auth/bidang-tugas/${id}/`, getAuth());
+            fetchBidangTugas();
+        } catch (err) { alert('Gagal menghapus'); }
+    };
+
+    const LABEL_COLORS = ['gray', 'red', 'orange', 'yellow', 'green', 'emerald', 'teal', 'blue', 'indigo', 'violet', 'purple', 'pink'];
 
     return (
         <div className="body bg-gray-50 min-h-screen">
@@ -212,6 +312,8 @@ const DashboardRoleManagementPage = () => {
                     {[
                         { key: 'roles', label: 'Roles', icon: 'admin_panel_settings' },
                         { key: 'labels', label: 'Label Pengguna', icon: 'label' },
+                        { key: 'lingkup_tugas', label: 'Lingkup Tugas', icon: 'map' },
+                        { key: 'bidang_tugas', label: 'Bidang Tugas', icon: 'work' },
                     ].map(tab => (
                         <button key={tab.key} onClick={() => setActiveTab(tab.key)}
                             className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition ${activeTab === tab.key
@@ -326,6 +428,102 @@ const DashboardRoleManagementPage = () => {
                         </div>
                     </div>
                 )}
+
+                {/* ============ LINGKUP TUGAS TAB ============ */}
+                {activeTab === 'lingkup_tugas' && (
+                    <div>
+                        <div className="flex justify-between items-center mb-4">
+                            <p className="text-gray-500 text-sm">{lingkupTugas.length} lingkup tugas tersedia</p>
+                            <button onClick={() => openLingkupTugasModal()} className="bg-blue-700 text-white px-5 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 shadow-lg shadow-blue-100 hover:bg-blue-800 transition">
+                                <span className="material-icons text-sm">add</span> Tambah Lingkup
+                            </button>
+                        </div>
+
+                        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                            <table className="w-full text-left text-sm">
+                                <thead className="bg-gray-50 border-b border-gray-100">
+                                    <tr>
+                                        <th className="px-6 py-4 text-gray-600 font-bold text-[11px] uppercase">Nama</th>
+                                        <th className="px-6 py-4 text-gray-600 font-bold text-[11px] uppercase">Kode</th>
+                                        <th className="px-6 py-4 text-gray-600 font-bold text-[11px] uppercase">Warna</th>
+                                        <th className="px-6 py-4 text-gray-600 font-bold text-[11px] uppercase text-center">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-50">
+                                    {lingkupTugas.map(l => (
+                                        <tr key={l.id} className="hover:bg-blue-50/30 transition">
+                                            <td className="px-6 py-4 font-bold text-gray-900">{l.name}</td>
+                                            <td className="px-6 py-4">
+                                                <span className="text-xs font-mono bg-gray-100 px-2 py-1 rounded">{l.code}</span>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <span className={`inline-block w-6 h-6 rounded-full bg-${l.color}-400 border-2 border-white shadow`}></span>
+                                            </td>
+                                            <td className="px-6 py-4 text-center">
+                                                <div className="flex justify-center gap-2">
+                                                    <button onClick={() => openLingkupTugasModal(l)} className="w-8 h-8 bg-white border border-gray-200 rounded-lg text-gray-400 hover:text-blue-700 hover:border-blue-200 flex items-center justify-center transition">
+                                                        <span className="material-icons text-sm">edit</span>
+                                                    </button>
+                                                    <button onClick={() => handleLingkupTugasDelete(l.id)} className="w-8 h-8 bg-white border border-gray-200 rounded-lg text-gray-400 hover:text-red-700 hover:border-red-200 flex items-center justify-center transition">
+                                                        <span className="material-icons text-sm">delete</span>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                )}
+
+                {/* ============ BIDANG TUGAS TAB ============ */}
+                {activeTab === 'bidang_tugas' && (
+                    <div>
+                        <div className="flex justify-between items-center mb-4">
+                            <p className="text-gray-500 text-sm">{bidangTugas.length} bidang tugas tersedia</p>
+                            <button onClick={() => openBidangTugasModal()} className="bg-emerald-700 text-white px-5 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 shadow-lg shadow-emerald-100 hover:bg-emerald-800 transition">
+                                <span className="material-icons text-sm">add</span> Tambah Bidang
+                            </button>
+                        </div>
+
+                        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                            <table className="w-full text-left text-sm">
+                                <thead className="bg-gray-50 border-b border-gray-100">
+                                    <tr>
+                                        <th className="px-6 py-4 text-gray-600 font-bold text-[11px] uppercase">Nama</th>
+                                        <th className="px-6 py-4 text-gray-600 font-bold text-[11px] uppercase">Kode</th>
+                                        <th className="px-6 py-4 text-gray-600 font-bold text-[11px] uppercase">Warna</th>
+                                        <th className="px-6 py-4 text-gray-600 font-bold text-[11px] uppercase text-center">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-50">
+                                    {bidangTugas.map(l => (
+                                        <tr key={l.id} className="hover:bg-emerald-50/30 transition">
+                                            <td className="px-6 py-4 font-bold text-gray-900">{l.name}</td>
+                                            <td className="px-6 py-4">
+                                                <span className="text-xs font-mono bg-gray-100 px-2 py-1 rounded">{l.code}</span>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <span className={`inline-block w-6 h-6 rounded-full bg-${l.color}-400 border-2 border-white shadow`}></span>
+                                            </td>
+                                            <td className="px-6 py-4 text-center">
+                                                <div className="flex justify-center gap-2">
+                                                    <button onClick={() => openBidangTugasModal(l)} className="w-8 h-8 bg-white border border-gray-200 rounded-lg text-gray-400 hover:text-blue-700 hover:border-blue-200 flex items-center justify-center transition">
+                                                        <span className="material-icons text-sm">edit</span>
+                                                    </button>
+                                                    <button onClick={() => handleBidangTugasDelete(l.id)} className="w-8 h-8 bg-white border border-gray-200 rounded-lg text-gray-400 hover:text-red-700 hover:border-red-200 flex items-center justify-center transition">
+                                                        <span className="material-icons text-sm">delete</span>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                )}
             </div>
 
             {/* ============ ROLE MODAL ============ */}
@@ -429,6 +627,86 @@ const DashboardRoleManagementPage = () => {
                             <div className="p-6 bg-gray-50 border-t border-gray-100 flex justify-end gap-3 rounded-b-3xl">
                                 <button type="button" onClick={() => setShowLabelModal(false)} className="px-6 py-2.5 rounded-xl text-sm font-bold text-gray-500 hover:bg-gray-200 transition">Batal</button>
                                 <button type="submit" className="bg-green-700 text-white px-8 py-2.5 rounded-xl text-sm font-bold shadow-lg shadow-green-100 hover:bg-green-800 transition">Simpan</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* ============ LINGKUP TUGAS MODAL ============ */}
+            {showLingkupTugasModal && (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[110] flex items-center justify-center p-4">
+                    <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl">
+                        <div className="p-6 border-b border-gray-100 flex justify-between items-center">
+                            <h2 className="text-xl font-bold text-gray-900">{editingLingkupTugas ? 'Edit Lingkup Tugas' : 'Tambah Lingkup Tugas'}</h2>
+                            <button onClick={() => setShowLingkupTugasModal(false)} className="text-gray-400 hover:text-gray-600">
+                                <span className="material-icons">close</span>
+                            </button>
+                        </div>
+                        <form onSubmit={handleLingkupTugasSave}>
+                            <div className="p-8 space-y-5">
+                                <div className="space-y-1">
+                                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Nama Lingkup</label>
+                                    <input type="text" required className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm outline-none" value={lingkupTugasForm.name} onChange={e => setLingkupTugasForm({ ...lingkupTugasForm, name: e.target.value })} placeholder="Contoh: Pusat" />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Kode</label>
+                                    <input type="text" required className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm outline-none font-mono" value={lingkupTugasForm.code} onChange={e => setLingkupTugasForm({ ...lingkupTugasForm, code: e.target.value })} placeholder="1PS" />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Warna</label>
+                                    <div className="flex flex-wrap gap-2">
+                                        {LABEL_COLORS.map(c => (
+                                            <button key={c} type="button" onClick={() => setLingkupTugasForm({ ...lingkupTugasForm, color: c })}
+                                                className={`w-8 h-8 rounded-full bg-${c}-400 border-2 transition ${lingkupTugasForm.color === c ? 'border-gray-900 scale-110 shadow-lg' : 'border-white shadow'}`}
+                                            />
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="p-6 bg-gray-50 border-t border-gray-100 flex justify-end gap-3 rounded-b-3xl">
+                                <button type="button" onClick={() => setShowLingkupTugasModal(false)} className="px-6 py-2.5 rounded-xl text-sm font-bold text-gray-500 hover:bg-gray-200 transition">Batal</button>
+                                <button type="submit" className="bg-blue-700 text-white px-8 py-2.5 rounded-xl text-sm font-bold shadow-lg shadow-blue-100 hover:bg-blue-800 transition">Simpan</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* ============ BIDANG TUGAS MODAL ============ */}
+            {showBidangTugasModal && (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[110] flex items-center justify-center p-4">
+                    <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl">
+                        <div className="p-6 border-b border-gray-100 flex justify-between items-center">
+                            <h2 className="text-xl font-bold text-gray-900">{editingBidangTugas ? 'Edit Bidang Tugas' : 'Tambah Bidang Tugas'}</h2>
+                            <button onClick={() => setShowBidangTugasModal(false)} className="text-gray-400 hover:text-gray-600">
+                                <span className="material-icons">close</span>
+                            </button>
+                        </div>
+                        <form onSubmit={handleBidangTugasSave}>
+                            <div className="p-8 space-y-5">
+                                <div className="space-y-1">
+                                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Nama Bidang</label>
+                                    <input type="text" required className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm outline-none" value={bidangTugasForm.name} onChange={e => setBidangTugasForm({ ...bidangTugasForm, name: e.target.value })} placeholder="Contoh: Manajemen Umum" />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Kode</label>
+                                    <input type="text" required className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm outline-none font-mono" value={bidangTugasForm.code} onChange={e => setBidangTugasForm({ ...bidangTugasForm, code: e.target.value })} placeholder="MNG" />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Warna</label>
+                                    <div className="flex flex-wrap gap-2">
+                                        {LABEL_COLORS.map(c => (
+                                            <button key={c} type="button" onClick={() => setBidangTugasForm({ ...bidangTugasForm, color: c })}
+                                                className={`w-8 h-8 rounded-full bg-${c}-400 border-2 transition ${bidangTugasForm.color === c ? 'border-gray-900 scale-110 shadow-lg' : 'border-white shadow'}`}
+                                            />
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="p-6 bg-gray-50 border-t border-gray-100 flex justify-end gap-3 rounded-b-3xl">
+                                <button type="button" onClick={() => setShowBidangTugasModal(false)} className="px-6 py-2.5 rounded-xl text-sm font-bold text-gray-500 hover:bg-gray-200 transition">Batal</button>
+                                <button type="submit" className="bg-emerald-700 text-white px-8 py-2.5 rounded-xl text-sm font-bold shadow-lg shadow-emerald-100 hover:bg-emerald-800 transition">Simpan</button>
                             </div>
                         </form>
                     </div>

@@ -36,6 +36,34 @@ class UserLabel(models.Model):
         return f"{self.name} ({self.code})"
 
 
+class LingkupTugas(models.Model):
+    """Lingkup Tugas untuk user (contoh: Pusat, Wilayah, dll)."""
+    name = models.CharField(max_length=50)
+    code = models.CharField(max_length=20, unique=True)
+    color = models.CharField(max_length=20, default='blue')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['name']
+
+    def __str__(self):
+        return f"{self.name} ({self.code})"
+
+
+class BidangTugas(models.Model):
+    """Bidang Tugas untuk user (contoh: Manajemen Umum, SDM, dll)."""
+    name = models.CharField(max_length=50)
+    code = models.CharField(max_length=20, unique=True)
+    color = models.CharField(max_length=20, default='emerald')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['name']
+
+    def __str__(self):
+        return f"{self.name} ({self.code})"
+
+
 class User(AbstractUser):
     ROLE_CHOICES = (
         ('user', 'User / Peminat'),
@@ -52,6 +80,8 @@ class User(AbstractUser):
     # Dynamic role & label system
     custom_roles = models.ManyToManyField(Role, blank=True, related_name='users')
     labels = models.ManyToManyField(UserLabel, blank=True, related_name='users')
+    lingkup_tugas = models.ManyToManyField(LingkupTugas, blank=True, related_name='users')
+    bidang_tugas = models.ManyToManyField(BidangTugas, blank=True, related_name='users')
     position = models.CharField(max_length=100, blank=True, null=True, help_text="Jabatan di BAE")
 
     def __str__(self):

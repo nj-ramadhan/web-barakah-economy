@@ -5,9 +5,10 @@ from rest_framework import generics, permissions, viewsets, filters
 from rest_framework_simplejwt.views import TokenObtainPairView
 from .serializers import (
     UserRegistrationSerializer, CustomTokenObtainPairSerializer,
-    UserAdminSerializer, RoleSerializer, UserLabelSerializer
+    UserAdminSerializer, RoleSerializer, UserLabelSerializer,
+    LingkupTugasSerializer, BidangTugasSerializer
 )
-from .models import Role, UserLabel
+from .models import Role, UserLabel, LingkupTugas, BidangTugas
 from rest_framework.decorators import action
 from barakah_app.utils import send_email
 from django.db import transaction
@@ -240,8 +241,22 @@ class UserLabelViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAdminUser]
 
 
+class LingkupTugasViewSet(viewsets.ModelViewSet):
+    """CRUD for lingkup tugas. Admin only."""
+    queryset = LingkupTugas.objects.all()
+    serializer_class = LingkupTugasSerializer
+    permission_classes = [permissions.IsAdminUser]
+
+
+class BidangTugasViewSet(viewsets.ModelViewSet):
+    """CRUD for bidang tugas. Admin only."""
+    queryset = BidangTugas.objects.all()
+    serializer_class = BidangTugasSerializer
+    permission_classes = [permissions.IsAdminUser]
+
+
 class UserViewSet(viewsets.ModelViewSet):
-    queryset = User.objects.all().select_related('profile').prefetch_related('custom_roles', 'labels').order_by('-date_joined')
+    queryset = User.objects.all().select_related('profile').prefetch_related('custom_roles', 'labels', 'lingkup_tugas', 'bidang_tugas').order_by('-date_joined')
     serializer_class = UserAdminSerializer
     permission_classes = [permissions.IsAdminUser]
 
@@ -305,6 +320,16 @@ class UserViewSet(viewsets.ModelViewSet):
         if label_filter:
             qs = qs.filter(labels__id=label_filter)
 
+        # Filter by lingkup tugas
+        lingkup_tugas_filter = self.request.query_params.get('lingkup_tugas', '')
+        if lingkup_tugas_filter:
+            qs = qs.filter(lingkup_tugas__id=lingkup_tugas_filter)
+
+        # Filter by bidang tugas
+        bidang_tugas_filter = self.request.query_params.get('bidang_tugas', '')
+        if bidang_tugas_filter:
+            qs = qs.filter(bidang_tugas__id=bidang_tugas_filter)
+
         # Filter by join date range
         date_from = self.request.query_params.get('date_from', '')
         date_to = self.request.query_params.get('date_to', '')
@@ -356,7 +381,7 @@ class UserViewSet(viewsets.ModelViewSet):
                 'Marital Status', 'Segment', 'Study Level', 'Study Campus', 'Study Faculty',
                 'Study Department', 'Study Program', 'Semester', 'Start Year', 'Finish Year',
                 'Address', 'Job', 'Work Field', 'Work Institution', 'Work Position', 'Salary', 'Province',
-                'Custom Roles', 'Labels',
+                'Custom Roles', 'Labels', 'Lingkup Tugas', 'Bidang Tugas',
                 'Aktivitas Charity', 'Aktivitas Event', 'Aktivitas Sinergy', 'Aktivitas E-Course', 'Aktivitas Digital Produk'
             ]
             writer.writerow(headers)
@@ -407,9 +432,11 @@ class UserViewSet(viewsets.ModelViewSet):
                 else:
                     row.extend([''] * 22)
                 
-                # Add custom roles and labels
+                # Add custom roles, labels, lingkup tugas, bidang tugas
                 row.append(' | '.join([r.name for r in user.custom_roles.all()]))
                 row.append(' | '.join([l.name for l in user.labels.all()]))
+                row.append(' | '.join([lt.name for lt in user.lingkup_tugas.all()]))
+                row.append(' | '.join([bt.name for bt in user.bidang_tugas.all()]))
 
                 # Activities (Real-time)
                 charity_acts = Donation.objects.filter(donor=user).exclude(payment_status='rejected').values('campaign__title', 'amount')
@@ -511,6 +538,18 @@ class UserViewSet(viewsets.ModelViewSet):
         labels = UserLabel.objects.all()
         return Response(UserLabelSerializer(labels, many=True).data)
 
+    @action(detail=False, methods=['get'])
+    def lingkup_tugas_list(self, request):
+        """Get all available lingkup tugas for filter dropdown."""
+        lingkup = LingkupTugas.objects.all()
+        return Response(LingkupTugasSerializer(lingkup, many=True).data)
+
+    @action(detail=False, methods=['get'])
+    def bidang_tugas_list(self, request):
+        """Get all available bidang tugas for filter dropdown."""
+        bidang = BidangTugas.objects.all()
+        return Response(BidangTugasSerializer(bidang, many=True).data)
+
     @action(detail=True, methods=['post'])
     def reset_password(self, request, pk=None):
         """Admin reset password user – generate password sementara."""
@@ -551,6 +590,12 @@ class UserViewSet(viewsets.ModelViewSet):
             elif field == 'label_ids':
                 for user in users:
                     user.labels.set(value)
+            elif field == 'lingkup_tugas_ids':
+                for user in users:
+                    user.lingkup_tugas.set(value)
+            elif field == 'bidang_tugas_ids':
+                for user in users:
+                    user.bidang_tugas.set(value)
             
             # Profile model fields
             else:
