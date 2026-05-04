@@ -17,13 +17,22 @@ class BusinessProfileViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         try:
             user = self.request.user
+            if user.is_anonymous:
+                return BusinessProfile.objects.none()
+                
             if user.role == 'admin':
-                return BusinessProfile.objects.all().order_by('-created_at')
-            return BusinessProfile.objects.filter(user=user).order_by('-created_at')
+                qs = BusinessProfile.objects.all().order_by('-created_at')
+            else:
+                qs = BusinessProfile.objects.filter(user=user).order_by('-created_at')
+            
+            # Debugging: check if we can evaluate the queryset
+            # (Force evaluation to catch database errors here)
+            list(qs[:1]) 
+            return qs
         except Exception as e:
-            import logging
-            logger = logging.getLogger(__name__)
-            logger.error(f"Error in BusinessProfile get_queryset: {str(e)}")
+            import traceback
+            print("=== BUSINESS PROFILE ERROR ===")
+            print(traceback.format_exc())
             raise e
 
     def perform_create(self, serializer):
