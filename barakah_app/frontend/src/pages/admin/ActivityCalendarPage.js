@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { Helmet } from 'react-helmet';
-import { Link, useNavigate } from 'react-router-dom';
 import Header from '../../components/layout/Header';
 import NavigationButton from '../../components/layout/Navigation';
 
@@ -9,25 +9,23 @@ const API = process.env.REACT_APP_API_BASE_URL;
 
 const ActivityCalendarPage = () => {
     const navigate = useNavigate();
-    const [activities, setActivities] = useState([]);
-    const [loading, setLoading] = useState(true);
     const [viewMode, setViewMode] = useState('monthly'); // weekly, monthly, quarterly, range
     const [currentDate, setCurrentDate] = useState(new Date());
-    const [customRange, setCustomRange] = useState({ 
-        start: new Date().toISOString().split('T')[0], 
-        end: new Date(new Date().setDate(new Date().getDate() + 30)).toISOString().split('T')[0] 
+    const [activities, setActivities] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [customRange, setCustomRange] = useState({
+        start: new Date().toISOString().split('T')[0],
+        end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
     });
 
-    const getAuth = () => {
+    const getAuth = useCallback(() => {
         const user = JSON.parse(localStorage.getItem('user'));
         return { headers: { Authorization: `Bearer ${user?.access}` } };
-    };
+    }, []);
 
-    const fetchActivities = async () => {
+    const fetchActivities = useCallback(async () => {
         setLoading(true);
         try {
-            // We fetch everything for simplicity in the frontend filtering, 
-            // but the API supports start/end if we wanted to optimize.
             const res = await axios.get(`${API}/api/site-content/activity-calendar/`, getAuth());
             setActivities(res.data);
         } catch (err) {
@@ -39,25 +37,61 @@ const ActivityCalendarPage = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [getAuth, navigate]);
 
     useEffect(() => {
         fetchActivities();
-    }, []);
+    }, [fetchActivities]);
 
-    // Date Utilities
-    const formatDate = (date) => {
-        return new Intl.DateTimeFormat('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(date));
+    const changeDate = (delta) => {
+        const newDate = new Date(currentDate);
+        if (viewMode === 'weekly') newDate.setDate(newDate.getDate() + (delta * 7));
+        else if (viewMode === 'monthly') newDate.setMonth(newDate.getMonth() + delta);
+        else if (viewMode === 'quarterly') newDate.setMonth(newDate.getMonth() + (delta * 3));
+        setCurrentDate(newDate);
     };
 
     const formatMonth = (date) => {
-        return new Intl.DateTimeFormat('id-ID', { month: 'long', year: 'numeric' }).format(date);
+        return date.toLocaleString('id-ID', { month: 'long', year: 'numeric' });
     };
 
-    const getDaysInMonth = (year, month) => new Date(year, month + 1, 0).getDate();
-    const getFirstDayOfMonth = (year, month) => new Date(year, month, 1).getDay();
+    const formatDate = (dateStr) => {
+        return new Date(dateStr).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+    };
 
-    // Filtering Logic
+    // Helper for monthly grid
+    const getDaysInMonth = (year, month) => new Date(year, month + 1, 0).getDate();
+    const getFirstDayOfMonth = (year, month) => {
+        const day = new Date(year, month, 1).getDay();
+        return day === 0 ? 6 : day - 1; // Adjust to Monday start
+    };
+
+    const calendarDays = useMemo(() => {
+        if (viewMode !== 'monthly') return [];
+        const year = currentDate.getFullYear();
+        const month = currentDate.getMonth();
+        const daysInMonth = getDaysInMonth(year, month);
+        const firstDay = getFirstDayOfMonth(year, month);
+        const days = [];
+
+        // Padding
+        for (let i = 0; i < firstDay; i++) {
+            days.push({ day: null, date: null, activities: [] });
+        }
+
+        for (let d = 1; d <= daysInMonth; d++) {
+            const date = new Date(year, month, d);
+            const dateStr = date.toISOString().split('T')[0];
+            const dayActivities = activities.filter(act => {
+                const start = act.start.split('T')[0];
+                const end = act.end.split('T')[0];
+                return dateStr >= start && dateStr <= end;
+            });
+            days.push({ day: d, date, activities: dayActivities });
+        }
+        return days;
+    }, [activities, currentDate, viewMode]);
+
     const filteredActivities = useMemo(() => {
         if (!activities.length) return [];
 
@@ -66,7 +100,7 @@ const ActivityCalendarPage = () => {
 
         if (viewMode === 'weekly') {
             const day = now.getDay();
-            const diff = now.getDate() - day + (day === 0 ? -6 : 1); // adjust when day is sunday
+            const diff = now.getDate() - day + (day === 0 ? -6 : 1);
             start = new Date(now.setDate(diff));
             start.setHours(0,0,0,0);
             end = new Date(start);
@@ -88,122 +122,109 @@ const ActivityCalendarPage = () => {
         return activities.filter(act => {
             const actStart = new Date(act.start);
             const actEnd = new Date(act.end);
-            // Overlap check
             return actStart <= end && actEnd >= start;
         }).sort((a, b) => new Date(a.start) - new Date(b.start));
     }, [activities, viewMode, currentDate, customRange]);
 
-    // Calendar Grid Generation (Monthly)
-    const calendarDays = useMemo(() => {
-        if (viewMode !== 'monthly') return [];
-        const year = currentDate.getFullYear();
-        const month = currentDate.getMonth();
-        const daysInMonth = getDaysInMonth(year, month);
-        const firstDay = getFirstDayOfMonth(year, month); // 0 = Sun, 1 = Mon ...
-        
-        // Adjust first day to start from Monday (1)
-        const adjustedFirstDay = firstDay === 0 ? 6 : firstDay - 1;
-
-        const days = [];
-        // Padding for previous month
-        for (let i = 0; i < adjustedFirstDay; i++) {
-            days.push({ day: null, date: null });
-        }
-        // Actual days
-        for (let i = 1; i <= daysInMonth; i++) {
-            const date = new Date(year, month, i);
-            const acts = activities.filter(act => {
-                const s = new Date(act.start);
-                const e = new Date(act.end);
-                const d = new Date(year, month, i);
-                d.setHours(0,0,0,0);
-                const dEnd = new Date(d);
-                dEnd.setHours(23,59,59,999);
-                return s <= dEnd && e >= d;
-            });
-            days.push({ day: i, date, activities: acts });
-        }
-        return days;
-    }, [activities, currentDate, viewMode]);
-
-    const changeDate = (offset) => {
-        const next = new Date(currentDate);
-        if (viewMode === 'weekly') next.setDate(next.getDate() + (offset * 7));
-        else if (viewMode === 'monthly') next.setMonth(next.getMonth() + offset);
-        else if (viewMode === 'quarterly') next.setMonth(next.getMonth() + (offset * 3));
-        setCurrentDate(next);
-    };
-
     return (
-        <div className="min-h-screen bg-gray-50 pb-24">
+        <div className="min-h-screen bg-[#f8fafc] pb-24">
             <Helmet>
                 <title>Kalender Kegiatan Admin - Barakah Economy</title>
             </Helmet>
             <Header />
-            <NavigationButton />
-
-            <div className="max-w-6xl mx-auto px-4 py-6">
-                {/* Header & Controls */}
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-                    <div>
-                        <h1 className="text-2xl font-black text-gray-800 flex items-center gap-2">
-                            <span className="material-icons text-indigo-600">calendar_month</span>
-                            Kalender Kegiatan
-                        </h1>
-                        <p className="text-sm text-gray-500 font-medium">Monitoring jadwal event dan kampanye charity</p>
+            
+            <div className="max-w-6xl mx-auto px-4 py-8">
+                {/* Header Section */}
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
+                    <div className="animate-fade-in">
+                        <div className="flex items-center gap-3 mb-2">
+                            <div className="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-200">
+                                <span className="material-icons text-white">calendar_month</span>
+                            </div>
+                            <div>
+                                <h1 className="text-2xl font-black text-gray-900 tracking-tight">Kalender Kegiatan</h1>
+                                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Admin Monitoring Dashboard</p>
+                            </div>
+                        </div>
                     </div>
 
-                    <div className="flex items-center bg-white p-1 rounded-2xl shadow-sm border border-gray-100 self-start">
+                    <div className="flex flex-wrap items-center gap-3 bg-white/50 backdrop-blur-md p-1.5 rounded-2xl border border-white shadow-sm">
                         {['weekly', 'monthly', 'quarterly', 'range'].map(mode => (
                             <button
                                 key={mode}
                                 onClick={() => setViewMode(mode)}
-                                className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
-                                    viewMode === mode ? 'bg-indigo-600 text-white shadow-md' : 'text-gray-400 hover:text-gray-600'
+                                className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300 ${
+                                    viewMode === mode 
+                                    ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-100 scale-105' 
+                                    : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100/50'
                                 }`}
                             >
                                 {mode === 'weekly' ? 'Mingguan' : mode === 'monthly' ? 'Bulanan' : mode === 'quarterly' ? 'Triwulan' : 'Range'}
                             </button>
                         ))}
+                        <div className="w-[1px] h-6 bg-gray-200 mx-1"></div>
+                        <button 
+                            onClick={fetchActivities}
+                            disabled={loading}
+                            className="p-2.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all"
+                            title="Refresh Data"
+                        >
+                            <span className={`material-icons text-sm ${loading ? 'animate-spin' : ''}`}>refresh</span>
+                        </button>
                     </div>
                 </div>
 
                 {/* Navigation & Title */}
                 {viewMode !== 'range' && (
-                    <div className="flex items-center justify-between mb-6 bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
-                        <button onClick={() => changeDate(-1)} className="w-10 h-10 flex items-center justify-center rounded-xl bg-gray-50 text-gray-600 hover:bg-gray-100 transition">
+                    <div className="flex items-center justify-between mb-8 bg-white/80 backdrop-blur-md rounded-[2rem] p-4 shadow-sm border border-white group">
+                        <button 
+                            onClick={() => changeDate(-1)} 
+                            className="w-12 h-12 flex items-center justify-center rounded-2xl bg-gray-50 text-gray-400 hover:bg-indigo-600 hover:text-white transition-all duration-300 shadow-inner"
+                        >
                             <span className="material-icons">chevron_left</span>
                         </button>
-                        <h2 className="text-lg font-black text-gray-700 capitalize">
-                            {viewMode === 'weekly' ? `Minggu ke-${Math.ceil(currentDate.getDate() / 7)} ${formatMonth(currentDate)}` :
-                             viewMode === 'monthly' ? formatMonth(currentDate) :
-                             `Triwulan ${Math.floor(currentDate.getMonth() / 3) + 1} ${currentDate.getFullYear()}`}
-                        </h2>
-                        <button onClick={() => changeDate(1)} className="w-10 h-10 flex items-center justify-center rounded-xl bg-gray-50 text-gray-600 hover:bg-gray-100 transition">
+                        <div className="text-center">
+                            <h2 className="text-xl font-black text-gray-800 capitalize tracking-tight">
+                                {viewMode === 'weekly' ? `Minggu ke-${Math.ceil(currentDate.getDate() / 7)} ${formatMonth(currentDate)}` :
+                                 viewMode === 'monthly' ? formatMonth(currentDate) :
+                                 `Triwulan ${Math.floor(currentDate.getMonth() / 3) + 1} ${currentDate.getFullYear()}`}
+                            </h2>
+                            <p className="text-[10px] font-bold text-indigo-500 uppercase tracking-[0.2em] mt-1">Navigasi Periode</p>
+                        </div>
+                        <button 
+                            onClick={() => changeDate(1)} 
+                            className="w-12 h-12 flex items-center justify-center rounded-2xl bg-gray-50 text-gray-400 hover:bg-indigo-600 hover:text-white transition-all duration-300 shadow-inner"
+                        >
                             <span className="material-icons">chevron_right</span>
                         </button>
                     </div>
                 )}
 
                 {viewMode === 'range' && (
-                    <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 mb-6">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Mulai Dari</label>
+                    <div className="bg-white/80 backdrop-blur-md rounded-[2.5rem] p-8 shadow-sm border border-white mb-8 animate-slide-down">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <div className="space-y-3">
+                                <label className="flex items-center gap-2 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1">
+                                    <span className="material-icons text-xs">calendar_today</span>
+                                    Mulai Dari
+                                </label>
                                 <input 
                                     type="date" 
                                     value={customRange.start}
                                     onChange={e => setCustomRange({...customRange, start: e.target.value})}
-                                    className="w-full px-4 py-3 bg-gray-50 border-2 border-gray-100 rounded-xl focus:border-indigo-500 outline-none transition-all font-bold text-gray-700"
+                                    className="w-full px-6 py-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl focus:border-indigo-500 focus:bg-white outline-none transition-all font-bold text-gray-700 shadow-inner"
                                 />
                             </div>
-                            <div>
-                                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Hingga Sampai</label>
+                            <div className="space-y-3">
+                                <label className="flex items-center gap-2 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1">
+                                    <span className="material-icons text-xs">event</span>
+                                    Hingga Sampai
+                                </label>
                                 <input 
                                     type="date" 
                                     value={customRange.end}
                                     onChange={e => setCustomRange({...customRange, end: e.target.value})}
-                                    className="w-full px-4 py-3 bg-gray-50 border-2 border-gray-100 rounded-xl focus:border-indigo-500 outline-none transition-all font-bold text-gray-700"
+                                    className="w-full px-6 py-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl focus:border-indigo-500 focus:bg-white outline-none transition-all font-bold text-gray-700 shadow-inner"
                                 />
                             </div>
                         </div>
@@ -212,34 +233,45 @@ const ActivityCalendarPage = () => {
 
                 {/* Main Content Area */}
                 {loading ? (
-                    <div className="flex flex-col items-center justify-center py-20 bg-white rounded-3xl shadow-sm border border-gray-100">
-                        <div className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mb-4"></div>
-                        <p className="text-sm font-bold text-gray-400 uppercase tracking-widest">Memuat Data Kalender...</p>
+                    <div className="flex flex-col items-center justify-center py-32 bg-white/50 backdrop-blur-sm rounded-[3rem] shadow-sm border border-white">
+                        <div className="relative w-20 h-20 mb-6">
+                            <div className="absolute inset-0 border-4 border-indigo-100 rounded-full"></div>
+                            <div className="absolute inset-0 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+                        </div>
+                        <p className="text-xs font-black text-gray-400 uppercase tracking-[0.3em] animate-pulse">Menyelaraskan Data...</p>
                     </div>
                 ) : (
                     <>
                         {/* Monthly Grid View (Desktop Only) */}
                         {viewMode === 'monthly' && (
-                            <div className="hidden md:block bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden mb-8">
+                            <div className="hidden md:block bg-white rounded-[2.5rem] shadow-xl border border-gray-100 overflow-hidden mb-12 animate-fade-in">
                                 <div className="grid grid-cols-7 border-b border-gray-100 bg-gray-50/50">
                                     {['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'].map(day => (
-                                        <div key={day} className="py-4 text-center text-[10px] font-black text-gray-400 uppercase tracking-widest">{day}</div>
+                                        <div key={day} className="py-5 text-center text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">{day}</div>
                                     ))}
                                 </div>
-                                <div className="grid grid-cols-7 auto-rows-[120px]">
+                                <div className="grid grid-cols-7 auto-rows-[140px]">
                                     {calendarDays.map((dayObj, i) => (
-                                        <div key={i} className={`p-2 border-r border-b border-gray-50 group hover:bg-indigo-50/20 transition-colors ${!dayObj.day ? 'bg-gray-50/30' : ''}`}>
+                                        <div key={i} className={`p-3 border-r border-b border-gray-50 group hover:bg-indigo-50/30 transition-all duration-300 relative ${!dayObj.day ? 'bg-gray-50/30' : ''}`}>
                                             {dayObj.day && (
                                                 <>
-                                                    <span className={`text-xs font-bold ${new Date().toDateString() === dayObj.date.toDateString() ? 'bg-indigo-600 text-white w-6 h-6 rounded-full flex items-center justify-center' : 'text-gray-400'}`}>
-                                                        {dayObj.day}
-                                                    </span>
-                                                    <div className="mt-2 space-y-1 overflow-y-auto max-h-[80px] custom-scrollbar">
+                                                    <div className="flex justify-between items-start mb-2">
+                                                        <span className={`text-sm font-black transition-transform group-hover:scale-110 ${new Date().toDateString() === dayObj.date.toDateString() ? 'bg-indigo-600 text-white w-8 h-8 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-200' : 'text-gray-300 group-hover:text-indigo-400'}`}>
+                                                            {dayObj.day}
+                                                        </span>
+                                                        {dayObj.activities.length > 0 && (
+                                                            <div className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-ping"></div>
+                                                        )}
+                                                    </div>
+                                                    <div className="space-y-1.5 overflow-y-auto max-h-[85px] custom-scrollbar pr-1">
                                                         {dayObj.activities.map(act => (
                                                             <div 
                                                                 key={act.id} 
-                                                                className="px-2 py-1 rounded text-[8px] font-bold text-white truncate cursor-pointer hover:brightness-110"
-                                                                style={{ backgroundColor: act.color }}
+                                                                className="px-2.5 py-1.5 rounded-lg text-[9px] font-black text-white truncate cursor-pointer hover:brightness-110 hover:shadow-md transition-all active:scale-95"
+                                                                style={{ 
+                                                                    backgroundColor: act.color,
+                                                                    background: `linear-gradient(135deg, ${act.color}, ${act.color}dd)` 
+                                                                }}
                                                                 title={act.title}
                                                                 onClick={() => window.open(act.url, '_blank')}
                                                             >
@@ -256,62 +288,66 @@ const ActivityCalendarPage = () => {
                         )}
 
                         {/* List View (Mobile & Other Modes) */}
-                        <div className={`${viewMode === 'monthly' ? 'md:hidden' : ''} space-y-4`}>
+                        <div className={`${viewMode === 'monthly' ? 'md:hidden' : ''} space-y-6 animate-fade-in`}>
                             {filteredActivities.length === 0 ? (
-                                <div className="bg-white rounded-3xl p-12 text-center border-2 border-dashed border-gray-200">
-                                    <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                                        <span className="material-icons text-gray-300 text-3xl">event_busy</span>
+                                <div className="bg-white/50 backdrop-blur-sm rounded-[3rem] p-20 text-center border-2 border-dashed border-gray-200">
+                                    <div className="w-20 h-20 bg-gray-100 rounded-[2rem] flex items-center justify-center mx-auto mb-6 shadow-inner">
+                                        <span className="material-icons text-gray-300 text-4xl">event_busy</span>
                                     </div>
-                                    <h3 className="text-lg font-bold text-gray-800 mb-1">Tidak Ada Kegiatan</h3>
-                                    <p className="text-sm text-gray-400">Belum ada jadwal untuk periode ini.</p>
+                                    <h3 className="text-xl font-black text-gray-800 mb-2">Belum Ada Agenda</h3>
+                                    <p className="text-sm text-gray-400 font-medium max-w-xs mx-auto">Tidak ada jadwal kegiatan yang ditemukan untuk periode ini.</p>
                                 </div>
                             ) : (
                                 filteredActivities.map((act) => (
-                                    <div key={act.id} className="group bg-white rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-all overflow-hidden flex flex-col md:flex-row md:items-center">
-                                        {/* Status Line */}
-                                        <div className="w-1.5 h-full md:w-2" style={{ backgroundColor: act.color }}></div>
+                                    <div key={act.id} className="group bg-white rounded-[2rem] shadow-sm border border-gray-100 hover:shadow-xl hover:border-indigo-100 transition-all duration-500 overflow-hidden flex flex-col md:flex-row md:items-center">
+                                        {/* Color Bar / Indicator */}
+                                        <div className="w-full h-2 md:w-3 md:h-24 shrink-0 transition-all duration-500 group-hover:w-4" style={{ backgroundColor: act.color }}></div>
                                         
-                                        <div className="flex-1 p-5">
-                                            <div className="flex items-center gap-2 mb-2">
-                                                <span className={`px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-tighter ${
-                                                    act.type === 'event' ? 'bg-indigo-100 text-indigo-700' : 'bg-red-100 text-red-700'
+                                        <div className="flex-1 p-6 sm:p-8">
+                                            <div className="flex flex-wrap items-center gap-3 mb-3">
+                                                <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-wider ${
+                                                    act.type === 'event' ? 'bg-indigo-50 text-indigo-600' : 'bg-rose-50 text-rose-600'
                                                 }`}>
-                                                    {act.type === 'event' ? 'Event' : 'Charity'}
+                                                    {act.type === 'event' ? 'Event Komunitas' : 'Program Charity'}
                                                 </span>
-                                                <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{act.category}</span>
+                                                <span className="text-[10px] text-gray-400 font-bold uppercase tracking-[0.2em]">{act.category}</span>
                                                 {act.status === 'pending' && (
-                                                    <span className="bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-tighter animate-pulse">MENUNGGU REVIEW</span>
+                                                    <span className="bg-amber-50 text-amber-600 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-wider border border-amber-100 animate-pulse">Menunggu Verifikasi</span>
                                                 )}
                                             </div>
                                             
-                                            <h3 className="text-base font-black text-gray-800 group-hover:text-indigo-600 transition-colors mb-2">{act.title}</h3>
+                                            <h3 className="text-lg sm:text-xl font-black text-gray-800 group-hover:text-indigo-600 transition-colors mb-4 line-clamp-2">{act.title}</h3>
                                             
-                                            <div className="flex flex-wrap items-center gap-y-2 gap-x-4">
-                                                <div className="flex items-center gap-1.5 text-[11px] text-gray-500 font-medium">
-                                                    <span className="material-icons text-sm">schedule</span>
-                                                    {formatDate(act.start)} {new Date(act.start).toDateString() !== new Date(act.end).toDateString() && `- ${formatDate(act.end)}`}
+                                            <div className="flex flex-wrap items-center gap-y-3 gap-x-6">
+                                                <div className="flex items-center gap-2 text-[11px] text-gray-500 font-bold">
+                                                    <div className="w-7 h-7 rounded-lg bg-gray-50 flex items-center justify-center text-gray-400 group-hover:bg-indigo-50 group-hover:text-indigo-500 transition-colors">
+                                                        <span className="material-icons text-sm">schedule</span>
+                                                    </div>
+                                                    {formatDate(act.start)} {new Date(act.start).toDateString() !== new Date(act.end).toDateString() && ` - ${formatDate(act.end)}`}
                                                 </div>
                                                 {act.location && (
-                                                    <div className="flex items-center gap-1.5 text-[11px] text-gray-500 font-medium">
-                                                        <span className="material-icons text-sm">location_on</span>
+                                                    <div className="flex items-center gap-2 text-[11px] text-gray-500 font-bold">
+                                                        <div className="w-7 h-7 rounded-lg bg-gray-50 flex items-center justify-center text-gray-400 group-hover:bg-rose-50 group-hover:text-rose-500 transition-colors">
+                                                            <span className="material-icons text-sm">location_on</span>
+                                                        </div>
                                                         {act.location}
                                                     </div>
                                                 )}
                                             </div>
                                         </div>
 
-                                        <div className="p-5 border-t md:border-t-0 md:border-l border-gray-50 bg-gray-50/50 md:bg-transparent flex justify-end gap-3">
+                                        <div className="p-6 sm:p-8 border-t md:border-t-0 md:border-l border-gray-50 bg-gray-50/30 md:bg-transparent flex flex-row md:flex-col justify-end gap-3 shrink-0">
                                             <Link 
                                                 to={act.url}
                                                 target="_blank"
-                                                className="px-4 py-2 bg-white border border-gray-200 text-gray-600 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-gray-50 transition shadow-sm"
+                                                className="flex-1 md:w-32 py-3 bg-white border border-gray-200 text-gray-600 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-gray-50 hover:text-indigo-600 transition-all text-center shadow-sm"
                                             >
-                                                Lihat Detail
+                                                Lihat Laman
                                             </Link>
                                             {act.type === 'event' && (
                                                 <Link 
                                                     to={`/dashboard/admin/events?id=${act.id.split('-')[1]}`}
-                                                    className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-700 transition shadow-md shadow-indigo-100"
+                                                    className="flex-1 md:w-32 py-3 bg-indigo-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-700 hover:shadow-lg hover:shadow-indigo-200 transition-all text-center shadow-md active:scale-95"
                                                 >
                                                     Kelola
                                                 </Link>
@@ -325,18 +361,24 @@ const ActivityCalendarPage = () => {
                 )}
                 
                 {/* Legend */}
-                <div className="mt-12 flex items-center justify-center gap-6">
-                    <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 rounded-full bg-indigo-600"></div>
-                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Kegiatan Event</span>
+                <div className="mt-16 flex flex-wrap items-center justify-center gap-8 bg-white/40 backdrop-blur-sm p-6 rounded-[2rem] border border-white shadow-sm">
+                    <div className="flex items-center gap-3">
+                        <div className="w-4 h-4 rounded-lg bg-indigo-600 shadow-md shadow-indigo-100"></div>
+                        <span className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Agenda Event</span>
                     </div>
-                    <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 rounded-full bg-red-500"></div>
-                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Kampanye Charity</span>
+                    <div className="flex items-center gap-3">
+                        <div className="w-4 h-4 rounded-lg bg-rose-500 shadow-md shadow-rose-100"></div>
+                        <span className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Program Charity</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                        <div className="w-4 h-4 rounded-lg bg-amber-400 shadow-md shadow-amber-100"></div>
+                        <span className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Menunggu Review</span>
                     </div>
                 </div>
             </div>
             
+            <NavigationButton />
+
             <style>{`
                 .custom-scrollbar::-webkit-scrollbar {
                     width: 4px;
@@ -345,11 +387,25 @@ const ActivityCalendarPage = () => {
                     background: transparent;
                 }
                 .custom-scrollbar::-webkit-scrollbar-thumb {
-                    background: #E5E7EB;
+                    background: #E2E8F0;
                     border-radius: 10px;
                 }
                 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-                    background: #D1D5DB;
+                    background: #CBD5E1;
+                }
+                @keyframes fadeIn {
+                    from { opacity: 0; transform: translateY(10px); }
+                    to { opacity: 1; transform: translateY(0); }
+                }
+                .animate-fade-in {
+                    animation: fadeIn 0.6s ease-out forwards;
+                }
+                @keyframes slideDown {
+                    from { opacity: 0; transform: translateY(-20px); }
+                    to { opacity: 1; transform: translateY(0); }
+                }
+                .animate-slide-down {
+                    animation: slideDown 0.4s ease-out forwards;
                 }
             `}</style>
         </div>

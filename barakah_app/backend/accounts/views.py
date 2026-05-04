@@ -376,8 +376,8 @@ class UserViewSet(viewsets.ModelViewSet):
 
             writer = csv.writer(response, delimiter=';')
             headers = [
-                'ID', 'Username', 'Email', 'Phone', 'Role', 'Verified Member', 'Date Joined',
-                'Full Name', 'Gender', 'Birth Place', 'Birth Date', 'Registration Date',
+                'ID', 'Username', 'Full Name', 'Email', 'Phone', 'Role', 'Verified Member', 'Date Joined',
+                'Gender', 'Birth Place', 'Birth Date', 'Registration Date',
                 'Marital Status', 'Segment', 'Study Level', 'Study Campus', 'Study Faculty',
                 'Study Department', 'Study Program', 'Semester', 'Start Year', 'Finish Year',
                 'Address', 'Job', 'Work Field', 'Work Institution', 'Work Position', 'Salary', 'Province',
@@ -396,6 +396,7 @@ class UserViewSet(viewsets.ModelViewSet):
                 row = [
                     user.id,
                     user.username,
+                    profile.name_full if profile else '',
                     user.email,
                     user.phone,
                     user.role,
@@ -406,7 +407,6 @@ class UserViewSet(viewsets.ModelViewSet):
                     province_display = province_map.get(profile.address_province, profile.address_province) if profile.address_province else ''
 
                     row.extend([
-                        profile.name_full or '',
                         profile.get_gender_display() if profile.gender else '',
                         profile.birth_place or '',
                         profile.birth_date or '',
@@ -430,7 +430,7 @@ class UserViewSet(viewsets.ModelViewSet):
                         province_display,
                     ])
                 else:
-                    row.extend([''] * 22)
+                    row.extend([''] * 21)
                 
                 # Add custom roles, labels, lingkup tugas, bidang tugas
                 row.append(' | '.join([r.name for r in user.custom_roles.all()]))

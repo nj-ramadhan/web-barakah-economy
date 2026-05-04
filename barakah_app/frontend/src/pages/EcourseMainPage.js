@@ -189,7 +189,7 @@ const EcourseMainPage = () => {
             {courses.map(course => {
               return (
                 <div key={course.id} className="bg-white rounded-lg overflow-hidden shadow">
-                  <Link to={`/kelas/${course.slug}`}>
+                  <Link to={`/kelas/${course.slug || course.id}`}>
                     <img
                       src={course.thumbnail || '/placeholder-image.jpg'}
                       alt={course.title}

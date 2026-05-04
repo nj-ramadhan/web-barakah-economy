@@ -16,6 +16,32 @@ class CourseViewSet(viewsets.ModelViewSet):
     serializer_class = CourseSerializer
     authentication_classes = [JWTAuthentication]
     parser_classes = [MultiPartParser, FormParser]
+    lookup_field = 'slug'
+
+    def get_object(self):
+        """
+        Override get_object to support lookups by both ID and slug.
+        This is useful for backward compatibility with old links.
+        """
+        queryset = self.filter_queryset(self.get_queryset())
+        lookup_url_kwarg = self.lookup_url_kwarg or self.lookup_field
+        lookup_value = self.kwargs[lookup_url_kwarg]
+
+        # Try to find by slug first
+        filter_kwargs = {self.lookup_field: lookup_value}
+        obj = queryset.filter(**filter_kwargs).first()
+        
+        if obj is None:
+            # If not found by slug, try by ID if it's numeric
+            if lookup_value.isdigit():
+                obj = queryset.filter(pk=lookup_value).first()
+        
+        if obj is None:
+            from django.http import Http404
+            raise Http404
+
+        self.check_object_permissions(self.request, obj)
+        return obj
 
     def get_permissions(self):
         if self.action in ['list', 'retrieve']:

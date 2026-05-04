@@ -1,10 +1,11 @@
 // pages/EcourseJoinCoursePage.js
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import axios from 'axios';
 import { Helmet } from 'react-helmet';
 import Header from '../components/layout/Header';
 import NavigationButton from '../components/layout/Navigation';
+import api from '../services/api';
+import { getCourseBySlug } from '../services/ecourseApi';
 import '../styles/Body.css';
 
 const EcourseJoinCoursePage = () => {
@@ -29,7 +30,7 @@ const EcourseJoinCoursePage = () => {
     const fetchCourse = async () => {
       try {
         setLoading(true);
-        const response = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/courses/${slug}/`);
+        const response = await getCourseBySlug(slug);
         setCourse(response.data);
       } catch (err) {
         console.error('Error fetching course:', err);
@@ -51,10 +52,7 @@ const EcourseJoinCoursePage = () => {
     const checkEnrollment = async () => {
       if (!user || !user.access) return;
       try {
-        const res = await axios.get(
-          `${process.env.REACT_APP_API_BASE_URL}/api/course/enrollments/`,
-          { headers: { Authorization: `Bearer ${user.access}` } }
-        );
+        const res = await api.get('/courses/enrollments/');
         const alreadyEnrolled = res.data.some(enroll =>
           (enroll.course_slug === slug || enroll.course === course?.id) &&
           ['paid', 'verified'].includes(enroll.payment_status)
@@ -86,24 +84,23 @@ const EcourseJoinCoursePage = () => {
 
     setSubmitting(true);
     try {
-      const res = await axios.post(
-        `${process.env.REACT_APP_API_BASE_URL}/api/course/enrollments/`,
+      const res = await api.post(
+        '/courses/enrollments/',
         {
           course: course.id,
           buyer_name: buyerName,
           buyer_email: buyerEmail,
           buyer_phone: buyerPhone
-        },
-        { headers: { Authorization: `Bearer ${user.access}` } }
+        }
       );
-
+      
       const enrollment = res.data;
       if (enrollment.payment_status === 'paid') {
         alert('Berhasil bergabung ke kelas gratis!');
         navigate(`/kelas/${course.slug}`);
       } else {
         // Redirect to payment confirmation for paid courses
-        navigate(`/kelas/payment-confirmation/${course.slug}`);
+        navigate(`/konfirmasi-pembayaran-kelas/${course.slug}`);
       }
     } catch (error) {
       alert('Gagal memproses pendaftaran: ' + (error.response?.data?.detail || error.message));

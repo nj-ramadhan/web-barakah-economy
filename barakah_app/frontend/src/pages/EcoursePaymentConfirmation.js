@@ -1,7 +1,8 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { getCourseBySlug } from '../services/ecourseApi';
+import api from '../services/api';
 import authService from '../services/auth';
-import axios from 'axios';
 import Header from '../components/layout/Header';
 import NavigationButton from '../components/layout/Navigation';
 import '../styles/Body.css';
@@ -78,7 +79,7 @@ const EcoursePaymentConfirmation = () => {
   useEffect(() => {
     const fetchCourse = async () => {
       try {
-        const res = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/courses/${slug}/`);
+        const res = await getCourseBySlug(slug);
         setCourse(res.data);
       } catch (err) {
         console.error("Error fetching course:", err);
@@ -191,10 +192,9 @@ const EcoursePaymentConfirmation = () => {
 
     try {
       // Replace with your actual backend endpoint for ecourse payment confirmation
-      const response = await axios.post(
-        `${process.env.REACT_APP_API_BASE_URL}/api/course/enrollments/upload-proof/`,
-        paymentData,
-        { headers }
+      const response = await api.post(
+        '/courses/enrollments/upload-proof/',
+        paymentData
       );
 
       if (response.status === 201 || response.status === 200) {

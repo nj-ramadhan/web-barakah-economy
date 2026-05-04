@@ -1,42 +1,16 @@
 import os
-import django
 import sys
+import django
 
-# Ensure backend directory is in path
+# Set up Django
 sys.path.append(os.getcwd())
-
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'barakah_app.settings')
-try:
-    django.setup()
-    print("Django setup successful.")
-except Exception as e:
-    print(f"Django setup FAILED: {e}")
-    sys.exit(1)
+os.environ['DEBUG'] = 'True'
+django.setup()
 
-from courses.models import Course, CourseEnrollment, CourseMaterial
-from django.db import connection
+from courses.models import Course
 
-print(f"Using database: {connection.settings_dict.get('NAME')}")
-
-try:
-    print("\nAttempting to fetch courses...")
-    courses = Course.objects.all()
-    count = courses.count()
-    print(f"Found {count} courses.")
-    
-    for c in courses[:5]:
-        print(f"- {c.title} (Slug: {c.slug}, Active: {c.is_active}, Instructor: {c.instructor.username})")
-        
-except Exception as e:
-    print(f"Error fetching courses: {e}")
-    import traceback
-    traceback.print_exc()
-
-try:
-    print("\nAttempting to fetch enrollments...")
-    enrollments = CourseEnrollment.objects.all()
-    print(f"Found {enrollments.count()} enrollments.")
-except Exception as e:
-    print(f"Error fetching enrollments: {e}")
-    import traceback
-    traceback.print_exc()
+print(f"{'ID':<5} | {'Slug':<50} | {'Title'}")
+print("-" * 80)
+for course in Course.objects.all():
+    print(f"{course.id:<5} | {str(course.slug):<50} | {course.title}")

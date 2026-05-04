@@ -415,13 +415,14 @@ const DashboardUserPage = () => {
                                     <tr>
                                         <th className="px-3 py-4"><input type="checkbox" checked={selectedUserIds.length === users.length && users.length > 0} onChange={toggleSelectAll} className="w-4 h-4 text-green-600 rounded" /></th>
                                         <SH label="User" field="username" {...{ sortField, sortDir, handleSort, getSortIcon }} />
+                                        <SH label="Nama" field="profile__name_full" {...{ sortField, sortDir, handleSort, getSortIcon }} />
                                         <th className="px-3 py-4 text-gray-600 font-bold uppercase tracking-wider text-[11px] min-w-[120px]">Kontak</th>
                                         <th className="px-3 py-4 text-gray-600 font-bold uppercase tracking-wider text-[11px] min-w-[80px]">Role</th>
                                         <th className="px-3 py-4 text-gray-600 font-bold uppercase tracking-wider text-[11px] min-w-[100px]">Custom Role</th>
                                         <th className="px-3 py-4 text-gray-600 font-bold uppercase tracking-wider text-[11px] min-w-[100px]">Label</th>
                                         <th className="px-3 py-4 text-gray-600 font-bold uppercase tracking-wider text-[11px] min-w-[100px]">Lingkup Tugas</th>
                                         <th className="px-3 py-4 text-gray-600 font-bold uppercase tracking-wider text-[11px] min-w-[100px]">Bidang Tugas</th>
-                                        <SH label="Nama" field="profile__name_full" {...{ sortField, sortDir, handleSort, getSortIcon }} />
+
                                         <SH label="Join" field="date_joined" {...{ sortField, sortDir, handleSort, getSortIcon }} />
                                         <th className="px-3 py-4 text-gray-600 font-bold uppercase tracking-wider text-[11px] min-w-[150px]">Charity</th>
                                         <th className="px-3 py-4 text-gray-600 font-bold uppercase tracking-wider text-[11px] min-w-[150px]">Event</th>
@@ -440,6 +441,12 @@ const DashboardUserPage = () => {
                                                 <div className="bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded font-black text-[9px] inline-block mb-1">ID: {u.id}</div>
                                                 <div className="font-bold text-gray-900 text-[11px] leading-tight">{u.username}</div>
                                                 <div className="text-[10px] text-gray-400 truncate max-w-[120px]">{u.email}</div>
+                                            </td>
+                                            <td className="px-3 py-3">
+                                                <div className="text-gray-900 font-bold text-[11px] line-clamp-1">{u.profile?.name_full || '-'}</div>
+                                                <div className="text-[10px] text-gray-400 mt-0.5">
+                                                    {PROVINCE_CHOICES.find(p => p[0] === u.profile?.address_province)?.[1] || '-'}
+                                                </div>
                                             </td>
                                             <td className="px-3 py-3 text-gray-600 text-[11px] whitespace-nowrap">
                                                 {u.phone || <span className="text-gray-300 italic">None</span>}
@@ -471,12 +478,7 @@ const DashboardUserPage = () => {
                                                     {(u.bidang_tugas || []).length === 0 && <span className="text-gray-300 text-[10px]">-</span>}
                                                 </div>
                                             </td>
-                                            <td className="px-3 py-3">
-                                                <div className="text-gray-900 font-bold text-[11px] line-clamp-1">{u.profile?.name_full || '-'}</div>
-                                                <div className="text-[10px] text-gray-400 mt-0.5">
-                                                    {PROVINCE_CHOICES.find(p => p[0] === u.profile?.address_province)?.[1] || '-'}
-                                                </div>
-                                            </td>
+
                                             <td className="px-3 py-3 text-gray-500 text-[10px] whitespace-nowrap">
                                                 {new Date(u.date_joined).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
                                             </td>
