@@ -1,6 +1,17 @@
-# profiles/serializers.py
-from rest_framework import serializers
-from .models import Profile
+from .models import Profile, BusinessProfile
+
+class BusinessProfileSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(source='user.username', read_only=True)
+    business_field_display = serializers.CharField(source='get_business_field_display', read_only=True)
+    business_scale_display = serializers.CharField(source='get_business_scale_display', read_only=True)
+    business_status_display = serializers.CharField(source='get_business_status_display', read_only=True)
+    sales_area_display = serializers.CharField(source='get_sales_area_display', read_only=True)
+    readiness_order_display = serializers.CharField(source='get_readiness_order_display', read_only=True)
+
+    class Meta:
+        model = BusinessProfile
+        fields = '__all__'
+        read_only_fields = ('user', 'is_curated')
 
 class ProfileSerializer(serializers.ModelSerializer):
     username = serializers.CharField(source='user.username', read_only=True)

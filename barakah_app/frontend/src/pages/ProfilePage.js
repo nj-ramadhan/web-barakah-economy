@@ -6,6 +6,7 @@ import { Helmet } from 'react-helmet';
 import Header from '../components/layout/Header';
 import NavigationButton from '../components/layout/Navigation';
 import authService from '../services/auth';
+import businessProfileService from '../services/businessProfile';
 import '../styles/Body.css';
 
 const formatDate = (dateData) => {
@@ -500,6 +501,140 @@ const DonationsTab = () => {
     );
 };
 
+const BusinessesTab = () => {
+    const [businesses, setBusinesses] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [activeSubTab, setActiveSubTab] = useState(0);
+
+    useEffect(() => {
+        const fetchBusinesses = async () => {
+            try {
+                const res = await businessProfileService.getBusinessProfiles();
+                setBusinesses(res.data);
+            } catch (err) {
+                console.error('Error fetching businesses:', err);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchBusinesses();
+    }, []);
+
+    if (loading) return (
+        <div className="space-y-4 animate-pulse">
+            <div className="h-10 bg-gray-200 rounded-xl w-full mb-4"></div>
+            <div className="h-64 bg-gray-100 rounded-3xl w-full"></div>
+        </div>
+    );
+
+    if (businesses.length === 0) return (
+        <div className="text-center py-12 text-gray-400 bg-gray-50 rounded-3xl border border-dashed border-gray-200">
+            <span className="material-icons text-4xl mb-2 opacity-20">storefront</span>
+            <p className="text-sm font-medium">Belum ada data usaha terdaftar</p>
+            <Link to="/dashboard/business-data/new" className="text-xs text-green-600 font-bold mt-2 inline-block hover:underline">
+                Daftarkan Usaha Sekarang
+            </Link>
+        </div>
+    );
+
+    const biz = businesses[activeSubTab];
+
+    return (
+        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+            {/* Sub-tabs for multiple businesses */}
+            {businesses.length > 1 && (
+                <div className="flex flex-wrap gap-2 mb-4 p-1.5 bg-gray-50 rounded-2xl">
+                    {businesses.map((b, idx) => (
+                        <button
+                            key={b.id}
+                            onClick={() => setActiveSubTab(idx)}
+                            className={`px-4 py-2 rounded-xl text-xs font-black transition-all ${activeSubTab === idx ? 'bg-white text-green-700 shadow-sm' : 'text-gray-400'}`}
+                        >
+                            USAHA {idx + 1}
+                        </button>
+                    ))}
+                </div>
+            )}
+
+            <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
+                <div className="h-48 relative">
+                    <img src={biz.foto_produk_1 || biz.logo} alt="Header" className="w-full h-full object-cover" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+                    <div className="absolute bottom-4 left-6 right-6 flex items-end gap-4">
+                        <div className="w-16 h-16 rounded-2xl border-2 border-white overflow-hidden bg-white shadow-lg shrink-0">
+                            <img src={biz.logo} alt="Logo" className="w-full h-full object-cover" />
+                        </div>
+                        <div className="pb-1">
+                            <h3 className="text-xl font-black text-white leading-tight">{biz.brand_name}</h3>
+                            <p className="text-white/80 text-[10px] font-bold uppercase tracking-widest">{biz.business_field_display}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="p-6 space-y-8">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <ProfileInfoItem label="Tagline" value={biz.tagline} icon="campaign" fullWidth />
+                        <ProfileInfoItem label="Status Usaha" value={biz.business_status_display} icon="analytics" />
+                        <ProfileInfoItem label="Area Penjualan" value={biz.sales_area_display} icon="public" />
+                        <ProfileInfoItem label="Kesiapan Order" value={biz.readiness_order_display} icon="task_alt" />
+                        <ProfileInfoItem label="Kontak Display" value={biz.display_contact} icon="contact_phone" />
+                    </div>
+
+                    <div className="space-y-4">
+                        <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest px-1">Deskripsi & Produk</h4>
+                        <div className="bg-gray-50 p-6 rounded-2xl border border-gray-100">
+                            <p className="text-sm text-gray-600 leading-relaxed mb-4">{biz.description}</p>
+                            <div className="pt-4 border-t border-gray-200">
+                                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Produk Utama</label>
+                                <p className="text-sm font-bold text-gray-800">{biz.main_products}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="space-y-4">
+                        <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest px-1">Keunggulan & Target</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="p-5 bg-green-50/50 rounded-2xl border border-green-100">
+                                <label className="block text-[10px] font-black text-green-700 uppercase tracking-widest mb-2">Keunggulan</label>
+                                <p className="text-xs font-medium text-green-800 leading-relaxed">{biz.keunggulan}</p>
+                            </div>
+                            <div className="p-5 bg-blue-50/50 rounded-2xl border border-blue-100">
+                                <label className="block text-[10px] font-black text-blue-700 uppercase tracking-widest mb-2">Target Market</label>
+                                <p className="text-xs font-medium text-blue-800 leading-relaxed">{biz.target_market}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        {biz.foto_produk_1 && (
+                            <div className="aspect-square rounded-2xl overflow-hidden border border-gray-100 shadow-sm">
+                                <img src={biz.foto_produk_1} className="w-full h-full object-cover" />
+                            </div>
+                        )}
+                        {biz.foto_produk_2 && (
+                            <div className="aspect-square rounded-2xl overflow-hidden border border-gray-100 shadow-sm">
+                                <img src={biz.foto_produk_2} className="w-full h-full object-cover" />
+                            </div>
+                        )}
+                        {biz.foto_produk_3 && (
+                            <div className="aspect-square rounded-2xl overflow-hidden border border-gray-100 shadow-sm">
+                                <img src={biz.foto_produk_3} className="w-full h-full object-cover" />
+                            </div>
+                        )}
+                    </div>
+                    
+                    <div className="pt-4 flex justify-end">
+                        <Link to={`/dashboard/business-data/edit/${biz.id}`} className="flex items-center gap-2 px-6 py-3 bg-gray-900 text-white rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-green-700 transition shadow-lg shadow-gray-200">
+                            <span className="material-icons text-sm">edit</span> Edit Data Usaha
+                        </Link>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+
 const ShoppingTab = () => {
     return (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
@@ -923,20 +1058,29 @@ const ProfilePage = () => {
                                     { id: 'shop', icon: 'storefront', label: 'Toko' },
                                     { id: 'courses', icon: 'school', label: 'Kelas' },
                                     { id: 'charity', icon: 'volunteer_activism', label: 'Donasi' },
+                                    { id: 'business', icon: 'handshake', label: 'Bisnis' },
                                     { id: 'purchases', icon: 'history', label: 'Riwayat' }
-                                ].map(tab => (
-                                    <button
-                                        key={tab.id}
-                                        onClick={() => setActiveTab(tab.id)}
-                                        className={`flex items-center gap-2 px-4 py-2.5 rounded-xl whitespace-nowrap text-sm font-bold transition-all ${activeTab === tab.id
-                                                ? 'bg-white text-green-700 shadow-sm'
-                                                : 'text-gray-400 hover:text-gray-600'
-                                            }`}
-                                    >
-                                        <span className="material-icons text-lg">{tab.icon}</span>
-                                        {tab.label}
-                                    </button>
-                                ))}
+                                ].map(tab => {
+                                    // Check if user is Anggota for business tab
+                                    const userRes = JSON.parse(localStorage.getItem('user'));
+                                    const isAnggota = userRes?.custom_roles_data?.some(r => r.name.toLowerCase().includes('anggota') || r.code.toLowerCase().includes('anggota')) || userRes?.role === 'admin';
+                                    if (tab.id === 'business' && !isAnggota) return null;
+                                    
+                                    return (
+                                        <button
+                                            key={tab.id}
+                                            onClick={() => setActiveTab(tab.id)}
+                                            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl whitespace-nowrap text-sm font-bold transition-all ${activeTab === tab.id
+                                                    ? 'bg-white text-green-700 shadow-sm'
+                                                    : 'text-gray-400 hover:text-gray-600'
+                                                }`}
+                                        >
+                                            <span className="material-icons text-lg">{tab.icon}</span>
+                                            {tab.label}
+                                        </button>
+                                    );
+                                })}
+
                             </div>
 
                             {/* Tab Content Area */}
@@ -1019,6 +1163,7 @@ const ProfilePage = () => {
                                 {activeTab === 'courses' && <CoursesTab />}
                                 {activeTab === 'purchases' && <PurchasesTab />}
                                 {activeTab === 'charity' && <DonationsTab />}
+                                {activeTab === 'business' && <BusinessesTab />}
                             </div>
 
                             {/* Footer Actions */}

@@ -104,6 +104,9 @@ import AdminPhotoFramerPage from './pages/admin/AdminPhotoFramerPage';
 import DashboardEventRecapPage from './pages/admin/DashboardEventRecapPage';
 import DashboardDonationManagementPage from './pages/admin/DashboardDonationManagementPage';
 import DashboardAnnouncementsPage from './pages/admin/DashboardAnnouncementsPage';
+import BusinessDataListPage from './pages/BusinessDataListPage';
+import BusinessDataFormPage from './pages/BusinessDataFormPage';
+import DashboardAdminBusinessPage from './pages/admin/DashboardAdminBusinessPage';
 import ExpeditionTestPage from './pages/admin/ExpeditionTestPage';
 import FloatingCartModal from './components/layout/FloatingCartModal';
 
@@ -337,6 +340,9 @@ const LayoutWrapper = ({ isDesktop }) => {
         <Route path="/dashboard/admin/photo-framer" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><AdminPhotoFramerPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/admin/event-recap" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardEventRecapPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/my-events" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardMyEventsPage /></ResponsiveLayout></PrivateRoute>} />
+        <Route path="/dashboard/business-data" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><BusinessDataListPage /></ResponsiveLayout></PrivateRoute>} />
+        <Route path="/dashboard/business-data/new" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><BusinessDataFormPage /></ResponsiveLayout></PrivateRoute>} />
+        <Route path="/dashboard/business-data/edit/:id" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><BusinessDataFormPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/my-campaigns" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardMyCampaignsPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/articles" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardArticleEditorPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/articles/:slug" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardArticleEditorPage /></ResponsiveLayout></PrivateRoute>} />
@@ -356,6 +362,8 @@ const LayoutWrapper = ({ isDesktop }) => {
         <Route path="/dashboard/admin/zis-config" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><AdminZISConfigPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/admin/zis-verify" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><AdminZISVerifyPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/admin/announcements" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardAnnouncementsPage /></ResponsiveLayout></PrivateRoute>} />
+        <Route path="/dashboard/admin/business-partners" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardAdminBusinessPage /></ResponsiveLayout></PrivateRoute>} />
+
         <Route path="/live-meet-test" element={<ResponsiveLayout isDesktop={isDesktop}><AdminJitsiMeetPage /></ResponsiveLayout>} />
       </Routes>
       <FloatingCartModal />

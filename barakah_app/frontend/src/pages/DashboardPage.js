@@ -495,6 +495,27 @@ const DashboardPage = () => {
 
                     {(() => {
                         const userRes = JSON.parse(localStorage.getItem('user'));
+                        const isAnggota = userRes?.custom_roles_data?.some(r => r.name.toLowerCase().includes('anggota') || r.code.toLowerCase().includes('anggota')) || userRes?.role === 'admin';
+                        if (!isAnggota) return null;
+                        return (
+                            <Link
+                                to="/dashboard/business-data"
+                                className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-emerald-50 hover:shadow-md transition"
+                            >
+                                <div className="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center">
+                                    <span className="material-icons text-emerald-700">handshake</span>
+                                </div>
+                                <div className="flex-1">
+                                    <h3 className="font-bold text-gray-800 text-sm">Pendataan Partner Bisnis</h3>
+                                    <p className="text-[11px] text-gray-500">Daftarkan usaha Anda sebagai partner resmi BAE</p>
+                                </div>
+                                <span className="material-icons text-gray-400">chevron_right</span>
+                            </Link>
+                        );
+                    })()}
+
+                    {(() => {
+                        const userRes = JSON.parse(localStorage.getItem('user'));
                         const isStaff = userRes?.role === 'staff' || userRes?.role === 'admin';
                         if (!isStaff) return null;
                         return (
@@ -655,12 +676,30 @@ const DashboardPage = () => {
                                     color: 'blue',
                                     title: 'Semua E-Course',
                                     desc: 'Pantau dan kelola course semua user (Admin)'
+                                },
+                                {
+                                    id: 'admin_business_partners',
+                                    access: isAdmin,
+                                    to: '/dashboard/admin/business-partners',
+                                    icon: 'handshake',
+                                    color: 'green',
+                                    title: 'Manajemen Partner Bisnis',
+                                    desc: 'Kurasi dan kelola data usaha anggota BAE (Admin)'
                                 }
                             ]
                         },
                         {
-                            title: 'Admin Event',
+                            title: 'Admin Konten & Pengumuman',
                             items: [
+                                {
+                                    id: 'announcements',
+                                    access: isAdmin,
+                                    to: '/dashboard/admin/announcements',
+                                    icon: 'campaign',
+                                    color: 'blue',
+                                    title: 'Manajemen Pengumuman',
+                                    desc: 'Kelola pop-up pengumuman & iklan aplikasi (Admin)'
+                                },
                                 {
                                     id: 'activities',
                                     access: hasAccess('activities'),
@@ -670,6 +709,20 @@ const DashboardPage = () => {
                                     title: 'Manajemen Kegiatan',
                                     desc: 'Kelola berita dan kegiatan komunitas (Admin)'
                                 },
+                                {
+                                    id: 'articles',
+                                    access: hasAccess('articles'),
+                                    to: '/dashboard/admin/articles',
+                                    icon: 'article',
+                                    color: 'orange',
+                                    title: 'Manajemen Artikel',
+                                    desc: 'Kelola semua artikel yang terbit (Admin)'
+                                }
+                            ]
+                        },
+                        {
+                            title: 'Admin Event',
+                            items: [
                                 {
                                     id: 'events',
                                     access: hasAccess('admin_events') || hasAccess('event'),
@@ -724,17 +777,8 @@ const DashboardPage = () => {
                             ]
                         },
                         {
-                            title: 'Admin Kampanye & Artikel',
+                            title: 'Admin Kampanye',
                             items: [
-                                {
-                                    id: 'articles',
-                                    access: hasAccess('articles'),
-                                    to: '/dashboard/admin/articles',
-                                    icon: 'article',
-                                    color: 'orange',
-                                    title: 'Manajemen Artikel',
-                                    desc: 'Kelola semua artikel yang terbit (Admin)'
-                                },
                                 {
                                     id: 'admin_campaigns',
                                     access: hasAccess('charity'),
@@ -796,15 +840,6 @@ const DashboardPage = () => {
                                     desc: 'Kelola logo partner di landing page (Admin)'
                                 },
                                 {
-                                    id: 'announcements',
-                                    access: isAdmin,
-                                    to: '/dashboard/admin/announcements',
-                                    icon: 'campaign',
-                                    color: 'blue',
-                                    title: 'Manajemen Pengumuman',
-                                    desc: 'Kelola pop-up pengumuman aplikasi (Admin)'
-                                },
-                                {
                                     id: 'consultants',
                                     access: hasAccess('consultants'),
                                     to: '/dashboard/admin/consultants',
@@ -816,6 +851,7 @@ const DashboardPage = () => {
                             ]
                         }
                     ];
+
 
                     const canSeeAnyAdminMenu = adminSections.some(section => section.items.some(item => item.access));
                     if (!canSeeAnyAdminMenu) return null;

@@ -4,6 +4,7 @@ from rest_framework.routers import SimpleRouter
 from . import views
 
 router = SimpleRouter()
+router.register(r'business-profiles', views.BusinessProfileViewSet, basename='business-profile')
 router.register(r'', views.ProfileViewSet, basename='profile')
 
 urlpatterns = [

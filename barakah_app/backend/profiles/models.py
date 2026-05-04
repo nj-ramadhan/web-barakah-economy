@@ -224,3 +224,98 @@ class Profile(models.Model):
 
     def __str__(self):
         return f'{self.user.username} Profile'
+
+class BusinessProfile(models.Model):
+    BIDANG_USAHA_CHOICES = [
+        ('kuliner', 'Kuliner'),
+        ('fashion', 'Fashion'),
+        ('jasa', 'Jasa'),
+        ('digital', 'Digital'),
+        ('kesehatan', 'Kesehatan'),
+        ('pendidikan', 'Pendidikan'),
+        ('lainnya', 'Lainnya'),
+    ]
+
+    SKALA_USAHA_CHOICES = [
+        ('<1jt', '< Rp1 juta'),
+        ('1-5jt', 'Rp1 – 5 juta'),
+        ('5-10jt', 'Rp5 – 10 juta'),
+        ('10-25jt', 'Rp10 – 25 juta'),
+        ('25-50jt', 'Rp25 – 50 juta'),
+        ('50-100jt', 'Rp50 – 100 juta'),
+        ('100-250jt', 'Rp100 – 250 juta'),
+        ('>250jt', '> Rp250 juta'),
+    ]
+
+    STATUS_USAHA_CHOICES = [
+        ('baru', 'Baru mulai'),
+        ('berjalan', 'Sudah berjalan'),
+        ('stabil', 'Sudah stabil'),
+    ]
+
+    AREA_PENJUALAN_CHOICES = [
+        ('lokal', 'Lokal'),
+        ('nasional', 'Nasional'),
+        ('internasional', 'Internasional'),
+    ]
+
+    KESIAPAN_ORDER_CHOICES = [
+        ('siap', 'Siap'),
+        ('belum_siap', 'Belum siap'),
+    ]
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='business_profiles')
+    
+    # SECTION 1 — DATA ANGGOTA
+    full_name = models.CharField(max_length=100)
+    community_username = models.CharField(max_length=100, blank=True, null=True)
+    whatsapp = models.CharField(max_length=15)
+
+    # SECTION 2 — DATA BISNIS
+    brand_name = models.CharField(max_length=100)
+    business_field = models.CharField(max_length=20, choices=BIDANG_USAHA_CHOICES)
+    business_field_other = models.CharField(max_length=100, blank=True, null=True)
+    description = models.TextField(help_text="Maks. 150 kata")
+    main_products = models.TextField()
+    business_scale = models.CharField(max_length=20, choices=SKALA_USAHA_CHOICES)
+    
+    # Positioning
+    keunggulan = models.TextField(help_text="Maks. 100 kata")
+    target_market = models.TextField()
+
+    # SECTION 3 — MEDIA & KONTAK
+    instagram = models.CharField(max_length=100, blank=True, null=True)
+    website = models.URLField(blank=True, null=True)
+    marketplace = models.CharField(max_length=255, blank=True, null=True)
+    customer_contact = models.CharField(max_length=15)
+
+    # SECTION 4 — MEDIA UNTUK WEBSITE
+    logo = models.ImageField(upload_to='business_logos/')
+    foto_produk_1 = models.ImageField(upload_to='business_products/')
+    foto_produk_2 = models.ImageField(upload_to='business_products/', blank=True, null=True)
+    foto_produk_3 = models.ImageField(upload_to='business_products/', blank=True, null=True)
+
+    # SECTION 5 — STATUS & KESIAPAN
+    business_status = models.CharField(max_length=20, choices=STATUS_USAHA_CHOICES)
+    sales_area = models.CharField(max_length=20, choices=AREA_PENJUALAN_CHOICES)
+    readiness_order = models.CharField(max_length=20, choices=KESIAPAN_ORDER_CHOICES)
+
+    # SECTION 6 — DATA UNTUK WEBSITE (DISPLAY PUBLIK)
+    display_name = models.CharField(max_length=100)
+    tagline = models.CharField(max_length=255, blank=True, null=True)
+    promo_description = models.TextField(help_text="Maks. 100 kata")
+    display_contact = models.CharField(max_length=255)
+    is_website_display_approved = models.BooleanField(default=False)
+
+    # SECTION 7 — TAMBAHAN (OPSIONAL)
+    business_needs = models.JSONField(default=list, blank=True) # Modal, Marketing, etc.
+    business_needs_other = models.CharField(max_length=100, blank=True, null=True)
+    expectations = models.TextField(blank=True, null=True)
+
+    # Admin Fields
+    is_curated = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.brand_name} ({self.user.username})"

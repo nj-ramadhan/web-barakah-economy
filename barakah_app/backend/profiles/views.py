@@ -6,8 +6,30 @@ from rest_framework.views import APIView
 from rest_framework import viewsets
 from rest_framework import status
 from django.db.models import Q
-from .models import Profile
-from .serializers import ProfileSerializer
+from .models import Profile, BusinessProfile
+from .serializers import ProfileSerializer, BusinessProfileSerializer
+
+class BusinessProfileViewSet(viewsets.ModelViewSet):
+    serializer_class = BusinessProfileSerializer
+    permission_classes = [IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser]
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.role == 'admin':
+            return BusinessProfile.objects.all().order_by('-created_at')
+        return BusinessProfile.objects.filter(user=user).order_by('-created_at')
+
+    def perform_create(self, serializer):
+        # User must be an Anggota or Admin
+        user = self.request.user
+        is_anggota = user.custom_roles.filter(Q(name__icontains='Anggota') | Q(code__icontains='anggota')).exists()
+        
+        if not is_anggota and user.role != 'admin':
+            from rest_framework.exceptions import PermissionDenied
+            raise PermissionDenied("Hanya anggota BAE Community yang dapat mengisi data usaha.")
+            
+        serializer.save(user=user)
 
 class ProfileViewSet(viewsets.ModelViewSet):
     queryset = Profile.objects.all()
