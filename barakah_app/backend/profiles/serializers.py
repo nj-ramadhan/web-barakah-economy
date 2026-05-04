@@ -18,12 +18,17 @@ class BusinessProfileSerializer(serializers.ModelSerializer):
         # Parse JSON fields if they are sent as strings via FormData
         import json
         mutable_data = data.copy() if hasattr(data, 'copy') else data
+        
         for field in ['business_needs']:
-            if field in mutable_data and isinstance(mutable_data[field], str):
-                try:
-                    mutable_data[field] = json.loads(mutable_data[field])
-                except json.JSONDecodeError:
-                    pass
+            if field in mutable_data:
+                val = mutable_data[field]
+                if isinstance(val, str):
+                    try:
+                        mutable_data[field] = json.loads(val)
+                    except json.JSONDecodeError:
+                        # Fallback if it's a simple string or single value
+                        mutable_data[field] = [val] if val else []
+        
         return super().to_internal_value(mutable_data)
 
 class ProfileSerializer(serializers.ModelSerializer):

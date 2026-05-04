@@ -124,7 +124,7 @@ const BusinessDataFormPage = () => {
         const data = new FormData();
         Object.keys(formData).forEach(key => {
             if (key === 'business_needs') {
-                data.append(key, JSON.stringify(formData[key]));
+                data.append(key, JSON.stringify(formData[key] || []));
             } else if (formData[key] !== null && formData[key] !== undefined) {
                 data.append(key, formData[key]);
             }
@@ -185,7 +185,7 @@ const BusinessDataFormPage = () => {
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="md:col-span-2">
-                                <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Nama Lengkap *</label>
+                                <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Nama Lengkap <span className="text-red-500">*</span></label>
                                 <input
                                     type="text" required name="full_name" value={formData.full_name} onChange={handleInputChange}
                                     className="w-full bg-gray-50 border-none rounded-2xl px-6 py-4 text-sm focus:ring-2 focus:ring-green-500 transition"
@@ -199,7 +199,7 @@ const BusinessDataFormPage = () => {
                                 />
                             </div>
                             <div>
-                                <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Nomor WhatsApp Aktif *</label>
+                                <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Nomor WhatsApp Aktif <span className="text-red-500">*</span></label>
                                 <input
                                     type="text" required name="whatsapp" value={formData.whatsapp} onChange={handleInputChange}
                                     className="w-full bg-gray-50 border-none rounded-2xl px-6 py-4 text-sm focus:ring-2 focus:ring-green-500 transition"
@@ -220,14 +220,14 @@ const BusinessDataFormPage = () => {
                         <div className="space-y-6">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
-                                    <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Nama Brand / Usaha *</label>
+                                    <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Nama Brand / Usaha <span className="text-red-500">*</span></label>
                                     <input
                                         type="text" required name="brand_name" value={formData.brand_name} onChange={handleInputChange}
                                         className="w-full bg-gray-50 border-none rounded-2xl px-6 py-4 text-sm focus:ring-2 focus:ring-blue-500 transition"
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Bidang Usaha *</label>
+                                    <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Bidang Usaha <span className="text-red-500">*</span></label>
                                     <select
                                         name="business_field" value={formData.business_field} onChange={handleInputChange}
                                         className="w-full bg-gray-50 border-none rounded-2xl px-6 py-4 text-sm focus:ring-2 focus:ring-blue-500 transition"
@@ -251,7 +251,7 @@ const BusinessDataFormPage = () => {
                             </div>
 
                             <div>
-                                <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Deskripsi Singkat Usaha * (Maks. 150 kata)</label>
+                                <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Deskripsi Singkat Usaha <span className="text-red-500">*</span> (Maks. 150 kata)</label>
                                 <textarea
                                     required name="description" value={formData.description} onChange={handleInputChange} rows="4"
                                     className="w-full bg-gray-50 border-none rounded-2xl px-6 py-4 text-sm focus:ring-2 focus:ring-blue-500 transition"
@@ -259,7 +259,7 @@ const BusinessDataFormPage = () => {
                             </div>
 
                             <div>
-                                <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Jenis Produk / Jasa Utama *</label>
+                                <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Jenis Produk / Jasa Utama <span className="text-red-500">*</span></label>
                                 <select
                                     required name="main_products" value={formData.main_products} onChange={handleInputChange}
                                     className="w-full bg-gray-50 border-none rounded-2xl px-6 py-4 text-sm focus:ring-2 focus:ring-blue-500 transition"
@@ -272,7 +272,7 @@ const BusinessDataFormPage = () => {
                             </div>
 
                             <div>
-                                <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Skala Usaha (Omzet Rata-rata per Bulan) *</label>
+                                <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Skala Usaha (Omzet Rata-rata per Bulan) <span className="text-red-500">*</span></label>
                                 <select
                                     name="business_scale" value={formData.business_scale} onChange={handleInputChange}
                                     className="w-full bg-gray-50 border-none rounded-2xl px-6 py-4 text-sm focus:ring-2 focus:ring-blue-500 transition"
@@ -293,14 +293,14 @@ const BusinessDataFormPage = () => {
                                 <h3 className="text-sm font-black text-gray-700 mb-4">🎯 Positioning & Kekuatan Bisnis</h3>
                                 <div className="space-y-6">
                                     <div>
-                                        <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Keunggulan Utama Bisnis * (Maks. 100 kata)</label>
+                                        <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Keunggulan Utama Bisnis <span className="text-red-500">*</span> (Maks. 100 kata)</label>
                                         <textarea
                                             required name="keunggulan" value={formData.keunggulan} onChange={handleInputChange} rows="3"
                                             className="w-full bg-gray-50 border-none rounded-2xl px-6 py-4 text-sm focus:ring-2 focus:ring-blue-500 transition"
                                         ></textarea>
                                     </div>
                                     <div>
-                                        <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Target Market Utama *</label>
+                                        <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Target Market Utama <span className="text-red-500">*</span></label>
                                         <input
                                             type="text" required name="target_market" value={formData.target_market} onChange={handleInputChange}
                                             className="w-full bg-gray-50 border-none rounded-2xl px-6 py-4 text-sm focus:ring-2 focus:ring-blue-500 transition"
@@ -345,7 +345,7 @@ const BusinessDataFormPage = () => {
                                 />
                             </div>
                             <div className="md:col-span-2">
-                                <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Nomor Kontak *</label>
+                                <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Nomor Kontak Pelanggan <span className="text-red-500">*</span></label>
                                 <input
                                     type="text" required name="customer_contact" value={formData.customer_contact} onChange={handleInputChange}
                                     className="w-full bg-gray-50 border-none rounded-2xl px-6 py-4 text-sm focus:ring-2 focus:ring-purple-500 transition"
@@ -365,7 +365,7 @@ const BusinessDataFormPage = () => {
 
                         <div className="space-y-8">
                             <div>
-                                <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Upload Logo Bisnis * (PNG/JPG)</label>
+                                <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Upload Logo Bisnis <span className="text-red-500">*</span> (PNG/JPG)</label>
                                 <div className="flex flex-col md:flex-row items-center gap-6">
                                     <div className="w-32 h-32 bg-gray-50 rounded-[2rem] border-2 border-dashed border-gray-200 overflow-hidden flex items-center justify-center flex-shrink-0">
                                         {previews.logo ? <img src={previews.logo} className="w-full h-full object-cover" /> : <span className="material-icons text-gray-300 text-3xl">add_photo_alternate</span>}
@@ -375,7 +375,7 @@ const BusinessDataFormPage = () => {
                             </div>
 
                             <div>
-                                <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Upload Foto Produk / Jasa * (Min. 1, Maks. 3)</label>
+                                <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Upload Foto Produk / Jasa <span className="text-red-500">*</span> (Min. 1, Maks. 3)</label>
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                     {['foto_produk_1', 'foto_produk_2', 'foto_produk_3'].map((name, i) => (
                                         <div key={name} className="space-y-4">
@@ -401,7 +401,7 @@ const BusinessDataFormPage = () => {
 
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                             <div>
-                                <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Status Usaha *</label>
+                                <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Status Usaha <span className="text-red-500">*</span></label>
                                 <select
                                     name="business_status" value={formData.business_status} onChange={handleInputChange}
                                     className="w-full bg-gray-50 border-none rounded-2xl px-6 py-4 text-sm focus:ring-2 focus:ring-teal-500 transition"
@@ -412,7 +412,7 @@ const BusinessDataFormPage = () => {
                                 </select>
                             </div>
                             <div>
-                                <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Area Penjualan *</label>
+                                <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Area Penjualan <span className="text-red-500">*</span></label>
                                 <select
                                     name="sales_area" value={formData.sales_area} onChange={handleInputChange}
                                     className="w-full bg-gray-50 border-none rounded-2xl px-6 py-4 text-sm focus:ring-2 focus:ring-teal-500 transition"
@@ -423,7 +423,7 @@ const BusinessDataFormPage = () => {
                                 </select>
                             </div>
                             <div>
-                                <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Kesiapan Order *</label>
+                                <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Kesiapan Order <span className="text-red-500">*</span></label>
                                 <select
                                     name="readiness_order" value={formData.readiness_order} onChange={handleInputChange}
                                     className="w-full bg-gray-50 border-none rounded-2xl px-6 py-4 text-sm focus:ring-2 focus:ring-teal-500 transition"
@@ -447,7 +447,7 @@ const BusinessDataFormPage = () => {
                         <div className="space-y-6">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
-                                    <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Nama Bisnis Display *</label>
+                                    <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Nama Bisnis Display <span className="text-red-500">*</span></label>
                                     <input
                                         type="text" required name="display_name" value={formData.display_name} onChange={handleInputChange}
                                         className="w-full bg-gray-50 border-none rounded-2xl px-6 py-4 text-sm focus:ring-2 focus:ring-indigo-500 transition"
@@ -463,7 +463,7 @@ const BusinessDataFormPage = () => {
                             </div>
 
                             <div>
-                                <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Deskripsi Promosi Web * (Maks. 100 kata)</label>
+                                <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Deskripsi Promosi Web <span className="text-red-500">*</span> (Maks. 100 kata)</label>
                                 <textarea
                                     required name="promo_description" value={formData.promo_description} onChange={handleInputChange} rows="3"
                                     className="w-full bg-gray-50 border-none rounded-2xl px-6 py-4 text-sm focus:ring-2 focus:ring-indigo-500 transition"
@@ -471,7 +471,7 @@ const BusinessDataFormPage = () => {
                             </div>
 
                             <div>
-                                <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Kontak yang Ditampilkan * (WA / IG / Web)</label>
+                                <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Kontak yang Ditampilkan <span className="text-red-500">*</span> (WA / IG / Web)</label>
                                 <input
                                     type="text" required name="display_contact" value={formData.display_contact} onChange={handleInputChange}
                                     className="w-full bg-gray-50 border-none rounded-2xl px-6 py-4 text-sm focus:ring-2 focus:ring-indigo-500 transition"
