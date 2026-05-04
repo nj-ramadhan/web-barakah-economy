@@ -126,6 +126,15 @@ const ActivityCalendarPage = () => {
         }).sort((a, b) => new Date(a.start) - new Date(b.start));
     }, [activities, viewMode, currentDate, customRange]);
 
+    const [selectedDateData, setSelectedDateData] = useState(null);
+    const [showDetailModal, setShowDetailModal] = useState(false);
+
+    const handleDateClick = (dayObj) => {
+        if (!dayObj.day) return;
+        setSelectedDateData(dayObj);
+        setShowDetailModal(true);
+    };
+
     return (
         <div className="min-h-screen bg-[#f8fafc] pb-24">
             <Helmet>
@@ -252,7 +261,11 @@ const ActivityCalendarPage = () => {
                                 </div>
                                 <div className="grid grid-cols-7 auto-rows-[140px]">
                                     {calendarDays.map((dayObj, i) => (
-                                        <div key={i} className={`p-3 border-r border-b border-gray-50 group hover:bg-indigo-50/30 transition-all duration-300 relative ${!dayObj.day ? 'bg-gray-50/30' : ''}`}>
+                                        <div 
+                                            key={i} 
+                                            onClick={() => handleDateClick(dayObj)}
+                                            className={`p-3 border-r border-b border-gray-50 group hover:bg-indigo-50/30 transition-all duration-300 relative cursor-pointer ${!dayObj.day ? 'bg-gray-50/30' : ''}`}
+                                        >
                                             {dayObj.day && (
                                                 <>
                                                     <div className="flex justify-between items-start mb-2">
@@ -260,22 +273,31 @@ const ActivityCalendarPage = () => {
                                                             {dayObj.day}
                                                         </span>
                                                         {dayObj.activities.length > 0 && (
-                                                            <div className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-ping"></div>
+                                                            <div className="flex flex-col items-end">
+                                                                <div className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-ping"></div>
+                                                                <span className="text-[8px] font-black text-indigo-500 mt-1">{dayObj.activities.length} Kegiatan</span>
+                                                            </div>
                                                         )}
                                                     </div>
                                                     <div className="space-y-1.5 overflow-y-auto max-h-[85px] custom-scrollbar pr-1">
                                                         {dayObj.activities.map(act => (
                                                             <div 
                                                                 key={act.id} 
-                                                                className="px-2.5 py-1.5 rounded-lg text-[9px] font-black text-white truncate cursor-pointer hover:brightness-110 hover:shadow-md transition-all active:scale-95"
+                                                                className="px-2.5 py-1.5 rounded-lg text-white cursor-pointer hover:brightness-110 hover:shadow-md transition-all active:scale-95 border border-white/20"
                                                                 style={{ 
                                                                     backgroundColor: act.color,
                                                                     background: `linear-gradient(135deg, ${act.color}, ${act.color}dd)` 
                                                                 }}
-                                                                title={act.title}
-                                                                onClick={() => window.open(act.url, '_blank')}
+                                                                title={`${act.title} - ${act.time_str}`}
                                                             >
-                                                                {act.title}
+                                                                <div className="flex justify-between items-center gap-1">
+                                                                    <span className="text-[8px] font-black truncate flex-1">{act.title}</span>
+                                                                    <span className="text-[7px] font-bold opacity-80 shrink-0">{act.time_str}</span>
+                                                                </div>
+                                                                <div className="flex items-center gap-1 mt-0.5 opacity-90">
+                                                                    <span className="material-icons text-[7px]">groups</span>
+                                                                    <span className="text-[7px] font-bold">{act.participants_count}</span>
+                                                                </div>
                                                             </div>
                                                         ))}
                                                     </div>
@@ -301,7 +323,7 @@ const ActivityCalendarPage = () => {
                                 filteredActivities.map((act) => (
                                     <div key={act.id} className="group bg-white rounded-[2rem] shadow-sm border border-gray-100 hover:shadow-xl hover:border-indigo-100 transition-all duration-500 overflow-hidden flex flex-col md:flex-row md:items-center">
                                         {/* Color Bar / Indicator */}
-                                        <div className="w-full h-2 md:w-3 md:h-24 shrink-0 transition-all duration-500 group-hover:w-4" style={{ backgroundColor: act.color }}></div>
+                                        <div className="w-full h-2 md:w-3 md:h-32 shrink-0 transition-all duration-500 group-hover:w-4" style={{ backgroundColor: act.color }}></div>
                                         
                                         <div className="flex-1 p-6 sm:p-8">
                                             <div className="flex flex-wrap items-center gap-3 mb-3">
@@ -323,7 +345,13 @@ const ActivityCalendarPage = () => {
                                                     <div className="w-7 h-7 rounded-lg bg-gray-50 flex items-center justify-center text-gray-400 group-hover:bg-indigo-50 group-hover:text-indigo-500 transition-colors">
                                                         <span className="material-icons text-sm">schedule</span>
                                                     </div>
-                                                    {formatDate(act.start)} {new Date(act.start).toDateString() !== new Date(act.end).toDateString() && ` - ${formatDate(act.end)}`}
+                                                    {formatDate(act.start)} pada {act.time_str}
+                                                </div>
+                                                <div className="flex items-center gap-2 text-[11px] text-gray-500 font-bold">
+                                                    <div className="w-7 h-7 rounded-lg bg-gray-50 flex items-center justify-center text-gray-400 group-hover:bg-emerald-50 group-hover:text-emerald-500 transition-colors">
+                                                        <span className="material-icons text-sm">groups</span>
+                                                    </div>
+                                                    {act.participants_count} Peserta Terdaftar
                                                 </div>
                                                 {act.location && (
                                                     <div className="flex items-center gap-2 text-[11px] text-gray-500 font-bold">
@@ -358,6 +386,91 @@ const ActivityCalendarPage = () => {
                             )}
                         </div>
                     </>
+                )}
+
+                {/* Detail Modal */}
+                {showDetailModal && selectedDateData && (
+                    <div className="fixed inset-0 z-[2000] flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm animate-fade-in">
+                        <div className="bg-white rounded-[2.5rem] w-full max-w-2xl shadow-2xl overflow-hidden animate-slide-up border border-white">
+                            <div className="p-8 border-b border-gray-50 flex justify-between items-center bg-gray-50/30">
+                                <div>
+                                    <h3 className="text-2xl font-black text-gray-800 tracking-tight">Agenda {formatDate(selectedDateData.date)}</h3>
+                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">Ditemukan {selectedDateData.activities.length} Kegiatan</p>
+                                </div>
+                                <button 
+                                    onClick={() => setShowDetailModal(false)}
+                                    className="w-12 h-12 rounded-2xl bg-white border border-gray-100 text-gray-400 hover:text-rose-500 hover:border-rose-100 transition-all shadow-sm"
+                                >
+                                    <span className="material-icons">close</span>
+                                </button>
+                            </div>
+                            
+                            <div className="p-8 max-h-[60vh] overflow-y-auto custom-scrollbar">
+                                {selectedDateData.activities.length === 0 ? (
+                                    <div className="py-12 text-center">
+                                        <div className="w-20 h-20 bg-gray-50 rounded-[2rem] flex items-center justify-center mx-auto mb-4">
+                                            <span className="material-icons text-gray-300 text-3xl">event_available</span>
+                                        </div>
+                                        <p className="text-gray-400 font-bold text-sm">Tidak ada kegiatan terjadwal di hari ini.</p>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-6">
+                                        {selectedDateData.activities.map(act => (
+                                            <div key={act.id} className="p-6 bg-gray-50/50 rounded-3xl border border-gray-100 hover:border-indigo-100 transition-all">
+                                                <div className="flex items-center gap-3 mb-4">
+                                                    <span className="material-icons p-2 bg-white rounded-xl shadow-sm text-sm" style={{ color: act.color }}>
+                                                        {act.type === 'event' ? 'event' : 'volunteer_activism'}
+                                                    </span>
+                                                    <div>
+                                                        <h4 className="text-base font-black text-gray-800 line-clamp-1">{act.title}</h4>
+                                                        <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">{act.category}</p>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div className="grid grid-cols-2 gap-4 mb-6">
+                                                    <div className="space-y-1">
+                                                        <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest">Waktu & Jam</p>
+                                                        <p className="text-[11px] font-bold text-gray-700 flex items-center gap-1">
+                                                            <span className="material-icons text-[12px]">schedule</span> {act.time_str} WIB
+                                                        </p>
+                                                    </div>
+                                                    <div className="space-y-1">
+                                                        <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest">Jumlah Peserta</p>
+                                                        <p className="text-[11px] font-bold text-gray-700 flex items-center gap-1">
+                                                            <span className="material-icons text-[12px]">groups</span> {act.participants_count} Orang
+                                                        </p>
+                                                    </div>
+                                                    {act.location && (
+                                                        <div className="space-y-1 col-span-2">
+                                                            <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest">Lokasi Kegiatan</p>
+                                                            <p className="text-[11px] font-bold text-gray-700 flex items-center gap-1">
+                                                                <span className="material-icons text-[12px]">location_on</span> {act.location}
+                                                            </p>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                
+                                                <div className="flex gap-2">
+                                                    <Link 
+                                                        to={act.url} target="_blank"
+                                                        className="flex-1 py-3 bg-white border border-gray-200 text-gray-600 rounded-xl text-[9px] font-black uppercase tracking-widest text-center hover:bg-gray-50 transition-all"
+                                                    >
+                                                        Halaman Publik
+                                                    </Link>
+                                                    <Link 
+                                                        to={act.type === 'event' ? `/dashboard/admin/events?id=${act.id.split('-')[1]}` : `/dashboard/admin/charity?id=${act.id.split('-')[1]}`}
+                                                        className="flex-1 py-3 bg-indigo-600 text-white rounded-xl text-[9px] font-black uppercase tracking-widest text-center hover:bg-indigo-700 transition-all shadow-md shadow-indigo-100"
+                                                    >
+                                                        Panel Admin
+                                                    </Link>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
                 )}
                 
                 {/* Legend */}

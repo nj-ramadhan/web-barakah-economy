@@ -5,7 +5,7 @@ const NavDropdown = ({ title, items }) => {
     const [isOpen, setIsOpen] = useState(false);
 
     return (
-        <div 
+        <div
             className="relative"
             onMouseEnter={() => setIsOpen(true)}
             onMouseLeave={() => setIsOpen(false)}
@@ -14,13 +14,13 @@ const NavDropdown = ({ title, items }) => {
                 {title}
                 <span className={`material-icons text-sm transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}>expand_more</span>
             </button>
-            
+
             <div className={`absolute top-full left-0 pt-2 transition-all duration-300 origin-top ${isOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'}`}>
                 <div className="w-56 bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-gray-100/50 py-3 overflow-hidden">
                     {items.map((item, idx) => (
-                        <Link 
+                        <Link
                             key={idx}
-                            to={item.to} 
+                            to={item.to}
                             className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-green-50 hover:text-green-700 transition group"
                         >
                             <div className="w-8 h-8 rounded-lg bg-gray-50 group-hover:bg-green-100 flex items-center justify-center transition">
@@ -79,11 +79,11 @@ const DesktopHeader = () => {
                 </div>
                 <span className="text-xl font-black text-green-800 tracking-tighter">BARAKAH ECONOMY</span>
             </Link>
-            
+
             <nav className="flex gap-8 items-center">
                 <Link to="/" className="text-gray-600 hover:text-green-700 font-semibold transition">Beranda</Link>
                 <Link to="/about" className="text-gray-600 hover:text-green-700 font-semibold transition">Tentang Kami</Link>
-                
+
                 <NavDropdown title="Produk & Layanan" items={group1} />
                 <NavDropdown title="Aktivitas & Sosial" items={group2} />
                 <NavDropdown title="Informasi & Diskusi" items={group3} />
@@ -104,7 +104,7 @@ const DesktopHeader = () => {
                             <span className="text-sm max-w-[100px] truncate">{user.username || 'Admin'}</span>
                             <span className="material-icons text-gray-400 text-sm transition-transform">{showProfileMenu ? 'expand_less' : 'expand_more'}</span>
                         </button>
-                        
+
                         {showProfileMenu && (
                             <div className="absolute right-0 mt-3 w-56 bg-white rounded-2xl shadow-2xl border border-gray-100 py-2 z-50">
                                 <div className="px-4 py-3 border-b border-gray-50 mb-1">
@@ -137,8 +137,5 @@ const DesktopHeader = () => {
         </header>
     );
 };
-
-export default DesktopHeader;
-
 
 export default DesktopHeader;
