@@ -14,6 +14,18 @@ class BusinessProfileSerializer(serializers.ModelSerializer):
         fields = '__all__'
         read_only_fields = ('user', 'is_curated')
 
+    def to_internal_value(self, data):
+        # Parse JSON fields if they are sent as strings via FormData
+        import json
+        mutable_data = data.copy() if hasattr(data, 'copy') else data
+        for field in ['business_needs']:
+            if field in mutable_data and isinstance(mutable_data[field], str):
+                try:
+                    mutable_data[field] = json.loads(mutable_data[field])
+                except json.JSONDecodeError:
+                    pass
+        return super().to_internal_value(mutable_data)
+
 class ProfileSerializer(serializers.ModelSerializer):
     username = serializers.CharField(source='user.username', read_only=True)
     email = serializers.EmailField(source='user.email', read_only=True)

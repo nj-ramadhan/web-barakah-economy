@@ -24,6 +24,7 @@ const DashboardEventPage = () => {
     const [showEditModal, setShowEditModal] = useState(false);
     const [selectedEvent, setSelectedEvent] = useState(null);
     const [editForm, setEditForm] = useState({});
+    const [previewImage, setPreviewImage] = useState(null);
 
     const fetchEvents = useCallback(async (page = 1) => {
         setLoading(true);
@@ -139,7 +140,7 @@ const DashboardEventPage = () => {
                                             <div className="flex items-center gap-3">
                                                 <div 
                                                     className="w-10 h-10 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0 cursor-pointer"
-                                                    onClick={() => window.open(ev.thumbnail_full || ev.thumbnail || '/placeholder-image.jpg', '_blank')}
+                                                    onClick={() => setPreviewImage(ev.thumbnail_full || ev.thumbnail || '/placeholder-image.jpg')}
                                                     title="Klik untuk lihat detail gambar asli"
                                                 >
                                                     <img src={ev.thumbnail || '/placeholder-image.jpg'} alt="" className="w-full h-full object-cover" />
@@ -259,6 +260,26 @@ const DashboardEventPage = () => {
                     </div>
                 </div>
             </div>
+
+            {/* Image Preview Modal */}
+            {previewImage && (
+                <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-gray-900/90 backdrop-blur-md animate-in fade-in duration-300">
+                    <div className="relative w-full max-w-5xl h-[80vh] flex items-center justify-center">
+                        <button
+                            onClick={() => setPreviewImage(null)}
+                            className="absolute -top-10 right-0 md:-right-10 w-10 h-10 bg-white/10 hover:bg-red-500 text-white rounded-full flex items-center justify-center transition backdrop-blur-sm z-[111]"
+                        >
+                            <span className="material-icons">close</span>
+                        </button>
+                        <img
+                            src={previewImage}
+                            alt="Full Preview"
+                            className="max-w-full max-h-full object-contain rounded-xl shadow-2xl"
+                        />
+                    </div>
+                </div>
+            )}
+
             <NavigationButton />
         </div>
     );

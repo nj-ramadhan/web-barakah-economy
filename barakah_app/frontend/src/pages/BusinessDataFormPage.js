@@ -259,11 +259,16 @@ const BusinessDataFormPage = () => {
                             </div>
 
                             <div>
-                                <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Produk / Jasa Utama *</label>
-                                <textarea
-                                    required name="main_products" value={formData.main_products} onChange={handleInputChange} rows="3"
+                                <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Jenis Produk / Jasa Utama *</label>
+                                <select
+                                    required name="main_products" value={formData.main_products} onChange={handleInputChange}
                                     className="w-full bg-gray-50 border-none rounded-2xl px-6 py-4 text-sm focus:ring-2 focus:ring-blue-500 transition"
-                                ></textarea>
+                                >
+                                    <option value="" disabled>Pilih Jenis Utama</option>
+                                    <option value="Produk (Fisik/Digital)">Produk (Fisik / Digital)</option>
+                                    <option value="Jasa (Layanan)">Jasa (Layanan)</option>
+                                    <option value="Produk & Jasa">Keduanya (Produk & Jasa)</option>
+                                </select>
                             </div>
 
                             <div>

@@ -153,24 +153,19 @@ const EventSubmissionPage = () => {
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
+    const [previewImage, setPreviewImage] = useState(null);
+
     const openPreview = (fileOrUrl, type) => {
         if (!fileOrUrl) return;
 
-        // If we have a full version available in state, use it
         if (type && files[`${type}_full`]) {
             const fullUrl = URL.createObjectURL(files[`${type}_full`]);
-            window.open(fullUrl, '_blank');
+            setPreviewImage(fullUrl);
             return;
         }
 
-        // Check if we are editing and have a full version from backend
-        const eventData = formData; // Actually we might need the original event object
-        // For simplicity, let's just check if the URL contains 'headers/' or 'thumbnails/' 
-        // and try to guess the 'full' URL if possible, or just use what's passed.
-        // Actually, better to pass the specific field.
-        
         const url = fileOrUrl instanceof File ? URL.createObjectURL(fileOrUrl) : fileOrUrl;
-        window.open(url, '_blank');
+        setPreviewImage(url);
     };
 
     const handleFileSelect = (e, type) => {
@@ -1137,6 +1132,25 @@ const EventSubmissionPage = () => {
                     onCancel={() => setCropper({ active: false, image: null, type: null })}
                 />
             )}
+            {/* Image Preview Modal */}
+            {previewImage && (
+                <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-gray-900/90 backdrop-blur-md animate-in fade-in duration-300">
+                    <div className="relative w-full max-w-5xl h-[80vh] flex items-center justify-center">
+                        <button
+                            onClick={() => setPreviewImage(null)}
+                            className="absolute -top-10 right-0 md:-right-10 w-10 h-10 bg-white/10 hover:bg-red-500 text-white rounded-full flex items-center justify-center transition backdrop-blur-sm z-[111]"
+                        >
+                            <span className="material-icons">close</span>
+                        </button>
+                        <img
+                            src={previewImage}
+                            alt="Full Preview"
+                            className="max-w-full max-h-full object-contain rounded-xl shadow-2xl"
+                        />
+                    </div>
+                </div>
+            )}
+
             <NavigationButton />
         </div>
     );
