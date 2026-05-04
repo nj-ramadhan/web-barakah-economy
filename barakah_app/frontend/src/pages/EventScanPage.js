@@ -375,11 +375,22 @@ const EventScanPage = () => {
                                     </p>
                                     <p className="text-[10px] text-gray-600 font-medium leading-tight">
                                         {scanResult.message} 
-                                        {event?.sessions?.length > 0 && selectedSession && (
-                                            <span className="block mt-1 font-bold text-[9px] text-purple-700 uppercase">
-                                                Sesi: {event.sessions.find(s => Number(s.id) === Number(selectedSession))?.title}
-                                            </span>
-                                        )}
+                                             <span className="block mt-1 font-bold text-[9px] text-purple-700 uppercase">
+                                                 Sesi: {event.sessions.find(s => Number(s.id) === Number(selectedSession))?.title}
+                                             </span>
+                                         )}
+                                         {scanResult.registration?.payment_method === 'ots' && (
+                                             <span className="mt-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-orange-100 text-orange-700 text-[8px] font-black uppercase tracking-tighter border border-orange-200">
+                                                 <span className="material-icons text-[10px]">payments</span>
+                                                 BAYAR OTS (CASH)
+                                             </span>
+                                         )}
+                                         {scanResult.registration?.payment_method === 'transfer' && (
+                                             <span className="mt-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 text-[8px] font-black uppercase tracking-tighter border border-blue-200">
+                                                 <span className="material-icons text-[10px]">check_circle</span>
+                                                 SUDAH TRANSFER
+                                             </span>
+                                         )}
                                     </p>
                                 </div>
                             </div>

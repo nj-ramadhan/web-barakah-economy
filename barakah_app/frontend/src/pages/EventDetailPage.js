@@ -32,6 +32,7 @@ const EventDetailPage = () => {
     const [selectedImage, setSelectedImage] = useState(null);
     const [paymentAmount, setPaymentAmount] = useState('');
     const [paymentProof, setPaymentProof] = useState(null);
+    const [paymentMethod, setPaymentMethod] = useState('transfer');
     const [isRegistered, setIsRegistered] = useState(false);
     const [activeTab, setActiveTab] = useState('about');
     const [showRegisterModal, setShowRegisterModal] = useState(false);
@@ -192,11 +193,13 @@ const EventDetailPage = () => {
         }
 
         data.append('responses', JSON.stringify(responses));
+        data.append('payment_method', paymentMethod);
+        
         Object.keys(files).forEach(fieldId => {
             if (files[fieldId]) data.append(fieldId, files[fieldId]);
         });
 
-        if (paymentProof) {
+        if (paymentMethod === 'transfer' && paymentProof) {
             const fixed = Number(event?.price_fixed) || 0;
             const extra = Number(paymentAmount) || 0;
             let totalToSave = 0;
@@ -206,6 +209,16 @@ const EventDetailPage = () => {
             else totalToSave = extra;
 
             data.append('payment_proof', paymentProof);
+            data.append('payment_amount', totalToSave);
+        } else if (paymentMethod === 'ots') {
+            const fixed = Number(event?.price_fixed) || 0;
+            const extra = Number(paymentAmount) || 0;
+            let totalToSave = 0;
+
+            if (event?.price_type === 'fixed') totalToSave = fixed;
+            else if (event?.price_type === 'hybrid_1') totalToSave = fixed + extra;
+            else totalToSave = extra;
+            
             data.append('payment_amount', totalToSave);
         }
 
@@ -1206,12 +1219,34 @@ const EventDetailPage = () => {
                                                 <div className="flex items-center justify-between">
                                                     <h3 className="text-sm font-bold text-gray-900 flex items-center gap-2">
                                                         <span className="material-icons text-green-600">payments</span>
-                                                        Informasi Pembayaran
+                                                        Metode Pembayaran
                                                     </h3>
                                                     <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-[10px] font-black uppercase">{event.price_type}</span>
                                                 </div>
 
-                                                <div className="flex flex-col sm:flex-row items-center gap-6 bg-white p-4 rounded-2xl border border-gray-100">
+                                                {event.allow_ots_payment && (
+                                                    <div className="grid grid-cols-2 gap-3">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setPaymentMethod('transfer')}
+                                                            className={`flex flex-col items-center justify-center p-4 rounded-2xl border-2 transition-all ${paymentMethod === 'transfer' ? 'border-green-600 bg-green-50 shadow-md' : 'border-gray-100 bg-white text-gray-400'}`}
+                                                        >
+                                                            <span className="material-icons text-xl mb-1">account_balance_wallet</span>
+                                                            <span className="text-[10px] font-bold uppercase tracking-widest">Transfer / QRIS</span>
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setPaymentMethod('ots')}
+                                                            className={`flex flex-col items-center justify-center p-4 rounded-2xl border-2 transition-all ${paymentMethod === 'ots' ? 'border-green-600 bg-green-50 shadow-md' : 'border-gray-100 bg-white text-gray-400'}`}
+                                                        >
+                                                            <span className="material-icons text-xl mb-1">payments</span>
+                                                            <span className="text-[10px] font-bold uppercase tracking-widest">Bayar di Tempat</span>
+                                                        </button>
+                                                    </div>
+                                                )}
+
+                                                {paymentMethod === 'transfer' ? (
+                                                    <div className="flex flex-col sm:flex-row items-center gap-6 bg-white p-4 rounded-2xl border border-gray-100 animate-fade-in">
                                                     <div className="w-32 h-32 bg-gray-100 rounded-xl overflow-hidden shrink-0 border border-gray-200">
                                                         <img src="/images/qris-bae2.png" alt="QRIS BAE" className="w-full h-full object-contain" />
                                                     </div>
@@ -1226,11 +1261,22 @@ const EventDetailPage = () => {
                                                         >
                                                             <span className="material-icons text-sm">download</span>
                                                             UNDUH QRIS
-                                                        </a>
+                                                         </a>
+                                                     </div>
+                                                 </div>
+                                             ) : (
+                                                 <div className="p-6 bg-blue-50 border border-blue-100 rounded-3xl flex items-start gap-4 animate-fade-in">
+                                                    <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center shrink-0">
+                                                        <span className="material-icons">info</span>
                                                     </div>
-                                                </div>
+                                                    <div>
+                                                        <p className="text-[10px] font-bold text-blue-800 uppercase tracking-widest mb-1">Pembayaran OTS (On The Spot)</p>
+                                                        <p className="text-xs text-blue-700 leading-relaxed font-medium">Anda dapat melakukan pendaftaran sekarang dan melakukan pembayaran secara tunai di lokasi acara (Meja Registrasi). Sampai jumpa di lokasi!</p>
+                                                    </div>
+                                                 </div>
+                                             )}
 
-                                                {/* Price Inputs based on price_type */}
+                                                 {/* Price Inputs based on price_type */}
                                                 <div className="space-y-4">
                                                     {(event.price_type === 'fixed' || event.price_type === 'hybrid_1') && (
                                                         <div className="flex items-center justify-between bg-white px-5 py-4 rounded-2xl border border-gray-100">
@@ -1258,7 +1304,7 @@ const EventDetailPage = () => {
 
                                                 {/* Total Display */}
                                                 <div className="flex flex-col gap-1 p-5 bg-green-50 rounded-2xl border-2 border-green-200 shadow-inner">
-                                                    <p className="text-[10px] font-black text-green-600 uppercase tracking-[0.2em] text-center">Total yang Harus Ditransfer</p>
+                                                    <p className="text-[10px] font-black text-green-600 uppercase tracking-[0.2em] text-center">Total yang {paymentMethod === 'ots' ? 'Dibayar di Lokasi' : 'Harus Ditransfer'}</p>
                                                     <p className="text-2xl font-black text-green-800 text-center">
                                                         Rp {(() => {
                                                             const fixed = Number(event?.price_fixed) || 0;
@@ -1274,23 +1320,25 @@ const EventDetailPage = () => {
                                                     </p>
                                                 </div>
 
-                                                <div className="space-y-2">
-                                                    <label className="text-[10px] font-bold text-gray-600 uppercase ml-1">Upload Bukti Transfer *</label>
-                                                    <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-200 border-dashed rounded-3xl cursor-pointer bg-white hover:bg-gray-50 transition-all">
-                                                        <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                                                            <span className="material-icons text-gray-400 mb-2">add_a_photo</span>
-                                                            <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Pilih Foto Bukti</p>
-                                                            {paymentProof && <p className="mt-1 text-xs text-green-600 font-bold">{paymentProof.name}</p>}
-                                                        </div>
-                                                        <input
-                                                            type="file"
-                                                            required
-                                                            accept="image/*"
-                                                            onChange={(e) => setPaymentProof(e.target.files[0])}
-                                                            className="hidden"
-                                                        />
-                                                    </label>
-                                                </div>
+                                                {paymentMethod === 'transfer' && (
+                                                    <div className="space-y-2 animate-fade-in">
+                                                        <label className="text-[10px] font-bold text-gray-600 uppercase ml-1">Upload Bukti Transfer *</label>
+                                                        <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-200 border-dashed rounded-3xl cursor-pointer bg-white hover:bg-gray-50 transition-all">
+                                                            <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                                                                <span className="material-icons text-gray-400 mb-2">add_a_photo</span>
+                                                                <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Pilih Foto Bukti</p>
+                                                                {paymentProof && <p className="mt-1 text-xs text-green-600 font-bold">{paymentProof.name}</p>}
+                                                            </div>
+                                                            <input
+                                                                type="file"
+                                                                required={paymentMethod === 'transfer'}
+                                                                accept="image/*"
+                                                                onChange={(e) => setPaymentProof(e.target.files[0])}
+                                                                className="hidden"
+                                                            />
+                                                        </label>
+                                                    </div>
+                                                )}
                                             </div>
                                         )}
 

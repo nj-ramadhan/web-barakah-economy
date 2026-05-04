@@ -191,3 +191,59 @@ class ManagementStatsView(APIView):
             'pending_donations': Donation.objects.filter(payment_status='pending').count(),
         }
         return Response(stats)
+
+class ActivityCalendarView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        # Check if user is staff or admin or has specific menu access
+        # For simplicity, we check is_staff or role admin here
+        if not (request.user.is_staff or request.user.role == 'admin'):
+             return Response({"error": "Unauthorized"}, status=status.HTTP_403_FORBIDDEN)
+
+        # Optional range filtering
+        start_param = request.query_params.get('start')
+        end_param = request.query_params.get('end')
+
+        from django.utils.dateparse import parse_datetime
+
+        # Fetch Events
+        events_qs = Event.objects.filter(status__in=['approved', 'ongoing', 'completed', 'pending'])
+        if start_param:
+            events_qs = events_qs.filter(start_date__gte=start_param)
+        if end_param:
+            events_qs = events_qs.filter(start_date__lte=end_param)
+            
+        event_data = [{
+            'id': f"event-{e.id}",
+            'title': e.title,
+            'type': 'event',
+            'category': e.category or 'Umum',
+            'start': e.start_date,
+            'end': e.end_date or e.start_date,
+            'location': e.location,
+            'status': e.status,
+            'color': '#4F46E5', # Indigo
+            'url': f"/event/{e.slug}"
+        } for e in events_qs]
+
+        # Fetch Campaigns with deadline
+        campaigns_qs = Campaign.objects.filter(approval_status='approved')
+        if start_param:
+            campaigns_qs = campaigns_qs.filter(created_at__gte=start_param)
+        if end_param:
+            campaigns_qs = campaigns_qs.filter(created_at__lte=end_param)
+            
+        campaign_data = [{
+            'id': f"campaign-{c.id}",
+            'title': f"[Charity] {c.title}",
+            'type': 'campaign',
+            'category': c.get_category_display(),
+            'start': c.created_at,
+            'end': c.deadline or c.created_at,
+            'status': c.approval_status,
+            'color': '#EF4444', # Red
+            'url': f"/campaign/{c.slug}"
+        } for c in campaigns_qs]
+
+        return Response(event_data + campaign_data)

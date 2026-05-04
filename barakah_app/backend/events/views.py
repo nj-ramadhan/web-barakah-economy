@@ -228,16 +228,20 @@ class EventViewSet(viewsets.ModelViewSet):
             return Response({"errors": errors}, status=status.HTTP_400_BAD_REQUEST)
             
         # 2. Payment Handling
+        payment_method = request.data.get('payment_method', 'transfer')
         payment_proof = request.FILES.get('payment_proof')
         payment_amount = request.data.get('payment_amount', 0)
         
-        if event.price_type != 'free' and not payment_proof:
+        # Check if event allows OTS
+        is_ots_valid = event.allow_ots_payment and payment_method == 'ots'
+
+        if event.price_type != 'free' and not is_ots_valid and not payment_proof:
             return Response({"error": "Bukti pembayaran wajib diunggah untuk event berbayar."}, status=status.HTTP_400_BAD_REQUEST)
 
-        # 2b. OCR Validation
+        # 2b. OCR Validation (Only for transfer)
         ocr_data = None
         ocr_verified = False
-        if payment_proof:
+        if payment_proof and not is_ots_valid:
             import decimal
             try:
                 expected_amount = decimal.Decimal(str(payment_amount))
@@ -292,6 +296,7 @@ class EventViewSet(viewsets.ModelViewSet):
             event=event,
             user=user,
             responses=responses,
+            payment_method=payment_method,
             payment_proof=payment_proof,
             payment_amount=payment_amount,
             ocr_data=ocr_data,
@@ -1183,6 +1188,7 @@ class EventViewSet(viewsets.ModelViewSet):
                 'id': registration.id,
                 'name': name,
                 'unique_code': registration.unique_code,
+                'payment_method': registration.payment_method,
                 'is_attended': registration.is_attended,
                 'attended_at': registration.attended_at,
             }

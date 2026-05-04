@@ -77,8 +77,12 @@ const EcoursePaymentConfirmation = () => {
   // Fetch course on slug change
   useEffect(() => {
     const fetchCourse = async () => {
-      const res = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/courses/?slug=${slug}`);
-      setCourse(res.data[0]);
+      try {
+        const res = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/courses/${slug}/`);
+        setCourse(res.data);
+      } catch (err) {
+        console.error("Error fetching course:", err);
+      }
     };
     fetchCourse();
   }, [slug]);

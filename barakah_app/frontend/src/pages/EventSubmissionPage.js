@@ -40,6 +40,7 @@ const EventSubmissionPage = () => {
         registration_start_at: '',
         category: '',
         has_certificate: false,
+        allow_ots_payment: false,
     });
     const [speakers, setSpeakers] = useState([]);
     const [sessions, setSessions] = useState([]);
@@ -101,6 +102,7 @@ const EventSubmissionPage = () => {
                         attachment_file: d.attachment_file,
                         category: d.category || '',
                         has_certificate: d.has_certificate || false,
+                        allow_ots_payment: d.allow_ots_payment || false,
                     });
                     
                     if (d.speakers && d.speakers.length > 0) setSpeakers(d.speakers);
@@ -831,6 +833,23 @@ const EventSubmissionPage = () => {
                                         <option value="hybrid_2">Hybrid 2 (Pilihan Fix/Sukarela)</option>
                                     </select>
                                 </div>
+
+                                {formData.price_type !== 'free' && (
+                                    <div className="space-y-1.5 md:col-span-2">
+                                        <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1 mb-2">Izinkan Pembayaran OTS (On The Spot)?</label>
+                                        <div className="flex items-center gap-3">
+                                            <button 
+                                                type="button"
+                                                onClick={() => setFormData(prev => ({ ...prev, allow_ots_payment: !prev.allow_ots_payment }))}
+                                                className={`w-12 h-6 rounded-full transition-colors relative ${formData.allow_ots_payment ? 'bg-green-500' : 'bg-gray-300'}`}
+                                            >
+                                                <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${formData.allow_ots_payment ? 'left-7' : 'left-1'}`}></div>
+                                            </button>
+                                            <span className="text-xs font-bold text-gray-600">{formData.allow_ots_payment ? 'Ya, Aktifkan OTS' : 'Hanya Transfer/QRIS'}</span>
+                                        </div>
+                                        <p className="text-[10px] text-gray-400 ml-1 italic">Jika aktif, pendaftar bisa memilih bayar di lokasi dan melewati upload bukti transfer di awal.</p>
+                                    </div>
+                                )}
                                 
                                 {['fixed', 'hybrid_1', 'hybrid_2'].includes(formData.price_type) && (
                                     <div className="space-y-1.5 md:col-span-2">

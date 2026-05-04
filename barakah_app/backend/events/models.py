@@ -74,6 +74,7 @@ class Event(models.Model):
     # Information fields
     category = models.CharField(max_length=100, blank=True, null=True, help_text="Kategori event (misal: Pelatihan, Seminar, dll)")
     has_certificate = models.BooleanField(default=False, help_text="Apakah event ini menyediakan sertifikat?")
+    allow_ots_payment = models.BooleanField(default=False, help_text="Izinkan pembayaran di tempat (On The Spot)")
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -246,6 +247,7 @@ class EventRegistration(models.Model):
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='approved')
     
     # Payment info
+    payment_method = models.CharField(max_length=20, choices=[('transfer', 'Transfer'), ('ots', 'On The Spot')], default='transfer')
     payment_proof = models.ImageField(upload_to='events/payments/', blank=True, null=True)
     payment_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     payment_status = models.CharField(max_length=20, choices=[('pending', 'Pending'), ('verified', 'Verified'), ('rejected', 'Rejected')], default='pending')

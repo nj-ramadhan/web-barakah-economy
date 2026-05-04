@@ -710,6 +710,15 @@ const DashboardPage = () => {
                                     desc: 'Kelola berita dan kegiatan komunitas (Admin)'
                                 },
                                 {
+                                    id: 'activity_calendar',
+                                    access: hasAccess('activities') || isAdmin,
+                                    to: '/dashboard/admin/calendar',
+                                    icon: 'calendar_month',
+                                    color: 'indigo',
+                                    title: 'Kalender Kegiatan',
+                                    desc: 'Pantau jadwal event & charity (Admin)'
+                                },
+                                {
                                     id: 'articles',
                                     access: hasAccess('articles'),
                                     to: '/dashboard/admin/articles',

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
 import axios from 'axios';
 import Header from '../../components/layout/Header';
@@ -13,9 +13,13 @@ const getAuth = () => {
 
 const DashboardAdminCampaignManagementPage = () => {
     const navigate = useNavigate();
+    const location = useLocation();
+    const queryParams = new URLSearchParams(location.search);
+    const idParam = queryParams.get('id');
+
     const [campaigns, setCampaigns] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [searchTerm, setSearchTerm] = useState('');
+    const [searchTerm, setSearchTerm] = useState(idParam || '');
     const [categoryFilter, setCategoryFilter] = useState('all');
 
     const fetchAllCampaigns = useCallback(async () => {
