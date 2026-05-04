@@ -1,6 +1,7 @@
 // App.js
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import GlobalPopupManager from './components/common/GlobalPopupManager';
 import PrivateRoute from './utils/PrivateRoute';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
@@ -199,7 +200,6 @@ const NotificationHandler = () => {
 
   return null;
 };
-import GlobalPopupManager from './components/common/GlobalPopupManager';
 
 const App = () => {
   const isDesktop = useMediaQuery('(min-width: 1024px)');
