@@ -62,10 +62,16 @@ class Migration(migrations.Migration):
                 'ordering': ['name'],
             },
         ),
-        migrations.AddField(
-            model_name='user',
-            name='position',
-            field=models.CharField(blank=True, help_text='Jabatan di BAE', max_length=100, null=True),
+        migrations.RunSQL(
+            sql='ALTER TABLE accounts_user ADD COLUMN IF NOT EXISTS position varchar(100) NULL;',
+            reverse_sql='ALTER TABLE accounts_user DROP COLUMN IF EXISTS position;',
+            state_operations=[
+                migrations.AddField(
+                    model_name='user',
+                    name='position',
+                    field=models.CharField(blank=True, help_text='Jabatan di BAE', max_length=100, null=True),
+                ),
+            ]
         ),
         migrations.AddField(
             model_name='user',
