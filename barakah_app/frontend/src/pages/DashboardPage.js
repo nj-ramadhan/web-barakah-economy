@@ -796,6 +796,15 @@ const DashboardPage = () => {
                                     desc: 'Kelola logo partner di landing page (Admin)'
                                 },
                                 {
+                                    id: 'announcements',
+                                    access: isAdmin,
+                                    to: '/dashboard/admin/announcements',
+                                    icon: 'campaign',
+                                    color: 'blue',
+                                    title: 'Manajemen Pengumuman',
+                                    desc: 'Kelola pop-up pengumuman aplikasi (Admin)'
+                                },
+                                {
                                     id: 'consultants',
                                     access: hasAccess('consultants'),
                                     to: '/dashboard/admin/consultants',

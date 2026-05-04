@@ -111,3 +111,26 @@ class PersonnelSocialMedia(models.Model):
 
     def __str__(self):
         return f"{self.personnel.name} - {self.icon}"
+
+class Announcement(models.Model):
+    TYPE_CHOICES = [
+        ('promotion', 'Promosi'),
+        ('update', 'Update Terbaru'),
+        ('announcement', 'Pengumuman'),
+        ('info', 'Informasi'),
+        ('other', 'Lain-lain'),
+    ]
+
+    title = models.CharField(max_length=255)
+    type = models.CharField(max_length=20, choices=TYPE_CHOICES, default='announcement')
+    image = models.ImageField(upload_to='announcements/', blank=True, null=True)
+    content = models.TextField(blank=True, null=True)
+    is_active = models.BooleanField(default=True)
+    target_url = models.URLField(blank=True, null=True, help_text="Link to redirect when clicked")
+    start_at = models.DateTimeField(null=True, blank=True, help_text="Waktu mulai tampil")
+    end_at = models.DateTimeField(null=True, blank=True, help_text="Waktu selesai tampil")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"[{self.get_type_display()}] {self.title}"

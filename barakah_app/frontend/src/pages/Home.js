@@ -1468,8 +1468,8 @@ const Home = () => {
                   onError={(e) => { e.target.src = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(seller.name) + '&background=0D8ABC&color=fff'; }}
                 />
               </div>
-              <p className="text-xs font-bold text-gray-800 line-clamp-1">@{seller.username}</p>
-              <p className="text-[10px] text-gray-500 line-clamp-1">{seller.name}</p>
+              <p className="text-xs font-bold text-gray-800 truncate px-2">@{seller.username}</p>
+              <p className="text-[10px] text-gray-500 truncate px-2">{seller.name}</p>
             </Link>
           ))}
           {popularSellers.length === 0 && !loading && (

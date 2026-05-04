@@ -184,8 +184,9 @@ class Profile(models.Model):
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
-        # Auto-verify member if essential KTP data is provided
-        if self.nik and self.name_full and not self.user.is_verified_member:
+        # Auto-verify member if essential KTP data or KTP image is provided
+        is_verified = (self.nik and self.name_full) or self.ktp_image
+        if is_verified and not self.user.is_verified_member:
             self.user.is_verified_member = True
             self.user.save(update_fields=['is_verified_member'])
         

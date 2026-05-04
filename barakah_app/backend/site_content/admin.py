@@ -1,5 +1,12 @@
 from django.contrib import admin
-from .models import Partner, Testimonial, Activity, AboutUs, AboutUsLegalDocument
+from .models import Partner, Testimonial, Activity, AboutUs, AboutUsLegalDocument, Announcement
+
+@admin.register(Announcement)
+class AnnouncementAdmin(admin.ModelAdmin):
+    list_display = ('title', 'type', 'is_active', 'start_at', 'end_at', 'created_at')
+    list_filter = ('is_active', 'type', 'start_at', 'end_at')
+    search_fields = ('title', 'content')
+
 
 @admin.register(Partner)
 class PartnerAdmin(admin.ModelAdmin):

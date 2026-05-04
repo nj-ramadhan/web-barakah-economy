@@ -693,8 +693,8 @@ const DesktopLandingPage = () => {
                                         className="flex-shrink-0 w-32 text-center group"
                                     >
                                         <SellerAvatar seller={seller} getMediaUrl={getMediaUrl} />
-                                        <p className="font-bold text-gray-900 text-sm group-hover:text-green-700 transition-colors">@{seller.username}</p>
-                                        <p className="text-[10px] text-gray-500 py-1">{seller.name}</p>
+                                        <p className="font-bold text-gray-900 text-sm group-hover:text-green-700 transition-colors truncate px-2">@{seller.username}</p>
+                                        <p className="text-[10px] text-gray-500 py-1 truncate px-2">{seller.name}</p>
                                     </Link>
                                 ))}
                             </div>

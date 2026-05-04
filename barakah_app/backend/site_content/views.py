@@ -1,8 +1,33 @@
+from django.db import models
 from rest_framework import viewsets, permissions, status, response
 from rest_framework.decorators import action
 from rest_framework_simplejwt.authentication import JWTAuthentication
-from .models import Partner, Testimonial, Activity, AboutUs, AboutUsLegalDocument, Personnel, PersonnelSocialMedia
-from .serializers import PartnerSerializer, TestimonialSerializer, ActivitySerializer, AboutUsSerializer, AboutUsLegalDocumentSerializer, PersonnelSerializer, PersonnelSocialMediaSerializer
+from .models import Partner, Testimonial, Activity, AboutUs, AboutUsLegalDocument, Personnel, PersonnelSocialMedia, Announcement
+from .serializers import PartnerSerializer, TestimonialSerializer, ActivitySerializer, AboutUsSerializer, AboutUsLegalDocumentSerializer, PersonnelSerializer, PersonnelSocialMediaSerializer, AnnouncementSerializer
+
+class AnnouncementViewSet(viewsets.ModelViewSet):
+    queryset = Announcement.objects.all().order_by('-created_at')
+    serializer_class = AnnouncementSerializer
+    authentication_classes = [JWTAuthentication]
+
+    def get_queryset(self):
+        from django.utils import timezone
+        now = timezone.now()
+        qs = Announcement.objects.filter(is_active=True).order_by('-created_at')
+        
+        # Only apply schedule filter for 'list' action (frontend popup)
+        # For admin (staff), show all for management purposes
+        if not self.request.user.is_staff or self.action == 'list':
+            qs = qs.filter(
+                (models.Q(start_at__isnull=True) | models.Q(start_at__lte=now)) &
+                (models.Q(end_at__isnull=True) | models.Q(end_at__gte=now))
+            )
+        return qs
+
+    def get_permissions(self):
+        if self.action in ['list', 'retrieve']:
+            return [permissions.AllowAny()]
+        return [permissions.IsAdminUser()]
 
 class PersonnelViewSet(viewsets.ModelViewSet):
     queryset = Personnel.objects.all()

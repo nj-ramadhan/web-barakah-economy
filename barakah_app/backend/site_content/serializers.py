@@ -1,5 +1,11 @@
 from rest_framework import serializers
-from .models import Partner, Testimonial, Activity, AboutUs, AboutUsLegalDocument, Personnel, PersonnelSocialMedia
+from .models import Partner, Testimonial, Activity, AboutUs, AboutUsLegalDocument, Personnel, PersonnelSocialMedia, Announcement
+
+class AnnouncementSerializer(serializers.ModelSerializer):
+    type_display = serializers.CharField(source='get_type_display', read_only=True)
+    class Meta:
+        model = Announcement
+        fields = '__all__'
 
 class AboutUsLegalDocumentSerializer(serializers.ModelSerializer):
     class Meta:

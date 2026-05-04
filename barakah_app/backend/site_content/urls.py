@@ -3,7 +3,7 @@ from rest_framework.routers import SimpleRouter
 from .views import (
     PartnerViewSet, TestimonialViewSet, ActivityViewSet, ActivityShareView, 
     AboutUsViewSet, AboutUsLegalDocumentViewSet, ManagementStatsView,
-    PersonnelViewSet, PersonnelSocialMediaViewSet
+    PersonnelViewSet, PersonnelSocialMediaViewSet, AnnouncementViewSet
 )
 
 router = SimpleRouter()
@@ -14,6 +14,7 @@ router.register(r'personnel-social-media', PersonnelSocialMediaViewSet)
 router.register(r'partners', PartnerViewSet)
 router.register(r'testimonials', TestimonialViewSet)
 router.register(r'activities', ActivityViewSet)
+router.register(r'announcements', AnnouncementViewSet)
 
 urlpatterns = [
     path('activities/share/<int:pk>/', ActivityShareView.as_view({'get': 'retrieve'}), name='activity-share'),

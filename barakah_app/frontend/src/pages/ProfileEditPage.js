@@ -338,7 +338,7 @@ const ProfileEditPage = () => {
         const fillable = ['nik', 'name_full', 'gender', 'birth_place', 'birth_date', 'marital_status', 'address', 'address_province'];
         let filled = 0;
         setProfile(prev => {
-          const updated = { ...prev, ktp_image: file };
+          const updated = { ...prev, ktp_image: file, is_verified_member: data.is_verified_member || prev.is_verified_member };
           fillable.forEach(field => {
             if (data[field] && (!prev[field] || prev[field] === '')) {
               updated[field] = data[field];
@@ -347,7 +347,7 @@ const ProfileEditPage = () => {
           });
           return updated;
         });
-        setKtpResult({ success: true, message: `Discan dengan ${filled} baris ditemukan. Foto disimpan otomatis.` });
+        setKtpResult({ success: true, message: `Discan dengan ${filled} baris ditemukan. Foto KTP berhasil disimpan dan akun Anda telah terverifikasi.` });
       }
     } catch (err) {
       console.error('KTP scan error:', err);

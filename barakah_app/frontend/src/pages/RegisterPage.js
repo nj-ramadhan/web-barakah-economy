@@ -45,6 +45,7 @@ const RegisterPage = () => {
         setLoading(true);
         try {
             await authService.register(username, email, password, namaLengkap, phone);
+            sessionStorage.setItem('just_registered', 'true');
             const loginUrl = nextPath ? `/login?next=${nextPath}` : '/login';
             navigate(loginUrl, { state: { registered: true, email } });
         } catch (error) {
@@ -67,6 +68,7 @@ const RegisterPage = () => {
             localStorage.setItem('user', JSON.stringify(response));
             // Jika user baru, arahkan ke profil untuk melengkapi data
             if (response.is_new_user) {
+                sessionStorage.setItem('just_registered', 'true');
                 navigate('/profile/edit?complete=1');
             } else {
                 const dest = nextPath || '/dashboard';

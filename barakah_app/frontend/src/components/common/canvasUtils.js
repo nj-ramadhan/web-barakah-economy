@@ -67,15 +67,6 @@ export const createImage = (url) =>
     // draw rotated image
     ctx.drawImage(image, 0, 0);
   
-    // croppedAreaPixels values are bounding box relative
-    // extract the cropped image using these values
-    const data = ctx.getImageData(
-      pixelCrop.x,
-      pixelCrop.y,
-      pixelCrop.width,
-      pixelCrop.height
-    );
-  
     // Determine new dimensions if resizing is needed
     let targetWidth = pixelCrop.width;
     let targetHeight = pixelCrop.height;
@@ -95,15 +86,19 @@ export const createImage = (url) =>
     targetCanvas.width = targetWidth;
     targetCanvas.height = targetHeight;
   
-    // To resize with good quality, we first draw the cropped data to a temp canvas at original size
-    // Then we draw from that temp canvas to the target canvas with scaling
-    const tempCanvas = document.createElement('canvas');
-    const tempCtx = tempCanvas.getContext('2d');
-    tempCanvas.width = pixelCrop.width;
-    tempCanvas.height = pixelCrop.height;
-    tempCtx.putImageData(data, 0, 0);
-  
-    targetCtx.drawImage(tempCanvas, 0, 0, targetWidth, targetHeight);
+    // Draw the cropped portion from the rotated canvas to the target canvas
+    // This is more memory-efficient than getImageData/putImageData
+    targetCtx.drawImage(
+      canvas,
+      pixelCrop.x,
+      pixelCrop.y,
+      pixelCrop.width,
+      pixelCrop.height,
+      0,
+      0,
+      targetWidth,
+      targetHeight
+    );
   
     // As a blob
     return new Promise((resolve) => {

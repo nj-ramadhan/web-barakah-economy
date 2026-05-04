@@ -103,6 +103,7 @@ import AdminJitsiMeetPage from './pages/AdminJitsiMeetPage';
 import AdminPhotoFramerPage from './pages/admin/AdminPhotoFramerPage';
 import DashboardEventRecapPage from './pages/admin/DashboardEventRecapPage';
 import DashboardDonationManagementPage from './pages/admin/DashboardDonationManagementPage';
+import DashboardAnnouncementsPage from './pages/admin/DashboardAnnouncementsPage';
 import ExpeditionTestPage from './pages/admin/ExpeditionTestPage';
 import FloatingCartModal from './components/layout/FloatingCartModal';
 
@@ -195,6 +196,8 @@ const NotificationHandler = () => {
 
   return null;
 };
+import GlobalPopupManager from './components/common/GlobalPopupManager';
+
 const App = () => {
   const isDesktop = useMediaQuery('(min-width: 1024px)');
 
@@ -202,6 +205,7 @@ const App = () => {
     <Router>
       <ScrollToTop />
       <NotificationHandler />
+      <GlobalPopupManager />
       <div className="min-h-screen bg-gray-100 flex justify-center">
         <Routes>
           <Route path="/*" element={<LayoutWrapper isDesktop={isDesktop} />} />
@@ -351,6 +355,7 @@ const LayoutWrapper = ({ isDesktop }) => {
         <Route path="/dashboard/zis/history" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><ZISHistoryPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/admin/zis-config" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><AdminZISConfigPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/admin/zis-verify" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><AdminZISVerifyPage /></ResponsiveLayout></PrivateRoute>} />
+        <Route path="/dashboard/admin/announcements" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardAnnouncementsPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/live-meet-test" element={<ResponsiveLayout isDesktop={isDesktop}><AdminJitsiMeetPage /></ResponsiveLayout>} />
       </Routes>
       <FloatingCartModal />

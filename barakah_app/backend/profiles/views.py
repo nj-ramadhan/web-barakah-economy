@@ -82,10 +82,23 @@ class ProfileViewSet(viewsets.ModelViewSet):
         image = request.FILES.get('ktp_image')
         if not image:
             return Response({'error': 'ktp_image file wajib diupload'}, status=status.HTTP_400_BAD_REQUEST)
+        
         allowed_types = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
         if image.content_type not in allowed_types:
             return Response({'error': 'Format file harus JPG, PNG, atau WebP'}, status=status.HTTP_400_BAD_REQUEST)
-        return Response(extract_ktp_data(image))
+
+        # Save image to profile immediately if user is authenticated
+        try:
+            profile = Profile.objects.get(user=request.user)
+            profile.ktp_image = image
+            profile.save() # This triggers auto-verification in models.py
+        except Profile.DoesNotExist:
+            pass
+
+        result = extract_ktp_data(image)
+        # Include updated verification status in response
+        result['is_verified_member'] = True
+        return Response(result)
 
     @action(detail=False, methods=['get'])
     def search(self, request):
@@ -223,5 +236,14 @@ def scan_ktp(request):
     if image.content_type not in allowed_types:
         return Response({'error': 'Format file harus JPG, PNG, atau WebP'}, status=status.HTTP_400_BAD_REQUEST)
 
+    # Save image to profile immediately
+    try:
+        profile = Profile.objects.get(user=request.user)
+        profile.ktp_image = image
+        profile.save() # Triggers auto-verification
+    except Profile.DoesNotExist:
+        pass
+
     result = extract_ktp_data(image)
+    result['is_verified_member'] = True
     return Response(result)
