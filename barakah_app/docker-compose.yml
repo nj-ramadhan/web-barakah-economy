@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   db:
-    image: postgres:15-alpine
+    image: postgres:17-alpine
     container_name: bae_postgres
     restart: always
     environment:
@@ -13,6 +13,11 @@ services:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - bae_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d bae_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   backend:
     build: ./backend
@@ -28,7 +33,8 @@ services:
       - DB_PORT=5432
       - DEBUG=False
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     ports:
       - "8000:8000"
     networks:
