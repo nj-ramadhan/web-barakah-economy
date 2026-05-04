@@ -173,6 +173,42 @@ const ActivityCalendarPage = () => {
                         ))}
                         <div className="w-[1px] h-6 bg-gray-200 mx-1"></div>
                         <button 
+                            onClick={() => {
+                                if (filteredActivities.length === 0) return alert("Tidak ada data untuk di-export");
+                                
+                                const headers = ["Tipe", "Judul", "Kategori", "Tanggal", "Jam", "Lokasi", "Peserta", "Status"];
+                                const csvContent = [
+                                    headers.join(","),
+                                    ...filteredActivities.map(act => [
+                                        act.type === 'event' ? "Event" : "Charity",
+                                        `"${act.title.replace(/"/g, '""')}"`,
+                                        act.category,
+                                        act.start.split('T')[0],
+                                        act.time_str,
+                                        `"${(act.location || '-').replace(/"/g, '""')}"`,
+                                        act.participants_count,
+                                        act.status
+                                    ].join(","))
+                                ].join("\n");
+
+                                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                                const link = document.createElement("a");
+                                const url = URL.createObjectURL(blob);
+                                link.setAttribute("href", url);
+                                link.setAttribute("download", `Data_Kegiatan_BAE_${new Date().toISOString().split('T')[0]}.csv`);
+                                link.style.visibility = 'hidden';
+                                document.body.appendChild(link);
+                                link.click();
+                                document.body.removeChild(link);
+                            }}
+                            className="flex items-center gap-2 px-4 py-2 text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all"
+                            title="Export CSV"
+                        >
+                            <span className="material-icons text-sm">download</span>
+                            <span className="text-[10px] font-black uppercase tracking-widest hidden sm:inline">Export CSV</span>
+                        </button>
+                        <div className="w-[1px] h-6 bg-gray-200 mx-1"></div>
+                        <button 
                             onClick={fetchActivities}
                             disabled={loading}
                             className="p-2.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all"
