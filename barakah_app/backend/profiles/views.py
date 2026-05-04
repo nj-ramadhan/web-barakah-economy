@@ -15,10 +15,16 @@ class BusinessProfileViewSet(viewsets.ModelViewSet):
     parser_classes = [MultiPartParser, FormParser]
 
     def get_queryset(self):
-        user = self.request.user
-        if user.role == 'admin':
-            return BusinessProfile.objects.all().order_by('-created_at')
-        return BusinessProfile.objects.filter(user=user).order_by('-created_at')
+        try:
+            user = self.request.user
+            if user.role == 'admin':
+                return BusinessProfile.objects.all().order_by('-created_at')
+            return BusinessProfile.objects.filter(user=user).order_by('-created_at')
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Error in BusinessProfile get_queryset: {str(e)}")
+            raise e
 
     def perform_create(self, serializer):
         # User must be an Anggota or Admin
