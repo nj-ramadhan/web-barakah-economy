@@ -169,6 +169,18 @@ class Profile(models.Model):
     address_village_name = models.CharField(max_length=100, blank=True, null=True, help_text="Nama Kelurahan/Desa")
     address_postal_code = models.CharField(max_length=10, blank=True, null=True)
     
+    # Fitness & Health Fields (Bae Fit)
+    weight = models.FloatField(blank=True, null=True, help_text="Current weight in KG")
+    height = models.FloatField(blank=True, null=True, help_text="Height in CM")
+    starting_weight = models.FloatField(blank=True, null=True, help_text="Weight when joined")
+    age_fitness = models.IntegerField(blank=True, null=True, help_text="Age for fitness analysis")
+    activity_level = models.CharField(max_length=20, default='Sedang', choices=[
+        ('Rendah', 'Jarang Olahraga'),
+        ('Sedang', '1-3x Seminggu'),
+        ('Tinggi', 'Setiap Hari')
+    ])
+    last_health_check = models.DateTimeField(blank=True, null=True)
+    
     # Shop fields for digital product sellers
     shop_thumbnail = models.ImageField(upload_to='shop_thumbnails/', blank=True, null=True)
     shop_description = models.TextField(blank=True, null=True)
