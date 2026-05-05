@@ -6,9 +6,10 @@ from .models import Profile
 
 @receiver(post_save, sender=settings.AUTH_USER_MODEL)
 def create_user_profile(sender, instance, created, **kwargs):
-    """Hanya membuat profil saat user baru pertama kali dibuat."""
     if created:
-        Profile.objects.get_or_create(user=instance)
+        Profile.objects.create(user=instance)
 
-# PENTING: Jangan tambahkan signal save_user_profile di sini 
-# karena akan menyebabkan RECURSION LOOP dengan Profile.save()
+@receiver(post_save, sender=settings.AUTH_USER_MODEL)
+def save_user_profile(sender, instance, **kwargs):
+    if hasattr(instance, 'profile'):
+        instance.profile.save()

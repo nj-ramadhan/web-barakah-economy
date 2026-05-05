@@ -150,12 +150,7 @@ class EventViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'], permission_classes=[permissions.AllowAny])
     def landing(self, request):
         """Public list for landing page (only approved)."""
-        try:
-            self._auto_complete_expired_events()
-        except Exception as e:
-            import logging
-            logging.getLogger(__name__).error(f"Error auto-completing expired events in landing: {e}")
-            
+        self._auto_complete_expired_events()
         # Include both approved and completed events in the public list, filtering for public visibility
         now = timezone.now()
         base_query = Event.objects.filter(

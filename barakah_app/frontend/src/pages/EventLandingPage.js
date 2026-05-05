@@ -36,12 +36,9 @@ const EventLandingPage = () => {
     const [selectedCategory, setSelectedCategory] = useState('Semua');
     const [isExpanded, setIsExpanded] = useState(false);
     const CATEGORY_LIMIT = 1; // Show only 'Semua' initially
-    const [error, setError] = useState(null);
 
     useEffect(() => {
         const fetchEvents = async () => {
-            setLoading(true);
-            setError(null);
             try {
                 const res = await getLandingEvents();
                 const data = Array.isArray(res.data) ? res.data : (res.data.results || []);
@@ -52,8 +49,7 @@ const EventLandingPage = () => {
                 const cats = ['Semua', ...new Set(data.map(ev => ev.category).filter(Boolean))];
                 setCategories(cats);
             } catch (err) {
-                console.error("Error fetching landing events:", err);
-                setError("Gagal memuat daftar event. Silakan coba beberapa saat lagi.");
+                console.error(err);
             } finally {
                 setLoading(false);
             }
@@ -145,23 +141,6 @@ const EventLandingPage = () => {
                                 </button>
                             </div>
                         )}
-                    </div>
-                )}
-
-                {/* Error Alert */}
-                {error && (
-                    <div className="mb-8 p-4 bg-red-50 border border-red-200 rounded-2xl flex items-center gap-3 text-red-700 shadow-sm animate-pulse">
-                        <span className="material-icons">error_outline</span>
-                        <div className="flex-1">
-                            <p className="text-xs font-bold uppercase tracking-wider mb-0.5">Terjadi Kesalahan</p>
-                            <p className="text-sm font-medium">{error}</p>
-                        </div>
-                        <button 
-                            onClick={() => window.location.reload()}
-                            className="bg-red-600 text-white px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-red-700 transition-colors shadow-sm"
-                        >
-                            RELOAD
-                        </button>
                     </div>
                 )}
 

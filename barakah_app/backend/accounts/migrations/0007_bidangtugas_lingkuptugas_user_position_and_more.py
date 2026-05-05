@@ -26,32 +26,6 @@ def seed_data(apps, schema_editor):
     for data in bidang_data:
         BidangTugas.objects.get_or_create(code=data['code'], defaults=data)
 
-def add_position_column(apps, schema_editor):
-    cursor = schema_editor.connection.cursor()
-    if schema_editor.connection.vendor == 'postgresql':
-        schema_editor.execute("ALTER TABLE accounts_user ADD COLUMN IF NOT EXISTS position varchar(100) NULL")
-    elif schema_editor.connection.vendor == 'sqlite':
-        cursor.execute("PRAGMA table_info(accounts_user)")
-        columns = [row[1] for row in cursor.fetchall()]
-        if 'position' not in columns:
-            schema_editor.execute("ALTER TABLE accounts_user ADD COLUMN position varchar(100) NULL")
-    else:
-        # Fallback for others
-        try:
-            schema_editor.execute("ALTER TABLE accounts_user ADD COLUMN position varchar(100) NULL")
-        except:
-            pass
-
-def remove_position_column(apps, schema_editor):
-    if schema_editor.connection.vendor == 'postgresql':
-        schema_editor.execute("ALTER TABLE accounts_user DROP COLUMN IF EXISTS position")
-    elif schema_editor.connection.vendor == 'sqlite':
-        # SQLite doesn't support DROP COLUMN in all versions, skip if fails
-        try:
-            schema_editor.execute("ALTER TABLE accounts_user DROP COLUMN position")
-        except:
-            pass
-
 def reverse_seed_data(apps, schema_editor):
     pass
 
@@ -88,16 +62,15 @@ class Migration(migrations.Migration):
                 'ordering': ['name'],
             },
         ),
-        migrations.SeparateDatabaseAndState(
+        migrations.RunSQL(
+            sql='ALTER TABLE accounts_user ADD COLUMN IF NOT EXISTS position varchar(100) NULL;',
+            reverse_sql='ALTER TABLE accounts_user DROP COLUMN IF EXISTS position;',
             state_operations=[
                 migrations.AddField(
                     model_name='user',
                     name='position',
                     field=models.CharField(blank=True, help_text='Jabatan di BAE', max_length=100, null=True),
                 ),
-            ],
-            database_operations=[
-                migrations.RunPython(add_position_column, reverse_code=remove_position_column),
             ]
         ),
         migrations.AddField(

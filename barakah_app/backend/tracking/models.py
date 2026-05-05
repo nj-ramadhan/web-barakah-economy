@@ -32,17 +32,3 @@ class Activity(models.Model):
 
     def __str__(self):
         return f"{self.activity_type.capitalize()} by {self.user.username} on {self.start_time.strftime('%Y-%m-%d')}"
-
-class WorkoutLog(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='workout_logs')
-    title = models.CharField(max_length=100) # e.g., Push Up
-    target = models.CharField(max_length=50) # e.g., 20 Reps
-    actual = models.CharField(max_length=50) # e.g., 15 Reps
-    calories_burned = models.PositiveIntegerField(default=0)
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        ordering = ['-created_at']
-
-    def __str__(self):
-        return f"{self.title} by {self.user.username} ({self.actual}/{self.target})"

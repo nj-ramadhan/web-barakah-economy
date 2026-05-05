@@ -71,7 +71,6 @@ else:
         'www.barakah.cloud',
         'api.barakah.cloud',
         '217.216.110.149',
-        '192.168.1.5',
         'localhost',
         '127.0.0.1',
         ]
@@ -219,21 +218,13 @@ else:
     #         'PORT': '5432',
     #     }
     # }
-    # DB Configuration with sensible defaults for Docker
-    DB_HOST_VAL = env('DB_HOST', default='db')
-    DB_USER_VAL = env('DB_USER', default='postgres')
-    
-    # Auto-correction for Docker environments if host is misconfigured as localhost
-    if os.path.exists('/.dockerenv') and DB_HOST_VAL == 'localhost':
-        DB_HOST_VAL = 'db'
-
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
             'NAME': env('DB_NAME', default='bae_db'),
-            'USER': DB_USER_VAL,
+            'USER': env('DB_USER', default='postgres'),
             'PASSWORD': env('DB_PASSWORD', default='BarakahEconomy2025!'),
-            'HOST': DB_HOST_VAL,
+            'HOST': env('DB_HOST', default='bae_postgres'),
             'PORT': env('DB_PORT', default='5432'),
         }
     }
@@ -402,21 +393,11 @@ LOGGING = {
             'level': 'DEBUG',  # Set to DEBUG to capture all logs
             'propagate': True,
         },   
-        'donations': {
+        'donations': {  # Add a logger for your 'accounts' app
             'handlers': ['console', 'file'],
-            'level': 'DEBUG',
+            'level': 'DEBUG',  # Set to DEBUG to capture all logs
             'propagate': True,
-        },
-        'profiles': {
-            'handlers': ['console', 'file'],
-            'level': 'DEBUG',
-            'propagate': True,
-        },
-        'tracking': {
-            'handlers': ['console', 'file'],
-            'level': 'DEBUG',
-            'propagate': True,
-        },
+        },                
     },
 }
 

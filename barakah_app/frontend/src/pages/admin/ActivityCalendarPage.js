@@ -58,18 +58,6 @@ const ActivityCalendarPage = () => {
     const formatDate = (dateStr) => {
         return new Date(dateStr).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
     };
-    const formatTime = (dateStr) => {
-        try {
-            const date = new Date(dateStr);
-            return date.toLocaleTimeString('id-ID', { 
-                hour: '2-digit', 
-                minute: '2-digit',
-                hour12: false 
-            }).replace('.', ':');
-        } catch (e) {
-            return '--:--';
-        }
-    };
 
     // Helper for monthly grid
     const getDaysInMonth = (year, month) => new Date(year, month + 1, 0).getDate();
@@ -196,7 +184,7 @@ const ActivityCalendarPage = () => {
                                         `"${act.title.replace(/"/g, '""')}"`,
                                         act.category,
                                         act.start.split('T')[0],
-                                        formatTime(act.start),
+                                        act.time_str,
                                         `"${(act.location || '-').replace(/"/g, '""')}"`,
                                         act.participants_count,
                                         act.status
@@ -336,11 +324,11 @@ const ActivityCalendarPage = () => {
                                                                     backgroundColor: act.color,
                                                                     background: `linear-gradient(135deg, ${act.color}, ${act.color}dd)` 
                                                                 }}
-                                                                title={`${act.title} - ${formatTime(act.start)}`}
+                                                                title={`${act.title} - ${act.time_str}`}
                                                             >
                                                                 <div className="flex justify-between items-center gap-1">
                                                                     <span className="text-[8px] font-black truncate flex-1">{act.title}</span>
-                                                                    <span className="text-[7px] font-bold opacity-80 shrink-0">{formatTime(act.start)}</span>
+                                                                    <span className="text-[7px] font-bold opacity-80 shrink-0">{act.time_str}</span>
                                                                 </div>
                                                                 <div className="flex items-center gap-1 mt-0.5 opacity-90">
                                                                     <span className="material-icons text-[7px]">groups</span>
@@ -393,7 +381,7 @@ const ActivityCalendarPage = () => {
                                                     <div className="w-7 h-7 rounded-lg bg-gray-50 flex items-center justify-center text-gray-400 group-hover:bg-indigo-50 group-hover:text-indigo-500 transition-colors">
                                                         <span className="material-icons text-sm">schedule</span>
                                                     </div>
-                                                    {formatDate(act.start)} pada {formatTime(act.start)}
+                                                    {formatDate(act.start)} pada {act.time_str}
                                                 </div>
                                                 <div className="flex items-center gap-2 text-[11px] text-gray-500 font-bold">
                                                     <div className="w-7 h-7 rounded-lg bg-gray-50 flex items-center justify-center text-gray-400 group-hover:bg-emerald-50 group-hover:text-emerald-500 transition-colors">
@@ -479,7 +467,7 @@ const ActivityCalendarPage = () => {
                                                     <div className="space-y-1">
                                                         <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest">Waktu & Jam</p>
                                                         <p className="text-[11px] font-bold text-gray-700 flex items-center gap-1">
-                                                            <span className="material-icons text-[12px]">schedule</span> {formatTime(act.start)} WIB
+                                                            <span className="material-icons text-[12px]">schedule</span> {act.time_str} WIB
                                                         </p>
                                                     </div>
                                                     <div className="space-y-1">
