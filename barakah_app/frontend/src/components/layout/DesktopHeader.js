@@ -10,7 +10,11 @@ const NavDropdown = ({ title, items }) => {
             onMouseEnter={() => setIsOpen(true)}
             onMouseLeave={() => setIsOpen(false)}
         >
-            <button className={`flex items-center gap-1 font-medium transition py-2 ${isOpen ? 'text-green-700' : 'text-gray-600 hover:text-green-700'}`}>
+            <button className={`flex items-center gap-1 px-4 py-1.5 rounded-full font-medium transition border shadow-sm ${
+                isOpen 
+                ? 'bg-green-50 border-green-200 text-green-700' 
+                : 'bg-gray-50/50 border-gray-100 text-gray-600 hover:bg-green-50 hover:border-green-200 hover:text-green-700'
+            }`}>
                 {title}
                 <span className={`material-icons text-sm transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}>expand_more</span>
             </button>
@@ -81,8 +85,8 @@ const DesktopHeader = () => {
             </Link>
 
             <nav className="flex gap-8 items-center">
-                <Link to="/" className="text-gray-600 hover:text-green-700 font-semibold transition">Beranda</Link>
-                <Link to="/about" className="text-gray-600 hover:text-green-700 font-semibold transition">Tentang Kami</Link>
+                <Link to="/" className="px-4 py-1.5 bg-gray-50/50 border border-gray-100 text-gray-600 hover:bg-green-50 hover:border-green-200 hover:text-green-700 font-semibold rounded-full transition shadow-sm">Beranda</Link>
+                <Link to="/about" className="px-4 py-1.5 bg-gray-50/50 border border-gray-100 text-gray-600 hover:bg-green-50 hover:border-green-200 hover:text-green-700 font-semibold rounded-full transition shadow-sm">Tentang Kami</Link>
 
                 <NavDropdown title="Produk & Layanan" items={group1} />
                 <NavDropdown title="Aktivitas & Sosial" items={group2} />
