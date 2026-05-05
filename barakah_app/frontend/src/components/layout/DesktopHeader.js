@@ -10,10 +10,10 @@ const NavDropdown = ({ title, items }) => {
             onMouseEnter={() => setIsOpen(true)}
             onMouseLeave={() => setIsOpen(false)}
         >
-            <button className={`flex items-center gap-1 px-4 py-1.5 rounded-full font-medium transition border shadow-sm ${
+            <button className={`flex items-center gap-1 px-4 py-2 rounded-xl font-bold transition-all duration-300 border shadow-sm ${
                 isOpen 
-                ? 'bg-green-50 border-green-200 text-green-700' 
-                : 'bg-gray-50/50 border-gray-100 text-gray-600 hover:bg-green-50 hover:border-green-200 hover:text-green-700'
+                ? 'bg-green-700 border-green-700 text-white shadow-lg shadow-green-100' 
+                : 'bg-white border-green-200 text-gray-700 hover:border-green-700 hover:text-green-700 hover:-translate-y-0.5 hover:shadow-md'
             }`}>
                 {title}
                 <span className={`material-icons text-sm transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}>expand_more</span>
@@ -85,8 +85,8 @@ const DesktopHeader = () => {
             </Link>
 
             <nav className="flex gap-8 items-center">
-                <Link to="/" className="px-4 py-1.5 bg-gray-50/50 border border-gray-100 text-gray-600 hover:bg-green-50 hover:border-green-200 hover:text-green-700 font-semibold rounded-full transition shadow-sm">Beranda</Link>
-                <Link to="/about" className="px-4 py-1.5 bg-gray-50/50 border border-gray-100 text-gray-600 hover:bg-green-50 hover:border-green-200 hover:text-green-700 font-semibold rounded-full transition shadow-sm">Tentang Kami</Link>
+                <Link to="/" className="px-5 py-2 bg-white border border-green-200 text-gray-700 hover:border-green-700 hover:text-green-700 font-bold rounded-xl transition-all duration-300 shadow-sm hover:-translate-y-0.5 hover:shadow-md">Beranda</Link>
+                <Link to="/about" className="px-5 py-2 bg-white border border-green-200 text-gray-700 hover:border-green-700 hover:text-green-700 font-bold rounded-xl transition-all duration-300 shadow-sm hover:-translate-y-0.5 hover:shadow-md">Tentang Kami</Link>
 
                 <NavDropdown title="Produk & Layanan" items={group1} />
                 <NavDropdown title="Aktivitas & Sosial" items={group2} />
