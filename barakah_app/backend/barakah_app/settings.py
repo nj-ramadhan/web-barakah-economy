@@ -219,13 +219,21 @@ else:
     #         'PORT': '5432',
     #     }
     # }
+    # DB Configuration with sensible defaults for Docker
+    DB_HOST_VAL = env('DB_HOST', default='db')
+    DB_USER_VAL = env('DB_USER', default='postgres')
+    
+    # Auto-correction for Docker environments if host is misconfigured as localhost
+    if os.path.exists('/.dockerenv') and DB_HOST_VAL == 'localhost':
+        DB_HOST_VAL = 'db'
+
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
             'NAME': env('DB_NAME', default='bae_db'),
-            'USER': env('DB_USER', default='postgres'),
+            'USER': DB_USER_VAL,
             'PASSWORD': env('DB_PASSWORD', default='BarakahEconomy2025!'),
-            'HOST': env('DB_HOST', default='bae_postgres'),
+            'HOST': DB_HOST_VAL,
             'PORT': env('DB_PORT', default='5432'),
         }
     }

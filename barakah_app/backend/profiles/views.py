@@ -86,9 +86,9 @@ class ProfileViewSet(viewsets.ModelViewSet):
         missing_fields = []
         
         if profile:
-            fields_to_check = ['name_full', 'address', 'bio', 'weight', 'height']
+            fields_to_check = ['name_full', 'address', 'gender', 'weight', 'height']
             for field in fields_to_check:
-                if not getattr(profile, field):
+                if not getattr(profile, field, None):
                     missing_fields.append(field)
             
             is_complete = len(missing_fields) == 0
