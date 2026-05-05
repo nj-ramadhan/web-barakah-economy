@@ -71,6 +71,7 @@ else:
         'www.barakah.cloud',
         'api.barakah.cloud',
         '217.216.110.149',
+        '192.168.1.5',
         'localhost',
         '127.0.0.1',
         ]
