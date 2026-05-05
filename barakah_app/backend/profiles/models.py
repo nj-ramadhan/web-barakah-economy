@@ -179,6 +179,7 @@ class Profile(models.Model):
         ('Sedang', '1-3x Seminggu'),
         ('Tinggi', 'Setiap Hari')
     ])
+    daily_target = models.FloatField(default=5.0, help_text="Daily distance target in KM")
     last_health_check = models.DateTimeField(blank=True, null=True)
     
     # Shop fields for digital product sellers
