@@ -55,7 +55,10 @@ class ProfileViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get', 'patch'])
     def me(self, request):
         try:
-            profile = Profile.objects.filter(user=request.user).first()
+            # Gunakan select_related agar pengambilan data user lebih cepat
+            profile = Profile.objects.select_related('user').filter(user=request.user).first()
+            
+            # Jika profil belum ada (misal: migrasi lama), buatkan sekarang
             if not profile:
                 profile = Profile.objects.create(user=request.user)
             
@@ -63,7 +66,6 @@ class ProfileViewSet(viewsets.ModelViewSet):
                 serializer = self.get_serializer(profile, data=request.data, partial=True)
                 if serializer.is_valid():
                     profile = serializer.save()
-                    profile.check_auto_roles()
                     return Response(serializer.data)
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
             
