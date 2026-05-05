@@ -393,11 +393,21 @@ LOGGING = {
             'level': 'DEBUG',  # Set to DEBUG to capture all logs
             'propagate': True,
         },   
-        'donations': {  # Add a logger for your 'accounts' app
+        'donations': {
             'handlers': ['console', 'file'],
-            'level': 'DEBUG',  # Set to DEBUG to capture all logs
+            'level': 'DEBUG',
             'propagate': True,
-        },                
+        },
+        'profiles': {
+            'handlers': ['console', 'file'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+        'tracking': {
+            'handlers': ['console', 'file'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
     },
 }
 
