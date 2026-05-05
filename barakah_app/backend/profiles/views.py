@@ -55,10 +55,18 @@ class ProfileViewSet(viewsets.ModelViewSet):
         profile = serializer.save()
         profile.check_auto_roles()
 
-    @action(detail=False, methods=['get'])
+    @action(detail=False, methods=['get', 'patch'])
     def me(self, request):
         try:
             profile = Profile.objects.get(user=request.user)
+            if request.method == 'PATCH':
+                serializer = self.get_serializer(profile, data=request.data, partial=True)
+                if serializer.is_valid():
+                    profile = serializer.save()
+                    profile.check_auto_roles()
+                    return Response(serializer.data)
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            
             serializer = self.get_serializer(profile)
             return Response(serializer.data)
         except Profile.DoesNotExist:
