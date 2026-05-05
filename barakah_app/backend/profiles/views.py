@@ -58,7 +58,11 @@ class ProfileViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get', 'patch'])
     def me(self, request):
         try:
-            profile = Profile.objects.get(user=request.user)
+            if not request.user.is_authenticated:
+                return Response({'error': 'Not authenticated'}, status=status.HTTP_401_UNAUTHORIZED)
+                
+            profile, created = Profile.objects.get_or_create(user=request.user)
+            
             if request.method == 'PATCH':
                 serializer = self.get_serializer(profile, data=request.data, partial=True)
                 if serializer.is_valid():
@@ -69,8 +73,10 @@ class ProfileViewSet(viewsets.ModelViewSet):
             
             serializer = self.get_serializer(profile)
             return Response(serializer.data)
-        except Profile.DoesNotExist:
-            return Response({'error': 'Profile not found'}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            import logging
+            logging.error(f"Error in Profile me: {str(e)}")
+            return Response({'error': f'Database or Server Error: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     @action(detail=False, methods=['get'], url_path='check-completeness')
     def check_completeness(self, request):
