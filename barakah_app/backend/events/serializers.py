@@ -96,11 +96,18 @@ class EventSerializer(serializers.ModelSerializer):
         
         reg = obj.registrations.filter(user=request.user).first()
         if reg:
+            qr_image_url = None
+            if reg.qr_image:
+                try:
+                    qr_image_url = request.build_absolute_uri(reg.qr_image.url)
+                except Exception:
+                    qr_image_url = None
+                    
             return {
                 "id": reg.id,
                 "status": reg.status,
                 "unique_code": reg.unique_code,
-                "qr_image": request.build_absolute_uri(reg.qr_image.url) if reg.qr_image else None,
+                "qr_image": qr_image_url,
                 "is_attended": reg.is_attended,
                 "attended_at": reg.attended_at,
             }
