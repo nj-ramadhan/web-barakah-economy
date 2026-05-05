@@ -88,7 +88,18 @@ class Migration(migrations.Migration):
                 'ordering': ['name'],
             },
         ),
-        migrations.RunPython(add_position_column, reverse_code=remove_position_column),
+        migrations.SeparateDatabaseAndState(
+            state_operations=[
+                migrations.AddField(
+                    model_name='user',
+                    name='position',
+                    field=models.CharField(blank=True, help_text='Jabatan di BAE', max_length=100, null=True),
+                ),
+            ],
+            database_operations=[
+                migrations.RunPython(add_position_column, reverse_code=remove_position_column),
+            ]
+        ),
         migrations.AddField(
             model_name='user',
             name='bidang_tugas',
