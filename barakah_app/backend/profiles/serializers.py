@@ -53,7 +53,7 @@ class ProfileSerializer(serializers.ModelSerializer):
         return [label.name for label in obj.user.labels.all()]
 
     def get_is_profile_complete(self, obj):
-        return bool(obj.user.phone and obj.name_full)
+        return obj.user.is_profile_complete
 
     def update(self, instance, validated_data):
         # Extract phone from user source if present in validated_data

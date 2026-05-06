@@ -104,3 +104,9 @@ class User(AbstractUser):
         for r in self.custom_roles.filter(is_active=True):
             menus.update(r.accessible_menus or [])
         return list(menus)
+
+    @property
+    def is_profile_complete(self):
+        """Checks if user has filled mandatory fields: phone and full name."""
+        profile = getattr(self, 'profile', None)
+        return bool(self.phone and profile and profile.name_full)

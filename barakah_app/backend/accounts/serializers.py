@@ -133,8 +133,18 @@ class UserAdminSerializer(serializers.ModelSerializer):
         if profile_data:
             from profiles.models import Profile
             profile, created = Profile.objects.get_or_create(user=instance)
+            
+            # Remove 'user' from profile_data if it exists (comes from source='user.phone')
+            # The phone itself might be in user_data or directly in profile_data depending on DRF parsing
+            user_nested_data = profile_data.pop('user', {})
+            phone = user_nested_data.get('phone')
+            if phone:
+                instance.phone = phone
+                instance.save()
+
             for attr, value in profile_data.items():
-                setattr(profile, attr, value)
+                if hasattr(profile, attr):
+                    setattr(profile, attr, value)
             profile.save()
 
         # Update M2M relationships explicitly
@@ -197,7 +207,14 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
                        User.objects.filter(username=login_id).first()
             if user_obj:
                 attrs['username'] = user_obj.username
-        return super().validate(attrs)
+        
+        data = super().validate(attrs)
+        data['id'] = self.user.id
+        data['username'] = self.user.username
+        data['email'] = self.user.email
+        data['role'] = self.user.role
+        data['is_profile_complete'] = self.user.is_profile_complete
+        return data
 
     @classmethod
     def get_token(cls, user):

@@ -111,12 +111,14 @@ import BusinessDataFormPage from './pages/BusinessDataFormPage';
 import DashboardAdminBusinessPage from './pages/admin/DashboardAdminBusinessPage';
 import ExpeditionTestPage from './pages/admin/ExpeditionTestPage';
 import FloatingCartModal from './components/layout/FloatingCartModal';
+import ProfileNotice from './components/common/ProfileNotice';
 
 import { ResponsiveLayout, MobileContainer } from './components/layout/ResponsiveLayout';
 import ScrollToTop from './components/layout/ScrollToTop';
 import NotificationService from './services/NotificationService';
 import { getSessions } from './services/chatApi';
 import { forumApi } from './services/forumApi';
+import ProfileNotice from './components/common/ProfileNotice';
 
 const NotificationHandler = () => {
   const location = useLocation();
@@ -222,6 +224,7 @@ const App = () => {
 const LayoutWrapper = ({ isDesktop }) => {
   return (
     <div className="w-full">
+      <ProfileNotice />
       <Routes>
         <Route path="/" element={isDesktop ? <DesktopLandingPage /> : <MobileContainer><Home /></MobileContainer>} />
 

@@ -51,10 +51,7 @@ class CustomTokenObtainPairView(TokenObtainPairView):
         except Exception:
             response.data['picture'] = None
 
-        # Check if profile is complete (needs name_full and phone)
-        profile_obj = getattr(user, 'profile', None)
-        is_complete = bool(user.phone and profile_obj and profile_obj.name_full)
-        response.data['is_profile_complete'] = is_complete
+        response.data['is_profile_complete'] = user.is_profile_complete
 
         return response
     
@@ -153,7 +150,7 @@ class GoogleLoginView(APIView):
                 'accessible_menus': user.get_all_accessible_menus(),
                 'picture': picture_url,
                 'is_new_user': created,
-                'is_profile_complete': bool(user.phone and (getattr(user, 'profile', None) and getattr(user, 'profile').name_full))
+                'is_profile_complete': user.is_profile_complete
             }, status=status.HTTP_200_OK)
         except ValueError as e:
             logger.error(f"Google Token verification failed: {e}")
@@ -391,7 +388,7 @@ class UserViewSet(viewsets.ModelViewSet):
 
             writer = csv.writer(response, delimiter=';')
             headers = [
-                'ID', 'Username', 'Full Name', 'Email', 'Phone', 'Role', 'Verified Member', 'Date Joined',
+                'ID', 'IDM', 'Username', 'Full Name', 'Email', 'Phone', 'Role', 'Verified Member', 'Date Joined',
                 'Gender', 'Birth Place', 'Birth Date', 'Registration Date',
                 'Marital Status', 'Segment', 'Study Level', 'Study Campus', 'Study Faculty',
                 'Study Department', 'Study Program', 'Semester', 'Start Year', 'Finish Year',
@@ -410,6 +407,7 @@ class UserViewSet(viewsets.ModelViewSet):
                 profile = getattr(user, 'profile', None)
                 row = [
                     user.id,
+                    profile.id_m if profile else '',
                     user.username,
                     profile.name_full if profile else '',
                     user.email,
@@ -479,6 +477,98 @@ class UserViewSet(viewsets.ModelViewSet):
         except Exception as e:
             logger.error(f"Error in export_csv: {str(e)}", exc_info=True)
             return HttpResponse(f"Error generating CSV: {str(e)}", status=500)
+
+    @action(detail=False, methods=['post'])
+    def import_csv(self, request):
+        import csv
+        import io
+        from django.db import transaction
+        from profiles.models import Profile
+        
+        file = request.FILES.get('file')
+        if not file:
+            return Response({'error': 'No file uploaded'}, status=400)
+            
+        decoded_file = file.read().decode('utf-8')
+        io_string = io.StringIO(decoded_file)
+        reader = csv.DictReader(io_string, delimiter=';')
+        
+        created_count = 0
+        updated_count = 0
+        errors = []
+        
+        with transaction.atomic():
+            for row_idx, row in enumerate(reader):
+                try:
+                    user_id = row.get('ID')
+                    username = row.get('Username')
+                    email = row.get('Email') or None
+                    phone = row.get('Phone') or ''
+                    role = row.get('Role') or 'user'
+                    is_verified = str(row.get('Verified Member', '')).lower() == 'true'
+                    full_name = row.get('Full Name') or ''
+                    id_m = row.get('IDM') or ''
+
+                    user = None
+                    if user_id:
+                        user = User.objects.filter(id=user_id).first()
+                    
+                    if user:
+                        # Update existing
+                        user.username = username or user.username
+                        user.email = email
+                        user.phone = phone
+                        user.role = role
+                        user.is_verified_member = is_verified
+                        user.save()
+                        updated_count += 1
+                    else:
+                        # Create new
+                        if not username:
+                            username = f"user_{random.randint(1000, 9999)}"
+                        
+                        # Check unique
+                        if User.objects.filter(username=username).exists():
+                             username = f"{username}_{random.randint(100, 999)}"
+
+                        user = User.objects.create_user(
+                            username=username,
+                            email=email,
+                            password=''.join(random.choices(string.ascii_letters + string.digits, k=12)),
+                            phone=phone,
+                            role=role,
+                            is_verified_member=is_verified
+                        )
+                        created_count += 1
+                    
+                    # Update Profile
+                    profile, _ = Profile.objects.get_or_create(user=user)
+                    profile.name_full = full_name
+                    profile.id_m = id_m
+                    
+                    # Advanced profile fields
+                    profile.gender = row.get('Gender', profile.gender)
+                    profile.birth_place = row.get('Birth Place', profile.birth_place)
+                    if row.get('Birth Date'): profile.birth_date = row.get('Birth Date')
+                    profile.marital_status = row.get('Marital Status', profile.marital_status)
+                    profile.segment = row.get('Segment', profile.segment)
+                    profile.study_level = row.get('Study Level', profile.study_level)
+                    profile.study_campus = row.get('Study Campus', profile.study_campus)
+                    profile.address = row.get('Address', profile.address)
+                    profile.job = row.get('Job', profile.job)
+                    profile.work_field = row.get('Work Field', profile.work_field)
+                    profile.work_institution = row.get('Work Institution', profile.work_institution)
+                    profile.work_position = row.get('Work Position', profile.work_position)
+                    
+                    profile.save()
+
+                except Exception as row_err:
+                    errors.append(f"Row {row_idx + 1}: {str(row_err)}")
+
+        return Response({
+            'message': f'Import complete. Created: {created_count}, Updated: {updated_count}',
+            'errors': errors
+        })
 
     @action(detail=False, methods=['post'])
     def blast_whatsapp(self, request):

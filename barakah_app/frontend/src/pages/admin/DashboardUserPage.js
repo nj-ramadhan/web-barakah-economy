@@ -54,11 +54,16 @@ const DashboardUserPage = () => {
     const [showResetPasswordModal, setShowResetPasswordModal] = useState(false);
     const [resetPasswordResult, setResetPasswordResult] = useState(null);
     const [resettingPassword, setResettingPassword] = useState(false);
+    const [batching, setBatching] = useState(false);
     // Batch edit state
     const [showBatchModal, setShowBatchModal] = useState(false);
     const [batchField, setBatchField] = useState('');
     const [batchValue, setBatchValue] = useState('');
-    const [batching, setBatching] = useState(false);
+    // Import state
+    const [showImportModal, setShowImportModal] = useState(false);
+    const [importFile, setImportFile] = useState(null);
+    const [importing, setImporting] = useState(false);
+    const [importResult, setImportResult] = useState(null);
 
     const fetchMeta = useCallback(async () => {
         try {
@@ -130,6 +135,30 @@ const DashboardUserPage = () => {
             link.setAttribute('download', 'users_full_data.csv');
             document.body.appendChild(link); link.click(); link.remove();
         } catch (err) { alert('Gagal export'); }
+    };
+
+    const handleImportCsv = async (e) => {
+        e.preventDefault();
+        if (!importFile) return;
+        setImporting(true);
+        setImportResult(null);
+        try {
+            const formData = new FormData();
+            formData.append('file', importFile);
+            const res = await axios.post(`${API}/api/auth/users/import_csv/`, formData, {
+                headers: {
+                    ...getAuth().headers,
+                    'Content-Type': 'multipart/form-data'
+                }
+            });
+            setImportResult(res.data);
+            alert(res.data.message);
+            fetchUsers(currentPage);
+        } catch (err) {
+            alert('Gagal import: ' + (err.response?.data?.error || err.message));
+        } finally {
+            setImporting(false);
+        }
     };
 
     const openAddModal = () => {
@@ -328,7 +357,8 @@ const DashboardUserPage = () => {
             <Helmet><title>Manajemen User - Admin</title></Helmet>
             <Header />
             <div className="max-w-7xl mx-auto px-4 py-6 pb-20">
-                <div className="flex items-center justify-between mb-6">
+                {/* Floating Header */}
+                <div className="sticky top-16 bg-gray-50/95 backdrop-blur-md z-[90] py-4 flex items-center justify-between mb-6 -mx-4 px-4 border-b border-gray-100 shadow-sm transition-all duration-300">
                     <div className="flex items-center gap-3">
                         <button onClick={() => navigate('/dashboard')} className="w-10 h-10 flex items-center justify-center bg-white rounded-xl shadow-sm border border-gray-100 text-gray-500 hover:text-green-700 transition">
                             <span className="material-icons">arrow_back</span>
@@ -338,27 +368,31 @@ const DashboardUserPage = () => {
                             <p className="text-sm text-gray-500">{totalCount} pengguna terdaftar</p>
                         </div>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2 justify-end">
                         <button onClick={openAddModal}
                             className="bg-gray-900 text-white px-5 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 shadow-lg hover:bg-gray-800 transition">
                             <span className="material-icons text-sm">person_add</span> Tambah User
                         </button>
+                        <button onClick={() => { setImportResult(null); setImportFile(null); setShowImportModal(true); }}
+                            className="bg-blue-600 text-white px-5 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 shadow-lg hover:bg-blue-700 transition">
+                            <span className="material-icons text-sm">upload_file</span> Import CSV
+                        </button>
+                        <button onClick={handleExportCsv}
+                            className="bg-green-700 text-white px-5 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 shadow-lg shadow-green-100 hover:bg-green-800 transition">
+                            <span className="material-icons text-sm">download</span> Export CSV
+                        </button>
                         {selectedUserIds.length > 0 && (
-                            <>
+                            <div className="flex gap-2">
                                 <button onClick={() => { setBatchField(''); setBatchValue(''); setShowBatchModal(true); }}
                                     className="bg-blue-600 text-white px-4 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 shadow-lg hover:bg-blue-700 transition">
                                     <span className="material-icons text-sm">edit</span> Edit ({selectedUserIds.length})
                                 </button>
                                 <button onClick={() => { setBlastResult(null); setShowBlastModal(true); }}
-                                    className="bg-green-600 text-white px-4 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 shadow-lg hover:bg-green-700 transition">
+                                    className="bg-green-600 text-white px-4 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 shadow-lg shadow-green-100 hover:bg-green-700 transition">
                                     <span className="material-icons text-sm">chat</span> Blast WA ({selectedUserIds.length})
                                 </button>
-                            </>
+                            </div>
                         )}
-                        <button onClick={handleExportCsv}
-                            className="bg-green-700 text-white px-5 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 shadow-lg shadow-green-100 hover:bg-green-800 transition">
-                            <span className="material-icons text-sm">download</span> Export CSV
-                        </button>
                     </div>
                 </div>
 
@@ -659,7 +693,7 @@ const DashboardUserPage = () => {
                                 {!editingUser ? (
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <FI label="Nama Lengkap" value={editFormData.name_full} onChange={v => setEditFormData(f => ({ ...f, name_full: v }))} />
-                                        <FI label="ID Member (IDM)" value={editFormData.id_m} onChange={v => setEditFormData(f => ({ ...f, id_m: v }))} />
+                                        <FI label="IDM" value={editFormData.id_m} onChange={v => setEditFormData(f => ({ ...f, id_m: v }))} />
                                         <FI label="Username" value={editFormData.username} onChange={v => setEditFormData(f => ({ ...f, username: v }))} />
                                         <FI label="Email (Opsional)" value={editFormData.email} onChange={v => setEditFormData(f => ({ ...f, email: v }))} />
                                         <FI label="No. Telepon (Opsional)" value={editFormData.phone} onChange={v => setEditFormData(f => ({ ...f, phone: v }))} />
@@ -676,7 +710,7 @@ const DashboardUserPage = () => {
                                         <div className="space-y-3">
                                             <h3 className="text-[10px] font-bold text-blue-700 uppercase tracking-widest border-b border-blue-100 pb-2 mb-2">Data Akun</h3>
                                             <FI label="Username" value={editFormData.username} onChange={v => setEditFormData(f => ({ ...f, username: v }))} />
-                                            <FI label="ID Member (IDM)" value={editFormData.profile?.id_m} onChange={v => setP('id_m', v)} />
+                                            <FI label="IDM" value={editFormData.profile?.id_m} onChange={v => setP('id_m', v)} />
                                             <FI label="Email" value={editFormData.email} onChange={v => setEditFormData(f => ({ ...f, email: v }))} />
                                             <FI label="No. Telepon" value={editFormData.phone} onChange={v => setEditFormData(f => ({ ...f, phone: v }))} />
                                             <FI label="Jabatan BAE" value={editFormData.position} onChange={v => setEditFormData(f => ({ ...f, position: v }))} />
@@ -988,6 +1022,57 @@ const DashboardUserPage = () => {
                             <button onClick={handleBatchUpdate} disabled={batching || !batchField || (Array.isArray(batchValue) ? batchValue.length === 0 : batchValue === '')}
                                 className="bg-blue-600 text-white px-8 py-2.5 rounded-xl text-sm font-bold shadow-lg hover:bg-blue-700 transition disabled:opacity-50">
                                 {batching ? 'Memproses...' : 'Simpan Perubahan'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* ============ IMPORT CSV MODAL ============ */}
+            {showImportModal && (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[150] flex items-center justify-center p-4">
+                    <div className="bg-white w-full max-w-lg rounded-3xl shadow-2xl">
+                        <div className="p-6 border-b border-gray-100 flex justify-between items-center">
+                            <h2 className="text-xl font-bold text-gray-900"><span className="material-icons text-blue-600 align-middle mr-2">upload_file</span>Import User CSV</h2>
+                            <button onClick={() => setShowImportModal(false)} className="text-gray-400 hover:text-gray-600"><span className="material-icons">close</span></button>
+                        </div>
+                        <div className="p-6 space-y-4">
+                            <div className="bg-blue-50 border border-blue-100 rounded-2xl p-4 text-xs text-blue-800 leading-relaxed">
+                                <p className="font-bold mb-1">Panduan Import:</p>
+                                <ul className="list-disc ml-4 space-y-0.5">
+                                    <li>Gunakan file CSV hasil Export agar format kolom sesuai.</li>
+                                    <li>Gunakan delimiter <b>titik koma (;)</b>.</li>
+                                    <li>Jika <b>ID</b> ditemukan, data user akan di-update (PUT).</li>
+                                    <li>Jika <b>ID</b> kosong, user baru akan dibuat (POST).</li>
+                                    <li>Username baru akan di-generate otomatis jika kosong.</li>
+                                </ul>
+                            </div>
+
+                            <div>
+                                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 block ml-1">Pilih File CSV</label>
+                                <input type="file" accept=".csv" onChange={e => setImportFile(e.target.files[0])}
+                                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-blue-500" />
+                            </div>
+
+                            {importResult && (
+                                <div className="max-h-40 overflow-y-auto space-y-2">
+                                    <div className="bg-green-50 border border-green-100 p-3 rounded-xl text-xs text-green-800">
+                                        {importResult.message}
+                                    </div>
+                                    {importResult.errors?.length > 0 && (
+                                        <div className="bg-red-50 border border-red-100 p-3 rounded-xl text-[10px] text-red-800">
+                                            <p className="font-bold mb-1">Errors:</p>
+                                            {importResult.errors.map((err, i) => <p key={i}>• {err}</p>)}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                        <div className="p-6 bg-gray-50 border-t flex justify-end gap-3 rounded-b-3xl">
+                            <button onClick={() => setShowImportModal(false)} className="px-6 py-2.5 rounded-xl text-sm font-bold text-gray-500 hover:bg-gray-200 transition">Tutup</button>
+                            <button onClick={handleImportCsv} disabled={importing || !importFile}
+                                className="bg-blue-600 text-white px-8 py-2.5 rounded-xl text-sm font-bold shadow-lg hover:bg-blue-700 transition disabled:opacity-50">
+                                {importing ? 'Mengimport...' : 'Mulai Import'}
                             </button>
                         </div>
                     </div>
