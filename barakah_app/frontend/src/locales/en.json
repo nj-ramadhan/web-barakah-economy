@@ -28,7 +28,7 @@
     "activities": "Our Activities",
     "event": "Event",
     "social_charity": "Social Charity",
-    "information": "Information",
+    "article": "Article",
     "discussion_forum": "Discussion Forum",
     "consultation": "Consultation"
   },
@@ -37,5 +37,16 @@
   },
   "profile": {
     "title": "Profile"
+  },
+  "nav": {
+    "home": "Home",
+    "consultation": "Consultation",
+    "activities": "Activities",
+    "articles": "Articles",
+    "digital_products": "Digital Products",
+    "about": "About",
+    "profile": "Profile",
+    "services": "Services",
+    "login": "Log in"
   }
 }

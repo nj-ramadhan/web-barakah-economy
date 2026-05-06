@@ -1,24 +1,26 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import '../../styles/Navigation.css';
 
-const LAYANAN_ITEMS = [
-  { to: '/', icon: 'home', label: 'Home', color: 'text-green-600' },
-  { to: '/chat', icon: 'chat', label: 'Konsultasi', color: 'text-green-600' },
+const getLayananItems = (t) => [
+  { to: '/', icon: 'home', label: t('nav.home', 'Home'), color: 'text-green-600' },
+  { to: '/chat', icon: 'chat', label: t('nav.consultation', 'Konsultasi'), color: 'text-green-600' },
   { to: '/charity', icon: 'volunteer_activism', label: 'Charity', color: 'text-red-500' },
-  { to: '/kegiatan', icon: 'event_note', label: 'Kegiatan', color: 'text-green-700' },
-  { to: '/sinergy', icon: 'shopping_bag', label: 'Sinergy', color: 'text-blue-600' },
+  { to: '/kegiatan', icon: 'event_note', label: t('nav.activities', 'Kegiatan'), color: 'text-green-700' },
+  { to: '/sinergy', icon: 'shopping_bag', label: 'E-commerce', color: 'text-blue-600' },
   { to: '/academy/ecourse', icon: 'school', label: 'E-Course', color: 'text-purple-600' },
-  { to: '/articles', icon: 'article', label: 'Article', color: 'text-orange-500' },
-  { to: '/digital-products', icon: 'storefront', label: 'Produk Digital', color: 'text-emerald-600' },
+  { to: '/articles', icon: 'article', label: t('nav.articles', 'Artikel'), color: 'text-orange-500' },
+  { to: '/digital-products', icon: 'storefront', label: t('nav.digital_products', 'Produk Digital'), color: 'text-emerald-600' },
   { to: '/event', icon: 'celebration', label: 'Event', color: 'text-indigo-600' },
   { to: '/forum', icon: 'forum', label: 'Forum', color: 'text-blue-500' },
-  { to: '/about', icon: 'info', label: 'About', color: 'text-teal-600' },
-  { to: '/profile', icon: 'person', label: 'Profile', color: 'text-gray-600' },
+  { to: '/about', icon: 'info', label: t('nav.about', 'About'), color: 'text-teal-600' },
+  { to: '/profile', icon: 'person', label: t('nav.profile', 'Profile'), color: 'text-gray-600' },
 ];
 
 const NavigationButton = () => {
   const location = useLocation();
+  const { t } = useTranslation();
   const [isLayananOpen, setIsLayananOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const layananRef = useRef(null);
@@ -78,7 +80,7 @@ const NavigationButton = () => {
                     className="grid grid-cols-3 gap-2 max-h-64 overflow-y-auto"
                     style={{ scrollbarWidth: 'thin' }}
                   >
-                    {LAYANAN_ITEMS.map((item) => (
+                    {getLayananItems(t).map((item) => (
                       <Link
                         key={item.to}
                         to={item.to}
@@ -103,7 +105,7 @@ const NavigationButton = () => {
                   }`}
               >
                 <span className="material-icons text-2xl">grid_view</span>
-                <span className="text-[11px] font-medium mt-0.5">Layanan</span>
+                <span className="text-[11px] font-medium mt-0.5">{t('nav.services', 'Layanan')}</span>
               </button>
             </div>
 
@@ -114,7 +116,7 @@ const NavigationButton = () => {
                 className="w-full flex items-center justify-center gap-1.5 py-2.5 bg-gradient-to-r from-green-500 to-green-700 rounded-2xl shadow-lg shadow-green-200 text-white hover:scale-105 active:scale-95 transition-all -mt-3"
               >
                 <span className="material-icons text-xl">chat</span>
-                <span className="text-sm font-bold">Konsultasi</span>
+                <span className="text-sm font-bold">{t('nav.consultation', 'Konsultasi')}</span>
               </Link>
             </div>
 
@@ -133,7 +135,7 @@ const NavigationButton = () => {
                 </span>
               )}
               <span className="text-[11px] font-medium mt-0.5">
-                {isLoggedIn ? 'Profile' : 'Log in'}
+                {isLoggedIn ? t('nav.profile', 'Profile') : t('nav.login', 'Log in')}
               </span>
             </Link>
 

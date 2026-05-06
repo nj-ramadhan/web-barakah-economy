@@ -28,7 +28,7 @@
     "activities": "Kegiatan Kami",
     "event": "Event",
     "social_charity": "Social Charity",
-    "information": "Informasi",
+    "article": "Artikel",
     "discussion_forum": "Forum Diskusi",
     "consultation": "Konsultasi"
   },
@@ -37,5 +37,16 @@
   },
   "profile": {
     "title": "Profil"
+  },
+  "nav": {
+    "home": "Beranda",
+    "consultation": "Konsultasi",
+    "activities": "Kegiatan",
+    "articles": "Artikel",
+    "digital_products": "Produk Digital",
+    "about": "Tentang",
+    "profile": "Profil",
+    "services": "Layanan",
+    "login": "Masuk"
   }
 }

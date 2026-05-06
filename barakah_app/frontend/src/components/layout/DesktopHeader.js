@@ -68,7 +68,7 @@ const DesktopHeader = () => {
     ];
 
     const group3 = [
-        { label: t('menu.information'), to: '/articles', icon: 'info' },
+        { label: t('menu.article'), to: '/articles', icon: 'info' },
         { label: t('menu.discussion_forum'), to: '/forum', icon: 'forum' },
         { label: t('menu.consultation'), to: '/chat', icon: 'support_agent' },
     ];

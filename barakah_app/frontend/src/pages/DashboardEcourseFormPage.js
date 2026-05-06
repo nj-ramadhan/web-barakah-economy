@@ -70,7 +70,7 @@ const DashboardEcourseFormPage = () => {
                     setIsFeatured(data.is_featured);
                     setHasCertificate(data.has_certificate || false);
                     setCertificateInfo(data.certificate_info || '');
-                    setThumbnailPreview(data.thumbnail);
+                    setThumbnailPreview(getMediaUrl(data.thumbnail));
                 } catch (err) {
                     console.error(err);
                     alert('Gagal mengambil data kursus');

@@ -118,7 +118,7 @@ const DigitalProductCheckoutPage = () => {
                 {/* Product Summary */}
                 <div className="flex items-center gap-3 bg-gray-50 p-3 rounded-xl mb-6">
                     <img
-                        src={getMediaUrl(product.thumbnail) || '/placeholder-image.jpg'}
+                        src={getMediaUrl(product.thumbnail_url || product.thumbnail) || '/placeholder-image.jpg'}
                         alt={product.title}
                         className="w-16 h-16 rounded-lg object-cover"
                         onError={(e) => { e.target.src = '/placeholder-image.jpg'; }}

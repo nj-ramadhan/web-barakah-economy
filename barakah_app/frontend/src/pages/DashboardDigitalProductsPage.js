@@ -108,7 +108,7 @@ const DashboardDigitalProductsPage = () => {
         setDigitalLink(product.digital_link);
         setIsActive(product.is_active);
         setVisibility(product.visibility || 'global');
-        setThumbnailPreview(product.thumbnail);
+        setThumbnailPreview(getMediaUrl(product.thumbnail_url || product.thumbnail));
         setShowForm(true);
     };
 
@@ -155,8 +155,20 @@ const DashboardDigitalProductsPage = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!title || !description || !price || !digitalLink) {
-            alert('Mohon lengkapi semua field yang wajib');
+        if (!title.trim()) {
+            alert('Judul produk wajib diisi');
+            return;
+        }
+        if (!description.trim()) {
+            alert('Deskripsi wajib diisi');
+            return;
+        }
+        if (!price && price !== 0 && price !== '0') {
+            alert('Harga wajib diisi');
+            return;
+        }
+        if (!digitalLink.trim()) {
+            alert('Link produk digital wajib diisi');
             return;
         }
         setSubmitting(true);
@@ -322,12 +334,11 @@ const DashboardDigitalProductsPage = () => {
                         <div>
                             <label className="block text-xs font-medium text-gray-600 mb-1">Link Produk Digital *</label>
                             <input
-                                type="url"
+                                type="text"
                                 value={digitalLink}
                                 onChange={(e) => setDigitalLink(e.target.value)}
                                 className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                                placeholder="https://lynk.id/your-product"
-                                required
+                                placeholder="https://drive.google.com/... atau https://lynk.id/..."
                             />
                             <p className="text-xs text-gray-400 mt-1">Link ini akan dikirim ke email pembeli setelah pembayaran</p>
                         </div>
@@ -382,7 +393,7 @@ const DashboardDigitalProductsPage = () => {
                             <div key={product.id} className="bg-white rounded-xl shadow-sm overflow-hidden">
                                 <div className="flex items-start gap-3 p-3">
                                     <img
-                                        src={getMediaUrl(product.thumbnail) || '/placeholder-image.jpg'}
+                                        src={getMediaUrl(product.thumbnail_url || product.thumbnail) || '/placeholder-image.jpg'}
                                         alt={product.title}
                                         className="w-16 h-16 rounded-lg object-cover flex-shrink-0"
                                         onError={(e) => { e.target.src = '/placeholder-image.jpg'; }}
