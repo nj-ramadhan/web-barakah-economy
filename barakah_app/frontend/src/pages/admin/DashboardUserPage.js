@@ -358,7 +358,7 @@ const DashboardUserPage = () => {
             <Header />
             <div className="max-w-7xl mx-auto px-4 py-6 pb-20">
                 {/* Floating Header */}
-                <div className="sticky top-16 bg-gray-50/95 backdrop-blur-md z-[90] py-4 flex items-center justify-between mb-6 -mx-4 px-4 border-b border-gray-100 shadow-sm transition-all duration-300">
+                <div className="sticky top-[64px] bg-gray-50/95 backdrop-blur-md z-[90] py-4 flex items-center justify-between mb-6 -mx-4 px-4 border-b border-gray-100 shadow-sm transition-all duration-300">
                     <div className="flex items-center gap-3">
                         <button onClick={() => navigate('/dashboard')} className="w-10 h-10 flex items-center justify-center bg-white rounded-xl shadow-sm border border-gray-100 text-gray-500 hover:text-green-700 transition">
                             <span className="material-icons">arrow_back</span>
@@ -368,7 +368,7 @@ const DashboardUserPage = () => {
                             <p className="text-sm text-gray-500">{totalCount} pengguna terdaftar</p>
                         </div>
                     </div>
-                    <div className="flex flex-wrap gap-2 justify-end">
+                    <div className="flex flex-wrap gap-2 items-center">
                         <button onClick={openAddModal}
                             className="bg-gray-900 text-white px-5 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 shadow-lg hover:bg-gray-800 transition">
                             <span className="material-icons text-sm">person_add</span> Tambah User
@@ -450,6 +450,7 @@ const DashboardUserPage = () => {
                                 <thead className="bg-gray-50 border-b border-gray-100">
                                     <tr>
                                         <th className="px-3 py-4"><input type="checkbox" checked={selectedUserIds.length === users.length && users.length > 0} onChange={toggleSelectAll} className="w-4 h-4 text-green-600 rounded" /></th>
+                                        <SH label="IDM" field="profile__id_m" {...{ sortField, sortDir, handleSort, getSortIcon }} />
                                         <SH label="User" field="username" {...{ sortField, sortDir, handleSort, getSortIcon }} />
                                         <SH label="Nama" field="profile__name_full" {...{ sortField, sortDir, handleSort, getSortIcon }} />
                                         <th className="px-3 py-4 text-gray-600 font-bold uppercase tracking-wider text-[11px] min-w-[120px]">Kontak</th>
@@ -474,8 +475,12 @@ const DashboardUserPage = () => {
                                         <tr key={u.id} className="hover:bg-green-50/30 transition">
                                             <td className="px-3 py-3"><input type="checkbox" checked={selectedUserIds.includes(u.id)} onChange={() => toggleSelectUser(u.id)} className="w-4 h-4 text-green-600 rounded" /></td>
                                             <td className="px-3 py-3">
+                                                <div className="font-mono text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-lg border border-blue-100 text-center">
+                                                    {u.profile?.id_m || '-'}
+                                                </div>
+                                            </td>
+                                            <td className="px-3 py-3">
                                                 <div className="bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded font-black text-[9px] inline-block mb-1">ID: {u.id}</div>
-                                                {u.profile?.id_m && <div className="bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded font-black text-[9px] inline-block mb-1 ml-1">IDM: {u.profile.id_m}</div>}
                                                 <div className="font-bold text-gray-900 text-[11px] leading-tight">{u.username}</div>
                                                 <div className="text-[10px] text-gray-400 truncate max-w-[120px]">{u.email}</div>
                                             </td>

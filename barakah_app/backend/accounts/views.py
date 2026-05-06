@@ -314,6 +314,7 @@ class UserViewSet(viewsets.ModelViewSet):
                 Q(email__icontains=search) |
                 Q(phone__icontains=search) |
                 Q(profile__name_full__icontains=search) |
+                Q(profile__id_m__icontains=search) |
                 Q(profile__address__icontains=search)
             )
 
