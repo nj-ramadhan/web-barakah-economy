@@ -58,19 +58,17 @@ const DesktopHeader = () => {
     const group1 = [
         { label: t('menu.ecommerce'), to: '/sinergy', icon: 'handshake' },
         { label: t('menu.ecourse'), to: '/academy/ecourse', icon: 'school' },
-        { label: t('menu.digital_products'), to: '/products/digital', icon: 'shopping_bag' },
-        { label: t('menu.master_data'), to: '/master-data', icon: 'data_usage' },
+        { label: t('menu.digital_products'), to: '/digital-products', icon: 'shopping_bag' },
     ];
 
     const group2 = [
         { label: t('menu.event'), to: '/event', icon: 'event' },
-        { label: t('menu.social_charity'), to: '/social-charity', icon: 'favorite' },
+        { label: t('menu.social_charity'), to: '/charity', icon: 'favorite' },
     ];
 
     const group3 = [
-        { label: t('menu.information'), to: '/informasi', icon: 'info' },
-        { label: t('menu.discussion_forum'), to: '/forum-diskusi', icon: 'forum' },
-        { label: t('menu.zakat_calculator'), to: '/kalkulator-zakat', icon: 'calculate' },
+        { label: t('menu.information'), to: '/articles', icon: 'info' },
+        { label: t('menu.discussion_forum'), to: '/forum', icon: 'forum' },
     ];
 
     return (
@@ -83,8 +81,8 @@ const DesktopHeader = () => {
             </Link>
 
             <nav className="flex gap-8 items-center">
-                <Link to="/" className="text-gray-600 hover:text-green-700 font-semibold transition">Beranda</Link>
-                <Link to="/about" className="text-gray-600 hover:text-green-700 font-semibold transition">Tentang Kami</Link>
+                <Link to="/" className="text-gray-600 hover:text-green-700 font-semibold transition">{t('header.home')}</Link>
+                <Link to="/about" className="text-gray-600 hover:text-green-700 font-semibold transition">{t('header.about')}</Link>
 
                 <NavDropdown title={t('menu.products_services')} items={group1} />
                 <NavDropdown title={t('menu.activities_social')} items={group2} />

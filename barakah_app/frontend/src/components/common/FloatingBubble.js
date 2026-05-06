@@ -13,9 +13,9 @@ const FloatingBubble = ({ show, link, label, icon }) => {
 
   // --- Defaults ---
   // const DEFAULT_LINK = 'https://barakah-economy.com/produk/kalender-barakah';
-  const DEFAULT_LINK = 'https://barakah.cloud/produk/kalender-barakah';
-  const DEFAULT_LABEL = 'Pesan Kalender Disini';
-  const DEFAULT_ICON = 'https://res.cloudinary.com/dfvsam6fi/image/upload/v1764136196/kalender_logo_xlrx5e.png';
+  const DEFAULT_LINK = 'https://barakah.cloud/charity';
+  const DEFAULT_LABEL = 'Yuk Sedekah';
+  const DEFAULT_ICON = 'volunteer_activism'; // Material Icon donasi
 
   const handleMouseDown = (e) => {
     if (e.button !== 0) return;
@@ -108,12 +108,22 @@ const FloatingBubble = ({ show, link, label, icon }) => {
       }}
       className="flex items-center bg-green-600 pr-4 pl-2 py-2 rounded-full shadow-[0_8px_30px_rgb(0,0,0,0.3)] hover:bg-green-700 transition-colors duration-200 select-none border-2 border-white/20 animate-bounce-slow"
     >
-      {/* Icon: Gunakan props icon jika ada, jika tidak pakai default */}
-      <img
-        src={icon || DEFAULT_ICON}
-        alt="Bubble Icon"
-        className="w-10 h-10 object-contain mr-2 bg-white rounded-full p-1 pointer-events-none"
-      />
+      {/* Icon: jika URL tampilkan img, jika nama Material Icon tampilkan span */}
+      {(() => {
+        const resolvedIcon = icon || DEFAULT_ICON;
+        const isUrl = resolvedIcon && (resolvedIcon.startsWith('http') || resolvedIcon.startsWith('/'));
+        return isUrl ? (
+          <img
+            src={resolvedIcon}
+            alt="Bubble Icon"
+            className="w-10 h-10 object-contain mr-2 bg-white rounded-full p-1 pointer-events-none"
+          />
+        ) : (
+          <span className="material-icons w-10 h-10 flex items-center justify-center mr-2 bg-white rounded-full text-green-600 text-2xl pointer-events-none shrink-0">
+            {resolvedIcon}
+          </span>
+        );
+      })()}
 
       {/* Label: Gunakan props label jika ada, jika tidak pakai default */}
       <span className="font-bold text-sm text-white whitespace-nowrap drop-shadow-md">
