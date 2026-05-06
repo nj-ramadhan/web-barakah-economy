@@ -421,13 +421,13 @@ class UserViewSet(viewsets.ModelViewSet):
                     province_display = province_map.get(profile.address_province, profile.address_province) if profile.address_province else ''
 
                     row.extend([
-                        profile.get_gender_display() if profile.gender else '',
+                        profile.gender or '',
                         profile.birth_place or '',
                         profile.birth_date or '',
                         profile.registration_date or '',
-                        profile.get_marital_status_display() if profile.marital_status else '',
-                        profile.get_segment_display() if profile.segment else '',
-                        profile.get_study_level_display() if profile.study_level else '',
+                        profile.marital_status or '',
+                        profile.segment or '',
+                        profile.study_level or '',
                         profile.study_campus or '',
                         profile.study_faculty or '',
                         profile.study_department or '',
@@ -436,12 +436,12 @@ class UserViewSet(viewsets.ModelViewSet):
                         profile.study_start_year or '',
                         profile.study_finish_year or '',
                         profile.address or '',
-                        profile.get_job_display() if profile.job else '',
-                        profile.get_work_field_display() if profile.work_field else '',
+                        profile.job or '',
+                        profile.work_field or '',
                         profile.work_institution or '',
                         profile.work_position or '',
                         profile.work_salary or '',
-                        province_display,
+                        profile.address_province or '',
                     ])
                 else:
                     row.extend([''] * 21)
@@ -565,21 +565,19 @@ class UserViewSet(viewsets.ModelViewSet):
                     profile.id_m = id_m
                     
                     # Advanced profile fields
-                    if row.get('Gender'): profile.gender = row.get('Gender').lower()[:1]
+                    if row.get('Gender'): profile.gender = row.get('Gender')
                     if row.get('Birth Place'): profile.birth_place = row.get('Birth Place')
                     if row.get('Birth Date'): profile.birth_date = row.get('Birth Date')
-                    if row.get('Marital Status'): profile.marital_status = row.get('Marital Status').lower()[:2]
-                    if row.get('Segment'): profile.segment = row.get('Segment').lower()
-                    if row.get('Study Level'): profile.study_level = row.get('Study Level').lower()
+                    if row.get('Marital Status'): profile.marital_status = row.get('Marital Status')
+                    if row.get('Segment'): profile.segment = row.get('Segment')
+                    if row.get('Study Level'): profile.study_level = row.get('Study Level')
                     if row.get('Study Campus'): profile.study_campus = row.get('Study Campus')
                     if row.get('Address'): profile.address = row.get('Address')
-                    if row.get('Job'): profile.job = row.get('Job').lower()
-                    if row.get('Work Field'): profile.work_field = row.get('Work Field').lower()
+                    if row.get('Job'): profile.job = row.get('Job')
+                    if row.get('Work Field'): profile.work_field = row.get('Work Field')
                     if row.get('Work Institution'): profile.work_institution = row.get('Work Institution')
                     if row.get('Work Position'): profile.work_position = row.get('Work Position')
-                    if row.get('Province'):
-                        # Map province display name to code if possible, or just save
-                        profile.address_province = row.get('Province').lower().replace(' ', '_')
+                    if row.get('Province'): profile.address_province = row.get('Province')
                     
                     profile.save()
 

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 const NavDropdown = ({ title, items }) => {
     const [isOpen, setIsOpen] = useState(false);
@@ -38,6 +39,7 @@ const NavDropdown = ({ title, items }) => {
 const DesktopHeader = () => {
     const [user, setUser] = useState(null);
     const [showProfileMenu, setShowProfileMenu] = useState(false);
+    const { t, i18n } = useTranslation();
 
     useEffect(() => {
         const userData = JSON.parse(localStorage.getItem('user'));
@@ -54,21 +56,21 @@ const DesktopHeader = () => {
     };
 
     const group1 = [
-        { label: 'Sinergy', to: '/sinergy', icon: 'handshake' },
-        { label: 'E-Course', to: '/academy/ecourse', icon: 'school' },
-        { label: 'Produk Digital', to: '/digital-products', icon: 'devices' },
+        { label: t('menu.ecommerce'), to: '/sinergy', icon: 'handshake' },
+        { label: t('menu.ecourse'), to: '/academy/ecourse', icon: 'school' },
+        { label: t('menu.digital_products'), to: '/products/digital', icon: 'shopping_bag' },
+        { label: t('menu.master_data'), to: '/master-data', icon: 'data_usage' },
     ];
 
     const group2 = [
-        { label: 'Charity', to: '/charity', icon: 'volunteer_activism' },
-        { label: 'Event', to: '/events', icon: 'event' },
-        { label: 'Kegiatan Kami', to: '/kegiatan', icon: 'diversity_3' },
+        { label: t('menu.event'), to: '/event', icon: 'event' },
+        { label: t('menu.social_charity'), to: '/social-charity', icon: 'favorite' },
     ];
 
     const group3 = [
-        { label: 'Artikel', to: '/articles', icon: 'article' },
-        { label: 'Forum', to: '/forum', icon: 'forum' },
-        { label: 'Konsultasi', to: '/chat', icon: 'chat' },
+        { label: t('menu.information'), to: '/informasi', icon: 'info' },
+        { label: t('menu.discussion_forum'), to: '/forum-diskusi', icon: 'forum' },
+        { label: t('menu.zakat_calculator'), to: '/kalkulator-zakat', icon: 'calculate' },
     ];
 
     return (
@@ -84,9 +86,22 @@ const DesktopHeader = () => {
                 <Link to="/" className="text-gray-600 hover:text-green-700 font-semibold transition">Beranda</Link>
                 <Link to="/about" className="text-gray-600 hover:text-green-700 font-semibold transition">Tentang Kami</Link>
 
-                <NavDropdown title="Produk & Layanan" items={group1} />
-                <NavDropdown title="Aktivitas & Sosial" items={group2} />
-                <NavDropdown title="Informasi & Diskusi" items={group3} />
+                <NavDropdown title={t('menu.products_services')} items={group1} />
+                <NavDropdown title={t('menu.activities_social')} items={group2} />
+                <NavDropdown title={t('menu.info_discussion')} items={group3} />
+
+                {/* Language Switcher */}
+                <button
+                    onClick={() => {
+                        const newLang = i18n.language === 'en' ? 'id' : 'en';
+                        i18n.changeLanguage(newLang);
+                    }}
+                    className="flex items-center gap-1 text-gray-600 hover:text-green-700 font-bold transition px-2 py-1 rounded-lg border border-transparent hover:border-green-200 hover:bg-green-50"
+                    title="Switch Language"
+                >
+                    <span className="material-icons text-sm">language</span>
+                    {i18n.language === 'en' ? 'EN' : 'ID'}
+                </button>
 
                 {user ? (
                     <div className="relative pl-4 border-l border-gray-200">

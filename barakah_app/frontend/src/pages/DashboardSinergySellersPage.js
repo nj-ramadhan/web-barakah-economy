@@ -33,7 +33,7 @@ const DashboardSinergySellersPage = () => {
             });
             setVouchers(voucherRes.data);
         } catch (error) {
-            console.error("Failed fetching Sinergy dashboard data", error);
+            console.error("Failed fetching E-commerce dashboard data", error);
         } finally {
             setLoading(false);
         }
@@ -161,7 +161,7 @@ const DashboardSinergySellersPage = () => {
             ) : products.length === 0 ? (
                 <div className="text-center py-12 bg-white rounded-2xl border border-dashed border-gray-200">
                     <span className="material-icons text-4xl text-gray-300">inventory_2</span>
-                    <p className="mt-2 text-sm text-gray-500">Anda belum memiliki produk fisik Sinergy.</p>
+                    <p className="mt-2 text-sm text-gray-500">Anda belum memiliki produk fisik E-commerce.</p>
                 </div>
             ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -259,7 +259,7 @@ const DashboardSinergySellersPage = () => {
         <div className="bg-white rounded-3xl p-6 shadow-xl border border-gray-100 animate-slide-up">
             <div className="flex items-center gap-3 mb-6 pb-4 border-b border-gray-100">
                 <button type="button" onClick={() => setActiveTab('list')} className="w-8 h-8 flex items-center justify-center bg-gray-50 hover:bg-gray-100 rounded-full text-gray-500 transition"><span className="material-icons">arrow_back</span></button>
-                <h2 className="text-xl font-bold text-gray-800">{activeTab === 'edit' ? 'Edit Produk Sinergy' : 'Tambah Produk Sinergy Baru'}</h2>
+                <h2 className="text-xl font-bold text-gray-800">{activeTab === 'edit' ? 'Edit Produk E-commerce' : 'Tambah Produk E-commerce Baru'}</h2>
             </div>
             
             <form className="space-y-6" onSubmit={handleSaveProduct}>
@@ -425,7 +425,7 @@ const DashboardSinergySellersPage = () => {
 
     return (
         <div className="body bg-gray-100 min-h-screen">
-            <Helmet><title>Pembuatan Sinergy - Barakah Economy</title></Helmet>
+            <Helmet><title>Pembuatan E-commerce - Barakah Economy</title></Helmet>
             <Header />
             <div className="max-w-4xl mx-auto px-4 py-6 pb-24">
                 {activeTab === 'list' ? renderList() : activeTab === 'voucher' ? renderVouchers() : renderForm()}

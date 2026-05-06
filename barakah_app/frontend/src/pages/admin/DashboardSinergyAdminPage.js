@@ -46,12 +46,12 @@ const DashboardSinergyAdminPage = () => {
 
     return (
         <div className="body bg-gray-50 min-h-screen">
-            <Helmet><title>Admin Manajemen Sinergy - Barakah Economy</title></Helmet>
+            <Helmet><title>Admin Manajemen E-commerce - Barakah Economy</title></Helmet>
             <Header />
             <div className="max-w-6xl mx-auto px-4 py-8 pb-24">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
                     <div>
-                        <h1 className="text-2xl font-bold text-gray-800">Manajemen Produk Sinergy</h1>
+                        <h1 className="text-2xl font-bold text-gray-800">Manajemen Produk E-commerce</h1>
                         <p className="text-sm text-gray-500">Persetujuan produk fisik dari seluruh seller</p>
                     </div>
                 </div>

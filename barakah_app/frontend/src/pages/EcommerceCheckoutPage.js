@@ -69,7 +69,7 @@ const EcommerceCheckoutPage = () => {
         });
         const p = res.data;
         if (!p.address_city_id || !p.address) {
-          alert('Tolong lengkapi alamat dan kota Anda terlebih dahulu untuk pengiriman barang (Sinergy).');
+          alert('Tolong lengkapi alamat dan kota Anda terlebih dahulu untuk pengiriman barang (E-commerce).');
           navigate('/profile/edit?complete=address');
           return;
         }
@@ -303,7 +303,7 @@ const EcommerceCheckoutPage = () => {
     <div className="body bg-gray-50 min-h-screen">
       <Header />
       <div className="container mx-auto px-4 py-6 max-w-2xl pb-24">
-        <h2 className="text-2xl font-bold mb-6 text-gray-800 text-center">Checkout Sinergy</h2>
+        <h2 className="text-2xl font-bold mb-6 text-gray-800 text-center">Checkout E-commerce</h2>
 
         {/* Alamat Penerima */}
         {profile && (

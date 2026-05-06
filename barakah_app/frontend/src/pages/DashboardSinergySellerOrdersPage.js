@@ -46,7 +46,7 @@ const DashboardSinergySellerOrdersPage = () => {
             const url = window.URL.createObjectURL(new Blob([response.data]));
             const link = document.createElement('a');
             link.href = url;
-            link.setAttribute('download', 'rekap_pesanan_sinergy.csv');
+            link.setAttribute('download', 'rekap_pesanan_ecommerce.csv');
             document.body.appendChild(link);
             link.click();
             link.remove();
@@ -142,7 +142,7 @@ const DashboardSinergySellerOrdersPage = () => {
                         </Link>
                         <div>
                             <h1 className="text-2xl font-black text-gray-800 tracking-tight">Manajemen Pesanan Masuk</h1>
-                            <p className="text-sm text-gray-500">Proses pemesanan produk fisik Sinergy Anda</p>
+                            <p className="text-sm text-gray-500">Proses pemesanan produk fisik E-commerce Anda</p>
                         </div>
                     </div>
                     <button 

@@ -339,7 +339,7 @@ const PurchasesTab = () => {
                         onClick={() => setHistoryType('sinergy')}
                         className={`px-3 py-1 rounded text-[10px] font-black uppercase transition-all ${historyType === 'sinergy' ? 'bg-white text-green-700 shadow-sm' : 'text-gray-400'}`}
                     >
-                        Sinergy
+                        E-commerce
                     </button>
                 </div>
             </div>
@@ -372,7 +372,7 @@ const PurchasesTab = () => {
             ) : (
                 physicalOrders.length === 0 ? (
                     <div className="text-center py-8 text-gray-400 bg-gray-50 rounded-xl border border-dashed text-xs">
-                        Belum ada riwayat belanja produk Sinergy
+                        Belum ada riwayat belanja produk E-commerce
                     </div>
                 ) : (
                     <div className="space-y-3">
@@ -1104,7 +1104,7 @@ const ProfilePage = () => {
                                         <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest px-1">Lokasi & Pengiriman</h4>
                                         <div className="bg-emerald-50 rounded-2xl p-4 mb-4 border border-emerald-100 flex gap-3">
                                             <span className="material-icons text-emerald-600">info</span>
-                                            <p className="text-[11px] text-emerald-800 leading-relaxed font-medium">Data kelurahan digunakan untuk menghitung biaya ongkir dari kurir Sinergy kami.</p>
+                                            <p className="text-[11px] text-emerald-800 leading-relaxed font-medium">Data kelurahan digunakan untuk menghitung biaya ongkir dari kurir E-commerce kami.</p>
                                         </div>
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                             <ProfileInfoItem label="Provinsi" value={profile.address_province} icon="domain" />

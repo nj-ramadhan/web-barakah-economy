@@ -1,8 +1,15 @@
 // components/layout/Header.js
 import { Link } from 'react-router-dom';
 import '../../styles/Header.css';
+import { useTranslation } from 'react-i18next';
 
 const Header = () => {
+  const { i18n } = useTranslation();
+
+  const toggleLanguage = () => {
+    const newLang = i18n.language === 'en' ? 'id' : 'en';
+    i18n.changeLanguage(newLang);
+  };
   return (
     <header className="bg-white shadow-sm sticky top-0 z-[1001] lg:hidden" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
       <div className="container px-4 py-2 flex items-center justify-between">
@@ -13,6 +20,13 @@ const Header = () => {
           <span className="text-xl font-black text-green-800 tracking-tighter">BARAKAH ECONOMY</span>
         </Link>
         <div className="flex items-center gap-2">
+          <button
+            onClick={toggleLanguage}
+            className="w-10 h-10 flex items-center justify-center text-green-700 font-bold bg-green-50 rounded-full hover:bg-green-100 transition border border-green-100"
+            title="Switch Language"
+          >
+            {i18n.language === 'en' ? 'ID' : 'EN'}
+          </button>
           <a
             href={localStorage.getItem('user') ? "/profile" : "/login"}
             className="w-10 h-10 flex items-center justify-center text-gray-500 bg-gray-50 rounded-full overflow-hidden border border-gray-200"

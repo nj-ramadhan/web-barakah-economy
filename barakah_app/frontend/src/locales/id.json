@@ -1,0 +1,41 @@
+{
+  "header": {
+    "search": "Cari...",
+    "home": "Beranda",
+    "about": "Tentang Kami",
+    "charity": "Charity",
+    "ecommerce": "E-commerce",
+    "academy": "Academy",
+    "articles": "Artikel",
+    "digital_products": "Produk Digital",
+    "login": "Masuk",
+    "profile": "Profil"
+  },
+  "home": {
+    "hero_title": "Barakah Economy",
+    "hero_subtitle": "Memberdayakan Ekonomi Umat dengan Ekosistem Halal",
+    "explore": "Jelajahi Sekarang",
+    "about_title": "Apa itu Barakah Economy?",
+    "about_desc": "Kami adalah platform digital yang berfokus pada pemberdayaan ekonomi umat Islam. Melalui program charity, e-commerce, dan edukasi, kami membangun ekosistem yang mendukung untuk umat."
+  },
+  "menu": {
+    "products_services": "Produk & Layanan",
+    "activities_social": "Aktivitas & Sosial",
+    "info_discussion": "Informasi & Diskusi",
+    "ecommerce": "E-commerce",
+    "ecourse": "E-Course",
+    "digital_products": "Produk Digital",
+    "master_data": "Master Data",
+    "event": "Event",
+    "social_charity": "Social Charity",
+    "information": "Informasi",
+    "discussion_forum": "Forum Diskusi",
+    "zakat_calculator": "Kalkulator Zakat"
+  },
+  "dashboard": {
+    "title": "Dashboard"
+  },
+  "profile": {
+    "title": "Profil"
+  }
+}

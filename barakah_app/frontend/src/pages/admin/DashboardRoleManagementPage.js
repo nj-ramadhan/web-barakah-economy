@@ -34,8 +34,8 @@ const MENU_OPTIONS = [
     { key: 'articles', label: 'Tulis Article' },
     { key: 'event', label: 'Event' },
     { key: 'admin_events', label: 'Manajemen Event' },
-    { key: 'sinergy_products', label: 'Pembuatan Produk (Sinergy)' },
-    { key: 'admin_sinergy', label: 'Manajemen Sinergy (Admin)' },
+    { key: 'sinergy_products', label: 'Pembuatan Produk (E-commerce)' },
+    { key: 'admin_sinergy', label: 'Manajemen E-commerce (Admin)' },
 ];
 
 // All profile fields that can be set as required

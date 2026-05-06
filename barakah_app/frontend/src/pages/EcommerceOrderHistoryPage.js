@@ -95,7 +95,7 @@ const EcommerceOrderHistoryPage = () => {
                 <div className="mb-8 flex items-center justify-between">
                     <div>
                         <h1 className="text-2xl font-black text-gray-900 tracking-tight">RIWAYAT BELANJA</h1>
-                        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1">Daftar pesanan produk Sinergy Anda</p>
+                        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1">Daftar pesanan produk E-commerce Anda</p>
                     </div>
                     <button 
                         onClick={() => navigate('/belanja')}
@@ -117,7 +117,7 @@ const EcommerceOrderHistoryPage = () => {
                             <span className="material-icons text-4xl text-gray-300">shopping_bag</span>
                         </div>
                         <h3 className="font-bold text-gray-900 mb-2">Belum ada pesanan</h3>
-                        <p className="text-sm text-gray-500 mb-8 max-w-xs mx-auto">Anda belum pernah melakukan pembelian produk Sinergy.</p>
+                        <p className="text-sm text-gray-500 mb-8 max-w-xs mx-auto">Anda belum pernah melakukan pembelian produk E-commerce.</p>
                         <button
                             onClick={() => navigate('/belanja')}
                             className="bg-emerald-600 text-white px-8 py-3 rounded-2xl font-bold text-sm tracking-wide hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-100"

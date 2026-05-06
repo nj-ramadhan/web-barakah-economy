@@ -1,0 +1,41 @@
+{
+  "header": {
+    "search": "Search...",
+    "home": "Home",
+    "about": "About Us",
+    "charity": "Charity",
+    "ecommerce": "E-commerce",
+    "academy": "Academy",
+    "articles": "Articles",
+    "digital_products": "Digital Products",
+    "login": "Log In",
+    "profile": "Profile"
+  },
+  "home": {
+    "hero_title": "Barakah Economy",
+    "hero_subtitle": "Empowering Ummah's Economy with Halal Ecosystem",
+    "explore": "Explore Now",
+    "about_title": "What is Barakah Economy?",
+    "about_desc": "We are a digital platform focused on empowering the Muslim community's economy. Through programs like charity, e-commerce, and education, we build a supportive ecosystem for Muslims."
+  },
+  "menu": {
+    "products_services": "Products & Services",
+    "activities_social": "Activities & Social",
+    "info_discussion": "Info & Discussion",
+    "ecommerce": "E-commerce",
+    "ecourse": "E-Course",
+    "digital_products": "Digital Products",
+    "master_data": "Master Data",
+    "event": "Event",
+    "social_charity": "Social Charity",
+    "information": "Information",
+    "discussion_forum": "Discussion Forum",
+    "zakat_calculator": "Zakat Calculator"
+  },
+  "dashboard": {
+    "title": "Dashboard"
+  },
+  "profile": {
+    "title": "Profile"
+  }
+}

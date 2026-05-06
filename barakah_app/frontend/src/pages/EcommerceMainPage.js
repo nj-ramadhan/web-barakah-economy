@@ -185,7 +185,7 @@ const EcommerceMainPage = () => {
     <div className="body">
       <Helmet>
         <meta name="description" content="Beli Produk yang Halal Toyyib Barakah dari UMKM Terpercaya" />
-        <meta property="og:title" content="BARAKAH SINERGY" />
+        <meta property="og:title" content="BARAKAH E-COMMERCE" />
         <meta property="og:description" content="Beli Produk yang Halal Toyyib Barakah dari UMKM Terpercaya" />
         <meta property="og:image" content="%PUBLIC_URL%/images/web-thumbnail.jpg" />
         <meta property="og:type" content="website" />
@@ -278,7 +278,7 @@ const EcommerceMainPage = () => {
       <div className="px-4 py-8 max-w-6xl mx-auto">
         <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
           <span className="w-1.5 h-6 bg-green-600 rounded-full"></span>
-          Semua Produk Sinergy
+          Semua Produk E-commerce
         </h2>
         {loading ? (
           <div className="flex justify-center items-center py-8">

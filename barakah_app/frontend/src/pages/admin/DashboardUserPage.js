@@ -161,6 +161,37 @@ const DashboardUserPage = () => {
         }
     };
 
+    const handleInlineEdit = async (userId, field, value) => {
+        try {
+            await axios.post(`${API}/api/auth/users/batch_update/`, {
+                user_ids: [userId],
+                field,
+                value
+            }, getAuth());
+            // Update local state without fetching all
+            setUsers(users.map(u => {
+                if (u.id === userId) {
+                    if (['role', 'phone', 'username', 'email', 'is_verified_member'].includes(field)) {
+                        return { ...u, [field]: value };
+                    } else if (['name_full', 'id_m', 'address_province'].includes(field)) {
+                        return { ...u, profile: { ...u.profile, [field]: value } };
+                    } else if (field === 'custom_role_ids') {
+                        return { ...u, custom_roles: allRoles.filter(r => value.includes(r.id)) };
+                    } else if (field === 'label_ids') {
+                        return { ...u, labels: allLabels.filter(r => value.includes(r.id)) };
+                    } else if (field === 'lingkup_tugas_ids') {
+                        return { ...u, lingkup_tugas: allLingkup.filter(r => value.includes(r.id)) };
+                    } else if (field === 'bidang_tugas_ids') {
+                        return { ...u, bidang_tugas: allBidang.filter(r => value.includes(r.id)) };
+                    }
+                }
+                return u;
+            }));
+        } catch (err) {
+            alert('Gagal update inline: ' + (err.response?.data?.error || err.message));
+        }
+    };
+
     const openAddModal = () => {
         setEditingUser(null);
         setEditFormData({
@@ -466,7 +497,7 @@ const DashboardUserPage = () => {
                                         <SH label="Join" field="date_joined" {...{ sortField, sortDir, handleSort, getSortIcon }} />
                                         <th className="px-3 py-4 text-gray-600 font-bold uppercase tracking-wider text-[11px] min-w-[150px]">Charity</th>
                                         <th className="px-3 py-4 text-gray-600 font-bold uppercase tracking-wider text-[11px] min-w-[150px]">Event</th>
-                                        <th className="px-3 py-4 text-gray-600 font-bold uppercase tracking-wider text-[11px] min-w-[150px]">Sinergy</th>
+                                        <th className="px-3 py-4 text-gray-600 font-bold uppercase tracking-wider text-[11px] min-w-[150px]">E-commerce</th>
                                         <th className="px-3 py-4 text-gray-600 font-bold uppercase tracking-wider text-[11px] min-w-[150px]">E-Course</th>
                                         <th className="px-3 py-4 text-gray-600 font-bold uppercase tracking-wider text-[11px] min-w-[150px]">Digital</th>
                                         <th className="px-3 py-4 text-gray-600 font-bold uppercase tracking-wider text-[11px] text-center">V</th>
@@ -479,49 +510,65 @@ const DashboardUserPage = () => {
                                             <td className="px-3 py-3"><input type="checkbox" checked={selectedUserIds.includes(u.id)} onChange={() => toggleSelectUser(u.id)} className="w-4 h-4 text-green-600 rounded" /></td>
                                             <td className="px-3 py-3 text-xs font-black text-gray-400">#{u.id}</td>
                                             <td className="px-3 py-3">
-                                                <div className="font-mono text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-lg border border-blue-100 text-center">
-                                                    {u.profile?.id_m || '-'}
-                                                </div>
+                                                <input type="text" defaultValue={u.profile?.id_m || ''} onBlur={(e) => { if (e.target.value !== (u.profile?.id_m || '')) handleInlineEdit(u.id, 'id_m', e.target.value); }} className="w-20 font-mono text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-lg border border-blue-100 text-center outline-none focus:ring-2 focus:ring-blue-400" placeholder="-" />
                                             </td>
                                             <td className="px-3 py-3">
-                                                <div className="font-bold text-gray-900 text-[11px] leading-tight">{u.username}</div>
-                                                <div className="text-[10px] text-gray-400 truncate max-w-[120px]">{u.email}</div>
+                                                <input type="text" defaultValue={u.username || ''} onBlur={(e) => { if (e.target.value !== (u.username || '')) handleInlineEdit(u.id, 'username', e.target.value); }} className="w-full min-w-[100px] bg-transparent border border-transparent hover:border-gray-200 focus:border-green-500 focus:bg-white rounded px-1 py-0.5 text-gray-900 font-bold text-[11px] leading-tight outline-none" placeholder="Username" />
+                                                <input type="email" defaultValue={u.email || ''} onBlur={(e) => { if (e.target.value !== (u.email || '')) handleInlineEdit(u.id, 'email', e.target.value); }} className="w-full min-w-[100px] bg-transparent border border-transparent hover:border-gray-200 focus:border-green-500 focus:bg-white rounded px-1 py-0.5 text-[10px] text-gray-400 mt-0.5 outline-none" placeholder="Email" />
                                             </td>
                                             <td className="px-3 py-3">
-                                                <div className="text-gray-900 font-bold text-[11px] line-clamp-1">{u.profile?.name_full || '-'}</div>
-                                                <div className="text-[10px] text-gray-400 mt-0.5">
-                                                    {PROVINCE_CHOICES.find(p => p[0] === u.profile?.address_province)?.[1] || '-'}
-                                                </div>
+                                                <textarea defaultValue={u.profile?.name_full || ''} onBlur={(e) => { if (e.target.value !== (u.profile?.name_full || '')) handleInlineEdit(u.id, 'name_full', e.target.value); }} className="w-full min-w-[120px] bg-transparent border border-transparent hover:border-gray-200 focus:border-green-500 focus:bg-white rounded px-1 py-0.5 text-gray-900 font-bold text-[11px] leading-tight outline-none resize-none" rows={2} placeholder="-" />
+                                                <select defaultValue={u.profile?.address_province || ''} onChange={(e) => { if (e.target.value !== (u.profile?.address_province || '')) handleInlineEdit(u.id, 'address_province', e.target.value); }} className="w-full max-w-[120px] bg-transparent border border-transparent hover:border-gray-200 focus:border-green-500 focus:bg-white rounded px-1 py-0.5 text-[10px] text-gray-500 outline-none mt-0.5 cursor-pointer">
+                                                    <option value="">- Pilih Provinsi -</option>
+                                                    {PROVINCE_CHOICES.map(p => <option key={p[0]} value={p[0]}>{p[1]}</option>)}
+                                                </select>
                                             </td>
                                             <td className="px-3 py-3 text-gray-600 text-[11px] whitespace-nowrap">
-                                                {u.phone || <span className="text-gray-300 italic">None</span>}
+                                                <input type="text" defaultValue={u.phone || ''} onBlur={(e) => { if (e.target.value !== (u.phone || '')) handleInlineEdit(u.id, 'phone', e.target.value); }} className="w-full min-w-[100px] bg-transparent border border-transparent hover:border-gray-200 focus:border-green-500 focus:bg-white rounded px-1 py-0.5 text-[11px] leading-tight outline-none" placeholder="-" />
                                             </td>
                                             <td className="px-3 py-3">
-                                                <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase ${u.role === 'admin' ? 'bg-red-50 text-red-600' : u.role === 'seller' ? 'bg-orange-50 text-orange-600' : 'bg-blue-50 text-blue-600'}`}>{u.role}</span>
+                                                <select defaultValue={u.role} onChange={(e) => { if (e.target.value !== u.role) handleInlineEdit(u.id, 'role', e.target.value); }} className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase outline-none cursor-pointer ${u.role === 'admin' ? 'bg-red-50 text-red-600' : u.role === 'seller' ? 'bg-orange-50 text-orange-600' : 'bg-blue-50 text-blue-600'}`}>
+                                                    <option value="user">USER</option>
+                                                    <option value="admin">ADMIN</option>
+                                                    <option value="seller">SELLER</option>
+                                                    <option value="staff">STAFF</option>
+                                                </select>
                                             </td>
                                             <td className="px-3 py-3">
-                                                <div className="max-w-[120px] flex flex-wrap gap-0.5">
-                                                    {(u.custom_roles || []).map(r => <span key={r.id} className="px-1.5 py-0.5 rounded bg-green-50 text-green-700 border border-green-100 text-[9px] font-bold">{r.name}</span>)}
-                                                    {(u.custom_roles || []).length === 0 && <span className="text-gray-300 text-[10px]">-</span>}
-                                                </div>
+                                                <select multiple defaultValue={(u.custom_roles || []).map(r => r.id)} onBlur={(e) => {
+                                                    const ids = Array.from(e.target.selectedOptions, option => parseInt(option.value, 10));
+                                                    const current = (u.custom_roles || []).map(r => r.id).sort().join(',');
+                                                    if (ids.sort().join(',') !== current) handleInlineEdit(u.id, 'custom_role_ids', ids);
+                                                }} className="w-full min-w-[100px] h-12 text-[9px] bg-transparent border border-transparent hover:border-gray-200 focus:border-green-500 rounded outline-none p-1 overflow-y-auto">
+                                                    {allRoles.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
+                                                </select>
                                             </td>
                                             <td className="px-3 py-3">
-                                                <div className="max-w-[120px] flex flex-wrap gap-0.5">
-                                                    {(u.labels || []).map(l => <span key={l.id} className="px-1.5 py-0.5 rounded bg-purple-50 text-purple-700 border border-purple-100 text-[9px] font-bold">{l.name}</span>)}
-                                                    {(u.labels || []).length === 0 && <span className="text-gray-300 text-[10px]">-</span>}
-                                                </div>
+                                                <select multiple defaultValue={(u.labels || []).map(r => r.id)} onBlur={(e) => {
+                                                    const ids = Array.from(e.target.selectedOptions, option => parseInt(option.value, 10));
+                                                    const current = (u.labels || []).map(r => r.id).sort().join(',');
+                                                    if (ids.sort().join(',') !== current) handleInlineEdit(u.id, 'label_ids', ids);
+                                                }} className="w-full min-w-[100px] h-12 text-[9px] bg-transparent border border-transparent hover:border-gray-200 focus:border-purple-500 rounded outline-none p-1 overflow-y-auto">
+                                                    {allLabels.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
+                                                </select>
                                             </td>
                                             <td className="px-3 py-3">
-                                                <div className="max-w-[120px] flex flex-wrap gap-0.5">
-                                                    {(u.lingkup_tugas || []).map(l => <span key={l.id} className="px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-100 text-[9px] font-bold">{l.name}</span>)}
-                                                    {(u.lingkup_tugas || []).length === 0 && <span className="text-gray-300 text-[10px]">-</span>}
-                                                </div>
+                                                <select multiple defaultValue={(u.lingkup_tugas || []).map(r => r.id)} onBlur={(e) => {
+                                                    const ids = Array.from(e.target.selectedOptions, option => parseInt(option.value, 10));
+                                                    const current = (u.lingkup_tugas || []).map(r => r.id).sort().join(',');
+                                                    if (ids.sort().join(',') !== current) handleInlineEdit(u.id, 'lingkup_tugas_ids', ids);
+                                                }} className="w-full min-w-[100px] h-12 text-[9px] bg-transparent border border-transparent hover:border-gray-200 focus:border-blue-500 rounded outline-none p-1 overflow-y-auto">
+                                                    {allLingkup.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
+                                                </select>
                                             </td>
                                             <td className="px-3 py-3">
-                                                <div className="max-w-[120px] flex flex-wrap gap-0.5">
-                                                    {(u.bidang_tugas || []).map(l => <span key={l.id} className="px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-100 text-[9px] font-bold">{l.name}</span>)}
-                                                    {(u.bidang_tugas || []).length === 0 && <span className="text-gray-300 text-[10px]">-</span>}
-                                                </div>
+                                                <select multiple defaultValue={(u.bidang_tugas || []).map(r => r.id)} onBlur={(e) => {
+                                                    const ids = Array.from(e.target.selectedOptions, option => parseInt(option.value, 10));
+                                                    const current = (u.bidang_tugas || []).map(r => r.id).sort().join(',');
+                                                    if (ids.sort().join(',') !== current) handleInlineEdit(u.id, 'bidang_tugas_ids', ids);
+                                                }} className="w-full min-w-[100px] h-12 text-[9px] bg-transparent border border-transparent hover:border-gray-200 focus:border-emerald-500 rounded outline-none p-1 overflow-y-auto">
+                                                    {allBidang.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
+                                                </select>
                                             </td>
 
                                             <td className="px-3 py-3 text-gray-500 text-[10px] whitespace-nowrap">
@@ -533,7 +580,7 @@ const DashboardUserPage = () => {
                                             <td className="px-3 py-3"><ActivityList items={u.activities?.courses} /></td>
                                             <td className="px-3 py-3"><ActivityList items={u.activities?.digital_products} /></td>
                                             <td className="px-3 py-3 text-center">
-                                                {u.is_verified_member ? <span className="material-icons text-green-600 text-sm">verified</span> : <span className="material-icons text-gray-200 text-sm">cancel</span>}
+                                                <input type="checkbox" defaultChecked={u.is_verified_member} onChange={(e) => handleInlineEdit(u.id, 'is_verified_member', e.target.checked)} className="w-4 h-4 text-green-600 rounded cursor-pointer" />
                                             </td>
                                             <td className="px-3 py-3">
                                                 <div className="flex items-center justify-center gap-1">
@@ -658,7 +705,7 @@ const DashboardUserPage = () => {
                                         <ActivityList items={selectedUser.activities?.events} />
                                     </div>
                                     <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100">
-                                        <p className="text-[10px] font-bold text-orange-700 uppercase mb-2">Sinergy</p>
+                                        <p className="text-[10px] font-bold text-orange-700 uppercase mb-2">E-commerce</p>
                                         <ActivityList items={selectedUser.activities?.sinergy} />
                                     </div>
                                     <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100">

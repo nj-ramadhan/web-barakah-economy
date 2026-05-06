@@ -1,14 +1,22 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import '../../styles/Header.css'; // Import the CSS file
+import { useTranslation } from 'react-i18next';
 
 const HeaderHome = ({ onSearch }) => {
   const [searchQuery, setSearchQuery] = useState('');
+
+  const { t, i18n } = useTranslation();
 
   const handleSearchChange = (e) => {
     const query = e.target.value;
     setSearchQuery(query);
     onSearch(query); // Pass the search query to the parent component
+  };
+
+  const toggleLanguage = () => {
+    const newLang = i18n.language === 'en' ? 'id' : 'en';
+    i18n.changeLanguage(newLang);
   };
 
   return (
@@ -24,19 +32,20 @@ const HeaderHome = ({ onSearch }) => {
           <div className="flex-1 max-w-[200px] mx-4 lg:mr-0 lg:ml-auto lg:max-w-[300px]">
             <input
               type="text"
-              placeholder="Cari..."
+              placeholder={t('header.search')}
               value={searchQuery}
               onChange={handleSearchChange}
               className="w-full px-4 py-2 border rounded-full text-sm focus:outline-none focus:ring-1 focus:ring-green-500 bg-white"
             />
           </div>
           <div className="flex items-center gap-2 lg:hidden">
-            <a
-              href={localStorage.getItem('user') ? "/profile" : "/login"}
-              className="w-10 h-10 flex items-center justify-center text-gray-500 bg-gray-50 rounded-full"
+            <button
+              onClick={toggleLanguage}
+              className="w-10 h-10 flex items-center justify-center text-green-700 font-bold bg-green-50 rounded-full hover:bg-green-100 transition"
+              title="Switch Language"
             >
-              <span className="material-icons text-xl">{localStorage.getItem('user') ? 'account_circle' : 'login'}</span>
-            </a>
+              {i18n.language === 'en' ? 'ID' : 'EN'}
+            </button>
           </div>
         </div>
       </div>

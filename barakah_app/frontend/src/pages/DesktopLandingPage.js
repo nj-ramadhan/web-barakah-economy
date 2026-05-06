@@ -190,7 +190,7 @@ const DesktopLandingPage = () => {
                                             articles[0] && { type: 'Artikel', title: articles[0].title, img: articles[0].images?.[0]?.path, link: `/articles/${articles[0].id}` },
                                             campaigns[0] && { type: 'Charity', title: campaigns[0].title, img: campaigns[0].thumbnail, link: `/kampanye/${campaigns[0].slug || campaigns[0].id}` },
                                             courses[0] && { type: 'Academy', title: courses[0].title, img: courses[0].thumbnail, link: `/kelas/${courses[0].slug || courses[0].id}` },
-                                            products[0] && { type: 'Sinergy', title: products[0].title, img: products[0].thumbnail, link: `/produk/${products[0].slug || products[0].id}` },
+                                            products[0] && { type: 'E-commerce', title: products[0].title, img: products[0].thumbnail, link: `/produk/${products[0].slug || products[0].id}` },
                                             digitalProducts[0] && { type: 'Digital', title: digitalProducts[0].title, img: digitalProducts[0].thumbnail, link: `/digital-products/${digitalProducts[0].slug}` }
                                         ].filter(Boolean).slice(0, 5).map((item, idx) => (
                                             <SwiperSlide key={idx}>
@@ -257,7 +257,7 @@ const DesktopLandingPage = () => {
                                     <div className="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-blue-600 transition">
                                         <span className="material-icons text-3xl text-blue-700 group-hover:text-white">shopping_bag</span>
                                     </div>
-                                    <h3 className="text-xl font-bold text-gray-900 mb-3">Sinergy Halal Mart</h3>
+                                    <h3 className="text-xl font-bold text-gray-900 mb-3">E-commerce Halal Mart</h3>
                                     <p className="text-gray-600 mb-4 text-sm">Penuhi kebutuhan harian dengan produk halal, bermutu, dan mendukung ekonomi umat.</p>
                                     <Link className="text-blue-700 font-semibold hover:underline text-sm" to="/sinergy">Lihat Produk →</Link>
                                 </div>
@@ -477,7 +477,7 @@ const DesktopLandingPage = () => {
                         <div className="max-w-6xl mx-auto">
                             <div className="flex justify-between items-center mb-8">
                                 <div>
-                                    <h2 className="text-3xl font-bold text-gray-900">Produk Sinergy</h2>
+                                    <h2 className="text-3xl font-bold text-gray-900">Produk E-commerce</h2>
                                     <p className="text-gray-500 mt-2">Penuhi kebutuhan harianmu dengan produk halal</p>
                                 </div>
                                 <Link to="/sinergy" className="px-6 py-2 border border-blue-600 text-blue-700 font-semibold rounded-lg hover:bg-blue-50 transition">
@@ -969,7 +969,7 @@ const DesktopLandingPage = () => {
                         <ul className="space-y-2 text-sm">
                             <li><Link to="/about" className="hover:text-white transition">Tentang Kami</Link></li>
                             <li><Link to="/charity" className="hover:text-white transition">Charity</Link></li>
-                            <li><Link to="/sinergy" className="hover:text-white transition">Sinergy</Link></li>
+                            <li><Link to="/sinergy" className="hover:text-white transition">E-commerce</Link></li>
                             <li><Link to="/academy" className="hover:text-white transition">Academy</Link></li>
                             <li><Link to="/articles" className="hover:text-white transition">Artikel</Link></li>
                             <li><Link to="/digital-products" className="hover:text-white transition">Produk Digital</Link></li>

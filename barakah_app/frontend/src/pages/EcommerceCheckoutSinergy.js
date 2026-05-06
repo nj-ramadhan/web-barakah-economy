@@ -40,7 +40,7 @@ const EcommerceCheckoutSinergy = () => {
                 const p = profileRes.data;
                 // Basic Validation for Shipping
                 if (!p.address_village_id || !p.address) {
-                    alert('Mohon lengkapi Alamat, Kota, Kecamatan, dan Kelurahan di profil Anda untuk kalkulasi ongkos kirim Sinergy.');
+                    alert('Mohon lengkapi Alamat, Kota, Kecamatan, dan Kelurahan di profil Anda untuk kalkulasi ongkos kirim E-commerce.');
                     navigate('/profile/edit?complete=address');
                     return;
                 }

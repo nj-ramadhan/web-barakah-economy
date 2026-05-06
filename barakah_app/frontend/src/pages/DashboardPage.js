@@ -9,12 +9,14 @@ import { formatCurrency } from '../utils/formatters';
 import { getMyDigitalProducts, getDigitalBalance, getWithdrawalHistory, createWithdrawalRequest } from '../services/digitalProductApi';
 import { getMyCourses } from '../services/ecourseApi';
 import authService from '../services/auth';
+import { useTranslation } from 'react-i18next';
 
 const formatIDR = (amount) => {
     return 'Rp ' + formatCurrency(amount);
 };
 
 const DashboardPage = () => {
+    const { t } = useTranslation();
     const navigate = useNavigate();
     const [productCount, setProductCount] = useState(0);
     const [courseCount, setCourseCount] = useState(0);
@@ -315,7 +317,7 @@ const DashboardPage = () => {
             <Header />
 
             <div className="max-w-6xl mx-auto px-4 py-4 pb-20">
-                <h1 className="text-xl font-bold mb-6">Dashboard</h1>
+                <h1 className="text-xl font-bold mb-6">{t('dashboard.title', 'Dashboard')}</h1>
 
                 {/* Balance Card */}
                 <div className="bg-gradient-to-br from-green-700 to-green-800 rounded-2xl p-5 mb-6 text-white shadow-lg relative overflow-hidden">
@@ -340,7 +342,7 @@ const DashboardPage = () => {
                             <div className="flex gap-2">
                                 <span>Digital: {formatIDR(balanceData.digital_sales_total || 0)}</span>
                                 <span>Course: {formatIDR(balanceData.course_sales_total || 0)}</span>
-                                <span>Sinergy: {formatIDR(balanceData.total_sinergy_sales || 0)}</span>
+                                <span>E-commerce: {formatIDR(balanceData.total_sinergy_sales || 0)}</span>
                             </div>
                         </div>
                     </div>
@@ -366,7 +368,7 @@ const DashboardPage = () => {
                                 </div>
                             )}
                             <span className="material-icons text-2xl mb-1">shopping_bag</span>
-                            <p className="font-bold text-2xl">Sinergy</p>
+                            <p className="font-bold text-2xl">E-commerce</p>
                             <p className="text-[10px] opacity-80 uppercase tracking-wider font-semibold">Produk Fisik</p>
                         </Link>
                     ) : null}
@@ -556,7 +558,7 @@ const DashboardPage = () => {
                                         <span className="material-icons text-green-700">inventory</span>
                                     </div>
                                     <div className="flex-1">
-                                        <h3 className="font-bold text-gray-800 text-sm">Pembuatan Produk (Sinergy)</h3>
+                                        <h3 className="font-bold text-gray-800 text-sm">Pembuatan Produk (E-commerce)</h3>
                                         <p className="text-[11px] text-gray-500">Kelola dan tambah produk fisik Anda</p>
                                     </div>
                                     <span className="material-icons text-gray-400">chevron_right</span>
