@@ -208,7 +208,7 @@ export const searchUsers = (search = '') => {
 };
 
 export const getAvailableUsers = (slug, search = '') => {
-    return axios.get(`${API_BASE_URL}/api/events/${slug}/available_users/`, {
+    return axios.get(`${API_BASE_URL}/api/events/${slug}/available-users/`, {
         params: { search },
         headers: getAuthHeaders()
     });

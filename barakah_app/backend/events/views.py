@@ -465,15 +465,14 @@ class EventViewSet(viewsets.ModelViewSet):
             "message": f"Berhasil mendaftarkan {count} user secara manual."
         }, status=status.HTTP_201_CREATED)
 
-    @action(detail=True, methods=['get'], permission_classes=[permissions.IsAuthenticated])
+    @action(detail=True, methods=['get'], permission_classes=[permissions.IsAuthenticated], url_path='available-users')
     def available_users(self, request, slug=None):
-        """Get users who are NOT yet registered for this event."""
+        """Get users who are NOT yet registered for this event and have complete data."""
         event = self.get_object()
         if not (request.user.is_staff or event.created_by == request.user or request.user.has_menu_access('admin_events')):
             return Response({"error": "Unauthorized"}, status=status.HTTP_403_FORBIDDEN)
 
         from accounts.models import User
-        from django.db.models import Q
         
         search = request.query_params.get('search', '')
         
