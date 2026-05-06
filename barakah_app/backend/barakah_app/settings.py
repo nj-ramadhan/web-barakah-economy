@@ -342,10 +342,8 @@ if DEBUG:
     # STATIC_ROOT = BASE_DIR / 'static'
     MEDIA_ROOT = BASE_DIR / 'media'
 else:
-    # STATIC_ROOT = '/var/www/barakah-economy/barakah_app/backend/static/'
-    # MEDIA_ROOT = '/var/www/barakah-economy/barakah_app/backend/media/'
-    STATIC_ROOT = env('STATIC_ROOT', default='/app/static/')
-    MEDIA_ROOT = env('MEDIA_ROOT', default='/app/media/')
+    STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+    MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # File upload settings
 FILE_UPLOAD_MAX_MEMORY_SIZE = 100 * 1024 * 1024  # 100MB limit
