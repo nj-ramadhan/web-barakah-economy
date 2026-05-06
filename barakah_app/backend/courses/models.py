@@ -103,16 +103,34 @@ class CourseEnrollment(models.Model):
         pass
 
 class CourseMaterial(models.Model):
+    MATERIAL_TYPE_CHOICES = [
+        ('video', 'Video (YouTube)'),
+        ('text', 'Penjabaran Materi (Teks/Gambar)'),
+        ('quiz', 'Kuis (Pilihan Ganda)'),
+    ]
+
     course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='materials')
     title = models.CharField(max_length=255)
-    description = models.TextField(blank=True, null=True)
+    material_type = models.CharField(max_length=20, choices=MATERIAL_TYPE_CHOICES, default='video')
+    description = models.TextField(blank=True, null=True, help_text="Short summary or instructions")
+    
+    # For Video type
     youtube_link = models.URLField(max_length=500, blank=True, null=True)
+    
+    # For Text type
+    content_text = RichTextField(blank=True, null=True)
+    
+    # For Quiz type
+    quiz_data = models.JSONField(blank=True, null=True, help_text="Store questions, options, and settings")
+    
+    # For all types
     pdf_file = models.FileField(upload_to='course_materials/pdf/', blank=True, null=True)
+    
     order = models.PositiveIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.title} - {self.course.title}"
+        return f"{self.title} - {self.course.title} ({self.get_material_type_display()})"
 
     class Meta:
         ordering = ['order', 'created_at']

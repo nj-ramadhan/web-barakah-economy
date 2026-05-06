@@ -5,7 +5,28 @@ from django.contrib.auth import get_user_model
 class CourseMaterialSerializer(serializers.ModelSerializer):
     class Meta:
         model = CourseMaterial
-        fields = ['id', 'course', 'title', 'description', 'youtube_link', 'pdf_file', 'order', 'created_at']
+        fields = [
+            'id', 'course', 'title', 'material_type', 'description', 
+            'youtube_link', 'content_text', 'quiz_data', 'pdf_file', 
+            'order', 'created_at'
+        ]
+
+    def to_internal_value(self, data):
+        # Handle quiz_data if it's sent as a JSON string (via FormData)
+        if 'quiz_data' in data:
+            quiz_data = data.get('quiz_data')
+            if isinstance(quiz_data, str) and quiz_data:
+                import json
+                try:
+                    # Create a copy that we can modify
+                    if hasattr(data, 'dict'):
+                        data = data.dict()
+                    else:
+                        data = dict(data)
+                    data['quiz_data'] = json.loads(quiz_data)
+                except (ValueError, TypeError):
+                    pass
+        return super().to_internal_value(data)
 
 class UserCourseProgressSerializer(serializers.ModelSerializer):
     class Meta:
