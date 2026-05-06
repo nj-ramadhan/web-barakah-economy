@@ -69,3 +69,32 @@ class ProfileSerializer(serializers.ModelSerializer):
             instance.user.save()
             
         return super().update(instance, validated_data)
+
+class PublicProfileSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(source='user.username', read_only=True)
+    has_digital_products = serializers.SerializerMethodField()
+    has_courses = serializers.SerializerMethodField()
+    has_physical_products = serializers.SerializerMethodField()
+    province_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Profile
+        fields = [
+            'user_id', 'username', 'nickname', 'name_full', 'picture', 
+            'google_picture_url', 'address_province', 'province_name',
+            'has_digital_products', 'has_courses', 'has_physical_products'
+        ]
+
+    def get_has_digital_products(self, obj):
+        return obj.user.digital_products.filter(is_active=True).exists()
+
+    def get_has_courses(self, obj):
+        return obj.user.instructed_courses.filter(is_active=True).exists()
+
+    def get_has_physical_products(self, obj):
+        return obj.user.physical_products.filter(is_active=True).exists()
+
+    def get_province_name(self, obj):
+        if not obj.address_province:
+            return ""
+        return dict(Profile.PROVINCE_CHOICES).get(obj.address_province, obj.address_province)

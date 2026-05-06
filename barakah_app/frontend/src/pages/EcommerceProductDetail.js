@@ -7,6 +7,7 @@ import Header from '../components/layout/Header';
 import NavigationButton from '../components/layout/Navigation';
 import { formatCurrency } from '../utils/formatters';
 import FloatingCartModal from '../components/layout/FloatingCartModal';
+import UserProfileModal from '../components/modals/UserProfileModal';
 import '../styles/Body.css';
 
 function getCsrfToken() {
@@ -56,6 +57,9 @@ const EcommerceProductDetail = () => {
   const [showFullDescription, setShowFullDescription] = useState(false);
   const [showFullTestimonies, setShowFullTestimonies] = useState({});
   const [selectedVariation, setSelectedVariation] = useState(null);
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [selectedUserId, setSelectedUserId] = useState(null);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
   const baseUrl = process.env.REACT_APP_API_BASE_URL;
 
@@ -253,14 +257,35 @@ const EcommerceProductDetail = () => {
         </button>
         <div className="bg-white rounded-2xl overflow-hidden shadow-lg border border-gray-100 flex flex-col md:flex-row">
           <div className="md:w-1/2">
-            <img
-              src={product.thumbnail || '/placeholder-image.jpg'}
-              alt={product.title}
-              className="w-full h-64 md:h-full object-cover"
-              onError={(e) => {
-                e.target.src = '/placeholder-image.jpg';
-              }}
-            />
+            <div className="relative group">
+              <img
+                src={selectedImage || product.thumbnail || '/placeholder-image.jpg'}
+                alt={product.title}
+                className="w-full h-80 md:h-[500px] object-cover transition-all duration-300"
+                onError={(e) => {
+                  e.target.src = '/placeholder-image.jpg';
+                }}
+              />
+              {product.images && product.images.length > 0 && (
+                <div className="flex gap-2 p-4 overflow-x-auto bg-white/80 backdrop-blur-sm absolute bottom-0 left-0 right-0">
+                   <div 
+                    className={`w-16 h-16 rounded-lg overflow-hidden border-2 cursor-pointer flex-shrink-0 transition ${(!selectedImage || selectedImage === product.thumbnail) ? 'border-green-600' : 'border-transparent'}`}
+                    onClick={() => setSelectedImage(product.thumbnail)}
+                  >
+                    <img src={product.thumbnail} className="w-full h-full object-cover" alt="thumb" />
+                  </div>
+                  {product.images.map((imgObj, idx) => (
+                    <div 
+                      key={idx} 
+                      className={`w-16 h-16 rounded-lg overflow-hidden border-2 cursor-pointer flex-shrink-0 transition ${selectedImage === imgObj.image ? 'border-green-600' : 'border-transparent'}`}
+                      onClick={() => setSelectedImage(imgObj.image)}
+                    >
+                      <img src={imgObj.image} className="w-full h-full object-cover" alt={`gallery-${idx}`} />
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
           <div className="p-6 md:p-10 md:w-1/2 flex flex-col justify-between">
             <div>
@@ -275,9 +300,23 @@ const EcommerceProductDetail = () => {
                         : formatIDR(product.price)
                     }
                    </p>
-                   <div className="flex items-center text-gray-400 text-xs gap-1">
-                        <span className="material-icons text-sm">visibility</span>
-                        {product.views_count || 0} kali dilihat
+                    <div className="flex items-center text-gray-400 text-xs gap-4">
+                        <div className="flex items-center gap-1">
+                          <span className="material-icons text-sm">visibility</span>
+                          {product.views_count || 0} kali dilihat
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <span className="material-icons text-sm text-green-600">storefront</span>
+                          oleh <span 
+                            className="font-bold text-green-700 hover:underline cursor-pointer"
+                            onClick={() => {
+                              setSelectedUserId(product.seller);
+                              setIsProfileModalOpen(true);
+                            }}
+                          >
+                            @{product.seller_name}
+                          </span>
+                        </div>
                     </div>
                 </div>
                 <p className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
@@ -470,6 +509,11 @@ const EcommerceProductDetail = () => {
 
       <NavigationButton />
       <FloatingCartModal />
+      <UserProfileModal 
+        userId={selectedUserId} 
+        isOpen={isProfileModalOpen} 
+        onClose={() => setIsProfileModalOpen(false)} 
+      />
     </div>
   );
 };

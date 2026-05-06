@@ -10,6 +10,7 @@ import Footer from '../components/layout/Footer';
 import CurrencyInput from '../components/common/CurrencyInput';
 import { formatCurrency } from '../utils/formatters';
 import { getMediaUrl } from '../utils/mediaUtils';
+import UserProfileModal from '../components/modals/UserProfileModal';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Pagination, Autoplay, EffectFade } from 'swiper/modules';
 import 'swiper/css';
@@ -41,6 +42,8 @@ const EventDetailPage = () => {
     const [registeredCode, setRegisteredCode] = useState(null); // kode unik QR setelah daftar
     const [registrationTimeLeft, setRegistrationTimeLeft] = useState(null);
     const [visibilityTimeLeft, setVisibilityTimeLeft] = useState(null);
+    const [selectedUserId, setSelectedUserId] = useState(null);
+    const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
     const calculateTimeLeft = (targetDate) => {
         if (!targetDate) return { total: 0 };
@@ -855,7 +858,15 @@ const EventDetailPage = () => {
                                                                         {p.name?.charAt(0).toUpperCase()}
                                                                     </div>
                                                                     <div className="min-w-0">
-                                                                        <p className="font-extrabold text-gray-900 truncate text-sm sm:text-base">
+                                                                        <p 
+                                                                            className={`font-extrabold text-gray-900 truncate text-sm sm:text-base ${p.user_id ? 'cursor-pointer hover:text-green-700 hover:underline' : ''}`}
+                                                                            onClick={() => {
+                                                                                if (p.user_id) {
+                                                                                    setSelectedUserId(p.user_id);
+                                                                                    setIsProfileModalOpen(true);
+                                                                                }
+                                                                            }}
+                                                                        >
                                                                             {p.name || 'Peserta'}
                                                                         </p>
                                                                         <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mt-0.5">
@@ -911,7 +922,15 @@ const EventDetailPage = () => {
                                                                             {p.name?.charAt(0).toUpperCase()}
                                                                         </div>
                                                                         <div className="min-w-0">
-                                                                            <p className={`font-extrabold ${color.text} truncate text-sm sm:text-base`}>
+                                                                            <p 
+                                                                                className={`font-extrabold ${color.text} truncate text-sm sm:text-base ${p.user_id ? 'cursor-pointer hover:underline' : ''}`}
+                                                                                onClick={() => {
+                                                                                    if (p.user_id) {
+                                                                                        setSelectedUserId(p.user_id);
+                                                                                        setIsProfileModalOpen(true);
+                                                                                    }
+                                                                                }}
+                                                                            >
                                                                                 {p.name || 'Peserta'}
                                                                             </p>
                                                                             <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mt-0.5">
@@ -1524,6 +1543,11 @@ const EventDetailPage = () => {
             )}
 
             <NavigationButton />
+            <UserProfileModal 
+                userId={selectedUserId} 
+                isOpen={isProfileModalOpen} 
+                onClose={() => setIsProfileModalOpen(false)} 
+            />
         </div>
     );
 };

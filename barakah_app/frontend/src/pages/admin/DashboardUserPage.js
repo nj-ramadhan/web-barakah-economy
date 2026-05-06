@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
 import axios from 'axios';
@@ -158,6 +158,24 @@ const DashboardUserPage = () => {
             alert('Gagal import: ' + (err.response?.data?.error || err.message));
         } finally {
             setImporting(false);
+        }
+    };
+
+    const handleDownloadTemplate = async () => {
+        try {
+            const response = await axios.get(`${API}/api/auth/users/download_import_template/`, {
+                ...getAuth(),
+                responseType: 'blob'
+            });
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', 'template_import_user.csv');
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+        } catch (err) {
+            alert('Gagal download template');
         }
     };
 
@@ -410,6 +428,10 @@ const DashboardUserPage = () => {
                             className="bg-blue-600 text-white px-5 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 shadow-lg hover:bg-blue-700 transition">
                             <span className="material-icons text-sm">upload_file</span> Import CSV
                         </button>
+                        <button onClick={handleDownloadTemplate}
+                            className="bg-blue-50 text-blue-700 px-5 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 shadow-sm border border-blue-100 hover:bg-blue-100 transition">
+                            <span className="material-icons text-sm">download</span> Template Import
+                        </button>
                         <button onClick={handleExportCsv}
                             className="bg-green-700 text-white px-5 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 shadow-lg shadow-green-100 hover:bg-green-800 transition">
                             <span className="material-icons text-sm">download</span> Export CSV
@@ -495,11 +517,6 @@ const DashboardUserPage = () => {
                                         <th className="px-3 py-4 text-gray-600 font-bold uppercase tracking-wider text-[11px] min-w-[100px]">Bidang Tugas</th>
 
                                         <SH label="Join" field="date_joined" {...{ sortField, sortDir, handleSort, getSortIcon }} />
-                                        <th className="px-3 py-4 text-gray-600 font-bold uppercase tracking-wider text-[11px] min-w-[150px]">Charity</th>
-                                        <th className="px-3 py-4 text-gray-600 font-bold uppercase tracking-wider text-[11px] min-w-[150px]">Event</th>
-                                        <th className="px-3 py-4 text-gray-600 font-bold uppercase tracking-wider text-[11px] min-w-[150px]">E-commerce</th>
-                                        <th className="px-3 py-4 text-gray-600 font-bold uppercase tracking-wider text-[11px] min-w-[150px]">E-Course</th>
-                                        <th className="px-3 py-4 text-gray-600 font-bold uppercase tracking-wider text-[11px] min-w-[150px]">Digital</th>
                                         <th className="px-3 py-4 text-gray-600 font-bold uppercase tracking-wider text-[11px] text-center">V</th>
                                         <th className="px-3 py-4 text-gray-600 font-bold uppercase tracking-wider text-[11px] text-center">Aksi</th>
                                     </tr>
@@ -535,50 +552,41 @@ const DashboardUserPage = () => {
                                                 </select>
                                             </td>
                                             <td className="px-3 py-3">
-                                                <select multiple defaultValue={(u.custom_roles || []).map(r => r.id)} onBlur={(e) => {
-                                                    const ids = Array.from(e.target.selectedOptions, option => parseInt(option.value, 10));
-                                                    const current = (u.custom_roles || []).map(r => r.id).sort().join(',');
-                                                    if (ids.sort().join(',') !== current) handleInlineEdit(u.id, 'custom_role_ids', ids);
-                                                }} className="w-full min-w-[100px] h-12 text-[9px] bg-transparent border border-transparent hover:border-gray-200 focus:border-green-500 rounded outline-none p-1 overflow-y-auto">
-                                                    {allRoles.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
-                                                </select>
+                                                <MultiSelectCell 
+                                                    selectedItems={u.custom_roles} 
+                                                    allOptions={allRoles} 
+                                                    onSave={(ids) => handleInlineEdit(u.id, 'custom_role_ids', ids)}
+                                                    color="blue"
+                                                />
                                             </td>
                                             <td className="px-3 py-3">
-                                                <select multiple defaultValue={(u.labels || []).map(r => r.id)} onBlur={(e) => {
-                                                    const ids = Array.from(e.target.selectedOptions, option => parseInt(option.value, 10));
-                                                    const current = (u.labels || []).map(r => r.id).sort().join(',');
-                                                    if (ids.sort().join(',') !== current) handleInlineEdit(u.id, 'label_ids', ids);
-                                                }} className="w-full min-w-[100px] h-12 text-[9px] bg-transparent border border-transparent hover:border-gray-200 focus:border-purple-500 rounded outline-none p-1 overflow-y-auto">
-                                                    {allLabels.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
-                                                </select>
+                                                <MultiSelectCell 
+                                                    selectedItems={u.labels} 
+                                                    allOptions={allLabels} 
+                                                    onSave={(ids) => handleInlineEdit(u.id, 'label_ids', ids)}
+                                                    color="purple"
+                                                />
                                             </td>
                                             <td className="px-3 py-3">
-                                                <select multiple defaultValue={(u.lingkup_tugas || []).map(r => r.id)} onBlur={(e) => {
-                                                    const ids = Array.from(e.target.selectedOptions, option => parseInt(option.value, 10));
-                                                    const current = (u.lingkup_tugas || []).map(r => r.id).sort().join(',');
-                                                    if (ids.sort().join(',') !== current) handleInlineEdit(u.id, 'lingkup_tugas_ids', ids);
-                                                }} className="w-full min-w-[100px] h-12 text-[9px] bg-transparent border border-transparent hover:border-gray-200 focus:border-blue-500 rounded outline-none p-1 overflow-y-auto">
-                                                    {allLingkup.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
-                                                </select>
+                                                <MultiSelectCell 
+                                                    selectedItems={u.lingkup_tugas} 
+                                                    allOptions={allLingkup} 
+                                                    onSave={(ids) => handleInlineEdit(u.id, 'lingkup_tugas_ids', ids)}
+                                                    color="indigo"
+                                                />
                                             </td>
                                             <td className="px-3 py-3">
-                                                <select multiple defaultValue={(u.bidang_tugas || []).map(r => r.id)} onBlur={(e) => {
-                                                    const ids = Array.from(e.target.selectedOptions, option => parseInt(option.value, 10));
-                                                    const current = (u.bidang_tugas || []).map(r => r.id).sort().join(',');
-                                                    if (ids.sort().join(',') !== current) handleInlineEdit(u.id, 'bidang_tugas_ids', ids);
-                                                }} className="w-full min-w-[100px] h-12 text-[9px] bg-transparent border border-transparent hover:border-gray-200 focus:border-emerald-500 rounded outline-none p-1 overflow-y-auto">
-                                                    {allBidang.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
-                                                </select>
+                                                <MultiSelectCell 
+                                                    selectedItems={u.bidang_tugas} 
+                                                    allOptions={allBidang} 
+                                                    onSave={(ids) => handleInlineEdit(u.id, 'bidang_tugas_ids', ids)}
+                                                    color="emerald"
+                                                />
                                             </td>
 
                                             <td className="px-3 py-3 text-gray-500 text-[10px] whitespace-nowrap">
                                                 {new Date(u.date_joined).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
                                             </td>
-                                            <td className="px-3 py-3"><ActivityList items={u.activities?.charity} /></td>
-                                            <td className="px-3 py-3"><ActivityList items={u.activities?.events} /></td>
-                                            <td className="px-3 py-3"><ActivityList items={u.activities?.sinergy} /></td>
-                                            <td className="px-3 py-3"><ActivityList items={u.activities?.courses} /></td>
-                                            <td className="px-3 py-3"><ActivityList items={u.activities?.digital_products} /></td>
                                             <td className="px-3 py-3 text-center">
                                                 <input type="checkbox" defaultChecked={u.is_verified_member} onChange={(e) => handleInlineEdit(u.id, 'is_verified_member', e.target.checked)} className="w-4 h-4 text-green-600 rounded cursor-pointer" />
                                             </td>
@@ -1180,6 +1188,64 @@ const ActivityList = ({ items }) => {
                     {item}
                 </div>
             ))}
+        </div>
+    );
+};
+
+const MultiSelectCell = ({ selectedItems, allOptions, onSave, color = "blue" }) => {
+    const [isOpen, setIsOpen] = useState(false);
+    const containerRef = useRef(null);
+
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (containerRef.current && !containerRef.current.contains(event.target)) setIsOpen(false);
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    const selectedIds = (selectedItems || []).map(i => i.id);
+    const handleToggle = (id) => {
+        const newIds = selectedIds.includes(id) ? selectedIds.filter(x => x !== id) : [...selectedIds, id];
+        onSave(newIds);
+    };
+
+    const colorClasses = {
+        blue: { bg: 'bg-blue-50', text: 'text-blue-700', border: 'border-blue-100', hover: 'hover:bg-blue-100', accent: 'text-blue-600' },
+        purple: { bg: 'bg-purple-50', text: 'text-purple-700', border: 'border-purple-100', hover: 'hover:bg-purple-100', accent: 'text-purple-600' },
+        indigo: { bg: 'bg-indigo-50', text: 'text-indigo-700', border: 'border-indigo-100', hover: 'hover:bg-indigo-100', accent: 'text-indigo-600' },
+        emerald: { bg: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-100', hover: 'hover:bg-emerald-100', accent: 'text-emerald-600' }
+    }[color] || { bg: 'bg-gray-50', text: 'text-gray-700', border: 'border-gray-100', hover: 'hover:bg-gray-100', accent: 'text-gray-600' };
+
+    return (
+        <div className="relative" ref={containerRef}>
+            <div onClick={() => setIsOpen(!isOpen)}
+                className="w-full min-w-[100px] min-h-[32px] p-1.5 border border-transparent hover:border-gray-200 hover:bg-gray-50/50 rounded-xl cursor-pointer transition-all flex flex-wrap gap-1 items-start group">
+                {(selectedItems || []).length === 0 ? (
+                    <span className="text-gray-300 italic text-[10px] ml-1">Pilih...</span>
+                ) : (
+                    selectedItems.map(item => (
+                        <span key={item.id} className={`text-[9px] font-black uppercase tracking-tight px-2 py-0.5 rounded-lg ${colorClasses.bg} ${colorClasses.text} ${colorClasses.border} max-w-full break-words leading-tight`}>
+                            {item.name}
+                        </span>
+                    ))
+                )}
+                <span className="material-icons text-gray-300 text-[12px] ml-auto self-center opacity-0 group-hover:opacity-100 transition-opacity">expand_more</span>
+            </div>
+
+            {isOpen && (
+                <div className="absolute z-[100] left-0 mt-2 w-48 bg-white border border-gray-100 shadow-2xl rounded-2xl p-2 animate-in fade-in slide-in-from-top-2 duration-200 overflow-hidden">
+                    <div className="max-h-48 overflow-y-auto custom-scrollbar p-1 space-y-0.5">
+                        {allOptions.map(opt => (
+                            <label key={opt.id} className={`flex items-center gap-2 px-3 py-2 rounded-xl cursor-pointer transition ${selectedIds.includes(opt.id) ? colorClasses.bg : 'hover:bg-gray-50'}`}>
+                                <input type="checkbox" checked={selectedIds.includes(opt.id)} onChange={() => handleToggle(opt.id)}
+                                    className={`w-3.5 h-3.5 ${colorClasses.accent} rounded border-gray-300 focus:ring-0`} />
+                                <span className={`text-[10px] font-bold ${selectedIds.includes(opt.id) ? colorClasses.text : 'text-gray-600'}`}>{opt.name}</span>
+                            </label>
+                        ))}
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

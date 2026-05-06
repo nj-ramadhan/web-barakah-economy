@@ -689,6 +689,7 @@ const ProfilePage = () => {
     const navigate = useNavigate();
     const [profile, setProfile] = useState({
         name_full: '',
+        nickname: '',
         gender: '',
         birth_date: '',
         birth_place: '',
@@ -1008,7 +1009,8 @@ const ProfilePage = () => {
 
                         <div className="pt-20 px-6">
                             <div className="text-center mb-8">
-                                <h3 className="text-2xl font-black text-gray-900">{profile.name_full || profile.username || 'Anggota Barakah'}</h3>
+                                <h3 className="text-2xl font-black text-gray-900">{profile.nickname || profile.name_full || profile.username || 'Anggota Barakah'}</h3>
+                                {profile.nickname && profile.name_full && <p className="text-xs text-gray-400 font-bold -mt-1">{profile.name_full}</p>}
                                 {profile.position && (
                                     <div className="mt-1">
                                         <span className="text-sm font-bold text-green-700 bg-green-50 px-3 py-1 rounded-lg border border-green-100">
@@ -1089,6 +1091,7 @@ const ProfilePage = () => {
                                     <div className="space-y-4">
                                         <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest px-1">Informasi Pribadi</h4>
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <ProfileInfoItem label="Nama Panggilan" value={profile.nickname} icon="face" />
                                             <ProfileInfoItem label="Nama Lengkap" value={profile.name_full} icon="badge" />
                                             <ProfileInfoItem label="NIK / No. KTP" value={profile.nik} icon="fingerprint" />
                                             <ProfileInfoItem label="Jenis Kelamin" value={GENDER_CHOICES[profile.gender]} icon="wc" />

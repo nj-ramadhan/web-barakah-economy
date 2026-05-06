@@ -41,7 +41,7 @@ const ProfileEditPage = () => {
   const isCompleteMode = new URLSearchParams(location.search).get('complete') === '1';
   const [missingFields, setMissingFields] = useState([]);
   const [profile, setProfile] = useState({
-    name_full: '', nik: '', gender: '', birth_date: '', birth_place: '',
+    name_full: '', nickname: '', nik: '', gender: '', birth_date: '', birth_place: '',
     marital_status: '', segment: '', study_level: '', study_campus: '',
     study_faculty: '', study_department: '', study_program: '',
     study_semester: '', study_start_year: '', study_finish_year: '',
@@ -335,7 +335,7 @@ const ProfileEditPage = () => {
         setKtpResult({ success: false, message: data._error });
       } else {
         // Auto-fill profile fields
-        const fillable = ['nik', 'name_full', 'gender', 'birth_place', 'birth_date', 'marital_status', 'address', 'address_province'];
+        const fillable = ['nik', 'name_full', 'nickname', 'gender', 'birth_place', 'birth_date', 'marital_status', 'address', 'address_province'];
         let filled = 0;
         setProfile(prev => {
           const updated = { ...prev, ktp_image: file, is_verified_member: data.is_verified_member || prev.is_verified_member };
@@ -429,7 +429,7 @@ const ProfileEditPage = () => {
   };
 
   const FIELD_LABELS = {
-    name_full: 'Nama Lengkap', gender: 'Jenis Kelamin', birth_place: 'Tempat Lahir',
+    name_full: 'Nama Lengkap', nickname: 'Nama Panggilan', gender: 'Jenis Kelamin', birth_place: 'Tempat Lahir',
     birth_date: 'Tanggal Lahir', address: 'Alamat', address_province: 'Provinsi',
     address_city_name: 'Kota/Kabupaten', address_subdistrict_name: 'Kecamatan',
     address_village_name: 'Kelurahan/Desa',
@@ -447,6 +447,12 @@ const ProfileEditPage = () => {
       case 'general':
         return (
           <div className="space-y-4">
+            <div>
+              <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
+                Nama Panggilan
+              </label>
+              <input type="text" name="nickname" placeholder="Nama Panggilan / Nickname" value={profile.nickname || ''} onChange={handleChange} className={inputCls('nickname')} />
+            </div>
             <div>
               <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
                 Nama Lengkap {isFieldMissing('name_full') && <span className="text-red-500">*wajib</span>}

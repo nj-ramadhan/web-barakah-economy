@@ -68,6 +68,12 @@ export const manualRegisterParticipant = (slug, data) => {
     });
 };
 
+export const bulkManualRegister = (slug, data) => {
+    return axios.post(`${API_BASE_URL}/api/events/${slug}/bulk_manual_register/`, data, {
+        headers: getAuthHeaders()
+    });
+};
+
 export const getEventParticipants = (slug) => {
     return axios.get(`${API_BASE_URL}/api/events/${slug}/participants/`, {
         headers: getAuthHeaders()
@@ -198,5 +204,23 @@ export const searchUsers = (search = '') => {
     return axios.get(`${API_BASE_URL}/api/accounts/users/`, {
         params: { search },
         headers: getAuthHeaders()
+    });
+};
+
+export const getAvailableUsers = (slug, search = '') => {
+    return axios.get(`${API_BASE_URL}/api/events/${slug}/available_users/`, {
+        params: { search },
+        headers: getAuthHeaders()
+    });
+};
+
+export const importParticipantsCsv = (slug, file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return axios.post(`${API_BASE_URL}/api/events/${slug}/import_participants_csv/`, formData, {
+        headers: {
+            ...getAuthHeaders(),
+            'Content-Type': 'multipart/form-data',
+        }
     });
 };

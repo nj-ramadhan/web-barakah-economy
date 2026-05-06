@@ -4,6 +4,7 @@ import { Helmet } from 'react-helmet';
 import { forumApi } from '../services/forumApi';
 import HeaderHome from '../components/layout/HeaderHome';
 import NavigationButton from '../components/layout/Navigation';
+import UserProfileModal from '../components/modals/UserProfileModal';
 
 const ForumMainPage = () => {
     const [threads, setThreads] = useState([]);
@@ -17,6 +18,8 @@ const ForumMainPage = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [filteredThreads, setFilteredThreads] = useState([]);
     const navigate = useNavigate();
+    const [selectedUserId, setSelectedUserId] = useState(null);
+    const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
     const user = JSON.parse(localStorage.getItem('user'));
     const isAdmin = user?.role === 'admin' || user?.role === 'staff' || user?.is_staff || user?.is_superuser;
@@ -277,7 +280,17 @@ const ForumMainPage = () => {
                                     </div>
                                     <div className="min-w-0">
                                         <p className="text-sm font-medium text-gray-900 truncate">
-                                            {thread.author?.full_name}
+                                            <span 
+                                                className="hover:text-blue-600 cursor-pointer"
+                                                onClick={(e) => {
+                                                    e.preventDefault();
+                                                    e.stopPropagation();
+                                                    setSelectedUserId(thread.author?.id);
+                                                    setIsProfileModalOpen(true);
+                                                }}
+                                            >
+                                                {thread.author?.full_name}
+                                            </span>
                                             {thread.author?.is_expert && (
                                                 <span className="ml-1 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
                                                     Pakar
@@ -322,6 +335,11 @@ const ForumMainPage = () => {
                 </div>
             )}
             <NavigationButton />
+            <UserProfileModal 
+                userId={selectedUserId} 
+                isOpen={isProfileModalOpen} 
+                onClose={() => setIsProfileModalOpen(false)} 
+            />
         </div>
     );
 };

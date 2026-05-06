@@ -6,6 +6,7 @@ import Header from '../components/layout/Header';
 import NavigationButton from '../components/layout/Navigation';
 import { getDigitalProductBySlug } from '../services/digitalProductApi';
 import { getMediaUrl } from '../utils/mediaUtils';
+import UserProfileModal from '../components/modals/UserProfileModal';
 import '../styles/Body.css';
 
 const formatIDR = (amount) => {
@@ -17,6 +18,8 @@ const DigitalProductDetailPage = () => {
     const [product, setProduct] = useState(null);
     const [loading, setLoading] = useState(true);
     const [shareMessage, setShareMessage] = useState('');
+    const [selectedUserId, setSelectedUserId] = useState(null);
+    const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
     const handleShare = () => {
         const shareUrl = `${window.location.origin}/api/digital-products/share/${product.seller_name}/${product.slug}`;
@@ -101,7 +104,13 @@ const DigitalProductDetailPage = () => {
                             <div className="flex items-center justify-between mb-6">
                                 <p className="text-sm text-gray-400 flex items-center gap-1">
                                     <span className="material-icons text-sm">person</span>
-                                    oleh <Link to={`/digital_produk/${product.seller_name}`} className="text-green-700 font-medium hover:underline">@{product.seller_name}</Link>
+                                    oleh <span 
+                                        className="text-green-700 font-medium hover:underline cursor-pointer"
+                                        onClick={() => {
+                                            setSelectedUserId(product.user);
+                                            setIsProfileModalOpen(true);
+                                        }}
+                                    >@{product.seller_name}</span>
                                 </p>
                                 <p className="text-sm text-gray-400 flex items-center gap-1 opacity-60">
                                     <span className="material-icons text-sm">visibility</span>
@@ -174,6 +183,11 @@ const DigitalProductDetailPage = () => {
             </div>
 
             <NavigationButton />
+            <UserProfileModal 
+                userId={selectedUserId} 
+                isOpen={isProfileModalOpen} 
+                onClose={() => setIsProfileModalOpen(false)} 
+            />
         </div>
     );
 };

@@ -137,6 +137,7 @@ class Profile(models.Model):
     google_picture_url = models.URLField(max_length=500, blank=True, null=True, help_text="URL foto profil dari Google OAuth")
     ktp_image = models.ImageField(upload_to='ktp_images/', blank=True, null=True)
     name_full = models.CharField(max_length=100, blank=True, null=True)
+    nickname = models.CharField(max_length=50, blank=True, null=True)
     gender = models.CharField(max_length=1, choices=GENDER_CHOICES, blank=True, null=True)
     birth_place = models.CharField(max_length=100, blank=True, null=True)
     birth_date = models.DateField(blank=True, null=True)

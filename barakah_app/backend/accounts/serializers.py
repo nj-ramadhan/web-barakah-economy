@@ -53,11 +53,49 @@ class UserAdminSerializer(serializers.ModelSerializer):
     )
     accessible_menus = serializers.SerializerMethodField()
     activities = serializers.SerializerMethodField()
+    event_attendance_detail = serializers.SerializerMethodField()
 
     def get_accessible_menus(self, obj):
         if not obj:
             return []
         return obj.get_all_accessible_menus()
+
+    def get_event_attendance_detail(self, obj):
+        from events.models import EventRegistration, EventAttendance
+        from django.utils import timezone
+        import json
+        
+        now = timezone.now()
+        registrations = EventRegistration.objects.filter(user=obj).select_related('event')
+        
+        details = []
+        for reg in registrations:
+            event = reg.event
+            has_attended = EventAttendance.objects.filter(registration=reg).exists()
+            
+            status = "Hadir" if has_attended else "Tidak Hadir"
+            
+            # If event is in the future or ongoing and not yet attended
+            if not has_attended and event.start_date and event.start_date > now:
+                status = "Terdaftar (Mendatang)"
+            elif not has_attended and event.end_date and event.end_date > now:
+                status = "Terdaftar (Sedang Berlangsung)"
+            elif not has_attended and not event.end_date and event.start_date and event.start_date > now:
+                 status = "Terdaftar (Mendatang)"
+            
+            details.append({
+                'id': event.id,
+                'title': event.title,
+                'status': status,
+                'date': event.start_date.strftime('%d %b %Y') if event.start_date else '-'
+            })
+            
+        # Update the JSON field in the model for persistence/export
+        if obj.event_attendance_json != details:
+            obj.event_attendance_json = details
+            obj.save(update_fields=['event_attendance_json'])
+            
+        return details
 
     def get_activities(self, obj):
         from donations.models import Donation
@@ -114,6 +152,8 @@ class UserAdminSerializer(serializers.ModelSerializer):
             'bidang_tugas', 'bidang_tugas_ids',
             'accessible_menus',
             'activities',
+            'event_attendance_detail',
+            'event_attendance_json',
         )
 
     def update(self, instance, validated_data):

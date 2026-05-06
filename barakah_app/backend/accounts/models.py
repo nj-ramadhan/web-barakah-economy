@@ -83,6 +83,7 @@ class User(AbstractUser):
     lingkup_tugas = models.ManyToManyField(LingkupTugas, blank=True, related_name='users')
     bidang_tugas = models.ManyToManyField(BidangTugas, blank=True, related_name='users')
     position = models.CharField(max_length=100, blank=True, null=True, help_text="Jabatan di BAE")
+    event_attendance_json = models.JSONField(default=list, blank=True, help_text="Cached list of attended events")
 
     def __str__(self):
         return f"{self.username} ({self.get_role_display()})"

@@ -423,6 +423,194 @@ class EventViewSet(viewsets.ModelViewSet):
             "id": registration.id
         }, status=status.HTTP_201_CREATED)
 
+    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
+    def bulk_manual_register(self, request, slug=None):
+        """
+        Register multiple users manually (Admin only).
+        """
+        event = self.get_object()
+        if not (request.user.is_staff or event.created_by == request.user or request.user.has_menu_access('admin_events')):
+            return Response({"error": "Unauthorized"}, status=status.HTTP_403_FORBIDDEN)
+
+        user_ids = request.data.get('user_ids', [])
+        if not user_ids:
+            return Response({"error": "Pilih minimal satu user."}, status=status.HTTP_400_BAD_REQUEST)
+
+        from accounts.models import User
+        users = User.objects.filter(id__in=user_ids)
+        
+        count = 0
+        for user in users:
+            # Skip if already registered
+            if EventRegistration.objects.filter(event=event, user=user).exists():
+                continue
+                
+            registration = EventRegistration.objects.create(
+                event=event,
+                user=user,
+                status='approved',
+                payment_status='verified',
+                payment_amount=0,
+                ocr_verified=True
+            )
+            count += 1
+            
+            # Send Notifications
+            try:
+                self._send_registration_notifications(registration)
+            except:
+                pass
+
+        return Response({
+            "message": f"Berhasil mendaftarkan {count} user secara manual."
+        }, status=status.HTTP_201_CREATED)
+
+    @action(detail=True, methods=['get'], permission_classes=[permissions.IsAuthenticated])
+    def available_users(self, request, slug=None):
+        """Get users who are NOT yet registered for this event."""
+        event = self.get_object()
+        if not (request.user.is_staff or event.created_by == request.user or request.user.has_menu_access('admin_events')):
+            return Response({"error": "Unauthorized"}, status=status.HTTP_403_FORBIDDEN)
+
+        from accounts.models import User
+        from django.db.models import Q
+        
+        search = request.query_params.get('search', '')
+        
+        # Get IDs of users already registered
+        registered_ids = EventRegistration.objects.filter(event=event, user__isnull=False).values_list('user_id', flat=True)
+        
+        users = User.objects.exclude(id__in=registered_ids)
+        
+        if search:
+            users = users.filter(
+                Q(username__icontains=search) |
+                Q(email__icontains=search) |
+                Q(profile__name_full__icontains=search) |
+                Q(phone__icontains=search)
+            )
+            
+        # Limit to 50 for performance
+        users = users.select_related('profile')[:50]
+        
+        from accounts.serializers import UserAdminSerializer
+        serializer = UserAdminSerializer(users, many=True)
+        return Response(serializer.data)
+
+    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
+    def import_participants_csv(self, request, slug=None):
+        """Import participants from CSV with Create/Update logic."""
+        event = self.get_object()
+        if not (request.user.is_staff or event.created_by == request.user or request.user.has_menu_access('admin_events')):
+            return Response({"error": "Unauthorized"}, status=status.HTTP_403_FORBIDDEN)
+
+        file = request.FILES.get('file')
+        if not file:
+            return Response({"error": "No file uploaded"}, status=status.HTTP_400_BAD_REQUEST)
+
+        import csv
+        import io
+        from django.db import transaction
+
+        try:
+            decoded_file = file.read().decode('utf-8')
+            io_string = io.StringIO(decoded_file)
+            # Try to detect delimiter (usually ; or ,)
+            dialect = csv.Sniffer().sniff(io_string.read(1024))
+            io_string.seek(0)
+            reader = csv.DictReader(io_string, delimiter=dialect.delimiter)
+        except Exception as e:
+            # Fallback to semicolon if sniffing fails
+            io_string.seek(0)
+            reader = csv.DictReader(io_string, delimiter=';')
+
+        created_count = 0
+        updated_count = 0
+        errors = []
+        
+        form_fields = {f.label.lower(): str(f.id) for f in event.form_fields.all()}
+
+        for row_idx, row in enumerate(reader):
+            try:
+                with transaction.atomic():
+                    reg_id = row.get('ID') or row.get('id')
+                    email = row.get('Email', '').strip()
+                    phone = row.get('Phone', '').strip() or row.get('WhatsApp', '').strip() or row.get('No HP', '').strip()
+                    name = row.get('Nama', '').strip() or row.get('Name', '').strip() or row.get('Full Name', '').strip()
+                    
+                    registration = None
+                    if reg_id and reg_id.isdigit():
+                        registration = EventRegistration.objects.filter(id=reg_id, event=event).first()
+                    
+                    if not registration and (email or phone):
+                        # Try to match by user email/phone if not found by ID
+                        from django.db.models import Q
+                        q = Q()
+                        if email: q |= Q(user__email=email) | Q(guest_email=email)
+                        if phone: q |= Q(user__phone=phone) | Q(responses__contains={v: phone for k, v in form_fields.items() if 'phone' in k or 'wa' in k})
+                        
+                        if q:
+                            registration = EventRegistration.objects.filter(q, event=event).first()
+
+                    # Collect responses from extra columns
+                    responses = registration.responses if registration else {}
+                    for key, value in row.items():
+                        clean_key = key.lower().strip()
+                        if clean_key in form_fields:
+                            field_id = form_fields[clean_key]
+                            responses[field_id] = value
+
+                    if registration:
+                        # Update
+                        if name:
+                            if registration.user:
+                                # We don't usually update user profile name from event import unless empty
+                                pass
+                            else:
+                                registration.guest_name = name
+                        
+                        if email and not registration.user:
+                            registration.guest_email = email
+                            
+                        registration.responses = responses
+                        registration.save()
+                        updated_count += 1
+                    else:
+                        # Create
+                        # Check if user exists in accounts
+                        from accounts.models import User
+                        user_obj = None
+                        if email:
+                            user_obj = User.objects.filter(email=email).first()
+                        if not user_obj and phone:
+                            user_obj = User.objects.filter(phone=phone).first()
+
+                        registration = EventRegistration.objects.create(
+                            event=event,
+                            user=user_obj,
+                            guest_name=name if not user_obj else None,
+                            guest_email=email if not user_obj else None,
+                            responses=responses,
+                            status='approved',
+                            payment_status='verified',
+                            payment_amount=0,
+                            ocr_verified=True
+                        )
+                        created_count += 1
+                        
+                        # Send notification for NEW registrations
+                        try:
+                            self._send_registration_notifications(registration)
+                        except:
+                            pass
+            except Exception as e:
+                errors.append(f"Baris {row_idx + 2}: {str(e)}")
+
+        return Response({
+            "message": f"Impor selesai. {created_count} baru, {updated_count} diperbarui.",
+            "errors": errors if errors else None
+        })
+
     def _send_registration_notifications(self, registration):
         """Helper to send Email and WhatsApp notifications on registration."""
         responses = registration.responses
@@ -1245,6 +1433,7 @@ class EventViewSet(viewsets.ModelViewSet):
                 
             data.append({
                 "id": reg.id,
+                "user_id": reg.user.id if reg.user else None,
                 "name": name,
                 "status": reg.status,
                 "team": team,
@@ -1275,7 +1464,7 @@ class EventViewSet(viewsets.ModelViewSet):
         writer = csv.writer(response, delimiter=';')
         
         # CSV Header
-        header = ['Waktu Daftar', 'ID Peserta', 'Kode Tiket', 'Nama', 'Email', 'Status', 'Kehadiran Umum']
+        header = ['ID', 'Waktu Daftar', 'ID Peserta', 'Kode Tiket', 'Nama', 'Email', 'Status', 'Kehadiran Umum']
         for field in form_fields:
             header.append(field.label)
         
@@ -1289,6 +1478,9 @@ class EventViewSet(viewsets.ModelViewSet):
         from django.utils import timezone
         for reg in registrations:
             row = []
+            # ID (Registration ID)
+            row.append(reg.id)
+
             # Registration Time
             row.append(reg.created_at.strftime('%Y-%m-%d %H:%M:%S'))
 

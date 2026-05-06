@@ -8,6 +8,7 @@ import ShareButton from '../components/campaigns/ShareButton';
 import { getCourseBySlug, getMyEnrolledCourses, createEnrollment } from '../services/ecourseApi';
 import { formatCurrency } from '../utils/formatters';
 import { getMediaUrl } from '../utils/mediaUtils';
+import UserProfileModal from '../components/modals/UserProfileModal';
 import '../styles/Body.css';
 
 const formatIDR = (amount) => {
@@ -28,6 +29,8 @@ const EcourseCourseDetail = () => {
   const [reviewForm, setReviewForm] = useState({ rating: 5, comment: '', image: null });
   const [submittingReview, setSubmittingReview] = useState(false);
   const [shareMessage, setShareMessage] = useState('');
+  const [selectedUserId, setSelectedUserId] = useState(null);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
   const handleShare = () => {
     const shareUrl = `${window.location.origin}/api/courses/share/${slug}`;
@@ -234,7 +237,15 @@ const EcourseCourseDetail = () => {
                 <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center">
                   <span className="material-icons text-green-700 text-[14px]">person</span>
                 </div>
-                <span className="text-xs font-bold text-gray-600">@{course.instructor_name}</span>
+                <span 
+                  className="text-xs font-bold text-gray-600 hover:text-green-700 cursor-pointer"
+                  onClick={() => {
+                    setSelectedUserId(course.instructor);
+                    setIsProfileModalOpen(true);
+                  }}
+                >
+                  @{course.instructor_name}
+                </span>
               </div>
               <div className="flex items-center gap-1.5 opacity-60">
                 <span className="material-icons text-[16px]">visibility</span>
@@ -489,6 +500,11 @@ const EcourseCourseDetail = () => {
 
 
       <NavigationButton />
+      <UserProfileModal 
+        userId={selectedUserId} 
+        isOpen={isProfileModalOpen} 
+        onClose={() => setIsProfileModalOpen(false)} 
+      />
 
       {/* Fixed share button for mobile */}
       <div className="md:hidden fixed bottom-24 right-4 z-50">

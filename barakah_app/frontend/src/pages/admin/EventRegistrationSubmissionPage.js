@@ -3,7 +3,7 @@ import { useParams, Link, useLocation } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
 import Header from '../../components/layout/Header';
 import NavigationButton from '../../components/layout/Navigation';
-import { getEventRegistrations, getEventDetail, exportRegistrationsCsv, blastEventWhatsapp, bulkDeleteRegistrations } from '../../services/eventApi';
+import { getEventRegistrations, getEventDetail, exportRegistrationsCsv, blastEventWhatsapp, bulkDeleteRegistrations, importParticipantsCsv } from '../../services/eventApi';
 import EventManualRegistrationModal from '../../components/admin/EventManualRegistrationModal';
 import EventRegistrationEditModal from '../../components/admin/EventRegistrationEditModal';
 import CertificateEditor from '../../components/events/CertificateEditor';
@@ -29,6 +29,7 @@ const EventRegistrationSubmissionPage = () => {
     const [showEditModal, setShowEditModal] = useState(false);
     const [editingRegistration, setEditingRegistration] = useState(null);
     const [activeTab, setActiveTab] = useState(initialTab); // 'participants' or 'certificate'
+    const [isImporting, setIsImporting] = useState(false);
 
     useEffect(() => {
         fetchData();
@@ -142,6 +143,27 @@ const EventRegistrationSubmissionPage = () => {
             alert('Gagal mengekspor data.');
         } finally {
             setIsExporting(false);
+        }
+    };
+
+    const handleImportCsv = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        setIsImporting(true);
+        try {
+            const res = await importParticipantsCsv(slug, file);
+            alert(res.data.message);
+            if (res.data.errors && res.data.errors.length > 0) {
+                console.warn("Import Errors:", res.data.errors);
+            }
+            fetchData();
+        } catch (err) {
+            console.error(err);
+            alert('Gagal mengimpor data: ' + (err.response?.data?.error || err.message));
+        } finally {
+            setIsImporting(false);
+            e.target.value = ''; // Reset input
         }
     };
 
@@ -265,8 +287,27 @@ const EventRegistrationSubmissionPage = () => {
                             <span className={`material-icons text-sm ${isExporting ? 'animate-spin' : ''}`}>
                                 {isExporting ? 'sync' : 'cloud_download'}
                             </span>
-                            Export CSV
+                            Export
                         </button>
+                        <div className="relative">
+                            <input 
+                                type="file" 
+                                accept=".csv" 
+                                id="import-csv-input" 
+                                className="hidden" 
+                                onChange={handleImportCsv}
+                                disabled={isImporting}
+                            />
+                            <label
+                                htmlFor="import-csv-input"
+                                className={`bg-gray-100 text-gray-700 px-5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 hover:bg-gray-200 transition shadow-sm border border-gray-200 cursor-pointer ${isImporting ? 'opacity-50 pointer-events-none' : ''}`}
+                            >
+                                <span className={`material-icons text-sm ${isImporting ? 'animate-spin' : ''}`}>
+                                    {isImporting ? 'sync' : 'cloud_upload'}
+                                </span>
+                                Import
+                            </label>
+                        </div>
                         <button
                             onClick={() => setShowManualModal(true)}
                             className="bg-green-600 text-white px-5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 hover:bg-green-700 transition shadow-lg shadow-green-100"
@@ -741,6 +782,7 @@ const EventRegistrationSubmissionPage = () => {
                 isOpen={showManualModal}
                 onClose={() => setShowManualModal(false)}
                 event={event}
+                registrations={registrations}
                 onSuccess={() => fetchData()}
             />
 

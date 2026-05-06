@@ -395,7 +395,6 @@ class UserViewSet(viewsets.ModelViewSet):
                 'Study Department', 'Study Program', 'Semester', 'Start Year', 'Finish Year',
                 'Address', 'Job', 'Work Field', 'Work Institution', 'Work Position', 'Salary', 'Province',
                 'Custom Roles', 'Labels', 'Lingkup Tugas', 'Bidang Tugas',
-                'Aktivitas Charity', 'Aktivitas Event', 'Aktivitas Sinergy', 'Aktivitas E-Course', 'Aktivitas Digital Produk'
             ]
             writer.writerow(headers)
 
@@ -452,26 +451,6 @@ class UserViewSet(viewsets.ModelViewSet):
                 row.append(' | '.join([lt.name for lt in user.lingkup_tugas.all()]))
                 row.append(' | '.join([bt.name for bt in user.bidang_tugas.all()]))
 
-                # Activities (Real-time)
-                charity_acts = Donation.objects.filter(donor=user).exclude(payment_status='rejected').values('campaign__title', 'amount')
-                row.append(' | '.join([f"{d.get('campaign__title') or 'Tanpa Judul'} (Rp {int(d.get('amount') or 0):,})" for d in charity_acts]))
-
-                event_acts = EventRegistration.objects.filter(user=user).exclude(status='rejected').values_list('event__title', flat=True)
-                row.append(' | '.join([str(t) for t in event_acts]))
-
-                sinergy_acts = OrderItem.objects.filter(
-                    order__user=user
-                ).exclude(
-                    order__status__in=['Batal', 'batal', 'Rejected', 'rejected']
-                ).select_related('product', 'variation')
-                row.append(' | '.join([f"{item.product.title}{' ('+item.variation.name+')' if item.variation else ''} x{item.quantity}" for item in sinergy_acts]))
-
-                course_acts = CourseEnrollment.objects.filter(user=user, payment_status__in=['verified', 'paid']).values_list('course__title', flat=True)
-                row.append(' | '.join([str(t) for t in course_acts]))
-
-                digital_acts = DigitalOrder.objects.filter(buyer=user, payment_status='verified').values_list('digital_product__title', flat=True)
-                row.append(' | '.join([str(t) for t in digital_acts]))
-                
                 writer.writerow(row)
 
             return response
@@ -756,4 +735,27 @@ class UserViewSet(viewsets.ModelViewSet):
                     return Response({'error': f'Invalid field: {field}'}, status=status.HTTP_400_BAD_REQUEST)
 
         return Response({'message': f'Successfully updated {updated_count} users.'})
+
+    @action(detail=False, methods=['get'])
+    def download_import_template(self, request):
+        """Download CSV template for user import."""
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="template_import_user.csv"'
+        
+        writer = csv.writer(response, delimiter=';')
+        writer.writerow([
+            'ID', 'Username', 'Email', 'Phone', 'Role', 'Verified Member',
+            'Full Name', 'IDM', 'Gender', 'Birth Place', 'Birth Date', 'Marital Status',
+            'Segment', 'Study Level', 'Study Campus', 'Address', 'Job', 'Work Field',
+            'Work Institution', 'Work Position', 'Province'
+        ])
+        # Add a sample row
+        writer.writerow([
+            '', 'john_doe', 'john@example.com', '08123456789', 'user', 'False',
+            'John Doe', 'ID123', 'Laki-laki', 'Jakarta', '1990-01-01', 'Belum Menikah',
+            'Umum', 'S1', 'Universitas Indonesia', 'Jl. Merdeka No. 1', 'Developer', 'IT',
+            'Tech Corp', 'Senior Dev', 'DKI Jakarta'
+        ])
+        
+        return response
 

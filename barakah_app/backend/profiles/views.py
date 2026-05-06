@@ -7,7 +7,7 @@ from rest_framework import viewsets
 from rest_framework import status
 from django.db.models import Q
 from .models import Profile, BusinessProfile
-from .serializers import ProfileSerializer, BusinessProfileSerializer
+from .serializers import ProfileSerializer, BusinessProfileSerializer, PublicProfileSerializer
 
 class BusinessProfileViewSet(viewsets.ModelViewSet):
     serializer_class = BusinessProfileSerializer
@@ -54,6 +54,15 @@ class ProfileViewSet(viewsets.ModelViewSet):
     def perform_update(self, serializer):
         profile = serializer.save()
         profile.check_auto_roles()
+
+    @action(detail=True, methods=['get'], url_path='public', permission_classes=[IsAuthenticated])
+    def public_profile(self, request, user_id=None):
+        try:
+            profile = Profile.objects.get(user_id=user_id)
+            serializer = PublicProfileSerializer(profile, context={'request': request})
+            return Response(serializer.data)
+        except Profile.DoesNotExist:
+            return Response({'error': 'Profile not found'}, status=status.HTTP_404_NOT_FOUND)
 
     @action(detail=False, methods=['get'])
     def me(self, request):

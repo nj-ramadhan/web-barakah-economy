@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
 import { forumApi } from '../services/forumApi';
+import UserProfileModal from '../components/modals/UserProfileModal';
 
 const RenderReply = ({ 
     reply, 
@@ -18,7 +19,9 @@ const RenderReply = ({
     mentionUsers, 
     handleMentionSelect, 
     renderContentWithMentions, 
-    formatDate 
+    renderContentWithMentions, 
+    formatDate,
+    onOpenProfile 
 }) => {
     const isExpert = reply.is_expert;
 
@@ -31,7 +34,12 @@ const RenderReply = ({
                     </div>
                     <div>
                         <p className="text-sm font-semibold text-gray-900 flex items-center gap-2">
-                            {reply.author?.full_name}
+                            <span 
+                                className="hover:text-blue-600 cursor-pointer"
+                                onClick={() => onOpenProfile(reply.author?.id)}
+                            >
+                                {reply.author?.full_name}
+                            </span>
                             {isExpert && (
                                 <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
                                     Pakar
@@ -139,6 +147,7 @@ const RenderReply = ({
                             handleMentionSelect={handleMentionSelect}
                             renderContentWithMentions={renderContentWithMentions}
                             formatDate={formatDate}
+                            onOpenProfile={onOpenProfile}
                         />
                     ))}
                 </div>
@@ -159,6 +168,8 @@ const ForumThreadDetail = () => {
     const [mentionUsers, setMentionUsers] = useState([]);
     const [showMentionDropdown, setShowMentionDropdown] = useState(false);
     const [cursorPosition, setCursorPosition] = useState(0);
+    const [selectedUserId, setSelectedUserId] = useState(null);
+    const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
     const user = JSON.parse(localStorage.getItem('user'));
     const isAdmin = user?.role === 'admin' || user?.role === 'staff' || user?.is_staff || user?.is_superuser;
@@ -317,7 +328,15 @@ const ForumThreadDetail = () => {
                                 </div>
                                 <div>
                                     <p className="font-bold text-gray-900">
-                                        {thread.author?.full_name}
+                                        <span 
+                                            className="hover:text-blue-600 cursor-pointer"
+                                            onClick={() => {
+                                                setSelectedUserId(thread.author?.id);
+                                                setIsProfileModalOpen(true);
+                                            }}
+                                        >
+                                            {thread.author?.full_name}
+                                        </span>
                                         {thread.author?.is_expert && (
                                             <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
                                                 Pakar
@@ -464,6 +483,10 @@ const ForumThreadDetail = () => {
                                     handleMentionSelect={handleMentionSelect}
                                     renderContentWithMentions={renderContentWithMentions}
                                     formatDate={formatDate}
+                                    onOpenProfile={(id) => {
+                                        setSelectedUserId(id);
+                                        setIsProfileModalOpen(true);
+                                    }}
                                 />
                             ))}
                         </div>
@@ -472,6 +495,11 @@ const ForumThreadDetail = () => {
                     )}
                 </div>
             </div>
+            <UserProfileModal 
+                userId={selectedUserId} 
+                isOpen={isProfileModalOpen} 
+                onClose={() => setIsProfileModalOpen(false)} 
+            />
         </div>
     );
 };

@@ -23,7 +23,7 @@ class DigitalProductPublicSerializer(serializers.ModelSerializer):
     class Meta:
         model = DigitalProduct
         fields = [
-            'id', 'seller_name', 'title', 'slug', 'description',
+            'id', 'user', 'seller_name', 'title', 'slug', 'description',
             'category', 'visibility', 'thumbnail', 'price',
             'is_active', 'view_count', 'created_at',
         ]
