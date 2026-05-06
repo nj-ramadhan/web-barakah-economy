@@ -5,7 +5,26 @@ import { Helmet } from 'react-helmet';
 import Header from '../components/layout/Header';
 import NavigationButton from '../components/layout/Navigation';
 import { getCourseMaterials, createMaterial, updateMaterial, deleteMaterial, getCourseDetail } from '../services/ecourseApi';
+import axios from 'axios';
 import '../styles/Body.css';
+
+const getMediaUrl = (url) => {
+    if (!url) return '';
+    if (url.startsWith('blob:')) return url;
+    const baseUrl = process.env.REACT_APP_API_BASE_URL || '';
+    const cleanBase = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+    if (url.startsWith('http')) {
+        try {
+            const urlObj = new URL(url);
+            if (urlObj.hostname === 'localhost' || urlObj.hostname === '127.0.0.1' || /^(\d{1,3}\.){3}\d{1,3}$/.test(urlObj.hostname)) {
+                return `${cleanBase}${urlObj.pathname}${urlObj.search}`;
+            }
+        } catch (e) { return url; }
+        return url;
+    }
+    const cleanUrl = url.startsWith('/') ? url : `/${url}`;
+    return `${cleanBase}${cleanUrl}`;
+};
 
 const DashboardEcourseMaterialsPage = () => {
     const { id } = useParams();
@@ -187,10 +206,41 @@ const DashboardEcourseMaterialsPage = () => {
     };
 
     // Rich Text simple editor logic
-    const execCmd = (command, value = null) => {
-        document.execCommand(command, false, value);
-        if (contentRef.current) {
-            setContentText(contentRef.current.innerHTML);
+    const execCmd = async (command, value = null) => {
+        if (command === 'insertImage') {
+            const fileInput = document.createElement('input');
+            fileInput.type = 'file';
+            fileInput.accept = 'image/*';
+            fileInput.onchange = async (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    const formData = new FormData();
+                    formData.append('image', file);
+                    try {
+                        const user = JSON.parse(localStorage.getItem('user'));
+                        const res = await axios.post(`${process.env.REACT_APP_API_BASE_URL}/api/articles/upload-image/`, formData, {
+                            headers: { 
+                                'Content-Type': 'multipart/form-data',
+                                'Authorization': `Bearer ${user.access}`
+                            }
+                        });
+                        const imageUrl = getMediaUrl(res.data.image || res.data.url);
+                        document.execCommand('insertImage', false, imageUrl);
+                        if (contentRef.current) {
+                            setContentText(contentRef.current.innerHTML);
+                        }
+                    } catch (err) {
+                        console.error('Upload failed:', err);
+                        alert('Gagal mengunggah gambar');
+                    }
+                }
+            };
+            fileInput.click();
+        } else {
+            document.execCommand(command, false, value);
+            if (contentRef.current) {
+                setContentText(contentRef.current.innerHTML);
+            }
         }
     };
 
@@ -321,10 +371,7 @@ const DashboardEcourseMaterialsPage = () => {
                                         <button type="button" onClick={() => execCmd('insertUnorderedList')} className="w-8 h-8 rounded-lg hover:bg-gray-100 text-gray-600"><span className="material-icons text-base">format_list_bulleted</span></button>
                                         <button type="button" onClick={() => execCmd('insertOrderedList')} className="w-8 h-8 rounded-lg hover:bg-gray-100 text-gray-600"><span className="material-icons text-base">format_list_numbered</span></button>
                                         <div className="w-px h-6 bg-gray-200 mx-1"></div>
-                                        <button type="button" onClick={() => {
-                                            const url = prompt('Masukkan URL gambar:');
-                                            if (url) execCmd('insertImage', url);
-                                        }} className="w-8 h-8 rounded-lg hover:bg-gray-100 text-gray-600"><span className="material-icons text-base">image</span></button>
+                                        <button type="button" onClick={() => execCmd('insertImage')} className="w-8 h-8 rounded-lg hover:bg-gray-100 text-gray-600"><span className="material-icons text-base">image</span></button>
                                     </div>
                                     <div
                                         ref={contentRef}

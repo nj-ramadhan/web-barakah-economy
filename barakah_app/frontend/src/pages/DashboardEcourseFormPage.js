@@ -11,9 +11,21 @@ import '../styles/Body.css';
  
 const getMediaUrl = (url) => {
     if (!url) return '';
-    if (url.startsWith('http') || url.startsWith('blob:')) return url;
+    if (url.startsWith('blob:')) return url;
+    
     const baseUrl = process.env.REACT_APP_API_BASE_URL || '';
     const cleanBase = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+
+    if (url.startsWith('http')) {
+        try {
+            const urlObj = new URL(url);
+            if (urlObj.hostname === 'localhost' || urlObj.hostname === '127.0.0.1' || /^(\d{1,3}\.){3}\d{1,3}$/.test(urlObj.hostname)) {
+                return `${cleanBase}${urlObj.pathname}${urlObj.search}`;
+            }
+        } catch (e) { return url; }
+        return url;
+    }
+
     const cleanUrl = url.startsWith('/') ? url : `/${url}`;
     return `${cleanBase}${cleanUrl}`;
 };
@@ -198,7 +210,7 @@ const DashboardEcourseFormPage = () => {
                             className="aspect-video border-2 border-dashed border-gray-200 rounded-2xl flex flex-col items-center justify-center cursor-pointer hover:border-green-400 hover:bg-green-50/30 transition overflow-hidden"
                         >
                             {thumbnailPreview ? (
-                                <img src={getMediaUrl(thumbnailPreview)} alt="Preview" className="w-full h-full object-cover" />
+                                <img src={thumbnailPreview} alt="Preview" className="w-full h-full object-cover" />
                             ) : (
                                 <>
                                     <span className="material-icons text-gray-300 text-4xl mb-2">add_photo_alternate</span>
