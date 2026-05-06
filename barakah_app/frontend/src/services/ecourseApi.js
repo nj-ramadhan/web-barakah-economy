@@ -89,3 +89,6 @@ export const downloadCourseCertificate = (courseId) =>
     api.get(`${API_BASE}/${courseId}/download_certificate/`, {
         responseType: 'blob'
     });
+
+export const getCourseBuyers = (courseId) =>
+    api.get(`${API_BASE}/${courseId}/buyers/`);

@@ -126,7 +126,7 @@ class CourseViewSet(viewsets.ModelViewSet):
     def buyers(self, request, pk=None):
         try:
             course = self.get_object()
-            if course.instructor != request.user:
+            if course.instructor != request.user and not request.user.is_staff:
                 return Response({'error': 'Unauthorized'}, status=status.HTTP_403_FORBIDDEN)
             
             enrollments = CourseEnrollment.objects.filter(course=course, payment_status__in=['paid', 'verified'])

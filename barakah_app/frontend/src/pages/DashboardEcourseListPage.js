@@ -5,7 +5,7 @@ import { Helmet } from 'react-helmet';
 import Header from '../components/layout/Header';
 import BackButton from '../components/global/BackButton';
 import NavigationButton from '../components/layout/Navigation';
-import { getMyCourses, updateCourse, deleteCourse, getCourseCertificateSettings, updateCourseCertificateSettings } from '../services/ecourseApi';
+import { getMyCourses, updateCourse, deleteCourse, getCourseCertificateSettings, updateCourseCertificateSettings, getCourseBuyers } from '../services/ecourseApi';
 import CertificateEditor from '../components/events/CertificateEditor';
 import { getMediaUrl } from '../utils/mediaUtils';
 import '../styles/Body.css';
@@ -68,11 +68,7 @@ const DashboardEcourseListPage = () => {
         setShowStudentsModal(true);
         setActiveCourseTitle(course.title);
         try {
-            const user = JSON.parse(localStorage.getItem('user'));
-            const axios = (await import('axios')).default;
-            const res = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/courses/${course.id}/buyers/`, {
-                headers: { Authorization: `Bearer ${user.access}` }
-            });
+            const res = await getCourseBuyers(course.id);
             setSelectedCourseStudents(res.data);
         } catch (err) {
             console.error(err);
@@ -288,9 +284,13 @@ const DashboardEcourseListPage = () => {
                                                     <td className="px-4 py-3 font-medium">{b.buyer_name}</td>
                                                     <td className="px-4 py-3 text-gray-500">{b.buyer_email}</td>
                                                     <td className="px-4 py-3">
-                                                        <a href={`https://wa.me/${b.buyer_phone.replace(/\D/g,'')}`} target="_blank" rel="noreferrer" className="text-green-600 font-bold hover:underline">
-                                                            {b.buyer_phone}
-                                                        </a>
+                                                        {b.buyer_phone ? (
+                                                            <a href={`https://wa.me/${b.buyer_phone.replace(/\D/g,'')}`} target="_blank" rel="noreferrer" className="text-green-600 font-bold hover:underline">
+                                                                {b.buyer_phone}
+                                                            </a>
+                                                        ) : (
+                                                            <span className="text-gray-400">-</span>
+                                                        )}
                                                     </td>
                                                     <td className="px-4 py-3 text-gray-400 text-xs">
                                                         {new Date(b.enrolled_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
