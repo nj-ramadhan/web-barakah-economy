@@ -191,7 +191,7 @@ const DashboardUserPage = () => {
                 if (u.id === userId) {
                     if (['role', 'phone', 'username', 'email', 'is_verified_member'].includes(field)) {
                         return { ...u, [field]: value };
-                    } else if (['name_full', 'id_m', 'address_province'].includes(field)) {
+                    } else if (['name_full', 'id_m', 'address_province', 'nickname'].includes(field)) {
                         return { ...u, profile: { ...u.profile, [field]: value } };
                     } else if (field === 'custom_role_ids') {
                         return { ...u, custom_roles: allRoles.filter(r => value.includes(r.id)) };
@@ -215,7 +215,7 @@ const DashboardUserPage = () => {
         setEditFormData({
             username: '', email: '', phone: '', password: '',
             role: 'user', is_verified_member: false,
-            name_full: '', id_m: '', custom_role_ids: [], label_ids: [], profile: {}
+            name_full: '', nickname: '', id_m: '', custom_role_ids: [], label_ids: [], profile: {}
         });
         setShowEditModal(true);
     };
@@ -231,7 +231,7 @@ const DashboardUserPage = () => {
             lingkup_tugas_ids: (user.lingkup_tugas || []).map(l => l.id),
             bidang_tugas_ids: (user.bidang_tugas || []).map(b => b.id),
             profile: {
-                name_full: p.name_full || '', nik: p.nik || '', gender: p.gender || '', birth_place: p.birth_place || '',
+                name_full: p.name_full || '', nickname: p.nickname || '', nik: p.nik || '', gender: p.gender || '', birth_place: p.birth_place || '',
                 birth_date: p.birth_date || '', registration_date: p.registration_date || '',
                 marital_status: p.marital_status || '', segment: p.segment || '',
                 study_level: p.study_level || '', study_campus: p.study_campus || '',
@@ -258,6 +258,7 @@ const DashboardUserPage = () => {
                     phone: editFormData.phone, password: editFormData.password,
                     role: editFormData.role, is_verified_member: editFormData.is_verified_member,
                     name_full: editFormData.name_full || '',
+                    nickname: editFormData.nickname || '',
                     id_m: editFormData.id_m || '',
                 };
                 await axios.post(`${API}/api/auth/users/`, payload, getAuth());
@@ -393,6 +394,8 @@ const DashboardUserPage = () => {
                                 <td className="px-3 py-4"><div className="w-10 h-4 bg-purple-50 rounded-full"></div></td>
                                 <td className="px-3 py-4"><div className="h-4 bg-gray-100 rounded w-28 mb-1"></div><div className="h-2 bg-gray-100 rounded w-6"></div></td>
                                 <td className="px-3 py-4"><div className="h-3 bg-gray-100 rounded w-20"></div></td>
+                                <td className="px-3 py-4"><div className="h-3 bg-gray-100 rounded w-20"></div></td>
+                                <td className="px-3 py-4"><div className="h-3 bg-gray-100 rounded w-16"></div></td>
                                 <td className="px-3 py-4 text-center"><div className="w-4 h-4 bg-gray-200 rounded-full mx-auto"></div></td>
                                 <td className="px-3 py-4"><div className="flex justify-center gap-1"><div className="w-7 h-7 bg-gray-100 rounded-lg"></div><div className="w-7 h-7 bg-gray-100 rounded-lg"></div><div className="w-7 h-7 bg-gray-100 rounded-lg"></div></div></td>
                             </tr>
@@ -509,6 +512,7 @@ const DashboardUserPage = () => {
                                         <SH label="IDM" field="profile__id_m" {...{ sortField, sortDir, handleSort, getSortIcon }} />
                                         <SH label="User" field="username" {...{ sortField, sortDir, handleSort, getSortIcon }} />
                                         <SH label="Nama" field="profile__name_full" {...{ sortField, sortDir, handleSort, getSortIcon }} />
+                                        <SH label="Panggilan" field="profile__nickname" {...{ sortField, sortDir, handleSort, getSortIcon }} />
                                         <th className="px-3 py-4 text-gray-600 font-bold uppercase tracking-wider text-[11px] min-w-[120px]">Kontak</th>
                                         <th className="px-3 py-4 text-gray-600 font-bold uppercase tracking-wider text-[11px] min-w-[80px]">Role</th>
                                         <th className="px-3 py-4 text-gray-600 font-bold uppercase tracking-wider text-[11px] min-w-[100px]">Custom Role</th>
@@ -539,6 +543,9 @@ const DashboardUserPage = () => {
                                                     <option value="">- Pilih Provinsi -</option>
                                                     {PROVINCE_CHOICES.map(p => <option key={p[0]} value={p[0]}>{p[1]}</option>)}
                                                 </select>
+                                            </td>
+                                            <td className="px-3 py-3">
+                                                <input type="text" defaultValue={u.profile?.nickname || ''} onBlur={(e) => { if (e.target.value !== (u.profile?.nickname || '')) handleInlineEdit(u.id, 'nickname', e.target.value); }} className="w-full min-w-[80px] bg-transparent border border-transparent hover:border-gray-200 focus:border-green-500 focus:bg-white rounded px-1 py-0.5 text-gray-900 font-bold text-[11px] leading-tight outline-none" placeholder="-" />
                                             </td>
                                             <td className="px-3 py-3 text-gray-600 text-[11px] whitespace-nowrap">
                                                 <input type="text" defaultValue={u.phone || ''} onBlur={(e) => { if (e.target.value !== (u.phone || '')) handleInlineEdit(u.id, 'phone', e.target.value); }} className="w-full min-w-[100px] bg-transparent border border-transparent hover:border-gray-200 focus:border-green-500 focus:bg-white rounded px-1 py-0.5 text-[11px] leading-tight outline-none" placeholder="-" />
@@ -647,7 +654,7 @@ const DashboardUserPage = () => {
                         <div className="px-8 pt-16 pb-8">
                             <div className="flex justify-between items-start mb-6">
                                 <div>
-                                    <h2 className="text-2xl font-bold text-gray-900">{selectedUser.profile?.name_full || selectedUser.username}</h2>
+                                    <h2 className="text-2xl font-bold text-gray-900">{selectedUser.profile?.name_full || selectedUser.username} {selectedUser.profile?.nickname && <span className="text-green-600 font-medium">({selectedUser.profile.nickname})</span>}</h2>
                                     <p className="text-gray-500 font-medium">@{selectedUser.username} • {selectedUser.role.toUpperCase()}</p>
                                     <div className="flex flex-wrap gap-1 mt-2">
                                         {(selectedUser.custom_roles || []).map(r => <span key={r.id} className="px-2 py-0.5 bg-green-50 text-green-700 rounded-full text-[10px] font-bold">{r.name}</span>)}
@@ -756,6 +763,7 @@ const DashboardUserPage = () => {
                                 {!editingUser ? (
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <FI label="Nama Lengkap" value={editFormData.name_full} onChange={v => setEditFormData(f => ({ ...f, name_full: v }))} />
+                                        <FI label="Nama Panggilan" value={editFormData.nickname} onChange={v => setEditFormData(f => ({ ...f, nickname: v }))} />
                                         <FI label="IDM (ID Member)" value={editFormData.id_m} onChange={v => setEditFormData(f => ({ ...f, id_m: v }))} />
                                         <FI label="Username" value={editFormData.username} onChange={v => setEditFormData(f => ({ ...f, username: v }))} />
                                         <FI label="Email (Opsional)" value={editFormData.email} onChange={v => setEditFormData(f => ({ ...f, email: v }))} />
@@ -836,6 +844,7 @@ const DashboardUserPage = () => {
                                         <div className="space-y-3">
                                             <h3 className="text-[10px] font-bold text-green-700 uppercase tracking-widest border-b border-green-100 pb-2 mb-2">Data Diri</h3>
                                             <FI label="Nama Lengkap" value={editFormData.profile?.name_full} onChange={v => setP('name_full', v)} />
+                                            <FI label="Nama Panggilan" value={editFormData.profile?.nickname} onChange={v => setP('nickname', v)} />
                                             <FI label="NIK (No. KTP)" value={editFormData.profile?.nik} onChange={v => setP('nik', v)} />
                                             <FS label="Jenis Kelamin" value={editFormData.profile?.gender} onChange={v => setP('gender', v)} options={GENDER_CHOICES} />
                                             <FI label="Tempat Lahir" value={editFormData.profile?.birth_place} onChange={v => setP('birth_place', v)} />

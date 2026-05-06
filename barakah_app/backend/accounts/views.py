@@ -314,6 +314,7 @@ class UserViewSet(viewsets.ModelViewSet):
                 Q(email__icontains=search) |
                 Q(phone__icontains=search) |
                 Q(profile__name_full__icontains=search) |
+                Q(profile__nickname__icontains=search) |
                 Q(profile__id_m__icontains=search) |
                 Q(profile__address__icontains=search)
             )
@@ -389,12 +390,13 @@ class UserViewSet(viewsets.ModelViewSet):
 
             writer = csv.writer(response, delimiter=';')
             headers = [
-                'ID', 'IDM', 'Username', 'Full Name', 'Email', 'Phone', 'Role', 'Verified Member', 'Date Joined',
+                'ID', 'IDM', 'Username', 'Full Name', 'Nickname', 'Email', 'Phone', 'Role', 'Verified Member', 'Date Joined',
                 'Gender', 'Birth Place', 'Birth Date', 'Registration Date',
                 'Marital Status', 'Segment', 'Study Level', 'Study Campus', 'Study Faculty',
                 'Study Department', 'Study Program', 'Semester', 'Start Year', 'Finish Year',
                 'Address', 'Job', 'Work Field', 'Work Institution', 'Work Position', 'Salary', 'Province',
                 'Custom Roles', 'Labels', 'Lingkup Tugas', 'Bidang Tugas',
+                'Charity', 'Events', 'E-commerce', 'E-course', 'Digital Product'
             ]
             writer.writerow(headers)
 
@@ -410,6 +412,7 @@ class UserViewSet(viewsets.ModelViewSet):
                     profile.id_m if profile else '',
                     user.username,
                     profile.name_full if profile else '',
+                    profile.nickname if profile else '',
                     user.email,
                     user.phone,
                     user.role,
@@ -451,6 +454,15 @@ class UserViewSet(viewsets.ModelViewSet):
                 row.append(' | '.join([lt.name for lt in user.lingkup_tugas.all()]))
                 row.append(' | '.join([bt.name for bt in user.bidang_tugas.all()]))
 
+                # Add activity summaries
+                charity_count = Donation.objects.filter(user=user, payment_status='success').count()
+                event_count = EventRegistration.objects.filter(user=user).count()
+                order_count = OrderItem.objects.filter(order__user=user).count()
+                course_count = CourseEnrollment.objects.filter(user=user).count()
+                digital_count = DigitalOrder.objects.filter(user=user, payment_status='paid').count()
+
+                row.extend([charity_count, event_count, order_count, course_count, digital_count])
+
                 writer.writerow(row)
 
             return response
@@ -491,6 +503,7 @@ class UserViewSet(viewsets.ModelViewSet):
                     role = row.get('Role') or 'user'
                     is_verified = str(row.get('Verified Member', '')).lower() == 'true'
                     full_name = row.get('Full Name') or ''
+                    nickname = row.get('Nickname') or ''
                     id_m = row.get('IDM') or ''
 
                     user = None
@@ -546,6 +559,7 @@ class UserViewSet(viewsets.ModelViewSet):
                     # Update Profile
                     profile, _ = Profile.objects.get_or_create(user=user)
                     profile.name_full = full_name
+                    profile.nickname = nickname
                     profile.id_m = id_m
                     
                     # Advanced profile fields
@@ -738,24 +752,52 @@ class UserViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get'])
     def download_import_template(self, request):
-        """Download CSV template for user import."""
+        """Download CSV template for user import populated with all existing users."""
+        import csv
+        from django.http import HttpResponse
+        from profiles.models import Profile
+
         response = HttpResponse(content_type='text/csv')
         response['Content-Disposition'] = 'attachment; filename="template_import_user.csv"'
         
         writer = csv.writer(response, delimiter=';')
-        writer.writerow([
+        headers = [
             'ID', 'Username', 'Email', 'Phone', 'Role', 'Verified Member',
-            'Full Name', 'IDM', 'Gender', 'Birth Place', 'Birth Date', 'Marital Status',
+            'Full Name', 'Nickname', 'IDM', 'Gender', 'Birth Place', 'Birth Date', 'Marital Status',
             'Segment', 'Study Level', 'Study Campus', 'Address', 'Job', 'Work Field',
             'Work Institution', 'Work Position', 'Province'
-        ])
-        # Add a sample row
-        writer.writerow([
-            '', 'john_doe', 'john@example.com', '08123456789', 'user', 'False',
-            'John Doe', 'ID123', 'Laki-laki', 'Jakarta', '1990-01-01', 'Belum Menikah',
-            'Umum', 'S1', 'Universitas Indonesia', 'Jl. Merdeka No. 1', 'Developer', 'IT',
-            'Tech Corp', 'Senior Dev', 'DKI Jakarta'
-        ])
+        ]
+        writer.writerow(headers)
+        
+        # Get all users
+        queryset = self.get_queryset()
+        for user in queryset:
+            profile = getattr(user, 'profile', None)
+            row = [
+                user.id,
+                user.username,
+                user.email or '',
+                user.phone or '',
+                user.role,
+                user.is_verified_member,
+                profile.name_full if profile else '',
+                profile.nickname if profile else '',
+                profile.id_m if profile else '',
+                profile.gender if profile else '',
+                profile.birth_place if profile else '',
+                profile.birth_date if profile else '',
+                profile.marital_status if profile else '',
+                profile.segment if profile else '',
+                profile.study_level if profile else '',
+                profile.study_campus if profile else '',
+                profile.address if profile else '',
+                profile.job if profile else '',
+                profile.work_field if profile else '',
+                profile.work_institution if profile else '',
+                profile.work_position if profile else '',
+                profile.address_province if profile else ''
+            ]
+            writer.writerow(row)
         
         return response
 
