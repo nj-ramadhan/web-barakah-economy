@@ -13,6 +13,16 @@ const formatIDR = (amount) => {
   }).format(amount);
 };
 
+const getMediaUrl = (url) => {
+  if (!url) return null;
+  if (url.startsWith('http')) return url;
+  const baseUrl = process.env.REACT_APP_API_BASE_URL || '';
+  // Ensure no double slashes
+  const cleanBase = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+  const cleanUrl = url.startsWith('/') ? url : `/${url}`;
+  return `${cleanBase}${cleanUrl}`;
+};
+
 const EcourseMainPage = () => {
   const [courses, setCourses] = useState([]);
   const [featuredCourses, setFeaturedCourses] = useState([]);
@@ -124,7 +134,9 @@ const EcourseMainPage = () => {
 
       {/* Featured Campaign Slider */}
       <div className="px-4 pt-4 max-w-6xl mx-auto" style={{ position: 'relative', zIndex: 10 }}>
-        {featuredCourses.length > 0 && (
+        {loading && featuredCourses.length === 0 ? (
+          <div className="w-full h-56 lg:h-96 bg-gray-200 animate-pulse rounded-2xl shadow-lg"></div>
+        ) : featuredCourses.length > 0 && (
           <div className="relative rounded-2xl overflow-hidden h-56 lg:h-96 shadow-lg">
             {/* Slides */}
             <div className="h-full">
@@ -136,11 +148,11 @@ const EcourseMainPage = () => {
                       }`}
                   >
                     <img
-                      src={course.thumbnail || '/images/peduli-dhuafa-banner.jpg'}
+                      src={getMediaUrl(course.thumbnail) || '/placeholder-image.jpg'}
                       alt={course.title}
                       className="w-full h-56 lg:h-96 object-cover"
                       onError={(e) => {
-                        e.target.src = '/images/peduli-dhuafa-banner.jpg';
+                        e.target.src = '/placeholder-image.jpg';
                       }}
                     />
                     <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-6 lg:p-10">
@@ -191,7 +203,7 @@ const EcourseMainPage = () => {
                 <div key={course.id} className="bg-white rounded-lg overflow-hidden shadow">
                   <Link to={`/kelas/${course.slug || course.id}`}>
                     <img
-                      src={course.thumbnail || '/placeholder-image.jpg'}
+                      src={getMediaUrl(course.thumbnail) || '/placeholder-image.jpg'}
                       alt={course.title}
                       className="w-full h-28 object-cover"
                       onError={(e) => {

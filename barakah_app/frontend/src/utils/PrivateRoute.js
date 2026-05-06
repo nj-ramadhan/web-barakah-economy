@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, Navigate } from 'react-router-dom';
 import WarningModal from '../components/popup/WarningModal';
 
 const PrivateRoute = ({ children }) => {
@@ -15,6 +15,10 @@ const PrivateRoute = ({ children }) => {
     }, [user]);
 
     if (user) {
+        // If profile is incomplete, and we are not already on profile/edit, redirect
+        if (user.is_profile_complete === false && location.pathname !== '/profile/edit') {
+            return <Navigate to="/profile/edit" replace state={{ from: location }} />;
+        }
         return children; // Allow access if the user is logged in
     }
 

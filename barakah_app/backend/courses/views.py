@@ -90,7 +90,7 @@ class CourseViewSet(viewsets.ModelViewSet):
                 Q(title__icontains=search) |
                 Q(description__icontains=search)
             )
-        return queryset
+        return queryset.order_by('-is_featured', '-created_at')
 
     def perform_create(self, serializer):
         serializer.save(instructor=self.request.user)

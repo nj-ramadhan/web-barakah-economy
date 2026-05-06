@@ -1,15 +1,17 @@
 // components/layout/Header.js
-import React from 'react';
+import { Link } from 'react-router-dom';
 import '../../styles/Header.css';
 
 const Header = () => {
   return (
     <header className="bg-white shadow-sm sticky top-0 z-[1001] lg:hidden" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
       <div className="container px-4 py-2 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <img src="/images/logo.png" alt="BAE Community" className="h-8 w-8 object-contain" />
-          <span className="font-black text-green-800 tracking-tighter text-sm">BARAKAH APP</span>
-        </div>
+        <Link to="/" className="flex items-center gap-2 group">
+          <div className="p-1.5 bg-green-50 rounded-xl group-hover:bg-green-100 transition">
+            <img src="/logo.png" alt="Barakah Economy" className="h-8 w-8 object-contain" onError={(e) => { e.target.src = '/icon-512x512.png'; }} />
+          </div>
+          <span className="text-xl font-black text-green-800 tracking-tighter">BARAKAH ECONOMY</span>
+        </Link>
         <div className="flex items-center gap-2">
           <a
             href={localStorage.getItem('user') ? "/profile" : "/login"}

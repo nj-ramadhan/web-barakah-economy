@@ -56,6 +56,9 @@ class Course(models.Model):
     def __str__(self):
         return f"{self.title}"
 
+    class Meta:
+        ordering = ['-is_featured', '-created_at']
+
 class CourseEnrollment(models.Model):
     PAYMENT_STATUS_CHOICES = [
         ('pending', 'Pending'),

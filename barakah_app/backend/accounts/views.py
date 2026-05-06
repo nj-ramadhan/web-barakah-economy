@@ -51,6 +51,11 @@ class CustomTokenObtainPairView(TokenObtainPairView):
         except Exception:
             response.data['picture'] = None
 
+        # Check if profile is complete (needs name_full and phone)
+        profile_obj = getattr(user, 'profile', None)
+        is_complete = bool(user.phone and profile_obj and profile_obj.name_full)
+        response.data['is_profile_complete'] = is_complete
+
         return response
     
 class LoginView(CustomTokenObtainPairView):
@@ -148,6 +153,7 @@ class GoogleLoginView(APIView):
                 'accessible_menus': user.get_all_accessible_menus(),
                 'picture': picture_url,
                 'is_new_user': created,
+                'is_profile_complete': bool(user.phone and (getattr(user, 'profile', None) and getattr(user, 'profile').name_full))
             }, status=status.HTTP_200_OK)
         except ValueError as e:
             logger.error(f"Google Token verification failed: {e}")
@@ -269,24 +275,33 @@ class UserViewSet(viewsets.ModelViewSet):
         role = request.data.get('role', 'user')
         is_verified = request.data.get('is_verified_member', False)
         name_full = request.data.get('name_full', '')
+        id_m = request.data.get('id_m', '')
 
-        if not username or not email or not password:
-            return Response({'error': 'Username, email, dan password wajib diisi.'}, status=status.HTTP_400_BAD_REQUEST)
+        if not username:
+            return Response({'error': 'Username wajib diisi.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Jika password tidak diisi (manual entry), buat random agar tidak kosong
+        if not password:
+            password = ''.join(random.choices(string.ascii_letters + string.digits, k=12))
 
         if User.objects.filter(username=username).exists():
             return Response({'error': 'Username sudah digunakan.'}, status=status.HTTP_400_BAD_REQUEST)
-        if User.objects.filter(email=email).exists():
+        
+        if email and User.objects.filter(email=email).exists():
             return Response({'error': 'Email sudah terdaftar.'}, status=status.HTTP_400_BAD_REQUEST)
 
         user = User.objects.create_user(
-            username=username, email=email, password=password,
+            username=username, email=email or None, password=password,
             phone=phone, role=role, is_verified_member=is_verified
         )
 
-        if name_full:
+        if name_full or id_m:
             from profiles.models import Profile
             profile, _ = Profile.objects.get_or_create(user=user)
-            profile.name_full = name_full
+            if name_full:
+                profile.name_full = name_full
+            if id_m:
+                profile.id_m = id_m
             profile.save()
 
         return Response(UserAdminSerializer(user).data, status=status.HTTP_201_CREATED)

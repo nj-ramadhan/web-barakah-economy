@@ -72,7 +72,7 @@ class User(AbstractUser):
         ('staff', 'Staff / Pengelola'),
     )
 
-    email = models.EmailField(unique=True)
+    email = models.EmailField(unique=True, null=True, blank=True)
     phone = models.CharField(max_length=15, blank=True, null=True)
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='user')
     is_verified_member = models.BooleanField(default=False)

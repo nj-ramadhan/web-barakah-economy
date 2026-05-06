@@ -39,6 +39,7 @@ class ProfileSerializer(serializers.ModelSerializer):
     is_verified_member = serializers.BooleanField(source='user.is_verified_member', read_only=True)
     labels = serializers.SerializerMethodField(read_only=True)
     accessible_menus = serializers.SerializerMethodField(read_only=True)
+    is_profile_complete = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Profile
@@ -50,6 +51,9 @@ class ProfileSerializer(serializers.ModelSerializer):
 
     def get_labels(self, obj):
         return [label.name for label in obj.user.labels.all()]
+
+    def get_is_profile_complete(self, obj):
+        return bool(obj.user.phone and obj.name_full)
 
     def update(self, instance, validated_data):
         # Extract phone from user source if present in validated_data

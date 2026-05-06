@@ -65,9 +65,8 @@ const RegisterPage = () => {
     const handleGoogleRegister = async (credentialResponse) => {
         try {
             const response = await authService.googleLogin(credentialResponse.credential);
-            localStorage.setItem('user', JSON.stringify(response));
-            // Jika user baru, arahkan ke profil untuk melengkapi data
-            if (response.is_new_user) {
+            // is_profile_complete check is important for automated redirect
+            if (response.is_profile_complete === false || response.is_new_user) {
                 sessionStorage.setItem('just_registered', 'true');
                 navigate('/profile/edit?complete=1');
             } else {

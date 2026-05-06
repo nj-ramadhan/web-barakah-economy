@@ -8,6 +8,15 @@ import api from '../services/api';
 import { getCourseBySlug } from '../services/ecourseApi';
 import '../styles/Body.css';
 
+const getMediaUrl = (url) => {
+  if (!url) return null;
+  if (url.startsWith('http')) return url;
+  const baseUrl = process.env.REACT_APP_API_BASE_URL || '';
+  const cleanBase = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+  const cleanUrl = url.startsWith('/') ? url : `/${url}`;
+  return `${cleanBase}${cleanUrl}`;
+};
+
 const EcourseJoinCoursePage = () => {
   const { slug } = useParams();
   const navigate = useNavigate();
@@ -143,7 +152,7 @@ const EcourseJoinCoursePage = () => {
         {/* Course Summary */}
         <div className="flex items-center gap-3 bg-gray-50 p-3 rounded-xl mb-6 border border-gray-100 shadow-sm">
           <img
-            src={course.thumbnail || '/placeholder-image.jpg'}
+            src={getMediaUrl(course.thumbnail) || '/placeholder-image.jpg'}
             alt={course.title}
             className="w-16 h-16 rounded-lg object-cover"
             onError={(e) => { e.target.src = '/placeholder-image.jpg'; }}

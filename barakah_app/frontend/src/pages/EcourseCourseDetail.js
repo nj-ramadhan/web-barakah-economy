@@ -14,6 +14,15 @@ const formatIDR = (amount) => {
   return 'Rp ' + formatCurrency(amount);
 };
 
+const getMediaUrl = (url) => {
+  if (!url) return null;
+  if (url.startsWith('http')) return url;
+  const baseUrl = process.env.REACT_APP_API_BASE_URL || '';
+  const cleanBase = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+  const cleanUrl = url.startsWith('/') ? url : `/${url}`;
+  return `${cleanBase}${cleanUrl}`;
+};
+
 const EcourseCourseDetail = () => {
   const { slug } = useParams();
   const navigate = useNavigate();
@@ -182,7 +191,7 @@ const EcourseCourseDetail = () => {
         <meta name="description" content={course.description?.replace(/<[^>]+>/g, '').slice(0, 100)} />
         <meta property="og:title" content={course.title} />
         <meta property="og:description" content={course.description?.replace(/<[^>]+>/g, '').slice(0, 100)} />
-        <meta property="og:image" content={course.thumbnail} />
+        <meta property="og:image" content={getMediaUrl(course.thumbnail)} />
         <meta property="og:type" content="website" />
         <meta property="og:url" content={window.location.href} />
 
@@ -214,7 +223,7 @@ const EcourseCourseDetail = () => {
       <div className="px-4 py-4 max-w-6xl mx-auto">
         <div className="bg-white rounded-lg overflow-hidden shadow">
           <img
-            src={course.thumbnail || '/placeholder-image.jpg'}
+            src={getMediaUrl(course.thumbnail) || '/placeholder-image.jpg'}
             alt={course.title}
             className="w-full h-56 object-cover"
             onError={(e) => {
@@ -470,7 +479,7 @@ const EcourseCourseDetail = () => {
                           <p className="text-xs text-gray-600 leading-relaxed mb-3">{review.comment}</p>
                           {review.image && (
                             <img
-                              src={baseUrl + review.image}
+                              src={getMediaUrl(review.image)}
                               alt="Review"
                               className="w-32 h-32 object-cover rounded-lg border border-gray-100 shadow-sm"
                             />

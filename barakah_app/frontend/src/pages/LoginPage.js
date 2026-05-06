@@ -56,7 +56,11 @@ const LoginPage = () => {
             localStorage.setItem('user', JSON.stringify(userProfile));
             setIsLoggedIn(true);
             alert('Berhasil Login!');
-            navigate(nextPath);
+            if (response.is_profile_complete === false) {
+                navigate('/profile/edit', { replace: true });
+            } else {
+                navigate(nextPath);
+            }
         } catch (error) {
             alert('Gagal Login, Isi nama dan password yang benar');
             console.log(error.message);
@@ -85,7 +89,11 @@ const LoginPage = () => {
             localStorage.setItem('user', JSON.stringify(userProfile));
             setIsLoggedIn(true);
             alert('Berhasil Login dengan akun google!');
-            navigate(nextPath);
+            if (response.is_profile_complete === false) {
+                navigate('/profile/edit', { replace: true });
+            } else {
+                navigate(nextPath);
+            }
         } catch (error) {
             alert('Gagal Login dengan akun google, coba cara lain');
             console.log(error.message);

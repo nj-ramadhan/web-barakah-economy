@@ -405,11 +405,12 @@ const ProfileEditPage = () => {
 
         const updatedProfile = await authService.updateProfile(user.id, formData);
 
-        // Update user in localStorage with new picture
-        if (updatedProfile && updatedProfile.picture) {
+        // Update user in localStorage with new picture and completion status
+        if (updatedProfile) {
           const currentUser = JSON.parse(localStorage.getItem('user'));
           if (currentUser) {
-            currentUser.picture = updatedProfile.picture;
+            if (updatedProfile.picture) currentUser.picture = updatedProfile.picture;
+            currentUser.is_profile_complete = updatedProfile.is_profile_complete;
             localStorage.setItem('user', JSON.stringify(currentUser));
           }
         }

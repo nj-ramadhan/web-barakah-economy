@@ -62,6 +62,7 @@ const googleLogin = (token) => {
         picture: response.data.picture,
         is_verified_member: response.data.is_verified_member,
         accessible_menus: response.data.accessible_menus,
+        is_profile_complete: response.data.is_profile_complete,
       }));
     }
     return response.data;
@@ -95,6 +96,7 @@ const login = (username, password) => {
         email: response.data.email,
         role: response.data.role,
         picture: response.data.picture,
+        is_profile_complete: response.data.is_profile_complete,
       }));
     }
     return response.data;

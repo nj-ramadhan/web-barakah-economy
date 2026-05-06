@@ -7,6 +7,15 @@ import { getCourseDetail, getCourseMaterials, getMyEnrolledCourses, downloadCour
 import api from '../services/api';
 import '../styles/Body.css';
 
+const getMediaUrl = (url) => {
+    if (!url) return null;
+    if (url.startsWith('http')) return url;
+    const baseUrl = process.env.REACT_APP_API_BASE_URL || '';
+    const cleanBase = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+    const cleanUrl = url.startsWith('/') ? url : `/${url}`;
+    return `${cleanBase}${cleanUrl}`;
+};
+
 const EcourseViewerPage = () => {
     const { slug } = useParams();
     const navigate = useNavigate();
@@ -295,7 +304,7 @@ const EcourseViewerPage = () => {
                                             </div>
                                         </div>
                                         <a
-                                            href={currentMaterial.pdf_file.startsWith('http') ? currentMaterial.pdf_file : `${baseUrl}${currentMaterial.pdf_file}`}
+                                            href={getMediaUrl(currentMaterial.pdf_file)}
                                             target="_blank"
                                             rel="noopener noreferrer"
                                             className="bg-white border border-gray-200 text-gray-700 px-5 py-2.5 rounded-xl text-xs font-black shadow-sm hover:bg-gray-50 transition"

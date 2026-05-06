@@ -137,7 +137,7 @@ const DashboardUserPage = () => {
         setEditFormData({
             username: '', email: '', phone: '', password: '',
             role: 'user', is_verified_member: false,
-            name_full: '', custom_role_ids: [], label_ids: [], profile: {}
+            name_full: '', id_m: '', custom_role_ids: [], label_ids: [], profile: {}
         });
         setShowEditModal(true);
     };
@@ -163,6 +163,7 @@ const DashboardUserPage = () => {
                 address: p.address || '', address_province: p.address_province || '',
                 job: p.job || '', work_field: p.work_field || '', work_institution: p.work_institution || '',
                 work_position: p.work_position || '', work_salary: p.work_salary || '',
+                id_m: p.id_m || '',
             }
         });
         setShowEditModal(true);
@@ -179,6 +180,7 @@ const DashboardUserPage = () => {
                     phone: editFormData.phone, password: editFormData.password,
                     role: editFormData.role, is_verified_member: editFormData.is_verified_member,
                     name_full: editFormData.name_full || '',
+                    id_m: editFormData.id_m || '',
                 };
                 await axios.post(`${API}/api/auth/users/`, payload, getAuth());
                 alert('User baru berhasil dibuat!');
@@ -439,6 +441,7 @@ const DashboardUserPage = () => {
                                             <td className="px-3 py-3"><input type="checkbox" checked={selectedUserIds.includes(u.id)} onChange={() => toggleSelectUser(u.id)} className="w-4 h-4 text-green-600 rounded" /></td>
                                             <td className="px-3 py-3">
                                                 <div className="bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded font-black text-[9px] inline-block mb-1">ID: {u.id}</div>
+                                                {u.profile?.id_m && <div className="bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded font-black text-[9px] inline-block mb-1 ml-1">IDM: {u.profile.id_m}</div>}
                                                 <div className="font-bold text-gray-900 text-[11px] leading-tight">{u.username}</div>
                                                 <div className="text-[10px] text-gray-400 truncate max-w-[120px]">{u.email}</div>
                                             </td>
@@ -656,10 +659,11 @@ const DashboardUserPage = () => {
                                 {!editingUser ? (
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <FI label="Nama Lengkap" value={editFormData.name_full} onChange={v => setEditFormData(f => ({ ...f, name_full: v }))} />
+                                        <FI label="ID Member (IDM)" value={editFormData.id_m} onChange={v => setEditFormData(f => ({ ...f, id_m: v }))} />
                                         <FI label="Username" value={editFormData.username} onChange={v => setEditFormData(f => ({ ...f, username: v }))} />
-                                        <FI label="Email" value={editFormData.email} onChange={v => setEditFormData(f => ({ ...f, email: v }))} />
-                                        <FI label="No. Telepon" value={editFormData.phone} onChange={v => setEditFormData(f => ({ ...f, phone: v }))} />
-                                        <FI label="Password (wajib)*" value={editFormData.password} onChange={v => setEditFormData(f => ({ ...f, password: v }))} type="password" />
+                                        <FI label="Email (Opsional)" value={editFormData.email} onChange={v => setEditFormData(f => ({ ...f, email: v }))} />
+                                        <FI label="No. Telepon (Opsional)" value={editFormData.phone} onChange={v => setEditFormData(f => ({ ...f, phone: v }))} />
+                                        <FI label="Password (Opsional)" value={editFormData.password} onChange={v => setEditFormData(f => ({ ...f, password: v }))} type="password" />
                                         <FS label="Role" value={editFormData.role} onChange={v => setEditFormData(f => ({ ...f, role: v }))} options={[['user', 'User'], ['admin', 'Admin'], ['seller', 'Seller'], ['staff', 'Staff']]} />
                                         <div className="flex items-center gap-2 col-span-2">
                                             <input type="checkbox" id="is_v_new" checked={editFormData.is_verified_member} onChange={e => setEditFormData(f => ({ ...f, is_verified_member: e.target.checked }))} className="w-4 h-4 text-blue-600 rounded" />
@@ -672,6 +676,7 @@ const DashboardUserPage = () => {
                                         <div className="space-y-3">
                                             <h3 className="text-[10px] font-bold text-blue-700 uppercase tracking-widest border-b border-blue-100 pb-2 mb-2">Data Akun</h3>
                                             <FI label="Username" value={editFormData.username} onChange={v => setEditFormData(f => ({ ...f, username: v }))} />
+                                            <FI label="ID Member (IDM)" value={editFormData.profile?.id_m} onChange={v => setP('id_m', v)} />
                                             <FI label="Email" value={editFormData.email} onChange={v => setEditFormData(f => ({ ...f, email: v }))} />
                                             <FI label="No. Telepon" value={editFormData.phone} onChange={v => setEditFormData(f => ({ ...f, phone: v }))} />
                                             <FI label="Jabatan BAE" value={editFormData.position} onChange={v => setEditFormData(f => ({ ...f, position: v }))} />
