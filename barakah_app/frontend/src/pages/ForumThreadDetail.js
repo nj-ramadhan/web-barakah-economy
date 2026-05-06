@@ -19,7 +19,6 @@ const RenderReply = ({
     mentionUsers, 
     handleMentionSelect, 
     renderContentWithMentions, 
-    renderContentWithMentions, 
     formatDate,
     onOpenProfile 
 }) => {
