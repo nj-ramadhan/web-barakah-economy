@@ -65,6 +65,16 @@ const UserProfileModal = ({ userId, isOpen, onClose }) => {
                 <h2 className="text-xl font-black text-gray-900">{profile.nickname || profile.name_full || profile.username}</h2>
                 {(profile.nickname && profile.name_full) && <p className="text-xs text-gray-400 font-bold -mt-1">{profile.name_full}</p>}
                 <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest mt-1">@{profile.username}</p>
+                
+                {profile.labels && profile.labels.length > 0 && (
+                  <div className="user-profile-modal-labels">
+                    {profile.labels.map((label, idx) => (
+                      <span key={idx} className="user-label-badge">
+                        {label}
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
 

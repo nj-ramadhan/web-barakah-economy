@@ -76,13 +76,15 @@ class PublicProfileSerializer(serializers.ModelSerializer):
     has_courses = serializers.SerializerMethodField()
     has_physical_products = serializers.SerializerMethodField()
     province_name = serializers.SerializerMethodField()
+    labels = serializers.SerializerMethodField()
 
     class Meta:
         model = Profile
         fields = [
             'user_id', 'username', 'nickname', 'name_full', 'picture', 
             'google_picture_url', 'address_province', 'province_name',
-            'has_digital_products', 'has_courses', 'has_physical_products'
+            'has_digital_products', 'has_courses', 'has_physical_products',
+            'labels'
         ]
 
     def get_has_digital_products(self, obj):
@@ -98,3 +100,6 @@ class PublicProfileSerializer(serializers.ModelSerializer):
         if not obj.address_province:
             return ""
         return dict(Profile.PROVINCE_CHOICES).get(obj.address_province, obj.address_province)
+
+    def get_labels(self, obj):
+        return [l.name for l in obj.user.labels.all()]
