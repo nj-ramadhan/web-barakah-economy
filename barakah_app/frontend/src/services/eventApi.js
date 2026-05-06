@@ -193,3 +193,10 @@ export const downloadCertificate = (slug) => {
         responseType: 'blob'
     });
 };
+
+export const searchUsers = (search = '') => {
+    return axios.get(`${API_BASE_URL}/api/accounts/users/`, {
+        params: { search },
+        headers: getAuthHeaders()
+    });
+};

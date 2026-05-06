@@ -310,7 +310,10 @@ const EventRegistrationSubmissionPage = () => {
                                     ) : (
                                         <th className="p-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Kehadiran</th>
                                     )}
-                                    {event?.form_fields?.map(field => (
+                                    {event?.form_fields?.filter(field => {
+                                        const label = (field.label || '').toLowerCase();
+                                        return !(label === 'nama' || label === 'nama lengkap' || label === 'email' || label.includes('whatsapp') || label === 'no hp' || label === 'nomor wa');
+                                    }).map(field => (
                                         <th key={field.id} className="p-5 text-[10px] font-black text-gray-400 uppercase tracking-widest min-w-[150px]">{field.label}</th>
                                     ))}
                                     {event?.price_type !== 'free' && (
@@ -394,7 +397,10 @@ const EventRegistrationSubmissionPage = () => {
                                                         )}
                                                     </td>
                                                 )}
-                                                {event?.form_fields?.map(field => {
+                                                {event?.form_fields?.filter(field => {
+                                                    const label = (field.label || '').toLowerCase();
+                                                    return !(label === 'nama' || label === 'nama lengkap' || label === 'email' || label.includes('whatsapp') || label === 'no hp' || label === 'nomor wa');
+                                                }).map(field => {
                                                     let value = reg.responses?.[field.id];
 
                                                     // Robust Fallback 1: Use labels from backend serializer

@@ -205,7 +205,8 @@ class ActivityCalendarView(APIView):
         from django.db.models import Count
 
         # Fetch Events with participant counts
-        events_qs = Event.objects.filter(status__in=['approved', 'ongoing', 'completed', 'pending']).annotate(
+        # Include 'draft' for internal monitoring
+        events_qs = Event.objects.filter(status__in=['approved', 'ongoing', 'completed', 'pending', 'draft']).annotate(
             reg_count=Count('registrations')
         )
         if start_param:
@@ -215,7 +216,7 @@ class ActivityCalendarView(APIView):
             
         event_data = [{
             'id': f"event-{e.id}",
-            'title': e.title,
+            'title': f"[{e.status.upper()}] {e.title}" if e.status in ['pending', 'draft'] else e.title,
             'type': 'event',
             'category': e.category or 'Umum',
             'start': e.start_date.isoformat(),
@@ -226,12 +227,13 @@ class ActivityCalendarView(APIView):
             'organizer': e.organizer_name,
             'capacity': e.capacity,
             'status': e.status,
-            'color': '#4F46E5', # Indigo
+            'color': '#F59E0B' if e.status in ['pending', 'draft'] else '#4F46E5', # Amber for internal, Indigo for public
             'url': f"/event/{e.slug}"
         } for e in events_qs]
 
         # Fetch Campaigns with donation counts
-        campaigns_qs = Campaign.objects.filter(approval_status='approved').annotate(
+        # Include 'pending' for internal monitoring
+        campaigns_qs = Campaign.objects.filter(approval_status__in=['approved', 'pending']).annotate(
             don_count=Count('donations')
         )
         if start_param:
@@ -241,7 +243,7 @@ class ActivityCalendarView(APIView):
             
         campaign_data = [{
             'id': f"campaign-{c.id}",
-            'title': f"[Charity] {c.title}",
+            'title': f"[PENDING] {c.title}" if c.approval_status == 'pending' else f"[Charity] {c.title}",
             'type': 'campaign',
             'category': c.get_category_display(),
             'start': c.created_at.isoformat(),
@@ -251,7 +253,7 @@ class ActivityCalendarView(APIView):
             'target_amount': float(c.target_amount),
             'current_amount': float(c.current_amount),
             'status': c.approval_status,
-            'color': '#EF4444', # Red
+            'color': '#F59E0B' if c.approval_status == 'pending' else '#EF4444', # Amber for internal, Red for public
             'url': f"/campaign/{c.slug}"
         } for c in campaigns_qs]
 

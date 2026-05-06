@@ -361,10 +361,18 @@ class EventViewSet(viewsets.ModelViewSet):
         sessions_str = "\n".join(session_list)
 
         # Create registration
+        user_id = request.data.get('user_id')
+        user_obj = None
+        if user_id:
+            from django.contrib.auth import get_user_model
+            User = get_user_model()
+            user_obj = User.objects.filter(id=user_id).first()
+
         registration = EventRegistration.objects.create(
             event=event,
-            guest_name=name,
-            guest_email=email,
+            user=user_obj,
+            guest_name=name if not user_obj else None,
+            guest_email=email if not user_obj else None,
             responses=responses,
             status='approved',
             payment_status='verified',
