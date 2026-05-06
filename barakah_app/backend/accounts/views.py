@@ -455,7 +455,8 @@ class UserViewSet(viewsets.ModelViewSet):
                 row.append(' | '.join([bt.name for bt in user.bidang_tugas.all()]))
 
                 # Add activity detailed lists
-                charity_list = Donation.objects.filter(donor=user, payment_status='verified').values_list('campaign__title', flat=True).distinct()
+                donations = Donation.objects.filter(donor=user, payment_status='verified').values('campaign__title', 'amount')
+                charity_list = [f"{d.get('campaign__title') or 'Tanpa Judul'} (Rp {int(d.get('amount') or 0):,})" for d in donations]
                 event_list = EventRegistration.objects.filter(user=user, status='approved').values_list('event__title', flat=True)
                 order_list = OrderItem.objects.filter(order__user=user, order__status__in=['Paid', 'Completed', 'Shipped', 'Delivered']).values_list('product__title', flat=True)
                 course_list = CourseEnrollment.objects.filter(user=user, payment_status__in=['verified', 'paid']).values_list('course__title', flat=True)

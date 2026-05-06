@@ -519,6 +519,11 @@ const DashboardUserPage = () => {
                                         <th className="px-3 py-4 text-gray-600 font-bold uppercase tracking-wider text-[11px] min-w-[100px]">Label</th>
                                         <th className="px-3 py-4 text-gray-600 font-bold uppercase tracking-wider text-[11px] min-w-[100px]">Lingkup Tugas</th>
                                         <th className="px-3 py-4 text-gray-600 font-bold uppercase tracking-wider text-[11px] min-w-[100px]">Bidang Tugas</th>
+                                        <th className="px-3 py-4 text-gray-600 font-bold uppercase tracking-wider text-[11px] min-w-[120px]">Charity</th>
+                                        <th className="px-3 py-4 text-gray-600 font-bold uppercase tracking-wider text-[11px] min-w-[120px]">Events</th>
+                                        <th className="px-3 py-4 text-gray-600 font-bold uppercase tracking-wider text-[11px] min-w-[120px]">E-commerce</th>
+                                        <th className="px-3 py-4 text-gray-600 font-bold uppercase tracking-wider text-[11px] min-w-[120px]">E-course</th>
+                                        <th className="px-3 py-4 text-gray-600 font-bold uppercase tracking-wider text-[11px] min-w-[120px]">Digital</th>
 
                                         <SH label="Join" field="date_joined" {...{ sortField, sortDir, handleSort, getSortIcon }} />
                                         <th className="px-3 py-4 text-gray-600 font-bold uppercase tracking-wider text-[11px] text-center">V</th>
@@ -591,7 +596,33 @@ const DashboardUserPage = () => {
                                                 />
                                             </td>
 
-                                            <td className="px-3 py-3 text-gray-500 text-[10px] whitespace-nowrap">
+                                            <td className="px-3 py-3">
+                                                <div className="flex flex-wrap gap-1 max-w-[200px]">
+                                                    {(u.activities?.charity || []).map((item, idx) => <span key={idx} className="px-1.5 py-0.5 bg-rose-50 text-rose-600 rounded text-[9px] font-medium leading-tight">{item}</span>)}
+                                                </div>
+                                            </td>
+                                            <td className="px-3 py-3">
+                                                <div className="flex flex-wrap gap-1 max-w-[200px]">
+                                                    {(u.activities?.events || []).map((item, idx) => <span key={idx} className="px-1.5 py-0.5 bg-amber-50 text-amber-600 rounded text-[9px] font-medium leading-tight">{item}</span>)}
+                                                </div>
+                                            </td>
+                                            <td className="px-3 py-3">
+                                                <div className="flex flex-wrap gap-1 max-w-[200px]">
+                                                    {(u.activities?.sinergy || []).map((item, idx) => <span key={idx} className="px-1.5 py-0.5 bg-blue-50 text-blue-600 rounded text-[9px] font-medium leading-tight">{item}</span>)}
+                                                </div>
+                                            </td>
+                                            <td className="px-3 py-3">
+                                                <div className="flex flex-wrap gap-1 max-w-[200px]">
+                                                    {(u.activities?.courses || []).map((item, idx) => <span key={idx} className="px-1.5 py-0.5 bg-green-50 text-green-600 rounded text-[9px] font-medium leading-tight">{item}</span>)}
+                                                </div>
+                                            </td>
+                                            <td className="px-3 py-3">
+                                                <div className="flex flex-wrap gap-1 max-w-[200px]">
+                                                    {(u.activities?.digital_products || []).map((item, idx) => <span key={idx} className="px-1.5 py-0.5 bg-purple-50 text-purple-600 rounded text-[9px] font-medium leading-tight">{item}</span>)}
+                                                </div>
+                                            </td>
+
+                                            <td className="px-3 py-3 text-gray-500 text-[10px] whitespace-nowrap font-medium italic">
                                                 {new Date(u.date_joined).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
                                             </td>
                                             <td className="px-3 py-3 text-center">
