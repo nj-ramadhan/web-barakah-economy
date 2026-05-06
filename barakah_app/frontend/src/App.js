@@ -118,7 +118,6 @@ import ScrollToTop from './components/layout/ScrollToTop';
 import NotificationService from './services/NotificationService';
 import { getSessions } from './services/chatApi';
 import { forumApi } from './services/forumApi';
-import ProfileNotice from './components/common/ProfileNotice';
 
 const NotificationHandler = () => {
   const location = useLocation();
