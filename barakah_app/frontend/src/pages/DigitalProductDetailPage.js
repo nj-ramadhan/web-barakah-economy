@@ -93,7 +93,7 @@ const DigitalProductDetailPage = () => {
                 <div className="bg-white rounded-2xl overflow-hidden shadow-lg border border-gray-100 flex flex-col md:flex-row mx-4 mt-4">
                     <div className="md:w-1/2">
                         <img
-                            src={getMediaUrl(product.thumbnail) || '/placeholder-image.jpg'}
+                            src={getMediaUrl(product.thumbnail_url || product.thumbnail) || '/placeholder-image.jpg'}
                             alt={product.title}
                             className="w-full h-64 md:h-full object-cover"
                             onError={(e) => { e.target.src = '/placeholder-image.jpg'; }}

@@ -62,6 +62,7 @@ const DesktopHeader = () => {
     ];
 
     const group2 = [
+        { label: t('menu.activities'), to: '/kegiatan', icon: 'event_note' },
         { label: t('menu.event'), to: '/event', icon: 'event' },
         { label: t('menu.social_charity'), to: '/charity', icon: 'favorite' },
     ];
@@ -69,6 +70,7 @@ const DesktopHeader = () => {
     const group3 = [
         { label: t('menu.information'), to: '/articles', icon: 'info' },
         { label: t('menu.discussion_forum'), to: '/forum', icon: 'forum' },
+        { label: t('menu.consultation'), to: '/chat', icon: 'support_agent' },
     ];
 
     return (

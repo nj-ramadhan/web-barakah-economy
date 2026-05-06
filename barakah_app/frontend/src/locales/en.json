@@ -25,12 +25,12 @@
     "ecommerce": "E-commerce",
     "ecourse": "E-Course",
     "digital_products": "Digital Products",
-    "master_data": "Master Data",
+    "activities": "Our Activities",
     "event": "Event",
     "social_charity": "Social Charity",
     "information": "Information",
     "discussion_forum": "Discussion Forum",
-    "zakat_calculator": "Zakat Calculator"
+    "consultation": "Consultation"
   },
   "dashboard": {
     "title": "Dashboard"

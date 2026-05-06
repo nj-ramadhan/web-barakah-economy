@@ -89,7 +89,7 @@ const DigitalProductListPage = () => {
                             <Link key={product.id} to={`/digital_produk/${product.seller_name}/${product.slug}`} className="block">
                                 <div className="bg-white rounded-xl overflow-hidden shadow hover:shadow-lg transition">
                                     <img
-                                        src={getMediaUrl(product.thumbnail) || '/placeholder-image.jpg'}
+                                        src={getMediaUrl(product.thumbnail_url || product.thumbnail) || '/placeholder-image.jpg'}
                                         alt={product.title}
                                         className="w-full h-28 object-cover"
                                         onError={(e) => { e.target.src = '/placeholder-image.jpg'; }}

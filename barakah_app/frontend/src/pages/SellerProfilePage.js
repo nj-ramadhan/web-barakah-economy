@@ -279,7 +279,7 @@ const SellerProfilePage = () => {
                                 >
                                     <div className={`${layoutStyle === 'biolink' ? 'w-24 h-24 flex-shrink-0' : 'w-full'}`}>
                                         <img
-                                            src={getMediaUrl(product.thumbnail) || '/placeholder-image.jpg'}
+                                            src={getMediaUrl(product.thumbnail_url || product.thumbnail) || '/placeholder-image.jpg'}
                                             alt={product.title}
                                             className={`w-full object-cover ${layoutStyle === 'biolink' ? 'h-full' : 'h-32'}`}
                                         />

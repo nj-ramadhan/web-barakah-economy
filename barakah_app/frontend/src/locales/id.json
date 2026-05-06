@@ -25,12 +25,12 @@
     "ecommerce": "E-commerce",
     "ecourse": "E-Course",
     "digital_products": "Produk Digital",
-    "master_data": "Master Data",
+    "activities": "Kegiatan Kami",
     "event": "Event",
     "social_charity": "Social Charity",
     "information": "Informasi",
     "discussion_forum": "Forum Diskusi",
-    "zakat_calculator": "Kalkulator Zakat"
+    "consultation": "Konsultasi"
   },
   "dashboard": {
     "title": "Dashboard"
