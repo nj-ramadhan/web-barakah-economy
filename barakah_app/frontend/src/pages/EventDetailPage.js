@@ -9,6 +9,7 @@ import authService from '../services/auth';
 import Footer from '../components/layout/Footer';
 import CurrencyInput from '../components/common/CurrencyInput';
 import { formatCurrency } from '../utils/formatters';
+import { getMediaUrl } from '../utils/mediaUtils';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Pagination, Autoplay, EffectFade } from 'swiper/modules';
 import 'swiper/css';
@@ -83,7 +84,6 @@ const EventDetailPage = () => {
         return () => clearInterval(timer);
     }, [event]);
 
-    const API = process.env.REACT_APP_API_BASE_URL;
 
     const fetchDetail = useCallback(async () => {
         try {
@@ -244,12 +244,6 @@ const EventDetailPage = () => {
         }
     };
 
-    const getAbsoluteUrl = (url) => {
-        if (!url) return window.location.origin + '/logo192.png';
-        if (url.startsWith('http')) return url;
-        // Handle relative paths from backend
-        return window.location.origin + (url.startsWith('/') ? url : '/' + url);
-    };
 
     const handleShare = async () => {
         const shareTitle = event?.title || 'Event Barakah Economy';
@@ -332,7 +326,7 @@ const EventDetailPage = () => {
                 <meta property="og:url" content={window.location.href} />
                 <meta property="og:title" content={event.title} />
                 <meta property="og:description" content={event.description?.replace(/<[^>]*>/g, '').substring(0, 160)} />
-                <meta property="og:image" content={getAbsoluteUrl(event.thumbnail || event.header_image)} />
+                <meta property="og:image" content={getMediaUrl(event.thumbnail || event.header_image)} />
                 <meta property="og:image:alt" content={event.title} />
                 <meta property="og:site_name" content="Barakah Economy" />
 
@@ -341,7 +335,7 @@ const EventDetailPage = () => {
                 <meta property="twitter:url" content={window.location.href} />
                 <meta property="twitter:title" content={event.title} />
                 <meta property="twitter:description" content={event.description?.replace(/<[^>]*>/g, '').substring(0, 160)} />
-                <meta property="twitter:image" content={getAbsoluteUrl(event.thumbnail || event.header_image)} />
+                <meta property="twitter:image" content={getMediaUrl(event.thumbnail || event.header_image)} />
 
                 {/* JSON-LD Structured Data for Rich Snippets */}
                 <script type="application/ld+json">
@@ -351,7 +345,7 @@ const EventDetailPage = () => {
                         "name": event.title,
                         "description": event.description?.replace(/<[^>]*>/g, '').substring(0, 400),
                         "image": [
-                            getAbsoluteUrl(event.thumbnail || event.header_image)
+                            getMediaUrl(event.thumbnail || event.header_image)
                         ],
                         "startDate": event.date,
                         "endDate": event.end_date || event.date,
@@ -450,14 +444,14 @@ const EventDetailPage = () => {
                         ].filter(img => img))).map((img, idx) => (
                             <SwiperSlide key={idx} className="h-full w-full flex items-center justify-center bg-black/20">
                                 <img
-                                    src={img}
+                                    src={getMediaUrl(img)}
                                     alt={`${event.title} - ${idx + 1}`}
                                     className="w-full h-full object-cover"
                                     onError={(e) => { e.target.onerror = null; e.target.src = '/images/event-header-default.jpg'; }}
                                 />
                                 {/* View Full Image Button */}
                                 <button
-                                    onClick={(e) => { e.stopPropagation(); window.open(img, '_blank'); }}
+                                    onClick={(e) => { e.stopPropagation(); window.open(getMediaUrl(img), '_blank'); }}
                                     className="absolute bottom-6 right-6 bg-black/60 hover:bg-black/80 backdrop-blur-md text-white px-4 py-2.5 rounded-xl border border-white/20 flex items-center gap-2 text-xs font-bold transition-all shadow-xl z-20"
                                 >
                                     <span className="material-icons text-sm">zoom_out_map</span>
@@ -670,7 +664,7 @@ const EventDetailPage = () => {
                                         <div className="flex flex-wrap gap-4">
                                             {event.attachment_file && (
                                                 <a
-                                                    href={event.attachment_file}
+                                                    href={getMediaUrl(event.attachment_file)}
                                                     target="_blank"
                                                     rel="noreferrer"
                                                     className="inline-flex items-center gap-3 px-6 py-4 bg-white text-blue-700 rounded-3xl border border-blue-200 shadow-sm hover:shadow-md hover:border-blue-300 transition group"

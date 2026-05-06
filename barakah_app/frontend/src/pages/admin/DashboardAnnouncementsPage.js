@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import siteContentService from '../../services/siteContent';
+import { getMediaUrl } from '../../utils/mediaUtils';
 
 const DashboardAnnouncementsPage = () => {
   const [announcements, setAnnouncements] = useState([]);
@@ -128,7 +129,7 @@ const DashboardAnnouncementsPage = () => {
             <div key={ann.id} className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden flex flex-col">
               {ann.image && (
                 <div className="h-40 bg-gray-100 relative">
-                  <img src={ann.image} alt={ann.title} className="w-full h-full object-cover" />
+                  <img src={getMediaUrl(ann.image)} alt={ann.title} className="w-full h-full object-cover" />
                   {!ann.is_active && (
                     <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
                       <span className="bg-red-500 text-white px-3 py-1 rounded-full text-[10px] font-bold uppercase">Nonaktif</span>

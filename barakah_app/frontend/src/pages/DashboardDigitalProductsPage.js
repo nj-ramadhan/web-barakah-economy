@@ -15,32 +15,12 @@ import BackButton from '../components/global/BackButton';
 import ImageCropperModal from '../components/common/ImageCropper';
 import CurrencyInput from '../components/common/CurrencyInput';
 import { formatCurrency } from '../utils/formatters';
+import { getMediaUrl } from '../utils/mediaUtils';
 import '../styles/Body.css';
 
 const formatIDR = (amount) => {
     if (amount === 0 || amount === '0') return 'Gratis';
     return 'Rp ' + formatCurrency(amount);
-};
-
-const getMediaUrl = (url) => {
-    if (!url) return '';
-    if (url.startsWith('blob:')) return url;
-    
-    const baseUrl = process.env.REACT_APP_API_BASE_URL || '';
-    const cleanBase = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
-
-    if (url.startsWith('http')) {
-        try {
-            const urlObj = new URL(url);
-            if (urlObj.hostname === 'localhost' || urlObj.hostname === '127.0.0.1' || /^(\d{1,3}\.){3}\d{1,3}$/.test(urlObj.hostname)) {
-                return `${cleanBase}${urlObj.pathname}${urlObj.search}`;
-            }
-        } catch (e) { return url; }
-        return url;
-    }
-
-    const cleanUrl = url.startsWith('/') ? url : `/${url}`;
-    return `${cleanBase}${cleanUrl}`;
 };
 
 const CATEGORY_CHOICES = [
@@ -154,7 +134,8 @@ const DashboardDigitalProductsPage = () => {
         setShowBuyersModal(true);
         try {
             const user = JSON.parse(localStorage.getItem('user'));
-            const res = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/digital-products/${product.slug}/buyers/`, {
+            const baseUrl = process.env.REACT_APP_API_BASE_URL || window.location.origin;
+            const res = await axios.get(`${baseUrl}/api/digital-products/${product.slug}/buyers/`, {
                 headers: { Authorization: `Bearer ${user.access}` }
             });
             setSelectedProductBuyers(res.data);
@@ -177,7 +158,7 @@ const DashboardDigitalProductsPage = () => {
             alert('Deskripsi wajib diisi');
             return;
         }
-        if (price === undefined || price === null || price === '') {
+        if (price === undefined || price === null || price.toString().trim() === '') {
             alert('Harga wajib diisi (isi 0 jika gratis)');
             return;
         }
@@ -234,7 +215,7 @@ const DashboardDigitalProductsPage = () => {
 
     const handleCropComplete = (croppedBlob) => {
         const file = new File([croppedBlob], 'product_thumb.jpg', { type: 'image/jpeg' });
-        
+
         setThumbnail(file);
         setThumbnailPreview(URL.createObjectURL(croppedBlob));
         setCropper({ active: false, image: null });
@@ -278,7 +259,7 @@ const DashboardDigitalProductsPage = () => {
                                 className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center cursor-pointer hover:border-green-400 transition"
                             >
                                 {thumbnailPreview ? (
-                                    <img src={thumbnailPreview} alt="Preview" className="max-h-32 mx-auto rounded" />
+                                    <img src={getMediaUrl(thumbnailPreview)} alt="Preview" className="max-h-32 mx-auto rounded" />
                                 ) : (
                                     <>
                                         <span className="material-icons text-gray-400 text-3xl">add_photo_alternate</span>
@@ -472,7 +453,7 @@ const DashboardDigitalProductsPage = () => {
                             <h3 className="text-lg font-bold">Data Pembeli</h3>
                             <button onClick={() => setShowBuyersModal(false)} className="material-icons text-gray-400">close</button>
                         </div>
-                        
+
                         <div className="flex-1 overflow-y-auto">
                             {buyersLoading ? (
                                 <div className="flex justify-center py-10"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div></div>
@@ -495,7 +476,7 @@ const DashboardDigitalProductsPage = () => {
                                                     <td className="px-4 py-3 font-medium">{b.buyer_name}</td>
                                                     <td className="px-4 py-3 text-gray-500">{b.buyer_email}</td>
                                                     <td className="px-4 py-3">
-                                                        <a href={`https://wa.me/${b.buyer_phone.replace(/\D/g,'')}`} target="_blank" rel="noreferrer" className="text-green-600 font-bold hover:underline">
+                                                        <a href={`https://wa.me/${b.buyer_phone.replace(/\D/g, '')}`} target="_blank" rel="noreferrer" className="text-green-600 font-bold hover:underline">
                                                             {b.buyer_phone}
                                                         </a>
                                                     </td>
@@ -515,7 +496,7 @@ const DashboardDigitalProductsPage = () => {
             )}
 
             {cropper.active && (
-                <ImageCropperModal 
+                <ImageCropperModal
                     image={cropper.image}
                     aspect={1}
                     maxWidth={1024}

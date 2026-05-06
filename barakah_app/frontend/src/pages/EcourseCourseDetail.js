@@ -7,20 +7,12 @@ import NavigationButton from '../components/layout/Navigation';
 import ShareButton from '../components/campaigns/ShareButton';
 import { getCourseBySlug, getMyEnrolledCourses, createEnrollment } from '../services/ecourseApi';
 import { formatCurrency } from '../utils/formatters';
+import { getMediaUrl } from '../utils/mediaUtils';
 import '../styles/Body.css';
 
 const formatIDR = (amount) => {
   if (amount <= 0) return 'GRATIS';
   return 'Rp ' + formatCurrency(amount);
-};
-
-const getMediaUrl = (url) => {
-  if (!url) return null;
-  if (url.startsWith('http')) return url;
-  const baseUrl = process.env.REACT_APP_API_BASE_URL || '';
-  const cleanBase = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
-  const cleanUrl = url.startsWith('/') ? url : `/${url}`;
-  return `${cleanBase}${cleanUrl}`;
 };
 
 const EcourseCourseDetail = () => {

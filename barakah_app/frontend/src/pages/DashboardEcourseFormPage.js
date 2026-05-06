@@ -8,27 +8,8 @@ import { createCourse, updateCourse, getCourseDetail } from '../services/ecourse
 import ImageCropperModal from '../components/common/ImageCropper';
 import CurrencyInput from '../components/common/CurrencyInput';
 import '../styles/Body.css';
- 
-const getMediaUrl = (url) => {
-    if (!url) return '';
-    if (url.startsWith('blob:')) return url;
-    
-    const baseUrl = process.env.REACT_APP_API_BASE_URL || '';
-    const cleanBase = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
 
-    if (url.startsWith('http')) {
-        try {
-            const urlObj = new URL(url);
-            if (urlObj.hostname === 'localhost' || urlObj.hostname === '127.0.0.1' || /^(\d{1,3}\.){3}\d{1,3}$/.test(urlObj.hostname)) {
-                return `${cleanBase}${urlObj.pathname}${urlObj.search}`;
-            }
-        } catch (e) { return url; }
-        return url;
-    }
-
-    const cleanUrl = url.startsWith('/') ? url : `/${url}`;
-    return `${cleanBase}${cleanUrl}`;
-};
+import { getMediaUrl } from '../utils/mediaUtils';
 
 const CATEGORY_CHOICES = [
     { value: 'islam', label: 'Agama Islam' },
@@ -128,8 +109,13 @@ const DashboardEcourseFormPage = () => {
         formData.append('title', title);
         formData.append('description', description);
         formData.append('category', category);
-        formData.append('price', price || '0');
-        formData.append('discount', discount || '0');
+        
+        // Ensure price and discount are at least '0' to avoid validation errors
+        const cleanPrice = (price === undefined || price === null || price.toString().trim() === '') ? '0' : price.toString();
+        const cleanDiscount = (discount === undefined || discount === null || discount.toString().trim() === '') ? '0' : discount.toString();
+        
+        formData.append('price', cleanPrice);
+        formData.append('discount', cleanDiscount);
         formData.append('is_active', isActive ? 'true' : 'false');
         formData.append('is_featured', isFeatured ? 'true' : 'false');
         formData.append('has_certificate', hasCertificate ? 'true' : 'false');
@@ -210,7 +196,7 @@ const DashboardEcourseFormPage = () => {
                             className="aspect-video border-2 border-dashed border-gray-200 rounded-2xl flex flex-col items-center justify-center cursor-pointer hover:border-green-400 hover:bg-green-50/30 transition overflow-hidden"
                         >
                             {thumbnailPreview ? (
-                                <img src={thumbnailPreview} alt="Preview" className="w-full h-full object-cover" />
+                                <img src={getMediaUrl(thumbnailPreview)} alt="Preview" className="w-full h-full object-cover" />
                             ) : (
                                 <>
                                     <span className="material-icons text-gray-300 text-4xl mb-2">add_photo_alternate</span>

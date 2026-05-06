@@ -119,7 +119,7 @@ const EventRegistrationSubmissionPage = () => {
     const getImageUrl = (path) => {
         if (!path) return '';
         if (path.startsWith('http')) return path;
-        const baseUrl = process.env.REACT_APP_API_BASE_URL || '';
+        const baseUrl = process.env.REACT_APP_API_BASE_URL || 'https://api.barakah.cloud';
         const cleanBaseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
         const cleanPath = path.startsWith('/') ? path : `/${path}`;
         return `${cleanBaseUrl}${cleanPath}`;

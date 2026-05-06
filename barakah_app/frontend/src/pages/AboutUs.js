@@ -5,6 +5,7 @@ import Header from '../components/layout/Header';
 import NavigationButton from '../components/layout/Navigation';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
+import { getMediaUrl } from '../utils/mediaUtils';
 import '../styles/Body.css';
 
 const AboutUs = () => {
@@ -30,24 +31,6 @@ const AboutUs = () => {
     };
     fetchAboutUs();
   }, []);
-
-  const getMediaUrl = (path, file) => {
-    if (file instanceof Blob) return URL.createObjectURL(file);
-    if (!path) return '';
-    if (path.startsWith('http')) return path;
-    
-    // Extract origin from API URL (e.g. https://domain.com/api -> https://domain.com)
-    const baseUrl = process.env.REACT_APP_API_BASE_URL.replace(/\/api\/?$/, '').replace(/\/$/, '');
-    
-    let cleanPath = path;
-    if (cleanPath.startsWith('/media/') || cleanPath.startsWith('media/')) {
-      cleanPath = cleanPath.startsWith('/') ? cleanPath : `/${cleanPath}`;
-    } else {
-      cleanPath = cleanPath.startsWith('/') ? `/media${cleanPath}` : `/media/${cleanPath}`;
-    }
-    
-    return `${baseUrl}${cleanPath}`;
-  };
 
   // Hierarchy Tree Logic
   const buildTree = (records) => {

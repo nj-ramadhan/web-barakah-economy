@@ -4,6 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
 import Header from '../components/layout/Header';
 import { getDigitalProductBySlug, createDigitalOrder } from '../services/digitalProductApi';
+import { getMediaUrl } from '../utils/mediaUtils';
 import '../styles/Body.css';
 
 const formatIDR = (amount) => {
@@ -11,12 +12,6 @@ const formatIDR = (amount) => {
     return 'Rp. ' + new Intl.NumberFormat('id-ID', { minimumFractionDigits: 0 }).format(amount);
 };
 
-const getMediaUrl = (url) => {
-    if (!url) return '';
-    if (url.startsWith('http')) return url;
-    const baseUrl = process.env.REACT_APP_API_BASE_URL || '';
-    return `${baseUrl}${url}`;
-};
 
 const DigitalProductCheckoutPage = () => {
     const { slug } = useParams();

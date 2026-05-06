@@ -5,28 +5,9 @@ import { Helmet } from 'react-helmet';
 import Header from '../components/layout/Header';
 import NavigationButton from '../components/layout/Navigation';
 import { getCourseDetail, getCourseMaterials, downloadCourseCertificate } from '../services/ecourseApi';
+import { getMediaUrl } from '../utils/mediaUtils';
 import api from '../services/api';
 import '../styles/Body.css';
-
-const getMediaUrl = (url) => {
-    if (!url) return null;
-    if (url.startsWith('blob:')) return url;
-    
-    const baseUrl = process.env.REACT_APP_API_BASE_URL || '';
-    const cleanBase = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
-
-    // Jika URL sudah lengkap tapi menunjuk ke localhost/IP (umum di Docker)
-    if (url.startsWith('http')) {
-        const urlObj = new URL(url);
-        if (urlObj.hostname === 'localhost' || urlObj.hostname === '127.0.0.1' || /^(\d{1,3}\.){3}\d{1,3}$/.test(urlObj.hostname)) {
-            return `${cleanBase}${urlObj.pathname}${urlObj.search}`;
-        }
-        return url;
-    }
-
-    const cleanUrl = url.startsWith('/') ? url : `/${url}`;
-    return `${cleanBase}${cleanUrl}`;
-};
 
 // Quiz Component
 const QuizViewer = ({ quizData, onComplete, onReset, isCompleted }) => {

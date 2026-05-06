@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import siteContentService from '../../services/siteContent';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Pagination, Autoplay } from 'swiper/modules';
+import { getMediaUrl } from '../../utils/mediaUtils';
 import 'swiper/css';
 import 'swiper/css/pagination';
 
@@ -116,7 +117,7 @@ const GlobalPopupManager = () => {
                   {ann.image && (
                     <div className="relative h-64 overflow-hidden">
                       <img 
-                        src={ann.image} 
+                        src={getMediaUrl(ann.image)} 
                         alt={ann.title} 
                         className="w-full h-full object-cover"
                       />

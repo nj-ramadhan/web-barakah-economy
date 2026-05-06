@@ -5,26 +5,11 @@ import { Helmet } from 'react-helmet';
 import Header from '../components/layout/Header';
 import NavigationButton from '../components/layout/Navigation';
 import { getCourseMaterials, createMaterial, updateMaterial, deleteMaterial, getCourseDetail } from '../services/ecourseApi';
+import api from '../services/api';
 import axios from 'axios';
 import '../styles/Body.css';
 
-const getMediaUrl = (url) => {
-    if (!url) return '';
-    if (url.startsWith('blob:')) return url;
-    const baseUrl = process.env.REACT_APP_API_BASE_URL || '';
-    const cleanBase = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
-    if (url.startsWith('http')) {
-        try {
-            const urlObj = new URL(url);
-            if (urlObj.hostname === 'localhost' || urlObj.hostname === '127.0.0.1' || /^(\d{1,3}\.){3}\d{1,3}$/.test(urlObj.hostname)) {
-                return `${cleanBase}${urlObj.pathname}${urlObj.search}`;
-            }
-        } catch (e) { return url; }
-        return url;
-    }
-    const cleanUrl = url.startsWith('/') ? url : `/${url}`;
-    return `${cleanBase}${cleanUrl}`;
-};
+import { getMediaUrl } from '../utils/mediaUtils';
 
 const DashboardEcourseMaterialsPage = () => {
     const { id } = useParams();
@@ -217,11 +202,9 @@ const DashboardEcourseMaterialsPage = () => {
                     const formData = new FormData();
                     formData.append('image', file);
                     try {
-                        const user = JSON.parse(localStorage.getItem('user'));
-                        const res = await axios.post(`${process.env.REACT_APP_API_BASE_URL}/api/articles/upload-image/`, formData, {
+                        const res = await api.post('/articles/upload-content-image/', formData, {
                             headers: { 
-                                'Content-Type': 'multipart/form-data',
-                                'Authorization': `Bearer ${user.access}`
+                                'Content-Type': 'multipart/form-data'
                             }
                         });
                         const imageUrl = getMediaUrl(res.data.image || res.data.url);

@@ -5,6 +5,7 @@ import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Pagination, Autoplay } from 'swiper/modules';
 import 'swiper/swiper-bundle.css';
 import DesktopHeader from '../components/layout/DesktopHeader';
+import { getMediaUrl } from '../utils/mediaUtils';
 
 const formatIDR = (amount) => {
     return 'Rp. ' + new Intl.NumberFormat('id-ID', { minimumFractionDigits: 0 }).format(amount);
@@ -37,14 +38,6 @@ const getEventStatus = (startStr, endStr) => {
     }
 };
 
-const getMediaUrl = (url) => {
-    if (!url) return '';
-    if (url.startsWith('http')) return url;
-    const base = process.env.REACT_APP_API_BASE_URL || '';
-    const cleanBase = base.endsWith('/') ? base.slice(0, -1) : base;
-    const cleanUrl = url.startsWith('/') ? url : '/' + url;
-    return `${cleanBase}${cleanUrl}`;
-};
 
 const SellerAvatar = ({ seller, getMediaUrl }) => {
     const [imgError, setImgError] = useState(false);

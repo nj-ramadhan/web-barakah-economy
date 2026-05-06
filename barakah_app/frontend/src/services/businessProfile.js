@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = `${process.env.REACT_APP_API_BASE_URL}/api/profiles/business-profiles/`;
+const API_URL = `${process.env.REACT_APP_API_BASE_URL || 'https://api.barakah.cloud'}/api/profiles/business-profiles/`;
 
 const businessProfileService = {
   getBusinessProfiles: () => {

@@ -6,16 +6,8 @@ import Header from '../components/layout/Header';
 import NavigationButton from '../components/layout/Navigation';
 import api from '../services/api';
 import { getCourseBySlug } from '../services/ecourseApi';
+import { getMediaUrl } from '../utils/mediaUtils';
 import '../styles/Body.css';
-
-const getMediaUrl = (url) => {
-  if (!url) return null;
-  if (url.startsWith('http')) return url;
-  const baseUrl = process.env.REACT_APP_API_BASE_URL || '';
-  const cleanBase = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
-  const cleanUrl = url.startsWith('/') ? url : `/${url}`;
-  return `${cleanBase}${cleanUrl}`;
-};
 
 const EcourseJoinCoursePage = () => {
   const { slug } = useParams();

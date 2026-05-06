@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = `${process.env.REACT_APP_API_BASE_URL}/api/zis`;
+const API_URL = `${process.env.REACT_APP_API_BASE_URL || 'https://api.barakah.cloud'}/api/zis`;
 
 const getAuthHeader = () => {
     const user = JSON.parse(localStorage.getItem('user'));

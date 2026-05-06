@@ -10,8 +10,8 @@ i18n
       en: { translation: en },
       id: { translation: id },
     },
-    lng: 'en', // default language
-    fallbackLng: 'en',
+    lng: 'id', // default language
+    fallbackLng: 'id',
     interpolation: {
       escapeValue: false, // react already safes from xss
     },

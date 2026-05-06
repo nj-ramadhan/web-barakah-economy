@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = `${process.env.REACT_APP_API_BASE_URL}/api`;
+const API_URL = `${process.env.REACT_APP_API_BASE_URL || window.location.origin}/api`;
 
 const api = axios.create({
   baseURL: API_URL,
@@ -37,7 +37,8 @@ api.interceptors.response.use(
           const user = JSON.parse(userStr);
           if (user.refresh) {
             // Attempt to refresh the access token
-            const refreshResponse = await axios.post(`${process.env.REACT_APP_API_BASE_URL}/api/auth/token/refresh/`, {
+            const baseUrl = process.env.REACT_APP_API_BASE_URL || 'https://api.barakah.cloud';
+            const refreshResponse = await axios.post(`${baseUrl}/api/auth/token/refresh/`, {
               refresh: user.refresh
             });
             

@@ -4,12 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import Header from '../../components/layout/Header';
 import NavigationButton from '../../components/layout/Navigation';
 import ImageCropperModal from '../../components/common/ImageCropper';
-
-const getMediaUrl = (url) => {
-    if (!url) return '';
-    if (url.startsWith('http')) return url;
-    return `${process.env.REACT_APP_API_BASE_URL}${url}`;
-};
+import { getMediaUrl } from '../../utils/mediaUtils';
 
 const DashboardActivitiesPage = () => {
     const [activities, setActivities] = useState([]);

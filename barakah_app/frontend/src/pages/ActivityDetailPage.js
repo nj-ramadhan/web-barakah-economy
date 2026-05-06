@@ -5,12 +5,7 @@ import axios from 'axios';
 import Header from '../components/layout/Header';
 import NavigationButton from '../components/layout/Navigation';
 import ShareButton from '../components/campaigns/ShareButton';
-
-const getMediaUrl = (url) => {
-    if (!url) return '';
-    if (url.startsWith('http')) return url;
-    return `${process.env.REACT_APP_API_BASE_URL}${url}`;
-};
+import { getMediaUrl } from '../utils/mediaUtils';
 
 const ActivityDetailPage = () => {
     const { id } = useParams();

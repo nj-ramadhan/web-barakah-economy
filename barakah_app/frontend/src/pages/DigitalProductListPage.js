@@ -6,31 +6,11 @@ import HeaderHome from '../components/layout/HeaderHome';
 import NavigationButton from '../components/layout/Navigation';
 import { formatCurrency } from '../utils/formatters';
 import { getDigitalProducts, getPopularSellers } from '../services/digitalProductApi';
+import { getMediaUrl } from '../utils/mediaUtils';
 import '../styles/Body.css';
 
 const formatIDR = (amount) => {
     return 'Rp ' + formatCurrency(amount);
-};
-
-const getMediaUrl = (url) => {
-    if (!url) return '';
-    if (url.startsWith('blob:')) return url;
-    
-    const baseUrl = process.env.REACT_APP_API_BASE_URL || '';
-    const cleanBase = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
-
-    if (url.startsWith('http')) {
-        try {
-            const urlObj = new URL(url);
-            if (urlObj.hostname === 'localhost' || urlObj.hostname === '127.0.0.1' || /^(\d{1,3}\.){3}\d{1,3}$/.test(urlObj.hostname)) {
-                return `${cleanBase}${urlObj.pathname}${urlObj.search}`;
-            }
-        } catch (e) { return url; }
-        return url;
-    }
-
-    const cleanUrl = url.startsWith('/') ? url : `/${url}`;
-    return `${cleanBase}${cleanUrl}`;
 };
 
 const DigitalProductListPage = () => {

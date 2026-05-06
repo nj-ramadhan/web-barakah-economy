@@ -4,6 +4,7 @@ import { Helmet } from 'react-helmet';
 import Header from '../../components/layout/Header';
 import NavigationButton from '../../components/layout/Navigation';
 import { getEvents, updateEvent, deleteEvent } from '../../services/eventApi';
+import { getMediaUrl } from '../../utils/mediaUtils';
 
 const API = process.env.REACT_APP_API_BASE_URL;
 
@@ -144,10 +145,10 @@ const DashboardEventPage = () => {
                                             <div className="flex items-center gap-3">
                                                 <div 
                                                     className="w-10 h-10 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0 cursor-pointer"
-                                                    onClick={() => setPreviewImage(ev.thumbnail_full || ev.thumbnail || '/placeholder-image.jpg')}
+                                                    onClick={() => setPreviewImage(getMediaUrl(ev.thumbnail_full || ev.thumbnail || '/placeholder-image.jpg'))}
                                                     title="Klik untuk lihat detail gambar asli"
                                                 >
-                                                    <img src={ev.thumbnail || '/placeholder-image.jpg'} alt="" className="w-full h-full object-cover" />
+                                                    <img src={getMediaUrl(ev.thumbnail || '/placeholder-image.jpg')} alt="" className="w-full h-full object-cover" />
                                                 </div>
                                                 <div>
                                                     <div className="flex items-center gap-2">
@@ -276,7 +277,7 @@ const DashboardEventPage = () => {
                             <span className="material-icons">close</span>
                         </button>
                         <img
-                            src={previewImage}
+                            src={getMediaUrl(previewImage)}
                             alt="Full Preview"
                             className="max-w-full max-h-full object-contain rounded-xl shadow-2xl"
                         />

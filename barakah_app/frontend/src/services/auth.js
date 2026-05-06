@@ -1,7 +1,7 @@
 import axios from 'axios';
 import api from './api';
 
-const API_URL = `${process.env.REACT_APP_API_BASE_URL}/api/auth/`;
+const API_URL = `${process.env.REACT_APP_API_BASE_URL || 'https://api.barakah.cloud'}/api/auth/`;
 
 // Utility function to get the CSRF token from cookies
 function getCookie(name) {

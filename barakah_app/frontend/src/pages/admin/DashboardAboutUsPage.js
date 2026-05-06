@@ -3,6 +3,7 @@ import axios from 'axios';
 import Header from '../../components/layout/Header';
 import NavigationButton from '../../components/layout/Navigation';
 import ImageCropperModal from '../../components/common/ImageCropper';
+import { getMediaUrl } from '../../utils/mediaUtils';
 
 const API = process.env.REACT_APP_API_BASE_URL;
 
@@ -35,26 +36,6 @@ const DashboardAboutUsPage = () => {
     const [newLegalDoc, setNewLegalDoc] = useState({ title: '', image: null });
     const [uploadingDoc, setUploadingDoc] = useState(false);
     const [cropper, setCropper] = useState({ show: false, image: null, target: null, aspect: 1/1, personnelIdx: null });
-    
-    const getMediaUrl = (path, file) => {
-        if (file instanceof Blob) return URL.createObjectURL(file);
-        if (!path) return '';
-        if (path.startsWith('http')) return path;
-        
-        // Extract origin from API URL (e.g. https://domain.com/api -> https://domain.com)
-        const origin = API.replace(/\/api\/?$/, '');
-        
-        let cleanPath = path;
-        // If path already has /media/ or media/, just ensure it has leading slash
-        if (cleanPath.startsWith('/media/') || cleanPath.startsWith('media/')) {
-            cleanPath = cleanPath.startsWith('/') ? cleanPath : `/${cleanPath}`;
-        } else {
-            // Otherwise prepend /media/
-            cleanPath = cleanPath.startsWith('/') ? `/media${cleanPath}` : `/media/${cleanPath}`;
-        }
-        
-        return `${origin}${cleanPath}`;
-    };
 
     const fetchAboutUs = async () => {
         try {

@@ -5,33 +5,13 @@ import axios from 'axios';
 import { Helmet } from 'react-helmet';
 import HeaderHome from '../components/layout/HeaderHome'; // Import the Header component
 import NavigationButton from '../components/layout/Navigation'; // Import the Navigation component
+import { getMediaUrl } from '../utils/mediaUtils';
 
 const formatIDR = (amount) => {
   if (amount <= 0) return 'GRATIS';
   return 'Rp. ' + new Intl.NumberFormat('id-ID', {
     minimumFractionDigits: 0,
   }).format(amount);
-};
-
-const getMediaUrl = (url) => {
-  if (!url) return null;
-  if (url.startsWith('blob:')) return url;
-  
-  const baseUrl = process.env.REACT_APP_API_BASE_URL || '';
-  const cleanBase = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
-
-  if (url.startsWith('http')) {
-      try {
-          const urlObj = new URL(url);
-          if (urlObj.hostname === 'localhost' || urlObj.hostname === '127.0.0.1' || /^(\d{1,3}\.){3}\d{1,3}$/.test(urlObj.hostname)) {
-              return `${cleanBase}${urlObj.pathname}${urlObj.search}`;
-          }
-      } catch (e) { return url; }
-      return url;
-  }
-
-  const cleanUrl = url.startsWith('/') ? url : `/${url}`;
-  return `${cleanBase}${cleanUrl}`;
 };
 
 const EcourseMainPage = () => {

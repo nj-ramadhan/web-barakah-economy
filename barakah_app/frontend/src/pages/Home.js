@@ -11,6 +11,7 @@ import { Navigation, Pagination, Scrollbar, Autoplay } from 'swiper/modules';
 import ShareButton from '../components/campaigns/ShareButton';
 import { getDigitalProducts, getPopularSellers } from '../services/digitalProductApi';
 import FloatingCartModal from '../components/layout/FloatingCartModal';
+import { getMediaUrl } from '../utils/mediaUtils';
 
 function getCsrfToken() {
   const cookies = document.cookie.split(';');
@@ -58,14 +59,6 @@ const formatDeadline = (deadline) => {
   });
 };
 
-const getMediaUrl = (url) => {
-  if (!url) return '';
-  if (url.startsWith('http')) return url;
-  const baseUrl = process.env.REACT_APP_API_BASE_URL || '';
-  const cleanBase = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
-  const cleanUrl = url.startsWith('/') ? url : `/${url}`;
-  return `${cleanBase}${cleanUrl}`;
-};
 
 const getEventStatus = (startStr, endStr) => {
   const now = new Date();
@@ -602,7 +595,7 @@ const Home = () => {
                       }`}
                   >
                     <img
-                      src={campaign.thumbnail || '/images/peduli-dhuafa-banner.jpg'}
+                      src={getMediaUrl(campaign.thumbnail) || '/images/peduli-dhuafa-banner.jpg'}
                       alt={campaign.title}
                       className="w-full h-56 object-cover"
                       onError={(e) => {
@@ -681,7 +674,7 @@ const Home = () => {
                     <div className="bg-white rounded-lg overflow-hidden shadow">
                       <Link to={`/kampanye/${campaign.slug || campaign.id}`}>
                         <img
-                          src={campaign.thumbnail || '/placeholder-image.jpg'}
+                          src={getMediaUrl(campaign.thumbnail) || '/placeholder-image.jpg'}
                           alt={campaign.title}
                           className="w-full h-28 object-cover"
                           onError={(e) => {

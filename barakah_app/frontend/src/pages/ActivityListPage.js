@@ -4,12 +4,7 @@ import { Helmet } from 'react-helmet';
 import axios from 'axios';
 import HeaderHome from '../components/layout/HeaderHome';
 import NavigationButton from '../components/layout/Navigation';
-
-const getMediaUrl = (url) => {
-    if (!url) return '';
-    if (url.startsWith('http')) return url;
-    return `${process.env.REACT_APP_API_BASE_URL}${url}`;
-};
+import { getMediaUrl } from '../utils/mediaUtils';
 
 const ActivityListPage = () => {
     const [activities, setActivities] = useState([]);

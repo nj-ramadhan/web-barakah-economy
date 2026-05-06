@@ -3,13 +3,7 @@ import Header from '../../components/layout/Header';
 import NavigationButton from '../../components/layout/Navigation';
 import { getAdminAllProducts, deleteAdminProduct } from '../../services/digitalProductApi';
 import { formatCurrency } from '../../utils/formatters';
-
-const getMediaUrl = (url) => {
-    if (!url) return '';
-    if (url.startsWith('http')) return url;
-    const baseUrl = process.env.REACT_APP_API_BASE_URL || '';
-    return `${baseUrl}${url}`;
-};
+import { getMediaUrl } from '../../utils/mediaUtils';
 
 const AdminAllProductsPage = () => {
     const [products, setProducts] = useState([]);

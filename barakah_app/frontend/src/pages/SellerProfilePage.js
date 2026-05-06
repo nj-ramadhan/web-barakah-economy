@@ -8,17 +8,11 @@ import { getPublicDigitalProfile } from '../services/digitalProductApi';
 import ShareButton from '../components/campaigns/ShareButton';
 import ShopDecoration from '../components/profile/ShopDecoration';
 import StoreTemplates from '../components/profile/StoreTemplates';
+import { getMediaUrl } from '../utils/mediaUtils';
 import '../styles/Body.css';
 
 const formatIDR = (amount) => {
     return 'Rp. ' + new Intl.NumberFormat('id-ID', { minimumFractionDigits: 0 }).format(amount);
-};
-
-const getMediaUrl = (url) => {
-    if (!url) return '';
-    if (url.startsWith('http')) return url;
-    const baseUrl = process.env.REACT_APP_API_BASE_URL || '';
-    return `${baseUrl}${url}`;
 };
 
 const SellerProfilePage = () => {
