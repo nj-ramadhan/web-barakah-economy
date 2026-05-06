@@ -221,6 +221,19 @@ const App = () => {
 };
 
 const LayoutWrapper = ({ isDesktop }) => {
+  const location = useLocation();
+  const navigate = React.useNavigate();
+  const user = JSON.parse(localStorage.getItem('user'));
+
+  React.useEffect(() => {
+    // Force redirect to profile edit if profile is incomplete
+    // Except for pages that must be accessible
+    const publicPaths = ['/login', '/register', '/lupa-password', '/reset-password', '/profile/edit'];
+    if (user && user.is_profile_complete === false && !publicPaths.includes(location.pathname)) {
+      navigate('/profile/edit', { replace: true, state: { from: location } });
+    }
+  }, [user, location.pathname, navigate]);
+
   return (
     <div className="w-full">
       <ProfileNotice />

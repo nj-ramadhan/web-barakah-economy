@@ -503,8 +503,12 @@ class UserViewSet(viewsets.ModelViewSet):
                 try:
                     user_id = row.get('ID')
                     username = row.get('Username')
-                    email = row.get('Email') or None
-                    phone = row.get('Phone') or ''
+                    
+                    # Convert empty email to None to avoid unique constraint "" error in Postgres
+                    raw_email = row.get('Email', '').strip()
+                    email = raw_email if raw_email else None
+                    
+                    phone = row.get('Phone', '').strip()
                     role = row.get('Role') or 'user'
                     is_verified = str(row.get('Verified Member', '')).lower() == 'true'
                     full_name = row.get('Full Name') or ''
@@ -526,11 +530,23 @@ class UserViewSet(viewsets.ModelViewSet):
                     else:
                         # Create new
                         if not username:
-                            username = f"user_{random.randint(1000, 9999)}"
+                            # Try to generate from email or name
+                            if email:
+                                username = email.split('@')[0]
+                            elif full_name:
+                                username = full_name.lower().replace(' ', '_')
+                            else:
+                                username = f"user_{random.randint(1000, 9999)}"
                         
-                        # Check unique
-                        if User.objects.filter(username=username).exists():
-                             username = f"{username}_{random.randint(100, 999)}"
+                        # Check unique username
+                        base_username = username
+                        counter = 1
+                        while User.objects.filter(username=username).exists():
+                            username = f"{base_username}_{random.randint(100, 999)}"
+                            if counter > 5: # prevent infinite loop
+                                username = f"{base_username}_{random.randint(1000, 9999)}"
+                                break
+                            counter += 1
 
                         user = User.objects.create_user(
                             username=username,
@@ -543,23 +559,27 @@ class UserViewSet(viewsets.ModelViewSet):
                         created_count += 1
                     
                     # Update Profile
+                    from profiles.models import Profile
                     profile, _ = Profile.objects.get_or_create(user=user)
                     profile.name_full = full_name
                     profile.id_m = id_m
                     
                     # Advanced profile fields
-                    profile.gender = row.get('Gender', profile.gender)
-                    profile.birth_place = row.get('Birth Place', profile.birth_place)
+                    if row.get('Gender'): profile.gender = row.get('Gender').lower()[:1]
+                    if row.get('Birth Place'): profile.birth_place = row.get('Birth Place')
                     if row.get('Birth Date'): profile.birth_date = row.get('Birth Date')
-                    profile.marital_status = row.get('Marital Status', profile.marital_status)
-                    profile.segment = row.get('Segment', profile.segment)
-                    profile.study_level = row.get('Study Level', profile.study_level)
-                    profile.study_campus = row.get('Study Campus', profile.study_campus)
-                    profile.address = row.get('Address', profile.address)
-                    profile.job = row.get('Job', profile.job)
-                    profile.work_field = row.get('Work Field', profile.work_field)
-                    profile.work_institution = row.get('Work Institution', profile.work_institution)
-                    profile.work_position = row.get('Work Position', profile.work_position)
+                    if row.get('Marital Status'): profile.marital_status = row.get('Marital Status').lower()[:2]
+                    if row.get('Segment'): profile.segment = row.get('Segment').lower()
+                    if row.get('Study Level'): profile.study_level = row.get('Study Level').lower()
+                    if row.get('Study Campus'): profile.study_campus = row.get('Study Campus')
+                    if row.get('Address'): profile.address = row.get('Address')
+                    if row.get('Job'): profile.job = row.get('Job').lower()
+                    if row.get('Work Field'): profile.work_field = row.get('Work Field').lower()
+                    if row.get('Work Institution'): profile.work_institution = row.get('Work Institution')
+                    if row.get('Work Position'): profile.work_position = row.get('Work Position')
+                    if row.get('Province'):
+                        # Map province display name to code if possible, or just save
+                        profile.address_province = row.get('Province').lower().replace(' ', '_')
                     
                     profile.save()
 

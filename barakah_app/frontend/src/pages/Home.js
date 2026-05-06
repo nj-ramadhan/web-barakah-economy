@@ -61,7 +61,10 @@ const formatDeadline = (deadline) => {
 const getMediaUrl = (url) => {
   if (!url) return '';
   if (url.startsWith('http')) return url;
-  return `${process.env.REACT_APP_API_BASE_URL}${url}`;
+  const baseUrl = process.env.REACT_APP_API_BASE_URL || '';
+  const cleanBase = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+  const cleanUrl = url.startsWith('/') ? url : `/${url}`;
+  return `${cleanBase}${cleanUrl}`;
 };
 
 const getEventStatus = (startStr, endStr) => {

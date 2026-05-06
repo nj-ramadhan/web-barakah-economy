@@ -8,6 +8,15 @@ import { createCourse, updateCourse, getCourseDetail } from '../services/ecourse
 import ImageCropperModal from '../components/common/ImageCropper';
 import CurrencyInput from '../components/common/CurrencyInput';
 import '../styles/Body.css';
+ 
+const getMediaUrl = (url) => {
+    if (!url) return '';
+    if (url.startsWith('http') || url.startsWith('blob:')) return url;
+    const baseUrl = process.env.REACT_APP_API_BASE_URL || '';
+    const cleanBase = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+    const cleanUrl = url.startsWith('/') ? url : `/${url}`;
+    return `${cleanBase}${cleanUrl}`;
+};
 
 const CATEGORY_CHOICES = [
     { value: 'islam', label: 'Agama Islam' },
@@ -189,7 +198,7 @@ const DashboardEcourseFormPage = () => {
                             className="aspect-video border-2 border-dashed border-gray-200 rounded-2xl flex flex-col items-center justify-center cursor-pointer hover:border-green-400 hover:bg-green-50/30 transition overflow-hidden"
                         >
                             {thumbnailPreview ? (
-                                <img src={thumbnailPreview} alt="Preview" className="w-full h-full object-cover" />
+                                <img src={getMediaUrl(thumbnailPreview)} alt="Preview" className="w-full h-full object-cover" />
                             ) : (
                                 <>
                                     <span className="material-icons text-gray-300 text-4xl mb-2">add_photo_alternate</span>

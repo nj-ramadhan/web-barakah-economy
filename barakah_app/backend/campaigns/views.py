@@ -66,14 +66,19 @@ class CampaignViewSet(viewsets.ModelViewSet):
     def get_object(self):
         """Logic Hybrid: Cek Slug dulu, kalau gagal cek ID"""
         queryset = self.filter_queryset(self.get_queryset())
-        lookup_value = self.kwargs.get('slug')
+        lookup_value = self.kwargs.get('slug') or self.kwargs.get('pk')
         obj = None
 
-        if lookup_value is not None:
-            if lookup_value.isdigit():
+        if lookup_value:
+            # Try slug first
+            obj = queryset.filter(slug=lookup_value).first()
+            if not obj and str(lookup_value).isdigit():
+                # Then try ID
                 obj = queryset.filter(id=lookup_value).first()
-            if not obj:
-                obj = get_object_or_404(queryset, slug=lookup_value)
+
+        if not obj:
+            from django.http import Http404
+            raise Http404
 
         self.check_object_permissions(self.request, obj)
         return obj

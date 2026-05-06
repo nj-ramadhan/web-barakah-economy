@@ -220,7 +220,9 @@ const DashboardUserPage = () => {
             // Clean profile data: remove empty strings to avoid validation issues
             const cleanProfile = {};
             Object.entries(editFormData.profile || {}).forEach(([k, v]) => {
-                if (v !== '' && v !== null && v !== undefined) cleanProfile[k] = v;
+                // Only skip if truly null or undefined, allow empty string for some fields if needed
+                // But for most, empty string means reset. IDM should be allowed to be empty or set.
+                if (v !== null && v !== undefined) cleanProfile[k] = v;
             });
             const payload = {
                 username: editFormData.username,
@@ -450,6 +452,7 @@ const DashboardUserPage = () => {
                                 <thead className="bg-gray-50 border-b border-gray-100">
                                     <tr>
                                         <th className="px-3 py-4"><input type="checkbox" checked={selectedUserIds.length === users.length && users.length > 0} onChange={toggleSelectAll} className="w-4 h-4 text-green-600 rounded" /></th>
+                                        <SH label="ID" field="id" {...{ sortField, sortDir, handleSort, getSortIcon }} />
                                         <SH label="IDM" field="profile__id_m" {...{ sortField, sortDir, handleSort, getSortIcon }} />
                                         <SH label="User" field="username" {...{ sortField, sortDir, handleSort, getSortIcon }} />
                                         <SH label="Nama" field="profile__name_full" {...{ sortField, sortDir, handleSort, getSortIcon }} />
@@ -474,13 +477,13 @@ const DashboardUserPage = () => {
                                     {users.map(u => (
                                         <tr key={u.id} className="hover:bg-green-50/30 transition">
                                             <td className="px-3 py-3"><input type="checkbox" checked={selectedUserIds.includes(u.id)} onChange={() => toggleSelectUser(u.id)} className="w-4 h-4 text-green-600 rounded" /></td>
+                                            <td className="px-3 py-3 text-xs font-black text-gray-400">#{u.id}</td>
                                             <td className="px-3 py-3">
                                                 <div className="font-mono text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-lg border border-blue-100 text-center">
                                                     {u.profile?.id_m || '-'}
                                                 </div>
                                             </td>
                                             <td className="px-3 py-3">
-                                                <div className="bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded font-black text-[9px] inline-block mb-1">ID: {u.id}</div>
                                                 <div className="font-bold text-gray-900 text-[11px] leading-tight">{u.username}</div>
                                                 <div className="text-[10px] text-gray-400 truncate max-w-[120px]">{u.email}</div>
                                             </td>
@@ -698,7 +701,7 @@ const DashboardUserPage = () => {
                                 {!editingUser ? (
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <FI label="Nama Lengkap" value={editFormData.name_full} onChange={v => setEditFormData(f => ({ ...f, name_full: v }))} />
-                                        <FI label="IDM" value={editFormData.id_m} onChange={v => setEditFormData(f => ({ ...f, id_m: v }))} />
+                                        <FI label="IDM (ID Member)" value={editFormData.id_m} onChange={v => setEditFormData(f => ({ ...f, id_m: v }))} />
                                         <FI label="Username" value={editFormData.username} onChange={v => setEditFormData(f => ({ ...f, username: v }))} />
                                         <FI label="Email (Opsional)" value={editFormData.email} onChange={v => setEditFormData(f => ({ ...f, email: v }))} />
                                         <FI label="No. Telepon (Opsional)" value={editFormData.phone} onChange={v => setEditFormData(f => ({ ...f, phone: v }))} />
@@ -715,7 +718,7 @@ const DashboardUserPage = () => {
                                         <div className="space-y-3">
                                             <h3 className="text-[10px] font-bold text-blue-700 uppercase tracking-widest border-b border-blue-100 pb-2 mb-2">Data Akun</h3>
                                             <FI label="Username" value={editFormData.username} onChange={v => setEditFormData(f => ({ ...f, username: v }))} />
-                                            <FI label="IDM" value={editFormData.profile?.id_m} onChange={v => setP('id_m', v)} />
+                                            <FI label="IDM (ID Member)" value={editFormData.profile?.id_m} onChange={v => setP('id_m', v)} />
                                             <FI label="Email" value={editFormData.email} onChange={v => setEditFormData(f => ({ ...f, email: v }))} />
                                             <FI label="No. Telepon" value={editFormData.phone} onChange={v => setEditFormData(f => ({ ...f, phone: v }))} />
                                             <FI label="Jabatan BAE" value={editFormData.position} onChange={v => setEditFormData(f => ({ ...f, position: v }))} />

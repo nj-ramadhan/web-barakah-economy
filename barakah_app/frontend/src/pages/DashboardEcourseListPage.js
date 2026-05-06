@@ -17,7 +17,9 @@ const getMediaUrl = (url) => {
     if (!url) return '';
     if (url.startsWith('http')) return url;
     const baseUrl = process.env.REACT_APP_API_BASE_URL || '';
-    return `${baseUrl}${url}`;
+    const cleanBase = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+    const cleanUrl = url.startsWith('/') ? url : `/${url}`;
+    return `${cleanBase}${cleanUrl}`;
 };
 
 const DashboardEcourseListPage = () => {

@@ -264,7 +264,7 @@ const EcourseCourseDetail = () => {
             )}
             {isEnrolled && (
               <button
-                onClick={() => navigate(`/kelas/buka/${course.slug}`)}
+                onClick={() => navigate(`/kelas/buka/${course.slug || course.id}`)}
                 className="block w-full text-center bg-green-600 text-white py-2 rounded-md text-sm font-bold hover:bg-green-700 shadow-md transition"
               >
                 MULAI BELAJAR

@@ -7,8 +7,8 @@ const Header = () => {
     <header className="bg-white shadow-sm sticky top-0 z-[1001] lg:hidden" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
       <div className="container px-4 py-2 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-2 group">
-          <div className="p-1.5 bg-green-50 rounded-xl group-hover:bg-green-100 transition">
-            <img src="/logo.png" alt="Barakah Economy" className="h-8 w-8 object-contain" onError={(e) => { e.target.src = '/icon-512x512.png'; }} />
+          <div className="p-1.5 bg-green-50 rounded-xl group-hover:bg-green-100 transition shadow-sm">
+            <img src="/logo.png" alt="Barakah Economy" className="h-8 w-8 object-contain" />
           </div>
           <span className="text-xl font-black text-green-800 tracking-tighter">BARAKAH ECONOMY</span>
         </Link>
