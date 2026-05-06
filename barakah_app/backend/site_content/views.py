@@ -216,7 +216,8 @@ class ActivityCalendarView(APIView):
             
         event_data = [{
             'id': f"event-{e.id}",
-            'title': f"[{e.status.upper()}] {e.title}" if e.status in ['pending', 'draft'] else e.title,
+            'title': (f"[INTERNAL] {e.title}" if e.visibility == 'private' else 
+                      (f"[{e.status.upper()}] {e.title}" if e.status in ['pending', 'draft'] else e.title)),
             'type': 'event',
             'category': e.category or 'Umum',
             'start': e.start_date.isoformat(),
@@ -227,7 +228,8 @@ class ActivityCalendarView(APIView):
             'organizer': e.organizer_name,
             'capacity': e.capacity,
             'status': e.status,
-            'color': '#F59E0B' if e.status in ['pending', 'draft'] else '#4F46E5', # Amber for internal, Indigo for public
+            'visibility': e.visibility,
+            'color': '#7C3AED' if e.visibility == 'private' else ('#F59E0B' if e.status in ['pending', 'draft'] else '#4F46E5'), # Purple for internal, Amber for pending, Indigo for public
             'url': f"/event/{e.slug}"
         } for e in events_qs]
 

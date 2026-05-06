@@ -1464,7 +1464,7 @@ class EventViewSet(viewsets.ModelViewSet):
         writer = csv.writer(response, delimiter=';')
         
         # CSV Header
-        header = ['ID', 'Waktu Daftar', 'ID Peserta', 'Kode Tiket', 'Nama', 'Email', 'Status', 'Kehadiran Umum']
+        header = ['ID', 'Waktu Daftar', 'ID Peserta', 'Kode Tiket', 'Nama', 'Email', 'Label User', 'Status', 'Kehadiran Umum']
         for field in form_fields:
             header.append(field.label)
         
@@ -1501,6 +1501,12 @@ class EventViewSet(viewsets.ModelViewSet):
             
             # Email
             row.append(reg.guest_email or (reg.user.email if reg.user else "-"))
+
+            # Label User
+            labels_str = "-"
+            if reg.user:
+                labels_str = " | ".join([l.name for l in reg.user.labels.all()])
+            row.append(labels_str)
             
             # Status
             row.append(reg.get_status_display())

@@ -516,6 +516,10 @@ const ActivityCalendarPage = () => {
                         <span className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Agenda Event</span>
                     </div>
                     <div className="flex items-center gap-3">
+                        <div className="w-4 h-4 rounded-lg bg-purple-600 shadow-md shadow-purple-100"></div>
+                        <span className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Event Internal</span>
+                    </div>
+                    <div className="flex items-center gap-3">
                         <div className="w-4 h-4 rounded-lg bg-rose-500 shadow-md shadow-rose-100"></div>
                         <span className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Program Charity</span>
                     </div>

@@ -342,6 +342,7 @@ const EventRegistrationSubmissionPage = () => {
                                     <th className="p-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Waktu</th>
                                     <th className="p-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Kode Tiket</th>
                                     <th className="p-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Identitas</th>
+                                    <th className="p-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Label</th>
                                     {event?.sessions && event.sessions.length > 0 ? (
                                         event.sessions.map(ses => (
                                             <th key={ses.id} className="p-5 text-[10px] font-black text-purple-600 uppercase tracking-widest min-w-[100px] text-center bg-purple-50/30">
@@ -400,6 +401,19 @@ const EventRegistrationSubmissionPage = () => {
                                                     </div>
                                                     <div className="text-[10px] text-gray-500 font-medium">
                                                         {hybrid.email}
+                                                    </div>
+                                                </td>
+                                                <td className="p-5">
+                                                    <div className="flex flex-wrap gap-1 max-w-[150px]">
+                                                        {reg.user_details?.labels?.length > 0 ? (
+                                                            reg.user_details.labels.map((l, idx) => (
+                                                                <span key={idx} className="bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-tight border border-blue-100">
+                                                                    {l.name}
+                                                                </span>
+                                                            ))
+                                                        ) : (
+                                                            <span className="text-gray-300 italic text-[10px]">-</span>
+                                                        )}
                                                     </div>
                                                 </td>
                                                 {/* Dynamic Session Attendance Columns */}

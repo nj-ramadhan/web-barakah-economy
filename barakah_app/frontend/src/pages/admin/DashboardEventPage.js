@@ -30,6 +30,11 @@ const DashboardEventPage = () => {
     const [selectedEvent, setSelectedEvent] = useState(null);
     const [editForm, setEditForm] = useState({});
     const [previewImage, setPreviewImage] = useState(null);
+    
+    // Approval Modal States
+    const [showApproveModal, setShowApproveModal] = useState(false);
+    const [approvingEvent, setApprovingEvent] = useState(null);
+    const [visibilityToggle, setVisibilityToggle] = useState('public');
 
     const fetchEvents = useCallback(async (page = 1) => {
         setLoading(true);
@@ -59,10 +64,30 @@ const DashboardEventPage = () => {
     }, [navigate, fetchEvents, currentPage]);
 
     const handleStatusUpdate = async (slug, newStatus) => {
+        if (newStatus === 'approved') {
+            const event = events.find(e => e.slug === slug);
+            setApprovingEvent(event);
+            setVisibilityToggle(event?.visibility || 'public');
+            setShowApproveModal(true);
+            return;
+        }
+
         try {
             await updateEvent(slug, { status: newStatus });
             fetchEvents(currentPage);
         } catch (err) { alert('Gagal update status'); }
+    };
+
+    const confirmApproval = async () => {
+        try {
+            await updateEvent(approvingEvent.slug, { 
+                status: 'approved',
+                visibility: visibilityToggle
+            });
+            setShowApproveModal(false);
+            setApprovingEvent(null);
+            fetchEvents(currentPage);
+        } catch (err) { alert('Gagal menyetujui event'); }
     };
 
     const handleDelete = async (slug) => {
@@ -281,6 +306,78 @@ const DashboardEventPage = () => {
                             alt="Full Preview"
                             className="max-w-full max-h-full object-contain rounded-xl shadow-2xl"
                         />
+                    </div>
+                </div>
+            )}
+
+            {/* Approval Modal */}
+            {showApproveModal && (
+                <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-gray-900/40 backdrop-blur-sm">
+                    <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
+                        <div className="p-8 text-center">
+                            <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <span className="material-icons text-3xl">verified</span>
+                            </div>
+                            <h3 className="text-xl font-black text-gray-900 mb-2">Setujui Event</h3>
+                            <p className="text-sm text-gray-500 mb-8">Apakah Anda yakin ingin menyetujui event <strong>{approvingEvent?.title}</strong>?</p>
+                            
+                            <div className="bg-gray-50 p-6 rounded-2xl border border-gray-100 text-left mb-8">
+                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4">Pengaturan Visibilitas</p>
+                                
+                                <div className="space-y-3">
+                                    <label className={`flex items-center gap-3 p-3 rounded-xl border-2 transition cursor-pointer ${visibilityToggle === 'public' ? 'bg-green-50 border-green-500' : 'bg-white border-gray-100'}`}>
+                                        <input 
+                                            type="radio" 
+                                            name="visibility" 
+                                            value="public" 
+                                            checked={visibilityToggle === 'public'}
+                                            onChange={() => setVisibilityToggle('public')}
+                                            className="hidden"
+                                        />
+                                        <span className={`material-icons text-sm ${visibilityToggle === 'public' ? 'text-green-600' : 'text-gray-300'}`}>
+                                            {visibilityToggle === 'public' ? 'radio_button_checked' : 'radio_button_unchecked'}
+                                        </span>
+                                        <div>
+                                            <p className="text-xs font-bold text-gray-900">Publik (Kegiatan Kami)</p>
+                                            <p className="text-[10px] text-gray-500 mt-0.5">Event akan tampil di beranda dan dapat ditemukan publik.</p>
+                                        </div>
+                                    </label>
+
+                                    <label className={`flex items-center gap-3 p-3 rounded-xl border-2 transition cursor-pointer ${visibilityToggle === 'private' ? 'bg-purple-50 border-purple-500' : 'bg-white border-gray-100'}`}>
+                                        <input 
+                                            type="radio" 
+                                            name="visibility" 
+                                            value="private" 
+                                            checked={visibilityToggle === 'private'}
+                                            onChange={() => setVisibilityToggle('private')}
+                                            className="hidden"
+                                        />
+                                        <span className={`material-icons text-sm ${visibilityToggle === 'private' ? 'text-purple-600' : 'text-gray-300'}`}>
+                                            {visibilityToggle === 'private' ? 'radio_button_checked' : 'radio_button_unchecked'}
+                                        </span>
+                                        <div>
+                                            <p className="text-xs font-bold text-gray-900">Internal (Hanya Link)</p>
+                                            <p className="text-[10px] text-gray-500 mt-0.5">Event tersembunyi dari beranda, hanya untuk urusan internal.</p>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div className="flex gap-3">
+                                <button 
+                                    onClick={() => setShowApproveModal(false)}
+                                    className="flex-1 px-6 py-3 bg-gray-100 text-gray-600 rounded-2xl text-xs font-black hover:bg-gray-200 transition"
+                                >
+                                    BATAL
+                                </button>
+                                <button 
+                                    onClick={confirmApproval}
+                                    className="flex-1 px-6 py-3 bg-green-600 text-white rounded-2xl text-xs font-black hover:bg-green-700 transition shadow-lg shadow-green-100"
+                                >
+                                    SETUJUI EVENT
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             )}
