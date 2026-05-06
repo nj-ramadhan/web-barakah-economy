@@ -454,14 +454,20 @@ class UserViewSet(viewsets.ModelViewSet):
                 row.append(' | '.join([lt.name for lt in user.lingkup_tugas.all()]))
                 row.append(' | '.join([bt.name for bt in user.bidang_tugas.all()]))
 
-                # Add activity summaries
-                charity_count = Donation.objects.filter(user=user, payment_status='success').count()
-                event_count = EventRegistration.objects.filter(user=user).count()
-                order_count = OrderItem.objects.filter(order__user=user).count()
-                course_count = CourseEnrollment.objects.filter(user=user).count()
-                digital_count = DigitalOrder.objects.filter(user=user, payment_status='paid').count()
+                # Add activity detailed lists
+                charity_list = Donation.objects.filter(donor=user, payment_status='verified').values_list('campaign__title', flat=True).distinct()
+                event_list = EventRegistration.objects.filter(user=user, status='approved').values_list('event__title', flat=True)
+                order_list = OrderItem.objects.filter(order__user=user, order__status__in=['Paid', 'Completed', 'Shipped', 'Delivered']).values_list('product__title', flat=True)
+                course_list = CourseEnrollment.objects.filter(user=user, payment_status__in=['verified', 'paid']).values_list('course__title', flat=True)
+                digital_list = DigitalOrder.objects.filter(buyer=user, payment_status='verified').values_list('digital_product__title', flat=True)
 
-                row.extend([charity_count, event_count, order_count, course_count, digital_count])
+                row.extend([
+                    ' | '.join(filter(None, charity_list)),
+                    ' | '.join(filter(None, event_list)),
+                    ' | '.join(filter(None, order_list)),
+                    ' | '.join(filter(None, course_list)),
+                    ' | '.join(filter(None, digital_list))
+                ])
 
                 writer.writerow(row)
 
