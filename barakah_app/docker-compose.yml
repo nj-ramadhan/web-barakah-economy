@@ -39,6 +39,9 @@ services:
       - "8000:8000"
     networks:
       - bae_network
+    volumes:
+      - ./backend/static:/app/static
+      - ./backend/media:/app/media
 
   frontend:
     build:
