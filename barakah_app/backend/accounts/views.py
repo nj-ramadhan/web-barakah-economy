@@ -483,7 +483,6 @@ class UserViewSet(viewsets.ModelViewSet):
     def import_csv(self, request):
         import csv
         import io
-        from django.db import transaction
         from profiles.models import Profile
         
         file = request.FILES.get('file')
@@ -498,11 +497,12 @@ class UserViewSet(viewsets.ModelViewSet):
         updated_count = 0
         errors = []
         
-        with transaction.atomic():
-            for row_idx, row in enumerate(reader):
-                try:
+        rows = list(reader)  # consume reader once
+        for row_idx, row in enumerate(rows):
+            try:
+                with transaction.atomic():
                     user_id = row.get('ID')
-                    username = row.get('Username')
+                    username = row.get('Username', '').strip()
                     
                     # Convert empty email to None to avoid unique constraint "" error in Postgres
                     raw_email = row.get('Email', '').strip()
@@ -520,8 +520,14 @@ class UserViewSet(viewsets.ModelViewSet):
                     
                     if user:
                         # Update existing
-                        user.username = username or user.username
-                        user.email = email
+                        if username:
+                            user.username = username
+                        # Only update email if non-empty and different to avoid unique constraint
+                        if email and email != user.email:
+                            if not User.objects.filter(email=email).exclude(id=user.id).exists():
+                                user.email = email
+                        elif not email:
+                            user.email = None
                         user.phone = phone
                         user.role = role
                         user.is_verified_member = is_verified
@@ -543,7 +549,7 @@ class UserViewSet(viewsets.ModelViewSet):
                         counter = 1
                         while User.objects.filter(username=username).exists():
                             username = f"{base_username}_{random.randint(100, 999)}"
-                            if counter > 5: # prevent infinite loop
+                            if counter > 5:
                                 username = f"{base_username}_{random.randint(1000, 9999)}"
                                 break
                             counter += 1
@@ -559,7 +565,6 @@ class UserViewSet(viewsets.ModelViewSet):
                         created_count += 1
                     
                     # Update Profile
-                    from profiles.models import Profile
                     profile, _ = Profile.objects.get_or_create(user=user)
                     profile.name_full = full_name
                     profile.id_m = id_m
@@ -581,13 +586,14 @@ class UserViewSet(viewsets.ModelViewSet):
                     
                     profile.save()
 
-                except Exception as row_err:
-                    errors.append(f"Row {row_idx + 1}: {str(row_err)}")
+            except Exception as row_err:
+                errors.append(f"Row {row_idx + 2}: {str(row_err)}")
 
         return Response({
             'message': f'Import complete. Created: {created_count}, Updated: {updated_count}',
             'errors': errors
         })
+
 
     @action(detail=False, methods=['post'])
     def blast_whatsapp(self, request):
@@ -700,13 +706,29 @@ class UserViewSet(viewsets.ModelViewSet):
         if not user_ids or not field:
             return Response({'error': 'user_ids and field are required'}, status=status.HTTP_400_BAD_REQUEST)
 
+        updated_count = 0
         with transaction.atomic():
             users = User.objects.filter(id__in=user_ids)
-            
-            # User model fields
+            updated_count = users.count()
+
+            # Direct User model fields (bulk-updatable)
             if field in ['role', 'is_verified_member']:
                 users.update(**{field: value})
-            
+
+            # Direct User model fields (need per-user handling for uniqueness)
+            elif field == 'username':
+                for user in users:
+                    user.username = value
+                    user.save()
+            elif field == 'email':
+                for user in users:
+                    user.email = value if value else None
+                    user.save()
+            elif field == 'phone':
+                for user in users:
+                    user.phone = value
+                    user.save()
+
             # ManyToMany fields
             elif field == 'custom_role_ids':
                 for user in users:
@@ -720,11 +742,11 @@ class UserViewSet(viewsets.ModelViewSet):
             elif field == 'bidang_tugas_ids':
                 for user in users:
                     user.bidang_tugas.set(value)
-            
+
             # Profile model fields
             else:
                 from profiles.models import Profile
-                profile_fields = [f.name for f in Profile._meta.get_fields()]
+                profile_fields = [f.name for f in Profile._meta.get_fields() if hasattr(f, 'column')]
                 if field in profile_fields:
                     for user in users:
                         profile, _ = Profile.objects.get_or_create(user=user)
@@ -732,5 +754,6 @@ class UserViewSet(viewsets.ModelViewSet):
                         profile.save()
                 else:
                     return Response({'error': f'Invalid field: {field}'}, status=status.HTTP_400_BAD_REQUEST)
-        
-        return Response({'message': f'Successfully updated {users.count()} users.'})
+
+        return Response({'message': f'Successfully updated {updated_count} users.'})
+
