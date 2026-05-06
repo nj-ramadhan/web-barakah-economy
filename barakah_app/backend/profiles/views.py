@@ -1,6 +1,6 @@
 from rest_framework.decorators import api_view, permission_classes, parser_classes, action
 from rest_framework.parsers import MultiPartParser, FormParser
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import viewsets
@@ -55,7 +55,7 @@ class ProfileViewSet(viewsets.ModelViewSet):
         profile = serializer.save()
         profile.check_auto_roles()
 
-    @action(detail=True, methods=['get'], url_path='public', permission_classes=[IsAuthenticated])
+    @action(detail=True, methods=['get'], url_path='public', permission_classes=[AllowAny])
     def public_profile(self, request, user_id=None):
         try:
             profile = Profile.objects.get(user_id=user_id)

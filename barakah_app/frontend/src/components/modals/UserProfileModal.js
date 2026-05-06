@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../../services/api';
 import { Link } from 'react-router-dom';
 import './UserProfileModal.css';
 
@@ -18,15 +18,17 @@ const UserProfileModal = ({ userId, isOpen, onClose }) => {
     setLoading(true);
     setError(null);
     try {
-      const user = JSON.parse(localStorage.getItem('user'));
-      const res = await axios.get(
-        `${process.env.REACT_APP_API_BASE_URL}/api/profiles/${userId}/public/`,
-        { headers: { Authorization: `Bearer ${user.access}` } }
-      );
+      // Use the standard 'api' service which handles base URL and token injection
+      const res = await api.get(`/profiles/${userId}/public/`);
       setProfile(res.data);
     } catch (err) {
       console.error('Error fetching public profile:', err);
-      setError('Gagal memuat profil pengguna.');
+      // More descriptive error message
+      if (err.response && err.response.status === 404) {
+        setError('Profil pengguna tidak ditemukan.');
+      } else {
+        setError('Gagal memuat profil pengguna. Silakan coba lagi.');
+      }
     } finally {
       setLoading(false);
     }

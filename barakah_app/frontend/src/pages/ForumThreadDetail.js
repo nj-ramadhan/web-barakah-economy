@@ -34,8 +34,11 @@ const RenderReply = ({
                     <div>
                         <p className="text-sm font-semibold text-gray-900 flex items-center gap-2">
                             <span 
-                                className="hover:text-blue-600 cursor-pointer"
+                                className="hover:text-blue-600 cursor-pointer transition-colors"
+                                role="button"
+                                tabIndex="0"
                                 onClick={() => onOpenProfile(reply.author?.id)}
+                                onKeyDown={(e) => e.key === 'Enter' && onOpenProfile(reply.author?.id)}
                             >
                                 {reply.author?.full_name}
                             </span>
@@ -328,10 +331,18 @@ const ForumThreadDetail = () => {
                                 <div>
                                     <p className="font-bold text-gray-900">
                                         <span 
-                                            className="hover:text-blue-600 cursor-pointer"
+                                            className="hover:text-blue-600 cursor-pointer transition-colors"
+                                            role="button"
+                                            tabIndex="0"
                                             onClick={() => {
                                                 setSelectedUserId(thread.author?.id);
                                                 setIsProfileModalOpen(true);
+                                            }}
+                                            onKeyDown={(e) => {
+                                                if (e.key === 'Enter') {
+                                                    setSelectedUserId(thread.author?.id);
+                                                    setIsProfileModalOpen(true);
+                                                }
                                             }}
                                         >
                                             {thread.author?.full_name}

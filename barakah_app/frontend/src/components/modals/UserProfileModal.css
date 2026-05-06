@@ -21,6 +21,9 @@
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
   position: relative;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  max-height: 90vh;
 }
 
 .user-profile-modal-close {
@@ -69,6 +72,8 @@
 
 .user-profile-modal-content {
   padding: 0;
+  overflow-y: auto;
+  flex: 1;
 }
 
 .user-profile-modal-header {
@@ -93,7 +98,7 @@
 .user-profile-modal-avatar img {
   width: 100px;
   height: 100px;
-  object-cover: cover;
+  object-fit: cover;
 }
 
 .user-profile-modal-info {
@@ -120,7 +125,7 @@
   font-size: 10px;
   font-weight: 900;
   text-transform: uppercase;
-  color: #9ca3af;
+  color: #10b981;
   letter-spacing: 0.1em;
   margin-bottom: 2px;
 }
