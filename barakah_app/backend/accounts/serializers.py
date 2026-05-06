@@ -109,8 +109,8 @@ class UserAdminSerializer(serializers.ModelSerializer):
         charity_list = [f"{d.get('campaign__title') or 'Tanpa Judul'} (Rp {int(d.get('amount') or 0):,})" for d in donations]
         
         # Events - Show both approved and pending
-        events = EventRegistration.objects.filter(user=obj).exclude(status='rejected').values_list('event__title', flat=True)
-        event_list = list(events)
+        events = EventRegistration.objects.filter(user=obj).exclude(status='rejected').values('event__title', 'payment_amount')
+        event_list = [f"{e.get('event__title')} (Rp {int(e.get('payment_amount') or 0):,})" if e.get('payment_amount') else e.get('event__title') for e in events]
         
         # Sinergy
         # Exclude Pending and Batal statuses to show only active/completed activities

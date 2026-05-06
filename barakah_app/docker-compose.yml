@@ -1,3 +1,6 @@
+# Docker Compose for Barakah Economy
+# NOTE: To allow large file uploads (PDFs/Images), ensure your Nginx proxy 
+# (either on host or as a container) has 'client_max_body_size 100M;'
 version: '3.8'
 
 services:

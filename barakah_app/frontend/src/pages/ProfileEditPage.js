@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import Header from '../components/layout/Header';
 import BackButton from '../components/global/BackButton';
+import { getMediaUrl } from '../utils/mediaUtils';
 import NavigationButton from '../components/layout/Navigation';
 import ImageCropperModal from '../components/common/ImageCropper';
 import authService from '../services/auth';
@@ -297,17 +298,27 @@ const ProfileEditPage = () => {
   };
 
   const handleCropComplete = (croppedBlob) => {
-    const file = new File([croppedBlob], 'profile_picture.jpg', { type: 'image/jpeg' });
-    setProfile((prev) => ({ ...prev, picture: file }));
-    setCropper({ active: false, image: null });
+    try {
+      if (!croppedBlob) {
+        setCropper({ active: false, image: null });
+        return;
+      }
+      const file = new File([croppedBlob], 'profile_picture.jpg', { type: 'image/jpeg' });
+      setProfile((prev) => ({ ...prev, picture: file }));
+      setCropper({ active: false, image: null });
+    } catch (err) {
+      console.error('Error creating cropped file:', err);
+      alert('Gagal memproses gambar. Silakan coba lagi.');
+      setCropper({ active: false, image: null });
+    }
   };
 
   const handleKtpScan = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
-    if (file.size > 10 * 1024 * 1024) {
-      alert('Ukuran file KTP terlalu besar. Maksimal 10MB.');
+    if (file.size > 50 * 1024 * 1024) {
+      alert('Ukuran file KTP terlalu besar. Maksimal 50MB.');
       return;
     }
 
@@ -364,8 +375,10 @@ const ProfileEditPage = () => {
     }
 
     // Validation for Shipping (Village ID must be 10 digits if address is started)
-    if (profile.address_province_id && (!profile.address_village_id || String(profile.address_village_id).length !== 10)) {
-      alert('PENTING: Mohon lengkapi Kelurahan/Desa Anda. Diperlukan untuk perhitungan ongkos kirim yang akurat.');
+    // Validation for village (only if province is selected)
+    // Relaxed validation: only alert if they have province but no village at all
+    if (profile.address_province_id && !profile.address_village_id) {
+      alert('Mohon lengkapi Kelurahan/Desa Anda untuk akurasi data pengiriman.');
       setActiveTab('address');
       return;
     }
@@ -386,7 +399,15 @@ const ProfileEditPage = () => {
             }
             // Fix 2: Clean salary and other numeric fields
             else if (key === 'work_salary' && typeof profile[key] === 'string') {
-              const cleanValue = profile[key].replace(/[^0-9]/g, '');
+              // Only keep digits, but if it's already a DRF decimal string like "1000.00", 
+              // we need to be careful. However, since the user usually sees it formatted with dots 
+              // from formatIDR, we remove everything except digits.
+              // To handle "1000.00" from API: if it contains a dot and ends with .00, remove the .00 first.
+              let val = profile[key];
+              if (val.includes('.') && val.endsWith('.00')) {
+                val = val.split('.')[0];
+              }
+              const cleanValue = val.replace(/[^0-9]/g, '');
               if (cleanValue) formData.append(key, cleanValue);
             }
             // Fix 3: Skip empty strings for numeric fields, but allow '0'
@@ -423,7 +444,8 @@ const ProfileEditPage = () => {
         }
       }
     } catch (error) {
-      alert('Data Profile gagal diperbaharui');
+      const errorMsg = error.response?.data ? JSON.stringify(error.response.data) : 'Data Profile gagal diperbaharui';
+      alert('Error: ' + errorMsg);
       console.error('Failed to update profile:', error);
     }
   };
@@ -879,7 +901,7 @@ const ProfileEditPage = () => {
               <div className="flex items-center gap-4 mb-6">
                 <div className="w-20 h-20 rounded-2xl overflow-hidden border-2 border-gray-200 bg-gray-50 flex items-center justify-center shrink-0">
                   <img
-                    src={profile.picture instanceof File ? URL.createObjectURL(profile.picture) : (profile.picture || `${API}/media/profile_images/pas_foto_standard.png`)}
+                    src={profile.picture instanceof File ? URL.createObjectURL(profile.picture) : getMediaUrl(profile.picture || '/media/profile_images/pas_foto_standard.png')}
                     alt="Profile"
                     className="w-full h-full object-cover"
                   />

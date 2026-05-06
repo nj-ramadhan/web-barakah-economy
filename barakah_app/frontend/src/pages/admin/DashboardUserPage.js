@@ -612,28 +612,28 @@ const DashboardUserPage = () => {
                                                 />
                                             </td>
 
-                                            <td className="px-3 py-3">
-                                                <div className="flex flex-wrap gap-1 max-w-[200px] max-h-[60px] overflow-y-auto pr-1">
+                                            <td className="px-3 py-3 align-top">
+                                                <div className="flex flex-wrap content-start gap-1 max-w-[200px] h-[80px] overflow-y-auto pr-1">
                                                     {(u.activities?.charity || []).map((item, idx) => <span key={idx} className="px-1.5 py-0.5 bg-rose-50 text-rose-600 rounded text-[9px] font-medium leading-tight">{item}</span>)}
                                                 </div>
                                             </td>
-                                            <td className="px-3 py-3">
-                                                <div className="flex flex-wrap gap-1 max-w-[200px] max-h-[60px] overflow-y-auto pr-1">
+                                            <td className="px-3 py-3 align-top">
+                                                <div className="flex flex-wrap content-start gap-1 max-w-[200px] h-[80px] overflow-y-auto pr-1">
                                                     {(u.activities?.events || []).map((item, idx) => <span key={idx} className="px-1.5 py-0.5 bg-amber-50 text-amber-600 rounded text-[9px] font-medium leading-tight">{item}</span>)}
                                                 </div>
                                             </td>
-                                            <td className="px-3 py-3">
-                                                <div className="flex flex-wrap gap-1 max-w-[200px] max-h-[60px] overflow-y-auto pr-1">
+                                            <td className="px-3 py-3 align-top">
+                                                <div className="flex flex-wrap content-start gap-1 max-w-[200px] h-[80px] overflow-y-auto pr-1">
                                                     {(u.activities?.sinergy || []).map((item, idx) => <span key={idx} className="px-1.5 py-0.5 bg-blue-50 text-blue-600 rounded text-[9px] font-medium leading-tight">{item}</span>)}
                                                 </div>
                                             </td>
-                                            <td className="px-3 py-3">
-                                                <div className="flex flex-wrap gap-1 max-w-[200px] max-h-[60px] overflow-y-auto pr-1">
+                                            <td className="px-3 py-3 align-top">
+                                                <div className="flex flex-wrap content-start gap-1 max-w-[200px] h-[80px] overflow-y-auto pr-1">
                                                     {(u.activities?.courses || []).map((item, idx) => <span key={idx} className="px-1.5 py-0.5 bg-green-50 text-green-600 rounded text-[9px] font-medium leading-tight">{item}</span>)}
                                                 </div>
                                             </td>
-                                            <td className="px-3 py-3">
-                                                <div className="flex flex-wrap gap-1 max-w-[200px] max-h-[60px] overflow-y-auto pr-1">
+                                            <td className="px-3 py-3 align-top">
+                                                <div className="flex flex-wrap content-start gap-1 max-w-[200px] h-[80px] overflow-y-auto pr-1">
                                                     {(u.activities?.digital_products || []).map((item, idx) => <span key={idx} className="px-1.5 py-0.5 bg-purple-50 text-purple-600 rounded text-[9px] font-medium leading-tight">{item}</span>)}
                                                 </div>
                                             </td>

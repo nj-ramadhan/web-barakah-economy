@@ -79,12 +79,16 @@ const DashboardShopSettingsPage = () => {
             if (user && user.id) {
                 const formData = new FormData();
 
-                formData.append('shop_description', profile.shop_description);
-                formData.append('shop_layout', profile.shop_layout);
-                formData.append('shop_theme_color', profile.shop_theme_color);
-                formData.append('shop_font', profile.shop_font);
-                formData.append('shop_decoration', profile.shop_decoration);
-                formData.append('shop_template', profile.shop_template);
+                const fields = [
+                    'shop_description', 'shop_layout', 'shop_theme_color', 
+                    'shop_font', 'shop_decoration', 'shop_template'
+                ];
+
+                fields.forEach(f => {
+                    if (profile[f] !== null && profile[f] !== undefined) {
+                        formData.append(f, profile[f]);
+                    }
+                });
 
                 if (profile.shop_thumbnail instanceof File) {
                     formData.append('shop_thumbnail', profile.shop_thumbnail);
@@ -94,8 +98,9 @@ const DashboardShopSettingsPage = () => {
                 alert('Pengaturan Toko berhasil disimpan');
             }
         } catch (error) {
+            const errorMsg = error.response?.data ? JSON.stringify(error.response.data) : 'Gagal menyimpan pengaturan toko';
+            alert('Error: ' + errorMsg);
             console.error('Failed to update shop settings:', error);
-            alert('Gagal menyimpan pengaturan toko');
         } finally {
             setSaving(false);
         }

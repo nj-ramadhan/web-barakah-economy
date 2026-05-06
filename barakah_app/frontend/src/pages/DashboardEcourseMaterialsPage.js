@@ -155,7 +155,8 @@ const DashboardEcourseMaterialsPage = () => {
             fetchData();
         } catch (err) {
             console.error(err);
-            alert('Gagal menyimpan materi. Periksa kembali input Anda.');
+            const errorMsg = err.response?.data ? JSON.stringify(err.response.data) : 'Gagal menyimpan materi. Periksa kembali input Anda.';
+            alert('Error: ' + errorMsg);
         } finally {
             setSubmitting(false);
         }
@@ -464,8 +465,8 @@ const DashboardEcourseMaterialsPage = () => {
                                         accept="application/pdf"
                                         onChange={(e) => {
                                             const file = e.target.files[0];
-                                            if (file && file.size > 10 * 1024 * 1024) {
-                                                alert('File terlalu besar. Maksimal 10MB.');
+                                            if (file && file.size > 100 * 1024 * 1024) {
+                                                alert('File terlalu besar. Maksimal 100MB.');
                                                 e.target.value = null;
                                             } else {
                                                 setPdfFile(file);
@@ -475,6 +476,14 @@ const DashboardEcourseMaterialsPage = () => {
                                     />
                                     {pdfFile && <span className="text-[10px] font-bold text-green-700 bg-green-100 px-2 py-1 rounded-lg">TERPILIH</span>}
                                 </div>
+                                {editingMaterial?.pdf_file && !pdfFile && (
+                                    <div className="mt-2 flex items-center gap-2 px-2">
+                                        <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">File saat ini:</span>
+                                        <a href={getMediaUrl(editingMaterial.pdf_file)} target="_blank" rel="noreferrer" className="text-[10px] font-black text-blue-600 hover:text-blue-700 flex items-center gap-1 bg-blue-50 px-2 py-1 rounded-lg border border-blue-100">
+                                            <span className="material-icons text-[12px]">picture_as_pdf</span> LIHAT PDF
+                                        </a>
+                                    </div>
+                                )}
                             </div>
 
                             <div>

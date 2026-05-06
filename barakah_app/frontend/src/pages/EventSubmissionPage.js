@@ -385,35 +385,8 @@ const EventSubmissionPage = () => {
         } catch (err) {
             console.error(err);
             const errorData = err.response?.data;
-            let errorMessage = `Gagal ${isEdit ? 'memperbarui' : 'mengajukan'} event.`;
-            
-            const fieldLabels = {
-                title: 'Judul',
-                start_date: 'Waktu Mulai',
-                end_date: 'Waktu Selesai',
-                location: 'Lokasi',
-                description: 'Deskripsi',
-                short_description: 'Ringkasan',
-                organizer_name: 'Penyelenggara',
-                organizer_contact: 'Kontak',
-                form_fields: 'Field Pendaftaran',
-                capacity: 'Kapasitas',
-                price_fixed: 'Harga',
-                visible_at: 'Jadwal Visibilitas',
-                registration_start_at: 'Jadwal Pendaftaran'
-            };
-
-            if (errorData && typeof errorData === 'object') {
-                const details = Object.entries(errorData)
-                    .map(([key, val]) => {
-                        const label = fieldLabels[key] || key;
-                        return `${label}: ${Array.isArray(val) ? val.join(', ') : val}`;
-                    })
-                    .join(' | ');
-                if (details) errorMessage = details;
-            }
-            
-            setError(errorMessage);
+            const errorMsg = errorData ? JSON.stringify(errorData) : `Gagal ${isEdit ? 'memperbarui' : 'mengajukan'} event.`;
+            setError(errorMsg);
             window.scrollTo({ top: 0, behavior: 'smooth' });
         } finally {
             setLoading(false);
