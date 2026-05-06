@@ -1,6 +1,6 @@
 // App.js
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation, useNavigate } from 'react-router-dom';
 import GlobalPopupManager from './components/common/GlobalPopupManager';
 import PrivateRoute from './utils/PrivateRoute';
 import LoginPage from './pages/LoginPage';
@@ -222,7 +222,7 @@ const App = () => {
 
 const LayoutWrapper = ({ isDesktop }) => {
   const location = useLocation();
-  const navigate = React.useNavigate();
+  const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem('user'));
 
   React.useEffect(() => {
