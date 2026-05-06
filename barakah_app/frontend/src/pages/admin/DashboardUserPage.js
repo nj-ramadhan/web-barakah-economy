@@ -372,14 +372,23 @@ const DashboardUserPage = () => {
                     <thead className="bg-gray-50 border-b border-gray-100">
                         <tr>
                             <th className="px-3 py-4 w-10"><div className="w-4 h-4 bg-gray-200 rounded"></div></th>
+                            <th className="px-3 py-4"><div className="h-4 bg-gray-200 rounded w-10"></div></th>
+                            <th className="px-3 py-4"><div className="h-4 bg-gray-200 rounded w-16"></div></th>
                             <th className="px-3 py-4"><div className="h-4 bg-gray-200 rounded w-20"></div></th>
-                            <th className="px-3 py-4"><div className="h-4 bg-gray-200 rounded w-16"></div></th>
-                            <th className="px-3 py-4"><div className="h-4 bg-gray-200 rounded w-12"></div></th>
-                            <th className="px-3 py-4"><div className="h-4 bg-gray-200 rounded w-16"></div></th>
-                            <th className="px-3 py-4"><div className="h-4 bg-gray-200 rounded w-12"></div></th>
                             <th className="px-3 py-4"><div className="h-4 bg-gray-200 rounded w-24"></div></th>
                             <th className="px-3 py-4"><div className="h-4 bg-gray-200 rounded w-16"></div></th>
-                            <th className="px-3 py-4"><div className="h-4 bg-gray-200 rounded w-8"></div></th>
+                            <th className="px-3 py-4"><div className="h-4 bg-gray-200 rounded w-20"></div></th>
+                            <th className="px-3 py-4"><div className="h-4 bg-gray-200 rounded w-12"></div></th>
+                            <th className="px-3 py-4"><div className="h-4 bg-gray-200 rounded w-16"></div></th>
+                            <th className="px-3 py-4"><div className="h-4 bg-gray-200 rounded w-16"></div></th>
+                            <th className="px-3 py-4"><div className="h-4 bg-gray-200 rounded w-16"></div></th>
+                            <th className="px-3 py-4"><div className="h-4 bg-gray-200 rounded w-16"></div></th>
+                            <th className="px-3 py-4"><div className="h-4 bg-gray-200 rounded w-16"></div></th>
+                            <th className="px-3 py-4"><div className="h-4 bg-gray-200 rounded w-16"></div></th>
+                            <th className="px-3 py-4"><div className="h-4 bg-gray-200 rounded w-16"></div></th>
+                            <th className="px-3 py-4"><div className="h-4 bg-gray-200 rounded w-16"></div></th>
+                            <th className="px-3 py-4"><div className="h-4 bg-gray-200 rounded w-16"></div></th>
+                            <th className="px-3 py-4"><div className="h-4 bg-gray-200 rounded w-8 mx-auto"></div></th>
                             <th className="px-3 py-4 text-center"><div className="h-4 bg-gray-200 rounded w-16 mx-auto"></div></th>
                         </tr>
                     </thead>
@@ -387,12 +396,19 @@ const DashboardUserPage = () => {
                         {[...Array(5)].map((_, i) => (
                             <tr key={i}>
                                 <td className="px-3 py-4"><div className="w-4 h-4 bg-gray-100 rounded"></div></td>
-                                <td className="px-3 py-4"><div className="h-4 bg-gray-100 rounded w-24 mb-1"></div><div className="h-2 bg-gray-100 rounded w-16"></div></td>
+                                <td className="px-3 py-4"><div className="h-4 bg-gray-100 rounded w-10"></div></td>
+                                <td className="px-3 py-4"><div className="h-4 bg-gray-100 rounded w-14"></div></td>
+                                <td className="px-3 py-4"><div className="h-4 bg-gray-100 rounded w-20"></div></td>
+                                <td className="px-3 py-4"><div className="h-4 bg-gray-100 rounded w-24"></div></td>
+                                <td className="px-3 py-4"><div className="h-4 bg-gray-100 rounded w-16"></div></td>
                                 <td className="px-3 py-4"><div className="h-3 bg-gray-100 rounded w-20"></div></td>
                                 <td className="px-3 py-4"><div className="h-4 bg-gray-100 rounded w-12 rounded-full"></div></td>
-                                <td className="px-3 py-4 gap-1 flex"><div className="w-12 h-4 bg-green-50 rounded-full mt-3"></div></td>
+                                <td className="px-3 py-4"><div className="w-12 h-4 bg-green-50 rounded-full"></div></td>
                                 <td className="px-3 py-4"><div className="w-10 h-4 bg-purple-50 rounded-full"></div></td>
                                 <td className="px-3 py-4"><div className="h-4 bg-gray-100 rounded w-28 mb-1"></div><div className="h-2 bg-gray-100 rounded w-6"></div></td>
+                                <td className="px-3 py-4"><div className="h-3 bg-gray-100 rounded w-20"></div></td>
+                                <td className="px-3 py-4"><div className="h-3 bg-gray-100 rounded w-20"></div></td>
+                                <td className="px-3 py-4"><div className="h-3 bg-gray-100 rounded w-20"></div></td>
                                 <td className="px-3 py-4"><div className="h-3 bg-gray-100 rounded w-20"></div></td>
                                 <td className="px-3 py-4"><div className="h-3 bg-gray-100 rounded w-20"></div></td>
                                 <td className="px-3 py-4"><div className="h-3 bg-gray-100 rounded w-16"></div></td>
@@ -597,27 +613,27 @@ const DashboardUserPage = () => {
                                             </td>
 
                                             <td className="px-3 py-3">
-                                                <div className="flex flex-wrap gap-1 max-w-[200px]">
+                                                <div className="flex flex-wrap gap-1 max-w-[200px] max-h-[60px] overflow-y-auto pr-1">
                                                     {(u.activities?.charity || []).map((item, idx) => <span key={idx} className="px-1.5 py-0.5 bg-rose-50 text-rose-600 rounded text-[9px] font-medium leading-tight">{item}</span>)}
                                                 </div>
                                             </td>
                                             <td className="px-3 py-3">
-                                                <div className="flex flex-wrap gap-1 max-w-[200px]">
+                                                <div className="flex flex-wrap gap-1 max-w-[200px] max-h-[60px] overflow-y-auto pr-1">
                                                     {(u.activities?.events || []).map((item, idx) => <span key={idx} className="px-1.5 py-0.5 bg-amber-50 text-amber-600 rounded text-[9px] font-medium leading-tight">{item}</span>)}
                                                 </div>
                                             </td>
                                             <td className="px-3 py-3">
-                                                <div className="flex flex-wrap gap-1 max-w-[200px]">
+                                                <div className="flex flex-wrap gap-1 max-w-[200px] max-h-[60px] overflow-y-auto pr-1">
                                                     {(u.activities?.sinergy || []).map((item, idx) => <span key={idx} className="px-1.5 py-0.5 bg-blue-50 text-blue-600 rounded text-[9px] font-medium leading-tight">{item}</span>)}
                                                 </div>
                                             </td>
                                             <td className="px-3 py-3">
-                                                <div className="flex flex-wrap gap-1 max-w-[200px]">
+                                                <div className="flex flex-wrap gap-1 max-w-[200px] max-h-[60px] overflow-y-auto pr-1">
                                                     {(u.activities?.courses || []).map((item, idx) => <span key={idx} className="px-1.5 py-0.5 bg-green-50 text-green-600 rounded text-[9px] font-medium leading-tight">{item}</span>)}
                                                 </div>
                                             </td>
                                             <td className="px-3 py-3">
-                                                <div className="flex flex-wrap gap-1 max-w-[200px]">
+                                                <div className="flex flex-wrap gap-1 max-w-[200px] max-h-[60px] overflow-y-auto pr-1">
                                                     {(u.activities?.digital_products || []).map((item, idx) => <span key={idx} className="px-1.5 py-0.5 bg-purple-50 text-purple-600 rounded text-[9px] font-medium leading-tight">{item}</span>)}
                                                 </div>
                                             </td>
