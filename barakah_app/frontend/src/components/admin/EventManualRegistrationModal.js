@@ -92,27 +92,40 @@ const EventManualRegistrationModal = ({ isOpen, onClose, event, registrations = 
         }
     };
 
-    const handleConfirmSelection = () => {
+    const handleConfirmSelection = async () => {
         if (selectedUserIds.length === 0) {
             setIsUserListOpen(false);
             return;
         }
 
-        // If only one user is selected, pre-fill the form
-        if (selectedUserIds.length === 1) {
-            const user = allUsers.find(u => u.id === selectedUserIds[0]);
-            if (user) {
-                setFormData(prev => ({
-                    ...prev,
+        setLoading(true);
+        setError(null);
+        try {
+            if (selectedUserIds.length > 1) {
+                await bulkManualRegister(event.slug, { user_ids: selectedUserIds });
+            } else {
+                const user = allUsers.find(u => u.id === selectedUserIds[0]);
+                const directData = {
                     user_id: user.id,
                     name: user.profile?.name_full || user.username,
                     email: user.email || '',
-                    phone: user.phone || ''
-                }));
+                    phone: user.phone || '',
+                    responses: {}
+                };
+                await manualRegisterParticipant(event.slug, directData);
             }
+            
+            onSuccess();
+            onClose();
+            setFormData({ name: '', email: '', phone: '', user_id: null, responses: {} });
+            setSelectedUserIds([]);
+        } catch (err) {
+            console.error(err);
+            setError(err.response?.data?.error || 'Gagal mendaftarkan peserta.');
+        } finally {
+            setLoading(false);
+            setIsUserListOpen(false);
         }
-        
-        setIsUserListOpen(false);
     };
 
     const handleSubmit = async (e) => {

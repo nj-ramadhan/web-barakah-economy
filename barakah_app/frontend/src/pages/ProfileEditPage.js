@@ -369,6 +369,14 @@ const ProfileEditPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Mandatory fields check
+    if (!profile.name_full || !profile.nickname || !profile.phone) {
+      alert('Nama Lengkap, Nama Panggilan, dan No. HP wajib diisi.');
+      setActiveTab('general');
+      return;
+    }
+
     if (profile.picture instanceof File && profile.picture.size > 5 * 1024 * 1024) {
       alert('File foto profil terlalu besar (Maks 5MB)');
       return;
@@ -460,9 +468,14 @@ const ProfileEditPage = () => {
 
   const isFieldMissing = (field) => missingFields.includes(field);
 
-  const inputCls = (field) =>
-    `w-full p-3 border rounded-xl text-sm transition outline-none focus:ring-2 ${isFieldMissing(field) ? 'border-red-300 bg-red-50 focus:ring-red-400' : 'border-gray-200 bg-gray-50 focus:ring-green-500'
+  const inputCls = (field) => {
+    const isMandatoryMissing = (field === 'name_full' || field === 'nickname' || field === 'phone') && !profile[field];
+    return `w-full p-3 border rounded-xl text-sm transition outline-none focus:ring-2 ${
+      (isFieldMissing(field) || isMandatoryMissing) 
+        ? 'border-red-500 bg-red-50 focus:ring-red-400' 
+        : 'border-gray-200 bg-gray-50 focus:ring-green-500'
     }`;
+  };
 
   const renderTabContent = () => {
     switch (activeTab) {
@@ -471,7 +484,7 @@ const ProfileEditPage = () => {
           <div className="space-y-4">
             <div>
               <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
-                Nama Panggilan
+                Nama Panggilan <span className="text-red-500">*wajib</span>
               </label>
               <input type="text" name="nickname" placeholder="Nama Panggilan / Nickname" value={profile.nickname || ''} onChange={handleChange} className={inputCls('nickname')} />
             </div>
