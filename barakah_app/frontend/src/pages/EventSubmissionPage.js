@@ -566,9 +566,22 @@ const EventSubmissionPage = () => {
                                 <input 
                                     type="file" 
                                     accept="image/*" 
-                                    onChange={(e) => setFormData({...formData, bib_template_image: e.target.files[0]})}
+                                    onChange={(e) => {
+                                        const file = e.target.files[0];
+                                        if (file) {
+                                            setFormData({...formData, bib_template_image: file});
+                                            // Create a temp preview URL for this session
+                                            const url = URL.createObjectURL(file);
+                                            setFormData(prev => ({ ...prev, _bib_preview: url }));
+                                        }
+                                    }}
                                     className="w-full text-xs font-bold text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-[10px] file:font-black file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer"
                                 />
+                                {formData._bib_preview && (
+                                    <div className="mt-2 rounded-xl overflow-hidden border border-gray-100 max-h-40 flex items-center justify-center bg-gray-50">
+                                        <img src={formData._bib_preview} alt="BIB Preview" className="max-w-full max-h-40 object-contain" />
+                                    </div>
+                                )}
                             </div>
                         )}
                                     </div>

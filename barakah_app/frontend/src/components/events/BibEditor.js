@@ -1,16 +1,27 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { getBibSettings, updateBibSettings } from '../../services/eventApi';
 
+const getImageUrl = (path) => {
+    if (!path) return null;
+    if (path.startsWith('http')) return path;
+    const baseUrl = process.env.REACT_APP_API_BASE_URL || 'https://api.barakah.cloud';
+    const cleanBaseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+    const cleanPath = path.startsWith('/') ? path : `/${path}`;
+    return `${cleanBaseUrl}${cleanPath}`;
+};
+
 const BibEditor = ({ slug }) => {
     const [settings, setSettings] = useState({
         number_x: 50,
         number_y: 50,
         number_font_size: 150,
         number_color: '#000000',
+        number_font_family: 'Roboto-Bold.ttf',
         name_x: 50,
         name_y: 80,
         name_font_size: 40,
         name_color: '#000000',
+        name_font_family: 'Roboto-Bold.ttf',
         number_format: '001',
         is_active: true,
         show_photo: false,
@@ -19,6 +30,21 @@ const BibEditor = ({ slug }) => {
         photo_width: 20,
         photo_height: 25
     });
+
+    const FONT_OPTIONS = [
+        { label: 'Roboto (Default)', value: 'Roboto-Bold.ttf', css: 'sans-serif' },
+        { label: 'Montserrat', value: 'Montserrat-SemiBold.ttf', css: "'Montserrat', sans-serif" },
+        { label: 'Open Sans', value: 'OpenSans-Bold.ttf', css: "'Open Sans', sans-serif" },
+        { label: 'Poppins', value: 'Poppins-Bold.ttf', css: "'Poppins', sans-serif" },
+        { label: 'Great Vibes (Script)', value: 'GreatVibes-Regular.ttf', css: "'Great Vibes', cursive" },
+        { label: 'Dancing Script', value: 'DancingScript-Bold.ttf', css: "'Dancing Script', cursive" },
+        { label: 'Playfair Display', value: 'PlayfairDisplay-Bold.ttf', css: "serif" },
+    ];
+
+    const getFontCss = (value) => {
+        const option = FONT_OPTIONS.find(o => o.value === value);
+        return option ? option.css : 'sans-serif';
+    };
     const [template, setTemplate] = useState(null);
     const [previewUrl, setPreviewUrl] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -37,7 +63,7 @@ const BibEditor = ({ slug }) => {
                     ...response.data
                 });
                 if (response.data.template_image) {
-                    setPreviewUrl(response.data.template_image);
+                    setPreviewUrl(getImageUrl(response.data.template_image));
                 }
             }
             setLoading(false);
@@ -95,7 +121,17 @@ const BibEditor = ({ slug }) => {
         });
 
         try {
-            await updateBibSettings(slug, formData);
+            const response = await updateBibSettings(slug, formData);
+            if (response.data) {
+                setSettings({
+                    ...settings,
+                    ...response.data
+                });
+                if (response.data.template_image) {
+                    setPreviewUrl(getImageUrl(response.data.template_image));
+                }
+                setTemplate(null); // Clear selected file after success
+            }
             alert("Pengaturan BIB berhasil disimpan!");
         } catch (error) {
             console.error("Save error", error);
@@ -103,8 +139,10 @@ const BibEditor = ({ slug }) => {
         }
     };
 
+    const [imageLoaded, setImageLoaded] = useState(false);
+
     const getPreviewFontSize = (baseSize) => {
-        if (!imageRef.current) return baseSize / 2;
+        if (!imageRef.current || !imageLoaded) return baseSize / 2;
         const rect = imageRef.current.getBoundingClientRect();
         // Base normalization: assume 1000px height for font scale
         return (baseSize / 1000) * rect.height;
@@ -138,13 +176,24 @@ const BibEditor = ({ slug }) => {
                         style={{ userSelect: 'none' }}
                     >
                         {previewUrl ? (
-                            <div className="relative inline-block shadow-2xl rounded-lg overflow-hidden">
+                            <div className={`relative inline-block shadow-2xl rounded-lg overflow-hidden ${!imageLoaded ? 'opacity-0' : 'opacity-100 transition-opacity duration-500'}`}>
                                 <img 
                                     ref={imageRef}
                                     src={previewUrl} 
                                     alt="BIB Template" 
                                     className="max-w-full h-auto block" 
+                                    onLoad={() => setImageLoaded(true)}
+                                    onError={() => {
+                                        console.error("Failed to load BIB template image");
+                                        setImageLoaded(false);
+                                    }}
                                 />
+                                {!imageLoaded && (
+                                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-50 text-gray-400">
+                                        <span className="material-icons animate-spin text-4xl mb-2">sync</span>
+                                        <span className="text-xs font-bold uppercase tracking-widest">Memuat Gambar...</span>
+                                    </div>
+                                )}
 
                                 {/* BIB Number Placeholder */}
                                 <div 
@@ -155,6 +204,7 @@ const BibEditor = ({ slug }) => {
                                         transform: 'translate(-50%, -50%)',
                                         fontSize: `${getPreviewFontSize(settings.number_font_size)}px`,
                                         color: settings.number_color,
+                                        fontFamily: getFontCss(settings.number_font_family),
                                         fontWeight: '900',
                                         lineHeight: 1,
                                         textShadow: '0 0 4px rgba(255,255,255,0.5)'
@@ -166,13 +216,14 @@ const BibEditor = ({ slug }) => {
 
                                 {/* Participant Name Placeholder */}
                                 <div 
-                                    className="absolute cursor-move whitespace-nowrap flex items-center justify-center select-none"
+                                    className="absolute cursor-move whitespace-nowrap flex items-center justify-center select-none text-center"
                                     style={{ 
                                         left: `${settings.name_x}%`, 
                                         top: `${settings.name_y}%`,
                                         transform: 'translate(-50%, -50%)',
                                         fontSize: `${getPreviewFontSize(settings.name_font_size)}px`,
                                         color: settings.name_color,
+                                        fontFamily: getFontCss(settings.name_font_family),
                                         fontWeight: 'bold',
                                         textTransform: 'uppercase'
                                     }}
@@ -243,24 +294,40 @@ const BibEditor = ({ slug }) => {
                         </div>
 
                         <div>
-                            <label className="text-[10px] font-bold text-gray-500 block mb-2 uppercase">Ukuran & Warna Nomor</label>
-                            <div className="flex gap-2">
+                            <label className="text-[10px] font-bold text-gray-500 block mb-2 uppercase">Ukuran, Warna & Jenis Font Nomor</label>
+                            <div className="flex gap-2 mb-2">
                                 <input type="number" value={settings.number_font_size} onChange={(e) => setSettings({...settings, number_font_size: parseInt(e.target.value) || 10})} className="w-20 bg-white border border-gray-200 rounded-xl px-2 py-2 text-xs font-bold text-center" />
                                 <input type="color" value={settings.number_color} onChange={(e) => setSettings({...settings, number_color: e.target.value})} className="h-10 w-14 border-0 p-0 bg-transparent cursor-pointer rounded-lg" />
-                                <input type="text" value={settings.number_color.toUpperCase()} onChange={(e) => setSettings({...settings, number_color: e.target.value})} className="flex-grow border border-gray-200 rounded-xl px-3 text-[10px] font-mono font-bold" />
                             </div>
+                            <select 
+                                value={settings.number_font_family}
+                                onChange={(e) => setSettings({...settings, number_font_family: e.target.value})}
+                                className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2 text-[10px] font-bold focus:outline-none"
+                            >
+                                {FONT_OPTIONS.map(opt => (
+                                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                ))}
+                            </select>
                         </div>
 
                         <hr className="border-gray-200" />
                         <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">3. Konfigurasi Nama</label>
 
                         <div>
-                            <label className="text-[10px] font-bold text-gray-500 block mb-2 uppercase">Ukuran & Warna Nama</label>
-                            <div className="flex gap-2">
+                            <label className="text-[10px] font-bold text-gray-500 block mb-2 uppercase">Ukuran, Warna & Jenis Font Nama</label>
+                            <div className="flex gap-2 mb-2">
                                 <input type="number" value={settings.name_font_size} onChange={(e) => setSettings({...settings, name_font_size: parseInt(e.target.value) || 10})} className="w-20 bg-white border border-gray-200 rounded-xl px-2 py-2 text-xs font-bold text-center" />
                                 <input type="color" value={settings.name_color} onChange={(e) => setSettings({...settings, name_color: e.target.value})} className="h-10 w-14 border-0 p-0 bg-transparent cursor-pointer rounded-lg" />
-                                <input type="text" value={settings.name_color.toUpperCase()} onChange={(e) => setSettings({...settings, name_color: e.target.value})} className="flex-grow border border-gray-200 rounded-xl px-3 text-[10px] font-mono font-bold" />
                             </div>
+                            <select 
+                                value={settings.name_font_family}
+                                onChange={(e) => setSettings({...settings, name_font_family: e.target.value})}
+                                className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2 text-[10px] font-bold focus:outline-none"
+                            >
+                                {FONT_OPTIONS.map(opt => (
+                                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                ))}
+                            </select>
                         </div>
 
                         <hr className="border-gray-200" />

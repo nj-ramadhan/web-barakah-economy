@@ -362,11 +362,13 @@ class EventBib(models.Model):
     number_y = models.FloatField(default=50.0)
     number_font_size = models.IntegerField(default=150)
     number_color = models.CharField(max_length=7, default='#000000')
+    number_font_family = models.CharField(max_length=100, default='Roboto-Bold.ttf')
     
     name_x = models.FloatField(default=50.0)
     name_y = models.FloatField(default=80.0)
     name_font_size = models.IntegerField(default=40)
     name_color = models.CharField(max_length=7, default='#000000')
+    name_font_family = models.CharField(max_length=100, default='Roboto-Bold.ttf')
     
     # format: 1, 01, 001, 0001, 00001
     number_format = models.CharField(max_length=20, default='001')

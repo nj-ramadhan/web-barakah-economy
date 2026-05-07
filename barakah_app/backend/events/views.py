@@ -1323,15 +1323,19 @@ class EventViewSet(viewsets.ModelViewSet):
                 if 'template_image' in request.FILES:
                     bib.template_image = request.FILES['template_image']
                 
-                for field in ['number_x', 'number_y', 'number_font_size', 'number_color', 'name_x', 'name_y', 'name_font_size', 'name_color', 'number_format', 'is_active']:
+                for field in ['number_x', 'number_y', 'number_font_size', 'number_color', 'number_font_family', 'name_x', 'name_y', 'name_font_size', 'name_color', 'name_font_family', 'number_format', 'is_active', 'show_photo', 'photo_x', 'photo_y', 'photo_width', 'photo_height']:
                     if field in request.data:
                         val = request.data.get(field)
                         try:
-                            if field in ['number_x', 'number_y', 'name_x', 'name_y']: val = float(val)
-                            if field in ['number_font_size', 'name_font_size']: val = int(val)
-                            if field == 'is_active': val = val in [True, 'true', '1', 1]
+                            if field in ['number_x', 'number_y', 'name_x', 'name_y', 'photo_x', 'photo_y', 'photo_width', 'photo_height']: 
+                                val = float(val)
+                            if field in ['number_font_size', 'name_font_size']: 
+                                val = int(val)
+                            if field in ['is_active', 'show_photo']: 
+                                val = str(val).lower() in ['true', '1', 'yes']
                             setattr(bib, field, val)
-                        except: pass
+                        except Exception as e:
+                            print(f"Error setting field {field}: {e}")
                 
                 bib.save()
                 return Response(EventBibSerializer(bib).data)
@@ -1389,25 +1393,34 @@ class EventViewSet(viewsets.ModelViewSet):
             # Scale font size relative to image height (reference: 1000px height)
             num_font_size = int((bib.number_font_size / 1000.0) * height)
             name_font_size = int((bib.name_font_size / 1000.0) * height)
-            
             # Load font
             fonts_dir = os.path.join(os.path.dirname(__file__), 'fonts')
             os.makedirs(fonts_dir, exist_ok=True)
-            font_path = os.path.join(fonts_dir, 'Roboto-Bold.ttf')
-            
-            # Auto-download if missing
-            if not os.path.exists(font_path):
-                import requests
-                try:
-                    r = requests.get('https://github.com/google/fonts/raw/main/apache/roboto/static/Roboto-Bold.ttf', timeout=10)
-                    if r.status_code == 200:
-                        with open(font_path, 'wb') as f:
-                            f.write(r.content)
-                except: pass
 
-            def get_font(size):
-                if os.path.exists(font_path):
-                    try: return ImageFont.truetype(font_path, size)
+            def get_font(font_family, size):
+                f_path = os.path.join(fonts_dir, font_family)
+                if not os.path.exists(f_path):
+                    # Attempt download
+                    font_urls = {
+                        'DancingScript-Bold.ttf': 'https://github.com/google/fonts/raw/main/ofl/dancingscript/DancingScript%5Bwght%5D.ttf',
+                        'GreatVibes-Regular.ttf': 'https://github.com/google/fonts/raw/main/ofl/greatvibes/GreatVibes-Regular.ttf',
+                        'Roboto-Bold.ttf': 'https://github.com/google/fonts/raw/main/apache/roboto/static/Roboto-Bold.ttf',
+                        'PlayfairDisplay-Bold.ttf': 'https://github.com/google/fonts/raw/main/ofl/playfairdisplay/static/PlayfairDisplay-Bold.ttf',
+                        'Montserrat-SemiBold.ttf': 'https://github.com/google/fonts/raw/main/ofl/montserrat/static/Montserrat-SemiBold.ttf',
+                        'OpenSans-Bold.ttf': 'https://github.com/google/fonts/raw/main/ofl/opensans/static/OpenSans-Bold.ttf',
+                        'Poppins-Bold.ttf': 'https://github.com/google/fonts/raw/main/ofl/poppins/Poppins-Bold.ttf'
+                    }
+                    if font_family in font_urls:
+                        import requests
+                        try:
+                            r = requests.get(font_urls[font_family], timeout=10)
+                            if r.status_code == 200:
+                                with open(f_path, 'wb') as f:
+                                    f.write(r.content)
+                        except: pass
+                
+                if os.path.exists(f_path):
+                    try: return ImageFont.truetype(f_path, size)
                     except: pass
                 return ImageFont.load_default()
 
@@ -1420,10 +1433,12 @@ class EventViewSet(viewsets.ModelViewSet):
                 draw.text((x - w/2, y - h/2), text, font=font, fill=color)
 
             # Draw BIB
-            draw_centered_text(formatted_bib, get_font(num_font_size), num_x_px, num_y_px, bib.number_color)
+            num_font_family = getattr(bib, 'number_font_family', 'Roboto-Bold.ttf')
+            draw_centered_text(formatted_bib, get_font(num_font_family, num_font_size), num_x_px, num_y_px, bib.number_color)
             
             # Draw Name
-            draw_centered_text(participant_name.upper(), get_font(name_font_size), name_x_px, name_y_px, bib.name_color)
+            name_font_family = getattr(bib, 'name_font_family', 'Roboto-Bold.ttf')
+            draw_centered_text(participant_name.upper(), get_font(name_font_family, name_font_size), name_x_px, name_y_px, bib.name_color)
             
             # Draw Photo if enabled
             if bib.show_photo:
