@@ -159,12 +159,15 @@ class EventSerializer(serializers.ModelSerializer):
         event = Event.objects.create(**validated_data)
         
         for field in fields_data:
+            field.pop('id', None)
             EventFormField.objects.create(event=event, **field)
             
         for spk in speakers_data:
+            spk.pop('id', None)
             EventSpeaker.objects.create(event=event, **spk)
             
         for ses in sessions_data:
+            ses.pop('id', None)
             EventSession.objects.create(event=event, **ses)
             
         from .models import EventDocumentationImage, EventGalleryImage

@@ -339,9 +339,6 @@ const EventSubmissionPage = () => {
         if (files.thumbnail instanceof File) {
             data.append('thumbnail', files.thumbnail);
         }
-        if (files.thumbnail_full instanceof File) {
-            data.append('thumbnail_full', files.thumbnail_full);
-        }
         
         // Append form fields as JSON string (backend will handle)
         if (formFields.length > 0) {
