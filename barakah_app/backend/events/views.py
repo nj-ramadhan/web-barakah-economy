@@ -352,6 +352,12 @@ class EventViewSet(viewsets.ModelViewSet):
                 responses = json.loads(responses)
             except:
                 responses = {}
+        
+        # Ensure phone and email are in responses for guest notifications
+        if phone and 'wa' not in str(responses).lower():
+            responses['WhatsApp'] = phone
+        if email and 'email' not in str(responses).lower():
+            responses['Email'] = email
 
         # Build sessions info for email/WA
         session_list = []
@@ -382,10 +388,13 @@ class EventViewSet(viewsets.ModelViewSet):
 
         # Send WhatsApp confirmation if possible
         try:
-            whatsapp_msg = f"Halo {name},\n\nAnda telah didaftarkan secara manual untuk event *{event.title}*.\n\n*Rincian Sesi:*\n{sessions_str}\n\nKode Tiket: *{registration.unique_code}*\n\nTerima kasih!"
-            whatsapp_service.send_message(phone, whatsapp_msg)
+            if phone:
+                formatted_phone = self._format_phone_number(phone)
+                whatsapp_msg = f"Halo {name},\n\nAnda telah didaftarkan secara manual untuk event *{event.title}*.\n\n*Rincian Sesi:*\n{sessions_str}\n\nKode Tiket: *{registration.unique_code}*\n\nTerima kasih!"
+                whatsapp_service.send_message(formatted_phone, whatsapp_msg)
         except Exception as e:
-            print(f"Failed to send manual registration WA: {e}")
+            import logging
+            logging.getLogger(__name__).error(f"Failed to send manual registration WA: {e}")
 
         # Send Email
         try:
@@ -632,21 +641,39 @@ class EventViewSet(viewsets.ModelViewSet):
         if registration.user:
             if not email:
                 email = registration.user.email
-            if hasattr(registration.user, 'phone'):
+            if not phone and hasattr(registration.user, 'phone'):
                 phone = registration.user.phone
 
         # Scan dynamic form fields for contact info (overrides account data if present in form)
         for field in form_fields:
             field_id = str(field.id)
-            value = responses.get(field_id)
-            if not value or not isinstance(value, str):
+            label_key = field.label.lower()
+            
+            # Try to get value by ID or by Label (in case of manual registration with label keys)
+            value = responses.get(field_id) or responses.get(label_key)
+            
+            if not value or not isinstance(value, (str, int)):
                 continue
             
-            label = field.label.lower()
-            if 'email' in label:
+            value = str(value)
+            if 'email' in label_key:
                 email = value
-            if any(kw in label for kw in ['wa', 'whatsapp', 'hp', 'telepon', 'phone', 'handphone']):
+            if any(kw in label_key for kw in ['wa', 'whatsapp', 'hp', 'telepon', 'phone', 'handphone', 'wa peserta']):
                 phone = value
+
+        # Final check: if still no phone, try to find ANY 10+ digit string in responses
+        if not phone:
+            for val in responses.values():
+                if isinstance(val, str):
+                    # Basic check for phone-like string
+                    digits = ''.join(filter(str.isdigit, val))
+                    if len(digits) >= 10:
+                        phone = val
+                        break
+        
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.debug(f"Notification Triggered - Reg ID: {registration.id}, Phone: {phone}, Email: {email}")
 
         # Prepare time string with timezone handling
         # Use timezone.localtime to convert from UTC to Asia/Jakarta (set in settings)
