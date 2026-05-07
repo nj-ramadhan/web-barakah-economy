@@ -3,7 +3,7 @@ import { useParams, Link, useLocation } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
 import Header from '../../components/layout/Header';
 import NavigationButton from '../../components/layout/Navigation';
-import { getEventRegistrations, getEventDetail, exportRegistrationsCsv, blastEventWhatsapp, bulkDeleteRegistrations, importParticipantsCsv } from '../../services/eventApi';
+import { getEventRegistrations, getEventDetail, exportRegistrationsCsv, blastEventWhatsapp, bulkDeleteRegistrations, importParticipantsCsv, bulkResendNotifications } from '../../services/eventApi';
 import EventManualRegistrationModal from '../../components/admin/EventManualRegistrationModal';
 import EventRegistrationEditModal from '../../components/admin/EventRegistrationEditModal';
 import CertificateEditor from '../../components/events/CertificateEditor';
@@ -31,6 +31,7 @@ const EventRegistrationSubmissionPage = () => {
     const [editingRegistration, setEditingRegistration] = useState(null);
     const [activeTab, setActiveTab] = useState(initialTab); // 'participants', 'certificate', or 'bib'
     const [isImporting, setIsImporting] = useState(false);
+    const [isResending, setIsResending] = useState(false);
 
     useEffect(() => {
         fetchData();
@@ -200,6 +201,24 @@ const EventRegistrationSubmissionPage = () => {
             setIsBlasting(false);
         }
     };
+    
+    const handleResendNotifications = async () => {
+        if (selectedIds.length === 0 || isResending) return;
+        
+        if (!window.confirm(`Kirim ulang notifikasi QR/BIB ke ${selectedIds.length} peserta terpilih?`)) return;
+        
+        setIsResending(true);
+        try {
+            const res = await bulkResendNotifications(slug, selectedIds);
+            alert(res.data.message);
+            setSelectedIds([]);
+        } catch (err) {
+            console.error(err);
+            alert('Gagal mengirim ulang notifikasi: ' + (err.response?.data?.error || err.message));
+        } finally {
+            setIsResending(false);
+        }
+    };
 
     const handleBulkDelete = async () => {
         if (selectedIds.length === 0) {
@@ -331,6 +350,18 @@ const EventRegistrationSubmissionPage = () => {
                             <span className="material-icons text-sm">send</span>
                             Blast WA
                         </button>
+                        {selectedIds.length > 0 && (
+                            <button
+                                onClick={handleResendNotifications}
+                                disabled={isResending}
+                                className="bg-blue-600 text-white px-5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 hover:bg-blue-700 transition shadow-lg shadow-blue-100 animate-in zoom-in duration-200"
+                            >
+                                <span className={`material-icons text-sm ${isResending ? 'animate-spin' : ''}`}>
+                                    {isResending ? 'sync' : 'qr_code_2'}
+                                </span>
+                                Kirim Ulang QR/BIB
+                            </button>
+                        )}
                     </div>
                 </div>
 

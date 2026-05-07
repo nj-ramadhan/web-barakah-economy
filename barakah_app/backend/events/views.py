@@ -474,6 +474,37 @@ class EventViewSet(viewsets.ModelViewSet):
             "message": f"Berhasil mendaftarkan {count} user secara manual."
         }, status=status.HTTP_201_CREATED)
 
+    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
+    def bulk_resend_notifications(self, request, slug=None):
+        """Resend QR/BIB notifications to selected participants."""
+        event = self.get_object()
+        if not (request.user.is_staff or event.created_by == request.user or request.user.has_menu_access('admin_events')):
+            return Response({"error": "Unauthorized"}, status=status.HTTP_403_FORBIDDEN)
+
+        registration_ids = request.data.get('registration_ids', [])
+        if not registration_ids:
+            return Response({"error": "Pilih minimal satu peserta."}, status=status.HTTP_400_BAD_REQUEST)
+
+        registrations = EventRegistration.objects.filter(id__in=registration_ids, event=event)
+        
+        success_count = 0
+        fail_count = 0
+        
+        for reg in registrations:
+            try:
+                self._send_registration_notifications(reg)
+                success_count += 1
+            except Exception as e:
+                import logging
+                logging.getLogger(__name__).error(f"Bulk resend failed for reg {reg.id}: {e}")
+                fail_count += 1
+        
+        return Response({
+            "message": f"Selesai. {success_count} notifikasi terkirim, {fail_count} gagal.",
+            "success_count": success_count,
+            "fail_count": fail_count
+        })
+
     @action(detail=True, methods=['get'], permission_classes=[permissions.IsAuthenticated], url_path='available-users')
     def available_users(self, request, slug=None):
         """Get users who are NOT yet registered for this event and have complete data."""

@@ -129,6 +129,14 @@ export const blastEventWhatsapp = (slug, message, registrationIds = null, imageB
     });
 };
 
+export const bulkResendNotifications = (slug, registrationIds) => {
+    return axios.post(`${API_BASE_URL}/api/events/${slug}/bulk_resend_notifications/`, { 
+        registration_ids: registrationIds 
+    }, {
+        headers: getAuthHeaders()
+    });
+};
+
 export const getGlobalRegistrations = (params = {}) => {
     return axios.get(`${API_BASE_URL}/api/events/global_registrations/`, {
         params,
