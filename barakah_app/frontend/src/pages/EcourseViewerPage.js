@@ -347,7 +347,7 @@ const EcourseViewerPage = () => {
                                                   m.material_type === 'text' ? 'bg-orange-100 text-orange-700' : 'bg-blue-100 text-blue-700'}`}>
                                                 {m.material_type || 'video'}
                                             </span>
-                                            {m.pdf_file && (
+                                            {(m.pdf_file || m.pdf_link) && (
                                                 <span className="text-[8px] text-red-500 flex items-center gap-0.5 font-black">
                                                     <span className="material-icons text-[10px]">picture_as_pdf</span> PDF
                                                 </span>
@@ -444,7 +444,7 @@ const EcourseViewerPage = () => {
                                     <p className="text-gray-500 text-sm italic border-l-4 border-gray-100 pl-4 py-1 mb-8">{currentMaterial.description}</p>
                                 )}
 
-                                {currentMaterial.pdf_file && (
+                                { (currentMaterial.pdf_file || currentMaterial.pdf_link) && (
                                     <div className="p-6 bg-blue-50/50 rounded-[2rem] border-2 border-blue-100 flex flex-col sm:flex-row items-center justify-between gap-4">
                                         <div className="flex items-center gap-4">
                                             <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center shadow-sm">
@@ -456,12 +456,12 @@ const EcourseViewerPage = () => {
                                             </div>
                                         </div>
                                         <a
-                                            href={getMediaUrl(currentMaterial.pdf_file)}
+                                            href={currentMaterial.pdf_file ? getMediaUrl(currentMaterial.pdf_file) : currentMaterial.pdf_link}
                                             target="_blank"
                                             rel="noopener noreferrer"
                                             className="w-full sm:w-auto bg-white border-2 border-gray-200 text-gray-700 px-8 py-3 rounded-2xl text-xs font-black shadow-sm hover:bg-gray-50 transition flex items-center justify-center gap-2"
                                         >
-                                            <span className="material-icons text-sm">download</span> DOWNLOAD PDF
+                                            <span className="material-icons text-sm">{currentMaterial.pdf_file ? 'download' : 'open_in_new'}</span> {currentMaterial.pdf_file ? 'DOWNLOAD PDF' : 'BUKA LINK PDF'}
                                         </a>
                                     </div>
                                 )}

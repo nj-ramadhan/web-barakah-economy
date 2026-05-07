@@ -125,6 +125,7 @@ class CourseMaterial(models.Model):
     
     # For all types
     pdf_file = models.FileField(upload_to='course_materials/pdf/', blank=True, null=True)
+    pdf_link = models.URLField(max_length=500, blank=True, null=True)
     
     order = models.PositiveIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)

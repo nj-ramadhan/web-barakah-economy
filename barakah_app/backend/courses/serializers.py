@@ -7,7 +7,7 @@ class CourseMaterialSerializer(serializers.ModelSerializer):
         model = CourseMaterial
         fields = [
             'id', 'course', 'title', 'material_type', 'description', 
-            'youtube_link', 'content_text', 'quiz_data', 'pdf_file', 
+            'youtube_link', 'content_text', 'quiz_data', 'pdf_file', 'pdf_link',
             'order', 'created_at'
         ]
 

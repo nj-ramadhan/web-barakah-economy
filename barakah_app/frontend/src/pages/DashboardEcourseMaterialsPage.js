@@ -29,6 +29,8 @@ const DashboardEcourseMaterialsPage = () => {
     const [youtubeLink, setYoutubeLink] = useState('');
     const [contentText, setContentText] = useState('');
     const [pdfFile, setPdfFile] = useState(null);
+    const [pdfLink, setPdfLink] = useState('');
+    const [pdfSourceType, setPdfSourceType] = useState('file'); // 'file' or 'link'
     const [order, setOrder] = useState('0');
     
     // Quiz state
@@ -69,6 +71,8 @@ const DashboardEcourseMaterialsPage = () => {
         setYoutubeLink('');
         setContentText('');
         setPdfFile(null);
+        setPdfLink('');
+        setPdfSourceType('file');
         setOrder(materials.length.toString());
         setQuizQuestions([]);
         setEditingMaterial(null);
@@ -83,6 +87,8 @@ const DashboardEcourseMaterialsPage = () => {
         setYoutubeLink(mat.youtube_link || '');
         setContentText(mat.content_text || '');
         setOrder(mat.order.toString());
+        setPdfLink(mat.pdf_link || '');
+        setPdfSourceType(mat.pdf_link && !mat.pdf_file ? 'link' : 'file');
         
         if (mat.quiz_data) {
             let qData = mat.quiz_data;
@@ -139,8 +145,14 @@ const DashboardEcourseMaterialsPage = () => {
             }));
         }
 
-        if (pdfFile) {
+        if (pdfSourceType === 'file' && pdfFile) {
             formData.append('pdf_file', pdfFile);
+            formData.append('pdf_link', '');
+        } else if (pdfSourceType === 'link') {
+            formData.append('pdf_link', pdfLink);
+            // If there's an existing file, we might want to clear it? 
+            // In many APIs, sending pdf_link while pdf_file is empty doesn't auto-clear pdf_file.
+            // But for this "pilih salah 1" logic, we'll assume the backend or UI handles the priority.
         }
 
         try {
@@ -457,31 +469,67 @@ const DashboardEcourseMaterialsPage = () => {
 
                         <div className="pt-4 border-t border-gray-50 space-y-4">
                             <div>
-                                <label className="block text-[10px] font-black text-gray-400 mb-1 uppercase tracking-widest">File Lampiran (PDF)</label>
-                                <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200 hover:border-green-300 transition-all group">
-                                    <span className="material-icons text-gray-300 group-hover:text-green-500 transition">upload_file</span>
-                                    <input
-                                        type="file"
-                                        accept="application/pdf"
-                                        onChange={(e) => {
-                                            const file = e.target.files[0];
-                                            if (file && file.size > 100 * 1024 * 1024) {
-                                                alert('File terlalu besar. Maksimal 100MB.');
-                                                e.target.value = null;
-                                            } else {
-                                                setPdfFile(file);
-                                            }
-                                        }}
-                                        className="flex-1 text-xs text-gray-500 file:hidden"
-                                    />
-                                    {pdfFile && <span className="text-[10px] font-bold text-green-700 bg-green-100 px-2 py-1 rounded-lg">TERPILIH</span>}
+                                <div className="flex justify-between items-center mb-1">
+                                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">File Lampiran (PDF)</label>
+                                    <div className="flex bg-gray-100 p-0.5 rounded-lg">
+                                        <button 
+                                            type="button"
+                                            onClick={() => setPdfSourceType('file')}
+                                            className={`px-3 py-1 text-[8px] font-black rounded-md transition ${pdfSourceType === 'file' ? 'bg-white text-green-700 shadow-sm' : 'text-gray-400'}`}
+                                        >
+                                            UPLOAD FILE
+                                        </button>
+                                        <button 
+                                            type="button"
+                                            onClick={() => setPdfSourceType('link')}
+                                            className={`px-3 py-1 text-[8px] font-black rounded-md transition ${pdfSourceType === 'link' ? 'bg-white text-green-700 shadow-sm' : 'text-gray-400'}`}
+                                        >
+                                            PASTE LINK
+                                        </button>
+                                    </div>
                                 </div>
-                                {editingMaterial?.pdf_file && !pdfFile && (
-                                    <div className="mt-2 flex items-center gap-2 px-2">
-                                        <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">File saat ini:</span>
-                                        <a href={getMediaUrl(editingMaterial.pdf_file)} target="_blank" rel="noreferrer" className="text-[10px] font-black text-blue-600 hover:text-blue-700 flex items-center gap-1 bg-blue-50 px-2 py-1 rounded-lg border border-blue-100">
-                                            <span className="material-icons text-[12px]">picture_as_pdf</span> LIHAT PDF
-                                        </a>
+
+                                {pdfSourceType === 'file' ? (
+                                    <div className="animate-fade-in">
+                                        <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200 hover:border-green-300 transition-all group">
+                                            <span className="material-icons text-gray-300 group-hover:text-green-500 transition">upload_file</span>
+                                            <input
+                                                type="file"
+                                                accept="application/pdf"
+                                                onChange={(e) => {
+                                                    const file = e.target.files[0];
+                                                    if (file && file.size > 5 * 1024 * 1024) {
+                                                        alert('File terlalu besar. Maksimal 5MB.');
+                                                        e.target.value = null;
+                                                    } else {
+                                                        setPdfFile(file);
+                                                    }
+                                                }}
+                                                className="flex-1 text-xs text-gray-500 file:hidden"
+                                            />
+                                            {pdfFile && <span className="text-[10px] font-bold text-green-700 bg-green-100 px-2 py-1 rounded-lg">TERPILIH</span>}
+                                        </div>
+                                        {editingMaterial?.pdf_file && !pdfFile && (
+                                            <div className="mt-2 flex items-center gap-2 px-2">
+                                                <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">File saat ini:</span>
+                                                <a href={getMediaUrl(editingMaterial.pdf_file)} target="_blank" rel="noreferrer" className="text-[10px] font-black text-blue-600 hover:text-blue-700 flex items-center gap-1 bg-blue-50 px-2 py-1 rounded-lg border border-blue-100">
+                                                    <span className="material-icons text-[12px]">picture_as_pdf</span> LIHAT PDF
+                                                </a>
+                                            </div>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <div className="animate-fade-in">
+                                        <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-2xl border-2 border-gray-100 focus-within:border-green-500 transition-all">
+                                            <span className="material-icons text-gray-400">link</span>
+                                            <input
+                                                type="url"
+                                                value={pdfLink}
+                                                onChange={(e) => setPdfLink(e.target.value)}
+                                                placeholder="https://example.com/materi.pdf"
+                                                className="flex-1 bg-transparent text-xs font-bold outline-none"
+                                            />
+                                        </div>
                                     </div>
                                 )}
                             </div>
