@@ -135,7 +135,9 @@ const BibEditor = ({ slug }) => {
             alert("Pengaturan BIB berhasil disimpan!");
         } catch (error) {
             console.error("Save error", error);
-            alert("Gagal menyimpan pengaturan.");
+            const errorMsg = error.response?.data?.error || 
+                           (error.response?.data ? JSON.stringify(error.response.data) : "Gagal menyimpan pengaturan.");
+            alert(errorMsg);
         }
     };
 

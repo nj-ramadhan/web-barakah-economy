@@ -1,4 +1,5 @@
 from rest_framework import viewsets, permissions, status, filters
+from django.db import transaction
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from django.core.mail import send_mail, EmailMessage
@@ -1535,8 +1536,13 @@ class EventViewSet(viewsets.ModelViewSet):
     def bib_settings(self, request, slug=None):
         """Manage BIB template settings for an event."""
         event = self.get_object()
-        if not (request.user.is_staff or event.created_by == request.user):
-            return Response({"error": "Hanya penyelenggara yang bisa mengelola nomor punggung."}, status=status.HTTP_403_FORBIDDEN)
+        
+        # Authorization check: Admin OR Owner
+        is_admin = request.user.has_menu_access('admin_events') or request.user.is_staff
+        is_owner = event.created_by == request.user
+        
+        if not (is_admin or is_owner):
+            return Response({"error": "Hanya penyelenggara atau admin yang bisa mengelola nomor punggung."}, status=status.HTTP_403_FORBIDDEN)
             
         from .models import EventBib
         from .serializers import EventBibSerializer
@@ -1545,30 +1551,29 @@ class EventViewSet(viewsets.ModelViewSet):
             bib, created = EventBib.objects.get_or_create(event=event)
             
             if request.method == 'POST':
+                # Use serializer for robust validation and data type conversion
+                serializer = EventBibSerializer(bib, data=request.data, partial=True)
+                
+                # Handle template_image explicitly if sent via request.FILES
+                # EventBibSerializer should handle this if field names match, 
+                # but we'll ensure it works for 'template_image' specifically.
                 if 'template_image' in request.FILES:
                     bib.template_image = request.FILES['template_image']
                 
-                for field in ['number_x', 'number_y', 'number_font_size', 'number_color', 'number_font_family', 'name_x', 'name_y', 'name_font_size', 'name_color', 'name_font_family', 'number_format', 'is_active', 'show_photo', 'photo_x', 'photo_y', 'photo_width', 'photo_height']:
-                    if field in request.data:
-                        val = request.data.get(field)
-                        try:
-                            if field in ['number_x', 'number_y', 'name_x', 'name_y', 'photo_x', 'photo_y', 'photo_width', 'photo_height']: 
-                                val = float(val)
-                            if field in ['number_font_size', 'name_font_size']: 
-                                val = int(val)
-                            if field in ['is_active', 'show_photo']: 
-                                val = str(val).lower() in ['true', '1', 'yes']
-                            setattr(bib, field, val)
-                        except Exception as e:
-                            print(f"Error setting field {field}: {e}")
-                
-                bib.save()
-                return Response(EventBibSerializer(bib).data)
+                if serializer.is_valid():
+                    with transaction.atomic():
+                        serializer.save()
+                    return Response(serializer.data)
+                else:
+                    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
             
             return Response(EventBibSerializer(bib).data)
         except Exception as e:
+            # Keep helpful database error message for missing migrations
             if "column" in str(e).lower() or "no such column" in str(e).lower():
-                return Response({"error": f"Database belum di-update (Missing Column). Silakan jalankan 'python manage.py migrate' di server. Error: {str(e)}"}, status=500)
+                return Response({
+                    "error": f"Database belum di-update (Missing Column). Silakan jalankan 'python manage.py migrate' di server. Detail: {str(e)}"
+                }, status=500)
             return Response({"error": str(e)}, status=500)
 
     @action(detail=True, methods=['get'], permission_classes=[permissions.IsAuthenticated])
