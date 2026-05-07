@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from .models import Event, EventFormField, EventRegistration, EventRegistrationFile, EventDocumentationImage, EventGalleryImage, EventCertificate, EventBib
 from accounts.serializers import UserAdminSerializer
+from django.db import transaction
 
 class EventFormFieldSerializer(serializers.ModelSerializer):
     class Meta:
@@ -82,9 +83,12 @@ class EventSerializer(serializers.ModelSerializer):
             from .serializers import EventBibSerializer
             bib = EventBib.objects.filter(event=obj).first()
             if bib:
+                # If migration is pending, accessing fields might fail
                 return EventBibSerializer(bib, context=self.context).data
             return None
-        except Exception:
+        except Exception as e:
+            # Log the error but don't fail the whole request
+            print(f"BIB serialization error (likely pending migrations): {e}")
             return None
 
     def get_certificate(self, obj):
@@ -147,6 +151,7 @@ class EventSerializer(serializers.ModelSerializer):
         
         return super().to_internal_value(mutable_data)
 
+    @transaction.atomic
     def create(self, validated_data):
         fields_data = validated_data.pop('form_fields', [])
         speakers_data = validated_data.pop('speakers', [])
@@ -188,6 +193,7 @@ class EventSerializer(serializers.ModelSerializer):
             
         return event
 
+    @transaction.atomic
     def update(self, instance, validated_data):
         fields_data = validated_data.pop('form_fields', None)
         speakers_data = validated_data.pop('speakers', None)

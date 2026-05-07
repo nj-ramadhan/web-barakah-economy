@@ -1342,6 +1342,8 @@ class EventViewSet(viewsets.ModelViewSet):
             
             return Response(EventBibSerializer(bib).data)
         except Exception as e:
+            if "column" in str(e).lower() or "no such column" in str(e).lower():
+                return Response({"error": f"Database belum di-update (Missing Column). Silakan jalankan 'python manage.py migrate' di server. Error: {str(e)}"}, status=500)
             return Response({"error": str(e)}, status=500)
 
     @action(detail=True, methods=['get'], permission_classes=[permissions.IsAuthenticated])
