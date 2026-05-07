@@ -690,14 +690,56 @@ class EventViewSet(viewsets.ModelViewSet):
                 f"{sessions_str}\n\n"
                 f"Salam,\nBarakah Economy"
             )
-            whatsapp_service.send_message(formatted_phone, wa_message)
+            
+            # Send text message first
+            msg_res = whatsapp_service.send_message(formatted_phone, wa_message)
+            if not msg_res.get('success'):
+                import logging
+                logging.getLogger(__name__).error(f"WhatsApp text send failed for {formatted_phone}: {msg_res.get('message')}")
 
-            if registration.qr_image:
+            # Send Image (BIB if available, else QR)
+            sent_image = False
+            
+            # Try to send BIB if enabled
+            if registration.event.has_bib:
+                try:
+                    bib_buffer = self._generate_bib_image(registration)
+                    if bib_buffer:
+                        import base64
+                        encoded = base64.b64encode(bib_buffer.read()).decode('utf-8')
+                        file_b64 = f"data:image/jpeg;base64,{encoded}"
+                        fmt = registration.event.bib_template.number_format or '001'
+                        formatted_bib = str(registration.bib_number).zfill(len(fmt))
+                        
+                        img_res = whatsapp_service.send_file(
+                            formatted_phone, 
+                            f"Nomor Punggung (BIB) - {unique_code}", 
+                            file_b64, 
+                            filename=f"BIB_{formatted_bib}.jpg"
+                        )
+                        if img_res.get('success'):
+                            sent_image = True
+                        else:
+                            logging.getLogger(__name__).warning(f"WhatsApp BIB send failed, falling back to QR: {img_res.get('message')}")
+                except Exception as e:
+                    import logging
+                    logging.getLogger(__name__).error(f"Error in automatic BIB sending: {e}")
+
+            # Fallback to QR if BIB not sent or not applicable
+            if not sent_image and registration.qr_image:
                 try:
                     import base64
+                    registration.qr_image.seek(0)
                     encoded = base64.b64encode(registration.qr_image.read()).decode('utf-8')
                     file_b64 = f"data:image/png;base64,{encoded}"
-                    whatsapp_service.send_file(formatted_phone, f"QR Tiket {unique_code}", file_b64, filename=f"tiket_{unique_code}.png")
+                    img_res = whatsapp_service.send_file(
+                        formatted_phone, 
+                        f"QR Tiket {unique_code}", 
+                        file_b64, 
+                        filename=f"tiket_{unique_code}.png"
+                    )
+                    if not img_res.get('success'):
+                        logging.getLogger(__name__).error(f"WhatsApp QR send failed for {formatted_phone}: {img_res.get('message')}")
                 except Exception as e:
                     import logging
                     logging.getLogger(__name__).error(f"Gagal mengirim gambar WA QR: {e}")
@@ -749,8 +791,8 @@ class EventViewSet(viewsets.ModelViewSet):
         elif digits.startswith('8'): 
             digits = '62' + digits
         
-        # Return with + prefix as requested
-        return f"+{digits}"
+        # Return only digits (no +) for better compatibility with WA Gateways
+        return digits
 
     @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
     def blast_whatsapp(self, request, slug=None):
@@ -1306,69 +1348,23 @@ class EventViewSet(viewsets.ModelViewSet):
         from .serializers import EventRegistrationSerializer
         return Response(EventRegistrationSerializer(reg).data)
 
-    @action(detail=True, methods=['post', 'get'], permission_classes=[permissions.IsAuthenticated])
-    def bib_settings(self, request, slug=None):
-        """Manage BIB template settings for an event."""
-        event = self.get_object()
-        if not (request.user.is_staff or event.created_by == request.user):
-            return Response({"error": "Hanya penyelenggara yang bisa mengelola nomor punggung."}, status=status.HTTP_403_FORBIDDEN)
-            
-        from .models import EventBib
-        from .serializers import EventBibSerializer
-        
+    def _generate_bib_image(self, registration):
+        """Internal helper to generate a personalized BIB image."""
         try:
-            bib, created = EventBib.objects.get_or_create(event=event)
-            
-            if request.method == 'POST':
-                if 'template_image' in request.FILES:
-                    bib.template_image = request.FILES['template_image']
-                
-                for field in ['number_x', 'number_y', 'number_font_size', 'number_color', 'number_font_family', 'name_x', 'name_y', 'name_font_size', 'name_color', 'name_font_family', 'number_format', 'is_active', 'show_photo', 'photo_x', 'photo_y', 'photo_width', 'photo_height']:
-                    if field in request.data:
-                        val = request.data.get(field)
-                        try:
-                            if field in ['number_x', 'number_y', 'name_x', 'name_y', 'photo_x', 'photo_y', 'photo_width', 'photo_height']: 
-                                val = float(val)
-                            if field in ['number_font_size', 'name_font_size']: 
-                                val = int(val)
-                            if field in ['is_active', 'show_photo']: 
-                                val = str(val).lower() in ['true', '1', 'yes']
-                            setattr(bib, field, val)
-                        except Exception as e:
-                            print(f"Error setting field {field}: {e}")
-                
-                bib.save()
-                return Response(EventBibSerializer(bib).data)
-            
-            return Response(EventBibSerializer(bib).data)
-        except Exception as e:
-            if "column" in str(e).lower() or "no such column" in str(e).lower():
-                return Response({"error": f"Database belum di-update (Missing Column). Silakan jalankan 'python manage.py migrate' di server. Error: {str(e)}"}, status=500)
-            return Response({"error": str(e)}, status=500)
-
-    @action(detail=True, methods=['get'], permission_classes=[permissions.IsAuthenticated])
-    def download_bib(self, request, slug=None):
-        """Download personalized BIB (race number) for the user."""
-        event = self.get_object()
-        
-        from .models import EventBib, EventRegistration
-        try:
-            bib = event.bib_template
+            bib = registration.event.bib_template
             if not bib.is_active or not bib.template_image:
-                return Response({"error": "Nomor punggung belum diaktifkan oleh penyelenggara."}, status=status.HTTP_400_BAD_REQUEST)
-        except EventBib.DoesNotExist:
-            return Response({"error": "Nomor punggung tidak tersedia untuk event ini."}, status=status.HTTP_404_NOT_FOUND)
-            
-        # Verify registration
-        registration = EventRegistration.objects.filter(event=event, user=request.user, status='approved').first()
-        if not registration:
-            return Response({"error": "Hanya peserta terdaftar yang bisa mengunduh nomor punggung."}, status=status.HTTP_403_FORBIDDEN)
-            
+                return None
+        except Exception:
+            return None
+
         # Get name and formatted bib
         _, _, participant_name = self._detect_contact_info_standalone(registration)
         if not participant_name:
-            profile = getattr(request.user, 'profile', None)
-            participant_name = profile.name_full if profile and profile.name_full else request.user.username
+            if registration.user:
+                profile = getattr(registration.user, 'profile', None)
+                participant_name = profile.name_full if profile and profile.name_full else registration.user.username
+            else:
+                participant_name = registration.guest_name or "Participant"
 
         # Format BIB number
         fmt = bib.number_format or '001'
@@ -1377,8 +1373,8 @@ class EventViewSet(viewsets.ModelViewSet):
         # Generate image using Pillow
         from PIL import Image, ImageDraw, ImageFont
         import os
-        from django.http import HttpResponse
         from io import BytesIO
+        from django.db import models
         
         try:
             # Open template
@@ -1395,6 +1391,7 @@ class EventViewSet(viewsets.ModelViewSet):
             # Scale font size relative to image height (reference: 1000px height)
             num_font_size = int((bib.number_font_size / 1000.0) * height)
             name_font_size = int((bib.name_font_size / 1000.0) * height)
+            
             # Load font
             fonts_dir = os.path.join(os.path.dirname(__file__), 'fonts')
             os.makedirs(fonts_dir, exist_ok=True)
@@ -1460,24 +1457,88 @@ class EventViewSet(viewsets.ModelViewSet):
                         photo_x_px = int(width * bib.photo_x / 100)
                         photo_y_px = int(height * bib.photo_y / 100)
                         
-                        # Resize photo (keeping aspect ratio or forcing size?)
-                        # We force size for the placeholder but use thumbnail/resize
                         participant_photo = participant_photo.resize((photo_w_px, photo_h_px), Image.LANCZOS)
                         
                         # Paste photo onto BIB
                         img.paste(participant_photo, (photo_x_px - photo_w_px//2, photo_y_px - photo_h_px//2), participant_photo)
-                    except Exception as photo_err:
-                        print(f"Error drawing participant photo: {photo_err}")
-            
-            # Return image
+                    except Exception: pass
+
             buffer = BytesIO()
             img.save(buffer, format="JPEG", quality=95)
-            response = HttpResponse(buffer.getvalue(), content_type="image/jpeg")
-            response['Content-Disposition'] = f'attachment; filename="BIB_{formatted_bib}.jpg"'
-            return response
+            buffer.seek(0)
+            return buffer
             
         except Exception as e:
-            return Response({"error": f"Gagal membuat nomor punggung: {str(e)}"}, status=500)
+            import logging
+            logging.getLogger(__name__).error(f"Error generating BIB image: {e}")
+            return None
+
+    @action(detail=True, methods=['post', 'get'], permission_classes=[permissions.IsAuthenticated])
+    def bib_settings(self, request, slug=None):
+        """Manage BIB template settings for an event."""
+        event = self.get_object()
+        if not (request.user.is_staff or event.created_by == request.user):
+            return Response({"error": "Hanya penyelenggara yang bisa mengelola nomor punggung."}, status=status.HTTP_403_FORBIDDEN)
+            
+        from .models import EventBib
+        from .serializers import EventBibSerializer
+        
+        try:
+            bib, created = EventBib.objects.get_or_create(event=event)
+            
+            if request.method == 'POST':
+                if 'template_image' in request.FILES:
+                    bib.template_image = request.FILES['template_image']
+                
+                for field in ['number_x', 'number_y', 'number_font_size', 'number_color', 'number_font_family', 'name_x', 'name_y', 'name_font_size', 'name_color', 'name_font_family', 'number_format', 'is_active', 'show_photo', 'photo_x', 'photo_y', 'photo_width', 'photo_height']:
+                    if field in request.data:
+                        val = request.data.get(field)
+                        try:
+                            if field in ['number_x', 'number_y', 'name_x', 'name_y', 'photo_x', 'photo_y', 'photo_width', 'photo_height']: 
+                                val = float(val)
+                            if field in ['number_font_size', 'name_font_size']: 
+                                val = int(val)
+                            if field in ['is_active', 'show_photo']: 
+                                val = str(val).lower() in ['true', '1', 'yes']
+                            setattr(bib, field, val)
+                        except Exception as e:
+                            print(f"Error setting field {field}: {e}")
+                
+                bib.save()
+                return Response(EventBibSerializer(bib).data)
+            
+            return Response(EventBibSerializer(bib).data)
+        except Exception as e:
+            if "column" in str(e).lower() or "no such column" in str(e).lower():
+                return Response({"error": f"Database belum di-update (Missing Column). Silakan jalankan 'python manage.py migrate' di server. Error: {str(e)}"}, status=500)
+            return Response({"error": str(e)}, status=500)
+
+    @action(detail=True, methods=['get'], permission_classes=[permissions.IsAuthenticated])
+    def download_bib(self, request, slug=None):
+        """Download personalized BIB (race number) for the user."""
+        event = self.get_object()
+        
+        from .models import EventRegistration
+        # Verify registration
+        registration = EventRegistration.objects.filter(event=event, user=request.user, status='approved').first()
+        if not registration:
+            return Response({"error": "Hanya peserta terdaftar yang bisa mengunduh nomor punggung."}, status=status.HTTP_403_FORBIDDEN)
+            
+        buffer = self._generate_bib_image(registration)
+        if not buffer:
+            return Response({"error": "Gagal membuat nomor punggung atau template belum siap."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Format BIB number for filename
+        try:
+            fmt = event.bib_template.number_format or '001'
+        except:
+            fmt = '001'
+        formatted_bib = str(registration.bib_number).zfill(len(fmt))
+
+        from django.http import HttpResponse
+        response = HttpResponse(buffer.getvalue(), content_type="image/jpeg")
+        response['Content-Disposition'] = f'attachment; filename="BIB_{formatted_bib}.jpg"'
+        return response
 
     @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
     def scan_attendance(self, request, slug=None):
