@@ -74,6 +74,7 @@ class Event(models.Model):
     # Information fields
     category = models.CharField(max_length=100, blank=True, null=True, help_text="Kategori event (misal: Pelatihan, Seminar, dll)")
     has_certificate = models.BooleanField(default=False, help_text="Apakah event ini menyediakan sertifikat?")
+    has_bib = models.BooleanField(default=False, help_text="Apakah event ini menyediakan nomor punggung (BIB)?")
     allow_ots_payment = models.BooleanField(default=False, help_text="Izinkan pembayaran di tempat (On The Spot)")
 
     created_at = models.DateTimeField(auto_now_add=True)
@@ -260,6 +261,8 @@ class EventRegistration(models.Model):
     is_attended = models.BooleanField(default=False, help_text="Tandai hadir saat event berlangsung")
     attended_at = models.DateTimeField(blank=True, null=True, help_text="Waktu scan kehadiran")
     
+    bib_number = models.PositiveIntegerField(blank=True, null=True, help_text="Nomor urut pendaftaran (untuk No Punggung/BIB)")
+    
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -295,6 +298,15 @@ class EventRegistration(models.Model):
                 self.qr_image.save(f"qr_{self.unique_code}.png", ContentFile(buffer.getvalue()), save=False)
             except ImportError:
                 print("Library qrcode belum terinstall. Lewati generate gambar QR.")
+                
+        # Assign BIB number if not set
+        if not self.bib_number:
+            # Count existing registrations for this event
+            last_reg = EventRegistration.objects.filter(event=self.event).order_by('-bib_number').first()
+            if last_reg and last_reg.bib_number:
+                self.bib_number = last_reg.bib_number + 1
+            else:
+                self.bib_number = 1
                 
         super().save(*args, **kwargs)
 
@@ -340,3 +352,28 @@ class EventCertificate(models.Model):
 
     def __str__(self):
         return f"Certificate for {self.event.title}"
+
+class EventBib(models.Model):
+    event = models.OneToOneField(Event, on_delete=models.CASCADE, related_name='bib_template')
+    template_image = models.ImageField(upload_to='events/bibs/templates/', blank=True, null=True)
+    
+    # Position in percentage (0-100)
+    number_x = models.FloatField(default=50.0)
+    number_y = models.FloatField(default=50.0)
+    number_font_size = models.IntegerField(default=150)
+    number_color = models.CharField(max_length=7, default='#000000')
+    
+    name_x = models.FloatField(default=50.0)
+    name_y = models.FloatField(default=80.0)
+    name_font_size = models.IntegerField(default=40)
+    name_color = models.CharField(max_length=7, default='#000000')
+    
+    # format: 1, 01, 001, 0001, 00001
+    number_format = models.CharField(max_length=20, default='001')
+    
+    is_active = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"BIB Template for {self.event.title}"

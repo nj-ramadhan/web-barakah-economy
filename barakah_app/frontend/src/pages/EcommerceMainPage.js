@@ -295,7 +295,7 @@ const EcommerceMainPage = () => {
                 <div key={product.id} className="bg-white rounded-lg overflow-hidden shadow">
                   <Link to={`/produk/${product.slug || product.id}`}>
                     <img
-                      src={product.thumbnail || '/placeholder-image.jpg'}
+                      src={getMediaUrl(product.thumbnail) || '/placeholder-image.jpg'}
                       alt={product.title}
                       className="w-full h-28 object-cover"
                       onError={(e) => {

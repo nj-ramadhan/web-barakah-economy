@@ -40,6 +40,7 @@ const EventSubmissionPage = () => {
         registration_start_at: '',
         category: '',
         has_certificate: false,
+        has_bib: false,
         allow_ots_payment: false,
     });
     const [speakers, setSpeakers] = useState([]);
@@ -102,6 +103,7 @@ const EventSubmissionPage = () => {
                         attachment_file: d.attachment_file,
                         category: d.category || '',
                         has_certificate: d.has_certificate || false,
+                        has_bib: d.has_bib || false,
                         allow_ots_payment: d.allow_ots_payment || false,
                     });
                     
@@ -512,7 +514,20 @@ const EventSubmissionPage = () => {
                                             >
                                                 <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${formData.has_certificate ? 'left-7' : 'left-1'}`}></div>
                                             </button>
-                                            <span className="text-xs font-bold text-gray-600">{formData.has_certificate ? 'Ya, Ada Sertifikat' : 'Tidak Ada'}</span>
+                                            <span className="text-xs font-bold text-gray-600">{formData.has_certificate ? 'Ya' : 'Tidak'}</span>
+                                        </div>
+                                    </div>
+                                    <div className="space-y-1.5 flex flex-col justify-center">
+                                        <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1 mb-2">Tersedia No Punggung (BIB)?</label>
+                                        <div className="flex items-center gap-3">
+                                            <button 
+                                                type="button"
+                                                onClick={() => setFormData(prev => ({ ...prev, has_bib: !prev.has_bib }))}
+                                                className={`w-12 h-6 rounded-full transition-colors relative ${formData.has_bib ? 'bg-blue-500' : 'bg-gray-300'}`}
+                                            >
+                                                <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${formData.has_bib ? 'left-7' : 'left-1'}`}></div>
+                                            </button>
+                                            <span className="text-xs font-bold text-gray-600">{formData.has_bib ? 'Ya' : 'Tidak'}</span>
                                         </div>
                                     </div>
                                 </div>

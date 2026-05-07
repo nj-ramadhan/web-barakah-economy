@@ -200,6 +200,28 @@ export const downloadCertificate = (slug) => {
     });
 };
 
+export const getBibSettings = (slug) => {
+    return axios.get(`${API_BASE_URL}/api/events/${slug}/bib_settings/`, {
+        headers: getAuthHeaders()
+    });
+};
+
+export const updateBibSettings = (slug, formData) => {
+    return axios.post(`${API_BASE_URL}/api/events/${slug}/bib_settings/`, formData, {
+        headers: {
+            ...getAuthHeaders(),
+            'Content-Type': 'multipart/form-data',
+        }
+    });
+};
+
+export const downloadBib = (slug) => {
+    return axios.get(`${API_BASE_URL}/api/events/${slug}/download_bib/`, {
+        headers: getAuthHeaders(),
+        responseType: 'blob'
+    });
+};
+
 export const searchUsers = (search = '') => {
     return axios.get(`${API_BASE_URL}/api/accounts/users/`, {
         params: { search },

@@ -1306,6 +1306,135 @@ class EventViewSet(viewsets.ModelViewSet):
         from .serializers import EventRegistrationSerializer
         return Response(EventRegistrationSerializer(reg).data)
 
+    @action(detail=True, methods=['post', 'get'], permission_classes=[permissions.IsAuthenticated])
+    def bib_settings(self, request, slug=None):
+        """Manage BIB template settings for an event."""
+        event = self.get_object()
+        if not (request.user.is_staff or event.created_by == request.user):
+            return Response({"error": "Hanya penyelenggara yang bisa mengelola nomor punggung."}, status=status.HTTP_403_FORBIDDEN)
+            
+        from .models import EventBib
+        from .serializers import EventBibSerializer
+        
+        try:
+            bib, created = EventBib.objects.get_or_create(event=event)
+            
+            if request.method == 'POST':
+                if 'template_image' in request.FILES:
+                    bib.template_image = request.FILES['template_image']
+                
+                for field in ['number_x', 'number_y', 'number_font_size', 'number_color', 'name_x', 'name_y', 'name_font_size', 'name_color', 'number_format', 'is_active']:
+                    if field in request.data:
+                        val = request.data.get(field)
+                        try:
+                            if field in ['number_x', 'number_y', 'name_x', 'name_y']: val = float(val)
+                            if field in ['number_font_size', 'name_font_size']: val = int(val)
+                            if field == 'is_active': val = val in [True, 'true', '1', 1]
+                            setattr(bib, field, val)
+                        except: pass
+                
+                bib.save()
+                return Response(EventBibSerializer(bib).data)
+            
+            return Response(EventBibSerializer(bib).data)
+        except Exception as e:
+            return Response({"error": str(e)}, status=500)
+
+    @action(detail=True, methods=['get'], permission_classes=[permissions.IsAuthenticated])
+    def download_bib(self, request, slug=None):
+        """Download personalized BIB (race number) for the user."""
+        event = self.get_object()
+        
+        from .models import EventBib, EventRegistration
+        try:
+            bib = event.bib_template
+            if not bib.is_active or not bib.template_image:
+                return Response({"error": "Nomor punggung belum diaktifkan oleh penyelenggara."}, status=status.HTTP_400_BAD_REQUEST)
+        except EventBib.DoesNotExist:
+            return Response({"error": "Nomor punggung tidak tersedia untuk event ini."}, status=status.HTTP_404_NOT_FOUND)
+            
+        # Verify registration
+        registration = EventRegistration.objects.filter(event=event, user=request.user, status='approved').first()
+        if not registration:
+            return Response({"error": "Hanya peserta terdaftar yang bisa mengunduh nomor punggung."}, status=status.HTTP_403_FORBIDDEN)
+            
+        # Get name and formatted bib
+        _, _, participant_name = self._detect_contact_info_standalone(registration)
+        if not participant_name:
+            profile = getattr(request.user, 'profile', None)
+            participant_name = profile.name_full if profile and profile.name_full else request.user.username
+
+        # Format BIB number
+        fmt = bib.number_format or '001'
+        formatted_bib = str(registration.bib_number).zfill(len(fmt))
+
+        # Generate image using Pillow
+        from PIL import Image, ImageDraw, ImageFont
+        import os
+        from django.http import HttpResponse
+        from io import BytesIO
+        
+        try:
+            # Open template
+            img = Image.open(bib.template_image.path).convert("RGB")
+            draw = ImageDraw.Draw(img)
+            width, height = img.size
+            
+            # Position calculations (percentages to pixels)
+            num_x_px = int(width * bib.number_x / 100)
+            num_y_px = int(height * bib.number_y / 100)
+            name_x_px = int(width * bib.name_x / 100)
+            name_y_px = int(height * bib.name_y / 100)
+            
+            # Scale font size relative to image height (reference: 1000px height)
+            num_font_size = int((bib.number_font_size / 1000.0) * height)
+            name_font_size = int((bib.name_font_size / 1000.0) * height)
+            
+            # Load font
+            fonts_dir = os.path.join(os.path.dirname(__file__), 'fonts')
+            os.makedirs(fonts_dir, exist_ok=True)
+            font_path = os.path.join(fonts_dir, 'Roboto-Bold.ttf')
+            
+            # Auto-download if missing
+            if not os.path.exists(font_path):
+                import requests
+                try:
+                    r = requests.get('https://github.com/google/fonts/raw/main/apache/roboto/static/Roboto-Bold.ttf', timeout=10)
+                    if r.status_code == 200:
+                        with open(font_path, 'wb') as f:
+                            f.write(r.content)
+                except: pass
+
+            def get_font(size):
+                if os.path.exists(font_path):
+                    try: return ImageFont.truetype(font_path, size)
+                    except: pass
+                return ImageFont.load_default()
+
+            def draw_centered_text(text, font, x, y, color):
+                try:
+                    left, top, right, bottom = draw.textbbox((0, 0), text, font=font)
+                    w, h = right - left, bottom - top
+                except:
+                    w, h = draw.textsize(text, font=font)
+                draw.text((x - w/2, y - h/2), text, font=font, fill=color)
+
+            # Draw BIB
+            draw_centered_text(formatted_bib, get_font(num_font_size), num_x_px, num_y_px, bib.number_color)
+            
+            # Draw Name
+            draw_centered_text(participant_name.upper(), get_font(name_font_size), name_x_px, name_y_px, bib.name_color)
+            
+            # Return image
+            buffer = BytesIO()
+            img.save(buffer, format="JPEG", quality=95)
+            response = HttpResponse(buffer.getvalue(), content_type="image/jpeg")
+            response['Content-Disposition'] = f'attachment; filename="BIB_{formatted_bib}.jpg"'
+            return response
+            
+        except Exception as e:
+            return Response({"error": f"Gagal membuat nomor punggung: {str(e)}"}, status=500)
+
     @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
     def scan_attendance(self, request, slug=None):
         """Scan QR code untuk menandai kehadiran peserta (per sesi)."""
@@ -1440,6 +1569,15 @@ class EventViewSet(viewsets.ModelViewSet):
                         team = str(val)
                         break
                 
+            # Get uploaded files
+            uploaded_files = []
+            for f in reg.uploaded_files.all():
+                uploaded_files.append({
+                    "id": f.id,
+                    "label": f.field.label,
+                    "url": request.build_absolute_uri(f.file.url) if f.file else None
+                })
+
             data.append({
                 "id": reg.id,
                 "user_id": reg.user.id if reg.user else None,
@@ -1447,6 +1585,7 @@ class EventViewSet(viewsets.ModelViewSet):
                 "status": reg.status,
                 "team": team,
                 "created_at": reg.created_at,
+                "uploaded_files": uploaded_files,
             })
             
         return Response(data)

@@ -260,7 +260,7 @@ const EcommerceProductDetail = () => {
           <div className="md:w-1/2">
             <div className="relative group">
               <img
-                src={selectedImage || product.thumbnail || '/placeholder-image.jpg'}
+                src={getMediaUrl(selectedImage) || getMediaUrl(product.thumbnail) || '/placeholder-image.jpg'}
                 alt={product.title}
                 className="w-full h-80 md:h-[500px] object-cover transition-all duration-300"
                 onError={(e) => {
@@ -273,7 +273,7 @@ const EcommerceProductDetail = () => {
                     className={`w-16 h-16 rounded-lg overflow-hidden border-2 cursor-pointer flex-shrink-0 transition ${(!selectedImage || selectedImage === product.thumbnail) ? 'border-green-600' : 'border-transparent'}`}
                     onClick={() => setSelectedImage(product.thumbnail)}
                   >
-                    <img src={product.thumbnail} className="w-full h-full object-cover" alt="thumb" />
+                    <img src={getMediaUrl(product.thumbnail)} className="w-full h-full object-cover" alt="thumb" />
                   </div>
                   {product.images.map((imgObj, idx) => (
                     <div 
@@ -281,7 +281,7 @@ const EcommerceProductDetail = () => {
                       className={`w-16 h-16 rounded-lg overflow-hidden border-2 cursor-pointer flex-shrink-0 transition ${selectedImage === imgObj.image ? 'border-green-600' : 'border-transparent'}`}
                       onClick={() => setSelectedImage(imgObj.image)}
                     >
-                      <img src={imgObj.image} className="w-full h-full object-cover" alt={`gallery-${idx}`} />
+                      <img src={getMediaUrl(imgObj.image)} className="w-full h-full object-cover" alt={`gallery-${idx}`} />
                     </div>
                   ))}
                 </div>

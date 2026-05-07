@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Event, EventFormField, EventRegistration, EventRegistrationFile, EventDocumentationImage, EventGalleryImage, EventCertificate
+from .models import Event, EventFormField, EventRegistration, EventRegistrationFile, EventDocumentationImage, EventGalleryImage, EventCertificate, EventBib
 from accounts.serializers import UserAdminSerializer
 
 class EventFormFieldSerializer(serializers.ModelSerializer):
@@ -57,6 +57,11 @@ class EventCertificateSerializer(serializers.ModelSerializer):
         model = EventCertificate
         fields = '__all__'
 
+class EventBibSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EventBib
+        fields = '__all__'
+
 
 class EventSerializer(serializers.ModelSerializer):
     created_by_details = UserAdminSerializer(source='created_by', read_only=True)
@@ -69,6 +74,18 @@ class EventSerializer(serializers.ModelSerializer):
     attended_count = serializers.SerializerMethodField()
     user_registration = serializers.SerializerMethodField()
     certificate = serializers.SerializerMethodField()
+    bib_template = serializers.SerializerMethodField()
+
+    def get_bib_template(self, obj):
+        try:
+            from .models import EventBib
+            from .serializers import EventBibSerializer
+            bib = EventBib.objects.filter(event=obj).first()
+            if bib:
+                return EventBibSerializer(bib, context=self.context).data
+            return None
+        except Exception:
+            return None
 
     def get_certificate(self, obj):
         try:
@@ -235,6 +252,21 @@ class EventRegistrationSerializer(serializers.ModelSerializer):
     user_details = UserAdminSerializer(source='user', read_only=True)
     responses_with_labels = serializers.SerializerMethodField()
     attendances_list = EventAttendanceSerializer(source='attendances', many=True, read_only=True)
+    formatted_bib = serializers.SerializerMethodField()
+
+    def get_formatted_bib(self, obj):
+        if not obj.bib_number:
+            return None
+        
+        # Get format from template
+        try:
+            template = obj.event.bib_template
+            fmt = template.number_format
+            if fmt:
+                return str(obj.bib_number).zfill(len(fmt))
+        except:
+            pass
+        return str(obj.bib_number).zfill(3) # Default 001
 
     class Meta:
         model = EventRegistration

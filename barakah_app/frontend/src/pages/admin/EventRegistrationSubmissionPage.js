@@ -7,6 +7,7 @@ import { getEventRegistrations, getEventDetail, exportRegistrationsCsv, blastEve
 import EventManualRegistrationModal from '../../components/admin/EventManualRegistrationModal';
 import EventRegistrationEditModal from '../../components/admin/EventRegistrationEditModal';
 import CertificateEditor from '../../components/events/CertificateEditor';
+import BibEditor from '../../components/events/BibEditor';
 import '../../styles/Body.css';
 
 const EventRegistrationSubmissionPage = () => {
@@ -28,7 +29,7 @@ const EventRegistrationSubmissionPage = () => {
     const [showManualModal, setShowManualModal] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
     const [editingRegistration, setEditingRegistration] = useState(null);
-    const [activeTab, setActiveTab] = useState(initialTab); // 'participants' or 'certificate'
+    const [activeTab, setActiveTab] = useState(initialTab); // 'participants', 'certificate', or 'bib'
     const [isImporting, setIsImporting] = useState(false);
 
     useEffect(() => {
@@ -261,6 +262,14 @@ const EventRegistrationSubmissionPage = () => {
                             >
                                 Sertifikat
                             </button>
+                            {event?.has_bib && (
+                                <button 
+                                    onClick={() => setActiveTab('bib')}
+                                    className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'bib' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+                                >
+                                    BIB
+                                </button>
+                            )}
                         </div>
 
                         <div className="flex flex-wrap gap-2">
@@ -552,8 +561,10 @@ const EventRegistrationSubmissionPage = () => {
                         </table>
                     </div>
                 </div>
-                ) : (
+                ) : activeTab === 'certificate' ? (
                     <CertificateEditor slug={slug} />
+                ) : (
+                    <BibEditor slug={slug} />
                 )}
             </div>
 
