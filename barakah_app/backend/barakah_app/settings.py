@@ -409,6 +409,6 @@ EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD', default='')
 DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL', default='noreply@barakah-economy.com')
 
 # WhatsApp API Configuration
-WHATSAPP_API_URL = env('WHATSAPP_API_URL', default='http://notif-gowhatsappwebmultidevice-23d189-159-65-58-54.traefik.me')
+WHATSAPP_API_URL = env('WHATSAPP_API_URL', default='http://notif-gowhatsappwebmultidevice-g19qsd-b2e86e-159-65-58-54.nip.io')
 WHATSAPP_API_USER = env('WHATSAPP_API_USER', default='admin')
 WHATSAPP_API_PASS = env('WHATSAPP_API_PASS', default='reh1sspkbdgul0ebtax6vwxjqnzhzek7')

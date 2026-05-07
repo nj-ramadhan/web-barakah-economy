@@ -15,7 +15,7 @@ logger = logging.getLogger('accounts')
 
 # Config from settings/env with defaults from the PHP reference
 WA_API_URL = getattr(settings, 'WHATSAPP_API_URL', 
-    'http://notif-gowhatsappwebmultidevice-23d189-159-65-58-54.traefik.me')
+    'http://notif-gowhatsappwebmultidevice-g19qsd-b2e86e-159-65-58-54.nip.io')
 WA_API_USER = getattr(settings, 'WHATSAPP_API_USER', 'admin')
 WA_API_PASS = getattr(settings, 'WHATSAPP_API_PASS', 'reh1sspkbdgul0ebtax6vwxjqnzhzek7')
 
