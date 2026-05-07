@@ -4,7 +4,7 @@ class WhatsAppController {
     private $db;
 
     // Hardcoded config for now as requested. Can be moved to DB later.
-    private $api_url = "http://notif-gowhatsappwebmultidevice-23d189-159-65-58-54.traefik.me";
+    private $api_url = "http://notif-gowhatsappwebmultidevice-g19qsd-b2e86e-159-65-58-54.nip.io";
     private $api_user = "admin";
     private $api_pass = "reh1sspkbdgul0ebtax6vwxjqnzhzek7";
 
