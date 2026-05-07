@@ -7,6 +7,8 @@ import HeaderHome from '../components/layout/HeaderHome'; // Import the Header c
 import NavigationButton from '../components/layout/Navigation'; // Import the Navigation component
 import { formatCurrency } from '../utils/formatters';
 import FloatingCartModal from '../components/layout/FloatingCartModal';
+import UserProfileModal from '../components/modals/UserProfileModal';
+import { getMediaUrl } from '../utils/mediaUtils';
 
 function getCsrfToken() {
   const cookies = document.cookie.split(';');
@@ -33,6 +35,8 @@ const EcommerceMainPage = () => {
   const [activeSlide, setActiveSlide] = useState(0);
   const sliderInterval = useRef(null);
   const navigate = useNavigate();
+  const [selectedUserId, setSelectedUserId] = useState(null);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
   // Fetch featured products (only once when the component mounts)
   useEffect(() => {
@@ -311,12 +315,28 @@ const EcommerceMainPage = () => {
                         <p className="text-gray-500 text-[10px]">stok: {(product.total_stock !== undefined ? product.total_stock : product.stock) > 0 ? (product.total_stock !== undefined ? product.total_stock : product.stock) : 'habis'}</p>
                       </div>
                     
-                    <div className="flex items-center gap-2 mb-3">
-                      <div className="flex items-center text-gray-400 text-[10px] gap-1">
-                        <span className="material-icons text-[12px]">visibility</span>
-                        {product.views_count || 0}
+                      <div className="flex items-center gap-2 mb-3">
+                        <div className="flex items-center text-gray-400 text-[10px] gap-1">
+                          <span className="material-icons text-[12px]">visibility</span>
+                          {product.views_count || 0}
+                        </div>
+                        <div 
+                          className="flex items-center gap-1.5 ml-auto cursor-pointer hover:bg-gray-50 p-1 rounded-lg transition-all"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setSelectedUserId(product.seller);
+                            setIsProfileModalOpen(true);
+                          }}
+                        >
+                          <img 
+                            src={getMediaUrl(product.seller_avatar) || `https://ui-avatars.com/api/?name=${product.seller_name}&background=random`} 
+                            alt={product.seller_name} 
+                            className="w-4 h-4 rounded-full object-cover border border-emerald-100" 
+                          />
+                          <span className="text-[10px] font-bold text-emerald-700">@{product.seller_name}</span>
+                        </div>
                       </div>
-                    </div>
 
                     {product.stock <= 0 ? (
                       <div className="flex flex-col gap-2">
@@ -384,6 +404,11 @@ const EcommerceMainPage = () => {
       {/* Bottom Navigation */}
       <NavigationButton />
       <FloatingCartModal />
+      <UserProfileModal 
+        userId={selectedUserId} 
+        isOpen={isProfileModalOpen} 
+        onClose={() => setIsProfileModalOpen(false)} 
+      />
     </div>
   );
 };

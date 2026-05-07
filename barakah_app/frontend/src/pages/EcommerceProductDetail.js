@@ -8,6 +8,7 @@ import NavigationButton from '../components/layout/Navigation';
 import { formatCurrency } from '../utils/formatters';
 import FloatingCartModal from '../components/layout/FloatingCartModal';
 import UserProfileModal from '../components/modals/UserProfileModal';
+import { getMediaUrl } from '../utils/mediaUtils';
 import '../styles/Body.css';
 
 function getCsrfToken() {
@@ -306,16 +307,20 @@ const EcommerceProductDetail = () => {
                           {product.views_count || 0} kali dilihat
                         </div>
                         <div className="flex items-center gap-1">
-                          <span className="material-icons text-sm text-green-600">storefront</span>
-                          oleh <span 
-                            className="font-bold text-green-700 hover:underline cursor-pointer"
+                          <div 
+                            className="flex items-center gap-2 font-bold text-green-700 hover:bg-green-50 p-1.5 rounded-xl transition-all cursor-pointer border border-transparent hover:border-green-100"
                             onClick={() => {
                               setSelectedUserId(product.seller);
                               setIsProfileModalOpen(true);
                             }}
                           >
-                            @{product.seller_name}
-                          </span>
+                            <img 
+                              src={getMediaUrl(product.seller_avatar) || `https://ui-avatars.com/api/?name=${product.seller_name}&background=random`} 
+                              alt={product.seller_name} 
+                              className="w-6 h-6 rounded-full object-cover border-2 border-white shadow-sm" 
+                            />
+                            <span>@{product.seller_name}</span>
+                          </div>
                         </div>
                     </div>
                 </div>

@@ -455,7 +455,7 @@ const EventDetailPage = () => {
                                 {/* View Full Image Button */}
                                 <button
                                     onClick={(e) => { e.stopPropagation(); window.open(getMediaUrl(img), '_blank'); }}
-                                    className="absolute bottom-6 right-6 bg-black/60 hover:bg-black/80 backdrop-blur-md text-white px-4 py-2.5 rounded-xl border border-white/20 flex items-center gap-2 text-xs font-bold transition-all shadow-xl z-20"
+                                    className="absolute top-6 right-6 bg-black/60 hover:bg-black/80 backdrop-blur-md text-white px-4 py-2.5 rounded-xl border border-white/20 flex items-center gap-2 text-xs font-bold transition-all shadow-xl z-20"
                                 >
                                     <span className="material-icons text-sm">zoom_out_map</span>
                                     Lihat Ukuran Penuh
@@ -1117,11 +1117,11 @@ const EventDetailPage = () => {
                             ) : (
                                 <button
                                     onClick={() => setShowRegisterModal(true)}
-                                    className="w-full bg-white text-gray-900 py-4 rounded-2xl text-xs font-extrabold uppercase tracking-widest hover:bg-green-50 transition shadow-xl relative z-10 flex flex-col items-center justify-center gap-1"
+                                    className="w-full bg-green-600 hover:bg-green-700 text-white py-4 rounded-2xl text-xs font-extrabold uppercase tracking-widest transition shadow-xl relative z-10 flex flex-col items-center justify-center gap-1"
                                 >
                                     <span>Daftar Sekarang</span>
                                     {event.capacity > 0 && (
-                                        <span className="text-[9px] text-green-600 opacity-80 normal-case font-bold tracking-normal italic">
+                                        <span className="text-[9px] text-white opacity-80 normal-case font-bold tracking-normal italic">
                                             Tersisa {event.capacity - (event.registration_count || 0)} Slot Lagi
                                         </span>
                                     )}

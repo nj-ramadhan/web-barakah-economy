@@ -16,6 +16,8 @@ const DashboardSinergySellersPage = () => {
     const [variants, setVariants] = useState([{name: '', additional_price: 0, stock: 0}]);
     const [selectedCouriers, setSelectedCouriers] = useState(['jne', 'pos', 'tiki', 'jnt']);
     const [isCodAvailable, setIsCodAvailable] = useState(false);
+    const [manualStock, setManualStock] = useState(0);
+    const [manualPrice, setManualPrice] = useState(0);
 
 
     const fetchDashboardData = async () => {
@@ -48,6 +50,8 @@ const DashboardSinergySellersPage = () => {
         setVariants(product.variations && product.variations.length > 0 ? product.variations : [{name: '', additional_price: 0, stock: 0}]);
         setSelectedCouriers(product.supported_couriers ? product.supported_couriers.split(',') : ['jne', 'pos', 'tiki', 'jnt']);
         setIsCodAvailable(product.is_cod_available || false);
+        setManualStock(product.stock || 0);
+        setManualPrice(product.price || 0);
         setActiveTab('edit');
     };
 
@@ -195,6 +199,8 @@ const DashboardSinergySellersPage = () => {
                                     }
                                     setSelectedCouriers(p.supported_couriers ? p.supported_couriers.split(',') : ['jne', 'pos', 'tiki', 'jnt']);
                                     setIsCodAvailable(p.is_cod_available || false);
+                                    setManualStock(p.stock || 0);
+                                    setManualPrice(p.price || 0);
                                     setActiveTab('edit');
                                 }} className="flex-1 py-2 text-xs font-bold text-emerald-700 bg-emerald-50 rounded-xl hover:bg-emerald-100 border border-emerald-100 transition">Edit & Variasi</button>
 
@@ -277,7 +283,8 @@ const DashboardSinergySellersPage = () => {
                         <label className="block text-sm font-semibold text-gray-700 mb-1">Harga Jual (Rp) {variants.length > 0 && variants[0].name && <span className="text-[10px] text-emerald-600">(Auto dari Variasi)</span>}</label>
                         <CurrencyInput 
                             name="price" 
-                            value={variants.length > 0 && variants[0].name ? Math.min(...variants.map(v => v.additional_price || 0)) : (editingProduct?.price || '')} 
+                            value={variants.length > 0 && variants[0].name ? Math.min(...variants.map(v => v.additional_price || 0)) : manualPrice} 
+                            onChange={(e) => setManualPrice(e.target.value)}
                             required 
                             placeholder="0" 
                             className={`!px-4 !py-3 !bg-gray-50 !border-gray-200 !rounded-xl ${variants.length > 0 && variants[0].name ? 'opacity-70' : ''}`}
@@ -292,7 +299,8 @@ const DashboardSinergySellersPage = () => {
                         <input 
                             type="number" 
                             name="stock" 
-                            value={variants.length > 0 && variants[0].name ? variants.reduce((sum, v) => sum + (parseInt(v.stock) || 0), 0) : (editingProduct?.stock || '')} 
+                            value={variants.length > 0 && variants[0].name ? variants.reduce((sum, v) => sum + (parseInt(v.stock) || 0), 0) : manualStock} 
+                            onChange={(e) => setManualStock(e.target.value)}
                             required 
                             placeholder="0" 
                             className={`w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none transition ${variants.length > 0 && variants[0].name ? 'opacity-70' : ''}`} 
