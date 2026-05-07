@@ -174,6 +174,15 @@ class EventSerializer(serializers.ModelSerializer):
         for img in gallery_images:
             EventGalleryImage.objects.create(event=event, image=img)
             
+        # Handle BIB Template Image if provided
+        bib_image = request.FILES.get('bib_template_image') if request else None
+        if bib_image or event.has_bib:
+            bib, _ = EventBib.objects.get_or_create(event=event)
+            if bib_image:
+                bib.template_image = bib_image
+                bib.is_active = True
+                bib.save()
+            
         return event
 
     def update(self, instance, validated_data):
@@ -239,6 +248,15 @@ class EventSerializer(serializers.ModelSerializer):
                 EventDocumentationImage.objects.create(event=instance, image=img)
             for img in gallery_images:
                 EventGalleryImage.objects.create(event=instance, image=img)
+            
+            # Handle BIB Template Image
+            bib_image = request.FILES.get('bib_template_image')
+            if bib_image or instance.has_bib:
+                bib, _ = EventBib.objects.get_or_create(event=instance)
+                if bib_image:
+                    bib.template_image = bib_image
+                    bib.is_active = True
+                    bib.save()
         
         return instance
 

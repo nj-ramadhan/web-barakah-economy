@@ -12,7 +12,12 @@ const BibEditor = ({ slug }) => {
         name_font_size: 40,
         name_color: '#000000',
         number_format: '001',
-        is_active: true
+        is_active: true,
+        show_photo: false,
+        photo_x: 50,
+        photo_y: 30,
+        photo_width: 20,
+        photo_height: 25
     });
     const [template, setTemplate] = useState(null);
     const [previewUrl, setPreviewUrl] = useState(null);
@@ -65,6 +70,8 @@ const BibEditor = ({ slug }) => {
                 setSettings(prev => ({ ...prev, number_x: x, number_y: y }));
             } else if (type === 'name') {
                 setSettings(prev => ({ ...prev, name_x: x, name_y: y }));
+            } else if (type === 'photo') {
+                setSettings(prev => ({ ...prev, photo_x: x, photo_y: y }));
             }
         };
 
@@ -173,6 +180,27 @@ const BibEditor = ({ slug }) => {
                                 >
                                     NAMA PESERTA
                                 </div>
+
+                                {/* Participant Photo Placeholder */}
+                                {settings.show_photo && (
+                                    <div 
+                                        className="absolute cursor-move border-4 border-dashed border-blue-400 bg-blue-50/50 flex items-center justify-center select-none overflow-hidden"
+                                        style={{ 
+                                            left: `${settings.photo_x}%`, 
+                                            top: `${settings.photo_y}%`,
+                                            width: `${settings.photo_width}%`,
+                                            height: `${settings.photo_height}%`,
+                                            transform: 'translate(-50%, -50%)',
+                                            borderRadius: '10%'
+                                        }}
+                                        onMouseDown={(e) => handleDrag(e, 'photo')}
+                                    >
+                                        <div className="flex flex-col items-center justify-center text-blue-500">
+                                            <span className="material-icons" style={{ fontSize: '2vw' }}>account_box</span>
+                                            <span className="text-[0.6vw] font-black uppercase mt-1">FOTO</span>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         ) : (
                             <div className="text-center p-12">
@@ -234,6 +262,31 @@ const BibEditor = ({ slug }) => {
                                 <input type="text" value={settings.name_color.toUpperCase()} onChange={(e) => setSettings({...settings, name_color: e.target.value})} className="flex-grow border border-gray-200 rounded-xl px-3 text-[10px] font-mono font-bold" />
                             </div>
                         </div>
+
+                        <hr className="border-gray-200" />
+                        <div className="flex items-center justify-between mb-2">
+                            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">4. Foto Peserta</label>
+                            <button 
+                                type="button"
+                                onClick={() => setSettings({...settings, show_photo: !settings.show_photo})}
+                                className={`w-8 h-4 rounded-full transition-colors relative ${settings.show_photo ? 'bg-green-500' : 'bg-gray-300'}`}
+                            >
+                                <div className={`absolute top-0.5 w-3 h-3 bg-white rounded-full transition-transform ${settings.show_photo ? 'left-4.5' : 'left-0.5'}`}></div>
+                            </button>
+                        </div>
+
+                        {settings.show_photo && (
+                            <div className="space-y-4 animate-fade-in">
+                                <div>
+                                    <label className="text-[10px] font-bold text-gray-500 block mb-1 uppercase">Lebar Foto (%)</label>
+                                    <input type="range" min="5" max="80" value={settings.photo_width} onChange={(e) => setSettings({...settings, photo_width: parseFloat(e.target.value)})} className="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600" />
+                                </div>
+                                <div>
+                                    <label className="text-[10px] font-bold text-gray-500 block mb-1 uppercase">Tinggi Foto (%)</label>
+                                    <input type="range" min="5" max="80" value={settings.photo_height} onChange={(e) => setSettings({...settings, photo_height: parseFloat(e.target.value)})} className="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600" />
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     <div className="pt-4">

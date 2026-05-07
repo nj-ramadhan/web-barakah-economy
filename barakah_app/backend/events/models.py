@@ -371,6 +371,13 @@ class EventBib(models.Model):
     # format: 1, 01, 001, 0001, 00001
     number_format = models.CharField(max_length=20, default='001')
     
+    # Photo Position
+    show_photo = models.BooleanField(default=False)
+    photo_x = models.FloatField(default=50.0)
+    photo_y = models.FloatField(default=30.0)
+    photo_width = models.FloatField(default=20.0)
+    photo_height = models.FloatField(default=25.0)
+    
     is_active = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

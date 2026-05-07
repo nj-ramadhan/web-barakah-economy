@@ -1425,6 +1425,33 @@ class EventViewSet(viewsets.ModelViewSet):
             # Draw Name
             draw_centered_text(participant_name.upper(), get_font(name_font_size), name_x_px, name_y_px, bib.name_color)
             
+            # Draw Photo if enabled
+            if bib.show_photo:
+                # Find "Pas Foto" in registration files
+                photo_file = registration.uploaded_files.filter(
+                    models.Q(field__label__icontains='pas foto') | 
+                    models.Q(field__label__icontains='foto peserta')
+                ).first()
+                
+                if photo_file and photo_file.file:
+                    try:
+                        participant_photo = Image.open(photo_file.file.path).convert("RGBA")
+                        
+                        # Calculate pixel dimensions for photo
+                        photo_w_px = int(width * bib.photo_width / 100)
+                        photo_h_px = int(height * bib.photo_height / 100)
+                        photo_x_px = int(width * bib.photo_x / 100)
+                        photo_y_px = int(height * bib.photo_y / 100)
+                        
+                        # Resize photo (keeping aspect ratio or forcing size?)
+                        # We force size for the placeholder but use thumbnail/resize
+                        participant_photo = participant_photo.resize((photo_w_px, photo_h_px), Image.LANCZOS)
+                        
+                        # Paste photo onto BIB
+                        img.paste(participant_photo, (photo_x_px - photo_w_px//2, photo_y_px - photo_h_px//2), participant_photo)
+                    except Exception as photo_err:
+                        print(f"Error drawing participant photo: {photo_err}")
+            
             # Return image
             buffer = BytesIO()
             img.save(buffer, format="JPEG", quality=95)

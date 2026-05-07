@@ -374,6 +374,10 @@ const EventSubmissionPage = () => {
             });
         }
 
+        if (formData.bib_template_image instanceof File) {
+            data.append('bib_template_image', formData.bib_template_image);
+        }
+
         try {
             if (isEdit) {
                 await updateEvent(slug, data);
@@ -518,17 +522,55 @@ const EventSubmissionPage = () => {
                                         </div>
                                     </div>
                                     <div className="space-y-1.5 flex flex-col justify-center">
-                                        <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1 mb-2">Tersedia No Punggung (BIB)?</label>
-                                        <div className="flex items-center gap-3">
-                                            <button 
-                                                type="button"
-                                                onClick={() => setFormData(prev => ({ ...prev, has_bib: !prev.has_bib }))}
-                                                className={`w-12 h-6 rounded-full transition-colors relative ${formData.has_bib ? 'bg-blue-500' : 'bg-gray-300'}`}
-                                            >
-                                                <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${formData.has_bib ? 'left-7' : 'left-1'}`}></div>
-                                            </button>
-                                            <span className="text-xs font-bold text-gray-600">{formData.has_bib ? 'Ya' : 'Tidak'}</span>
-                                        </div>
+                                        <div className="flex items-center justify-between p-4 bg-blue-50 rounded-2xl border border-blue-100">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 bg-blue-600 text-white rounded-xl flex items-center justify-center shadow-lg shadow-blue-200">
+                                    <span className="material-icons">badge</span>
+                                </div>
+                                <div>
+                                    <h4 className="text-sm font-black text-gray-900">Fitur No Punggung (BIB)</h4>
+                                    <p className="text-[10px] text-blue-600 font-bold uppercase tracking-wider">Otomatis tambah kolom Pas Foto di pendaftaran</p>
+                                </div>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    const newValue = !formData.has_bib;
+                                    setFormData({ ...formData, has_bib: newValue });
+                                    
+                                    // Automatically add "Pas Foto" field if enabled
+                                    if (newValue) {
+                                        const hasPhotoField = formFields.some(f => f.label.toLowerCase().includes('pas foto'));
+                                        if (!hasPhotoField) {
+                                            const newField = {
+                                                id: Date.now(),
+                                                label: 'Pas Foto (Foto Peserta)',
+                                                field_type: 'file',
+                                                required: true,
+                                                placeholder: 'Upload pas foto format JPG/PNG'
+                                            };
+                                            setFormFields([...formFields, newField]);
+                                        }
+                                    }
+                                }}
+                                className={`w-12 h-6 rounded-full transition-colors relative ${formData.has_bib ? 'bg-blue-600' : 'bg-gray-300'}`}
+                            >
+                                <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${formData.has_bib ? 'left-7' : 'left-1'}`}></div>
+                            </button>
+                        </div>
+
+                        {formData.has_bib && (
+                            <div className="p-6 bg-white border border-blue-100 rounded-3xl space-y-4 shadow-sm animate-fade-in">
+                                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Upload Desain BIB (Opsional)</label>
+                                <p className="text-[10px] text-gray-500 italic">Anda juga bisa mengatur ini nanti di menu Kelola Event {'>'} BIB</p>
+                                <input 
+                                    type="file" 
+                                    accept="image/*" 
+                                    onChange={(e) => setFormData({...formData, bib_template_image: e.target.files[0]})}
+                                    className="w-full text-xs font-bold text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-[10px] file:font-black file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer"
+                                />
+                            </div>
+                        )}
                                     </div>
                                 </div>
                             </div>
