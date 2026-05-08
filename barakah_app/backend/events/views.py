@@ -58,8 +58,12 @@ class EventViewSet(viewsets.ModelViewSet):
         if self.request.user.has_menu_access('admin_events'):
             return [permissions.IsAuthenticated()]
 
-        # Regular users can create/update their own events
-        if self.action in ['create', 'update', 'partial_update', 'my_events']:
+        # Regular users can create/update their own events and panitia can scan
+        if self.action in [
+            'create', 'update', 'partial_update', 'my_events', 
+            'scan_attendance', 'check_scan_permission', 'manage_committees', 
+            'send_scan_link', 'bulk_resend_notifications'
+        ]:
             return [permissions.IsAuthenticated()]
             
         # Deny others
@@ -368,9 +372,10 @@ class EventViewSet(viewsets.ModelViewSet):
         """
         event = self.get_object()
         
-        # Check permissions: Admin or Event Creator
-        if not (request.user.is_staff or event.created_by == request.user or request.user.has_menu_access('admin_events')):
-            return Response({"error": "Unauthorized"}, status=status.HTTP_403_FORBIDDEN)
+        # Check permissions: Admin, Event Creator, or Committee
+        is_committee = event.committees.filter(id=request.user.id).exists()
+        if not (request.user.is_staff or event.created_by == request.user or request.user.has_menu_access('admin_events') or is_committee):
+            return Response({"error": "Hanya admin, penyelenggara, atau panitia yang bisa mendaftarkan peserta secara manual."}, status=status.HTTP_403_FORBIDDEN)
 
         # Basic identification
         name = request.data.get('name')
@@ -513,8 +518,9 @@ class EventViewSet(viewsets.ModelViewSet):
     def bulk_resend_notifications(self, request, slug=None):
         """Resend QR/BIB notifications to selected participants."""
         event = self.get_object()
-        if not (request.user.is_staff or event.created_by == request.user or request.user.has_menu_access('admin_events')):
-            return Response({"error": "Unauthorized"}, status=status.HTTP_403_FORBIDDEN)
+        is_committee = event.committees.filter(id=request.user.id).exists()
+        if not (request.user.is_staff or event.created_by == request.user or request.user.has_menu_access('admin_events') or is_committee):
+            return Response({"error": "Unauthorized: Hanya admin, penyelenggara, atau panitia yang bisa mengirim ulang notifikasi."}, status=status.HTTP_403_FORBIDDEN)
 
         registration_ids = request.data.get('registration_ids', [])
         if not registration_ids:
@@ -544,7 +550,8 @@ class EventViewSet(viewsets.ModelViewSet):
     def available_users(self, request, slug=None):
         """Get users who are NOT yet registered for this event and have complete data with pagination."""
         event = self.get_object()
-        if not (request.user.is_staff or event.created_by == request.user or request.user.has_menu_access('admin_events')):
+        is_committee = event.committees.filter(id=request.user.id).exists()
+        if not (request.user.is_staff or event.created_by == request.user or request.user.has_menu_access('admin_events') or is_committee):
             return Response({"error": "Unauthorized"}, status=status.HTTP_403_FORBIDDEN)
 
         from accounts.models import User
@@ -595,8 +602,9 @@ class EventViewSet(viewsets.ModelViewSet):
     def import_participants_csv(self, request, slug=None):
         """Import participants from CSV with Create/Update logic."""
         event = self.get_object()
-        if not (request.user.is_staff or event.created_by == request.user or request.user.has_menu_access('admin_events')):
-            return Response({"error": "Unauthorized"}, status=status.HTTP_403_FORBIDDEN)
+        is_committee = event.committees.filter(id=request.user.id).exists()
+        if not (request.user.is_staff or event.created_by == request.user or request.user.has_menu_access('admin_events') or is_committee):
+            return Response({"error": "Unauthorized: Hanya admin, penyelenggara, atau panitia yang bisa melakukan impor."}, status=status.HTTP_403_FORBIDDEN)
 
         file = request.FILES.get('file')
         if not file:
@@ -1675,8 +1683,18 @@ class EventViewSet(viewsets.ModelViewSet):
     def check_scan_permission(self, request, slug=None):
         """Check if user has permission to scan attendance."""
         event = self.get_object()
-        is_committee = event.committees.filter(id=request.user.id).exists()
-        if not (request.user.is_staff or event.created_by == request.user or request.user.has_menu_access('admin_events') or is_committee):
+        user = request.user
+        
+        is_committee = event.committees.filter(id=user.id).exists()
+        is_admin = user.is_staff or user.has_menu_access('admin_events')
+        is_owner = event.created_by == user
+        
+        authorized = is_admin or is_owner or is_committee
+        
+        # Verbose logging for debugging
+        logger.info(f"Check Scan Permission - User: {user.username} (ID: {user.id}) | Event: {slug} | Authorized: {authorized} | Role: {'Admin' if is_admin else 'Owner' if is_owner else 'Committee' if is_committee else 'None'}")
+        
+        if not authorized:
              return Response({'authorized': False, 'error': 'Hanya penyelenggara, admin, atau panitia terpilih yang bisa scan kehadiran.'}, status=status.HTTP_403_FORBIDDEN)
         return Response({'authorized': True})
 
@@ -1701,11 +1719,23 @@ class EventViewSet(viewsets.ModelViewSet):
                 return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
         elif identifier:
             identifier = identifier.strip()
+            # Try exact match first
             target_user = User.objects.filter(
                 Q(email__iexact=identifier) | 
                 Q(username__iexact=identifier) | 
                 Q(phone=identifier)
             ).first()
+            
+            # If not found and looks like a phone number, try variations
+            if not target_user and any(c.isdigit() for c in identifier):
+                digits = ''.join(filter(str.isdigit, identifier))
+                if digits.startswith('0'):
+                    digits = '62' + digits[1:]
+                elif digits.startswith('8'):
+                    digits = '62' + digits
+                
+                target_user = User.objects.filter(phone__icontains=digits[-9:]).first()
+
             if not target_user:
                 return Response({"error": f"User dengan email/username/phone '{identifier}' tidak ditemukan."}, status=status.HTTP_404_NOT_FOUND)
         else:
@@ -1724,11 +1754,7 @@ class EventViewSet(viewsets.ModelViewSet):
             try:
                 frontend_url = getattr(settings, 'FRONTEND_URL', 'https://barakah.cloud')
                 scan_url = f"{frontend_url}/dashboard/event/scan/{event.slug}"
-                formatted_phone = target_user.phone
-                if formatted_phone.startswith('0'):
-                    formatted_phone = '62' + formatted_phone[1:]
-                elif not formatted_phone.startswith('62'):
-                    formatted_phone = '62' + formatted_phone
+                formatted_phone = self._format_phone_number(target_user.phone)
                 
                 message = (
                     f"Halo {target_user.username},\n\n"
@@ -1738,7 +1764,7 @@ class EventViewSet(viewsets.ModelViewSet):
                 )
                 whatsapp_service.send_message(formatted_phone, message)
             except Exception as e:
-                logger.error(f"Failed to send auto committee notification: {str(e)}")
+                logging.getLogger(__name__).error(f"Failed to send auto committee notification: {str(e)}")
 
             return Response({"message": f"{target_user.username} berhasil ditambahkan sebagai panitia dan link scan telah dikirim melalui WhatsApp."})
         elif operation == 'remove':
@@ -1769,11 +1795,7 @@ class EventViewSet(viewsets.ModelViewSet):
         success_count = 0
         for user in committees:
             if user.phone:
-                formatted_phone = user.phone
-                if formatted_phone.startswith('0'):
-                    formatted_phone = '62' + formatted_phone[1:]
-                elif not formatted_phone.startswith('62'):
-                    formatted_phone = '62' + formatted_phone
+                formatted_phone = self._format_phone_number(user.phone)
                 
                 message = f"Halo {user.username},\n\nAnda ditugaskan sebagai Panitia untuk event: *{event.title}*.\n\nSilakan akses link berikut untuk melakukan scan kehadiran peserta:\n{scan_url}\n\nTerima kasih!"
                 
@@ -1946,9 +1968,13 @@ class EventViewSet(viewsets.ModelViewSet):
         """Export all registrations for this event as a CSV file."""
         event = self.get_object()
         
-        # Verify ownership
-        if not request.user.is_staff and event.created_by != request.user:
-            return Response({"error": "Unauthorized"}, status=status.HTTP_403_FORBIDDEN)
+        # Verify ownership: Admin, Organizer, or Committee
+        is_committee = event.committees.filter(id=request.user.id).exists()
+        is_admin = request.user.is_staff or request.user.has_menu_access('admin_events')
+        is_owner = event.created_by == request.user
+
+        if not (is_admin or is_owner or is_committee):
+            return Response({"error": "Unauthorized: Anda tidak memiliki akses untuk mengekspor data pendaftaran."}, status=status.HTTP_403_FORBIDDEN)
             
         registrations = EventRegistration.objects.filter(event=event).select_related('user', 'user__profile').prefetch_related('attendances')
         form_fields = event.form_fields.all()
@@ -2082,9 +2108,10 @@ class EventRegistrationViewSet(viewsets.ModelViewSet):
         if user.is_staff or user.has_menu_access('admin_events'):
             return EventRegistration.objects.all()
         
-        # Event owners can see registrations for their events
-        user_events = Event.objects.filter(created_by=user)
-        return EventRegistration.objects.filter(event__in=user_events)
+        # Event owners and committees can see registrations for their events
+        from django.db.models import Q
+        user_events = Event.objects.filter(Q(created_by=user) | Q(committees=user))
+        return EventRegistration.objects.filter(event__in=user_events).distinct()
 
     def get_permissions(self):
         # Registration management only for authenticated users (Staff/Creators)
