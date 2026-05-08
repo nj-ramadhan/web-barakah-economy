@@ -100,12 +100,22 @@ class EventViewSet(viewsets.ModelViewSet):
         return data
 
     def create(self, request, *args, **kwargs):
-        data = self._get_parsed_data(request)
-        serializer = self.get_serializer(data=data)
-        serializer.is_valid(raise_exception=True)
-        self.perform_create(serializer)
-        headers = self.get_success_headers(serializer.data)
-        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+        try:
+            data = self._get_parsed_data(request)
+            serializer = self.get_serializer(data=data)
+            serializer.is_valid(raise_exception=True)
+            self.perform_create(serializer)
+            headers = self.get_success_headers(serializer.data)
+            return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+        except Exception as e:
+            import traceback
+            error_trace = traceback.format_exc()
+            logger.error(f"Event creation error: {str(e)}\n{error_trace}")
+            return Response({
+                "error": "Terjadi kesalahan internal saat membuat event.",
+                "details": str(e),
+                "trace": error_trace if settings.DEBUG else None
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def perform_create(self, serializer):
         serializer.save(created_by=self.request.user)
@@ -132,18 +142,27 @@ class EventViewSet(viewsets.ModelViewSet):
         if old_status == 'approved' and not request.user.is_staff:
             data['status'] = 'approved'
             
-        serializer.is_valid(raise_exception=True)
-        self.perform_update(serializer)
+        try:
+            serializer.is_valid(raise_exception=True)
+            self.perform_update(serializer)
 
-        if new_status and old_status != new_status:
-            send_status_update_email(
-                instance.created_by, 
-                instance.title, 
-                new_status, 
-                rejection_reason
-            )
+            if new_status and old_status != new_status:
+                send_status_update_email(
+                    instance.created_by, 
+                    instance.title, 
+                    new_status, 
+                    rejection_reason
+                )
 
-        return Response(serializer.data)
+            return Response(serializer.data)
+        except Exception as e:
+            import traceback
+            error_trace = traceback.format_exc()
+            logger.error(f"Event update error: {str(e)}\n{error_trace}")
+            return Response({
+                "error": "Terjadi kesalahan internal saat memperbarui event.",
+                "details": str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def perform_update(self, serializer):
         serializer.save()

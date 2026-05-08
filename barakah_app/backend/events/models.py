@@ -89,7 +89,16 @@ class Event(models.Model):
     def save(self, *args, **kwargs):
         if not self.slug:
             from django.utils.text import slugify
-            self.slug = slugify(self.title)
+            import uuid
+            base_slug = slugify(self.title)
+            if not base_slug: # Fallback for empty title/non-ascii
+                base_slug = "event"
+            
+            slug = base_slug
+            # Check for uniqueness and append suffix if needed
+            while Event.objects.filter(slug=slug).exists():
+                slug = f"{base_slug}-{uuid.uuid4().hex[:4]}"
+            self.slug = slug
         
         # If header_image is empty but thumbnail is present, use thumbnail
         if not self.header_image and self.thumbnail:
