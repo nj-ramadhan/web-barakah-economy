@@ -220,7 +220,6 @@ class Profile(models.Model):
                     
         if assigned_new_role and user.role == 'user':
             user.is_verified_member = True
-            user.role = 'seller'
             user.save()
 
     def __str__(self):
