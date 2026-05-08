@@ -10,7 +10,8 @@ const UserSelectionOverlay = ({
     selectedUserIds, 
     handleToggleUserSelection, 
     handleSelectAllFound, 
-    handleConfirmSelection 
+    handleConfirmSelection,
+    pagination = { current: 1, total: 1, hasNext: false, hasPrev: false, onPageChange: () => {} }
 }) => {
     if (!isOpen) return null;
 
@@ -35,9 +36,12 @@ const UserSelectionOverlay = ({
                         <input
                             type="text"
                             className="w-full pl-12 pr-4 py-4 bg-white border border-gray-200 rounded-2xl text-sm focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none shadow-sm"
-                            placeholder="Cari Username / Nama / Email..."
+                            placeholder="Cari Username / Nama / Email / No Telp..."
                             value={userSearch}
-                            onChange={(e) => setUserSearch(e.target.value)}
+                            onChange={(e) => {
+                                setUserSearch(e.target.value);
+                                pagination.onPageChange(1); // Reset to page 1 on search
+                            }}
                         />
                         {isFetchingUsers && (
                             <div className="absolute right-4 top-1/2 -translate-y-1/2">
@@ -57,6 +61,25 @@ const UserSelectionOverlay = ({
                                 </span>
                                 {allUsers.every(u => selectedUserIds.includes(u.id)) ? 'Batal Pilih Semua' : 'Pilih Semua Hasil'}
                             </button>
+
+                            {/* Pagination Controls */}
+                            <div className="flex items-center gap-3">
+                                <button 
+                                    disabled={!pagination.hasPrev || isFetchingUsers}
+                                    onClick={() => pagination.onPageChange(pagination.current - 1)}
+                                    className="w-8 h-8 flex items-center justify-center rounded-lg bg-white border border-gray-200 text-gray-500 disabled:opacity-30 hover:bg-gray-50 transition shadow-sm"
+                                >
+                                    <span className="material-icons text-sm">chevron_left</span>
+                                </button>
+                                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Halaman {pagination.current}</span>
+                                <button 
+                                    disabled={!pagination.hasNext || isFetchingUsers}
+                                    onClick={() => pagination.onPageChange(pagination.current + 1)}
+                                    className="w-8 h-8 flex items-center justify-center rounded-lg bg-white border border-gray-200 text-gray-500 disabled:opacity-30 hover:bg-gray-50 transition shadow-sm"
+                                >
+                                    <span className="material-icons text-sm">chevron_right</span>
+                                </button>
+                            </div>
                         </div>
                     )}
                 </div>
@@ -89,17 +112,13 @@ const UserSelectionOverlay = ({
                                         {selectedUserIds.includes(user.id) && <span className="material-icons text-[16px] text-white">check</span>}
                                     </div>
                                 </div>
-                                <div className="w-12 h-12 bg-gray-100 rounded-2xl overflow-hidden flex-shrink-0 flex items-center justify-center font-black text-blue-600">
-                                    {user.profile?.picture ? (
-                                        <img src={user.profile.picture} alt="" className="w-full h-full object-cover" />
-                                    ) : (
-                                        user.username.charAt(0).toUpperCase()
-                                    )}
+                                <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex-shrink-0 flex items-center justify-center">
+                                    <span className="material-icons text-2xl">person</span>
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                    <div className="font-black text-gray-900 text-sm truncate">{user.profile?.name_full || user.username}</div>
+                                    <div className="font-black text-gray-900 text-sm truncate">{user.full_name || user.username}</div>
                                     <div className="text-[10px] text-gray-400 font-bold uppercase tracking-tighter truncate">
-                                        @{user.username} • {user.email || 'No Email'}
+                                        {user.email || 'No Email'} • {user.phone || 'No Phone'}
                                     </div>
                                 </div>
                             </label>

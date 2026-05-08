@@ -13,12 +13,19 @@ const EventManualRegistrationModal = ({ isOpen, onClose, event, registrations = 
         responses: {}
     });
 
+    const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+    const isSystemAdmin = currentUser?.role === 'admin';
+
     // User Search/List State
     const [isUserListOpen, setIsUserListOpen] = useState(false);
     const [userSearch, setUserSearch] = useState('');
     const [allUsers, setAllUsers] = useState([]);
     const [isFetchingUsers, setIsFetchingUsers] = useState(false);
     const [selectedUserIds, setSelectedUserIds] = useState([]);
+    
+    // Pagination State
+    const [page, setPage] = useState(1);
+    const [paginationInfo, setPaginationInfo] = useState({ next: null, previous: null, count: 0 });
     
     const searchTimeoutRef = useRef(null);
 
@@ -43,12 +50,25 @@ const EventManualRegistrationModal = ({ isOpen, onClose, event, registrations = 
     // Get IDs of users who are already registered
     const registeredUserIds = registrations.map(r => r.user).filter(id => id !== null);
 
-    const fetchUsers = async (query = '') => {
+    const fetchUsers = async (query = '', pageNum = 1) => {
         setIsFetchingUsers(true);
         try {
-            const res = await getAvailableUsers(event.slug, query);
-            // Result is already filtered by backend
-            setAllUsers(res.data.results || res.data || []);
+            // Updated to handle pagination parameters
+            const res = await getAvailableUsers(event.slug, query, pageNum);
+            
+            // Backend now returns paginated response: { count, next, previous, results }
+            if (res.data.results) {
+                setAllUsers(res.data.results);
+                setPaginationInfo({
+                    next: res.data.next,
+                    previous: res.data.previous,
+                    count: res.data.count
+                });
+            } else {
+                // Fallback for non-paginated or old API
+                setAllUsers(res.data || []);
+                setPaginationInfo({ next: null, previous: null, count: (res.data || []).length });
+            }
         } catch (err) {
             console.error("Fetch users failed", err);
         } finally {
@@ -58,15 +78,16 @@ const EventManualRegistrationModal = ({ isOpen, onClose, event, registrations = 
 
     useEffect(() => {
         if (isUserListOpen) {
-            fetchUsers(userSearch);
+            fetchUsers(userSearch, page);
         }
-    }, [isUserListOpen]);
+    }, [isUserListOpen, page]);
 
     useEffect(() => {
         if (isUserListOpen) {
             if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
             searchTimeoutRef.current = setTimeout(() => {
-                fetchUsers(userSearch);
+                setPage(1); // Reset to page 1 on search
+                fetchUsers(userSearch, 1);
             }, 500);
         }
         return () => { if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current); };
@@ -198,16 +219,18 @@ const EventManualRegistrationModal = ({ isOpen, onClose, event, registrations = 
                         </div>
                     )}
 
-                    <div className="mb-8 flex justify-center">
-                        <button
-                            type="button"
-                            onClick={() => setIsUserListOpen(true)}
-                            className="group flex items-center gap-3 px-6 py-4 bg-blue-50 text-blue-700 rounded-2xl hover:bg-blue-100 transition-all border border-blue-100 shadow-sm"
-                        >
-                            <span className="material-icons text-xl group-hover:rotate-12 transition-transform">group_add</span>
-                            <span className="text-sm font-black uppercase tracking-wider">Pilih dari User Terdaftar</span>
-                        </button>
-                    </div>
+                    {isSystemAdmin && (
+                        <div className="mb-8 flex justify-center">
+                            <button
+                                type="button"
+                                onClick={() => setIsUserListOpen(true)}
+                                className="group flex items-center gap-3 px-6 py-4 bg-blue-50 text-blue-700 rounded-2xl hover:bg-blue-100 transition-all border border-blue-100 shadow-sm"
+                            >
+                                <span className="material-icons text-xl group-hover:rotate-12 transition-transform">group_add</span>
+                                <span className="text-sm font-black uppercase tracking-wider">Pilih dari User Terdaftar</span>
+                            </button>
+                        </div>
+                    )}
 
                     {selectedUserIds.length > 0 && (
                         <div className="mb-8 p-6 bg-emerald-50 border border-emerald-100 rounded-3xl animate-in zoom-in-95">
@@ -312,6 +335,13 @@ const EventManualRegistrationModal = ({ isOpen, onClose, event, registrations = 
                 handleToggleUserSelection={handleToggleUserSelection}
                 handleSelectAllFound={handleSelectAllFound}
                 handleConfirmSelection={handleConfirmSelection}
+                pagination={{
+                    current: page,
+                    hasNext: !!paginationInfo.next,
+                    hasPrev: !!paginationInfo.previous,
+                    count: paginationInfo.count,
+                    onPageChange: setPage
+                }}
             />
         </div>
     );

@@ -343,6 +343,13 @@ const EventRegistrationSubmissionPage = () => {
                             <span className="material-icons text-sm">person_add</span>
                             Tambah
                         </button>
+                        <Link
+                            to={`/dashboard/event/scan/${slug}`}
+                            className="bg-purple-50 text-purple-600 px-5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 hover:bg-purple-100 transition shadow-sm border border-purple-100"
+                        >
+                            <span className="material-icons text-sm">qr_code_scanner</span>
+                            Scan Hadir
+                        </Link>
                         <button
                             onClick={() => setShowBlastModal(true)}
                             className="bg-purple-600 text-white px-5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 hover:bg-purple-700 transition shadow-lg shadow-purple-100"

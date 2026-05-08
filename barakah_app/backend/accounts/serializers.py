@@ -239,6 +239,14 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("A user with this email already exists.")
         return value
 
+class UserSimpleSerializer(serializers.ModelSerializer):
+    full_name = serializers.CharField(source='profile.name_full', read_only=True)
+
+    class Meta:
+        model = User
+        fields = ('id', 'username', 'email', 'phone', 'full_name')
+
+
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     def validate(self, attrs):
         login_id = attrs.get('username')

@@ -542,12 +542,14 @@ class EventViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['get'], permission_classes=[permissions.IsAuthenticated], url_path='available-users')
     def available_users(self, request, slug=None):
-        """Get users who are NOT yet registered for this event and have complete data."""
+        """Get users who are NOT yet registered for this event and have complete data with pagination."""
         event = self.get_object()
         if not (request.user.is_staff or event.created_by == request.user or request.user.has_menu_access('admin_events')):
             return Response({"error": "Unauthorized"}, status=status.HTTP_403_FORBIDDEN)
 
         from accounts.models import User
+        from accounts.serializers import UserSimpleSerializer
+        from rest_framework.pagination import PageNumberPagination
         
         search = request.query_params.get('search', '')
         
@@ -574,12 +576,13 @@ class EventViewSet(viewsets.ModelViewSet):
                 Q(phone__icontains=search)
             )
             
-        # Limit to 50 for performance
-        users = users.select_related('profile')[:50]
+        users = users.select_related('profile').order_by('profile__name_full')
         
-        from accounts.serializers import UserAdminSerializer
-        serializer = UserAdminSerializer(users, many=True)
-        return Response(serializer.data)
+        paginator = PageNumberPagination()
+        paginator.page_size = 50
+        result_page = paginator.paginate_queryset(users, request)
+        serializer = UserSimpleSerializer(result_page, many=True)
+        return paginator.get_paginated_response(serializer.data)
 
     @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
     def import_participants_csv(self, request, slug=None):
@@ -794,17 +797,24 @@ class EventViewSet(viewsets.ModelViewSet):
             if registration.qr_image:
                 try:
                     import base64
-                    registration.qr_image.seek(0)
-                    encoded = base64.b64encode(registration.qr_image.read()).decode('utf-8')
-                    file_b64 = f"data:image/png;base64,{encoded}"
-                    img_res = whatsapp_service.send_file(
-                        formatted_phone, 
-                        f"QR Tiket {unique_code}", 
-                        file_b64, 
-                        filename=f"tiket_{unique_code}.png"
-                    )
-                    if not img_res.get('success'):
-                        logging.getLogger(__name__).error(f"WhatsApp QR send failed for {formatted_phone}: {img_res.get('message')}")
+                    import os
+                    
+                    # Ensure the file exists and can be read
+                    if registration.qr_image.storage.exists(registration.qr_image.name):
+                        with registration.qr_image.open('rb') as qr_file:
+                            encoded = base64.b64encode(qr_file.read()).decode('utf-8')
+                            file_b64 = f"data:image/png;base64,{encoded}"
+                            
+                            img_res = whatsapp_service.send_file(
+                                formatted_phone, 
+                                f"QR Tiket {unique_code}", 
+                                file_b64, 
+                                filename=f"tiket_{unique_code}.png"
+                            )
+                            if not img_res.get('success'):
+                                logging.getLogger(__name__).error(f"WhatsApp QR send failed for {formatted_phone}: {img_res.get('message')}")
+                    else:
+                        logging.getLogger(__name__).error(f"QR image file not found for registration {registration.id}")
                 except Exception as e:
                     import logging
                     logging.getLogger(__name__).error(f"Gagal mengirim gambar WA QR: {e}")

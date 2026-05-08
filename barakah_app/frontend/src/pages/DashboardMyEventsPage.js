@@ -167,29 +167,6 @@ const DashboardMyEventsPage = () => {
                                                 <span className="material-icons text-sm">group</span>
                                                 Peserta
                                             </Link>
-                                            <Link 
-                                                to={`/dashboard/event/scan/${event.slug}`}
-                                                className="px-4 py-2 bg-purple-50 text-purple-600 rounded-xl text-xs font-bold hover:bg-purple-100 transition flex items-center gap-1.5"
-                                            >
-                                                <span className="material-icons text-sm">qr_code_scanner</span>
-                                                Scan Hadir
-                                            </Link>
-                                            <Link 
-                                                to={`/dashboard/event/submissions/${event.slug}?tab=certificate`}
-                                                className="px-4 py-2 bg-orange-50 text-orange-600 rounded-xl text-xs font-bold hover:bg-orange-100 transition flex items-center gap-1.5"
-                                            >
-                                                <span className="material-icons text-sm">workspace_premium</span>
-                                                Sertifikat
-                                            </Link>
-                                            {event.has_bib && (
-                                                <Link 
-                                                    to={`/dashboard/event/submissions/${event.slug}?tab=bib`}
-                                                    className="px-4 py-2 bg-blue-50 text-blue-600 rounded-xl text-xs font-bold hover:bg-blue-100 transition flex items-center gap-1.5"
-                                                >
-                                                    <span className="material-icons text-sm">badge</span>
-                                                    BIB
-                                                </Link>
-                                            )}
                                         </div>
                                         
                                         {event.status === 'rejected' && event.rejection_reason && (
