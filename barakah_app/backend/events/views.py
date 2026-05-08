@@ -17,6 +17,9 @@ from accounts import whatsapp_service
 from .payment_ocr_service import extract_payment_data
 import os
 import re
+import logging
+
+logger = logging.getLogger(__name__)
 
 class EventViewSet(viewsets.ModelViewSet):
     queryset = Event.objects.all().order_by('-start_date')
