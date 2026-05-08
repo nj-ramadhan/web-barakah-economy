@@ -790,36 +790,8 @@ class EventViewSet(viewsets.ModelViewSet):
                 import logging
                 logging.getLogger(__name__).error(f"WhatsApp text send failed for {formatted_phone}: {msg_res.get('message')}")
 
-            # Send Image (BIB if available, else QR)
-            sent_image = False
-            
-            # Try to send BIB if enabled
-            if registration.event.has_bib:
-                try:
-                    bib_buffer = self._generate_bib_image(registration)
-                    if bib_buffer:
-                        import base64
-                        encoded = base64.b64encode(bib_buffer.read()).decode('utf-8')
-                        file_b64 = f"data:image/jpeg;base64,{encoded}"
-                        fmt = registration.event.bib_template.number_format or '001'
-                        formatted_bib = str(registration.bib_number).zfill(len(fmt))
-                        
-                        img_res = whatsapp_service.send_file(
-                            formatted_phone, 
-                            f"Nomor Punggung (BIB) - {unique_code}", 
-                            file_b64, 
-                            filename=f"BIB_{formatted_bib}.jpg"
-                        )
-                        if img_res.get('success'):
-                            sent_image = True
-                        else:
-                            logging.getLogger(__name__).warning(f"WhatsApp BIB send failed, falling back to QR: {img_res.get('message')}")
-                except Exception as e:
-                    import logging
-                    logging.getLogger(__name__).error(f"Error in automatic BIB sending: {e}")
-
-            # Fallback to QR if BIB not sent or not applicable
-            if not sent_image and registration.qr_image:
+            # Always try to send QR code image if available
+            if registration.qr_image:
                 try:
                     import base64
                     registration.qr_image.seek(0)
@@ -836,6 +808,29 @@ class EventViewSet(viewsets.ModelViewSet):
                 except Exception as e:
                     import logging
                     logging.getLogger(__name__).error(f"Gagal mengirim gambar WA QR: {e}")
+
+            # Send BIB if enabled
+            if registration.event.has_bib:
+                try:
+                    bib_buffer = self._generate_bib_image(registration)
+                    if bib_buffer:
+                        import base64
+                        encoded = base64.b64encode(bib_buffer.read()).decode('utf-8')
+                        file_b64 = f"data:image/jpeg;base64,{encoded}"
+                        fmt = registration.event.bib_template.number_format or '001'
+                        formatted_bib = str(registration.bib_number).zfill(len(fmt))
+                        
+                        img_res = whatsapp_service.send_file(
+                            formatted_phone, 
+                            f"Nomor Punggung (BIB) - {unique_code}", 
+                            file_b64, 
+                            filename=f"BIB_{formatted_bib}.jpg"
+                        )
+                        if not img_res.get('success'):
+                            logging.getLogger(__name__).warning(f"WhatsApp BIB send failed: {img_res.get('message')}")
+                except Exception as e:
+                    import logging
+                    logging.getLogger(__name__).error(f"Error in automatic BIB sending: {e}")
 
             subject = f"Konfirmasi Pendaftaran Event: {registration.event.title}"
             email_body = (
