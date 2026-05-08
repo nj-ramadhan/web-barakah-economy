@@ -317,9 +317,18 @@ const EventManualRegistrationModal = ({ isOpen, onClose, event, registrations = 
                         </div>
 
                         <div className="pt-8 border-t border-gray-50 flex flex-col sm:flex-row gap-4">
-                            <button type="button" onClick={onClose} className="flex-1 py-5 bg-gray-100 text-gray-500 rounded-3xl text-xs font-black uppercase tracking-widest hover:bg-gray-200 transition-all">BATAL</button>
-                            <button type="submit" disabled={loading} className="flex-[2] py-5 bg-gradient-to-br from-green-600 to-emerald-800 text-white rounded-3xl text-xs font-black uppercase tracking-widest shadow-xl hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50">
-                                {loading ? 'MENYIMPAN...' : selectedUserIds.length > 1 ? `DAFTARKAN ${selectedUserIds.length} PESERTA` : 'TAMBAH PESERTA'}
+                            <button type="button" onClick={onClose} disabled={loading} className="flex-1 py-5 bg-gray-100 text-gray-500 rounded-3xl text-xs font-black uppercase tracking-widest hover:bg-gray-200 transition-all disabled:opacity-50">BATAL</button>
+                            <button type="submit" disabled={loading} className="flex-[2] py-5 bg-gradient-to-br from-green-600 to-emerald-800 text-white rounded-3xl text-xs font-black uppercase tracking-widest shadow-xl hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-70 disabled:grayscale flex items-center justify-center gap-3">
+                                {loading ? (
+                                    <>
+                                        <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>
+                                        MENYIMPAN...
+                                    </>
+                                ) : selectedUserIds.length > 1 ? (
+                                    `DAFTARKAN ${selectedUserIds.length} PESERTA`
+                                ) : (
+                                    'TAMBAH PESERTA'
+                                )}
                             </button>
                         </div>
                     </form>

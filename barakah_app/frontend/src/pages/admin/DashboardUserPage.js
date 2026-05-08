@@ -127,7 +127,10 @@ const DashboardUserPage = () => {
         fetchMeta();
     }, [navigate, fetchMeta]);
 
-    useEffect(() => { fetchUsers(currentPage); }, [currentPage, fetchUsers, pageSize]);
+    useEffect(() => { 
+        // Initial fetch or page change
+        fetchUsers(currentPage); 
+    }, [currentPage, fetchUsers, pageSize]);
 
     const handleSort = (field) => {
         if (sortField === field) {
@@ -535,11 +538,22 @@ const DashboardUserPage = () => {
                     </div>
                 </div>
 
-                {/* Table */}
-                {loading && users.length === 0 ? (
-                    <UserSkeleton />
-                ) : (
-                    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                {/* Table Section */}
+                <div className={`relative transition-all duration-500 ${loading ? 'opacity-70' : 'opacity-100'}`}>
+                    {/* Loading Overlay for pagination/search changes */}
+                    {loading && users.length > 0 && (
+                        <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/20 backdrop-blur-[1px] rounded-2xl">
+                            <div className="bg-white/80 p-4 rounded-3xl shadow-xl flex items-center gap-3 border border-white">
+                                <div className="animate-spin h-5 w-5 border-2 border-green-600 border-t-transparent rounded-full"></div>
+                                <span className="text-xs font-black text-green-700 uppercase tracking-widest">Memperbarui...</span>
+                            </div>
+                        </div>
+                    )}
+
+                    {loading && users.length === 0 ? (
+                        <UserSkeleton />
+                    ) : (
+                        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
                         <div className="overflow-x-auto">
                             <table className="w-full text-left text-sm">
                                 <thead className="bg-gray-50 border-b border-gray-100">
@@ -568,8 +582,12 @@ const DashboardUserPage = () => {
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-50">
-                                    {users.map(u => (
-                                        <tr key={u.id} className="hover:bg-green-50/30 transition">
+                                    {users.map((u, idx) => (
+                                        <tr 
+                                            key={u.id} 
+                                            style={{ animationDelay: `${(idx % 10) * 40}ms` }}
+                                            className="hover:bg-green-50/30 transition animate-in fade-in slide-in-from-bottom-1 duration-300"
+                                        >
                                             <td className="px-3 py-3"><input type="checkbox" checked={selectedUserIds.includes(u.id)} onChange={() => toggleSelectUser(u.id)} className="w-4 h-4 text-green-600 rounded" /></td>
                                             <td className="px-3 py-3 text-xs font-black text-gray-400">#{u.id}</td>
                                             <td className="px-3 py-3">
@@ -688,6 +706,7 @@ const DashboardUserPage = () => {
                         </div>
                     </div>
                 )}
+</div>
 
                 {/* Pagination */}
                 {totalPages > 1 && (

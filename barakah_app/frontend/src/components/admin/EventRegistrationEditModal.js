@@ -167,16 +167,22 @@ const EventRegistrationEditModal = ({ isOpen, onClose, event, registration, onSu
                             <button
                                 type="button"
                                 onClick={onClose}
-                                className="flex-1 py-4 bg-gray-100 text-gray-600 rounded-2xl text-sm font-bold hover:bg-gray-200 transition"
+                                disabled={loading}
+                                className="flex-1 py-4 bg-gray-100 text-gray-600 rounded-2xl text-sm font-bold hover:bg-gray-200 transition disabled:opacity-50"
                             >
                                 BATAL
                             </button>
                             <button
                                 type="submit"
                                 disabled={loading}
-                                className="flex-[2] py-4 bg-gray-900 text-white rounded-2xl text-sm font-extrabold uppercase tracking-widest shadow-xl hover:bg-gray-800 transition disabled:opacity-50"
+                                className="flex-[2] py-4 bg-gray-900 text-white rounded-2xl text-sm font-extrabold uppercase tracking-widest shadow-xl hover:bg-gray-800 transition disabled:opacity-70 flex items-center justify-center gap-3"
                             >
-                                {loading ? 'MENYIMPAN...' : 'SIMPAN PERUBAHAN'}
+                                {loading ? (
+                                    <>
+                                        <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>
+                                        MENYIMPAN...
+                                    </>
+                                ) : 'SIMPAN PERUBAHAN'}
                             </button>
                         </div>
                     </form>

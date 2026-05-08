@@ -118,11 +118,15 @@ def send_file(phone, caption, file_data_base64, filename='document.pdf'):
 
 def _send_file_internal(phone, caption, file_path, filename, mime_type):
     """Internal helper to send a file from a local path."""
-    api_url = f"{WA_API_URL.rstrip('/')}/send/file"
+    is_image = mime_type.startswith('image/')
+    endpoint = "image" if is_image else "file"
+    api_url = f"{WA_API_URL.rstrip('/')}/send/{endpoint}"
     
     try:
         with open(file_path, 'rb') as f:
-            files = {'file': (filename, f, mime_type)}
+            # Field name is 'image' for /send/image and 'file' for /send/file
+            field_name = 'image' if is_image else 'file'
+            files = {field_name: (filename, f, mime_type)}
             data = {'phone': phone, 'caption': caption}
             
             response = requests.post(
@@ -134,30 +138,29 @@ def _send_file_internal(phone, caption, file_path, filename, mime_type):
                 verify=False
             )
         
-        logger.info(f"WA File Response to {phone} ({mime_type}): {response.status_code}")
+        logger.info(f"WA {endpoint.capitalize()} Response to {phone} ({mime_type}): {response.status_code}")
 
         if 200 <= response.status_code < 300:
             return {
                 'success': True,
                 'data': {
-                    'mode': 'file',
+                    'mode': endpoint,
                     'mime': mime_type,
                     'api_response': response.json() if response.text else None
                 }
             }
         else:
-            # Fallback to text message
-            logger.warning(f"WA file send failed (HTTP {response.status_code}, MIME: {mime_type}), falling back to text")
-            fallback_msg = f"{caption}\n\n*[System]* Gagal lampirkan file ({mime_type})."
-            # Prevent infinite loops by not using send_file again
+            # Fallback/Error handling
+            err_msg = response.json().get('message') if response.text else f"HTTP {response.status_code}"
+            logger.warning(f"WA {endpoint} send failed ({err_msg}, MIME: {mime_type})")
             return {
                 'success': False,
-                'message': f"Gagal kirim file (HTTP {response.status_code})"
+                'message': f"Gagal kirim {endpoint} ({err_msg})"
             }
 
     except Exception as e:
         logger.error(f"WhatsApp _send_file_internal error: {e}")
-        return {'success': False, 'message': f'Internal error sending file: {str(e)}'}
+        return {'success': False, 'message': f'Internal error sending {endpoint}: {str(e)}'}
 
 
 def blast_messages(phone_list, message_template, placeholder_data_list=None, file_data_base64=None, filename='image.jpg'):

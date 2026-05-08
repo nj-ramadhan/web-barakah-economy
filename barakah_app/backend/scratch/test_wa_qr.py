@@ -13,12 +13,12 @@ import base64
 
 def test_qr_send():
     # Use a real registration ID if possible, or just a dummy
-    reg = EventRegistration.objects.get(id=2)
+    reg = EventRegistration.objects.get(id=3)
     if not reg:
         print("No registration found")
         return
 
-    phone = reg.responses.get('No HP') or reg.responses.get('no hp')
+    phone = reg.responses.get('No HP') or reg.responses.get('no hp') or reg.responses.get('WhatsApp') or reg.responses.get('whatsapp')
     if not phone and reg.user:
         phone = reg.user.phone
     

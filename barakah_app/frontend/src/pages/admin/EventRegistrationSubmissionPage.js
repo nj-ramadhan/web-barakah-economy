@@ -33,6 +33,7 @@ const EventRegistrationSubmissionPage = () => {
     const [activeTab, setActiveTab] = useState(initialTab); // 'participants', 'certificate', or 'bib'
     const [isImporting, setIsImporting] = useState(false);
     const [isResending, setIsResending] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
     const [showCommitteeModal, setShowCommitteeModal] = useState(false);
 
     useEffect(() => {
@@ -223,8 +224,7 @@ const EventRegistrationSubmissionPage = () => {
     };
 
     const handleBulkDelete = async () => {
-        if (selectedIds.length === 0) {
-            alert('Pilih peserta yang akan dihapus terlebih dahulu.');
+        if (selectedIds.length === 0 || isDeleting) {
             return;
         }
 
@@ -232,6 +232,7 @@ const EventRegistrationSubmissionPage = () => {
             return;
         }
 
+        setIsDeleting(true);
         try {
             await bulkDeleteRegistrations(selectedIds);
             alert('Berhasil menghapus peserta.');
@@ -241,6 +242,8 @@ const EventRegistrationSubmissionPage = () => {
         } catch (err) {
             console.error(err);
             alert('Gagal menghapus peserta: ' + (err.response?.data?.error || err.message));
+        } finally {
+            setIsDeleting(false);
         }
     };
 
@@ -302,12 +305,14 @@ const EventRegistrationSubmissionPage = () => {
                         )}
                         <button
                             onClick={handleBulkDelete}
-                            disabled={selectedIds.length === 0}
+                            disabled={selectedIds.length === 0 || isDeleting}
                             className="bg-red-50 text-red-600 px-5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 hover:bg-red-100 transition shadow-sm border border-red-100 disabled:opacity-20"
                             title="Hapus Data Terpilih"
                         >
-                            <span className="material-icons text-sm">delete_sweep</span>
-                            Hapus
+                            <span className={`material-icons text-sm ${isDeleting ? 'animate-spin' : ''}`}>
+                                {isDeleting ? 'sync' : 'delete_sweep'}
+                            </span>
+                            {isDeleting ? 'Menghapus...' : 'Hapus'}
                         </button>
                         <button
                             onClick={handleExportCsv}

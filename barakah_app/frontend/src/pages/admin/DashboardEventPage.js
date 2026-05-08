@@ -143,28 +143,47 @@ const DashboardEventPage = () => {
                     </select>
                 </div>
 
-                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left text-sm">
-                            <thead className="bg-gray-50 border-b border-gray-100">
-                                <tr>
-                                    <th className="px-4 py-4 font-bold text-gray-600 uppercase tracking-wider text-[11px]">Event</th>
-                                    <th className="px-4 py-4 font-bold text-gray-600 uppercase tracking-wider text-[11px]">Penyelenggara</th>
-                                    <th className="px-4 py-4 font-bold text-gray-600 uppercase tracking-wider text-[11px]">Pembuat</th>
-                                    <th className="px-4 py-4 font-bold text-gray-600 uppercase tracking-wider text-[11px]">Biaya</th>
-                                    <th className="px-4 py-4 font-bold text-gray-600 uppercase tracking-wider text-[11px]">Waktu & Tempat</th>
-                                    <th className="px-4 py-4 font-bold text-gray-600 uppercase tracking-wider text-[11px]">Pendaftar</th>
-                                    <th className="px-4 py-4 font-bold text-gray-600 uppercase tracking-wider text-[11px]">Visibilitas</th>
-                                    <th className="px-4 py-4 font-bold text-gray-600 uppercase tracking-wider text-[11px]">Status</th>
-                                    <th className="px-4 py-4 font-bold text-gray-600 uppercase tracking-wider text-[11px] text-center">Aksi</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-50 font-medium">
-                                {loading ? (
-                                    <tr><td colSpan="5" className="text-center py-10 text-gray-400 animate-pulse">Memuat data event...</td></tr>
-                                ) : events.length === 0 ? (
-                                    <tr><td colSpan="5" className="text-center py-10 text-gray-400 italic">Tidak ada event ditemukan</td></tr>
-                                ) : events.map(ev => (
+                {/* Table Section */}
+                <div className={`relative transition-all duration-500 ${loading ? 'opacity-70' : 'opacity-100'}`}>
+                    {/* Loading Overlay for pagination/search changes */}
+                    {loading && events.length > 0 && (
+                        <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/20 backdrop-blur-[1px] rounded-2xl">
+                            <div className="bg-white/80 p-4 rounded-3xl shadow-xl flex items-center gap-3 border border-white">
+                                <div className="animate-spin h-5 w-5 border-2 border-green-600 border-t-transparent rounded-full"></div>
+                                <span className="text-xs font-black text-green-700 uppercase tracking-widest">Memperbarui...</span>
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-left text-sm">
+                                <thead className="bg-gray-50 border-b border-gray-100">
+                                    <tr>
+                                        <th className="px-4 py-4 font-bold text-gray-600 uppercase tracking-wider text-[11px]">Event</th>
+                                        <th className="px-4 py-4 font-bold text-gray-600 uppercase tracking-wider text-[11px]">Penyelenggara</th>
+                                        <th className="px-4 py-4 font-bold text-gray-600 uppercase tracking-wider text-[11px]">Pembuat</th>
+                                        <th className="px-4 py-4 font-bold text-gray-600 uppercase tracking-wider text-[11px]">Biaya</th>
+                                        <th className="px-4 py-4 font-bold text-gray-600 uppercase tracking-wider text-[11px]">Waktu & Tempat</th>
+                                        <th className="px-4 py-4 font-bold text-gray-600 uppercase tracking-wider text-[11px]">Pendaftar</th>
+                                        <th className="px-4 py-4 font-bold text-gray-600 uppercase tracking-wider text-[11px]">Visibilitas</th>
+                                        <th className="px-4 py-4 font-bold text-gray-600 uppercase tracking-wider text-[11px]">Status</th>
+                                        <th className="px-4 py-4 font-bold text-gray-600 uppercase tracking-wider text-[11px] text-center">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-50 font-medium">
+                                    {loading && events.length === 0 ? (
+                                        <tr>
+                                            <td colSpan="9" className="text-center py-20">
+                                                <div className="flex flex-col items-center gap-4">
+                                                    <div className="animate-spin h-8 w-8 border-4 border-green-600 border-t-transparent rounded-full"></div>
+                                                    <p className="text-xs font-black text-gray-400 uppercase tracking-[0.2em]">Memuat data event...</p>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ) : events.length === 0 ? (
+                                        <tr><td colSpan="9" className="text-center py-20 text-gray-400 italic">Tidak ada event ditemukan</td></tr>
+                                    ) : events.map(ev => (
                                     <tr key={ev.id} className="hover:bg-gray-50/50 transition">
                                         <td className="px-4 py-4">
                                             <div className="flex items-center gap-3">
@@ -280,6 +299,7 @@ const DashboardEventPage = () => {
                             </tbody>
                         </table>
                     </div>
+                </div>
                     {/* Pagination Placeholder */}
                     <div className="px-4 py-4 bg-gray-50 border-t border-gray-100 flex justify-between items-center text-xs text-gray-500">
                         <p>Showing {events.length} of {totalCount} events</p>

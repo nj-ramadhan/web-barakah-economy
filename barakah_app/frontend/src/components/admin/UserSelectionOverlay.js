@@ -11,7 +11,16 @@ const UserSelectionOverlay = ({
     handleToggleUserSelection, 
     handleSelectAllFound, 
     handleConfirmSelection,
-    pagination = { current: 1, total: 1, hasNext: false, hasPrev: false, onPageChange: () => {} }
+    pagination = { 
+        current: 1, 
+        total: 0, 
+        totalPages: 1,
+        pageSize: 10,
+        hasNext: false, 
+        hasPrev: false, 
+        onPageChange: () => {},
+        onPageSizeChange: () => {}
+    }
 }) => {
     if (!isOpen) return null;
 
@@ -48,10 +57,11 @@ const UserSelectionOverlay = ({
                             )}
                         </div>
                         <select 
-                            value={pagination.pageSize} 
+                            value={pagination.pageSize || 10} 
                             onChange={(e) => pagination.onPageSizeChange(e.target.value)}
                             className="bg-white border border-gray-200 rounded-2xl px-4 py-3 text-xs font-black text-green-700 outline-none focus:ring-2 focus:ring-green-500 shadow-sm"
                         >
+                            <option value="5">5 / hal</option>
                             <option value="10">10 / hal</option>
                             <option value="25">25 / hal</option>
                             <option value="50">50 / hal</option>
@@ -96,68 +106,79 @@ const UserSelectionOverlay = ({
                     </div>
                 </div>
 
-                {/* User List */}
-                <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
-                    {allUsers.length === 0 ? (
-                        <div className="text-center py-20 bg-gray-50/50 rounded-[3rem] border-2 border-dashed border-gray-100 flex flex-col items-center justify-center">
-                            <div className="w-20 h-20 bg-white rounded-3xl flex items-center justify-center shadow-xl mb-6 transform -rotate-12">
-                                <span className="material-icons text-4xl text-gray-200">person_search</span>
+                {/* User List Section */}
+                <div className="flex-1 relative overflow-hidden flex flex-col">
+                    {/* Loading Overlay */}
+                    {isFetchingUsers && allUsers.length > 0 && (
+                        <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/20 backdrop-blur-[1px]">
+                            <div className="bg-white/80 p-4 rounded-3xl shadow-xl flex items-center gap-3 border border-white">
+                                <div className="animate-spin h-5 w-5 border-2 border-green-600 border-t-transparent rounded-full"></div>
+                                <span className="text-[10px] font-black text-green-700 uppercase tracking-widest">Mencari...</span>
                             </div>
-                            <p className="text-sm font-bold text-gray-400 uppercase tracking-widest">User tidak ditemukan</p>
-                            <p className="text-[10px] text-gray-300 mt-2 uppercase tracking-[0.2em]">Coba kata kunci lain</p>
-                        </div>
-                    ) : (
-                        <div className="space-y-3">
-                            {allUsers.map(user => (
-                                <label 
-                                    key={user.id} 
-                                    className={`group flex items-center justify-between p-5 rounded-3xl border transition-all cursor-pointer hover:shadow-xl hover:shadow-green-900/5 ${
-                                        selectedUserIds.includes(user.id) 
-                                            ? 'bg-green-50/50 border-green-200 shadow-lg shadow-green-900/5 ring-1 ring-green-100' 
-                                            : 'bg-white border-gray-100 hover:border-green-100'
-                                    }`}
-                                >
-                                    <div className="flex items-center gap-5">
-                                        <div className="relative">
-                                            <input
-                                                type="checkbox"
-                                                className="hidden"
-                                                checked={selectedUserIds.includes(user.id)}
-                                                onChange={() => handleToggleUserSelection(user.id)}
-                                            />
-                                            <div className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all ${
-                                                selectedUserIds.includes(user.id) 
-                                                    ? 'bg-green-600 border-green-600 scale-110 shadow-lg shadow-green-600/30' 
-                                                    : 'bg-white border-gray-200 group-hover:border-green-400'
-                                            }`}>
-                                                {selectedUserIds.includes(user.id) && <span className="material-icons text-white text-[14px]">check</span>}
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <div className="flex items-center gap-2 mb-1">
-                                                <p className={`text-sm font-black uppercase tracking-tight transition-colors ${
-                                                    selectedUserIds.includes(user.id) ? 'text-green-900' : 'text-gray-900'
-                                                }`}>
-                                                    {user.full_name || user.username}
-                                                </p>
-                                                <span className="px-2 py-0.5 bg-gray-100 text-gray-400 rounded-md text-[8px] font-black tracking-widest uppercase">#{user.id}</span>
-                                            </div>
-                                            <p className="text-[10px] text-gray-400 font-bold tracking-tight flex items-center gap-2">
-                                                <span className="flex items-center gap-1"><span className="material-icons text-[10px]">alternate_email</span>{user.email}</span>
-                                                <span className="w-1 h-1 bg-gray-200 rounded-full"></span>
-                                                <span className="flex items-center gap-1"><span className="material-icons text-[10px]">phone</span>{user.phone || '-'}</span>
-                                            </p>
-                                        </div>
-                                    </div>
-                                    <span className={`material-icons text-lg transition-all transform ${
-                                        selectedUserIds.includes(user.id) ? 'text-green-600 scale-110' : 'text-gray-100 group-hover:text-green-200'
-                                    }`}>
-                                        {selectedUserIds.includes(user.id) ? 'verified' : 'account_circle'}
-                                    </span>
-                                </label>
-                            ))}
                         </div>
                     )}
+
+                    <div className={`flex-1 overflow-y-auto p-8 custom-scrollbar transition-all duration-500 ${isFetchingUsers ? 'opacity-60 blur-[1px]' : 'opacity-100'}`}>
+                        {isFetchingUsers && allUsers.length === 0 ? (
+                            <div className="space-y-4">
+                                {[...Array(5)].map((_, i) => (
+                                    <div key={i} className="h-16 bg-gray-50 rounded-2xl animate-pulse border border-gray-100"></div>
+                                ))}
+                            </div>
+                        ) : allUsers.length === 0 ? (
+                            <div className="text-center py-20 bg-gray-50 rounded-[2.5rem] border border-dashed border-gray-200">
+                                <span className="material-icons text-gray-200 text-6xl mb-4">person_search</span>
+                                <p className="text-sm font-bold text-gray-400 italic">User tidak ditemukan...</p>
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-1 gap-3">
+                                {allUsers.map((user, idx) => (
+                                    <div 
+                                        key={user.id} 
+                                        onClick={() => handleToggleUserSelection(user.id)}
+                                        style={{ animationDelay: `${idx * 50}ms` }}
+                                        className={`p-4 rounded-2xl border-2 transition-all duration-300 cursor-pointer flex items-center justify-between group animate-in fade-in slide-in-from-bottom-2 ${
+                                            selectedUserIds.includes(user.id) 
+                                            ? 'bg-green-50 border-green-500 shadow-lg shadow-green-900/5 scale-[1.02]' 
+                                            : 'bg-white border-gray-50 hover:border-gray-200 hover:bg-gray-50 shadow-sm'
+                                        }`}
+                                    >
+                                        <div className="flex items-center gap-5">
+                                            <div className="relative">
+                                                <div className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all ${
+                                                    selectedUserIds.includes(user.id) 
+                                                        ? 'bg-green-600 border-green-600 scale-110 shadow-lg shadow-green-600/30' 
+                                                        : 'bg-white border-gray-200 group-hover:border-green-400'
+                                                }`}>
+                                                    {selectedUserIds.includes(user.id) && <span className="material-icons text-white text-[14px]">check</span>}
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <div className="flex items-center gap-2 mb-1">
+                                                    <p className={`text-sm font-black uppercase tracking-tight transition-colors ${
+                                                        selectedUserIds.includes(user.id) ? 'text-green-900' : 'text-gray-900'
+                                                    }`}>
+                                                        {user.full_name || user.username}
+                                                    </p>
+                                                    <span className="px-2 py-0.5 bg-gray-100 text-gray-400 rounded-md text-[8px] font-black tracking-widest uppercase">#{user.id}</span>
+                                                </div>
+                                                <p className="text-[10px] text-gray-400 font-bold tracking-tight flex items-center gap-2">
+                                                    <span className="flex items-center gap-1"><span className="material-icons text-[10px]">alternate_email</span>{user.email}</span>
+                                                    <span className="w-1 h-1 bg-gray-200 rounded-full"></span>
+                                                    <span className="flex items-center gap-1"><span className="material-icons text-[10px]">phone</span>{user.phone || '-'}</span>
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <span className={`material-icons text-lg transition-all transform ${
+                                            selectedUserIds.includes(user.id) ? 'text-green-600 scale-110' : 'text-gray-100 group-hover:text-green-200'
+                                        }`}>
+                                            {selectedUserIds.includes(user.id) ? 'verified' : 'account_circle'}
+                                        </span>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
                 </div>
 
                 {/* Footer Selection Summary */}
