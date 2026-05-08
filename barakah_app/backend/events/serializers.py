@@ -25,11 +25,35 @@ class EventSpeakerSerializer(serializers.ModelSerializer):
         model = EventSpeaker
         fields = ['id', 'name', 'role', 'photo', 'link', 'order']
 
+    def to_internal_value(self, data):
+        # Handle cases where photo might be a URL string during edit
+        if 'photo' in data and isinstance(data['photo'], str) and data['photo'].startswith('http'):
+            # It's an existing URL, we don't want to try and save it as a new file
+            # Remove it so the model doesn't try to save a string as an image
+            data = data.copy()
+            data.pop('photo')
+        
+        # Handle empty strings for optional fields
+        for field in ['role', 'link']:
+            if field in data and data[field] == '':
+                if not hasattr(data, 'copy'): data = data.copy()
+                data[field] = None
+                
+        return super().to_internal_value(data)
+
 class EventSessionSerializer(serializers.ModelSerializer):
     attendance_count = serializers.SerializerMethodField()
     class Meta:
         model = EventSession
         fields = ['id', 'title', 'start_time', 'end_time', 'order', 'attendance_count']
+
+    def to_internal_value(self, data):
+        # Handle empty strings for datetime fields
+        for field in ['start_time', 'end_time']:
+            if field in data and data[field] == '':
+                data = data.copy() if hasattr(data, 'copy') else data
+                data[field] = None
+        return super().to_internal_value(data)
 
     def get_attendance_count(self, obj):
         return obj.attendances.count()
@@ -196,12 +220,17 @@ class EventSerializer(serializers.ModelSerializer):
             # Handle BIB Template Image if provided
             bib_image = request.FILES.get('bib_template_image') if request else None
             if bib_image or event.has_bib:
-                logger.info("Handling BIB Template")
-                bib, _ = EventBib.objects.get_or_create(event=event)
-                if bib_image:
-                    bib.template_image = bib_image
-                    bib.is_active = True
-                    bib.save()
+                try:
+                    logger.info("Handling BIB Template")
+                    bib, _ = EventBib.objects.get_or_create(event=event)
+                    if bib_image:
+                        bib.template_image = bib_image
+                        bib.is_active = True
+                        bib.save()
+                except Exception as bib_err:
+                    logger.error(f"Failed to create/get EventBib: {str(bib_err)}")
+                    # We don't want to fail the whole event creation just because BIB config failed
+                    # but we should at least log it.
                 
             return event
         except Exception as e:
@@ -276,11 +305,14 @@ class EventSerializer(serializers.ModelSerializer):
             # Handle BIB Template Image
             bib_image = request.FILES.get('bib_template_image')
             if bib_image or instance.has_bib:
-                bib, _ = EventBib.objects.get_or_create(event=instance)
-                if bib_image:
-                    bib.template_image = bib_image
-                    bib.is_active = True
-                    bib.save()
+                try:
+                    bib, _ = EventBib.objects.get_or_create(event=instance)
+                    if bib_image:
+                        bib.template_image = bib_image
+                        bib.is_active = True
+                        bib.save()
+                except Exception as bib_err:
+                    logger.error(f"Failed to update EventBib: {str(bib_err)}")
         
         return instance
 

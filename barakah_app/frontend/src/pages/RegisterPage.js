@@ -179,7 +179,7 @@ const RegisterPage = () => {
                             {/* No HP */}
                             <div>
                                 <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">
-                                    No. HP / WhatsApp <span className="text-red-500">*</span>
+                                    HP / WhatsApp <span className="text-red-500">*</span>
                                 </label>
                                 <input
                                     id="reg-phone"

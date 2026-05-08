@@ -116,6 +116,9 @@ class EventViewSet(viewsets.ModelViewSet):
             self.perform_create(serializer)
             headers = self.get_success_headers(serializer.data)
             return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+        except serializers.ValidationError as e:
+            # Re-raise validation errors so DRF can handle them (returns 400)
+            raise e
         except Exception as e:
             import traceback
             error_trace = traceback.format_exc()
@@ -164,13 +167,16 @@ class EventViewSet(viewsets.ModelViewSet):
                 )
 
             return Response(serializer.data)
+        except serializers.ValidationError as e:
+            raise e
         except Exception as e:
             import traceback
             error_trace = traceback.format_exc()
             logger.error(f"Event update error: {str(e)}\n{error_trace}")
             return Response({
                 "error": "Terjadi kesalahan internal saat memperbarui event.",
-                "details": str(e)
+                "details": str(e),
+                "trace": error_trace if settings.DEBUG else None
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def perform_update(self, serializer):

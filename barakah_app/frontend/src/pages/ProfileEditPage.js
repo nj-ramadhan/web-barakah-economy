@@ -193,18 +193,18 @@ const ProfileEditPage = () => {
             );
 
             if (matchProvince) {
-               setProfile(prev => ({ 
-                 ...prev, 
-                 address_province_id: matchProvince.province_id,
-                 address_province: matchProvince.province 
-               }));
+              setProfile(prev => ({
+                ...prev,
+                address_province_id: matchProvince.province_id,
+                address_province: matchProvince.province
+              }));
 
-               // Fetch cities lazily for this province so city matching can happen
-               fetchCities(matchProvince.province_id, true);
+              // Fetch cities lazily for this province so city matching can happen
+              fetchCities(matchProvince.province_id, true);
 
-               // We will use another effect or wait for cities to load to match the city
-               // Storing detected city name temporarily to match once cities are fetched
-               setProfile(prev => ({ ...prev, _detected_city: cityName }));
+              // We will use another effect or wait for cities to load to match the city
+              // Storing detected city name temporarily to match once cities are fetched
+              setProfile(prev => ({ ...prev, _detected_city: cityName }));
             }
           }
         }
@@ -372,7 +372,7 @@ const ProfileEditPage = () => {
 
     // Mandatory fields check
     if (!profile.name_full || !profile.nickname || !profile.phone) {
-      alert('Nama Lengkap, Nama Panggilan, dan No. HP wajib diisi.');
+      alert('Nama Lengkap, Nama Panggilan, dan HP wajib diisi.');
       setActiveTab('general');
       return;
     }
@@ -470,11 +470,10 @@ const ProfileEditPage = () => {
 
   const inputCls = (field) => {
     const isMandatoryMissing = (field === 'name_full' || field === 'nickname' || field === 'phone') && !profile[field];
-    return `w-full p-3 border rounded-xl text-sm transition outline-none focus:ring-2 ${
-      (isFieldMissing(field) || isMandatoryMissing) 
-        ? 'border-red-500 bg-red-50 focus:ring-red-400' 
-        : 'border-gray-200 bg-gray-50 focus:ring-green-500'
-    }`;
+    return `w-full p-3 border rounded-xl text-sm transition outline-none focus:ring-2 ${(isFieldMissing(field) || isMandatoryMissing)
+      ? 'border-red-500 bg-red-50 focus:ring-red-400'
+      : 'border-gray-200 bg-gray-50 focus:ring-green-500'
+      }`;
   };
 
   const renderTabContent = () => {
@@ -496,7 +495,7 @@ const ProfileEditPage = () => {
             </div>
             <div>
               <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
-                No. HP / WhatsApp {isFieldMissing('phone') && <span className="text-red-500">*wajib</span>}
+                HP / WhatsApp {isFieldMissing('phone') && <span className="text-red-500">*wajib</span>}
               </label>
               <input type="text" name="phone" placeholder="Contoh: 081234567890" value={profile.phone || ''} onChange={handleChange} className={inputCls('phone')} />
             </div>
@@ -661,7 +660,7 @@ const ProfileEditPage = () => {
                   >
                     <option value="">{loadingCities ? 'Memuat Kota...' : 'Pilih Kota'}</option>
                     {cities.length === 0 && profile.address_city_id && (
-                       <option value={profile.address_city_id}>{profile.address_city_name || 'Loading...'}</option>
+                      <option value={profile.address_city_id}>{profile.address_city_name || 'Loading...'}</option>
                     )}
                     {cities.map(c => (
                       <option key={c.city_id} value={c.city_id}>{c.type} {c.city_name}</option>
@@ -942,8 +941,8 @@ const ProfileEditPage = () => {
                       type="button"
                       onClick={() => setActiveTab(tab.key)}
                       className={`flex-1 flex items-center justify-center gap-1 py-2.5 rounded-lg text-xs font-bold transition ${activeTab === tab.key
-                          ? 'bg-white text-green-700 shadow-sm shadow-gray-200'
-                          : 'text-gray-500 hover:text-gray-700'
+                        ? 'bg-white text-green-700 shadow-sm shadow-gray-200'
+                        : 'text-gray-500 hover:text-gray-700'
                         }`}
                     >
                       <span className="material-icons text-sm">{tab.icon}</span>
