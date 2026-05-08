@@ -377,195 +377,203 @@ const DashboardPage = () => {
                 {/* Menu */}
                 <h2 className="font-semibold text-gray-700 mb-3 px-1">Manajemen Bisnis & Personal</h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-10">
-                    <Link
-                        to="/dashboard/digital-products"
-                        className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-gray-50 hover:shadow-md transition"
-                    >
-                        <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
-                            <span className="material-icons text-green-700">inventory_2</span>
-                        </div>
-                        <div className="flex-1">
-                            <h3 className="font-bold text-gray-800 text-sm">Produk Digital Saya</h3>
-                            <p className="text-[11px] text-gray-500">Kelola dan jual produk digital Anda</p>
-                        </div>
-                        <span className="material-icons text-gray-400">chevron_right</span>
-                    </Link>
-
-                    <Link
-                        to="/dashboard/ecourses"
-                        className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-gray-50 hover:shadow-md transition"
-                    >
-                        <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-                            <span className="material-icons text-blue-700">video_library</span>
-                        </div>
-                        <div className="flex-1">
-                            <h3 className="font-bold text-gray-800 text-sm">E-Course Saya</h3>
-                            <p className="text-[11px] text-gray-500">Buat dan kelola video pembelajaran</p>
-                        </div>
-                        <span className="material-icons text-gray-400">chevron_right</span>
-                    </Link>
-
-                    <Link
-                        to={`/digital-produk/${username}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-gray-50 hover:shadow-md transition"
-                    >
-                        <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
-                            <span className="material-icons text-purple-700">visibility</span>
-                        </div>
-                        <div className="flex-1">
-                            <h3 className="font-bold text-gray-800 text-sm">Lihat Toko</h3>
-                            <p className="text-[11px] text-gray-500">Pratinjau toko digital Anda</p>
-                        </div>
-                        <span className="material-icons text-gray-400">open_in_new</span>
-                    </Link>
-
-                    <Link
-                        to="/dashboard/shop-settings"
-                        className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-gray-50 hover:shadow-md transition"
-                    >
-                        <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center">
-                            <span className="material-icons text-orange-700">storefront</span>
-                        </div>
-                        <div className="flex-1">
-                            <h3 className="font-bold text-gray-800 text-sm">Pengaturan Toko</h3>
-                            <p className="text-[11px] text-gray-500">Dandani tampilan dan tautan toko Anda</p>
-                        </div>
-                        <span className="material-icons text-gray-400">chevron_right</span>
-                    </Link>
-
-                    <div
-                        onClick={() => setShowTestimonialModal(true)}
-                        className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-orange-50 hover:shadow-md transition cursor-pointer"
-                    >
-                        <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center">
-                            <span className="material-icons text-orange-700">rate_review</span>
-                        </div>
-                        <div className="flex-1">
-                            <h3 className="font-bold text-gray-800 text-sm">Testimoni Saya</h3>
-                            <p className="text-[11px] text-gray-500">
-                                {myTestimonial
-                                    ? (myTestimonial.is_approved ? 'Testimoni Anda sudah tayang' : 'Menunggu moderasi admin')
-                                    : 'Berikan ulasan Anda tentang Barakah App'}
-                            </p>
-                        </div>
-                        <span className="material-icons text-gray-400">{myTestimonial ? 'edit' : 'add'}</span>
-                    </div>
-
-                    <Link
-                        to="/dashboard/my-campaigns"
-                        className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-red-50 hover:shadow-md transition"
-                    >
-                        <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center">
-                            <span className="material-icons text-red-700">campaign</span>
-                        </div>
-                        <div className="flex-1">
-                            <h3 className="font-bold text-gray-800 text-sm">Ajukan Kampanye</h3>
-                            <p className="text-[11px] text-gray-500">Buat dan pantau pengajuan kampanye charity Anda</p>
-                        </div>
-                        <span className="material-icons text-gray-400">chevron_right</span>
-                    </Link>
-
-                    <Link
-                        to="/dashboard/articles"
-                        className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-orange-50 hover:shadow-md transition"
-                    >
-                        <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center">
-                            <span className="material-icons text-orange-700">edit_note</span>
-                        </div>
-                        <div className="flex-1">
-                            <h3 className="font-bold text-gray-800 text-sm">Tulis Article</h3>
-                            <p className="text-[11px] text-gray-500">Buat dan kelola artikel dengan editor rich text</p>
-                        </div>
-                        <span className="material-icons text-gray-400">chevron_right</span>
-                    </Link>
-
-                    <Link
-                        to="/dashboard/my-events"
-                        className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-indigo-50 hover:shadow-md transition"
-                    >
-                        <div className="w-12 h-12 bg-indigo-100 rounded-xl flex items-center justify-center">
-                            <span className="material-icons text-indigo-700">celebration</span>
-                        </div>
-                        <div className="flex-1">
-                            <h3 className="font-bold text-gray-800 text-sm">Event Barakah</h3>
-                            <p className="text-[11px] text-gray-500">Kelola pendaftaran dan pengajuan event Anda</p>
-                        </div>
-                        <span className="material-icons text-gray-400">chevron_right</span>
-                    </Link>
-
-                    {(() => {
-                        const userRes = JSON.parse(localStorage.getItem('user'));
-                        const isAnggota = userRes?.custom_roles_data?.some(r => r.name.toLowerCase().includes('anggota') || r.code.toLowerCase().includes('anggota')) || userRes?.role === 'admin';
-                        if (!isAnggota) return null;
-                        return (
-                            <Link
-                                to="/dashboard/business-data"
-                                className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-emerald-50 hover:shadow-md transition"
-                            >
-                                <div className="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center">
-                                    <span className="material-icons text-emerald-700">handshake</span>
-                                </div>
-                                <div className="flex-1">
-                                    <h3 className="font-bold text-gray-800 text-sm">Pendataan Partner Bisnis</h3>
-                                    <p className="text-[11px] text-gray-500">Daftarkan usaha Anda sebagai partner resmi BAE</p>
-                                </div>
-                                <span className="material-icons text-gray-400">chevron_right</span>
-                            </Link>
-                        );
-                    })()}
-
-                    {(() => {
-                        const userRes = JSON.parse(localStorage.getItem('user'));
-                        const isStaff = userRes?.role === 'staff' || userRes?.role === 'admin';
-                        if (!isStaff) return null;
-                        return (
-                            <Link
-                                to="/dashboard/zis"
-                                className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-emerald-50 hover:shadow-md transition"
-                            >
-                                <div className="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center">
-                                    <span className="material-icons text-emerald-700">payments</span>
-                                </div>
-                                <div className="flex-1">
-                                    <h3 className="font-bold text-gray-800 text-sm">ZIS Rutin</h3>
-                                    <p className="text-[11px] text-gray-500">Setoran zakat, infaq, dan sedekah bulanan</p>
-                                </div>
-                                <span className="material-icons text-gray-400">chevron_right</span>
-                            </Link>
-                        );
-                    })()}
-
                     {(() => {
                         const userRes = JSON.parse(localStorage.getItem('user'));
                         const isAdmin = userRes?.username === 'admin' || userRes?.role === 'admin';
                         const accessibleMenus = userProfile?.accessible_menus || [];
+                        // Helper to check if user has custom role access OR if it's a default menu (for now let's make it strict per user request)
                         const hasAccess = (menuKey) => isAdmin || accessibleMenus.includes(menuKey) || accessibleMenus.includes('*');
 
-                        if (hasAccess('sinergy_products')) {
-                            return (
-                                <Link
-                                    to="/dashboard/sinergy/seller"
-                                    className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-green-100 hover:shadow-md transition relative"
-                                >
-                                    {sinergyPendingCount > 0 && (
-                                        <div className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center border-2 border-white shadow-sm z-10 animate-bounce">
-                                            {sinergyPendingCount}
+                        return (
+                            <>
+                                {hasAccess('digital_products') && (
+                                    <Link
+                                        to="/dashboard/digital-products"
+                                        className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-gray-50 hover:shadow-md transition"
+                                    >
+                                        <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
+                                            <span className="material-icons text-green-700">inventory_2</span>
                                         </div>
-                                    )}
-                                    <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
-                                        <span className="material-icons text-green-700">inventory</span>
+                                        <div className="flex-1">
+                                            <h3 className="font-bold text-gray-800 text-sm">Produk Digital Saya</h3>
+                                            <p className="text-[11px] text-gray-500">Kelola dan jual produk digital Anda</p>
+                                        </div>
+                                        <span className="material-icons text-gray-400">chevron_right</span>
+                                    </Link>
+                                )}
+
+                                {hasAccess('my_ecourses') && (
+                                    <Link
+                                        to="/dashboard/ecourses"
+                                        className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-gray-50 hover:shadow-md transition"
+                                    >
+                                        <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                                            <span className="material-icons text-blue-700">video_library</span>
+                                        </div>
+                                        <div className="flex-1">
+                                            <h3 className="font-bold text-gray-800 text-sm">E-Course Saya</h3>
+                                            <p className="text-[11px] text-gray-500">Buat dan kelola video pembelajaran</p>
+                                        </div>
+                                        <span className="material-icons text-gray-400">chevron_right</span>
+                                    </Link>
+                                )}
+
+                                {hasAccess('view_shop') && (
+                                    <Link
+                                        to={`/digital-produk/${username}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-gray-50 hover:shadow-md transition"
+                                    >
+                                        <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
+                                            <span className="material-icons text-purple-700">visibility</span>
+                                        </div>
+                                        <div className="flex-1">
+                                            <h3 className="font-bold text-gray-800 text-sm">Lihat Toko</h3>
+                                            <p className="text-[11px] text-gray-500">Pratinjau toko digital Anda</p>
+                                        </div>
+                                        <span className="material-icons text-gray-400">open_in_new</span>
+                                    </Link>
+                                )}
+
+                                {hasAccess('shop_settings') && (
+                                    <Link
+                                        to="/dashboard/shop-settings"
+                                        className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-gray-50 hover:shadow-md transition"
+                                    >
+                                        <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center">
+                                            <span className="material-icons text-orange-700">storefront</span>
+                                        </div>
+                                        <div className="flex-1">
+                                            <h3 className="font-bold text-gray-800 text-sm">Pengaturan Toko</h3>
+                                            <p className="text-[11px] text-gray-500">Dandani tampilan dan tautan toko Anda</p>
+                                        </div>
+                                        <span className="material-icons text-gray-400">chevron_right</span>
+                                    </Link>
+                                )}
+
+                                {hasAccess('my_testimonials') && (
+                                    <div
+                                        onClick={() => setShowTestimonialModal(true)}
+                                        className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-orange-50 hover:shadow-md transition cursor-pointer"
+                                    >
+                                        <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center">
+                                            <span className="material-icons text-orange-700">rate_review</span>
+                                        </div>
+                                        <div className="flex-1">
+                                            <h3 className="font-bold text-gray-800 text-sm">Testimoni Saya</h3>
+                                            <p className="text-[11px] text-gray-500">
+                                                {myTestimonial
+                                                    ? (myTestimonial.is_approved ? 'Testimoni Anda sudah tayang' : 'Menunggu moderasi admin')
+                                                    : 'Berikan ulasan Anda tentang Barakah App'}
+                                            </p>
+                                        </div>
+                                        <span className="material-icons text-gray-400">{myTestimonial ? 'edit' : 'add'}</span>
                                     </div>
-                                    <div className="flex-1">
-                                        <h3 className="font-bold text-gray-800 text-sm">Pembuatan Produk (E-commerce)</h3>
-                                        <p className="text-[11px] text-gray-500">Kelola dan tambah produk fisik Anda</p>
-                                    </div>
-                                    <span className="material-icons text-gray-400">chevron_right</span>
-                                </Link>
-                            );
-                        }
-                        return null;
+                                )}
+
+                                {hasAccess('submit_campaign') && (
+                                    <Link
+                                        to="/dashboard/my-campaigns"
+                                        className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-red-50 hover:shadow-md transition"
+                                    >
+                                        <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center">
+                                            <span className="material-icons text-red-700">campaign</span>
+                                        </div>
+                                        <div className="flex-1">
+                                            <h3 className="font-bold text-gray-800 text-sm">Ajukan Kampanye</h3>
+                                            <p className="text-[11px] text-gray-500">Buat dan pantau pengajuan kampanye charity Anda</p>
+                                        </div>
+                                        <span className="material-icons text-gray-400">chevron_right</span>
+                                    </Link>
+                                )}
+
+                                {hasAccess('write_article') && (
+                                    <Link
+                                        to="/dashboard/articles"
+                                        className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-orange-50 hover:shadow-md transition"
+                                    >
+                                        <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center">
+                                            <span className="material-icons text-orange-700">edit_note</span>
+                                        </div>
+                                        <div className="flex-1">
+                                            <h3 className="font-bold text-gray-800 text-sm">Tulis Article</h3>
+                                            <p className="text-[11px] text-gray-500">Buat dan kelola artikel dengan editor rich text</p>
+                                        </div>
+                                        <span className="material-icons text-gray-400">chevron_right</span>
+                                    </Link>
+                                )}
+
+                                {hasAccess('my_events') && (
+                                    <Link
+                                        to="/dashboard/my-events"
+                                        className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-indigo-50 hover:shadow-md transition"
+                                    >
+                                        <div className="w-12 h-12 bg-indigo-100 rounded-xl flex items-center justify-center">
+                                            <span className="material-icons text-indigo-700">celebration</span>
+                                        </div>
+                                        <div className="flex-1">
+                                            <h3 className="font-bold text-gray-800 text-sm">Event Barakah</h3>
+                                            <p className="text-[11px] text-gray-500">Kelola pendaftaran dan pengajuan event Anda</p>
+                                        </div>
+                                        <span className="material-icons text-gray-400">chevron_right</span>
+                                    </Link>
+                                )}
+
+                                {hasAccess('business_data') && (
+                                    <Link
+                                        to="/dashboard/business-data"
+                                        className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-emerald-50 hover:shadow-md transition"
+                                    >
+                                        <div className="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center">
+                                            <span className="material-icons text-emerald-700">handshake</span>
+                                        </div>
+                                        <div className="flex-1">
+                                            <h3 className="font-bold text-gray-800 text-sm">Pendataan Partner Bisnis</h3>
+                                            <p className="text-[11px] text-gray-500">Daftarkan usaha Anda sebagai partner resmi BAE</p>
+                                        </div>
+                                        <span className="material-icons text-gray-400">chevron_right</span>
+                                    </Link>
+                                )}
+
+                                {hasAccess('zis_routine') && (
+                                    <Link
+                                        to="/dashboard/zis"
+                                        className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-emerald-50 hover:shadow-md transition"
+                                    >
+                                        <div className="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center">
+                                            <span className="material-icons text-emerald-700">payments</span>
+                                        </div>
+                                        <div className="flex-1">
+                                            <h3 className="font-bold text-gray-800 text-sm">ZIS Rutin</h3>
+                                            <p className="text-[11px] text-gray-500">Setoran zakat, infaq, dan sedekah bulanan</p>
+                                        </div>
+                                        <span className="material-icons text-gray-400">chevron_right</span>
+                                    </Link>
+                                )}
+
+                                {hasAccess('sinergy_products') && (
+                                    <Link
+                                        to="/dashboard/sinergy/seller"
+                                        className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-green-100 hover:shadow-md transition relative"
+                                    >
+                                        {sinergyPendingCount > 0 && (
+                                            <div className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center border-2 border-white shadow-sm z-10 animate-bounce">
+                                                {sinergyPendingCount}
+                                            </div>
+                                        )}
+                                        <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
+                                            <span className="material-icons text-green-700">inventory</span>
+                                        </div>
+                                        <div className="flex-1">
+                                            <h3 className="font-bold text-gray-800 text-sm">Pembuatan Produk (E-commerce)</h3>
+                                            <p className="text-[11px] text-gray-500">Kelola dan tambah produk fisik Anda</p>
+                                        </div>
+                                        <span className="material-icons text-gray-400">chevron_right</span>
+                                    </Link>
+                                )}
+                            </>
+                        );
                     })()}
                 </div>
 
@@ -620,7 +628,7 @@ const DashboardPage = () => {
                                 },
                                 {
                                     id: 'zis_config',
-                                    access: isAdmin,
+                                    access: hasAccess('zis_management'),
                                     to: '/dashboard/admin/zis-config',
                                     icon: 'settings_applications',
                                     color: 'slate',
@@ -629,7 +637,7 @@ const DashboardPage = () => {
                                 },
                                 {
                                     id: 'zis_verify',
-                                    access: isAdmin,
+                                    access: hasAccess('zis_management'),
                                     to: '/dashboard/admin/zis-verify',
                                     icon: 'fact_check',
                                     color: 'green',
@@ -681,7 +689,7 @@ const DashboardPage = () => {
                                 },
                                 {
                                     id: 'admin_business_partners',
-                                    access: isAdmin,
+                                    access: hasAccess('partners'),
                                     to: '/dashboard/admin/business-partners',
                                     icon: 'handshake',
                                     color: 'green',
@@ -695,7 +703,7 @@ const DashboardPage = () => {
                             items: [
                                 {
                                     id: 'announcements',
-                                    access: isAdmin,
+                                    access: hasAccess('announcements'),
                                     to: '/dashboard/admin/announcements',
                                     icon: 'campaign',
                                     color: 'blue',

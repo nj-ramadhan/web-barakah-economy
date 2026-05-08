@@ -199,7 +199,7 @@ class Profile(models.Model):
         user = self.user
         from accounts.models import Role
         
-        active_roles = Role.objects.filter(is_active=True)
+        active_roles = Role.objects.filter(is_active=True, is_automatic=True)
         assigned_new_role = False
         
         for role_obj in active_roles:

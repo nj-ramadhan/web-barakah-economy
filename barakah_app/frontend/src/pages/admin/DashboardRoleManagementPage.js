@@ -11,31 +11,38 @@ const getAuth = () => {
     return { headers: { Authorization: `Bearer ${user?.access}` } };
 };
 
-// All available menu keys that can be assigned to roles
+// All available menu keys that can be assigned to roles (Synced with backend/admin.py)
 const MENU_OPTIONS = [
-    { key: 'dashboard', label: 'Dashboard' },
-    { key: 'digital_products', label: 'Produk Digital' },
-    { key: 'ecourses', label: 'E-Course' },
-    { key: 'shop_settings', label: 'Pengaturan Toko' },
-    { key: 'charity', label: 'Manajemen Charity' },
-    { key: 'partners', label: 'Manajemen Partner' },
-    { key: 'testimonials', label: 'Manajemen Testimoni' },
-    { key: 'activities', label: 'Manajemen Kegiatan' },
-    { key: 'users', label: 'Manajemen User' },
-    { key: 'roles', label: 'Manajemen Role' },
-    { key: 'all_products', label: 'Semua Produk (Admin)' },
-    { key: 'all_courses', label: 'Semua Course (Admin)' },
-    { key: 'consultants', label: 'Pengaturan Konsultasi' },
-    { key: 'transactions', label: 'Riwayat Transaksi' },
-    { key: 'forum', label: 'Manajemen Forum' },
-    { key: 'withdrawals', label: 'Manajemen Penarikan' },
-    { key: 'campaign_submit', label: 'Ajukan Kampanye' },
-    { key: 'campaign_approval', label: 'Persetujuan Kampanye' },
-    { key: 'articles', label: 'Tulis Article' },
-    { key: 'event', label: 'Event' },
-    { key: 'admin_events', label: 'Manajemen Event' },
-    { key: 'sinergy_products', label: 'Pembuatan Produk (E-commerce)' },
-    { key: 'admin_sinergy', label: 'Manajemen E-commerce (Admin)' },
+    { key: '*', label: 'SEMUA AKSES (Super Admin)' },
+    { key: 'sinergy_products', label: 'E-commerce: Tambah/Kelola Produk Fisik' },
+    { key: 'admin_sinergy', label: 'E-commerce: Manajemen Produk (Admin)' },
+    { key: 'withdrawals', label: 'Keuangan: Manajemen Penarikan' },
+    { key: 'transactions', label: 'Keuangan: Riwayat Transaksi' },
+    { key: 'charity', label: 'Charity: Manajemen Kampanye & Donasi' },
+    { key: 'campaign_approval', label: 'Charity: Persetujuan Kampanye' },
+    { key: 'articles', label: 'Konten: Manajemen Artikel' },
+    { key: 'activities', label: 'Konten: Manajemen Kegiatan & Berita' },
+    { key: 'testimonials', label: 'Konten: Manajemen Testimoni' },
+    { key: 'forum', label: 'Konten: Manajemen Forum' },
+    { key: 'admin_events', label: 'Event: Manajemen Event & Rekap' },
+    { key: 'photo_framer', label: 'Event: Bingkai Foto Otomatis' },
+    { key: 'users', label: 'Sistem: Manajemen Data User' },
+    { key: 'roles', label: 'Sistem: Manajemen Role & Akses Menu' },
+    { key: 'zis_management', label: 'Keuangan: Manajemen & Verifikasi ZIS' },
+    { key: 'announcements', label: 'Konten: Manajemen Pengumuman & Iklan' },
+    { key: 'partners', label: 'Sistem: Manajemen Partner Bisnis (Admin)' },
+    { key: 'consultants', label: 'Sistem: Manajemen Konsultan (Admin)' },
+    { key: 'about_us', label: 'Sistem: Edit Tentang Kami (Admin)' },
+    { key: 'digital_products', label: 'Bisnis: Produk Digital Saya' },
+    { key: 'my_ecourses', label: 'Bisnis: E-Course Saya' },
+    { key: 'view_shop', label: 'Bisnis: Lihat Toko' },
+    { key: 'shop_settings', label: 'Bisnis: Pengaturan Toko' },
+    { key: 'business_data', label: 'Bisnis: Pendataan Partner Bisnis' },
+    { key: 'my_testimonials', label: 'Personal: Testimoni Saya' },
+    { key: 'submit_campaign', label: 'Personal: Ajukan Kampanye' },
+    { key: 'write_article', label: 'Personal: Tulis Artikel' },
+    { key: 'my_events', label: 'Personal: Event Barakah' },
+    { key: 'zis_routine', label: 'Personal: ZIS Rutin' },
 ];
 
 // All profile fields that can be set as required
@@ -67,7 +74,7 @@ const DashboardRoleManagementPage = () => {
     const [roleForm, setRoleForm] = useState({
         name: '', code: '', description: '',
         accessible_menus: [], required_profile_fields: [],
-        is_active: true
+        is_active: true, is_automatic: true
     });
 
     // === LABELS STATE ===
@@ -133,11 +140,12 @@ const DashboardRoleManagementPage = () => {
                 name: role.name, code: role.code, description: role.description || '',
                 accessible_menus: role.accessible_menus || [],
                 required_profile_fields: role.required_profile_fields || [],
-                is_active: role.is_active
+                is_active: role.is_active,
+                is_automatic: role.is_automatic
             });
         } else {
             setEditingRole(null);
-            setRoleForm({ name: '', code: '', description: '', accessible_menus: [], required_profile_fields: [], is_active: true });
+            setRoleForm({ name: '', code: '', description: '', accessible_menus: [], required_profile_fields: [], is_active: true, is_automatic: true });
         }
         setShowRoleModal(true);
     };
@@ -345,6 +353,11 @@ const DashboardRoleManagementPage = () => {
                                             <div className="flex items-center gap-3">
                                                 <h3 className="font-bold text-gray-900">{role.name}</h3>
                                                 <span className="text-[10px] px-2 py-0.5 bg-blue-50 text-blue-600 rounded-full font-bold">{role.code}</span>
+                                                {role.is_automatic ? (
+                                                    <span className="text-[10px] px-2 py-0.5 bg-green-50 text-green-600 rounded-full font-bold">Otomatis</span>
+                                                ) : (
+                                                    <span className="text-[10px] px-2 py-0.5 bg-orange-50 text-orange-600 rounded-full font-bold">Manual (Admin)</span>
+                                                )}
                                                 {!role.is_active && <span className="text-[10px] px-2 py-0.5 bg-red-50 text-red-600 rounded-full font-bold">Non-Aktif</span>}
                                             </div>
                                             <p className="text-sm text-gray-500 mt-1">{role.description || '-'}</p>
@@ -579,9 +592,15 @@ const DashboardRoleManagementPage = () => {
                                     </div>
                                 </div>
 
-                                <div className="flex items-center gap-2">
-                                    <input type="checkbox" id="role_active" checked={roleForm.is_active} onChange={e => setRoleForm({ ...roleForm, is_active: e.target.checked })} className="w-4 h-4 text-green-600 rounded" />
-                                    <label htmlFor="role_active" className="text-sm font-medium text-gray-700">Role Aktif</label>
+                                <div className="flex items-center gap-6">
+                                    <div className="flex items-center gap-2">
+                                        <input type="checkbox" id="role_active" checked={roleForm.is_active} onChange={e => setRoleForm({ ...roleForm, is_active: e.target.checked })} className="w-4 h-4 text-green-600 rounded" />
+                                        <label htmlFor="role_active" className="text-sm font-medium text-gray-700">Role Aktif</label>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <input type="checkbox" id="role_automatic" checked={roleForm.is_automatic} onChange={e => setRoleForm({ ...roleForm, is_automatic: e.target.checked })} className="w-4 h-4 text-green-600 rounded" />
+                                        <label htmlFor="role_automatic" className="text-sm font-medium text-gray-700">Diberikan Otomatis (via Profil)</label>
+                                    </div>
                                 </div>
                             </div>
                             <div className="p-6 bg-gray-50 border-t border-gray-100 flex justify-end gap-3 rounded-b-3xl">

@@ -13,6 +13,8 @@ class Role(models.Model):
     required_profile_fields = models.JSONField(default=list, blank=True,
         help_text="Profile fields required for verified member with this role")
     is_active = models.BooleanField(default=True)
+    is_automatic = models.BooleanField(default=True, 
+        help_text="If True, this role can be obtained automatically via profile completion.")
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
