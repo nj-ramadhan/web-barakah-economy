@@ -778,6 +778,12 @@ class EventViewSet(viewsets.ModelViewSet):
         if phone:
             formatted_phone = self._format_phone_number(phone)
             unique_code = registration.unique_code or '-'
+            bib_info = ""
+            if registration.event.has_bib:
+                fmt = getattr(registration.event.bib_template, 'number_format', '001') if hasattr(registration.event, 'bib_template') else '001'
+                formatted_bib = str(registration.bib_number or 0).zfill(len(str(fmt)))
+                bib_info = f"🔢 *NOMOR PESERTA (BIB):* {formatted_bib}\n"
+
             wa_message = (
                 f"Halo! Terima kasih telah mendaftar di event: *{registration.event.title}*.\n\n"
                 f"✅ Pendaftaran Anda diterima!\n\n"
@@ -785,6 +791,7 @@ class EventViewSet(viewsets.ModelViewSet):
                 f"━━━━━━━━━━━━━━━━\n"
                 f"*{unique_code}*\n"
                 f"━━━━━━━━━━━━━━━━\n\n"
+                f"{bib_info}"
                 f"📌 Simpan kode ini sebagai tiket masuk event. Kode ini akan di-scan saat Anda hadir.\n"
                 f"📷 QR Code tiket bisa dilihat di halaman detail event.\n\n"
                 f"📅 Waktu: {time_str}\n"
@@ -801,23 +808,21 @@ class EventViewSet(viewsets.ModelViewSet):
             if registration.qr_image:
                 try:
                     import base64
-                    # Ensure the file exists and can be read
-                    if registration.qr_image.storage.exists(registration.qr_image.name):
-                        with registration.qr_image.storage.open(registration.qr_image.name, 'rb') as qr_file:
-                            qr_file.seek(0)
-                            content = qr_file.read()
-                            encoded = base64.b64encode(content).decode('utf-8')
-                            qr_b64 = f"data:image/png;base64,{encoded}"
-                            
-                            # Send image with short caption
-                            whatsapp_service.send_file(
-                                formatted_phone, 
-                                f"QR Tiket {unique_code}", 
-                                qr_b64, 
-                                filename=f"tiket_{unique_code}.png"
-                            )
-                    else:
-                        logging.getLogger(__name__).error(f"QR image file not found for registration {registration.id}")
+                    # Ensure the file exists and can be read using the standard FieldFile.open()
+                    with registration.qr_image.open('rb') as qr_file:
+                        content = qr_file.read()
+                        encoded = base64.b64encode(content).decode('utf-8')
+                        qr_b64 = f"data:image/png;base64,{encoded}"
+                        
+                        # Send image with short caption
+                        qr_res = whatsapp_service.send_file(
+                            formatted_phone, 
+                            f"QR Tiket {unique_code}", 
+                            qr_b64, 
+                            filename=f"tiket_{unique_code}.png"
+                        )
+                        if not qr_res.get('success'):
+                            logging.getLogger(__name__).warning(f"WA QR send failed: {qr_res.get('message')}")
                 except Exception as e:
                     logging.getLogger(__name__).error(f"Error sending QR image for WA: {e}")
 
@@ -827,10 +832,12 @@ class EventViewSet(viewsets.ModelViewSet):
                     bib_buffer = self._generate_bib_image(registration)
                     if bib_buffer:
                         import base64
-                        encoded = base64.b64encode(bib_buffer.read()).decode('utf-8')
+                        bib_buffer.seek(0) # Ensure we're at the start
+                        content = bib_buffer.read()
+                        encoded = base64.b64encode(content).decode('utf-8')
                         file_b64 = f"data:image/jpeg;base64,{encoded}"
-                        fmt = registration.event.bib_template.number_format or '001'
-                        formatted_bib = str(registration.bib_number).zfill(len(fmt))
+                        fmt = getattr(registration.event.bib_template, 'number_format', '001') if hasattr(registration.event, 'bib_template') else '001'
+                        formatted_bib = str(registration.bib_number or 0).zfill(len(str(fmt)))
                         
                         img_res = whatsapp_service.send_file(
                             formatted_phone, 
@@ -841,7 +848,6 @@ class EventViewSet(viewsets.ModelViewSet):
                         if not img_res.get('success'):
                             logging.getLogger(__name__).warning(f"WhatsApp BIB send failed: {img_res.get('message')}")
                 except Exception as e:
-                    import logging
                     logging.getLogger(__name__).error(f"Error in automatic BIB sending: {e}")
 
             subject = f"Konfirmasi Pendaftaran Event: {registration.event.title}"
