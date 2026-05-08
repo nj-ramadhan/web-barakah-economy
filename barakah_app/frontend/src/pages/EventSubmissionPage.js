@@ -542,7 +542,7 @@ const EventSubmissionPage = () => {
                                                     <span className="material-icons">badge</span>
                                                 </div>
                                                 <div>
-                                                    <h4 className="text-sm font-black text-gray-900">Fitur No Punggung (BIB)</h4>
+                                                    <h4 className="text-sm font-black text-gray-900">Fitur No peserta (BIB)</h4>
                                                     <p className="text-[10px] text-blue-600 font-bold uppercase tracking-wider">Otomatis tambah kolom Pas Foto di pendaftaran</p>
                                                 </div>
                                             </div>

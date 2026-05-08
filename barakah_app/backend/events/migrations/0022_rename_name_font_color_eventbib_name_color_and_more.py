@@ -41,7 +41,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='eventregistration',
             name='bib_number',
-            field=models.PositiveIntegerField(blank=True, help_text='Nomor urut pendaftaran (untuk No Punggung/BIB)', null=True),
+            field=models.PositiveIntegerField(blank=True, help_text='Nomor urut pendaftaran (untuk No peserta/BIB)', null=True),
         ),
         migrations.AlterField(
             model_name='eventbib',

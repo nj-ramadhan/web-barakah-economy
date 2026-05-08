@@ -13,6 +13,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='event',
             name='has_bib',
-            field=models.BooleanField(default=False, help_text='Apakah event ini menyediakan nomor punggung (BIB)?'),
+            field=models.BooleanField(default=False, help_text='Apakah event ini menyediakan nomor peserta (BIB)?'),
         ),
     ]

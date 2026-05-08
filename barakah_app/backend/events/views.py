@@ -822,7 +822,7 @@ class EventViewSet(viewsets.ModelViewSet):
                         
                         img_res = whatsapp_service.send_file(
                             formatted_phone, 
-                            f"Nomor Punggung (BIB) - {unique_code}", 
+                            f"Nomor Peserta (BIB) - {unique_code}", 
                             file_b64, 
                             filename=f"BIB_{formatted_bib}.jpg"
                         )
@@ -1571,7 +1571,7 @@ class EventViewSet(viewsets.ModelViewSet):
         is_owner = event.created_by == request.user
         
         if not (is_admin or is_owner):
-            return Response({"error": "Hanya penyelenggara atau admin yang bisa mengelola nomor punggung."}, status=status.HTTP_403_FORBIDDEN)
+            return Response({"error": "Hanya penyelenggara atau admin yang bisa mengelola nomor Peserta."}, status=status.HTTP_403_FORBIDDEN)
             
         from .models import EventBib
         from .serializers import EventBibSerializer
@@ -1614,11 +1614,11 @@ class EventViewSet(viewsets.ModelViewSet):
         # Verify registration
         registration = EventRegistration.objects.filter(event=event, user=request.user, status='approved').first()
         if not registration:
-            return Response({"error": "Hanya peserta terdaftar yang bisa mengunduh nomor punggung."}, status=status.HTTP_403_FORBIDDEN)
+            return Response({"error": "Hanya peserta terdaftar yang bisa mengunduh nomor peserta."}, status=status.HTTP_403_FORBIDDEN)
             
         buffer = self._generate_bib_image(registration)
         if not buffer:
-            return Response({"error": "Gagal membuat nomor punggung atau template belum siap."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": "Gagal membuat nomor peserta atau template belum siap."}, status=status.HTTP_400_BAD_REQUEST)
 
         # Format BIB number for filename
         try:

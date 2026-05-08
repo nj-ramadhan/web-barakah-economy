@@ -74,7 +74,7 @@ class Event(models.Model):
     # Information fields
     category = models.CharField(max_length=100, blank=True, null=True, help_text="Kategori event (misal: Pelatihan, Seminar, dll)")
     has_certificate = models.BooleanField(default=False, help_text="Apakah event ini menyediakan sertifikat?")
-    has_bib = models.BooleanField(default=False, help_text="Apakah event ini menyediakan nomor punggung (BIB)?")
+    has_bib = models.BooleanField(default=False, help_text="Apakah event ini menyediakan nomor peserta (BIB)?")
     allow_ots_payment = models.BooleanField(default=False, help_text="Izinkan pembayaran di tempat (On The Spot)")
 
     created_at = models.DateTimeField(auto_now_add=True)
@@ -270,7 +270,7 @@ class EventRegistration(models.Model):
     is_attended = models.BooleanField(default=False, help_text="Tandai hadir saat event berlangsung")
     attended_at = models.DateTimeField(blank=True, null=True, help_text="Waktu scan kehadiran")
     
-    bib_number = models.PositiveIntegerField(blank=True, null=True, help_text="Nomor urut pendaftaran (untuk No Punggung/BIB)")
+    bib_number = models.PositiveIntegerField(blank=True, null=True, help_text="Nomor urut pendaftaran (untuk No Peserta/BIB)")
     
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

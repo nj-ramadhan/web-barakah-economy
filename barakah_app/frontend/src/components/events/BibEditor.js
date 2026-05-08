@@ -84,7 +84,7 @@ const BibEditor = ({ slug }) => {
     const handleDrag = (e, type) => {
         e.preventDefault();
         const rect = imageRef.current.getBoundingClientRect();
-        
+
         const onMouseMove = (moveEvent) => {
             let x = ((moveEvent.clientX - rect.left) / rect.width) * 100;
             let y = ((moveEvent.clientY - rect.top) / rect.height) * 100;
@@ -113,7 +113,7 @@ const BibEditor = ({ slug }) => {
     const handleSave = async () => {
         const formData = new FormData();
         if (template) formData.append('template_image', template);
-        
+
         Object.keys(settings).forEach(key => {
             if (key !== 'template_image' && settings[key] !== null) {
                 formData.append(key, settings[key]);
@@ -135,8 +135,8 @@ const BibEditor = ({ slug }) => {
             alert("Pengaturan BIB berhasil disimpan!");
         } catch (error) {
             console.error("Save error", error);
-            const errorMsg = error.response?.data?.error || 
-                           (error.response?.data ? JSON.stringify(error.response.data) : "Gagal menyimpan pengaturan.");
+            const errorMsg = error.response?.data?.error ||
+                (error.response?.data ? JSON.stringify(error.response.data) : "Gagal menyimpan pengaturan.");
             alert(errorMsg);
         }
     };
@@ -156,34 +156,34 @@ const BibEditor = ({ slug }) => {
         <div className="bib-editor bg-white p-4 md:p-6 rounded-xl shadow-sm border border-gray-100">
             <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-6 gap-4">
                 <div>
-                    <h3 className="text-xl font-bold text-gray-800">Editor No Punggung (BIB)</h3>
+                    <h3 className="text-xl font-bold text-gray-800">Editor No peserta (BIB)</h3>
                     <p className="text-xs text-gray-500 mt-1">Geser nomor dan nama peserta ke posisi yang diinginkan pada desain Anda.</p>
                 </div>
                 <div className="flex items-center space-x-2 bg-gray-50 px-4 py-2 rounded-xl">
                     <span className="text-sm font-bold text-gray-600">Status Aktif</span>
-                    <button 
-                        onClick={() => setSettings({...settings, is_active: !settings.is_active})}
+                    <button
+                        onClick={() => setSettings({ ...settings, is_active: !settings.is_active })}
                         className={`w-12 h-6 rounded-full transition-colors relative ${settings.is_active ? 'bg-blue-600' : 'bg-gray-300'}`}
                     >
                         <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${settings.is_active ? 'left-7' : 'left-1'}`}></div>
                     </button>
                 </div>
             </div>
-            
+
             <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
                 {/* Preview Section */}
                 <div className="xl:col-span-3">
-                    <div 
+                    <div
                         className="relative border-2 border-dashed border-gray-200 rounded-3xl overflow-hidden bg-gray-100 flex items-center justify-center p-4 min-h-[500px]"
                         style={{ userSelect: 'none' }}
                     >
                         {previewUrl ? (
                             <div className={`relative inline-block shadow-2xl rounded-lg overflow-hidden ${!imageLoaded ? 'opacity-0' : 'opacity-100 transition-opacity duration-500'}`}>
-                                <img 
+                                <img
                                     ref={imageRef}
-                                    src={previewUrl} 
-                                    alt="BIB Template" 
-                                    className="max-w-full h-auto block" 
+                                    src={previewUrl}
+                                    alt="BIB Template"
+                                    className="max-w-full h-auto block"
                                     onLoad={() => setImageLoaded(true)}
                                     onError={() => {
                                         console.error("Failed to load BIB template image");
@@ -198,10 +198,10 @@ const BibEditor = ({ slug }) => {
                                 )}
 
                                 {/* BIB Number Placeholder */}
-                                <div 
+                                <div
                                     className="absolute cursor-move whitespace-nowrap flex items-center justify-center select-none"
-                                    style={{ 
-                                        left: `${settings.number_x}%`, 
+                                    style={{
+                                        left: `${settings.number_x}%`,
                                         top: `${settings.number_y}%`,
                                         transform: 'translate(-50%, -50%)',
                                         fontSize: `${getPreviewFontSize(settings.number_font_size)}px`,
@@ -217,10 +217,10 @@ const BibEditor = ({ slug }) => {
                                 </div>
 
                                 {/* Participant Name Placeholder */}
-                                <div 
+                                <div
                                     className="absolute cursor-move whitespace-nowrap flex items-center justify-center select-none text-center"
-                                    style={{ 
-                                        left: `${settings.name_x}%`, 
+                                    style={{
+                                        left: `${settings.name_x}%`,
                                         top: `${settings.name_y}%`,
                                         transform: 'translate(-50%, -50%)',
                                         fontSize: `${getPreviewFontSize(settings.name_font_size)}px`,
@@ -236,10 +236,10 @@ const BibEditor = ({ slug }) => {
 
                                 {/* Participant Photo Placeholder */}
                                 {settings.show_photo && (
-                                    <div 
+                                    <div
                                         className="absolute cursor-move border-4 border-dashed border-blue-400 bg-blue-50/50 flex items-center justify-center select-none overflow-hidden"
-                                        style={{ 
-                                            left: `${settings.photo_x}%`, 
+                                        style={{
+                                            left: `${settings.photo_x}%`,
                                             top: `${settings.photo_y}%`,
                                             width: `${settings.photo_width}%`,
                                             height: `${settings.photo_height}%`,
@@ -279,12 +279,12 @@ const BibEditor = ({ slug }) => {
 
                     <div className="space-y-6">
                         <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">2. Konfigurasi Nomor</label>
-                        
+
                         <div>
                             <label className="text-[10px] font-bold text-gray-500 block mb-2 uppercase">Format Nomor</label>
-                            <select 
+                            <select
                                 value={settings.number_format}
-                                onChange={(e) => setSettings({...settings, number_format: e.target.value})}
+                                onChange={(e) => setSettings({ ...settings, number_format: e.target.value })}
                                 className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-xs font-bold focus:outline-none"
                             >
                                 <option value="1">1 (Tanpa Nol)</option>
@@ -298,12 +298,12 @@ const BibEditor = ({ slug }) => {
                         <div>
                             <label className="text-[10px] font-bold text-gray-500 block mb-2 uppercase">Ukuran, Warna & Jenis Font Nomor</label>
                             <div className="flex gap-2 mb-2">
-                                <input type="number" value={settings.number_font_size} onChange={(e) => setSettings({...settings, number_font_size: parseInt(e.target.value) || 10})} className="w-20 bg-white border border-gray-200 rounded-xl px-2 py-2 text-xs font-bold text-center" />
-                                <input type="color" value={settings.number_color} onChange={(e) => setSettings({...settings, number_color: e.target.value})} className="h-10 w-14 border-0 p-0 bg-transparent cursor-pointer rounded-lg" />
+                                <input type="number" value={settings.number_font_size} onChange={(e) => setSettings({ ...settings, number_font_size: parseInt(e.target.value) || 10 })} className="w-20 bg-white border border-gray-200 rounded-xl px-2 py-2 text-xs font-bold text-center" />
+                                <input type="color" value={settings.number_color} onChange={(e) => setSettings({ ...settings, number_color: e.target.value })} className="h-10 w-14 border-0 p-0 bg-transparent cursor-pointer rounded-lg" />
                             </div>
-                            <select 
+                            <select
                                 value={settings.number_font_family}
-                                onChange={(e) => setSettings({...settings, number_font_family: e.target.value})}
+                                onChange={(e) => setSettings({ ...settings, number_font_family: e.target.value })}
                                 className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2 text-[10px] font-bold focus:outline-none"
                             >
                                 {FONT_OPTIONS.map(opt => (
@@ -318,12 +318,12 @@ const BibEditor = ({ slug }) => {
                         <div>
                             <label className="text-[10px] font-bold text-gray-500 block mb-2 uppercase">Ukuran, Warna & Jenis Font Nama</label>
                             <div className="flex gap-2 mb-2">
-                                <input type="number" value={settings.name_font_size} onChange={(e) => setSettings({...settings, name_font_size: parseInt(e.target.value) || 10})} className="w-20 bg-white border border-gray-200 rounded-xl px-2 py-2 text-xs font-bold text-center" />
-                                <input type="color" value={settings.name_color} onChange={(e) => setSettings({...settings, name_color: e.target.value})} className="h-10 w-14 border-0 p-0 bg-transparent cursor-pointer rounded-lg" />
+                                <input type="number" value={settings.name_font_size} onChange={(e) => setSettings({ ...settings, name_font_size: parseInt(e.target.value) || 10 })} className="w-20 bg-white border border-gray-200 rounded-xl px-2 py-2 text-xs font-bold text-center" />
+                                <input type="color" value={settings.name_color} onChange={(e) => setSettings({ ...settings, name_color: e.target.value })} className="h-10 w-14 border-0 p-0 bg-transparent cursor-pointer rounded-lg" />
                             </div>
-                            <select 
+                            <select
                                 value={settings.name_font_family}
-                                onChange={(e) => setSettings({...settings, name_font_family: e.target.value})}
+                                onChange={(e) => setSettings({ ...settings, name_font_family: e.target.value })}
                                 className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2 text-[10px] font-bold focus:outline-none"
                             >
                                 {FONT_OPTIONS.map(opt => (
@@ -335,9 +335,9 @@ const BibEditor = ({ slug }) => {
                         <hr className="border-gray-200" />
                         <div className="flex items-center justify-between mb-2">
                             <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">4. Foto Peserta</label>
-                            <button 
+                            <button
                                 type="button"
-                                onClick={() => setSettings({...settings, show_photo: !settings.show_photo})}
+                                onClick={() => setSettings({ ...settings, show_photo: !settings.show_photo })}
                                 className={`w-8 h-4 rounded-full transition-colors relative ${settings.show_photo ? 'bg-green-500' : 'bg-gray-300'}`}
                             >
                                 <div className={`absolute top-0.5 w-3 h-3 bg-white rounded-full transition-transform ${settings.show_photo ? 'left-4.5' : 'left-0.5'}`}></div>
@@ -348,11 +348,11 @@ const BibEditor = ({ slug }) => {
                             <div className="space-y-4 animate-fade-in">
                                 <div>
                                     <label className="text-[10px] font-bold text-gray-500 block mb-1 uppercase">Lebar Foto (%)</label>
-                                    <input type="range" min="5" max="80" value={settings.photo_width} onChange={(e) => setSettings({...settings, photo_width: parseFloat(e.target.value)})} className="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600" />
+                                    <input type="range" min="5" max="80" value={settings.photo_width} onChange={(e) => setSettings({ ...settings, photo_width: parseFloat(e.target.value) })} className="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600" />
                                 </div>
                                 <div>
                                     <label className="text-[10px] font-bold text-gray-500 block mb-1 uppercase">Tinggi Foto (%)</label>
-                                    <input type="range" min="5" max="80" value={settings.photo_height} onChange={(e) => setSettings({...settings, photo_height: parseFloat(e.target.value)})} className="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600" />
+                                    <input type="range" min="5" max="80" value={settings.photo_height} onChange={(e) => setSettings({ ...settings, photo_height: parseFloat(e.target.value) })} className="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600" />
                                 </div>
                             </div>
                         )}
