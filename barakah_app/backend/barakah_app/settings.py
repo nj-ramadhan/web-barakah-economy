@@ -395,7 +395,12 @@ LOGGING = {
             'handlers': ['console', 'file'],
             'level': 'DEBUG',  # Set to DEBUG to capture all logs
             'propagate': True,
-        },                
+        },
+        'events': {
+            'handlers': ['console', 'file'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
     },
 }
 

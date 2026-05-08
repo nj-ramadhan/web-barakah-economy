@@ -33,7 +33,7 @@ class EventAdmin(admin.ModelAdmin):
             'fields': ('start_date', 'end_date', 'visible_at', 'registration_start_at')
         }),
         ('Lokasi & Kapasitas', {
-            'fields': ('location_type', 'location', 'location_url', 'capacity')
+            'fields': ('location', 'location_url', 'capacity')
         }),
         ('Biaya & Kontak', {
             'fields': ('price_type', 'price_fixed', 'organizer_name', 'organizer_contact', 'has_certificate')

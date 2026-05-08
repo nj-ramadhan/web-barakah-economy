@@ -153,45 +153,60 @@ class EventSerializer(serializers.ModelSerializer):
 
     @transaction.atomic
     def create(self, validated_data):
-        fields_data = validated_data.pop('form_fields', [])
-        speakers_data = validated_data.pop('speakers', [])
-        sessions_data = validated_data.pop('sessions', [])
+        import logging
+        import traceback
+        logger = logging.getLogger(__name__)
         
-        request = self.context.get('request')
-        doc_images = request.FILES.getlist('documentation_images_upload') if request else []
-        gallery_images = request.FILES.getlist('gallery_images_upload') if request else []
-        
-        event = Event.objects.create(**validated_data)
-        
-        for field in fields_data:
-            field.pop('id', None)
-            EventFormField.objects.create(event=event, **field)
+        try:
+            fields_data = validated_data.pop('form_fields', [])
+            speakers_data = validated_data.pop('speakers', [])
+            sessions_data = validated_data.pop('sessions', [])
             
-        for spk in speakers_data:
-            spk.pop('id', None)
-            EventSpeaker.objects.create(event=event, **spk)
+            request = self.context.get('request')
+            doc_images = request.FILES.getlist('documentation_images_upload') if request else []
+            gallery_images = request.FILES.getlist('gallery_images_upload') if request else []
             
-        for ses in sessions_data:
-            ses.pop('id', None)
-            EventSession.objects.create(event=event, **ses)
+            logger.info(f"Creating Event with data: {validated_data}")
+            event = Event.objects.create(**validated_data)
             
-        from .models import EventDocumentationImage, EventGalleryImage
-        for img in doc_images:
-            EventDocumentationImage.objects.create(event=event, image=img)
-            
-        for img in gallery_images:
-            EventGalleryImage.objects.create(event=event, image=img)
-            
-        # Handle BIB Template Image if provided
-        bib_image = request.FILES.get('bib_template_image') if request else None
-        if bib_image or event.has_bib:
-            bib, _ = EventBib.objects.get_or_create(event=event)
-            if bib_image:
-                bib.template_image = bib_image
-                bib.is_active = True
-                bib.save()
-            
-        return event
+            logger.info(f"Creating form fields: {len(fields_data)}")
+            for field in fields_data:
+                field.pop('id', None)
+                EventFormField.objects.create(event=event, **field)
+                
+            logger.info(f"Creating speakers: {len(speakers_data)}")
+            for spk in speakers_data:
+                spk.pop('id', None)
+                EventSpeaker.objects.create(event=event, **spk)
+                
+            logger.info(f"Creating sessions: {len(sessions_data)}")
+            for ses in sessions_data:
+                ses.pop('id', None)
+                EventSession.objects.create(event=event, **ses)
+                
+            from .models import EventDocumentationImage, EventGalleryImage
+            logger.info(f"Creating documentation images: {len(doc_images)}")
+            for img in doc_images:
+                EventDocumentationImage.objects.create(event=event, image=img)
+                
+            logger.info(f"Creating gallery images: {len(gallery_images)}")
+            for img in gallery_images:
+                EventGalleryImage.objects.create(event=event, image=img)
+                
+            # Handle BIB Template Image if provided
+            bib_image = request.FILES.get('bib_template_image') if request else None
+            if bib_image or event.has_bib:
+                logger.info("Handling BIB Template")
+                bib, _ = EventBib.objects.get_or_create(event=event)
+                if bib_image:
+                    bib.template_image = bib_image
+                    bib.is_active = True
+                    bib.save()
+                
+            return event
+        except Exception as e:
+            logger.error(f"Error in EventSerializer.create: {str(e)}\n{traceback.format_exc()}")
+            raise e
 
     @transaction.atomic
     def update(self, instance, validated_data):
