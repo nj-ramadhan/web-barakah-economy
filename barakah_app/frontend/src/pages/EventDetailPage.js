@@ -879,24 +879,9 @@ const EventDetailPage = () => {
                                                             {(participants || []).map((p) => (
                                                                 <div key={p.id} className="bg-white px-5 py-4 rounded-2xl border border-gray-100 flex items-center gap-4 hover:shadow-lg transition-all duration-300 group relative overflow-hidden">
                                                                     <div className="absolute left-0 top-0 bottom-0 w-1 bg-blue-500 opacity-20"></div>
-                                                                    <div className="w-10 h-10 rounded-xl overflow-hidden bg-blue-600 text-white flex items-center justify-center font-black text-xs shadow-sm shrink-0 border border-gray-100">
-                                                                        {p.uploaded_files && p.uploaded_files.length > 0 && p.uploaded_files.some(f => f.url && (f.url.match(/\.(jpeg|jpg|gif|png)$/i) || f.label.toLowerCase().includes('foto'))) ? (
-                                                                            <img 
-                                                                                src={p.uploaded_files.find(f => f.url && (f.url.match(/\.(jpeg|jpg|gif|png)$/i) || f.label.toLowerCase().includes('foto'))).url} 
-                                                                                alt={p.name} 
-                                                                                className="w-full h-full object-cover cursor-pointer"
-                                                                                onClick={(e) => {
-                                                                                    e.stopPropagation();
-                                                                                    window.open(p.uploaded_files.find(f => f.url && (f.url.match(/\.(jpeg|jpg|gif|png)$/i) || f.label.toLowerCase().includes('foto'))).url, '_blank');
-                                                                                }}
-                                                                            />
-                                                                        ) : (
-                                                                            p.name?.charAt(0).toUpperCase()
-                                                                        )}
-                                                                    </div>
                                                                     <div className="min-w-0">
                                                                         <p 
-                                                                            className={`font-extrabold text-gray-900 truncate text-sm sm:text-base ${p.user_id ? 'cursor-pointer hover:text-green-700 hover:underline' : ''}`}
+                                                                            className={`font-extrabold text-gray-900 break-words text-sm sm:text-base ${p.user_id ? 'cursor-pointer hover:text-green-700 hover:underline' : ''}`}
                                                                             onClick={() => {
                                                                                 if (p.user_id) {
                                                                                     setSelectedUserId(p.user_id);
@@ -910,19 +895,6 @@ const EventDetailPage = () => {
                                                                             <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
                                                                                 Terdaftar
                                                                             </p>
-                                                                            {p.uploaded_files && p.uploaded_files.map((file, idx) => (
-                                                                                <a 
-                                                                                    key={idx}
-                                                                                    href={file.url}
-                                                                                    target="_blank"
-                                                                                    rel="noreferrer"
-                                                                                    className="text-[8px] bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded border border-blue-100 flex items-center gap-1 hover:bg-blue-100 transition"
-                                                                                    onClick={(e) => e.stopPropagation()}
-                                                                                >
-                                                                                    <span className="material-icons text-[10px]">attach_file</span>
-                                                                                    {file.label}
-                                                                                </a>
-                                                                            ))}
                                                                         </div>
                                                                     </div>
                                                                 </div>
@@ -970,24 +942,9 @@ const EventDetailPage = () => {
                                                                         {/* Subtle Accent Line */}
                                                                         <div className={`absolute left-0 top-0 bottom-0 w-1 ${color.bullet} opacity-20`}></div>
 
-                                                                        <div className={`w-10 h-10 rounded-xl ${color.bullet} text-white flex items-center justify-center font-black text-xs shadow-sm shrink-0 border border-white/20 overflow-hidden`}>
-                                                                            {p.uploaded_files && p.uploaded_files.length > 0 && p.uploaded_files.some(f => f.url && (f.url.match(/\.(jpeg|jpg|gif|png)$/i) || f.label.toLowerCase().includes('foto'))) ? (
-                                                                                <img 
-                                                                                    src={p.uploaded_files.find(f => f.url && (f.url.match(/\.(jpeg|jpg|gif|png)$/i) || f.label.toLowerCase().includes('foto'))).url} 
-                                                                                    alt={p.name} 
-                                                                                    className="w-full h-full object-cover cursor-pointer"
-                                                                                    onClick={(e) => {
-                                                                                        e.stopPropagation();
-                                                                                        window.open(p.uploaded_files.find(f => f.url && (f.url.match(/\.(jpeg|jpg|gif|png)$/i) || f.label.toLowerCase().includes('foto'))).url, '_blank');
-                                                                                    }}
-                                                                                />
-                                                                            ) : (
-                                                                                p.name?.charAt(0).toUpperCase()
-                                                                            )}
-                                                                        </div>
                                                                         <div className="min-w-0">
                                                                             <p 
-                                                                                className={`font-extrabold ${color.text} truncate text-sm sm:text-base ${p.user_id ? 'cursor-pointer hover:underline' : ''}`}
+                                                                                className={`font-extrabold ${color.text} break-words text-sm sm:text-base ${p.user_id ? 'cursor-pointer hover:underline' : ''}`}
                                                                                 onClick={() => {
                                                                                     if (p.user_id) {
                                                                                         setSelectedUserId(p.user_id);
@@ -1001,19 +958,6 @@ const EventDetailPage = () => {
                                                                                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
                                                                                     Terdaftar
                                                                                 </p>
-                                                                                {p.uploaded_files && p.uploaded_files.map((file, idx) => (
-                                                                                    <a 
-                                                                                        key={idx}
-                                                                                        href={file.url}
-                                                                                        target="_blank"
-                                                                                        rel="noreferrer"
-                                                                                        className={`text-[8px] ${color.bg} ${color.text} px-1.5 py-0.5 rounded border ${color.border} flex items-center gap-1 hover:opacity-80 transition`}
-                                                                                        onClick={(e) => e.stopPropagation()}
-                                                                                    >
-                                                                                        <span className="material-icons text-[10px]">attach_file</span>
-                                                                                        {file.label}
-                                                                                    </a>
-                                                                                ))}
                                                                             </div>
                                                                         </div>
                                                                     </div>
