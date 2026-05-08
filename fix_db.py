@@ -1,5 +1,6 @@
 import os
 import subprocess
+import base64
 
 def run_cmd(cmd):
     print(f"Running: {cmd}")
@@ -10,7 +11,7 @@ def run_cmd(cmd):
         print(f"Success: {result.stdout}")
 
 def main():
-    print("Fixing database columns manually via Django Shell...")
+    print("Fixing database columns manually (Secure Base64 Method)...")
     if os.path.exists("barakah_app"):
         os.chdir("barakah_app")
     
@@ -25,9 +26,13 @@ def main():
     ]
     
     for sql in sql_commands:
-        # Menggunakan triple quotes agar tanda kutip di dalam SQL tidak merusak sintaks Python
-        python_code = f"from django.db import connection; cursor = connection.cursor(); cursor.execute(\"\"\"{sql}\"\"\")"
-        cmd = f'docker compose exec -T backend python manage.py shell -c \'{python_code}\''
+        # Kode python yang akan dijalankan di dalam kontainer
+        py_code = f"from django.db import connection; cursor = connection.cursor(); cursor.execute(\"{sql}\")"
+        # Encode ke base64 agar aman dari gangguan tanda kutip terminal
+        encoded_code = base64.b64encode(py_code.encode()).decode()
+        
+        # Jalankan di dalam docker
+        cmd = f"docker compose exec -T backend python -c \"import base64; exec(base64.b64decode('{encoded_code}'))\""
         run_cmd(cmd)
 
     print("\nMarking migration as faked...")
