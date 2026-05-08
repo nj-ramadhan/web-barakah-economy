@@ -76,7 +76,8 @@ class Event(models.Model):
     has_certificate = models.BooleanField(default=False, help_text="Apakah event ini menyediakan sertifikat?")
     has_bib = models.BooleanField(default=False, help_text="Apakah event ini menyediakan nomor peserta (BIB)?")
     allow_ots_payment = models.BooleanField(default=False, help_text="Izinkan pembayaran di tempat (On The Spot)")
-
+    committees = models.ManyToManyField(User, blank=True, related_name='committee_events', help_text="Panitia yang berhak melakukan scan kehadiran.")
+    
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

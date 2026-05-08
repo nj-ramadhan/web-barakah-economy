@@ -8,6 +8,7 @@ import EventManualRegistrationModal from '../../components/admin/EventManualRegi
 import EventRegistrationEditModal from '../../components/admin/EventRegistrationEditModal';
 import CertificateEditor from '../../components/events/CertificateEditor';
 import BibEditor from '../../components/events/BibEditor';
+import EventCommitteeModal from '../../components/admin/EventCommitteeModal';
 import '../../styles/Body.css';
 
 const EventRegistrationSubmissionPage = () => {
@@ -32,6 +33,7 @@ const EventRegistrationSubmissionPage = () => {
     const [activeTab, setActiveTab] = useState(initialTab); // 'participants', 'certificate', or 'bib'
     const [isImporting, setIsImporting] = useState(false);
     const [isResending, setIsResending] = useState(false);
+    const [showCommitteeModal, setShowCommitteeModal] = useState(false);
 
     useEffect(() => {
         fetchData();
@@ -369,6 +371,13 @@ const EventRegistrationSubmissionPage = () => {
                                 Kirim Ulang QR/BIB
                             </button>
                         )}
+                        <button
+                            onClick={() => setShowCommitteeModal(true)}
+                            className="bg-purple-100 text-purple-600 px-5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 hover:bg-purple-200 transition shadow-sm border border-purple-200"
+                        >
+                            <span className="material-icons text-sm">groups</span>
+                            Panitia
+                        </button>
                     </div>
                 </div>
 
@@ -798,6 +807,16 @@ const EventRegistrationSubmissionPage = () => {
                         </div>
                     </div>
                 </div>
+            )}
+
+            {/* Committee Modal */}
+            {showCommitteeModal && (
+                <EventCommitteeModal 
+                    slug={slug} 
+                    onClose={() => setShowCommitteeModal(false)}
+                    committees={event?.committees_details || []}
+                    onRefresh={fetchData}
+                />
             )}
 
             {/* Payment Proof Modal */}

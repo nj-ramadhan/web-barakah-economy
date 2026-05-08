@@ -579,7 +579,7 @@ class EventViewSet(viewsets.ModelViewSet):
         users = users.select_related('profile').order_by('profile__name_full')
         
         paginator = PageNumberPagination()
-        paginator.page_size = 50
+        paginator.page_size = 5
         result_page = paginator.paginate_queryset(users, request)
         serializer = UserSimpleSerializer(result_page, many=True)
         return paginator.get_paginated_response(serializer.data)
@@ -787,37 +787,36 @@ class EventViewSet(viewsets.ModelViewSet):
                 f"Salam,\nBarakah Economy"
             )
             
-            # Send text message first
-            msg_res = whatsapp_service.send_message(formatted_phone, wa_message)
-            if not msg_res.get('success'):
-                import logging
-                logging.getLogger(__name__).error(f"WhatsApp text send failed for {formatted_phone}: {msg_res.get('message')}")
-
-            # Always try to send QR code image if available
+            # Prepare QR code image if available
+            qr_b64 = None
             if registration.qr_image:
                 try:
                     import base64
-                    import os
-                    
                     # Ensure the file exists and can be read
                     if registration.qr_image.storage.exists(registration.qr_image.name):
                         with registration.qr_image.open('rb') as qr_file:
                             encoded = base64.b64encode(qr_file.read()).decode('utf-8')
-                            file_b64 = f"data:image/png;base64,{encoded}"
-                            
-                            img_res = whatsapp_service.send_file(
-                                formatted_phone, 
-                                f"QR Tiket {unique_code}", 
-                                file_b64, 
-                                filename=f"tiket_{unique_code}.png"
-                            )
-                            if not img_res.get('success'):
-                                logging.getLogger(__name__).error(f"WhatsApp QR send failed for {formatted_phone}: {img_res.get('message')}")
+                            qr_b64 = f"data:image/png;base64,{encoded}"
                     else:
                         logging.getLogger(__name__).error(f"QR image file not found for registration {registration.id}")
                 except Exception as e:
-                    import logging
-                    logging.getLogger(__name__).error(f"Gagal mengirim gambar WA QR: {e}")
+                    logging.getLogger(__name__).error(f"Error preparing QR image for WA: {e}")
+
+            # Send main notification
+            if qr_b64:
+                # Send QR image WITH the message as caption
+                img_res = whatsapp_service.send_file(
+                    formatted_phone, 
+                    wa_message, 
+                    qr_b64, 
+                    filename=f"tiket_{unique_code}.png"
+                )
+                if not img_res.get('success'):
+                    # Fallback to text if file send fails
+                    whatsapp_service.send_message(formatted_phone, wa_message)
+            else:
+                # No QR image available, just send text
+                whatsapp_service.send_message(formatted_phone, wa_message)
 
             # Send BIB if enabled
             if registration.event.has_bib:
@@ -1642,14 +1641,134 @@ class EventViewSet(viewsets.ModelViewSet):
         response['Content-Disposition'] = f'attachment; filename="BIB_{formatted_bib}.jpg"'
         return response
 
+    @action(detail=True, methods=['get'], permission_classes=[permissions.IsAuthenticated], url_path='check-scan-permission')
+    def check_scan_permission(self, request, slug=None):
+        """Check if user has permission to scan attendance."""
+        event = self.get_object()
+        is_committee = event.committees.filter(id=request.user.id).exists()
+        if not (request.user.is_staff or event.created_by == request.user or request.user.has_menu_access('admin_events') or is_committee):
+             return Response({'authorized': False, 'error': 'Hanya penyelenggara, admin, atau panitia terpilih yang bisa scan kehadiran.'}, status=status.HTTP_403_FORBIDDEN)
+        return Response({'authorized': True})
+
+    @action(detail=True, methods=['get'], permission_classes=[permissions.IsAuthenticated], url_path='available-committees')
+    def available_committees(self, request, slug=None):
+        """Search users to be added as committee members."""
+        event = self.get_object()
+        if not (request.user.is_staff or event.created_by == request.user or request.user.has_menu_access('admin_events')):
+            return Response({"error": "Unauthorized"}, status=status.HTTP_403_FORBIDDEN)
+
+        from accounts.models import User
+        from accounts.serializers import UserSimpleSerializer
+        
+        search = request.query_params.get('search', '')
+        if not search:
+            return Response([])
+            
+        # Exclude users already in committee
+        committee_ids = event.committees.values_list('id', flat=True)
+        
+        users = User.objects.exclude(id__in=committee_ids).filter(
+            Q(username__icontains=search) |
+            Q(email__icontains=search) |
+            Q(profile__name_full__icontains=search) |
+            Q(phone__icontains=search)
+        ).select_related('profile')[:20]
+        
+        serializer = UserSimpleSerializer(users, many=True)
+        return Response(serializer.data)
+
+    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated], url_path='manage-committees')
+    def manage_committees(self, request, slug=None):
+        """Add or remove committee members."""
+        event = self.get_object()
+        if not (request.user.is_staff or event.created_by == request.user or request.user.has_menu_access('admin_events')):
+            return Response({"error": "Unauthorized"}, status=status.HTTP_403_FORBIDDEN)
+
+        user_id = request.data.get('user_id')
+        operation = request.data.get('operation') # 'add' or 'remove'
+        
+        from accounts.models import User
+        try:
+            target_user = User.objects.get(id=user_id)
+        except User.DoesNotExist:
+            return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+            
+        if operation == 'add':
+            # Check for complete profile: Username, Email, and Phone
+            if not (target_user.username and target_user.email and target_user.phone):
+                return Response({
+                    "error": "Data profil panitia tidak lengkap. Username, Email, dan No HP wajib diisi agar bisa ditugaskan dan menerima link scan."
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            event.committees.add(target_user)
+            
+            # Send auto notification
+            try:
+                frontend_url = getattr(settings, 'FRONTEND_URL', 'https://barakah.cloud')
+                scan_url = f"{frontend_url}/dashboard/event/scan/{event.slug}"
+                formatted_phone = target_user.phone
+                if formatted_phone.startswith('0'):
+                    formatted_phone = '62' + formatted_phone[1:]
+                elif not formatted_phone.startswith('62'):
+                    formatted_phone = '62' + formatted_phone
+                
+                message = f"Halo {target_user.username},\n\nAnda ditugaskan sebagai Panitia untuk event: *{event.title}*.\n\nSilakan akses link berikut untuk melakukan scan kehadiran peserta:\n{scan_url}\n\nTerima kasih!"
+                whatsapp_service.send_message(formatted_phone, message)
+            except Exception as e:
+                logger.error(f"Failed to send auto committee notification: {str(e)}")
+
+            return Response({"message": f"{target_user.username} ditambahkan sebagai panitia dan link scan telah dikirim."})
+        elif operation == 'remove':
+            event.committees.remove(target_user)
+            return Response({"message": f"{target_user.username} dihapus dari panitia."})
+        else:
+            return Response({"error": "Invalid operation"}, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated], url_path='send-scan-link')
+    def send_scan_link(self, request, slug=None):
+        """Send the scan link to selected or all committees via WhatsApp."""
+        event = self.get_object()
+        if not (request.user.is_staff or event.created_by == request.user or request.user.has_menu_access('admin_events')):
+            return Response({"error": "Unauthorized"}, status=status.HTTP_403_FORBIDDEN)
+
+        committee_ids = request.data.get('user_ids') # Optional: if null, send to all
+        if committee_ids:
+            committees = event.committees.filter(id__in=committee_ids)
+        else:
+            committees = event.committees.all()
+            
+        if not committees.exists():
+            return Response({"error": "No committees selected"}, status=status.HTTP_400_BAD_REQUEST)
+            
+        frontend_url = getattr(settings, 'FRONTEND_URL', 'https://barakah.cloud')
+        scan_url = f"{frontend_url}/dashboard/event/scan/{event.slug}"
+        
+        success_count = 0
+        for user in committees:
+            if user.phone:
+                formatted_phone = user.phone
+                if formatted_phone.startswith('0'):
+                    formatted_phone = '62' + formatted_phone[1:]
+                elif not formatted_phone.startswith('62'):
+                    formatted_phone = '62' + formatted_phone
+                
+                message = f"Halo {user.username},\n\nAnda ditugaskan sebagai Panitia untuk event: *{event.title}*.\n\nSilakan akses link berikut untuk melakukan scan kehadiran peserta:\n{scan_url}\n\nTerima kasih!"
+                
+                res = whatsapp_service.send_message(formatted_phone, message)
+                if res.get('success'):
+                    success_count += 1
+                    
+        return Response({"message": f"Link scan berhasil dikirim ke {success_count} panitia."})
+
     @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
     def scan_attendance(self, request, slug=None):
         """Scan QR code untuk menandai kehadiran peserta (per sesi)."""
         event = self.get_object()
         
-        # Hanya organizer atau admin event
-        if not (request.user.is_staff or event.created_by == request.user or request.user.has_menu_access('admin_events')):
-            return Response({'error': 'Hanya penyelenggara atau admin yang bisa scan kehadiran.'}, status=status.HTTP_403_FORBIDDEN)
+        # Hanya organizer, admin event, atau panitia terpilih
+        is_committee = event.committees.filter(id=request.user.id).exists()
+        if not (request.user.is_staff or event.created_by == request.user or request.user.has_menu_access('admin_events') or is_committee):
+            return Response({'error': 'Hanya penyelenggara, admin, atau panitia terpilih yang bisa scan kehadiran.'}, status=status.HTTP_403_FORBIDDEN)
         
         unique_code = request.data.get('unique_code', '').strip().upper()
         # Handle cases where session_id might be "null" string or empty

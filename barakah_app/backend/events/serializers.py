@@ -95,6 +95,7 @@ class EventSerializer(serializers.ModelSerializer):
     gallery_images = EventGalleryImageSerializer(many=True, read_only=True)
     speakers = EventSpeakerSerializer(many=True, required=False)
     sessions = EventSessionSerializer(many=True, required=False)
+    committees_details = serializers.SerializerMethodField()
     registration_count = serializers.SerializerMethodField()
     attended_count = serializers.SerializerMethodField()
     user_registration = serializers.SerializerMethodField()
@@ -133,6 +134,10 @@ class EventSerializer(serializers.ModelSerializer):
     def get_attended_count(self, obj):
         # Count registrations that have at least one attendance record or is_attended true
         return obj.registrations.filter(is_attended=True).count()
+
+    def get_committees_details(self, obj):
+        from accounts.serializers import UserSimpleSerializer
+        return UserSimpleSerializer(obj.committees.all(), many=True).data
 
     def get_user_registration(self, obj):
         request = self.context.get('request')

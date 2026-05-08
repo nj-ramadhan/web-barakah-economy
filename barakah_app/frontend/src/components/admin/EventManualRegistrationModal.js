@@ -77,21 +77,16 @@ const EventManualRegistrationModal = ({ isOpen, onClose, event, registrations = 
     };
 
     useEffect(() => {
-        if (isUserListOpen) {
-            fetchUsers(userSearch, page);
-        }
-    }, [isUserListOpen, page]);
+        if (!isUserListOpen) return;
 
-    useEffect(() => {
-        if (isUserListOpen) {
-            if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
-            searchTimeoutRef.current = setTimeout(() => {
-                setPage(1); // Reset to page 1 on search
-                fetchUsers(userSearch, 1);
-            }, 500);
-        }
+        if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
+        
+        searchTimeoutRef.current = setTimeout(() => {
+            fetchUsers(userSearch, page);
+        }, userSearch ? 500 : 0);
+
         return () => { if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current); };
-    }, [userSearch]);
+    }, [isUserListOpen, userSearch, page]);
 
     if (!isOpen || !event) return null;
 

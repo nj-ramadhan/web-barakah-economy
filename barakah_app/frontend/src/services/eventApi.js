@@ -254,3 +254,27 @@ export const importParticipantsCsv = (slug, file) => {
         }
     });
 };
+
+export const getAvailableCommittees = (slug, search = '') => {
+    return axios.get(`${API_BASE_URL}/api/events/${slug}/available-committees/`, {
+        params: { search },
+        headers: getAuthHeaders()
+    });
+};
+
+export const manageCommittee = (slug, userId, operation) => {
+    return axios.post(`${API_BASE_URL}/api/events/${slug}/manage-committees/`, {
+        user_id: userId,
+        operation: operation
+    }, {
+        headers: getAuthHeaders()
+    });
+};
+
+export const sendScanLink = (slug, userIds = null) => {
+    return axios.post(`${API_BASE_URL}/api/events/${slug}/send-scan-link/`, {
+        user_ids: userIds
+    }, {
+        headers: getAuthHeaders()
+    });
+};

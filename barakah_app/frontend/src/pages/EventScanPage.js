@@ -30,12 +30,18 @@ const EventScanPage = () => {
 
     const fetchEvent = useCallback(async () => {
         try {
+            // First check permission
+            await axios.get(`${API}/api/events/${slug}/check-scan-permission/`, getAuth());
+            
             const res = await axios.get(`${API}/api/events/${slug}/`, getAuth());
             setEvent(res.data);
             if (!selectedSession && res.data.sessions && res.data.sessions.length > 0) {
                 setSelectedSession(res.data.sessions[0].id);
             }
-        } catch {
+        } catch (err) {
+            if (err.response?.status === 403) {
+                alert('Anda tidak memiliki akses sebagai panitia untuk event ini.');
+            }
             navigate('/dashboard/my-events');
         } finally {
             setLoading(false);
@@ -374,7 +380,8 @@ const EventScanPage = () => {
                                          scanResult.status === 'already_attended' ? 'Sudah Ada Data' : 'Gagal Verifikasi'}
                                     </p>
                                     <p className="text-[10px] text-gray-600 font-medium leading-tight">
-                                        {scanResult.message} 
+                                        {scanResult.message}
+                                        {selectedSession && (
                                              <span className="block mt-1 font-bold text-[9px] text-purple-700 uppercase">
                                                  Sesi: {event.sessions.find(s => Number(s.id) === Number(selectedSession))?.title}
                                              </span>
