@@ -29,54 +29,67 @@ const UserSelectionOverlay = ({
                     </button>
                 </div>
 
-                {/* Search Bar */}
-                <div className="px-8 py-4 bg-gray-50/50 border-b border-gray-100 space-y-3">
-                    <div className="relative">
-                        <span className="material-icons absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">search</span>
-                        <input
-                            type="text"
-                            className="w-full pl-12 pr-4 py-3 bg-white border border-gray-200 rounded-2xl text-sm focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none shadow-sm"
-                            placeholder="Cari Username / Nama / Email / No Telp..."
-                            value={userSearch}
-                            onChange={(e) => setUserSearch(e.target.value)}
-                        />
-                        {isFetchingUsers && (
-                            <div className="absolute right-4 top-1/2 -translate-y-1/2">
-                                <div className="animate-spin h-4 w-4 border-2 border-blue-500 border-t-transparent rounded-full"></div>
-                            </div>
-                        )}
+                {/* Search & Filter Header */}
+                <div className="px-8 py-6 bg-gray-50/80 border-b border-gray-100 backdrop-blur-sm">
+                    <div className="flex flex-wrap gap-3">
+                        <div className="flex-1 min-w-[200px] relative">
+                            <span className="material-icons absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-lg">search</span>
+                            <input
+                                type="text"
+                                className="w-full pl-12 pr-4 py-3 bg-white border border-gray-200 rounded-2xl text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all outline-none shadow-sm"
+                                placeholder="Cari nama, email, phone..."
+                                value={userSearch}
+                                onChange={(e) => setUserSearch(e.target.value)}
+                            />
+                            {isFetchingUsers && (
+                                <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                                    <div className="animate-spin h-4 w-4 border-2 border-green-500 border-t-transparent rounded-full"></div>
+                                </div>
+                            )}
+                        </div>
+                        <select 
+                            value={pagination.pageSize} 
+                            onChange={(e) => pagination.onPageSizeChange(e.target.value)}
+                            className="bg-white border border-gray-200 rounded-2xl px-4 py-3 text-xs font-black text-green-700 outline-none focus:ring-2 focus:ring-green-500 shadow-sm"
+                        >
+                            <option value="10">10 / hal</option>
+                            <option value="25">25 / hal</option>
+                            <option value="50">50 / hal</option>
+                        </select>
                     </div>
                     
-                    <div className="flex items-center justify-between px-2 min-h-[40px]">
+                    <div className="flex items-center justify-between mt-4 px-2 min-h-[40px]">
                         {pagination.total > 0 && (
                             <button 
                                 onClick={handleSelectAllFound}
-                                className="text-[10px] font-black text-blue-600 uppercase tracking-widest flex items-center gap-2 hover:bg-blue-50 px-3 py-2 rounded-xl transition"
+                                className="text-[10px] font-black text-blue-600 uppercase tracking-widest flex items-center gap-2 hover:bg-blue-50 px-4 py-2.5 rounded-xl transition shadow-sm border border-blue-50 bg-white"
                             >
                                 <span className="material-icons text-sm">
                                     {allUsers.length > 0 && allUsers.every(u => selectedUserIds.includes(u.id)) ? 'check_box' : 'check_box_outline_blank'}
                                 </span>
-                                {allUsers.length > 0 && allUsers.every(u => selectedUserIds.includes(u.id)) ? 'Batal Pilih Semua' : 'Pilih Semua Hasil'}
+                                {allUsers.length > 0 && allUsers.every(u => selectedUserIds.includes(u.id)) ? 'BATAL PILIH SEMUA' : 'PILIH SEMUA HASIL'}
                             </button>
                         )}
 
                         {/* Pagination Controls */}
-                        {pagination.total > 5 && (
+                        {pagination.totalPages > 1 && (
                             <div className="flex items-center gap-3">
                                 <button 
                                     disabled={!pagination.hasPrev || isFetchingUsers}
                                     onClick={() => pagination.onPageChange(pagination.current - 1)}
-                                    className="w-8 h-8 flex items-center justify-center rounded-lg bg-white border border-gray-200 text-gray-500 disabled:opacity-30 hover:bg-gray-50 transition shadow-sm"
+                                    className={`w-10 h-10 flex items-center justify-center rounded-xl border transition shadow-sm ${!pagination.hasPrev ? 'bg-gray-50 text-gray-300' : 'bg-white text-green-700 border-green-200 hover:bg-green-50'}`}
                                 >
-                                    <span className="material-icons text-sm">chevron_left</span>
+                                    <span className="material-icons">chevron_left</span>
                                 </button>
-                                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Halaman {pagination.current}</span>
+                                <span className="text-[10px] font-black text-gray-700 uppercase tracking-widest bg-white px-5 py-2.5 rounded-xl border border-gray-100 shadow-sm">
+                                    Hal {pagination.current}/{pagination.totalPages}
+                                </span>
                                 <button 
                                     disabled={!pagination.hasNext || isFetchingUsers}
                                     onClick={() => pagination.onPageChange(pagination.current + 1)}
-                                    className="w-8 h-8 flex items-center justify-center rounded-lg bg-white border border-gray-200 text-gray-500 disabled:opacity-30 hover:bg-gray-50 transition shadow-sm"
+                                    className={`w-10 h-10 flex items-center justify-center rounded-xl border transition shadow-sm ${!pagination.hasNext ? 'bg-gray-50 text-gray-300' : 'bg-white text-green-700 border-green-200 hover:bg-green-50'}`}
                                 >
-                                    <span className="material-icons text-sm">chevron_right</span>
+                                    <span className="material-icons">chevron_right</span>
                                 </button>
                             </div>
                         )}
@@ -84,56 +97,84 @@ const UserSelectionOverlay = ({
                 </div>
 
                 {/* User List */}
-                <div className="flex-1 overflow-y-auto px-6 py-4 space-y-1 custom-scrollbar bg-gray-50/30">
-                    {allUsers.length === 0 && !isFetchingUsers ? (
-                        <div className="text-center py-20 opacity-40">
-                            <span className="material-icons text-5xl">person_search</span>
-                            <p className="text-xs font-black uppercase tracking-widest mt-3">User tidak ditemukan</p>
+                <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
+                    {allUsers.length === 0 ? (
+                        <div className="text-center py-20 bg-gray-50/50 rounded-[3rem] border-2 border-dashed border-gray-100 flex flex-col items-center justify-center">
+                            <div className="w-20 h-20 bg-white rounded-3xl flex items-center justify-center shadow-xl mb-6 transform -rotate-12">
+                                <span className="material-icons text-4xl text-gray-200">person_search</span>
+                            </div>
+                            <p className="text-sm font-bold text-gray-400 uppercase tracking-widest">User tidak ditemukan</p>
+                            <p className="text-[10px] text-gray-300 mt-2 uppercase tracking-[0.2em]">Coba kata kunci lain</p>
                         </div>
                     ) : (
-                        allUsers.map(user => (
-                            <label
-                                key={user.id}
-                                className={`flex items-center gap-3 px-4 py-2.5 rounded-xl border transition-all cursor-pointer ${
-                                    selectedUserIds.includes(user.id) ? 'bg-blue-50 border-blue-200' : 'bg-white border-gray-100 hover:border-blue-100'
-                                }`}
-                            >
-                                <div className="flex items-center justify-center">
-                                    <input
-                                        type="checkbox"
-                                        checked={selectedUserIds.includes(user.id)}
-                                        onChange={() => handleToggleUserSelection(user.id)}
-                                        className="hidden"
-                                    />
-                                    <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${
-                                        selectedUserIds.includes(user.id) ? 'bg-blue-600 border-blue-600' : 'border-gray-300 bg-white'
+                        <div className="space-y-3">
+                            {allUsers.map(user => (
+                                <label 
+                                    key={user.id} 
+                                    className={`group flex items-center justify-between p-5 rounded-3xl border transition-all cursor-pointer hover:shadow-xl hover:shadow-green-900/5 ${
+                                        selectedUserIds.includes(user.id) 
+                                            ? 'bg-green-50/50 border-green-200 shadow-lg shadow-green-900/5 ring-1 ring-green-100' 
+                                            : 'bg-white border-gray-100 hover:border-green-100'
+                                    }`}
+                                >
+                                    <div className="flex items-center gap-5">
+                                        <div className="relative">
+                                            <input
+                                                type="checkbox"
+                                                className="hidden"
+                                                checked={selectedUserIds.includes(user.id)}
+                                                onChange={() => handleToggleUserSelection(user.id)}
+                                            />
+                                            <div className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all ${
+                                                selectedUserIds.includes(user.id) 
+                                                    ? 'bg-green-600 border-green-600 scale-110 shadow-lg shadow-green-600/30' 
+                                                    : 'bg-white border-gray-200 group-hover:border-green-400'
+                                            }`}>
+                                                {selectedUserIds.includes(user.id) && <span className="material-icons text-white text-[14px]">check</span>}
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <div className="flex items-center gap-2 mb-1">
+                                                <p className={`text-sm font-black uppercase tracking-tight transition-colors ${
+                                                    selectedUserIds.includes(user.id) ? 'text-green-900' : 'text-gray-900'
+                                                }`}>
+                                                    {user.full_name || user.username}
+                                                </p>
+                                                <span className="px-2 py-0.5 bg-gray-100 text-gray-400 rounded-md text-[8px] font-black tracking-widest uppercase">#{user.id}</span>
+                                            </div>
+                                            <p className="text-[10px] text-gray-400 font-bold tracking-tight flex items-center gap-2">
+                                                <span className="flex items-center gap-1"><span className="material-icons text-[10px]">alternate_email</span>{user.email}</span>
+                                                <span className="w-1 h-1 bg-gray-200 rounded-full"></span>
+                                                <span className="flex items-center gap-1"><span className="material-icons text-[10px]">phone</span>{user.phone || '-'}</span>
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <span className={`material-icons text-lg transition-all transform ${
+                                        selectedUserIds.includes(user.id) ? 'text-green-600 scale-110' : 'text-gray-100 group-hover:text-green-200'
                                     }`}>
-                                        {selectedUserIds.includes(user.id) && <span className="material-icons text-[14px] text-white">check</span>}
-                                    </div>
-                                </div>
-                                <div className="flex-1 min-w-0 flex items-center justify-between gap-4">
-                                    <div className="font-bold text-gray-900 text-sm truncate">{user.full_name || user.username}</div>
-                                    <div className="text-[10px] text-gray-400 font-bold uppercase tracking-tighter truncate text-right">
-                                        {user.email || 'No Email'} • {user.phone || 'No Phone'}
-                                    </div>
-                                </div>
-                            </label>
-                        ))
+                                        {selectedUserIds.includes(user.id) ? 'verified' : 'account_circle'}
+                                    </span>
+                                </label>
+                            ))}
+                        </div>
                     )}
                 </div>
 
-                {/* Footer */}
-                <div className="p-6 bg-white border-t border-gray-100 flex items-center justify-between">
-                    <div className="flex flex-col">
-                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">Total Terpilih</p>
-                        <p className="text-xl font-black text-blue-600 leading-none">{selectedUserIds.length} <span className="text-[10px] text-gray-400">User</span></p>
+                {/* Footer Selection Summary */}
+                <div className="p-8 border-t border-gray-50 bg-white flex items-center justify-between shadow-[0_-4px_20px_rgba(0,0,0,0.02)]">
+                    <div>
+                        <p className="text-[10px] text-gray-400 font-black uppercase tracking-[0.2em] mb-1">Total Terpilih</p>
+                        <div className="flex items-center gap-3">
+                            <span className="text-2xl font-black text-green-700 tracking-tighter">{selectedUserIds.length}</span>
+                            <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">User</span>
+                        </div>
                     </div>
                     <button
                         onClick={handleConfirmSelection}
-                        disabled={selectedUserIds.length === 0}
-                        className="px-10 py-4 bg-blue-600 text-white rounded-2xl text-xs font-black uppercase tracking-widest shadow-xl shadow-blue-900/20 hover:bg-blue-700 transition-all active:scale-95 disabled:opacity-50"
+                        className="bg-gray-900 text-white px-12 py-5 rounded-[2rem] text-[11px] font-black uppercase tracking-[0.2em] hover:bg-gray-800 transition-all shadow-xl shadow-gray-900/20 active:scale-95 flex items-center gap-3"
                     >
-                        KONFIRMASI ({selectedUserIds.length})
+                        Konfirmasi ({selectedUserIds.length})
+                        <span className="material-icons text-sm">arrow_forward</span>
                     </button>
                 </div>
             </div>

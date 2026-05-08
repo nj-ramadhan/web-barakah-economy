@@ -25,6 +25,7 @@ const EventManualRegistrationModal = ({ isOpen, onClose, event, registrations = 
     
     // Pagination State
     const [page, setPage] = useState(1);
+    const [pageSize, setPageSize] = useState(10);
     const [paginationInfo, setPaginationInfo] = useState({ next: null, previous: null, count: 0 });
     
     const searchTimeoutRef = useRef(null);
@@ -50,13 +51,15 @@ const EventManualRegistrationModal = ({ isOpen, onClose, event, registrations = 
     // Get IDs of users who are already registered
     const registeredUserIds = registrations.map(r => r.user).filter(id => id !== null);
 
-    const fetchUsers = async (query = '', pageNum = 1) => {
+    const fetchUsers = async (query = '', pageNum = 1, size = 10) => {
         setIsFetchingUsers(true);
         try {
             // Updated to handle pagination parameters
-            const res = await getAvailableUsers(event.slug, query, pageNum);
+            const res = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/events/${event.slug}/available-users/`, {
+                params: { search: query, page: pageNum, page_size: size },
+                headers: { Authorization: `Bearer ${JSON.parse(localStorage.getItem('user'))?.access}` }
+            });
             
-            // Backend now returns paginated response: { count, next, previous, results }
             if (res.data.results) {
                 setAllUsers(res.data.results);
                 setPaginationInfo({
@@ -87,11 +90,11 @@ const EventManualRegistrationModal = ({ isOpen, onClose, event, registrations = 
         if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
         
         searchTimeoutRef.current = setTimeout(() => {
-            fetchUsers(userSearch, page);
-        }, userSearch ? 600 : 0); // Increased debounce to 600ms
+            fetchUsers(userSearch, page, pageSize);
+        }, userSearch ? 600 : 0);
 
         return () => { if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current); };
-    }, [isUserListOpen, userSearch, page]);
+    }, [isUserListOpen, userSearch, page, pageSize]);
 
     if (!isOpen || !event) return null;
 
@@ -337,9 +340,12 @@ const EventManualRegistrationModal = ({ isOpen, onClose, event, registrations = 
                 handleConfirmSelection={handleConfirmSelection}
                 pagination={{
                     current: page,
+                    pageSize: pageSize,
+                    onPageSizeChange: (size) => { setPageSize(size); setPage(1); },
                     hasNext: !!paginationInfo.next,
                     hasPrev: !!paginationInfo.previous,
                     total: paginationInfo.count,
+                    totalPages: Math.ceil(paginationInfo.count / pageSize),
                     onPageChange: setPage
                 }}
             />

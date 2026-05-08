@@ -584,8 +584,9 @@ class EventViewSet(viewsets.ModelViewSet):
             
         users = users.select_related('profile').order_by('profile__name_full')
         
+        page_size = request.query_params.get('page_size', 10)
         paginator = PageNumberPagination()
-        paginator.page_size = 5
+        paginator.page_size = int(page_size)
         result_page = paginator.paginate_queryset(users, request)
         serializer = UserSimpleSerializer(result_page, many=True)
         return paginator.get_paginated_response(serializer.data)
