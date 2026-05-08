@@ -1744,20 +1744,21 @@ class EventViewSet(viewsets.ModelViewSet):
         # Convert IDs to strings since JSON keys are strings
         team_field_ids = [str(fid) for fid in team_field_ids]
 
+        # Permission check for sensitive data (files, etc)
+        is_admin = request.user.is_authenticated and (request.user.is_staff or request.user.has_menu_access('admin_events'))
+        is_owner = request.user.is_authenticated and event.created_by == request.user
+        can_see_private = is_admin or is_owner
+
         data = []
         for reg in registrations:
+            # ... (name and team logic same as before)
             name = ""
             if reg.user:
-                # Try to get full name first
                 profile = getattr(reg.user, 'profile', None)
-                if profile and profile.name_full:
-                    name = profile.name_full
-                else:
-                    name = reg.user.username
+                name = profile.name_full if profile and profile.name_full else reg.user.username
             else:
                 name = reg.guest_name or "Tamu"
             
-            # Find team value
             team = None
             if reg.responses:
                 for fid in team_field_ids:
@@ -1766,14 +1767,15 @@ class EventViewSet(viewsets.ModelViewSet):
                         team = str(val)
                         break
                 
-            # Get uploaded files
+            # Get uploaded files - ONLY if admin/owner
             uploaded_files = []
-            for f in reg.uploaded_files.all():
-                uploaded_files.append({
-                    "id": f.id,
-                    "label": f.field.label,
-                    "url": request.build_absolute_uri(f.file.url) if f.file else None
-                })
+            if can_see_private:
+                for f in reg.uploaded_files.all():
+                    uploaded_files.append({
+                        "id": f.id,
+                        "label": f.field.label,
+                        "url": request.build_absolute_uri(f.file.url) if f.file else None
+                    })
 
             data.append({
                 "id": reg.id,
