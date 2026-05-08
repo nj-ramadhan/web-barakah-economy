@@ -25,9 +25,9 @@ def main():
     ]
     
     for sql in sql_commands:
-        # Menjalankan SQL melalui Django Shell (Python)
-        python_code = f"from django.db import connection; cursor = connection.cursor(); cursor.execute('{sql}')"
-        cmd = f'docker compose exec -T backend python manage.py shell -c "{python_code}"'
+        # Menggunakan triple quotes agar tanda kutip di dalam SQL tidak merusak sintaks Python
+        python_code = f"from django.db import connection; cursor = connection.cursor(); cursor.execute(\"\"\"{sql}\"\"\")"
+        cmd = f'docker compose exec -T backend python manage.py shell -c \'{python_code}\''
         run_cmd(cmd)
 
     print("\nMarking migration as faked...")
