@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import axios from 'axios';
 import { manualRegisterParticipant, getAvailableUsers, bulkManualRegister } from '../../services/eventApi';
 import UserSelectionOverlay from './UserSelectionOverlay';
 
