@@ -721,7 +721,7 @@ const DashboardPage = () => {
                                 },
                                 {
                                     id: 'activity_calendar',
-                                    access: hasAccess('activities') || isAdmin,
+                                    access: hasAccess('activities'),
                                     to: '/dashboard/admin/calendar',
                                     icon: 'calendar_month',
                                     color: 'indigo',
@@ -744,7 +744,7 @@ const DashboardPage = () => {
                             items: [
                                 {
                                     id: 'events',
-                                    access: hasAccess('admin_events') || hasAccess('event'),
+                                    access: hasAccess('admin_events'),
                                     to: '/dashboard/admin/events',
                                     icon: 'event',
                                     color: 'teal',
