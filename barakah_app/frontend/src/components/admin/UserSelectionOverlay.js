@@ -38,10 +38,7 @@ const UserSelectionOverlay = ({
                             className="w-full pl-12 pr-4 py-3 bg-white border border-gray-200 rounded-2xl text-sm focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none shadow-sm"
                             placeholder="Cari Username / Nama / Email / No Telp..."
                             value={userSearch}
-                            onChange={(e) => {
-                                setUserSearch(e.target.value);
-                                pagination.onPageChange(1); // Reset to page 1 on search
-                            }}
+                            onChange={(e) => setUserSearch(e.target.value)}
                         />
                         {isFetchingUsers && (
                             <div className="absolute right-4 top-1/2 -translate-y-1/2">
@@ -50,19 +47,21 @@ const UserSelectionOverlay = ({
                         )}
                     </div>
                     
-                    {allUsers.length > 0 && (
-                        <div className="flex items-center justify-between px-2">
+                    <div className="flex items-center justify-between px-2 min-h-[40px]">
+                        {pagination.total > 0 && (
                             <button 
                                 onClick={handleSelectAllFound}
                                 className="text-[10px] font-black text-blue-600 uppercase tracking-widest flex items-center gap-2 hover:bg-blue-50 px-3 py-2 rounded-xl transition"
                             >
                                 <span className="material-icons text-sm">
-                                    {allUsers.every(u => selectedUserIds.includes(u.id)) ? 'check_box' : 'check_box_outline_blank'}
+                                    {allUsers.length > 0 && allUsers.every(u => selectedUserIds.includes(u.id)) ? 'check_box' : 'check_box_outline_blank'}
                                 </span>
-                                {allUsers.every(u => selectedUserIds.includes(u.id)) ? 'Batal Pilih Semua' : 'Pilih Semua Hasil'}
+                                {allUsers.length > 0 && allUsers.every(u => selectedUserIds.includes(u.id)) ? 'Batal Pilih Semua' : 'Pilih Semua Hasil'}
                             </button>
+                        )}
 
-                            {/* Pagination Controls */}
+                        {/* Pagination Controls */}
+                        {pagination.total > 5 && (
                             <div className="flex items-center gap-3">
                                 <button 
                                     disabled={!pagination.hasPrev || isFetchingUsers}
@@ -80,8 +79,8 @@ const UserSelectionOverlay = ({
                                     <span className="material-icons text-sm">chevron_right</span>
                                 </button>
                             </div>
-                        </div>
-                    )}
+                        )}
+                    </div>
                 </div>
 
                 {/* User List */}

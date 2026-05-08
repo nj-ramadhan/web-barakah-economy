@@ -25,7 +25,7 @@ def send_message(phone, message):
     if not phone:
         return {'success': False, 'message': 'No HP kosong'}
 
-    api_url = f"{WA_API_URL}/send/message"
+    api_url = f"{WA_API_URL.rstrip('/')}/send/message"
     payload = {
         'phone': phone,
         'message': message
@@ -39,6 +39,8 @@ def send_message(phone, message):
             timeout=30,
             verify=False
         )
+        
+        logger.info(f"WA Text Response to {phone}: {response.status_code}")
 
         if 200 <= response.status_code < 300:
             return {
@@ -116,7 +118,7 @@ def send_file(phone, caption, file_data_base64, filename='document.pdf'):
 
 def _send_file_internal(phone, caption, file_path, filename, mime_type):
     """Internal helper to send a file from a local path."""
-    api_url = f"{WA_API_URL}/send/file"
+    api_url = f"{WA_API_URL.rstrip('/')}/send/file"
     
     try:
         with open(file_path, 'rb') as f:
@@ -131,6 +133,8 @@ def _send_file_internal(phone, caption, file_path, filename, mime_type):
                 timeout=45,
                 verify=False
             )
+        
+        logger.info(f"WA File Response to {phone} ({mime_type}): {response.status_code}")
 
         if 200 <= response.status_code < 300:
             return {
@@ -145,7 +149,11 @@ def _send_file_internal(phone, caption, file_path, filename, mime_type):
             # Fallback to text message
             logger.warning(f"WA file send failed (HTTP {response.status_code}, MIME: {mime_type}), falling back to text")
             fallback_msg = f"{caption}\n\n*[System]* Gagal lampirkan file ({mime_type})."
-            return send_message(phone, fallback_msg)
+            # Prevent infinite loops by not using send_file again
+            return {
+                'success': False,
+                'message': f"Gagal kirim file (HTTP {response.status_code})"
+            }
 
     except Exception as e:
         logger.error(f"WhatsApp _send_file_internal error: {e}")

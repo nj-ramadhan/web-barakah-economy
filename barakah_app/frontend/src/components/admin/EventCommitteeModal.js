@@ -7,42 +7,32 @@ const EventCommitteeModal = ({ slug, onClose, committees, onRefresh }) => {
     const [loading, setLoading] = useState(false);
     const [isSending, setIsSending] = useState(false);
 
-    useEffect(() => {
-        if (search.length >= 3) {
-            const delayDebounceFn = setTimeout(() => {
-                handleSearch();
-            }, 500);
-            return () => clearTimeout(delayDebounceFn);
-        } else {
-            setAvailableUsers([]);
-        }
-    }, [search]);
+    const [identifier, setIdentifier] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const handleSearch = async () => {
-        setLoading(true);
+    const handleAddByIdentifier = async (e) => {
+        if (e) e.preventDefault();
+        if (!identifier.trim()) return;
+
+        setIsSubmitting(true);
         try {
-            const res = await getAvailableCommittees(slug, search);
-            setAvailableUsers(res.data);
+            const res = await manageCommittee(slug, null, 'add', identifier.trim());
+            onRefresh();
+            setIdentifier('');
+            alert(res.data.message);
         } catch (err) {
-            console.error(err);
+            const errorMsg = err.response?.data?.error || 'Gagal menambahkan panitia. Pastikan user sudah terdaftar.';
+            alert(errorMsg);
         } finally {
-            setLoading(false);
+            setIsSubmitting(false);
         }
     };
 
     const handleManage = async (user, operation) => {
-        if (operation === 'add') {
-            if (!user.username || !user.email || !user.phone) {
-                alert('Gagal: Panitia harus memiliki data profil lengkap (Username, Email, dan No HP) untuk menerima link scan otomatis.');
-                return;
-            }
-        }
-
         try {
             const res = await manageCommittee(slug, user.id, operation);
             onRefresh();
-            if (operation === 'add') {
-                setAvailableUsers(prev => prev.filter(u => u.id !== user.id));
+            if (operation === 'remove') {
                 alert(res.data.message);
             }
         } catch (err) {
@@ -86,42 +76,25 @@ const EventCommitteeModal = ({ slug, onClose, committees, onRefresh }) => {
                     {/* Add New Committee */}
                     <div className="mb-8">
                         <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 block ml-1">Tambah Panitia (Email / Phone / Username)</label>
-                        <div className="relative">
+                        <form onSubmit={handleAddByIdentifier} className="relative group">
                             <input
                                 type="text"
-                                className="w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl text-sm focus:ring-4 focus:ring-purple-500/10 focus:border-purple-500/30 outline-none transition-all"
-                                placeholder="Cari user..."
-                                value={search}
-                                onChange={(e) => setSearch(e.target.value)}
+                                className="w-full pl-12 pr-32 py-4 bg-gray-50 border border-gray-100 rounded-2xl text-sm focus:ring-4 focus:ring-purple-500/10 focus:border-purple-500/30 outline-none transition-all shadow-sm"
+                                placeholder="Masukkan Email atau Username atau No HP..."
+                                value={identifier}
+                                onChange={(e) => setIdentifier(e.target.value)}
+                                disabled={isSubmitting}
                             />
-                            <span className="material-icons absolute left-4 top-1/2 -translate-y-1/2 text-gray-300">search</span>
-                        </div>
-
-                        {loading && <p className="text-center py-4 text-xs text-gray-400">Mencari...</p>}
-
-                        {availableUsers.length > 0 && (
-                            <div className="mt-4 bg-white border border-gray-100 rounded-2xl shadow-sm divide-y divide-gray-50 overflow-hidden">
-                                {availableUsers.map(user => (
-                                    <div key={user.id} className="p-4 flex items-center justify-between hover:bg-gray-50 transition">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center text-gray-400">
-                                                <span className="material-icons text-lg">person</span>
-                                            </div>
-                                            <div>
-                                                <p className="text-sm font-bold text-gray-900">{user.full_name || user.username}</p>
-                                                <p className="text-[10px] text-gray-400">{user.email} {user.phone && `• ${user.phone}`}</p>
-                                            </div>
-                                        </div>
-                                        <button
-                                            onClick={() => handleManage(user, 'add')}
-                                            className="bg-purple-600 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-purple-700 transition"
-                                        >
-                                            Jadikan Panitia
-                                        </button>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
+                            <span className="material-icons absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-purple-500 transition-colors">alternate_email</span>
+                            
+                            <button
+                                type="submit"
+                                disabled={isSubmitting || !identifier.trim()}
+                                className="absolute right-2 top-2 bottom-2 bg-purple-600 text-white px-6 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-purple-700 transition shadow-lg shadow-purple-900/20 disabled:opacity-50 disabled:shadow-none"
+                            >
+                                {isSubmitting ? 'Proses...' : 'Tambah'}
+                            </button>
+                        </form>
                     </div>
 
                     {/* Current Committees */}

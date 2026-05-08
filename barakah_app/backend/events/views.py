@@ -551,7 +551,11 @@ class EventViewSet(viewsets.ModelViewSet):
         from accounts.serializers import UserSimpleSerializer
         from rest_framework.pagination import PageNumberPagination
         
-        search = request.query_params.get('search', '')
+        search = request.query_params.get('search', '').strip()
+        page = request.query_params.get('page', '1')
+        
+        # Logging to debug search issues
+        logger.info(f"Available Users Search: '{search}' | Page: {page} | Event: {slug}")
         
         # Get IDs of users already registered
         registered_ids = EventRegistration.objects.filter(event=event, user__isnull=False).values_list('user_id', flat=True)
@@ -560,21 +564,23 @@ class EventViewSet(viewsets.ModelViewSet):
             email__isnull=False,
             phone__isnull=False,
             profile__name_full__isnull=False
-        ).exclude(
-            email=''
-        ).exclude(
-            phone=''
-        ).exclude(
-            profile__name_full=''
-        )
+        ).exclude(email='').exclude(phone='').exclude(profile__name_full='')
         
         if search:
-            users = users.filter(
-                Q(username__icontains=search) |
-                Q(email__icontains=search) |
-                Q(profile__name_full__icontains=search) |
-                Q(phone__icontains=search)
-            )
+            # If search contains @ or looks like a phone, do more specific filtering
+            if '@' in search or search.isdigit():
+                users = users.filter(
+                    Q(email__icontains=search) | 
+                    Q(username__icontains=search) | 
+                    Q(phone__icontains=search)
+                )
+            else:
+                users = users.filter(
+                    Q(username__icontains=search) |
+                    Q(email__icontains=search) |
+                    Q(profile__name_full__icontains=search) |
+                    Q(phone__icontains=search)
+                )
             
         users = users.select_related('profile').order_by('profile__name_full')
         
@@ -787,36 +793,32 @@ class EventViewSet(viewsets.ModelViewSet):
                 f"Salam,\nBarakah Economy"
             )
             
-            # Prepare QR code image if available
-            qr_b64 = None
+            # 1. Send text message first
+            whatsapp_service.send_message(formatted_phone, wa_message)
+            
+            # 2. Send QR code image separately
             if registration.qr_image:
                 try:
                     import base64
                     # Ensure the file exists and can be read
                     if registration.qr_image.storage.exists(registration.qr_image.name):
-                        with registration.qr_image.open('rb') as qr_file:
-                            encoded = base64.b64encode(qr_file.read()).decode('utf-8')
+                        with registration.qr_image.storage.open(registration.qr_image.name, 'rb') as qr_file:
+                            qr_file.seek(0)
+                            content = qr_file.read()
+                            encoded = base64.b64encode(content).decode('utf-8')
                             qr_b64 = f"data:image/png;base64,{encoded}"
+                            
+                            # Send image with short caption
+                            whatsapp_service.send_file(
+                                formatted_phone, 
+                                f"QR Tiket {unique_code}", 
+                                qr_b64, 
+                                filename=f"tiket_{unique_code}.png"
+                            )
                     else:
                         logging.getLogger(__name__).error(f"QR image file not found for registration {registration.id}")
                 except Exception as e:
-                    logging.getLogger(__name__).error(f"Error preparing QR image for WA: {e}")
-
-            # Send main notification
-            if qr_b64:
-                # Send QR image WITH the message as caption
-                img_res = whatsapp_service.send_file(
-                    formatted_phone, 
-                    wa_message, 
-                    qr_b64, 
-                    filename=f"tiket_{unique_code}.png"
-                )
-                if not img_res.get('success'):
-                    # Fallback to text if file send fails
-                    whatsapp_service.send_message(formatted_phone, wa_message)
-            else:
-                # No QR image available, just send text
-                whatsapp_service.send_message(formatted_phone, wa_message)
+                    logging.getLogger(__name__).error(f"Error sending QR image for WA: {e}")
 
             # Send BIB if enabled
             if registration.event.has_bib:
@@ -1650,33 +1652,6 @@ class EventViewSet(viewsets.ModelViewSet):
              return Response({'authorized': False, 'error': 'Hanya penyelenggara, admin, atau panitia terpilih yang bisa scan kehadiran.'}, status=status.HTTP_403_FORBIDDEN)
         return Response({'authorized': True})
 
-    @action(detail=True, methods=['get'], permission_classes=[permissions.IsAuthenticated], url_path='available-committees')
-    def available_committees(self, request, slug=None):
-        """Search users to be added as committee members."""
-        event = self.get_object()
-        if not (request.user.is_staff or event.created_by == request.user or request.user.has_menu_access('admin_events')):
-            return Response({"error": "Unauthorized"}, status=status.HTTP_403_FORBIDDEN)
-
-        from accounts.models import User
-        from accounts.serializers import UserSimpleSerializer
-        
-        search = request.query_params.get('search', '')
-        if not search:
-            return Response([])
-            
-        # Exclude users already in committee
-        committee_ids = event.committees.values_list('id', flat=True)
-        
-        users = User.objects.exclude(id__in=committee_ids).filter(
-            Q(username__icontains=search) |
-            Q(email__icontains=search) |
-            Q(profile__name_full__icontains=search) |
-            Q(phone__icontains=search)
-        ).select_related('profile')[:20]
-        
-        serializer = UserSimpleSerializer(users, many=True)
-        return Response(serializer.data)
-
     @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated], url_path='manage-committees')
     def manage_committees(self, request, slug=None):
         """Add or remove committee members."""
@@ -1685,19 +1660,34 @@ class EventViewSet(viewsets.ModelViewSet):
             return Response({"error": "Unauthorized"}, status=status.HTTP_403_FORBIDDEN)
 
         user_id = request.data.get('user_id')
+        identifier = request.data.get('identifier') # email, phone, or username
         operation = request.data.get('operation') # 'add' or 'remove'
         
         from accounts.models import User
-        try:
-            target_user = User.objects.get(id=user_id)
-        except User.DoesNotExist:
-            return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+        target_user = None
+
+        if user_id:
+            try:
+                target_user = User.objects.get(id=user_id)
+            except User.DoesNotExist:
+                return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+        elif identifier:
+            identifier = identifier.strip()
+            target_user = User.objects.filter(
+                Q(email__iexact=identifier) | 
+                Q(username__iexact=identifier) | 
+                Q(phone=identifier)
+            ).first()
+            if not target_user:
+                return Response({"error": f"User dengan email/username/phone '{identifier}' tidak ditemukan."}, status=status.HTTP_404_NOT_FOUND)
+        else:
+            return Response({"error": "User ID or Identifier required"}, status=status.HTTP_400_BAD_REQUEST)
             
         if operation == 'add':
             # Check for complete profile: Username, Email, and Phone
             if not (target_user.username and target_user.email and target_user.phone):
                 return Response({
-                    "error": "Data profil panitia tidak lengkap. Username, Email, dan No HP wajib diisi agar bisa ditugaskan dan menerima link scan."
+                    "error": f"Data profil {target_user.username} tidak lengkap. Panitia wajib memiliki Username, Email, dan No HP untuk menerima link scan otomatis."
                 }, status=status.HTTP_400_BAD_REQUEST)
 
             event.committees.add(target_user)
@@ -1712,12 +1702,17 @@ class EventViewSet(viewsets.ModelViewSet):
                 elif not formatted_phone.startswith('62'):
                     formatted_phone = '62' + formatted_phone
                 
-                message = f"Halo {target_user.username},\n\nAnda ditugaskan sebagai Panitia untuk event: *{event.title}*.\n\nSilakan akses link berikut untuk melakukan scan kehadiran peserta:\n{scan_url}\n\nTerima kasih!"
+                message = (
+                    f"Halo {target_user.username},\n\n"
+                    f"Anda ditugaskan sebagai Panitia untuk event: *{event.title}*.\n\n"
+                    f"Silakan akses link berikut untuk melakukan scan kehadiran peserta:\n{scan_url}\n\n"
+                    f"Terima kasih!"
+                )
                 whatsapp_service.send_message(formatted_phone, message)
             except Exception as e:
                 logger.error(f"Failed to send auto committee notification: {str(e)}")
 
-            return Response({"message": f"{target_user.username} ditambahkan sebagai panitia dan link scan telah dikirim."})
+            return Response({"message": f"{target_user.username} berhasil ditambahkan sebagai panitia dan link scan telah dikirim melalui WhatsApp."})
         elif operation == 'remove':
             event.committees.remove(target_user)
             return Response({"message": f"{target_user.username} dihapus dari panitia."})

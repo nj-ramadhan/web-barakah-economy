@@ -76,6 +76,11 @@ const EventManualRegistrationModal = ({ isOpen, onClose, event, registrations = 
         }
     };
 
+    const handleSearchChange = (newSearch) => {
+        setUserSearch(newSearch);
+        setPage(1); // Reset page to 1 on any search change
+    };
+
     useEffect(() => {
         if (!isUserListOpen) return;
 
@@ -83,7 +88,7 @@ const EventManualRegistrationModal = ({ isOpen, onClose, event, registrations = 
         
         searchTimeoutRef.current = setTimeout(() => {
             fetchUsers(userSearch, page);
-        }, userSearch ? 500 : 0);
+        }, userSearch ? 600 : 0); // Increased debounce to 600ms
 
         return () => { if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current); };
     }, [isUserListOpen, userSearch, page]);
@@ -323,7 +328,7 @@ const EventManualRegistrationModal = ({ isOpen, onClose, event, registrations = 
                 isOpen={isUserListOpen}
                 onClose={() => setIsUserListOpen(false)}
                 userSearch={userSearch}
-                setUserSearch={setUserSearch}
+                setUserSearch={handleSearchChange}
                 isFetchingUsers={isFetchingUsers}
                 allUsers={allUsers}
                 selectedUserIds={selectedUserIds}
@@ -334,7 +339,7 @@ const EventManualRegistrationModal = ({ isOpen, onClose, event, registrations = 
                     current: page,
                     hasNext: !!paginationInfo.next,
                     hasPrev: !!paginationInfo.previous,
-                    count: paginationInfo.count,
+                    total: paginationInfo.count,
                     onPageChange: setPage
                 }}
             />

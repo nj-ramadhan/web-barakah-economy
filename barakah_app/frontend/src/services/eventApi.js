@@ -255,17 +255,11 @@ export const importParticipantsCsv = (slug, file) => {
     });
 };
 
-export const getAvailableCommittees = (slug, search = '') => {
-    return axios.get(`${API_BASE_URL}/api/events/${slug}/available-committees/`, {
-        params: { search },
-        headers: getAuthHeaders()
-    });
-};
-
-export const manageCommittee = (slug, userId, operation) => {
+export const manageCommittee = (slug, userId, operation, identifier = null) => {
     return axios.post(`${API_BASE_URL}/api/events/${slug}/manage-committees/`, {
         user_id: userId,
-        operation: operation
+        operation,
+        identifier
     }, {
         headers: getAuthHeaders()
     });
