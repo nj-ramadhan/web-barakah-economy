@@ -805,24 +805,45 @@ class EventViewSet(viewsets.ModelViewSet):
             whatsapp_service.send_message(formatted_phone, wa_message)
             
             # 2. Send QR code image separately
+            qr_content = None
             if registration.qr_image:
                 try:
-                    import base64
-                    # Ensure the file exists and can be read using the standard FieldFile.open()
+                    # Try to read existing image
                     with registration.qr_image.open('rb') as qr_file:
-                        content = qr_file.read()
-                        encoded = base64.b64encode(content).decode('utf-8')
-                        qr_b64 = f"data:image/png;base64,{encoded}"
-                        
-                        # Send image with short caption
-                        qr_res = whatsapp_service.send_file(
-                            formatted_phone, 
-                            f"QR Tiket {unique_code}", 
-                            qr_b64, 
-                            filename=f"tiket_{unique_code}.png"
-                        )
-                        if not qr_res.get('success'):
-                            logging.getLogger(__name__).warning(f"WA QR send failed: {qr_res.get('message')}")
+                        qr_content = qr_file.read()
+                except Exception as e:
+                    logging.getLogger(__name__).warning(f"Could not read qr_image from storage: {e}")
+
+            # If no image in storage, generate on-the-fly as backup
+            if not qr_content and unique_code:
+                try:
+                    import qrcode
+                    from io import BytesIO
+                    qr = qrcode.QRCode(version=1, box_size=10, border=4)
+                    qr.add_data(unique_code)
+                    qr.make(fit=True)
+                    img = qr.make_image(fill_color="black", back_color="white")
+                    buffer = BytesIO()
+                    img.save(buffer, format="PNG")
+                    qr_content = buffer.getvalue()
+                except Exception as e:
+                    logging.getLogger(__name__).error(f"Failed to generate QR on-the-fly: {e}")
+
+            if qr_content:
+                try:
+                    import base64
+                    encoded = base64.b64encode(qr_content).decode('utf-8')
+                    qr_b64 = f"data:image/png;base64,{encoded}"
+                    
+                    # Send image with short caption
+                    qr_res = whatsapp_service.send_file(
+                        formatted_phone, 
+                        f"QR Tiket {unique_code}", 
+                        qr_b64, 
+                        filename=f"tiket_{unique_code}.png"
+                    )
+                    if not qr_res.get('success'):
+                        logging.getLogger(__name__).warning(f"WA QR send failed: {qr_res.get('message')}")
                 except Exception as e:
                     logging.getLogger(__name__).error(f"Error sending QR image for WA: {e}")
 
