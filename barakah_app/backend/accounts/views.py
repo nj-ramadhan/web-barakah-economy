@@ -2,6 +2,7 @@ from django.core.mail import send_mail
 from django.contrib.auth import get_user_model
 from django.contrib.auth.tokens import default_token_generator
 from rest_framework import generics, permissions, viewsets, filters
+from rest_framework.pagination import PageNumberPagination
 from rest_framework_simplejwt.views import TokenObtainPairView
 from .serializers import (
     UserRegistrationSerializer, CustomTokenObtainPairSerializer,
@@ -258,10 +259,16 @@ class BidangTugasViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAdminUser]
 
 
+class UserPagination(PageNumberPagination):
+    page_size = 10
+    page_size_query_param = 'page_size'
+    max_page_size = 10000
+
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all().select_related('profile').prefetch_related('custom_roles', 'labels', 'lingkup_tugas', 'bidang_tugas').order_by('-date_joined')
     serializer_class = UserAdminSerializer
     permission_classes = [permissions.IsAdminUser]
+    pagination_class = UserPagination
 
     def create(self, request, *args, **kwargs):
         """Override create untuk support pembuatan user baru dengan password."""

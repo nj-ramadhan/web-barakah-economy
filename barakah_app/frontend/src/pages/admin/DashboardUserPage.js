@@ -27,6 +27,8 @@ const DashboardUserPage = () => {
     const [totalPages, setTotalPages] = useState(1);
     const [totalCount, setTotalCount] = useState(0);
     const [searchQuery, setSearchQuery] = useState('');
+    const [debouncedSearch, setDebouncedSearch] = useState('');
+    const [pageSize, setPageSize] = useState(10);
     const [filterRole, setFilterRole] = useState('');
     const [filterCustomRole, setFilterCustomRole] = useState('');
     const [filterLabel, setFilterLabel] = useState('');
@@ -80,6 +82,15 @@ const DashboardUserPage = () => {
         } catch (err) { console.error(err); }
     }, []);
 
+    // Debounce search query
+    useEffect(() => {
+        const handler = setTimeout(() => {
+            setDebouncedSearch(searchQuery);
+            setCurrentPage(1);
+        }, 600);
+        return () => clearTimeout(handler);
+    }, [searchQuery]);
+
     const fetchUsers = useCallback(async (page = 1) => {
         setLoading(true);
         try {
@@ -93,11 +104,14 @@ const DashboardUserPage = () => {
             if (filterDateFrom) params.date_from = filterDateFrom;
             if (filterDateTo) params.date_to = filterDateTo;
             if (sortField && sortDir) params.ordering = sortDir === 'desc' ? `-${sortField}` : sortField;
+            if (pageSize && pageSize !== 'all') params.page_size = pageSize;
+            if (pageSize === 'all') params.page_size = 10000;
             const response = await axios.get(`${API}/api/auth/users/`, { params, ...getAuth() });
             if (response.data.results) {
                 setUsers(response.data.results);
                 setTotalCount(response.data.count);
-                setTotalPages(Math.ceil(response.data.count / 10));
+                const ps = pageSize === 'all' ? response.data.count : parseInt(pageSize);
+                setTotalPages(Math.ceil(response.data.count / ps));
             } else {
                 setUsers(response.data);
                 setTotalCount(response.data.length);
@@ -105,7 +119,7 @@ const DashboardUserPage = () => {
             }
         } catch (err) { console.error(err); }
         setLoading(false);
-    }, [searchQuery, filterRole, filterCustomRole, filterLabel, filterLingkup, filterBidang, filterDateFrom, filterDateTo, sortField, sortDir]);
+    }, [debouncedSearch, pageSize, filterRole, filterCustomRole, filterLabel, filterLingkup, filterBidang, filterDateFrom, filterDateTo, sortField, sortDir]);
 
     useEffect(() => {
         const user = JSON.parse(localStorage.getItem('user'));
@@ -113,7 +127,7 @@ const DashboardUserPage = () => {
         fetchMeta();
     }, [navigate, fetchMeta]);
 
-    useEffect(() => { fetchUsers(currentPage); }, [currentPage, fetchUsers]);
+    useEffect(() => { fetchUsers(currentPage); }, [currentPage, fetchUsers, pageSize]);
 
     const handleSort = (field) => {
         if (sortField === field) {
@@ -477,10 +491,17 @@ const DashboardUserPage = () => {
                             <div className="relative">
                                 <span className="material-icons absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-lg">search</span>
                                 <input type="text" placeholder="Cari nama, email, phone..." value={searchQuery}
-                                    onChange={e => { setSearchQuery(e.target.value); setCurrentPage(1); }}
+                                    onChange={e => setSearchQuery(e.target.value)}
                                     className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-green-500" />
                             </div>
                         </div>
+                        <select value={pageSize} onChange={e => { setPageSize(e.target.value); setCurrentPage(1); }}
+                            className="bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none font-bold text-green-700">
+                            <option value="10">10 / hal</option>
+                            <option value="50">50 / hal</option>
+                            <option value="100">100 / hal</option>
+                            <option value="all">Semua Data</option>
+                        </select>
                         <select value={filterRole} onChange={e => { setFilterRole(e.target.value); setCurrentPage(1); }}
                             className="bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none">
                             <option value="">Semua Role</option>
