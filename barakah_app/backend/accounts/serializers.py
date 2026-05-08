@@ -91,9 +91,9 @@ class UserAdminSerializer(serializers.ModelSerializer):
             })
             
         # Update the JSON field in the model for persistence/export
-        if obj.event_attendance_json != details:
-            obj.event_attendance_json = details
-            obj.save(update_fields=['event_attendance_json'])
+        # if obj.event_attendance_json != details:
+        #     obj.event_attendance_json = details
+        #     obj.save(update_fields=['event_attendance_json'])
             
         return details
 

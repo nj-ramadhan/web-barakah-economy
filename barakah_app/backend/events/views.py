@@ -78,26 +78,32 @@ class EventViewSet(viewsets.ModelViewSet):
 
     def _get_parsed_data(self, request):
         """Returns a dict from request.data with JSON fields correctly parsed."""
-        # Start with a shallow copy of request.data
-        # If it's a QueryDict (multipart), .dict() gives us a mutable dict
-        if hasattr(request.data, 'dict'):
-            data = request.data.dict()
-        else:
-            # For JSON requests, it's already a dict
-            data = request.data.copy() if hasattr(request.data, 'copy') else dict(request.data)
+        import json
+        import logging
+        logger = logging.getLogger(__name__)
         
-        # Parse form_fields if it's a JSON string
-        form_fields = data.get('form_fields')
-        if form_fields and isinstance(form_fields, str):
-            try:
-                # Basic check if it looks like JSON
-                stripped = form_fields.strip()
-                if stripped.startswith('[') or stripped.startswith('{'):
-                    data['form_fields'] = json.loads(stripped)
-            except Exception as e:
-                print(f"Error parsing form_fields JSON: {e}")
-        
-        return data
+        try:
+            # If it's a QueryDict (multipart), .dict() gives us a mutable dict
+            if hasattr(request.data, 'dict'):
+                data = request.data.dict()
+            else:
+                # For JSON requests, it's already a dict
+                data = request.data.copy() if hasattr(request.data, 'copy') else dict(request.data)
+                
+            # Parse JSON strings in multipart form data
+            for field in ['form_fields', 'speakers', 'sessions']:
+                if field in data and isinstance(data[field], str):
+                    stripped = data[field].strip()
+                    if stripped and stripped != 'null':
+                        try:
+                            data[field] = json.loads(stripped)
+                        except json.JSONDecodeError:
+                            logger.warning(f"Failed to parse {field} as JSON: {stripped}")
+                            
+            return data
+        except Exception as e:
+            logger.error(f"Error in _get_parsed_data: {str(e)}")
+            return request.data  # Fallback to raw data
 
     def create(self, request, *args, **kwargs):
         try:
