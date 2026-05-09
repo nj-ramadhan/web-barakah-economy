@@ -25,7 +25,7 @@ const Header = () => {
             className="w-10 h-10 flex items-center justify-center text-green-700 font-bold bg-green-50 rounded-full hover:bg-green-100 transition border border-green-100"
             title="Switch Language"
           >
-            {i18n.language === 'en' ? 'ID' : 'EN'}
+            {i18n.language === 'en' ? 'EN' : 'ID'}
           </button>
           <a
             href={localStorage.getItem('user') ? "/profile" : "/login"}
