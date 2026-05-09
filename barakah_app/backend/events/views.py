@@ -911,16 +911,19 @@ class EventViewSet(viewsets.ModelViewSet):
             # 2. Send QR code image separately
             qr_content = None
             
-            # Special QR Handling: Generate on-the-fly if enabled
+            # Special QR Handling: Generate on-the-fly if enabled and update registration
             if registration.event.has_special_qr:
                 try:
                     from .utils import generate_special_qr_image
                     special_qr_file = generate_special_qr_image(registration)
                     if special_qr_file:
-                        qr_content = special_qr_file.read()
-                        logging.getLogger(__name__).info(f"Generated Special QR on-the-fly for Reg {registration.unique_code}")
+                        # Persist the special QR image so it's consistent everywhere (WA, Email, Web)
+                        registration.qr_image.save(f"special_qr_{registration.unique_code}.jpg", special_qr_file, save=True)
+                        registration.qr_image.seek(0)
+                        qr_content = registration.qr_image.read()
+                        logging.getLogger(__name__).info(f"Generated and saved Special QR for Reg {registration.unique_code}")
                 except Exception as e:
-                    logging.getLogger(__name__).error(f"Failed to generate Special QR on-the-fly: {e}")
+                    logging.getLogger(__name__).error(f"Failed to generate Special QR for Reg {registration.unique_code}: {e}")
 
             # If no special QR or generation failed, use existing qr_image
             if not qr_content and registration.qr_image:

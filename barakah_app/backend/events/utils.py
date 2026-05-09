@@ -8,20 +8,32 @@ from django.conf import settings
 from django.core.files.base import ContentFile
 
 def generate_special_qr_image(registration):
+    import logging
+    logger = logging.getLogger(__name__)
     event = registration.event
     try:
         special_qr = event.special_qr_template
-    except:
+    except Exception as e:
+        logger.warning(f"No special QR template found for event {event.id}: {e}")
         return None
 
-    if not special_qr or not special_qr.template_image or not special_qr.is_active:
+    if not special_qr:
+        logger.warning(f"Special QR template is None for event {event.id}")
+        return None
+        
+    if not special_qr.template_image:
+        logger.warning(f"Special QR template has no image for event {event.id}")
+        return None
+        
+    if not special_qr.is_active:
+        logger.warning(f"Special QR template is NOT active for event {event.id}")
         return None
 
     # Load template
     try:
         img = Image.open(special_qr.template_image.path).convert("RGB")
     except Exception as e:
-        print(f"Error opening template: {e}")
+        logger.error(f"Error opening special QR template image at {special_qr.template_image.path}: {e}")
         return None
 
     draw = ImageDraw.Draw(img)
