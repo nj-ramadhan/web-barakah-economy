@@ -73,6 +73,65 @@ const EventRegistrationSubmissionPage = () => {
         }
     };
 
+    const getHybridInfo = (reg, eventFields) => {
+        let name = "";
+        let email = "";
+        let phone = "";
+        let isProfileComplete = false;
+
+        // Start with User Details (Profile)
+        if (reg.user_details) {
+            name = reg.user_details.profile?.name_full || reg.user_details.username || "";
+            if (reg.user_details.profile?.name_full) isProfileComplete = true;
+
+            email = reg.user_details.email || "";
+            phone = reg.user_details.phone || "";
+            if (phone) isProfileComplete = true;
+        }
+
+        // Fallback to Guest Info
+        if (!name) name = reg.guest_name || "Peserta";
+        if (!email) email = reg.guest_email || "-";
+        if (!phone) phone = "-";
+
+        // Hybrid enrichment from form responses
+        if (eventFields && reg.responses) {
+            eventFields.forEach(field => {
+                const label = (field.label || '').toLowerCase();
+                const value = reg.responses[field.id];
+                if (!value) return;
+
+                // Priority: Form contact info for specific event context
+                if (label.includes('email')) {
+                    email = value;
+                }
+                if (label.includes('wa') || label.includes('hp') || label.includes('telepon') || label.includes('phone') || label.includes('handphone')) {
+                    phone = value;
+                }
+
+                // Name: Only override profile if profile is incomplete or form field is specifically 'Nama Lengkap'
+                if (label.includes('nama lengkap') || (label.includes('nama pendaftar'))) {
+                    if (!isProfileComplete || label.includes('lengkap')) {
+                        name = value;
+                    }
+                } else if (!name && label.includes('nama')) {
+                    name = value;
+                }
+            });
+        }
+
+        return { name, email, phone };
+    };
+
+    const getImageUrl = (path) => {
+        if (!path) return '';
+        if (path.startsWith('http')) return path;
+        const baseUrl = process.env.REACT_APP_API_BASE_URL || 'https://api.barakah.cloud';
+        const cleanBaseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+        const cleanPath = path.startsWith('/') ? path : `/${path}`;
+        return `${cleanBaseUrl}${cleanPath}`;
+    };
+
     // --- Sorting and Filtering Logic ---
     const handleSort = (key) => {
         let direction = 'asc';
@@ -157,64 +216,6 @@ const EventRegistrationSubmissionPage = () => {
         );
     };
 
-    const getHybridInfo = (reg, eventFields) => {
-        let name = "";
-        let email = "";
-        let phone = "";
-        let isProfileComplete = false;
-
-        // Start with User Details (Profile)
-        if (reg.user_details) {
-            name = reg.user_details.profile?.name_full || reg.user_details.username || "";
-            if (reg.user_details.profile?.name_full) isProfileComplete = true;
-
-            email = reg.user_details.email || "";
-            phone = reg.user_details.phone || "";
-            if (phone) isProfileComplete = true;
-        }
-
-        // Fallback to Guest Info
-        if (!name) name = reg.guest_name || "Peserta";
-        if (!email) email = reg.guest_email || "-";
-        if (!phone) phone = "-";
-
-        // Hybrid enrichment from form responses
-        if (eventFields && reg.responses) {
-            eventFields.forEach(field => {
-                const label = (field.label || '').toLowerCase();
-                const value = reg.responses[field.id];
-                if (!value) return;
-
-                // Priority: Form contact info for specific event context
-                if (label.includes('email')) {
-                    email = value;
-                }
-                if (label.includes('wa') || label.includes('hp') || label.includes('telepon') || label.includes('phone') || label.includes('handphone')) {
-                    phone = value;
-                }
-
-                // Name: Only override profile if profile is incomplete or form field is specifically 'Nama Lengkap'
-                if (label.includes('nama lengkap') || (label.includes('nama pendaftar'))) {
-                    if (!isProfileComplete || label.includes('lengkap')) {
-                        name = value;
-                    }
-                } else if (!name && label.includes('nama')) {
-                    name = value;
-                }
-            });
-        }
-
-        return { name, email, phone };
-    };
-
-    const getImageUrl = (path) => {
-        if (!path) return '';
-        if (path.startsWith('http')) return path;
-        const baseUrl = process.env.REACT_APP_API_BASE_URL || 'https://api.barakah.cloud';
-        const cleanBaseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
-        const cleanPath = path.startsWith('/') ? path : `/${path}`;
-        return `${cleanBaseUrl}${cleanPath}`;
-    };
 
     const handleExportCsv = async () => {
         if (isExporting) return;
