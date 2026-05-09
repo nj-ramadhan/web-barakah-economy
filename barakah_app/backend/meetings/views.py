@@ -187,8 +187,7 @@ class MeetingViewSet(viewsets.ModelViewSet):
         )
 
         for p in participants:
-            profile = getattr(p.user, 'profile', None)
-            phone = profile.phone if profile else None
+            phone = p.user.phone
             if phone:
                 digits = ''.join(filter(str.isdigit, str(phone)))
                 if digits.startswith('0'): digits = '62' + digits[1:]
@@ -224,13 +223,11 @@ class MeetingViewSet(viewsets.ModelViewSet):
                 meeting_time_str += f" - {timezone.localtime(meeting.end_date).strftime('%H:%M')}"
 
             for p in participants:
-                phone = None
+                phone = p.user.phone
                 name = p.user.username
                 profile = getattr(p.user, 'profile', None)
-                if profile:
-                    phone = profile.phone
-                    if profile.name_full:
-                        name = profile.name_full
+                if profile and profile.name_full:
+                    name = profile.name_full
                 
                 if phone:
                     # Basic normalization
@@ -297,7 +294,7 @@ class MeetingViewSet(viewsets.ModelViewSet):
                 p.user.username,
                 profile.name_full if profile else "-",
                 p.user.email,
-                profile.phone if profile else "-",
+                p.user.phone or "-",
             ]
             
             for s in sessions:

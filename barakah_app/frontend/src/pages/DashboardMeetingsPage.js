@@ -123,7 +123,14 @@ const DashboardMeetingsPage = () => {
                                             </div>
                                         </div>
 
-                                        <div className="flex flex-wrap gap-2">
+                                            <Link 
+                                                to={`/meetings/${meeting.slug}`}
+                                                target="_blank"
+                                                className="px-4 py-2 bg-blue-50 text-blue-600 rounded-xl text-xs font-bold hover:bg-blue-100 transition flex items-center gap-1.5"
+                                            >
+                                                <span className="material-icons text-sm">visibility</span>
+                                                Lihat
+                                            </Link>
                                             <Link 
                                                 to={`/dashboard/meetings/manage/${meeting.slug}`}
                                                 className="px-4 py-2 bg-green-50 text-green-600 rounded-xl text-xs font-bold hover:bg-green-100 transition flex items-center gap-1.5"
