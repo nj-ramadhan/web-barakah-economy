@@ -22,7 +22,28 @@ import logging
 logger = logging.getLogger(__name__)
 
 class EventViewSet(viewsets.ModelViewSet):
-    queryset = Event.objects.all().order_by('-start_date')
+    def get_queryset(self):
+        user = self.request.user
+        queryset = Event.objects.all().order_by('-start_date')
+        
+        # Admins see everything
+        if user and user.is_authenticated and (user.is_staff or user.has_menu_access('admin_events')):
+            return queryset
+            
+        # Visibility filtering for others
+        now = timezone.now()
+        is_visible = Q(visibility='public') & (Q(visible_at__isnull=True) | Q(visible_at__lte=now))
+        is_approved = Q(status__in=['approved', 'ongoing', 'completed'])
+        
+        if user and user.is_authenticated:
+            # Users see approved public events OR events they created
+            return queryset.filter(
+                (is_visible & is_approved) | Q(created_by=user)
+            ).distinct()
+        else:
+            # Guests see only approved public events
+            return queryset.filter(is_visible & is_approved)
+
     serializer_class = EventSerializer
     lookup_field = 'slug'
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
