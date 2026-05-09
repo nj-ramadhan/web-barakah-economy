@@ -101,14 +101,20 @@ class User(AbstractUser):
         try:
             roles_manager = getattr(self, 'custom_roles', None)
             if roles_manager is None:
+                logger.warning(f"User {self.username} has no custom_roles attribute or it is None")
                 return False
                 
+            if not hasattr(roles_manager, 'filter'):
+                logger.warning(f"User {self.username} custom_roles has no .filter() method: {type(roles_manager)}")
+                return False
+
             active_roles = roles_manager.filter(is_active=True)
             for role in active_roles:
                 if role.accessible_menus and menu_key in role.accessible_menus:
                     return True
-        except Exception:
-            pass
+        except Exception as e:
+            import traceback
+            logger.error(f"Error in has_menu_access for {self.username}: {str(e)}\n{traceback.format_exc()}")
         return False
 
     def get_all_accessible_menus(self):
@@ -122,10 +128,14 @@ class User(AbstractUser):
         try:
             roles_manager = getattr(self, 'custom_roles', None)
             if roles_manager:
-                for r in roles_manager.filter(is_active=True):
-                    menus.update(r.accessible_menus or [])
-        except Exception:
-            pass
+                if hasattr(roles_manager, 'filter'):
+                    for r in roles_manager.filter(is_active=True):
+                        menus.update(r.accessible_menus or [])
+                else:
+                    logger.warning(f"User {self.username} custom_roles in get_all_accessible_menus has no .filter()")
+        except Exception as e:
+            import traceback
+            logger.error(f"Error in get_all_accessible_menus for {self.username}: {str(e)}\n{traceback.format_exc()}")
         return list(menus)
 
     @property
