@@ -44,6 +44,7 @@ const EventSubmissionPage = () => {
         allow_ots_payment: false,
         free_for_label_ids: [],
         has_special_qr: false,
+        price_variations: [],
         // Added for consistency
         header_image: null,
         header_image_full: null,
@@ -124,6 +125,7 @@ const EventSubmissionPage = () => {
                         allow_ots_payment: d.allow_ots_payment || false,
                         free_for_label_ids: d.free_for_labels ? d.free_for_labels.map(l => l.id) : [],
                         has_special_qr: d.has_special_qr || false,
+                        price_variations: d.price_variations || [],
                     });
 
                     if (d.speakers && d.speakers.length > 0) setSpeakers(d.speakers);
@@ -256,6 +258,20 @@ const EventSubmissionPage = () => {
         setSessions(newArr);
     };
 
+    const addPriceVariation = () => setFormData(prev => ({ 
+        ...prev, 
+        price_variations: [...prev.price_variations, { title: '', price: 0, benefits: '', order: prev.price_variations.length }] 
+    }));
+    const removePriceVariation = (index) => setFormData(prev => ({ 
+        ...prev, 
+        price_variations: prev.price_variations.filter((_, i) => i !== index) 
+    }));
+    const updatePriceVariation = (index, updates) => {
+        const newArr = [...formData.price_variations];
+        newArr[index] = { ...newArr[index], ...updates };
+        setFormData(prev => ({ ...prev, price_variations: newArr }));
+    };
+
     const handleDocImageUpload = async (e) => {
         const uploadedFiles = Array.from(e.target.files);
         setLoading(true);
@@ -357,11 +373,16 @@ const EventSubmissionPage = () => {
             data.append('thumbnail', files.thumbnail);
         }
 
-        // Append free_for_label_ids
+        // Append free_for_label_ids correctly as multiple fields
         if (formData.free_for_label_ids && formData.free_for_label_ids.length > 0) {
             formData.free_for_label_ids.forEach(id => {
                 data.append('free_for_label_ids', id);
             });
+        }
+
+        // Append price variations as JSON
+        if (formData.price_variations && formData.price_variations.length > 0) {
+            data.append('price_variations', JSON.stringify(formData.price_variations));
         }
 
         // Append form fields as JSON string (backend will handle)
@@ -983,7 +1004,26 @@ const EventSubmissionPage = () => {
                                         </div>
                                         <button
                                             type="button"
-                                            onClick={() => setFormData(prev => ({ ...prev, has_special_qr: !prev.has_special_qr }))}
+                                            onClick={() => {
+                                                const newValue = !formData.has_special_qr;
+                                                setFormData(prev => ({ ...prev, has_special_qr: newValue }));
+                                                
+                                                // Automatically add "Pas Foto" field if enabled
+                                                if (newValue) {
+                                                    const hasPhotoField = formFields.some(f => f.label.toLowerCase().includes('foto peserta') || f.label.toLowerCase().includes('pas foto'));
+                                                    if (!hasPhotoField) {
+                                                        const newField = {
+                                                            id: Date.now(),
+                                                            label: 'Foto Peserta',
+                                                            field_type: 'file',
+                                                            required: true,
+                                                            placeholder: 'Upload foto format JPG/PNG',
+                                                            order: formFields.length
+                                                        };
+                                                        setFormFields([...formFields, newField]);
+                                                    }
+                                                }
+                                            }}
                                             className={`w-12 h-6 rounded-full transition-colors relative ${formData.has_special_qr ? 'bg-purple-600' : 'bg-gray-300'}`}
                                         >
                                             <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${formData.has_special_qr ? 'left-7' : 'left-1'}`}></div>
@@ -1171,6 +1211,71 @@ const EventSubmissionPage = () => {
                                         </div>
                                     </div>
                                 )}
+
+                                {/* Price Variations Section */}
+                                <div className="space-y-4 md:col-span-2 pt-6">
+                                    <div className="flex items-center justify-between">
+                                        <label className="text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Variasi Harga & Benefit (Opsional)</label>
+                                        <button
+                                            type="button"
+                                            onClick={addPriceVariation}
+                                            className="text-[10px] font-black text-green-700 bg-green-50 px-3 py-1.5 rounded-full hover:bg-green-100 transition flex items-center gap-1"
+                                        >
+                                            <span className="material-icons text-xs">add</span>
+                                            TAMBAH VARIASI
+                                        </button>
+                                    </div>
+                                    
+                                    <div className="space-y-3">
+                                        {formData.price_variations.map((varItem, idx) => (
+                                            <div key={idx} className="bg-gray-50 p-6 rounded-[2rem] border border-gray-100 relative animate-fade-in space-y-4">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => removePriceVariation(idx)}
+                                                    className="absolute top-4 right-4 w-8 h-8 bg-white text-red-500 rounded-full flex items-center justify-center shadow-sm hover:bg-red-50 transition"
+                                                >
+                                                    <span className="material-icons text-sm">close</span>
+                                                </button>
+                                                
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                                    <div className="space-y-1.5">
+                                                        <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Nama Variasi / Paket *</label>
+                                                        <input
+                                                            type="text"
+                                                            value={varItem.title}
+                                                            onChange={(e) => updatePriceVariation(idx, { title: e.target.value })}
+                                                            placeholder="Misal: Paket Platinum"
+                                                            className="w-full px-4 py-2.5 bg-white border border-gray-100 rounded-xl text-xs focus:ring-2 focus:ring-green-500 transition"
+                                                        />
+                                                    </div>
+                                                    <div className="space-y-1.5">
+                                                        <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Harga (Rp) *</label>
+                                                        <CurrencyInput
+                                                            value={varItem.price}
+                                                            onChange={(val) => updatePriceVariation(idx, { price: val })}
+                                                            className="w-full px-4 py-2.5 bg-white border border-gray-100 rounded-xl text-xs focus:ring-2 focus:ring-green-500 transition"
+                                                        />
+                                                    </div>
+                                                    <div className="space-y-1.5 sm:col-span-2">
+                                                        <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Keterangan Benefit (Satu per baris)</label>
+                                                        <textarea
+                                                            value={varItem.benefits}
+                                                            onChange={(e) => updatePriceVariation(idx, { benefits: e.target.value })}
+                                                            rows="2"
+                                                            placeholder="Benefit 1&#10;Benefit 2..."
+                                                            className="w-full px-4 py-2.5 bg-white border border-gray-100 rounded-xl text-xs focus:ring-2 focus:ring-green-500 transition"
+                                                        ></textarea>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                        {formData.price_variations.length === 0 && (
+                                            <div className="p-8 border-2 border-dashed border-gray-100 rounded-[2rem] text-center">
+                                                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Belum ada variasi harga</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
                             </div>
                         </div>
                         {/* PHASE 7: FORM PENDAFTARAN */}

@@ -110,6 +110,9 @@ import BusinessDataListPage from './pages/BusinessDataListPage';
 import BusinessDataFormPage from './pages/BusinessDataFormPage';
 import DashboardAdminBusinessPage from './pages/admin/DashboardAdminBusinessPage';
 import ExpeditionTestPage from './pages/admin/ExpeditionTestPage';
+import DashboardMeetingsPage from './pages/DashboardMeetingsPage';
+import MeetingSubmissionPage from './pages/MeetingSubmissionPage';
+import MeetingManagementPage from './pages/MeetingManagementPage';
 import FloatingCartModal from './components/layout/FloatingCartModal';
 import ProfileNotice from './components/common/ProfileNotice';
 
@@ -367,6 +370,10 @@ const LayoutWrapper = ({ isDesktop }) => {
         <Route path="/dashboard/sinergy/seller/orders" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardSinergySellerOrdersPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/admin/sinergy" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardSinergyAdminPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/admin/test-expedition" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><ExpeditionTestPage /></ResponsiveLayout></PrivateRoute>} />
+        <Route path="/dashboard/meetings" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardMeetingsPage /></ResponsiveLayout></PrivateRoute>} />
+        <Route path="/dashboard/meetings/new" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><MeetingSubmissionPage /></ResponsiveLayout></PrivateRoute>} />
+        <Route path="/dashboard/meetings/edit/:slug" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><MeetingSubmissionPage /></ResponsiveLayout></PrivateRoute>} />
+        <Route path="/dashboard/meetings/manage/:slug" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><MeetingManagementPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/digital-products" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardDigitalProductsPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/ecourses" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardEcourseListPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/ecourses/new" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardEcourseFormPage /></ResponsiveLayout></PrivateRoute>} />

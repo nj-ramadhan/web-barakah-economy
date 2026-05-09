@@ -231,7 +231,7 @@ export const downloadBib = (slug) => {
 };
 
 export const searchUsers = (search = '') => {
-    return axios.get(`${API_BASE_URL}/api/accounts/users/`, {
+    return axios.get(`${API_BASE_URL}/api/auth/users/`, {
         params: { search },
         headers: getAuthHeaders()
     });
@@ -274,7 +274,7 @@ export const sendScanLink = (slug, userIds = null) => {
 };
 
 export const getUserLabels = () => {
-    return axios.get(`${API_BASE_URL}/api/accounts/labels/`, {
+    return axios.get(`${API_BASE_URL}/api/auth/labels/`, {
         headers: getAuthHeaders()
     });
 };

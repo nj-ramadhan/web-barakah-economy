@@ -45,6 +45,7 @@ const EventDetailPage = () => {
     const [selectedUserId, setSelectedUserId] = useState(null);
     const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
     const [userProfile, setUserProfile] = useState(null);
+    const [selectedPriceVariation, setSelectedPriceVariation] = useState(null);
 
     const calculateTimeLeft = (targetDate) => {
         if (!targetDate) return { total: 0 };
@@ -222,8 +223,14 @@ const EventDetailPage = () => {
             if (files[fieldId]) data.append(fieldId, files[fieldId]);
         });
 
+        if (selectedPriceVariation) {
+            data.append('price_variation', selectedPriceVariation.id);
+        }
+
         if (paymentMethod === 'transfer' && paymentProof) {
-            const fixed = Number(event?.price_fixed) || 0;
+            let fixed = Number(event?.price_fixed) || 0;
+            if (selectedPriceVariation) fixed = Number(selectedPriceVariation.price);
+            
             const extra = Number(paymentAmount) || 0;
             let totalToSave = 0;
 
@@ -234,7 +241,9 @@ const EventDetailPage = () => {
             data.append('payment_proof', paymentProof);
             data.append('payment_amount', totalToSave);
         } else if (paymentMethod === 'ots') {
-            const fixed = Number(event?.price_fixed) || 0;
+            let fixed = Number(event?.price_fixed) || 0;
+            if (selectedPriceVariation) fixed = Number(selectedPriceVariation.price);
+            
             const extra = Number(paymentAmount) || 0;
             let totalToSave = 0;
 
@@ -1315,6 +1324,43 @@ const EventDetailPage = () => {
                                                     <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-[10px] font-black uppercase">{event.price_type}</span>
                                                 </div>
 
+                                                {/* Price Variations Selection */}
+                                                {event.price_variations && event.price_variations.length > 0 && (
+                                                    <div className="space-y-3">
+                                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Pilih Paket / Variasi HTM</label>
+                                                        <div className="grid grid-cols-1 gap-3">
+                                                            {event.price_variations.map((v, idx) => (
+                                                                <button
+                                                                    key={idx}
+                                                                    type="button"
+                                                                    onClick={() => setSelectedPriceVariation(v)}
+                                                                    className={`p-4 rounded-2xl border-2 text-left transition-all relative overflow-hidden group ${selectedPriceVariation?.id === v.id ? 'border-green-600 bg-green-50 shadow-md' : 'border-gray-100 bg-white hover:border-green-200'}`}
+                                                                >
+                                                                    <div className="flex justify-between items-start mb-2 relative z-10">
+                                                                        <h4 className={`text-xs font-black uppercase tracking-wider ${selectedPriceVariation?.id === v.id ? 'text-green-700' : 'text-gray-900'}`}>{v.title}</h4>
+                                                                        <span className={`text-sm font-black ${selectedPriceVariation?.id === v.id ? 'text-green-600' : 'text-gray-400'}`}>Rp {formatCurrency(v.price)}</span>
+                                                                    </div>
+                                                                    {v.benefits && (
+                                                                        <div className="space-y-1 relative z-10">
+                                                                            {v.benefits.split('\n').map((b, i) => (
+                                                                                <div key={i} className="flex items-center gap-2 text-[10px] text-gray-500 font-medium">
+                                                                                    <span className="material-icons text-[10px] text-green-500">check_circle</span>
+                                                                                    {b}
+                                                                                </div>
+                                                                            ))}
+                                                                        </div>
+                                                                    )}
+                                                                    {selectedPriceVariation?.id === v.id && (
+                                                                        <div className="absolute top-0 right-0 w-12 h-12 bg-green-600/10 rounded-bl-[2rem] flex items-center justify-center">
+                                                                            <span className="material-icons text-green-600 text-sm">check</span>
+                                                                        </div>
+                                                                    )}
+                                                                </button>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                )}
+
                                                 {event.allow_ots_payment && (
                                                     <div className="grid grid-cols-2 gap-3">
                                                         <button
@@ -1398,15 +1444,13 @@ const EventDetailPage = () => {
                                                     <p className="text-[10px] font-black text-green-600 uppercase tracking-[0.2em] text-center">Total yang {paymentMethod === 'ots' ? 'Dibayar di Lokasi' : 'Harus Ditransfer'}</p>
                                                     <p className="text-2xl font-black text-green-800 text-center">
                                                         Rp {(() => {
-                                                            const fixed = Number(event?.price_fixed) || 0;
+                                                            let fixed = Number(event?.price_fixed) || 0;
+                                                            if (selectedPriceVariation) fixed = Number(selectedPriceVariation.price);
+                                                            
                                                             const extra = Number(paymentAmount) || 0;
-                                                            let total = 0;
-
-                                                            if (event?.price_type === 'fixed') total = fixed;
-                                                            else if (event?.price_type === 'hybrid_1') total = fixed + extra;
-                                                            else total = extra; // voluntary or hybrid_2
-
-                                                            return formatCurrency(total);
+                                                            if (event?.price_type === 'fixed') return formatCurrency(fixed);
+                                                            if (event?.price_type === 'hybrid_1') return formatCurrency(fixed + extra);
+                                                            return formatCurrency(extra);
                                                         })()}
                                                     </p>
                                                 </div>

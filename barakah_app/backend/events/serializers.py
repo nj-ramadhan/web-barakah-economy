@@ -1,5 +1,9 @@
 from rest_framework import serializers
-from .models import Event, EventFormField, EventRegistration, EventRegistrationFile, EventDocumentationImage, EventGalleryImage, EventCertificate, EventBib, EventSpecialQR
+from .models import (
+    Event, EventFormField, EventRegistration, EventRegistrationFile, 
+    EventDocumentationImage, EventGalleryImage, EventCertificate, 
+    EventBib, EventSpecialQR, EventPriceVariation
+)
 from accounts.serializers import UserAdminSerializer, UserLabelSerializer, UserSimpleSerializer
 from accounts.models import UserLabel
 from django.db import transaction
@@ -94,6 +98,11 @@ class EventSpecialQRSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
+class EventPriceVariationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EventPriceVariation
+        fields = ['id', 'title', 'price', 'benefits', 'order']
+
 class EventSerializer(serializers.ModelSerializer):
     created_by_details = UserSimpleSerializer(source='created_by', read_only=True)
     form_fields = EventFormFieldSerializer(many=True, required=False)
@@ -108,6 +117,7 @@ class EventSerializer(serializers.ModelSerializer):
     free_for_label_ids = serializers.PrimaryKeyRelatedField(
         many=True, queryset=UserLabel.objects.all(), write_only=True, required=False, source='free_for_labels'
     )
+    price_variations = EventPriceVariationSerializer(many=True, required=False)
     user_registration = serializers.SerializerMethodField()
     certificate = serializers.SerializerMethodField()
     bib_template = serializers.SerializerMethodField()
@@ -222,28 +232,30 @@ class EventSerializer(serializers.ModelSerializer):
             fields_data = validated_data.pop('form_fields', [])
             speakers_data = validated_data.pop('speakers', [])
             sessions_data = validated_data.pop('sessions', [])
+            price_variations_data = validated_data.pop('price_variations', [])
             
             request = self.context.get('request')
             doc_images = request.FILES.getlist('documentation_images_upload') if request else []
             gallery_images = request.FILES.getlist('gallery_images_upload') if request else []
             
-            logger.info(f"Creating Event with data: {validated_data}")
-            event = Event.objects.create(**validated_data)
-            
-            logger.info(f"Creating form fields: {len(fields_data)}")
-            for field in fields_data:
-                field.pop('id', None)
-                EventFormField.objects.create(event=event, **field)
+            with transaction.atomic():
+                event = Event.objects.create(**validated_data)
                 
-            logger.info(f"Creating speakers: {len(speakers_data)}")
-            for spk in speakers_data:
-                spk.pop('id', None)
-                EventSpeaker.objects.create(event=event, **spk)
+                # Handle Form Fields
+                for field in fields_data:
+                    EventFormField.objects.create(event=event, **field)
                 
-            logger.info(f"Creating sessions: {len(sessions_data)}")
-            for ses in sessions_data:
-                ses.pop('id', None)
-                EventSession.objects.create(event=event, **ses)
+                # Handle Speakers
+                for spk in speakers_data:
+                    EventSpeaker.objects.create(event=event, **spk)
+                    
+                # Handle Sessions
+                for ses in sessions_data:
+                    EventSession.objects.create(event=event, **ses)
+
+                # Handle Price Variations
+                for var in price_variations_data:
+                    EventPriceVariation.objects.create(event=event, **var)
                 
             from .models import EventDocumentationImage, EventGalleryImage
             logger.info(f"Creating documentation images: {len(doc_images)}")
@@ -284,6 +296,8 @@ class EventSerializer(serializers.ModelSerializer):
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
         instance.save()
+        
+        price_variations_data = validated_data.pop('price_variations', None)
         
         # Sync form fields
         if fields_data is not None:
@@ -328,6 +342,24 @@ class EventSerializer(serializers.ModelSerializer):
                     new_sessions_ids.append(new_ses.id)
             instance.sessions.exclude(id__in=new_sessions_ids).delete()
         
+        # Sync price variations
+        if price_variations_data is not None:
+            existing_vars = {v.title.lower(): v for v in instance.price_variations.all()}
+            new_var_ids = []
+            for var_item in price_variations_data:
+                var_item.pop('id', None)
+                title = var_item.get('title', '').lower()
+                if title in existing_vars:
+                    var_obj = existing_vars[title]
+                    for attr, val in var_item.items():
+                        setattr(var_obj, attr, val)
+                    var_obj.save()
+                    new_var_ids.append(var_obj.id)
+                else:
+                    new_var = EventPriceVariation.objects.create(event=instance, **var_item)
+                    new_var_ids.append(new_var.id)
+            instance.price_variations.exclude(id__in=new_var_ids).delete()
+
         # Handle new documentation images
         request = self.context.get('request')
         if request:
@@ -364,6 +396,7 @@ class EventRegistrationSerializer(serializers.ModelSerializer):
     responses_with_labels = serializers.SerializerMethodField()
     attendances_list = EventAttendanceSerializer(source='attendances', many=True, read_only=True)
     formatted_bib = serializers.SerializerMethodField()
+    price_variation_details = EventPriceVariationSerializer(source='price_variation', read_only=True)
 
     def get_formatted_bib(self, obj):
         if not obj.bib_number:

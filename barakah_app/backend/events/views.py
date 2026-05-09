@@ -38,7 +38,7 @@ class EventViewSet(viewsets.ModelViewSet):
             # Visibility filtering for others
             now = timezone.now()
             is_visible = Q(visibility='public') & (Q(visible_at__isnull=True) | Q(visible_at__lte=now))
-            is_approved = Q(status__in=['approved', 'ongoing', 'completed'])
+            is_approved = Q(status__in=['approved', 'ongoing', 'completed', 'internal'])
             
             if user and user.is_authenticated:
                 # Users see approved public events OR events they created
@@ -67,7 +67,7 @@ class EventViewSet(viewsets.ModelViewSet):
         """
         now = timezone.now()
         expired_events = Event.objects.filter(
-            status__in=['approved', 'ongoing'],
+            status__in=['approved', 'ongoing', 'internal'],
             end_date__lt=now
         )
         for event in expired_events:
@@ -127,12 +127,16 @@ class EventViewSet(viewsets.ModelViewSet):
             # If it's a QueryDict (multipart), .dict() gives us a mutable dict
             if hasattr(request.data, 'dict'):
                 data = request.data.dict()
+                # Use getlist for many-to-many fields that might have multiple entries
+                for list_field in ['free_for_label_ids']:
+                    if list_field in request.data:
+                        data[list_field] = request.data.getlist(list_field)
             else:
                 # For JSON requests, it's already a dict
                 data = request.data.copy() if hasattr(request.data, 'copy') else dict(request.data)
                 
             # Parse JSON strings in multipart form data
-            for field in ['form_fields', 'speakers', 'sessions']:
+            for field in ['form_fields', 'speakers', 'sessions', 'price_variations']:
                 if field in data and isinstance(data[field], str):
                     stripped = data[field].strip()
                     if stripped and stripped != 'null':

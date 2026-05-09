@@ -7,6 +7,7 @@ class Event(models.Model):
         ('draft', 'Draft'),
         ('pending', 'Pending Review'),
         ('approved', 'Approved'),
+        ('internal', 'Internal Only (Hidden from Landing)'),
         ('rejected', 'Rejected'),
         ('cancelled', 'Cancelled'),
         ('ongoing', 'Ongoing'),
@@ -175,6 +176,19 @@ class EventGalleryImage(models.Model):
     def __str__(self):
         return f"Gallery for {self.event.title}"
 
+class EventPriceVariation(models.Model):
+    event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name='price_variations')
+    title = models.CharField(max_length=255, help_text="Misal: Paket Platinum, Early Bird, dll")
+    price = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    benefits = models.TextField(blank=True, null=True, help_text="Keterangan benefit yang didapat (pisahkan dengan baris baru)")
+    order = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ['order', 'price']
+
+    def __str__(self):
+        return f"{self.title} - {self.event.title} (Rp {self.price})"
+
 class EventSpeaker(models.Model):
     event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name='speakers')
     name = models.CharField(max_length=255)
@@ -251,8 +265,9 @@ class EventRegistration(models.Model):
 
     event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name='registrations')
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='event_registrations')
+    price_variation = models.ForeignKey(EventPriceVariation, on_delete=models.SET_NULL, null=True, blank=True, related_name='registrations')
     
-    # Guest info (in case they sign up without account)
+    unique_code = models.CharField(max_length=20, unique=True, blank=True)
     guest_name = models.CharField(max_length=255, blank=True, null=True)
     guest_email = models.EmailField(blank=True, null=True)
     

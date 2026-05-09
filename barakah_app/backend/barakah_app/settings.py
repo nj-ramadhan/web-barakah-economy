@@ -134,6 +134,7 @@ INSTALLED_APPS = [
     'article',
     'site_content',
     'events',
+    'meetings',
     'digital_products.apps.DigitalProductsConfig',
     'chat',
     'forum',
