@@ -138,6 +138,8 @@ const DashboardEventPage = () => {
                         <option value="">Semua Status</option>
                         <option value="pending">Menunggu</option>
                         <option value="approved">Disetujui</option>
+                        <option value="ongoing">Berjalan</option>
+                        <option value="internal">Internal</option>
                         <option value="rejected">Ditolak</option>
                         <option value="completed">Selesai</option>
                     </select>

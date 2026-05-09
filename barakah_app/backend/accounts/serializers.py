@@ -105,12 +105,14 @@ class UserAdminSerializer(serializers.ModelSerializer):
         from digital_products.models import DigitalOrder
         
         # Charity - Show verified and pending
-        donations = Donation.objects.filter(donor=obj).exclude(payment_status='rejected').values('campaign__title', 'amount')
-        charity_list = [f"{d.get('campaign__title') or 'Tanpa Judul'} (Rp {int(d.get('amount') or 0):,})" for d in donations]
+        donations = Donation.objects.filter(donor=obj).exclude(payment_status='rejected').values('campaign__title', 'amount', 'payment_status')
+        status_map = {'pending': 'MENUNGGU', 'verified': 'TERVERIFIKASI', 'approved': 'DISETUJUI'}
+        charity_list = [f"{d.get('campaign__title') or 'Tanpa Judul'} (Rp {int(d.get('amount') or 0):,}) - {status_map.get(d.get('payment_status'), 'MENUNGGU')}" for d in donations]
         
         # Events - Show both approved and pending
-        events = EventRegistration.objects.filter(user=obj).exclude(status='rejected').values('event__title', 'payment_amount')
-        event_list = [f"{e.get('event__title')} (Rp {int(e.get('payment_amount') or 0):,})" if e.get('payment_amount') else e.get('event__title') for e in events]
+        events = EventRegistration.objects.filter(user=obj).exclude(status='rejected').values('event__title', 'payment_amount', 'status')
+        reg_status_map = {'pending': 'MENUNGGU', 'approved': 'DISETUJUI', 'rejected': 'DITOLAK'}
+        event_list = [f"{e.get('event__title')} ({reg_status_map.get(e.get('status'), 'MENUNGGU')})" for e in events]
         
         # Sinergy
         # Exclude Pending and Batal statuses to show only active/completed activities

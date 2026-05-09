@@ -29,7 +29,7 @@ class EventViewSet(viewsets.ModelViewSet):
             if not request:
                 return Event.objects.none()
             user = request.user
-            queryset = Event.objects.all().order_by('-start_date')
+            queryset = Event.objects.all().order_by('-created_at')
             
             # Admin or staff can see all events
             if user and user.is_authenticated and (user.is_staff or user.has_menu_access('admin_events')):
@@ -910,7 +910,20 @@ class EventViewSet(viewsets.ModelViewSet):
             
             # 2. Send QR code image separately
             qr_content = None
-            if registration.qr_image:
+            
+            # Special QR Handling: Generate on-the-fly if enabled
+            if registration.event.has_special_qr:
+                try:
+                    from .utils import generate_special_qr_image
+                    special_qr_file = generate_special_qr_image(registration)
+                    if special_qr_file:
+                        qr_content = special_qr_file.read()
+                        logging.getLogger(__name__).info(f"Generated Special QR on-the-fly for Reg {registration.unique_code}")
+                except Exception as e:
+                    logging.getLogger(__name__).error(f"Failed to generate Special QR on-the-fly: {e}")
+
+            # If no special QR or generation failed, use existing qr_image
+            if not qr_content and registration.qr_image:
                 try:
                     # Try to read existing image
                     with registration.qr_image.open('rb') as qr_file:
@@ -918,7 +931,7 @@ class EventViewSet(viewsets.ModelViewSet):
                 except Exception as e:
                     logging.getLogger(__name__).warning(f"Could not read qr_image from storage: {e}")
 
-            # If no image in storage, generate on-the-fly as backup
+            # If still no image, generate on-the-fly as backup
             if not qr_content and unique_code:
                 try:
                     import qrcode
