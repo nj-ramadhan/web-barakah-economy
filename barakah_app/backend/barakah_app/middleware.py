@@ -21,6 +21,6 @@ class GlobalExceptionMiddleware:
             return JsonResponse({
                 "error": "Internal Server Error (Global Catch)",
                 "details": str(exception),
-                "trace": error_trace if settings.DEBUG else None
+                "trace": error_trace # Temporarily always show trace for debugging
             }, status=500)
         return None

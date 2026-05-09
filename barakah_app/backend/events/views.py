@@ -9,6 +9,7 @@ from django.http import HttpResponse
 import csv
 from .models import Event, EventFormField, EventRegistration, EventRegistrationFile
 from .serializers import EventSerializer, EventRegistrationSerializer
+from .simple_serializers import EventSimpleSerializer
 from django_filters.rest_framework import DjangoFilterBackend
 from barakah_app.utils import send_status_update_email
 import json
@@ -23,10 +24,13 @@ logger = logging.getLogger(__name__)
 
 class EventViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
-        user = self.request.user
+        request = getattr(self, 'request', None)
+        if not request:
+            return Event.objects.none()
+        user = request.user
         queryset = Event.objects.all().order_by('-start_date')
         
-        # Admins see everything
+        # Admin or staff can see all events
         if user and user.is_authenticated and (user.is_staff or user.has_menu_access('admin_events')):
             return queryset
             
@@ -241,9 +245,22 @@ class EventViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'], permission_classes=[permissions.IsAuthenticated])
     def my_events(self, request):
         """List events created by current user."""
-        events = Event.objects.filter(created_by=request.user).order_by('-created_at')
-        serializer = self.get_serializer(events, many=True)
-        return Response(serializer.data)
+        try:
+            # Filter by ID to be safer with lazy objects
+            user_id = request.user.id
+            events = Event.objects.filter(created_by_id=user_id).order_by('-created_at')
+            
+            # Use the simplified serializer for better performance
+            serializer = EventSimpleSerializer(events, many=True, context={'request': request})
+            return Response(serializer.data)
+        except Exception as e:
+            import traceback
+            error_trace = traceback.format_exc()
+            logger.error(f"Error in my_events: {str(e)}\n{error_trace}")
+            return Response({
+                "error": str(e),
+                "traceback": error_trace
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
     def register(self, request, slug=None):

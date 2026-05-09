@@ -150,32 +150,42 @@ class EventSerializer(serializers.ModelSerializer):
             return None
 
     def get_registration_count(self, obj):
-        # Count all registrations as they are now auto-approved
-        return obj.registrations.count()
+        try:
+            return obj.registrations.count()
+        except Exception:
+            return 0
 
     def get_attended_count(self, obj):
-        # Count registrations that have at least one attendance record or is_attended true
-        return obj.registrations.filter(is_attended=True).count()
+        try:
+            return obj.registrations.filter(is_attended=True).count()
+        except Exception:
+            return 0
 
     def get_committees_details(self, obj):
-        from accounts.serializers import UserSimpleSerializer
-        return UserSimpleSerializer(obj.committees.all(), many=True).data
+        try:
+            from accounts.serializers import UserSimpleSerializer
+            return UserSimpleSerializer(obj.committees.all(), many=True, context=self.context).data
+        except Exception:
+            return []
 
     def get_user_registration(self, obj):
-        request = self.context.get('request')
-        if not request or not request.user or not request.user.is_authenticated:
-            return None
-        
-        reg = obj.registrations.filter(user=request.user).first()
-        if reg:
-            return {
-                "id": reg.id,
-                "status": reg.status,
-                "unique_code": reg.unique_code,
-                "qr_image": request.build_absolute_uri(reg.qr_image.url) if reg.qr_image else None,
-                "is_attended": reg.is_attended,
-                "attended_at": reg.attended_at,
-            }
+        try:
+            request = self.context.get('request')
+            if not request or not request.user or not request.user.is_authenticated:
+                return None
+            
+            reg = obj.registrations.filter(user=request.user).first()
+            if reg:
+                return {
+                    "id": reg.id,
+                    "status": reg.status,
+                    "unique_code": reg.unique_code,
+                    "qr_image": request.build_absolute_uri(reg.qr_image.url) if reg.qr_image and hasattr(reg.qr_image, 'url') else None,
+                    "is_attended": reg.is_attended,
+                    "attended_at": reg.attended_at,
+                }
+        except Exception:
+            pass
         return None
     
     def validate_form_fields(self, value):
