@@ -80,10 +80,12 @@ class ProductViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         product = serializer.save(seller=self.request.user, status='pending')
         self._save_variations(product)
+        self._save_gallery_images(product)
 
     def perform_update(self, serializer):
         product = serializer.save()
         self._save_variations(product)
+        self._save_gallery_images(product)
 
     def _save_variations(self, product):
         import json
@@ -129,6 +131,21 @@ class ProductViewSet(viewsets.ModelViewSet):
                 print(f"Error saving variations: {e}")
                 import traceback
                 traceback.print_exc()
+
+    def _save_gallery_images(self, product):
+        from .models import ProductImage
+        gallery_images = self.request.FILES.getlist('gallery_images')
+        
+        if gallery_images:
+            # If we want to replace images on update, we could delete old ones
+            # But for simplicity, we'll just add new ones or handle it via a separate delete endpoint
+            # product.images.all().delete() 
+            
+            for img in gallery_images:
+                ProductImage.objects.create(
+                    product=product,
+                    image=img
+                )
 
 class ProductDetailView(APIView):
     def get(self, request, slug):

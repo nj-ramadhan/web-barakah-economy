@@ -79,7 +79,10 @@ const DashboardUserPage = () => {
             setAllLabels(labelsRes.data.results || labelsRes.data);
             setAllLingkup(lingkupRes.data.results || lingkupRes.data);
             setAllBidang(bidangRes.data.results || bidangRes.data);
-        } catch (err) { console.error(err); }
+        } catch (err) { 
+            console.error(err); 
+            alert('Gagal mengambil metadata (roles/labels). Pastikan Anda memiliki akses Admin.');
+        }
     }, []);
 
     // Debounce search query
@@ -117,7 +120,10 @@ const DashboardUserPage = () => {
                 setTotalCount(response.data.length);
                 setTotalPages(1);
             }
-        } catch (err) { console.error(err); }
+        } catch (err) { 
+            console.error(err); 
+            alert('Gagal mengambil data user: ' + (err.response?.data?.detail || err.message));
+        }
         setLoading(false);
     }, [debouncedSearch, pageSize, filterRole, filterCustomRole, filterLabel, filterLingkup, filterBidang, filterDateFrom, filterDateTo, sortField, sortDir]);
 

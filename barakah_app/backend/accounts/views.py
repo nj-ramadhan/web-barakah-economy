@@ -230,33 +230,42 @@ class ChangePasswordView(APIView):
         request.user.save()
         return Response({'message': 'Password berhasil diubah.'}, status=status.HTTP_200_OK)
 
+class IsAdminBarakah(permissions.BasePermission):
+    """Custom permission to allow staff OR users with role 'admin'."""
+    def has_permission(self, request, view):
+        return bool(
+            request.user and 
+            request.user.is_authenticated and 
+            (request.user.is_staff or request.user.role == 'admin')
+        )
+
 
 class RoleViewSet(viewsets.ModelViewSet):
     """CRUD for dynamic roles. Admin only."""
     queryset = Role.objects.all()
     serializer_class = RoleSerializer
-    permission_classes = [permissions.IsAdminUser]
+    permission_classes = [IsAdminBarakah]
 
 
 class UserLabelViewSet(viewsets.ModelViewSet):
     """CRUD for user labels. Admin only."""
     queryset = UserLabel.objects.all()
     serializer_class = UserLabelSerializer
-    permission_classes = [permissions.IsAdminUser]
+    permission_classes = [IsAdminBarakah]
 
 
 class LingkupTugasViewSet(viewsets.ModelViewSet):
     """CRUD for lingkup tugas. Admin only."""
     queryset = LingkupTugas.objects.all()
     serializer_class = LingkupTugasSerializer
-    permission_classes = [permissions.IsAdminUser]
+    permission_classes = [IsAdminBarakah]
 
 
 class BidangTugasViewSet(viewsets.ModelViewSet):
     """CRUD for bidang tugas. Admin only."""
     queryset = BidangTugas.objects.all()
     serializer_class = BidangTugasSerializer
-    permission_classes = [permissions.IsAdminUser]
+    permission_classes = [IsAdminBarakah]
 
 
 class UserPagination(PageNumberPagination):
@@ -267,7 +276,7 @@ class UserPagination(PageNumberPagination):
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all().select_related('profile').prefetch_related('custom_roles', 'labels', 'lingkup_tugas', 'bidang_tugas').order_by('-date_joined')
     serializer_class = UserAdminSerializer
-    permission_classes = [permissions.IsAdminUser]
+    permission_classes = [IsAdminBarakah]
     pagination_class = UserPagination
 
     def create(self, request, *args, **kwargs):

@@ -455,7 +455,7 @@ class WithdrawalViewSet(viewsets.ModelViewSet):
             from orders.models import Order
             total_sinergy_sales = Order.objects.filter(
                 seller=request.user,
-                status__in=['Paid', 'Shipped', 'Delivered']
+                status__in=['Paid', 'paid', 'Shipped', 'shipped', 'Delivered', 'delivered']
             ).aggregate(total=Sum('total_price'))['total'] or Decimal('0')
 
             total_sales = total_sales + total_course_sales + Decimal(total_sinergy_sales)

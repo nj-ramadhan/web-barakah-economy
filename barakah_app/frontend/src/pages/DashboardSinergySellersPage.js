@@ -18,6 +18,10 @@ const DashboardSinergySellersPage = () => {
     const [isCodAvailable, setIsCodAvailable] = useState(false);
     const [manualStock, setManualStock] = useState(0);
     const [manualPrice, setManualPrice] = useState(0);
+    const [thumbnailFile, setThumbnailFile] = useState(null);
+    const [thumbnailPreview, setThumbnailPreview] = useState(null);
+    const [galleryFiles, setGalleryFiles] = useState([]);
+    const [galleryPreviews, setGalleryPreviews] = useState([]);
 
 
     const fetchDashboardData = async () => {
@@ -70,6 +74,24 @@ const DashboardSinergySellersPage = () => {
         setVariants(newVariants);
     };
 
+    const handleThumbnailChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            setThumbnailFile(file);
+            setThumbnailPreview(URL.createObjectURL(file));
+        }
+    };
+
+    const handleGalleryChange = (e) => {
+        const files = Array.from(e.target.files);
+        if (files.length > 5) {
+            alert('Maksimal 5 foto galeri');
+            return;
+        }
+        setGalleryFiles(files);
+        setGalleryPreviews(files.map(file => URL.createObjectURL(file)));
+    };
+
     const handleSaveProduct = async (e) => {
         e.preventDefault();
         const user = JSON.parse(localStorage.getItem('user'));
@@ -86,6 +108,14 @@ const DashboardSinergySellersPage = () => {
             formData.append('supported_couriers', selectedCouriers.join(','));
             formData.append('is_cod_available', isCodAvailable);
             formData.append('purchase_instructions', e.target.purchase_instructions.value);
+            
+            if (thumbnailFile) {
+                formData.append('thumbnail', thumbnailFile);
+            }
+
+            galleryFiles.forEach(file => {
+                formData.append('gallery_images', file);
+            });
             
             const sanitizedVariants = variants.map(v => ({
                 ...v,
@@ -107,6 +137,10 @@ const DashboardSinergySellersPage = () => {
             }
             fetchDashboardData();
             setActiveTab('list');
+            setThumbnailFile(null);
+            setThumbnailPreview(null);
+            setGalleryFiles([]);
+            setGalleryPreviews([]);
         } catch (error) {
             console.error(error);
             alert('Gagal menyimpan produk');
@@ -154,7 +188,15 @@ const DashboardSinergySellersPage = () => {
                     <button onClick={() => setActiveTab('voucher')} className="bg-orange-100 hover:bg-orange-200 text-orange-700 px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 transition-all">
                         <span className="material-icons text-sm">local_activity</span> Buat Voucher
                     </button>
-                    <button onClick={() => { setActiveTab('add'); setEditingProduct(null); setVariants([{name: '', additional_price: 0, stock: 0}]); }} className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 shadow-sm transition-all shadow-emerald-200">
+                    <button onClick={() => { 
+                        setActiveTab('add'); 
+                        setEditingProduct(null); 
+                        setVariants([{name: '', additional_price: 0, stock: 0}]); 
+                        setThumbnailFile(null);
+                        setThumbnailPreview(null);
+                        setGalleryFiles([]);
+                        setGalleryPreviews([]);
+                    }} className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 shadow-sm transition-all shadow-emerald-200">
                         <span className="material-icons text-sm">add</span> Tambah Produk
                     </button>
                 </div>
@@ -201,6 +243,10 @@ const DashboardSinergySellersPage = () => {
                                     setIsCodAvailable(p.is_cod_available || false);
                                     setManualStock(p.stock || 0);
                                     setManualPrice(p.price || 0);
+                                    setThumbnailFile(null);
+                                    setThumbnailPreview(p.thumbnail || p.thumbnail_url);
+                                    setGalleryFiles([]);
+                                    setGalleryPreviews(p.images ? p.images.map(img => img.image) : []);
                                     setActiveTab('edit');
                                 }} className="flex-1 py-2 text-xs font-bold text-emerald-700 bg-emerald-50 rounded-xl hover:bg-emerald-100 border border-emerald-100 transition">Edit & Variasi</button>
 
@@ -383,12 +429,42 @@ const DashboardSinergySellersPage = () => {
                     </div>
                 </div>
 
-                <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-1">Foto Multi / Carousel</label>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-1">Foto Utama (Thumbnail)</label>
+                        <div 
+                            onClick={() => document.getElementById('thumbnail-input').click()}
+                            className="border-2 border-dashed border-gray-200 rounded-2xl p-4 text-center hover:border-emerald-500 hover:bg-emerald-50/30 cursor-pointer transition-all relative overflow-hidden h-40 flex flex-col items-center justify-center bg-gray-50/50"
+                        >
+                            {thumbnailPreview ? (
+                                <img src={thumbnailPreview} alt="Preview" className="absolute inset-0 w-full h-full object-cover" />
+                            ) : (
+                                <>
+                                    <span className="material-icons text-gray-400 text-3xl mb-2">add_a_photo</span>
+                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Pilih Foto Utama</p>
+                                </>
+                            )}
+                            <input id="thumbnail-input" type="file" accept="image/*" className="hidden" onChange={handleThumbnailChange} />
+                        </div>
+                    </div>
 
-                    <div className="border border-dashed border-gray-300 rounded-xl p-6 text-center hover:bg-gray-50 cursor-pointer transition">
-                        <span className="material-icons text-gray-400 text-3xl">add_photo_alternate</span>
-                        <p className="text-sm font-medium text-gray-500 mt-2">Pilih beberapa foto (Max 5)</p>
+                    <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-1">Galeri Foto (Carousel)</label>
+                        <div 
+                            onClick={() => document.getElementById('gallery-input').click()}
+                            className="border-2 border-dashed border-gray-200 rounded-2xl p-4 text-center hover:border-emerald-500 hover:bg-emerald-50/30 cursor-pointer transition-all h-40 flex flex-col items-center justify-center bg-gray-50/50"
+                        >
+                            <span className="material-icons text-gray-400 text-3xl mb-2">collections</span>
+                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Pilih Hingga 5 Foto</p>
+                            <input id="gallery-input" type="file" accept="image/*" multiple className="hidden" onChange={handleGalleryChange} />
+                        </div>
+                        {galleryPreviews.length > 0 && (
+                            <div className="flex gap-2 mt-3 overflow-x-auto pb-2">
+                                {galleryPreviews.map((src, idx) => (
+                                    <img key={idx} src={src} alt={`Preview ${idx}`} className="w-12 h-12 rounded-lg object-cover border border-gray-200 shadow-sm" />
+                                ))}
+                            </div>
+                        )}
                     </div>
                 </div>
 

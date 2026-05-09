@@ -7,6 +7,11 @@ import NavigationButton from '../../components/layout/Navigation';
 
 const API = process.env.REACT_APP_API_BASE_URL;
 
+const toLocalDateStr = (date) => {
+    const d = new Date(date);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
+
 const ActivityCalendarPage = () => {
     const navigate = useNavigate();
     const [viewMode, setViewMode] = useState('monthly'); // weekly, monthly, quarterly, range
@@ -14,8 +19,8 @@ const ActivityCalendarPage = () => {
     const [activities, setActivities] = useState([]);
     const [loading, setLoading] = useState(true);
     const [customRange, setCustomRange] = useState({
-        start: new Date().toISOString().split('T')[0],
-        end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+        start: toLocalDateStr(new Date()),
+        end: toLocalDateStr(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000))
     });
 
     const getAuth = useCallback(() => {
@@ -81,7 +86,7 @@ const ActivityCalendarPage = () => {
 
         for (let d = 1; d <= daysInMonth; d++) {
             const date = new Date(year, month, d);
-            const dateStr = date.toISOString().split('T')[0];
+            const dateStr = toLocalDateStr(date);
             const dayActivities = activities.filter(act => {
                 const start = act.start.split('T')[0];
                 const end = act.end.split('T')[0];
@@ -195,7 +200,7 @@ const ActivityCalendarPage = () => {
                                 const link = document.createElement("a");
                                 const url = URL.createObjectURL(blob);
                                 link.setAttribute("href", url);
-                                link.setAttribute("download", `Data_Kegiatan_BAE_${new Date().toISOString().split('T')[0]}.csv`);
+                                link.setAttribute("download", `Data_Kegiatan_BAE_${toLocalDateStr(new Date())}.csv`);
                                 link.style.visibility = 'hidden';
                                 document.body.appendChild(link);
                                 link.click();

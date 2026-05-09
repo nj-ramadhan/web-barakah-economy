@@ -45,6 +45,11 @@ const EventRegistrationSubmissionPage = () => {
     const [isResending, setIsResending] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
     const [showCommitteeModal, setShowCommitteeModal] = useState(false);
+    
+    // Sorting and Filtering State
+    const [sortConfig, setSortConfig] = useState({ key: 'created_at', direction: 'desc' });
+    const [filters, setFilters] = useState({ label: '', gender: '', attendance: 'all' });
+    const [searchTerm, setSearchTerm] = useState('');
 
     useEffect(() => {
         fetchData();
@@ -68,9 +73,79 @@ const EventRegistrationSubmissionPage = () => {
         }
     };
 
+    // --- Sorting and Filtering Logic ---
+    const handleSort = (key) => {
+        let direction = 'asc';
+        if (sortConfig.key === key && sortConfig.direction === 'asc') {
+            direction = 'desc';
+        }
+        setSortConfig({ key, direction });
+    };
+
+    const getUniqueLabels = () => {
+        const labels = new Set();
+        registrations.forEach(reg => {
+            reg.user_details?.labels?.forEach(l => labels.add(l.name));
+        });
+        return Array.from(labels).sort();
+    };
+
+    const filteredRegistrations = registrations.filter(reg => {
+        const hybrid = getHybridInfo(reg, event?.form_fields);
+        
+        // Search Filter
+        const searchStr = `${hybrid.name} ${hybrid.email} ${reg.unique_code}`.toLowerCase();
+        if (searchTerm && !searchStr.includes(searchTerm.toLowerCase())) return false;
+
+        // Label Filter
+        if (filters.label && !reg.user_details?.labels?.some(l => l.name === filters.label)) return false;
+
+        // Gender Filter
+        if (filters.gender) {
+            const genderField = event?.form_fields?.find(f => (f.label || '').toLowerCase().includes('jenis kelamin'));
+            const genderValue = reg.responses?.[genderField?.id]?.toLowerCase();
+            if (genderValue !== filters.gender.toLowerCase()) return false;
+        }
+
+        // Attendance Filter
+        if (filters.attendance !== 'all') {
+            const isAttended = reg.is_attended || (reg.attendances_list && reg.attendances_list.length > 0);
+            if (filters.attendance === 'attended' && !isAttended) return false;
+            if (filters.attendance === 'not_attended' && isAttended) return false;
+        }
+
+        return true;
+    });
+
+    const sortedRegistrations = [...filteredRegistrations].sort((a, b) => {
+        const { key, direction } = sortConfig;
+        let valA, valB;
+
+        if (key === 'created_at') {
+            valA = new Date(a.created_at);
+            valB = new Date(b.created_at);
+        } else if (key === 'unique_code') {
+            valA = a.unique_code || '';
+            valB = b.unique_code || '';
+        } else if (key === 'name') {
+            valA = getHybridInfo(a, event?.form_fields).name.toLowerCase();
+            valB = getHybridInfo(b, event?.form_fields).name.toLowerCase();
+        } else if (key === 'status') {
+            valA = a.status || '';
+            valB = b.status || '';
+        } else {
+            valA = a[key];
+            valB = b[key];
+        }
+
+        if (valA < valB) return direction === 'asc' ? -1 : 1;
+        if (valA > valB) return direction === 'asc' ? 1 : -1;
+        return 0;
+    });
+
     const handleSelectAll = (e) => {
         if (e.target.checked) {
-            setSelectedIds(registrations.map(r => r.id));
+            setSelectedIds(sortedRegistrations.map(r => r.id));
         } else {
             setSelectedIds([]);
         }
@@ -396,6 +471,49 @@ const EventRegistrationSubmissionPage = () => {
                     </div>
                 </div>
 
+                <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-6 mb-6">
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div className="relative">
+                            <span className="material-icons absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">search</span>
+                            <input 
+                                type="text"
+                                placeholder="Cari Nama / Kode..."
+                                className="w-full pl-9 pr-4 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-xs focus:ring-2 focus:ring-green-500 outline-none transition"
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                            />
+                        </div>
+                        <select 
+                            className="bg-gray-50 border border-gray-100 rounded-xl px-4 py-2.5 text-xs focus:ring-2 focus:ring-green-500 outline-none transition"
+                            value={filters.label}
+                            onChange={(e) => setFilters(prev => ({ ...prev, label: e.target.value }))}
+                        >
+                            <option value="">Semua Label</option>
+                            {getUniqueLabels().map(label => (
+                                <option key={label} value={label}>{label}</option>
+                            ))}
+                        </select>
+                        <select 
+                            className="bg-gray-50 border border-gray-100 rounded-xl px-4 py-2.5 text-xs focus:ring-2 focus:ring-green-500 outline-none transition"
+                            value={filters.gender}
+                            onChange={(e) => setFilters(prev => ({ ...prev, gender: e.target.value }))}
+                        >
+                            <option value="">Semua Gender</option>
+                            <option value="laki-laki">Laki-laki</option>
+                            <option value="perempuan">Perempuan</option>
+                        </select>
+                        <select 
+                            className="bg-gray-50 border border-gray-100 rounded-xl px-4 py-2.5 text-xs focus:ring-2 focus:ring-green-500 outline-none transition"
+                            value={filters.attendance}
+                            onChange={(e) => setFilters(prev => ({ ...prev, attendance: e.target.value }))}
+                        >
+                            <option value="all">Semua Kehadiran</option>
+                            <option value="attended">Sudah Hadir</option>
+                            <option value="not_attended">Belum Hadir</option>
+                        </select>
+                    </div>
+                </div>
+
                 {activeTab === 'participants' ? (
                     <div className="bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden">
                     <div className="overflow-x-auto">
@@ -407,12 +525,33 @@ const EventRegistrationSubmissionPage = () => {
                                             type="checkbox"
                                             className="w-4 h-4 rounded border-gray-300 text-green-700 focus:ring-green-500"
                                             onChange={handleSelectAll}
-                                            checked={registrations.length > 0 && selectedIds.length === registrations.length}
+                                            checked={sortedRegistrations.length > 0 && selectedIds.length === sortedRegistrations.length}
                                         />
                                     </th>
-                                    <th className="p-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Waktu</th>
-                                    <th className="p-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Kode Tiket</th>
-                                    <th className="p-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Identitas</th>
+                                    <th className="p-5 text-[10px] font-black text-gray-400 uppercase tracking-widest cursor-pointer hover:text-green-700 transition" onClick={() => handleSort('created_at')}>
+                                        <div className="flex items-center gap-1">
+                                            Waktu
+                                            {sortConfig.key === 'created_at' && (
+                                                <span className="material-icons text-xs">{sortConfig.direction === 'asc' ? 'arrow_upward' : 'arrow_downward'}</span>
+                                            )}
+                                        </div>
+                                    </th>
+                                    <th className="p-5 text-[10px] font-black text-gray-400 uppercase tracking-widest cursor-pointer hover:text-green-700 transition" onClick={() => handleSort('unique_code')}>
+                                        <div className="flex items-center gap-1">
+                                            Kode Tiket
+                                            {sortConfig.key === 'unique_code' && (
+                                                <span className="material-icons text-xs">{sortConfig.direction === 'asc' ? 'arrow_upward' : 'arrow_downward'}</span>
+                                            )}
+                                        </div>
+                                    </th>
+                                    <th className="p-5 text-[10px] font-black text-gray-400 uppercase tracking-widest cursor-pointer hover:text-green-700 transition" onClick={() => handleSort('name')}>
+                                        <div className="flex items-center gap-1">
+                                            Identitas
+                                            {sortConfig.key === 'name' && (
+                                                <span className="material-icons text-xs">{sortConfig.direction === 'asc' ? 'arrow_upward' : 'arrow_downward'}</span>
+                                            )}
+                                        </div>
+                                    </th>
                                     <th className="p-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Label</th>
                                     {event?.sessions && event.sessions.length > 0 ? (
                                         event.sessions.map(ses => (
@@ -421,7 +560,14 @@ const EventRegistrationSubmissionPage = () => {
                                             </th>
                                         ))
                                     ) : (
-                                        <th className="p-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Kehadiran</th>
+                                        <th className="p-5 text-[10px] font-black text-gray-400 uppercase tracking-widest cursor-pointer hover:text-green-700 transition" onClick={() => handleSort('is_attended')}>
+                                            <div className="flex items-center justify-center gap-1">
+                                                Kehadiran
+                                                {sortConfig.key === 'is_attended' && (
+                                                    <span className="material-icons text-xs">{sortConfig.direction === 'asc' ? 'arrow_upward' : 'arrow_downward'}</span>
+                                                )}
+                                            </div>
+                                        </th>
                                     )}
                                     {event?.form_fields?.filter(field => {
                                         const label = (field.label || '').toLowerCase();
@@ -430,21 +576,35 @@ const EventRegistrationSubmissionPage = () => {
                                         <th key={field.id} className="p-5 text-[10px] font-black text-gray-400 uppercase tracking-widest min-w-[150px]">{field.label}</th>
                                     ))}
                                     {event?.price_type !== 'free' && (
-                                        <th className="p-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Pembayaran</th>
+                                        <th className="p-5 text-[10px] font-black text-gray-400 uppercase tracking-widest cursor-pointer hover:text-green-700 transition" onClick={() => handleSort('payment_amount')}>
+                                            <div className="flex items-center gap-1">
+                                                Pembayaran
+                                                {sortConfig.key === 'payment_amount' && (
+                                                    <span className="material-icons text-xs">{sortConfig.direction === 'asc' ? 'arrow_upward' : 'arrow_downward'}</span>
+                                                )}
+                                            </div>
+                                        </th>
                                     )}
-                                    <th className="p-5 text-[10px] font-black text-gray-400 uppercase tracking-widest text-right">Status</th>
+                                    <th className="p-5 text-[10px] font-black text-gray-400 uppercase tracking-widest text-right cursor-pointer hover:text-green-700 transition" onClick={() => handleSort('status')}>
+                                        <div className="flex items-center justify-end gap-1">
+                                            Status
+                                            {sortConfig.key === 'status' && (
+                                                <span className="material-icons text-xs">{sortConfig.direction === 'asc' ? 'arrow_upward' : 'arrow_downward'}</span>
+                                            )}
+                                        </div>
+                                    </th>
                                     <th className="p-5 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-50">
-                                {registrations.length === 0 ? (
+                                {sortedRegistrations.length === 0 ? (
                                     <tr>
-                                        <td colSpan={6 + (event?.form_fields?.length || 0) + (event?.sessions?.length || 0)} className="p-12 text-center text-gray-400 italic text-sm">
-                                            Belum ada data pendaftar.
+                                        <td colSpan={10 + (event?.form_fields?.length || 0) + (event?.sessions?.length || 0)} className="p-12 text-center text-gray-400 italic text-sm">
+                                            {searchTerm || filters.label || filters.gender || filters.attendance !== 'all' ? 'Tidak ada data pendaftar yang sesuai filter.' : 'Belum ada data pendaftar.'}
                                         </td>
                                     </tr>
                                 ) : (
-                                    registrations.map((reg) => {
+                                    sortedRegistrations.map((reg) => {
                                         const hybrid = getHybridInfo(reg, event?.form_fields);
                                         return (
                                             <tr key={reg.id} className={`hover:bg-gray-50/50 transition-colors ${selectedIds.includes(reg.id) ? 'bg-green-50/30' : ''}`}>
