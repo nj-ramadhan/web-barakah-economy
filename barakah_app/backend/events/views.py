@@ -911,28 +911,38 @@ class EventViewSet(viewsets.ModelViewSet):
             # 2. Send QR code image separately
             qr_content = None
             
-            # Special QR Handling: Generate on-the-fly if enabled and update registration
+            # Special QR Handling: Attempt to generate if enabled or if a template might exist
+            qr_mime = "image/png" # Default
             if registration.event.has_special_qr:
                 try:
                     from .utils import generate_special_qr_image
+                    logging.getLogger(__name__).info(f"Attempting Special QR for Reg {registration.unique_code} (Event ID: {registration.event.id})")
                     special_qr_file = generate_special_qr_image(registration)
+                    
                     if special_qr_file:
-                        # Persist the special QR image so it's consistent everywhere (WA, Email, Web)
-                        registration.qr_image.save(f"special_qr_{registration.unique_code}.jpg", special_qr_file, save=True)
+                        # Force save to persistence
+                        filename = f"special_qr_{registration.unique_code}.jpg"
+                        registration.qr_image.save(filename, special_qr_file, save=True)
                         registration.qr_image.seek(0)
                         qr_content = registration.qr_image.read()
-                        logging.getLogger(__name__).info(f"Generated and saved Special QR for Reg {registration.unique_code}")
+                        qr_mime = "image/jpeg"
+                        logging.getLogger(__name__).info(f"Successfully generated and persisted Special QR for {registration.unique_code}")
+                    else:
+                        logging.getLogger(__name__).warning(f"Special QR generator returned None for {registration.unique_code}")
                 except Exception as e:
-                    logging.getLogger(__name__).error(f"Failed to generate Special QR for Reg {registration.unique_code}: {e}")
+                    import traceback
+                    logging.getLogger(__name__).error(f"Special QR Generation Error: {str(e)}\n{traceback.format_exc()}")
 
-            # If no special QR or generation failed, use existing qr_image
+            # Fallback to existing qr_image if Special QR failed or was skipped
             if not qr_content and registration.qr_image:
                 try:
-                    # Try to read existing image
                     with registration.qr_image.open('rb') as qr_file:
                         qr_content = qr_file.read()
+                        # Detect if it's a jpeg or png based on filename
+                        if registration.qr_image.name.lower().endswith('.jpg') or registration.qr_image.name.lower().endswith('.jpeg'):
+                            qr_mime = "image/jpeg"
                 except Exception as e:
-                    logging.getLogger(__name__).warning(f"Could not read qr_image from storage: {e}")
+                    logging.getLogger(__name__).warning(f"Fallback qr_image read failed: {e}")
 
             # If still no image, generate on-the-fly as backup
             if not qr_content and unique_code:
@@ -953,7 +963,7 @@ class EventViewSet(viewsets.ModelViewSet):
                 try:
                     import base64
                     encoded = base64.b64encode(qr_content).decode('utf-8')
-                    qr_b64 = f"data:image/png;base64,{encoded}"
+                    qr_b64 = f"data:{qr_mime};base64,{encoded}"
                     
                     # Send image with short caption
                     qr_res = whatsapp_service.send_file(

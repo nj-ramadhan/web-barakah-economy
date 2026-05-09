@@ -30,10 +30,24 @@ def generate_special_qr_image(registration):
         return None
 
     # Load template
+    img = None
     try:
+        # 1. Try standard Django .path
         img = Image.open(special_qr.template_image.path).convert("RGB")
     except Exception as e:
-        logger.error(f"Error opening special QR template image at {special_qr.template_image.path}: {e}")
+        logger.warning(f"Failed to open template via .path: {e}. Trying fallback...")
+        try:
+            # 2. Try manual path building if .path is weird (e.g. starts with /media/)
+            raw_path = str(special_qr.template_image.name)
+            if raw_path.startswith('/media/'):
+                raw_path = raw_path.replace('/media/', '', 1)
+            full_path = os.path.join(settings.MEDIA_ROOT, raw_path)
+            img = Image.open(full_path).convert("RGB")
+        except Exception as e2:
+            logger.error(f"All attempts to open template image failed: {e2}")
+            return None
+
+    if not img:
         return None
 
     draw = ImageDraw.Draw(img)
@@ -41,18 +55,23 @@ def generate_special_qr_image(registration):
 
     # 1. Draw QR or Barcode
     code_buffer = BytesIO()
-    if special_qr.code_type == 'barcode':
-        # Generate Barcode
-        EAN = barcode.get_barcode_class('code128')
-        ean = EAN(registration.unique_code, writer=ImageWriter())
-        ean.write(code_buffer)
-    else:
-        # Generate QR Code
-        qr = qrcode.QRCode(version=1, box_size=10, border=2)
-        qr.add_data(registration.unique_code)
-        qr.make(fit=True)
-        qr_img = qr.make_image(fill_color="black", back_color="white")
-        qr_img.save(code_buffer, format="PNG")
+    try:
+        if special_qr.code_type == 'barcode':
+            # Generate Barcode
+            EAN = barcode.get_barcode_class('code128')
+            ean = EAN(registration.unique_code, writer=ImageWriter())
+            # writer_options = {'write_text': False} # Can hide text if needed
+            ean.write(code_buffer)
+        else:
+            # Generate QR Code
+            qr = qrcode.QRCode(version=1, box_size=10, border=2)
+            qr.add_data(registration.unique_code)
+            qr.make(fit=True)
+            qr_img = qr.make_image(fill_color="black", back_color="white")
+            qr_img.save(code_buffer, format="PNG")
+    except Exception as e:
+        logger.error(f"Error generating code for special QR: {e}")
+        return None
 
     code_buffer.seek(0)
     code_img = Image.open(code_buffer).convert("RGBA")
@@ -72,7 +91,6 @@ def generate_special_qr_image(registration):
     img.paste(code_img, (paste_x, paste_y), code_img)
 
     # 2. Draw Dynamic Fields & Photos
-    # field_layouts: [ { field_id: ID, x: X, y: Y, font_size: SIZE, color: COLOR, font_family: FONT, is_photo: BOOL, shape: SHAPE, width: W, height: H }, ... ]
     for layout in special_qr.field_layouts:
         field_id = str(layout.get('field_id'))
         is_photo = layout.get('is_photo', False)
@@ -98,66 +116,53 @@ def generate_special_qr_image(registration):
                 target_w = int(pw_pct * width / 100)
                 target_h = int(ph_pct * height / 100)
 
-                # Resize photo with cropping to fit target aspect ratio
-                # (Standard thumbnail logic: crop to center)
+                # Resize photo with cropping
                 p_w, p_h = participant_photo.size
                 target_ratio = target_w / target_h
                 actual_ratio = p_w / p_h
 
                 if actual_ratio > target_ratio:
-                    # Photo is wider than target
                     new_w = int(target_ratio * p_h)
                     offset = (p_w - new_w) // 2
                     participant_photo = participant_photo.crop((offset, 0, offset + new_w, p_h))
                 else:
-                    # Photo is taller than target
                     new_h = int(p_w / target_ratio)
                     offset = (p_h - new_h) // 2
                     participant_photo = participant_photo.crop((0, offset, p_w, offset + new_h))
 
                 participant_photo = participant_photo.resize((target_w, target_h), Image.Resampling.LANCZOS)
 
-                # Apply Shape Mask
+                # Mask
                 mask = Image.new('L', (target_w, target_h), 0)
                 mask_draw = ImageDraw.Draw(mask)
-                
                 if shape == 'circle':
                     mask_draw.ellipse((0, 0, target_w, target_h), fill=255)
-                elif shape == 'square' or shape == 'portrait':
+                else:
                     mask_draw.rectangle((0, 0, target_w, target_h), fill=255)
                 
-                # Paste photo
                 img.paste(participant_photo, (px - target_w // 2, py - target_h // 2), mask)
-
             except Exception as e:
-                print(f"Error drawing photo: {e}")
-                continue
+                logger.error(f"Error drawing photo field {field_id}: {e}")
 
         else:
             # Handle Text field
             value = registration.responses.get(field_id, "")
-            
-            # If not found in responses, check if it's a fixed field (Nama/Email/etc)
             if not value:
-                # Try to match label if it's not ID based (legacy support)
+                # Try fallback by label if ID fails
                 from .models import EventFormField
                 try:
                     field = EventFormField.objects.get(id=field_id)
                     value = registration.responses.get(field.label, "")
-                except:
-                    pass
+                except: pass
 
-            if not value:
-                continue
+            if not value: continue
 
-            # Position
             fx = int(layout.get('x', 0) * width / 100)
             fy = int(layout.get('y', 0) * height / 100)
             fsize = int(layout.get('font_size', 20))
             fcolor = layout.get('color', '#000000')
             ffamily = layout.get('font_family', 'Roboto-Bold.ttf')
 
-            # Load font
             font_path = os.path.join(settings.BASE_DIR, 'events', 'fonts', ffamily)
             if not os.path.exists(font_path):
                 font_path = os.path.join(settings.BASE_DIR, 'events', 'fonts', 'Roboto-Bold.ttf')
@@ -167,16 +172,21 @@ def generate_special_qr_image(registration):
             except:
                 font = ImageFont.load_default()
 
-            # Draw text (centered at fx, fy)
             try:
-                text_bbox = draw.textbbox((0, 0), str(value), font=font)
-                text_width = text_bbox[2] - text_bbox[0]
-                text_height = text_bbox[3] - text_bbox[1]
-                draw.text((fx - text_width // 2, fy - text_height // 2), str(value), fill=fcolor, font=font)
-            except:
+                # Support for older Pillow versions
+                if hasattr(draw, 'textbbox'):
+                    bbox = draw.textbbox((0, 0), str(value), font=font)
+                    tw = bbox[2] - bbox[0]
+                    th = bbox[3] - bbox[1]
+                else:
+                    tw, th = draw.textsize(str(value), font=font)
+                
+                draw.text((fx - tw // 2, fy - th // 2), str(value), fill=fcolor, font=font)
+            except Exception as e:
+                logger.warning(f"Text drawing fallback: {e}")
                 draw.text((fx, fy), str(value), fill=fcolor, font=font)
 
     # Save to buffer
     result_buffer = BytesIO()
-    img.save(result_buffer, format="JPEG", quality=90)
+    img.save(result_buffer, format="JPEG", quality=95)
     return ContentFile(result_buffer.getvalue())
