@@ -10,6 +10,7 @@ const DashboardSinergySellerOrdersPage = () => {
     const [loading, setLoading] = useState(true);
     const [updatingId, setUpdatingId] = useState(null);
     const [localResi, setLocalResi] = useState({}); // { orderId: resiValue }
+    const [localEst, setLocalEst] = useState({}); // { orderId: estDays }
 
 
     const statusOptions = ['Pending', 'Proses', 'Dikirim', 'Selesai', 'Batal'];
@@ -72,22 +73,25 @@ const DashboardSinergySellerOrdersPage = () => {
     const handleUpdateStatus = async (orderId, newStatus) => {
         if (!user) return;
         
-        const resiToSave = localResi[orderId] !== undefined ? localResi[orderId] : orders.find(o => o.id === orderId)?.resi_number;
+        const order = orders.find(o => o.id === orderId);
+        const resiToSave = localResi[orderId] !== undefined ? localResi[orderId] : order?.resi_number;
+        const estToSave = localEst[orderId] !== undefined ? localEst[orderId] : (order?.estimated_delivery_days || 5);
         
         setUpdatingId(orderId);
         try {
             await axios.patch(`${process.env.REACT_APP_API_BASE_URL}/api/orders/seller-orders/${orderId}/`, 
                 { 
                     status: newStatus,
-                    resi_number: resiToSave
+                    resi_number: resiToSave,
+                    estimated_delivery_days: estToSave
                 },
                 { headers: { Authorization: `Bearer ${user.access}` } }
             );
             // Update local state
-            setOrders(orders.map(o => o.id === orderId ? { ...o, status: newStatus, resi_number: resiToSave } : o));
+            setOrders(orders.map(o => o.id === orderId ? { ...o, status: newStatus, resi_number: resiToSave, estimated_delivery_days: estToSave } : o));
             alert('Status pesanan berhasil diperbarui!');
         } catch (error) {
-            alert('Gagal mengubah status pesanan');
+            alert(error.response?.data?.error || 'Gagal mengubah status pesanan');
         } finally {
             setUpdatingId(null);
         }
@@ -272,66 +276,96 @@ const DashboardSinergySellerOrdersPage = () => {
                                             </div>
                                         </div>
                                     </div>
-
                                     {/* Action Controls */}
                                     <div className="space-y-4">
-                                            <div className="space-y-1">
-                                                <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Update Status</label>
-                                                <div className="relative">
-                                                    <select 
-                                                        value={order.status}
-                                                        onChange={(e) => handleUpdateStatus(order.id, e.target.value)}
-                                                        disabled={updatingId === order.id}
-                                                        className="w-full pl-4 pr-10 py-3 bg-white border border-gray-200 rounded-xl text-sm font-bold text-gray-700 focus:ring-2 focus:ring-emerald-500 outline-none appearance-none transition disabled:opacity-50"
-                                                    >
-                                                        {statusOptions.map(opt => (
-                                                            <option key={opt} value={opt}>{opt}</option>
-                                                        ))}
-                                                    </select>
-                                                    <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-                                                        {updatingId === order.id ? (
-                                                            <div className="animate-spin h-4 w-4 border-b-2 border-emerald-600 rounded-full"></div>
-                                                        ) : (
-                                                            <span className="material-icons text-gray-400">expand_more</span>
-                                                        )}
+                                            {order.status === 'Selesai' || order.status === 'Batal' ? (
+                                                <div className="p-4 bg-gray-50 rounded-xl border border-gray-200 text-center">
+                                                    <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Pesanan {order.status}</p>
+                                                    <p className="text-[10px] text-gray-500">Status pesanan ini sudah permanen dan tidak dapat diubah lagi.</p>
+                                                </div>
+                                            ) : (
+                                                <>
+                                                <div className="space-y-1">
+                                                    <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Update Status</label>
+                                                    <div className="relative">
+                                                        <select 
+                                                            value={order.status}
+                                                            onChange={(e) => handleUpdateStatus(order.id, e.target.value)}
+                                                            disabled={updatingId === order.id}
+                                                            className="w-full pl-4 pr-10 py-3 bg-white border border-gray-200 rounded-xl text-sm font-bold text-gray-700 focus:ring-2 focus:ring-emerald-500 outline-none appearance-none transition disabled:opacity-50"
+                                                        >
+                                                            {/* Restrict transitions: Sequential only */}
+                                                            {(() => {
+                                                                const allowed = {
+                                                                    'Pending': ['Pending', 'Paid', 'Batal'],
+                                                                    'Paid': ['Paid', 'Proses', 'Batal'],
+                                                                    'Proses': ['Proses', 'Dikirim', 'Batal'],
+                                                                    'Dikirim': ['Dikirim', 'Selesai', 'Batal'],
+                                                                    'Selesai': ['Selesai'],
+                                                                    'Batal': ['Batal']
+                                                                };
+                                                                const options = allowed[order.status] || statusOptions;
+                                                                return options.map(opt => (
+                                                                    <option key={opt} value={opt}>{opt}</option>
+                                                                ));
+                                                            })()}
+                                                        </select>
+                                                        <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                                                            {updatingId === order.id ? (
+                                                                <div className="animate-spin h-4 w-4 border-b-2 border-emerald-600 rounded-full"></div>
+                                                            ) : (
+                                                                <span className="material-icons text-gray-400">expand_more</span>
+                                                            )}
+                                                        </div>
                                                     </div>
                                                 </div>
-                                            </div>
 
-                                            <div className="space-y-1">
-                                                <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Nomor Resi Pengiriman</label>
-                                                <div className="flex gap-2">
-                                                    <input 
-                                                        type="text"
-                                                        placeholder="Masukkan No. Resi..."
-                                                        value={localResi[order.id] !== undefined ? localResi[order.id] : (order.resi_number || '')}
-                                                        onChange={(e) => setLocalResi({ ...localResi, [order.id]: e.target.value })}
-                                                        disabled={updatingId === order.id}
-                                                        className="flex-1 px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm font-medium text-gray-700 focus:ring-2 focus:ring-emerald-500 outline-none transition disabled:opacity-50"
-                                                    />
-                                                    <button 
-                                                        onClick={() => handleUpdateStatus(order.id, order.status)}
-                                                        disabled={updatingId === order.id}
-                                                        className="bg-emerald-600 text-white px-4 py-2 rounded-xl hover:bg-emerald-700 transition shadow-sm disabled:opacity-50"
-                                                        title="Simpan Resi"
-                                                    >
-                                                        <span className="material-icons text-sm">save</span>
-                                                    </button>
+                                                <div className="space-y-1">
+                                                    <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Nomor Resi & Estimasi</label>
+                                                    <div className="flex flex-col gap-2">
+                                                        <div className="flex gap-2">
+                                                            <input 
+                                                                type="text"
+                                                                placeholder="No. Resi Pengiriman..."
+                                                                value={localResi[order.id] !== undefined ? localResi[order.id] : (order.resi_number || '')}
+                                                                onChange={(e) => setLocalResi({ ...localResi, [order.id]: e.target.value })}
+                                                                disabled={updatingId === order.id}
+                                                                className="flex-1 px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-medium text-gray-700 focus:ring-2 focus:ring-emerald-500 outline-none transition disabled:opacity-50"
+                                                            />
+                                                            <input 
+                                                                type="number"
+                                                                placeholder="Est. Hari"
+                                                                title="Estimasi lama pengiriman (hari)"
+                                                                value={localEst[order.id] !== undefined ? localEst[order.id] : (order.estimated_delivery_days || 5)}
+                                                                onChange={(e) => setLocalEst({ ...localEst, [order.id]: e.target.value })}
+                                                                disabled={updatingId === order.id}
+                                                                className="w-20 px-3 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-medium text-gray-700 focus:ring-2 focus:ring-emerald-500 outline-none transition disabled:opacity-50 text-center"
+                                                            />
+                                                        </div>
+                                                        <button 
+                                                            onClick={() => handleUpdateStatus(order.id, order.status)}
+                                                            disabled={updatingId === order.id}
+                                                            className="w-full bg-emerald-600 text-white px-4 py-2 rounded-xl hover:bg-emerald-700 transition shadow-sm disabled:opacity-50 font-bold text-[10px] uppercase tracking-wider flex items-center justify-center gap-2"
+                                                        >
+                                                            <span className="material-icons text-sm">save</span> SIMPAN RESI & ESTIMASI
+                                                        </button>
+                                                    </div>
                                                 </div>
-                                            </div>
-                                            
-                                            <button 
-                                                onClick={() => handleSendWa(order.id)}
-                                                disabled={sendingWaId === order.id}
-                                                className="w-full bg-emerald-50 text-emerald-700 py-3 rounded-xl text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 border border-emerald-100 hover:bg-emerald-600 hover:text-white transition group disabled:opacity-50"
-                                            >
-                                                {sendingWaId === order.id ? (
-                                                    <div className="animate-spin h-3 w-3 border-b-2 border-emerald-600 rounded-full"></div>
-                                                ) : (
-                                                    <span className="material-icons text-sm">whatsapp</span>
-                                                )}
-                                                KIRIM NOTIFIKASI WA
-                                            </button>
+                                                
+                                                <button 
+                                                    onClick={() => handleSendWa(order.id)}
+                                                    disabled={sendingWaId === order.id}
+                                                    className="w-full bg-emerald-50 text-emerald-700 py-3 rounded-xl text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 border border-emerald-100 hover:bg-emerald-600 hover:text-white transition group disabled:opacity-50"
+                                                >
+                                                    {sendingWaId === order.id ? (
+                                                        <div className="animate-spin h-3 w-3 border-b-2 border-emerald-600 rounded-full"></div>
+                                                    ) : (
+                                                        <span className="material-icons text-sm">whatsapp</span>
+                                                    )}
+                                                    KIRIM NOTIFIKASI WA
+                                                </button>
+                                                </>
+                                            )}
 
                                             <div className="p-4 bg-blue-50/50 rounded-xl border border-blue-100">
                                                 <p className="text-[10px] text-blue-700 font-medium leading-relaxed">

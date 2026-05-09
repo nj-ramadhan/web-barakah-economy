@@ -83,6 +83,25 @@ const EcommerceOrderHistoryPage = () => {
         }
     }, [navigate]);
 
+    const handleCompleteOrder = async (orderId) => {
+        if (!window.confirm('Konfirmasi bahwa pesanan telah diterima? Status akan menjadi Selesai dan tidak dapat diubah lagi.')) return;
+        
+        const userData = localStorage.getItem('user');
+        if (!userData) return;
+        const user = JSON.parse(userData);
+
+        try {
+            await axios.patch(`${process.env.REACT_APP_API_BASE_URL}/api/orders/seller-orders/${orderId}/`, 
+                { status: 'Selesai' },
+                { headers: { Authorization: `Bearer ${user.access}` } }
+            );
+            alert('Terima kasih! Pesanan telah selesai.');
+            fetchOrders();
+        } catch (error) {
+            alert(error.response?.data?.error || 'Gagal menyelesaikan pesanan');
+        }
+    };
+
     useEffect(() => {
         fetchOrders();
     }, [fetchOrders]);
@@ -216,34 +235,44 @@ const EcommerceOrderHistoryPage = () => {
                                         </div>
                                     )}
 
-                                    <div className="flex gap-2">
-                                        {order.seller_phone && (
+                                        {order.status === 'Dikirim' && (
                                             <button 
-                                                onClick={() => {
-                                                    const cleanPhone = order.seller_phone.replace(/\D/g, '');
-                                                    const finalPhone = cleanPhone.startsWith('0') ? '62' + cleanPhone.slice(1) : cleanPhone;
-                                                    const msg = encodeURIComponent(`Halo ${order.seller_name}, saya ingin tanya tentang pesanan saya #${order.order_number}`);
-                                                    window.open(`https://wa.me/${finalPhone}?text=${msg}`, '_blank');
-                                                }}
-                                                className="flex-1 flex items-center justify-center gap-2 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all shadow-lg shadow-emerald-100"
+                                                onClick={() => handleCompleteOrder(order.id)}
+                                                className="w-full flex items-center justify-center gap-2 py-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl text-xs font-black uppercase tracking-widest transition-all shadow-lg shadow-emerald-100 mb-2"
                                             >
-                                                <span className="material-icons text-base">chat</span>
-                                                Hubungi Penjual
+                                                <span className="material-icons">check_circle</span>
+                                                Pesanan Diterima
                                             </button>
                                         )}
-                                        
-                                        {order.payment_proof && (
-                                            <a 
-                                                href={order.payment_proof.startsWith('http') ? order.payment_proof : `${process.env.REACT_APP_API_BASE_URL}${order.payment_proof}`}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="flex-1 flex items-center justify-center gap-2 py-3 bg-gray-50 hover:bg-gray-100 text-gray-600 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all border border-gray-100"
-                                            >
-                                                <span className="material-icons text-base">receipt_long</span>
-                                                Bukti Transfer
-                                            </a>
-                                        )}
-                                    </div>
+
+                                        <div className="flex gap-2">
+                                            {order.seller_phone && (
+                                                <button 
+                                                    onClick={() => {
+                                                        const cleanPhone = order.seller_phone.replace(/\D/g, '');
+                                                        const finalPhone = cleanPhone.startsWith('0') ? '62' + cleanPhone.slice(1) : cleanPhone;
+                                                        const msg = encodeURIComponent(`Halo ${order.seller_name}, saya ingin tanya tentang pesanan saya #${order.order_number}`);
+                                                        window.open(`https://wa.me/${finalPhone}?text=${msg}`, '_blank');
+                                                    }}
+                                                    className="flex-1 flex items-center justify-center gap-2 py-3 bg-white border border-emerald-600 text-emerald-600 hover:bg-emerald-50 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all"
+                                                >
+                                                    <span className="material-icons text-base">chat</span>
+                                                    Hubungi Penjual
+                                                </button>
+                                            )}
+                                            
+                                            {order.payment_proof && (
+                                                <a 
+                                                    href={order.payment_proof.startsWith('http') ? order.payment_proof : `${process.env.REACT_APP_API_BASE_URL}${order.payment_proof}`}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="flex-1 flex items-center justify-center gap-2 py-3 bg-gray-50 hover:bg-gray-100 text-gray-600 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all border border-gray-100"
+                                                >
+                                                    <span className="material-icons text-base">receipt_long</span>
+                                                    Bukti Transfer
+                                                </a>
+                                            )}
+                                        </div>
                                 </div>
                             </div>
                         ))}

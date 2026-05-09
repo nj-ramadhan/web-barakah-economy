@@ -452,22 +452,14 @@ class WithdrawalViewSet(viewsets.ModelViewSet):
                 payment_status='verified'
             ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
             
-            from orders.models import Order
-            total_sinergy_sales = Order.objects.filter(
+            total_sinergy_completed = Order.objects.filter(
                 seller=request.user,
-                status__in=[
-                    'Paid', 'paid', 'PAID', 
-                    'Proses', 'proses', 'PROSES', 
-                    'Dikirim', 'dikirim', 'DIKIRIM', 
-                    'Selesai', 'selesai', 'SELESAI',
-                    'Shipped', 'shipped', 'SHIPPED',
-                    'Delivered', 'delivered', 'DELIVERED'
-                ]
+                status__in=['Selesai', 'selesai', 'SELESAI', 'Delivered', 'delivered', 'DELIVERED']
             ).aggregate(
                 total=Sum(F('total_price') - F('voucher_nominal'), output_field=DecimalField())
             )['total'] or Decimal('0')
 
-            total_sales = total_sales + total_course_sales + Decimal(total_sinergy_sales)
+            total_sales = total_sales + total_course_sales + Decimal(total_sinergy_completed)
         except Exception as e:
             logger.error(f"Error calculating total sales: {e}")
             total_sales = Decimal('0')
@@ -526,26 +518,31 @@ class WithdrawalViewSet(viewsets.ModelViewSet):
             ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
             
             from orders.models import Order
-            total_sinergy_sales = Order.objects.filter(
+            # Completed Sinergy Sales (Available to withdraw)
+            total_sinergy_completed = Order.objects.filter(
                 seller=request.user,
-                status__in=[
-                    'Paid', 'paid', 'PAID', 
-                    'Proses', 'proses', 'PROSES', 
-                    'Dikirim', 'dikirim', 'DIKIRIM', 
-                    'Selesai', 'selesai', 'SELESAI',
-                    'Shipped', 'shipped', 'SHIPPED',
-                    'Delivered', 'delivered', 'DELIVERED'
-                ]
+                status__in=['Selesai', 'selesai', 'SELESAI', 'Delivered', 'delivered', 'DELIVERED']
             ).aggregate(
                 total=Sum(F('total_price') - F('voucher_nominal'), output_field=DecimalField())
             )['total'] or Decimal('0')
 
-            total_sales = total_digital_sales + total_course_sales + Decimal(total_sinergy_sales)
+            # Pending Sinergy Sales (Paid but not yet completed)
+            total_sinergy_pending = Order.objects.filter(
+                seller=request.user,
+                status__in=['Paid', 'paid', 'PAID', 'Proses', 'proses', 'PROSES', 'Dikirim', 'dikirim', 'DIKIRIM', 'Shipped', 'shipped', 'SHIPPED']
+            ).aggregate(
+                total=Sum(F('total_price') - F('voucher_nominal'), output_field=DecimalField())
+            )['total'] or Decimal('0')
+
+            total_sales_available = total_digital_sales + total_course_sales + Decimal(total_sinergy_completed)
+            total_sales_all = total_sales_available + Decimal(total_sinergy_pending)
         except Exception:
-            total_sales = Decimal('0')
+            total_sales_available = Decimal('0')
+            total_sales_all = Decimal('0')
             total_digital_sales = Decimal('0')
             total_course_sales = Decimal('0')
-            total_sinergy_sales = Decimal('0')
+            total_sinergy_completed = Decimal('0')
+            total_sinergy_pending = Decimal('0')
 
         try:
             total_withdrawn = WithdrawalRequest.objects.filter(
@@ -556,12 +553,14 @@ class WithdrawalViewSet(viewsets.ModelViewSet):
             total_withdrawn = Decimal('0')
 
         return Response({
-            'total_sales': total_sales,
+            'total_sales': total_sales_all,
             'total_digital_sales': total_digital_sales,
             'total_course_sales': total_course_sales,
-            'total_sinergy_sales': total_sinergy_sales,
+            'total_sinergy_sales': total_sinergy_completed,
+            'total_sinergy_pending': total_sinergy_pending,
             'total_withdrawn': total_withdrawn,
-            'available_balance': total_sales - total_withdrawn
+            'available_balance': total_sales_available - total_withdrawn,
+            'pending_balance': total_sinergy_pending
         })
 
     @action(detail=False, methods=['get'], url_path='admin-list', permission_classes=[permissions.IsAdminUser])

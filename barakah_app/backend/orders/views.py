@@ -197,16 +197,73 @@ class SellerOrderViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
+        from django.db.models import Q
         if user.is_superuser:
-            # Admins can see orders assigned to ANY superuser (central orders)
-            from django.contrib.auth import get_user_model
-            User = get_user_model()
-            superusers = User.objects.filter(is_superuser=True)
-            return Order.objects.filter(seller__in=superusers).order_by('-created_at')
-        return Order.objects.filter(seller=user).order_by('-created_at')
+            # Admins can see all orders
+            return Order.objects.all().order_by('-created_at')
+        # Sellers see their sales, buyers see their purchases
+        return Order.objects.filter(Q(seller=user) | Q(user=user)).distinct().order_by('-created_at')
 
     def partial_update(self, request, *args, **kwargs):
-        # Simply update without auto-sending WA
+        instance = self.get_object()
+        user = request.user
+        new_status = request.data.get('status')
+        
+        # 1. Enforce Immutability for Terminal Statuses
+        if instance.status in ['Selesai', 'Batal']:
+            return Response(
+                {'error': f'Pesanan dengan status {instance.status} tidak dapat diubah lagi.'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # 2. Buyer Permissions: Only allow setting to 'Selesai'
+        if instance.user == user and instance.seller != user:
+            if new_status != 'Selesai':
+                return Response(
+                    {'error': 'Sebagai pembeli, Anda hanya dapat mengubah status menjadi Selesai.'},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+            if instance.status != 'Dikirim':
+                return Response(
+                    {'error': 'Pesanan hanya dapat diselesaikan jika status sudah Dikirim.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+        
+        # 3. Enforce Sequential Status Updates (for sellers/admins)
+        if new_status:
+            allowed_transitions = {
+                'Pending': ['Paid', 'Batal'],
+                'Paid': ['Proses', 'Batal'],
+                'Proses': ['Dikirim', 'Batal'],
+                'Dikirim': ['Selesai', 'Batal'],
+                'Selesai': [],
+                'Batal': []
+            }
+            
+            # If the current status is not in the list (e.g. legacy status), we allow transition to any from the list
+            current_allowed = allowed_transitions.get(instance.status, ['Pending', 'Paid', 'Proses', 'Dikirim', 'Selesai', 'Batal'])
+            
+            if new_status not in current_allowed:
+                return Response(
+                    {'error': f'Status tidak dapat diubah dari {instance.status} ke {new_status}. Urutan: Pending -> Paid -> Proses -> Dikirim -> Selesai.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # 3. Handle Status-Specific Logic
+            from django.utils import timezone
+            from datetime import timedelta
+            
+            if new_status == 'Dikirim':
+                instance.shipped_at = timezone.now()
+                # Use estimated_delivery_days from request or default
+                est_days = request.data.get('estimated_delivery_days', instance.estimated_delivery_days)
+                instance.estimated_delivery_days = int(est_days)
+                # Auto complete after estimation + 5 days buffer
+                instance.auto_complete_at = instance.shipped_at + timedelta(days=instance.estimated_delivery_days + 5)
+                
+            elif new_status == 'Selesai':
+                instance.completed_at = timezone.now()
+        
         return super().partial_update(request, *args, **kwargs)
 
     def destroy(self, request, *args, **kwargs):

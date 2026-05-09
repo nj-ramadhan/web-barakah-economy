@@ -336,21 +336,32 @@ const DashboardPage = () => {
                     >
                         <span className="material-icons text-sm">history</span>
                     </button>
-                    <p className="text-xs opacity-80 mb-1">Saldo Tersedia</p>
-                    <h2 className="text-2xl font-bold mb-4">{formatIDR(balanceData.available_balance)}</h2>
-                    <div className="flex gap-2">
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <p className="text-[10px] uppercase font-black opacity-70 tracking-widest mb-1">Saldo Tersedia</p>
+                            <h2 className="text-3xl font-black">{formatIDR(balanceData.available_balance)}</h2>
+                        </div>
+                        <div className="md:text-right">
+                            <p className="text-[10px] uppercase font-black opacity-70 tracking-widest mb-1">Saldo Tertahan (Pending)</p>
+                            <h2 className="text-xl font-bold text-green-300">{formatIDR(balanceData.pending_balance || 0)}</h2>
+                        </div>
+                    </div>
+
+                    <div className="flex flex-wrap gap-3 items-center pt-4 border-t border-white/10">
                         <button
                             onClick={() => setShowWithdrawModal(true)}
-                            className="bg-white text-green-700 px-4 py-2 rounded-xl text-sm font-bold shadow-sm"
+                            className="bg-white text-green-800 px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest shadow-lg hover:bg-green-50 transition-all active:scale-95"
                         >
                             Tarik Saldo
                         </button>
-                        <div className="text-[10px] opacity-70 flex flex-col justify-center">
-                            <span>Total Penjualan: {formatIDR(balanceData.total_sales)}</span>
-                            <div className="flex gap-2">
-                                <span>Digital: {formatIDR(balanceData.digital_sales_total || 0)}</span>
-                                <span>Course: {formatIDR(balanceData.course_sales_total || 0)}</span>
-                                <span>E-commerce: {formatIDR(balanceData.total_sinergy_sales || 0)}</span>
+                        
+                        <div className="flex-1 min-w-[200px]">
+                            <div className="flex flex-wrap gap-x-4 gap-y-1 text-[9px] font-bold uppercase tracking-tight opacity-80">
+                                <span className="flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-blue-400"></div> Digital: {formatIDR(balanceData.total_digital_sales || 0)}</span>
+                                <span className="flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-amber-400"></div> Course: {formatIDR(balanceData.total_course_sales || 0)}</span>
+                                <span className="flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-emerald-400"></div> E-com (Selesai): {formatIDR(balanceData.total_sinergy_sales || 0)}</span>
+                                <span className="flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-red-400"></div> E-com (Pending): {formatIDR(balanceData.total_sinergy_pending || 0)}</span>
                             </div>
                         </div>
                     </div>

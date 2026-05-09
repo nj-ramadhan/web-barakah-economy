@@ -132,7 +132,13 @@ def send_status_update_notification(order):
     if order.status.lower() == 'proses':
         status_msg = "Pesanan Anda sedang diproses oleh penjual."
     elif order.status.lower() == 'dikirim':
-        status_msg = f"Pesanan Anda telah dikirim!\nNomor Resi: *{order.resi_number or 'Sedang diupdate'}*"
+        confirmation_link = f"https://barakah.cloud/dashboard/history" # Example domain
+        status_msg = (
+            f"Pesanan Anda telah dikirim!\n"
+            f"Nomor Resi: *{order.resi_number or 'Sedang diupdate'}*\n\n"
+            f"Silakan konfirmasi jika pesanan sudah diterima di link berikut:\n"
+            f"{confirmation_link}"
+        )
     elif order.status.lower() == 'selesai':
         status_msg = "Pesanan Anda telah dinyatakan selesai. Terima kasih!"
     elif order.status.lower() == 'batal':

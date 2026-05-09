@@ -19,9 +19,13 @@ class Order(models.Model):
     payment_proof = models.ImageField(upload_to='payment_proofs/orders/', null=True, blank=True)
 
 
-    status = models.CharField(max_length=50, default='Pending')  # e.g., Pending, Shipped, Delivered
+    status = models.CharField(max_length=50, default='Pending')  # e.g., Pending, Paid, Proses, Dikirim, Selesai, Batal
     order_number = models.CharField(max_length=20, unique=True, blank=True)
     resi_number = models.CharField(max_length=100, blank=True, null=True)
+    shipped_at = models.DateTimeField(null=True, blank=True)
+    estimated_delivery_days = models.IntegerField(default=5)
+    auto_complete_at = models.DateTimeField(null=True, blank=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
     buyer_note = models.TextField(blank=True, null=True, help_text="Catatan pembeli untuk penjual")
     
     # Qrisly Integration
