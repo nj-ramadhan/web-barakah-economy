@@ -8,6 +8,7 @@ import EventManualRegistrationModal from '../../components/admin/EventManualRegi
 import EventRegistrationEditModal from '../../components/admin/EventRegistrationEditModal';
 import CertificateEditor from '../../components/events/CertificateEditor';
 import BibEditor from '../../components/events/BibEditor';
+import SpecialQREditor from '../../components/events/SpecialQREditor';
 import EventCommitteeModal from '../../components/admin/EventCommitteeModal';
 import '../../styles/Body.css';
 
@@ -40,7 +41,7 @@ const EventRegistrationSubmissionPage = () => {
     const [showManualModal, setShowManualModal] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
     const [editingRegistration, setEditingRegistration] = useState(null);
-    const [activeTab, setActiveTab] = useState(initialTab); // 'participants', 'certificate', or 'bib'
+    const [activeTab, setActiveTab] = useState(initialTab); // 'participants', 'certificate', 'bib', or 'special_qr'
     const [isImporting, setIsImporting] = useState(false);
     const [isResending, setIsResending] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
@@ -382,6 +383,14 @@ const EventRegistrationSubmissionPage = () => {
                                     className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'bib' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
                                 >
                                     BIB
+                                </button>
+                            )}
+                            {event?.has_special_qr && (
+                                <button 
+                                    onClick={() => setActiveTab('special_qr')}
+                                    className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'special_qr' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+                                >
+                                    Manajemen QR
                                 </button>
                             )}
                         </div>
@@ -790,8 +799,10 @@ const EventRegistrationSubmissionPage = () => {
                 </div>
                 ) : activeTab === 'certificate' ? (
                     <CertificateEditor slug={slug} />
-                ) : (
+                ) : activeTab === 'bib' ? (
                     <BibEditor slug={slug} />
+                ) : (
+                    <SpecialQREditor slug={slug} />
                 )}
             </div>
 

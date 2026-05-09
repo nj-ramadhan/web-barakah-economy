@@ -1,6 +1,7 @@
 from rest_framework import serializers
-from .models import Event, EventFormField, EventRegistration, EventRegistrationFile, EventDocumentationImage, EventGalleryImage, EventCertificate, EventBib
-from accounts.serializers import UserAdminSerializer
+from .models import Event, EventFormField, EventRegistration, EventRegistrationFile, EventDocumentationImage, EventGalleryImage, EventCertificate, EventBib, EventSpecialQR
+from accounts.serializers import UserAdminSerializer, UserLabelSerializer
+from accounts.models import UserLabel
 from django.db import transaction
 
 class EventFormFieldSerializer(serializers.ModelSerializer):
@@ -87,6 +88,11 @@ class EventBibSerializer(serializers.ModelSerializer):
         model = EventBib
         fields = '__all__'
 
+class EventSpecialQRSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EventSpecialQR
+        fields = '__all__'
+
 
 class EventSerializer(serializers.ModelSerializer):
     created_by_details = UserAdminSerializer(source='created_by', read_only=True)
@@ -98,9 +104,14 @@ class EventSerializer(serializers.ModelSerializer):
     committees_details = serializers.SerializerMethodField()
     registration_count = serializers.SerializerMethodField()
     attended_count = serializers.SerializerMethodField()
+    free_for_labels = UserLabelSerializer(many=True, read_only=True)
+    free_for_label_ids = serializers.PrimaryKeyRelatedField(
+        many=True, queryset=UserLabel.objects.all(), write_only=True, required=False, source='free_for_labels'
+    )
     user_registration = serializers.SerializerMethodField()
     certificate = serializers.SerializerMethodField()
     bib_template = serializers.SerializerMethodField()
+    special_qr = serializers.SerializerMethodField()
 
     def get_bib_template(self, obj):
         try:
@@ -123,6 +134,17 @@ class EventSerializer(serializers.ModelSerializer):
             cert = EventCertificate.objects.filter(event=obj).first()
             if cert:
                 return EventCertificateSerializer(cert, context=self.context).data
+            return None
+        except Exception:
+            return None
+
+    def get_special_qr(self, obj):
+        try:
+            from .models import EventSpecialQR
+            from .serializers import EventSpecialQRSerializer
+            special_qr = EventSpecialQR.objects.filter(event=obj).first()
+            if special_qr:
+                return EventSpecialQRSerializer(special_qr, context=self.context).data
             return None
         except Exception:
             return None

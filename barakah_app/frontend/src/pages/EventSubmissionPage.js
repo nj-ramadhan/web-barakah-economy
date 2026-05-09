@@ -5,7 +5,7 @@ import Header from '../components/layout/Header';
 import NavigationButton from '../components/layout/Navigation';
 import ImageCropperModal from '../components/common/ImageCropper';
 import { compressImage } from '../components/common/canvasUtils';
-import { createEvent, getEventDetail, updateEvent } from '../services/eventApi';
+import { createEvent, getEventDetail, updateEvent, getUserLabels } from '../services/eventApi';
 import CKEditorComponent from '../components/common/CKEditor';
 import CurrencyInput from '../components/common/CurrencyInput';
 
@@ -42,7 +42,10 @@ const EventSubmissionPage = () => {
         has_certificate: false,
         has_bib: false,
         allow_ots_payment: false,
+        free_for_label_ids: [],
+        has_special_qr: false,
     });
+    const [availableLabels, setAvailableLabels] = useState([]);
     const [speakers, setSpeakers] = useState([]);
     const [sessions, setSessions] = useState([]);
 
@@ -60,6 +63,8 @@ const EventSubmissionPage = () => {
     const [cropper, setCropper] = useState({ active: false, image: null, type: null });
 
     useEffect(() => {
+        getUserLabels().then(res => setAvailableLabels(res.data)).catch(err => console.error("Error fetching labels:", err));
+    }, []);
         const user = JSON.parse(localStorage.getItem('user'));
         if (!user) {
             navigate(`/login?redirect=${isEdit ? `/event/edit/${slug}` : '/event/ajukan'}`);
@@ -105,6 +110,8 @@ const EventSubmissionPage = () => {
                         has_certificate: d.has_certificate || false,
                         has_bib: d.has_bib || false,
                         allow_ots_payment: d.allow_ots_payment || false,
+                        free_for_label_ids: d.free_for_labels ? d.free_for_labels.map(l => l.id) : [],
+                        has_special_qr: d.has_special_qr || false,
                     });
 
                     if (d.speakers && d.speakers.length > 0) setSpeakers(d.speakers);
@@ -338,6 +345,13 @@ const EventSubmissionPage = () => {
         // Only append files if they are actual File objects (newly selected/cropped)
         if (files.thumbnail instanceof File) {
             data.append('thumbnail', files.thumbnail);
+        }
+
+        // Append free_for_label_ids
+        if (formData.free_for_label_ids && formData.free_for_label_ids.length > 0) {
+            formData.free_for_label_ids.forEach(id => {
+                data.append('free_for_label_ids', id);
+            });
         }
 
         // Append form fields as JSON string (backend will handle)
@@ -906,7 +920,70 @@ const EventSubmissionPage = () => {
                                         </div>
                                         <p className="text-[10px] text-gray-400 ml-1 italic">Jika aktif, pendaftar bisa memilih bayar di lokasi dan melewati upload bukti transfer di awal.</p>
                                     </div>
+                                    <div className="space-y-1.5 md:col-span-2">
+                                        <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1 mb-2">Pengecualian Biaya (Gratis untuk Label Tertentu)</label>
+                                        <div className="p-4 bg-blue-50 rounded-2xl border border-blue-100">
+                                            <p className="text-[10px] text-blue-700 font-bold uppercase tracking-wider mb-3 flex items-center gap-1">
+                                                <span className="material-icons text-xs">info</span>
+                                                Pilih label user yang tidak perlu membayar (auto-lolos pembayaran)
+                                            </p>
+                                            <div className="flex flex-wrap gap-2">
+                                                {availableLabels.map(label => {
+                                                    const isSelected = formData.free_for_label_ids.includes(label.id);
+                                                    return (
+                                                        <button
+                                                            key={label.id}
+                                                            type="button"
+                                                            onClick={() => {
+                                                                const newSelected = isSelected
+                                                                    ? formData.free_for_label_ids.filter(id => id !== label.id)
+                                                                    : [...formData.free_for_label_ids, label.id];
+                                                                setFormData(prev => ({ ...prev, free_for_label_ids: newSelected }));
+                                                            }}
+                                                            className={`px-3 py-1.5 rounded-full text-[10px] font-bold transition-all border ${
+                                                                isSelected 
+                                                                    ? 'bg-blue-600 text-white border-blue-700 shadow-md' 
+                                                                    : 'bg-white text-gray-600 border-gray-200 hover:border-blue-300'
+                                                            }`}
+                                                        >
+                                                            {label.name}
+                                                        </button>
+                                                    );
+                                                })}
+                                            </div>
+                                            {formData.free_for_label_ids.length === 0 && (
+                                                <p className="text-[10px] text-gray-400 mt-3 italic text-center">Belum ada label yang dipilih</p>
+                                            )}
+                                        </div>
+                                    </div>
                                 )}
+
+                                <div className="space-y-1.5 md:col-span-2 p-6 bg-purple-50 rounded-[2rem] border border-purple-100 mt-4">
+                                    <div className="flex items-center justify-between mb-4">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 bg-white text-purple-600 rounded-xl flex items-center justify-center shadow-sm border border-purple-100">
+                                                <span className="material-icons">qr_code_2</span>
+                                            </div>
+                                            <div>
+                                                <p className="text-sm font-black text-purple-900">Gunakan Desain QR Khusus?</p>
+                                                <p className="text-[10px] text-purple-600 font-bold uppercase tracking-wider">Kirim tiket dengan desain kustom ke WhatsApp</p>
+                                            </div>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => setFormData(prev => ({ ...prev, has_special_qr: !prev.has_special_qr }))}
+                                            className={`w-12 h-6 rounded-full transition-colors relative ${formData.has_special_qr ? 'bg-purple-600' : 'bg-gray-300'}`}
+                                        >
+                                            <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${formData.has_special_qr ? 'left-7' : 'left-1'}`}></div>
+                                        </button>
+                                    </div>
+                                    {formData.has_special_qr && (
+                                        <div className="bg-white/50 p-4 rounded-2xl border border-purple-100 flex items-center gap-3">
+                                            <span className="material-icons text-purple-600 text-sm">info</span>
+                                            <p className="text-[10px] text-purple-700 italic leading-relaxed">Setelah menyimpan event, Anda bisa mengatur tata letak QR dan data peserta pada menu **Manajemen QR** di daftar pendaftar.</p>
+                                        </div>
+                                    )}
+                                </div>
 
                                 {['fixed', 'hybrid_1', 'hybrid_2'].includes(formData.price_type) && (
                                     <div className="space-y-1.5 md:col-span-2">

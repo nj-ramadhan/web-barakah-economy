@@ -272,3 +272,30 @@ export const sendScanLink = (slug, userIds = null) => {
         headers: getAuthHeaders()
     });
 };
+
+export const getUserLabels = () => {
+    return axios.get(`${API_BASE_URL}/api/accounts/labels/`, {
+        headers: getAuthHeaders()
+    });
+};
+
+export const getSpecialQRSettings = (slug) => {
+    return axios.get(`${API_BASE_URL}/api/events/${slug}/special_qr_settings/`, {
+        headers: getAuthHeaders()
+    });
+};
+
+export const updateSpecialQRSettings = (slug, formData) => {
+    return axios.post(`${API_BASE_URL}/api/events/${slug}/special_qr_settings/`, formData, {
+        headers: {
+            ...getAuthHeaders(),
+            'Content-Type': 'multipart/form-data',
+        }
+    });
+};
+
+export const regenerateQRImages = (slug) => {
+    return axios.post(`${API_BASE_URL}/api/events/${slug}/regenerate_qr_images/`, {}, {
+        headers: getAuthHeaders()
+    });
+};

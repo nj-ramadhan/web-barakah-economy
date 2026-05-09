@@ -77,6 +77,8 @@ class Event(models.Model):
     has_bib = models.BooleanField(default=False, help_text="Apakah event ini menyediakan nomor peserta (BIB)?")
     allow_ots_payment = models.BooleanField(default=False, help_text="Izinkan pembayaran di tempat (On The Spot)")
     committees = models.ManyToManyField(User, blank=True, related_name='committee_events', help_text="Panitia yang berhak melakukan scan kehadiran.")
+    free_for_labels = models.ManyToManyField('accounts.UserLabel', blank=True, related_name='free_events', help_text="Label user yang digratiskan pendaftarannya.")
+    has_special_qr = models.BooleanField(default=False, help_text="Apakah event ini menggunakan desain QR khusus?")
     
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -294,20 +296,27 @@ class EventRegistration(models.Model):
         # Auto-generate QR code image
         if not self.qr_image and self.unique_code:
             try:
-                import qrcode
-                from io import BytesIO
-                from django.core.files.base import ContentFile
+                from .utils import generate_special_qr_image
+                special_qr_file = generate_special_qr_image(self)
                 
-                qr = qrcode.QRCode(version=1, box_size=10, border=4)
-                qr.add_data(self.unique_code)
-                qr.make(fit=True)
-                img = qr.make_image(fill_color="black", back_color="white")
-                
-                buffer = BytesIO()
-                img.save(buffer, format="PNG")
-                self.qr_image.save(f"qr_{self.unique_code}.png", ContentFile(buffer.getvalue()), save=False)
-            except ImportError:
-                print("Library qrcode belum terinstall. Lewati generate gambar QR.")
+                if special_qr_file:
+                    self.qr_image.save(f"special_qr_{self.unique_code}.jpg", special_qr_file, save=False)
+                else:
+                    # Fallback to standard QR
+                    import qrcode
+                    from io import BytesIO
+                    from django.core.files.base import ContentFile
+                    
+                    qr = qrcode.QRCode(version=1, box_size=10, border=4)
+                    qr.add_data(self.unique_code)
+                    qr.make(fit=True)
+                    img = qr.make_image(fill_color="black", back_color="white")
+                    
+                    buffer = BytesIO()
+                    img.save(buffer, format="PNG")
+                    self.qr_image.save(f"qr_{self.unique_code}.png", ContentFile(buffer.getvalue()), save=False)
+            except Exception as e:
+                print(f"Error generating QR: {e}")
                 
         # Assign BIB number if not set
         if not self.bib_number:
@@ -396,3 +405,30 @@ class EventBib(models.Model):
 
     def __str__(self):
         return f"BIB Template for {self.event.title}"
+
+class EventSpecialQR(models.Model):
+    CODE_TYPES = (
+        ('qr', 'QR Code'),
+        ('barcode', 'Barcode'),
+    )
+    event = models.OneToOneField(Event, on_delete=models.CASCADE, related_name='special_qr_template')
+    template_image = models.ImageField(upload_to='events/special_qr/templates/', blank=True, null=True)
+    
+    code_type = models.CharField(max_length=10, choices=CODE_TYPES, default='qr')
+    
+    # Position in percentage (0-100)
+    code_x = models.FloatField(default=50.0)
+    code_y = models.FloatField(default=50.0)
+    code_width = models.FloatField(default=20.0)
+    code_height = models.FloatField(default=20.0)
+    
+    # Dynamic fields layout from form_fields
+    # Format: [ { field_id: ID, x: X, y: Y, font_size: SIZE, color: COLOR, font_family: FONT }, ... ]
+    field_layouts = models.JSONField(default=list, blank=True)
+    
+    is_active = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Special QR for {self.event.title}"

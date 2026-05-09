@@ -44,6 +44,7 @@ const EventDetailPage = () => {
     const [visibilityTimeLeft, setVisibilityTimeLeft] = useState(null);
     const [selectedUserId, setSelectedUserId] = useState(null);
     const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+    const [userProfile, setUserProfile] = useState(null);
 
     const calculateTimeLeft = (targetDate) => {
         if (!targetDate) return { total: 0 };
@@ -163,7 +164,12 @@ const EventDetailPage = () => {
             }
         };
         autoFillForm();
-    }, [showRegisterModal, event, hasAutoFilled]);
+
+        // Fetch profile for label check
+        if (user && !userProfile) {
+            authService.getProfile(user.id).then(res => setUserProfile(res)).catch(err => console.error(err));
+        }
+    }, [showRegisterModal, event, hasAutoFilled, userProfile]);
 
     const handleResponseChange = (fieldId, value) => {
         setResponses(prev => ({ ...prev, [fieldId]: value }));
@@ -180,6 +186,20 @@ const EventDetailPage = () => {
         } else {
             handleResponseChange(fieldId, currentOptions.filter(o => o !== option));
         }
+    };
+
+    const isUserFreeByLabel = () => {
+        if (!userProfile || !event?.free_for_labels) return false;
+        const userLabelIds = userProfile.labels?.map(l => l.id) || [];
+        const freeLabelIds = event.free_for_labels.map(l => l.id) || [];
+        return userLabelIds.some(id => freeLabelIds.includes(id));
+    };
+
+    const matchedLabelNames = () => {
+        if (!userProfile || !event?.free_for_labels) return "";
+        const userLabelIds = userProfile.labels?.map(l => l.id) || [];
+        const matched = event.free_for_labels.filter(l => userLabelIds.includes(l.id));
+        return matched.map(l => l.name).join(', ');
     };
 
     const handleSubmit = async (e) => {
@@ -1269,7 +1289,23 @@ const EventDetailPage = () => {
 
                                     <form onSubmit={handleSubmit} className="space-y-8">
                                         {/* HTM / Payment Section */}
-                                        {event.price_type !== 'free' && (
+                                        {event.price_type !== 'free' && isUserFreeByLabel() && (
+                                            <div className="p-6 bg-blue-600 rounded-[2.5rem] border border-blue-500 shadow-xl shadow-blue-200/50 animate-bounce-in">
+                                                <div className="flex items-center gap-4">
+                                                    <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center shrink-0">
+                                                        <span className="material-icons text-white">card_membership</span>
+                                                    </div>
+                                                    <div>
+                                                        <h4 className="text-white font-black text-sm uppercase tracking-wider">Gratis Spesial!</h4>
+                                                        <p className="text-blue-100 text-[11px] font-medium leading-relaxed">
+                                                            Karena Anda memiliki label <span className="bg-white/20 px-1.5 py-0.5 rounded-lg text-white font-bold">{matchedLabelNames()}</span>, Anda dapat mengikuti event ini secara <span className="text-white font-black">GRATIS</span>.
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {event.price_type !== 'free' && !isUserFreeByLabel() && (
                                             <div className="p-6 bg-gray-50 rounded-[2rem] border border-gray-200 space-y-6">
                                                 <div className="flex items-center justify-between">
                                                     <h3 className="text-sm font-bold text-gray-900 flex items-center gap-2">

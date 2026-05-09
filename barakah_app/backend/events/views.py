@@ -292,16 +292,21 @@ class EventViewSet(viewsets.ModelViewSet):
         payment_proof = request.FILES.get('payment_proof')
         payment_amount = request.data.get('payment_amount', 0)
         
+        # Check if user has free labels
+        user_labels = user.labels.all()
+        free_labels = event.free_for_labels.all()
+        is_free_by_label = any(label in free_labels for label in user_labels)
+        
         # Check if event allows OTS
         is_ots_valid = event.allow_ots_payment and payment_method == 'ots'
 
-        if event.price_type != 'free' and not is_ots_valid and not payment_proof:
+        if event.price_type != 'free' and not is_ots_valid and not is_free_by_label and not payment_proof:
             return Response({"error": "Bukti pembayaran wajib diunggah untuk event berbayar."}, status=status.HTTP_400_BAD_REQUEST)
 
-        # 2b. OCR Validation (Only for transfer)
+        # 2b. OCR Validation (Only for transfer and NOT free by label)
         ocr_data = None
         ocr_verified = False
-        if payment_proof and not is_ots_valid:
+        if payment_proof and not is_ots_valid and not is_free_by_label:
             import decimal
             try:
                 expected_amount = decimal.Decimal(str(payment_amount))
@@ -356,12 +361,13 @@ class EventViewSet(viewsets.ModelViewSet):
             event=event,
             user=user,
             responses=responses,
-            payment_method=payment_method,
+            payment_method=payment_method if not is_free_by_label else 'free_label',
             payment_proof=payment_proof,
             payment_amount=payment_amount,
             ocr_data=ocr_data,
             ocr_verified=ocr_verified,
-            status='approved' # Force auto-approve
+            status='approved', # Force auto-approve
+            payment_status='verified' if is_free_by_label else 'pending'
         )
         
         # 4. Handle File Uploads for dynamic fields
@@ -1722,12 +1728,72 @@ class EventViewSet(viewsets.ModelViewSet):
             
             return Response(EventBibSerializer(bib).data)
         except Exception as e:
-            # Keep helpful database error message for missing migrations
-            if "column" in str(e).lower() or "no such column" in str(e).lower():
-                return Response({
-                    "error": f"Database belum di-update (Missing Column). Silakan jalankan 'python manage.py migrate' di server. Detail: {str(e)}"
-                }, status=500)
             return Response({"error": str(e)}, status=500)
+
+    @action(detail=True, methods=['post', 'get'], permission_classes=[permissions.IsAuthenticated])
+    def special_qr_settings(self, request, slug=None):
+        """Manage Special QR template settings for an event."""
+        event = self.get_object()
+        
+        # Authorization check: Admin OR Owner
+        is_admin = request.user.has_menu_access('admin_events') or request.user.is_staff
+        is_owner = event.created_by == request.user
+        
+        if not (is_admin or is_owner):
+            return Response({"error": "Hanya penyelenggara atau admin yang bisa mengelola QR khusus."}, status=status.HTTP_403_FORBIDDEN)
+            
+        from .models import EventSpecialQR
+        from .serializers import EventSpecialQRSerializer
+        
+        try:
+            special_qr, created = EventSpecialQR.objects.get_or_create(event=event)
+            
+            if request.method == 'POST':
+                # Handle field_layouts if sent as JSON string
+                import json
+                data = request.data.copy()
+                if 'field_layouts' in data and isinstance(data['field_layouts'], str):
+                    try:
+                        data['field_layouts'] = json.loads(data['field_layouts'])
+                    except:
+                        pass
+
+                serializer = EventSpecialQRSerializer(special_qr, data=data, partial=True)
+                
+                if 'template_image' in request.FILES:
+                    special_qr.template_image = request.FILES['template_image']
+                
+                if serializer.is_valid():
+                    with transaction.atomic():
+                        serializer.save()
+                    return Response(serializer.data)
+                else:
+                    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            
+            return Response(EventSpecialQRSerializer(special_qr).data)
+        except Exception as e:
+            return Response({"error": str(e)}, status=500)
+
+    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
+    def regenerate_qr_images(self, request, slug=None):
+        """Force regenerate all QR/Barcode images for an event."""
+        event = self.get_object()
+        
+        is_admin = request.user.has_menu_access('admin_events') or request.user.is_staff
+        is_owner = event.created_by == request.user
+        
+        if not (is_admin or is_owner):
+            return Response({"error": "Hanya penyelenggara atau admin yang bisa melakukan ini."}, status=status.HTTP_403_FORBIDDEN)
+            
+        registrations = event.registrations.all()
+        count = 0
+        for reg in registrations:
+            # Clear existing image to trigger regeneration in save()
+            reg.qr_image = None
+            reg.save()
+            count += 1
+            
+        return Response({"message": f"Berhasil memperbarui {count} gambar tiket."})
 
     @action(detail=True, methods=['get'], permission_classes=[permissions.IsAuthenticated])
     def download_bib(self, request, slug=None):
