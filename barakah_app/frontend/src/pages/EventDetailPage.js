@@ -131,8 +131,8 @@ const EventDetailPage = () => {
             return;
         }
 
+        const user = JSON.parse(localStorage.getItem('user'));
         const autoFillForm = async () => {
-            const user = JSON.parse(localStorage.getItem('user'));
             if (showRegisterModal && user && event?.form_fields && !hasAutoFilled) {
                 try {
                     const profile = await authService.getProfile(user.id);
