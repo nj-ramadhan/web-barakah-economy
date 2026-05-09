@@ -50,10 +50,10 @@ class EventViewSet(viewsets.ModelViewSet):
 
     serializer_class = EventSerializer
     lookup_field = 'slug'
-    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
-    filterset_fields = ['status', 'is_featured', 'created_by']
-    search_fields = ['title', 'description', 'location', 'organizer_name']
-    ordering_fields = ['start_date', 'created_at']
+    # filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    # filterset_fields = ['status', 'is_featured', 'created_by']
+    # search_fields = ['title', 'description', 'location', 'organizer_name']
+    # ordering_fields = ['start_date', 'created_at']
 
     def _auto_complete_expired_events(self):
         """
@@ -246,20 +246,32 @@ class EventViewSet(viewsets.ModelViewSet):
     def my_events(self, request):
         """List events created by current user."""
         try:
-            # Filter by ID to be safer with lazy objects
-            user_id = request.user.id
-            events = Event.objects.filter(created_by_id=user_id).order_by('-created_at')
+            user = request.user
+            if not user or user.is_anonymous:
+                return Response({"error": "User not authenticated"}, status=401)
+                
+            # Direct query using the User object itself
+            events_list = Event.objects.filter(created_by=user).order_by('-created_at')
             
-            # Use the simplified serializer for better performance
-            serializer = EventSimpleSerializer(events, many=True, context={'request': request})
-            return Response(serializer.data)
+            # Manual serialization for maximum safety
+            data = []
+            for e in events_list:
+                data.append({
+                    "id": e.id,
+                    "title": e.title,
+                    "slug": e.slug,
+                    "status": e.status,
+                    "created_at": e.created_at
+                })
+            
+            return Response(data)
         except Exception as e:
             import traceback
             error_trace = traceback.format_exc()
-            logger.error(f"Error in my_events: {str(e)}\n{error_trace}")
             return Response({
-                "error": str(e),
-                "traceback": error_trace
+                "error": "Error in my_events",
+                "details": str(e),
+                "trace": error_trace
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
