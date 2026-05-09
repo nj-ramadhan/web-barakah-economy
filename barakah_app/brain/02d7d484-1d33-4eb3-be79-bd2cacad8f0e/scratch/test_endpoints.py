@@ -21,26 +21,25 @@ def test_my_events():
     factory = APIRequestFactory()
     view = EventViewSet.as_view({'get': 'my_events'})
     
-    # Get a user who has events
-    from events.models import Event
-    event = Event.objects.first()
-    if not event:
-        print("No events found in database to test with.")
-        return
-        
-    user = event.created_by
-    print(f"Testing my_events for user: {user.username}")
+    # Test with a user who might have NO custom roles
+    user = User.objects.filter(role='user').first()
+    if not user:
+        user = User.objects.create_user(username='testuser_noroles', email='test@example.com', password='password')
+    
+    print(f"Testing my_events for user: {user.username} (Roles: {list(user.custom_roles.all())})")
     
     request = factory.get('/api/events/my_events/')
     force_authenticate(request, user=user)
     
-    response = view(request)
-    print(f"Status Code: {response.status_code}")
-    if response.status_code != 200:
-        print(f"Response Data: {response.data}")
-    else:
-        print(f"Success! Found {len(response.data)} events.")
-        # print(json.dumps(response.data[0] if response.data else {}, indent=2))
+    try:
+        response = view(request)
+        print(f"Status Code: {response.status_code}")
+        if response.status_code != 200:
+            print(f"Response Data: {response.data}")
+    except Exception as e:
+        import traceback
+        print(f"FAILED with exception: {e}")
+        print(traceback.format_exc())
 
 def test_registrations():
     from events.views import EventRegistrationViewSet

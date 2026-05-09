@@ -92,23 +92,40 @@ class User(AbstractUser):
 
     def has_menu_access(self, menu_key):
         """Check if user has access to a specific menu via custom_roles."""
+        if not self.is_authenticated:
+            return False
         if self.role == 'admin' or self.is_staff:
             return True
         
-        # Check all active custom roles in Python to avoid database-specific JSON lookups
-        active_roles = self.custom_roles.filter(is_active=True)
-        for role in active_roles:
-            if role.accessible_menus and menu_key in role.accessible_menus:
-                return True
+        # Defensive check for ManyToMany manager
+        try:
+            roles_manager = getattr(self, 'custom_roles', None)
+            if roles_manager is None:
+                return False
+                
+            active_roles = roles_manager.filter(is_active=True)
+            for role in active_roles:
+                if role.accessible_menus and menu_key in role.accessible_menus:
+                    return True
+        except Exception:
+            pass
         return False
 
     def get_all_accessible_menus(self):
         """Get all menu keys accessible by this user."""
-        if self.role == 'admin':
-            return ['*']  # Admin has access to all
+        if not self.is_authenticated:
+            return []
+        if self.role == 'admin' or self.is_staff:
+            return ['*']
+            
         menus = set()
-        for r in self.custom_roles.filter(is_active=True):
-            menus.update(r.accessible_menus or [])
+        try:
+            roles_manager = getattr(self, 'custom_roles', None)
+            if roles_manager:
+                for r in roles_manager.filter(is_active=True):
+                    menus.update(r.accessible_menus or [])
+        except Exception:
+            pass
         return list(menus)
 
     @property

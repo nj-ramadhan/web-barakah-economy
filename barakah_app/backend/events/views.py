@@ -24,29 +24,34 @@ logger = logging.getLogger(__name__)
 
 class EventViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
-        request = getattr(self, 'request', None)
-        if not request:
-            return Event.objects.none()
-        user = request.user
-        queryset = Event.objects.all().order_by('-start_date')
-        
-        # Admin or staff can see all events
-        if user and user.is_authenticated and (user.is_staff or user.has_menu_access('admin_events')):
-            return queryset
+        try:
+            request = getattr(self, 'request', None)
+            if not request:
+                return Event.objects.none()
+            user = request.user
+            queryset = Event.objects.all().order_by('-start_date')
             
-        # Visibility filtering for others
-        now = timezone.now()
-        is_visible = Q(visibility='public') & (Q(visible_at__isnull=True) | Q(visible_at__lte=now))
-        is_approved = Q(status__in=['approved', 'ongoing', 'completed'])
-        
-        if user and user.is_authenticated:
-            # Users see approved public events OR events they created
-            return queryset.filter(
-                (is_visible & is_approved) | Q(created_by=user)
-            ).distinct()
-        else:
-            # Guests see only approved public events
-            return queryset.filter(is_visible & is_approved)
+            # Admin or staff can see all events
+            if user and user.is_authenticated and (user.is_staff or user.has_menu_access('admin_events')):
+                return queryset
+                
+            # Visibility filtering for others
+            now = timezone.now()
+            is_visible = Q(visibility='public') & (Q(visible_at__isnull=True) | Q(visible_at__lte=now))
+            is_approved = Q(status__in=['approved', 'ongoing', 'completed'])
+            
+            if user and user.is_authenticated:
+                # Users see approved public events OR events they created
+                return queryset.filter(
+                    (is_visible & is_approved) | Q(created_by=user)
+                ).distinct()
+            else:
+                # Guests see only approved public events
+                return queryset.filter(is_visible & is_approved)
+        except Exception as e:
+            import traceback
+            logger.error(f"Error in EventViewSet.get_queryset: {str(e)}\n{traceback.format_exc()}")
+            return Event.objects.none()
 
     serializer_class = EventSerializer
     lookup_field = 'slug'
@@ -70,29 +75,33 @@ class EventViewSet(viewsets.ModelViewSet):
             event.save() # This triggers the documentation signal
 
     def get_permissions(self):
-        # Public actions
-        if self.action in ['list', 'retrieve', 'landing', 'register', 'participants']:
-            return [permissions.AllowAny()]
-        
-        # CRUD / Management actions
-        # User must be authenticated
-        if not self.request.user or not self.request.user.is_authenticated:
-            return [permissions.IsAuthenticated()]
+        try:
+            # Public actions
+            if self.action in ['list', 'retrieve', 'landing', 'register', 'participants']:
+                return [permissions.AllowAny()]
             
-        # Check for menu access 'admin_events' or role 'admin'
-        if self.request.user.has_menu_access('admin_events'):
-            return [permissions.IsAuthenticated()]
+            # CRUD / Management actions
+            # User must be authenticated
+            if not self.request.user or not self.request.user.is_authenticated:
+                return [permissions.IsAuthenticated()]
+                
+            # Check for menu access 'admin_events' or role 'admin'
+            if self.request.user.has_menu_access('admin_events'):
+                return [permissions.IsAuthenticated()]
 
-        # Regular users can create/update their own events and panitia can scan
-        if self.action in [
-            'create', 'update', 'partial_update', 'my_events', 
-            'scan_attendance', 'check_scan_permission', 'manage_committees', 
-            'send_scan_link', 'bulk_resend_notifications'
-        ]:
+            # Regular users can create/update their own events and panitia can scan
+            if self.action in [
+                'create', 'update', 'partial_update', 'my_events', 
+                'scan_attendance', 'check_scan_permission', 'manage_committees', 
+                'send_scan_link', 'bulk_resend_notifications'
+            ]:
+                return [permissions.IsAuthenticated()]
+                
+            # Deny others
+            return [permissions.IsAdminUser()]
+        except Exception as e:
+            logger.error(f"Error in get_permissions: {str(e)}")
             return [permissions.IsAuthenticated()]
-            
-        # Deny others
-        return [permissions.IsAdminUser()]
 
     def list(self, request, *args, **kwargs):
         self._auto_complete_expired_events()
