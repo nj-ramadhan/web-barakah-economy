@@ -806,7 +806,9 @@ const EventRegistrationSubmissionPage = () => {
                                                                 reg.payment_status === 'rejected' ? 'bg-red-50 text-red-700' :
                                                                     'bg-orange-50 text-orange-700'
                                                                 }`}>
-                                                                {reg.payment_status || 'Pending'}
+                                                                {reg.payment_status === 'verified' ? 'TERVERIFIKASI' : 
+                                                                 reg.payment_status === 'rejected' ? 'DITOLAK' : 
+                                                                 'MENUNGGU'}
                                                             </span>
                                                         </div>
                                                     </td>
@@ -817,7 +819,9 @@ const EventRegistrationSubmissionPage = () => {
                                                             reg.status === 'rejected' ? 'bg-red-100 text-red-700' :
                                                                 'bg-orange-100 text-orange-700'
                                                             }`}>
-                                                            {reg.status}
+                                                            {reg.status === 'approved' ? 'DISETUJUI' : 
+                                                             reg.status === 'rejected' ? 'DITOLAK' : 
+                                                             'MENUNGGU'}
                                                         </span>
                                                     </div>
                                                 </td>

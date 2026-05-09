@@ -243,9 +243,17 @@ const DashboardEventPage = () => {
                                                 ev.status === 'approved' ? 'bg-green-100 text-green-700' :
                                                 ev.status === 'pending' ? 'bg-orange-100 text-orange-700' :
                                                 ev.status === 'rejected' ? 'bg-red-100 text-red-700' :
+                                                ev.status === 'ongoing' ? 'bg-blue-100 text-blue-700' :
+                                                ev.status === 'internal' ? 'bg-purple-100 text-purple-700' :
                                                 'bg-gray-100 text-gray-600'
                                             }`}>
-                                                {ev.status}
+                                                {ev.status === 'pending' ? 'MENUNGGU' : 
+                                                 ev.status === 'approved' ? 'DISETUJUI' : 
+                                                 ev.status === 'rejected' ? 'DITOLAK' : 
+                                                 ev.status === 'ongoing' ? 'BERJALAN' :
+                                                 ev.status === 'internal' ? 'INTERNAL' :
+                                                 ev.status === 'completed' ? 'SELESAI' : 
+                                                 ev.status.toUpperCase()}
                                             </span>
                                         </td>
                                         <td className="px-4 py-4">

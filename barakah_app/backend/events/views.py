@@ -55,10 +55,10 @@ class EventViewSet(viewsets.ModelViewSet):
 
     serializer_class = EventSerializer
     lookup_field = 'slug'
-    # filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
-    # filterset_fields = ['status', 'is_featured', 'created_by']
-    # search_fields = ['title', 'description', 'location', 'organizer_name']
-    # ordering_fields = ['start_date', 'created_at']
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filterset_fields = ['status', 'is_featured', 'created_by']
+    search_fields = ['title', 'description', 'location', 'organizer_name']
+    ordering_fields = ['start_date', 'created_at']
 
     def _auto_complete_expired_events(self):
         """
@@ -136,7 +136,7 @@ class EventViewSet(viewsets.ModelViewSet):
                 data = request.data.copy() if hasattr(request.data, 'copy') else dict(request.data)
                 
             # Parse JSON strings in multipart form data
-            for field in ['form_fields', 'speakers', 'sessions', 'price_variations']:
+            for field in ['form_fields', 'speakers', 'sessions', 'price_variations', 'field_layouts']:
                 if field in data and isinstance(data[field], str):
                     stripped = data[field].strip()
                     if stripped and stripped != 'null':
@@ -1793,19 +1793,8 @@ class EventViewSet(viewsets.ModelViewSet):
             special_qr, created = EventSpecialQR.objects.get_or_create(event=event)
             
             if request.method == 'POST':
-                # Handle field_layouts if sent as JSON string
-                import json
-                data = request.data.copy()
-                if 'field_layouts' in data and isinstance(data['field_layouts'], str):
-                    try:
-                        data['field_layouts'] = json.loads(data['field_layouts'])
-                    except:
-                        pass
-
+                data = self._get_parsed_data(request)
                 serializer = EventSpecialQRSerializer(special_qr, data=data, partial=True)
-                
-                if 'template_image' in request.FILES:
-                    special_qr.template_image = request.FILES['template_image']
                 
                 if serializer.is_valid():
                     with transaction.atomic():
