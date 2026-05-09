@@ -430,7 +430,15 @@ class EventViewSet(viewsets.ModelViewSet):
         try:
             if phone:
                 formatted_phone = self._format_phone_number(phone)
-                whatsapp_msg = f"Halo {name},\n\nAnda telah didaftarkan secara manual untuk event *{event.title}*.\n\n*Rincian Sesi:*\n{sessions_str}\n\nKode Tiket: *{registration.unique_code}*\n\nTerima kasih!"
+                event_url = f"{settings.FRONTEND_URL}/event/{event.slug}"
+                whatsapp_msg = (
+                    f"Halo {name},\n\n"
+                    f"Anda telah didaftarkan secara manual untuk event *{event.title}*.\n\n"
+                    f"🔗 *Detail Event:* {event_url}\n\n"
+                    f"*Rincian Sesi:*\n{sessions_str}\n\n"
+                    f"Kode Tiket: *{registration.unique_code}*\n\n"
+                    f"Terima kasih!"
+                )
                 whatsapp_service.send_message(formatted_phone, whatsapp_msg)
         except Exception as e:
             import logging
@@ -792,6 +800,7 @@ class EventViewSet(viewsets.ModelViewSet):
                 formatted_bib = str(registration.bib_number or 0).zfill(len(str(fmt)))
                 bib_info = f"🔢 *NOMOR PESERTA (BIB):* {formatted_bib}\n"
 
+            event_url = f"{settings.FRONTEND_URL}/event/{registration.event.slug}"
             wa_message = (
                 f"Halo! Terima kasih telah mendaftar di event: *{registration.event.title}*.\n\n"
                 f"✅ Pendaftaran Anda diterima!\n\n"
@@ -801,6 +810,7 @@ class EventViewSet(viewsets.ModelViewSet):
                 f"━━━━━━━━━━━━━━━━\n\n"
                 f"{bib_info}"
                 f"📌 Simpan kode ini sebagai tiket masuk event. Kode ini akan di-scan saat Anda hadir.\n"
+                f"🔗 *Link Event:* {event_url}\n"
                 f"📷 QR Code tiket bisa dilihat di halaman detail event.\n\n"
                 f"📅 Waktu: {time_str}\n"
                 f"📍 Lokasi: {registration.event.location}\n"
