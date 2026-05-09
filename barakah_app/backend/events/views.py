@@ -800,6 +800,20 @@ class EventViewSet(viewsets.ModelViewSet):
                 formatted_bib = str(registration.bib_number or 0).zfill(len(str(fmt)))
                 bib_info = f"🔢 *NOMOR PESERTA (BIB):* {formatted_bib}\n"
 
+            # Add OTS Reminder if applicable
+            ots_info = ""
+            if (registration.event.price_type != 'free' and 
+                registration.event.allow_ots_payment and 
+                registration.payment_method == 'ots'):
+                
+                price = registration.event.price_fixed
+                if price > 0:
+                    ots_info = (
+                        f"💰 *PEMBAYARAN DI TEMPAT (OTS):*\n"
+                        f"Harga Tiket: *Rp {int(price):,}*\n"
+                        f"Mohon siapkan uang tunai untuk pembayaran saat tiba di lokasi event.\n\n"
+                    )
+
             event_url = f"{settings.FRONTEND_URL}/event/{registration.event.slug}"
             wa_message = (
                 f"Halo! Terima kasih telah mendaftar di event: *{registration.event.title}*.\n\n"
@@ -808,6 +822,7 @@ class EventViewSet(viewsets.ModelViewSet):
                 f"━━━━━━━━━━━━━━━━\n"
                 f"*{unique_code}*\n"
                 f"━━━━━━━━━━━━━━━━\n\n"
+                f"{ots_info}"
                 f"{bib_info}"
                 f"📌 Simpan kode ini sebagai tiket masuk event. Kode ini akan di-scan saat Anda hadir.\n"
                 f"🔗 *Link Event:* {event_url}\n"
@@ -966,9 +981,21 @@ class EventViewSet(viewsets.ModelViewSet):
         # Build sessions string for placeholder
         session_list = []
         for s in event.sessions.all().order_by('order', 'start_time'):
-            time_str = f"({s.start_time.strftime('%H:%M')} - {s.end_time.strftime('%H:%M')})" if s.start_time and s.end_time else ""
-            session_list.append(f"- {s.title} {time_str}")
+            time_str_session = f"({s.start_time.strftime('%H:%M')} - {s.end_time.strftime('%H:%M')})" if s.start_time and s.end_time else ""
+            session_list.append(f"- {s.title} {time_str_session}")
         sessions_str = "\n".join(session_list) if session_list else "-"
+
+        # Build event time string
+        local_start = timezone.localtime(event.start_date)
+        event_time_str = local_start.strftime('%d %b %Y %H:%M')
+        if event.end_date:
+            local_end = timezone.localtime(event.end_date)
+            if local_start.date() == local_end.date():
+                event_time_str += f" - {local_end.strftime('%H:%M')}"
+            else:
+                event_time_str += f" - {local_end.strftime('%d %b %Y %H:%M')}"
+        
+        event_link = f"{settings.FRONTEND_URL}/event/{event.slug}"
 
         phone_list = []
         placeholder_data = []
@@ -991,7 +1018,10 @@ class EventViewSet(viewsets.ModelViewSet):
                     placeholder_data.append({
                         'name': detected_name, 
                         'event': event.title,
-                        'sessions': sessions_str
+                        'sessions': sessions_str,
+                        'event_link': event_link,
+                        'location_link': event.location_url or '-',
+                        'time': event_time_str
                     })
         
         if not phone_list:
@@ -1074,9 +1104,25 @@ class EventViewSet(viewsets.ModelViewSet):
                 if formatted_phone and core_number not in seen_phones:
                     seen_phones.add(core_number)
                     phone_list.append(formatted_phone)
+                    # Build event time string for this specific registration's event
+                    ev = reg.event
+                    local_start = timezone.localtime(ev.start_date)
+                    ev_time_str = local_start.strftime('%d %b %Y %H:%M')
+                    if ev.end_date:
+                        local_end = timezone.localtime(ev.end_date)
+                        if local_start.date() == local_end.date():
+                            ev_time_str += f" - {local_end.strftime('%H:%M')}"
+                        else:
+                            ev_time_str += f" - {local_end.strftime('%d %b %Y %H:%M')}"
+                    
+                    ev_link = f"{settings.FRONTEND_URL}/event/{ev.slug}"
+
                     placeholder_data.append({
                         'name': detected_name, 
-                        'event': reg.event.title
+                        'event': ev.title,
+                        'event_link': ev_link,
+                        'location_link': ev.location_url or '-',
+                        'time': ev_time_str
                     })
         
         if not phone_list:

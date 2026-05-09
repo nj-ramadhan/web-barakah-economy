@@ -23,8 +23,18 @@ const EventRegistrationSubmissionPage = () => {
     const [error, setError] = useState(null);
     const [isExporting, setIsExporting] = useState(false);
     const [showBlastModal, setShowBlastModal] = useState(false);
-    const [blastMessage, setBlastMessage] = useState('Halo {name}, mau mengingatkan untuk event {event} besok ya. Sampai jumpa!');
     const [isBlasting, setIsBlasting] = useState(false);
+    const [blastResult, setBlastResult] = useState(null);
+    const [selectedTemplate, setSelectedTemplate] = useState('custom');
+
+    const WA_TEMPLATES = [
+        { id: 'custom', label: 'Custom', message: '' },
+        { id: 'reminder', label: 'Reminder Event', message: 'Halo {name}, mengingatkan untuk event {event} yang akan dilaksanakan pada {time}. Sampai jumpa di lokasi: {location_link} !' },
+        { id: 'info', label: 'Info Khusus', message: 'Halo {name}, ada informasi khusus terkait event {event}. Silakan cek detailnya di: {event_link}' },
+        { id: 'sertifikat', label: 'Info Sertifikat', message: 'Halo {name}, terima kasih telah mengikuti event {event}. Sertifikat Anda sudah tersedia dan dapat diunduh di: {event_link}' },
+        { id: 'dokumentasi', label: 'Info Dokumentasi', message: 'Halo {name}, dokumentasi event {event} telah ditambahkan. Anda bisa lihat dan unduh di halaman: {event_link}' },
+    ];
+    const [blastMessage, setBlastMessage] = useState('Halo {name}, mau mengingatkan untuk event {event} besok ya. Sampai jumpa!');
     const [selectedPaymentProof, setSelectedPaymentProof] = useState(null);
     const [selectedIds, setSelectedIds] = useState([]);
     const [showManualModal, setShowManualModal] = useState(false);
@@ -742,11 +752,34 @@ const EventRegistrationSubmissionPage = () => {
                             </div>
 
                             <div className="mb-4">
+                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block ml-1">Pilih Template</label>
+                                <select 
+                                    className="w-full p-3 bg-gray-50 border border-gray-100 rounded-2xl text-xs focus:ring-2 focus:ring-emerald-500 transition outline-none"
+                                    value={selectedTemplate}
+                                    onChange={(e) => {
+                                        const val = e.target.value;
+                                        setSelectedTemplate(val);
+                                        const template = WA_TEMPLATES.find(t => t.id === val);
+                                        if (template && val !== 'custom') {
+                                            setBlastMessage(template.message);
+                                        }
+                                    }}
+                                >
+                                    {WA_TEMPLATES.map(t => (
+                                        <option key={t.id} value={t.id}>{t.label}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div className="mb-4">
                                 <div className="flex justify-between items-center mb-2 px-1">
                                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Isi Pesan</label>
-                                    <div className="flex gap-1.5">
+                                    <div className="flex flex-wrap gap-1.5 justify-end">
                                         <button onClick={() => setBlastMessage(prev => prev + ' {name}')} className="text-[9px] font-bold text-emerald-700 bg-emerald-50 px-2 py-1 rounded-lg hover:bg-emerald-100 transition">+{'{name}'}</button>
                                         <button onClick={() => setBlastMessage(prev => prev + ' {event}')} className="text-[9px] font-bold text-blue-700 bg-blue-50 px-2 py-1 rounded-lg hover:bg-blue-100 transition">+{'{event}'}</button>
+                                        <button onClick={() => setBlastMessage(prev => prev + ' {event_link}')} className="text-[9px] font-bold text-purple-700 bg-purple-50 px-2 py-1 rounded-lg hover:bg-purple-100 transition">+{'{event_link}'}</button>
+                                        <button onClick={() => setBlastMessage(prev => prev + ' {location_link}')} className="text-[9px] font-bold text-orange-700 bg-orange-50 px-2 py-1 rounded-lg hover:bg-orange-100 transition">+{'{location_link}'}</button>
+                                        <button onClick={() => setBlastMessage(prev => prev + ' {time}')} className="text-[9px] font-bold text-indigo-700 bg-indigo-50 px-2 py-1 rounded-lg hover:bg-indigo-100 transition">+{'{time}'}</button>
                                     </div>
                                 </div>
                                 <textarea

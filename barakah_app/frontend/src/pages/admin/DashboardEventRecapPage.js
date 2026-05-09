@@ -18,6 +18,15 @@ const DashboardEventRecapPage = () => {
     const [blastImage, setBlastImage] = useState(null);
     const [isBlasting, setIsBlasting] = useState(false);
     const [blastResult, setBlastResult] = useState(null);
+    const [selectedTemplate, setSelectedTemplate] = useState('custom');
+
+    const WA_TEMPLATES = [
+        { id: 'custom', label: 'Custom', message: '' },
+        { id: 'reminder', label: 'Reminder Event', message: 'Halo {name}, mengingatkan untuk event {event} yang akan dilaksanakan pada {time}. Sampai jumpa di lokasi: {location_link} !' },
+        { id: 'info', label: 'Info Khusus', message: 'Halo {name}, ada informasi khusus terkait event {event}. Silakan cek detailnya di: {event_link}' },
+        { id: 'sertifikat', label: 'Info Sertifikat', message: 'Halo {name}, terima kasih telah mengikuti event {event}. Sertifikat Anda sudah tersedia dan dapat diunduh di: {event_link}' },
+        { id: 'dokumentasi', label: 'Info Dokumentasi', message: 'Halo {name}, dokumentasi event {event} telah ditambahkan. Anda bisa lihat dan unduh di halaman: {event_link}' },
+    ];
 
     useEffect(() => {
         fetchData();
@@ -278,6 +287,26 @@ const DashboardEventRecapPage = () => {
 
                         <div className="space-y-5">
                             <div>
+                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block ml-1">Pilih Template</label>
+                                <select 
+                                    className="w-full p-3 bg-gray-50 border border-gray-100 rounded-2xl text-xs focus:ring-2 focus:ring-emerald-500 transition outline-none"
+                                    value={selectedTemplate}
+                                    onChange={(e) => {
+                                        const val = e.target.value;
+                                        setSelectedTemplate(val);
+                                        const template = WA_TEMPLATES.find(t => t.id === val);
+                                        if (template && val !== 'custom') {
+                                            setBlastMessage(template.message);
+                                        }
+                                    }}
+                                >
+                                    {WA_TEMPLATES.map(t => (
+                                        <option key={t.id} value={t.id}>{t.label}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div>
                                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block ml-1">Isi Pesan</label>
                                 <textarea 
                                     className="w-full p-5 bg-gray-50 border-none rounded-[1.5rem] text-sm focus:ring-2 focus:ring-emerald-500 transition resize-none"
@@ -286,9 +315,12 @@ const DashboardEventRecapPage = () => {
                                     onChange={e => setBlastMessage(e.target.value)}
                                     placeholder="Tulis pesan..."
                                 ></textarea>
-                                <div className="flex gap-2 mt-2">
+                                <div className="flex flex-wrap gap-2 mt-2">
                                     <button onClick={() => setBlastMessage(p => p + ' {name}')} className="text-[9px] font-black text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg hover:bg-emerald-100 transition">+{'{name}'}</button>
                                     <button onClick={() => setBlastMessage(p => p + ' {event}')} className="text-[9px] font-black text-blue-700 bg-blue-50 px-2.5 py-1 rounded-lg hover:bg-blue-100 transition">+{'{event}'}</button>
+                                    <button onClick={() => setBlastMessage(p => p + ' {event_link}')} className="text-[9px] font-black text-purple-700 bg-purple-50 px-2.5 py-1 rounded-lg hover:bg-purple-100 transition">+{'{event_link}'}</button>
+                                    <button onClick={() => setBlastMessage(p => p + ' {location_link}')} className="text-[9px] font-black text-orange-700 bg-orange-50 px-2.5 py-1 rounded-lg hover:bg-orange-100 transition">+{'{location_link}'}</button>
+                                    <button onClick={() => setBlastMessage(p => p + ' {time}')} className="text-[9px] font-black text-indigo-700 bg-indigo-50 px-2.5 py-1 rounded-lg hover:bg-indigo-100 transition">+{'{time}'}</button>
                                 </div>
                             </div>
 
