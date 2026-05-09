@@ -240,7 +240,11 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         return value
 
 class UserSimpleSerializer(serializers.ModelSerializer):
-    full_name = serializers.CharField(source='profile.name_full', read_only=True)
+    full_name = serializers.SerializerMethodField()
+    
+    def get_full_name(self, obj):
+        profile = getattr(obj, 'profile', None)
+        return profile.name_full if profile else obj.username
 
     class Meta:
         model = User

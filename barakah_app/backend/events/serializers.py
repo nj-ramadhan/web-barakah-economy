@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from .models import Event, EventFormField, EventRegistration, EventRegistrationFile, EventDocumentationImage, EventGalleryImage, EventCertificate, EventBib, EventSpecialQR
-from accounts.serializers import UserAdminSerializer, UserLabelSerializer
+from accounts.serializers import UserAdminSerializer, UserLabelSerializer, UserSimpleSerializer
 from accounts.models import UserLabel
 from django.db import transaction
 
@@ -95,7 +95,7 @@ class EventSpecialQRSerializer(serializers.ModelSerializer):
 
 
 class EventSerializer(serializers.ModelSerializer):
-    created_by_details = UserAdminSerializer(source='created_by', read_only=True)
+    created_by_details = UserSimpleSerializer(source='created_by', read_only=True)
     form_fields = EventFormFieldSerializer(many=True, required=False)
     documentation_images = EventDocumentationImageSerializer(many=True, read_only=True)
     gallery_images = EventGalleryImageSerializer(many=True, read_only=True)
