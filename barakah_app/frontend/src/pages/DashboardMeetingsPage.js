@@ -123,6 +123,7 @@ const DashboardMeetingsPage = () => {
                                             </div>
                                         </div>
 
+                                        <div className="flex flex-wrap gap-2">
                                             <Link 
                                                 to={`/meetings/${meeting.slug}`}
                                                 target="_blank"
