@@ -150,7 +150,9 @@ const DashboardEcourseListPage = () => {
                                                 <p className="font-bold text-green-800">{formatIDR(course.price)}</p>
                                             </div>
                                             <h3 className="font-bold text-gray-800 line-clamp-1">{course.title}</h3>
-                                            <p className="text-xs text-gray-500 line-clamp-2 mt-1">{course.description}</p>
+                                            <p className="text-xs text-gray-500 line-clamp-2 mt-1">
+                                                {(course.description || '').replace(/<[^>]*>/g, '')}
+                                            </p>
                                         </div>
 
                                         <div className="flex flex-wrap items-center justify-between gap-3 mt-4 pt-4 border-t border-gray-50">

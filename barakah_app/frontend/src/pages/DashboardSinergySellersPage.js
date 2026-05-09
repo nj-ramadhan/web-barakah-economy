@@ -229,7 +229,9 @@ const DashboardSinergySellersPage = () => {
                                     </span>
                                 </p>
                                 <p className="text-xs text-gray-400">Total Stok: <span className="font-bold">{p.total_stock || p.stock}</span></p>
-                                <p className="text-xs text-gray-500 line-clamp-2 mt-1">{p.description}</p>
+                                <p className="text-xs text-gray-500 line-clamp-2 mt-1">
+                                    {(p.description || '').replace(/<[^>]*>/g, '')}
+                                </p>
                             </div>
                             <div className="flex gap-2">
                                 <button onClick={() => {

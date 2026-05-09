@@ -19,6 +19,7 @@ const DashboardPage = () => {
     const { t } = useTranslation();
     const navigate = useNavigate();
     const [productCount, setProductCount] = useState(0);
+    const [sinergyProductCount, setSinergyProductCount] = useState(0);
     const [courseCount, setCourseCount] = useState(0);
     const [balanceData, setBalanceData] = useState({ available_balance: 0, total_sales: 0 });
     const [username, setUsername] = useState('');
@@ -63,7 +64,7 @@ const DashboardPage = () => {
         const fetchStats = async () => {
             try {
                 const user = JSON.parse(localStorage.getItem('user'));
-                const [productRes, courseRes, balanceRes, historyRes, profileRes, testimonialRes, statsRes, sinergyStatsRes] = await Promise.all([
+                const [productRes, courseRes, balanceRes, historyRes, profileRes, testimonialRes, statsRes, sinergyStatsRes, sinergyProductsRes] = await Promise.all([
                     getMyDigitalProducts(),
                     getMyCourses(),
                     getDigitalBalance().catch(() => ({ data: { available_balance: 0, total_sales: 0 } })),
@@ -77,8 +78,15 @@ const DashboardPage = () => {
                     }).catch(() => ({ data: {} })),
                     axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/orders/seller-orders/stats/`, {
                         headers: { Authorization: `Bearer ${user.access}` }
-                    }).catch(() => ({ data: { pending_count: 0 } }))
+                    }).catch(() => ({ data: { pending_count: 0 } })),
+                    axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/products/`, {
+                        headers: { Authorization: `Bearer ${user.access}` }
+                    }).catch(() => ({ data: [] }))
                 ])
+                
+                if (sinergyProductsRes && sinergyProductsRes.data) {
+                    setSinergyProductCount(sinergyProductsRes.data.length);
+                }
                 
                 if (sinergyStatsRes && sinergyStatsRes.data) {
                     setSinergyPendingCount(sinergyStatsRes.data.pending_count || 0);
@@ -368,7 +376,7 @@ const DashboardPage = () => {
                                 </div>
                             )}
                             <span className="material-icons text-2xl mb-1">shopping_bag</span>
-                            <p className="font-bold text-2xl">E-commerce</p>
+                            <p className="font-bold text-2xl">{loading ? '...' : sinergyProductCount}</p>
                             <p className="text-[10px] opacity-80 uppercase tracking-wider font-semibold">Produk Fisik</p>
                         </Link>
                     ) : null}

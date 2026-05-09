@@ -139,7 +139,10 @@ const DigitalProductDetailPage = () => {
                                     <span className="material-icons text-sm">description</span>
                                     Deskripsi
                                 </h2>
-                                <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-wrap">{product.description}</p>
+                                <div 
+                                    className="text-sm text-gray-600 leading-relaxed"
+                                    dangerouslySetInnerHTML={{ __html: product.description }}
+                                />
                             </div>
 
                             <div className="bg-blue-50 rounded-xl p-4 mb-6 text-sm text-blue-700 flex items-start gap-3">

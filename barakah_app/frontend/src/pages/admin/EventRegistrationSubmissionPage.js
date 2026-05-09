@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, Link, useLocation } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
 import Header from '../../components/layout/Header';
@@ -141,66 +141,70 @@ const EventRegistrationSubmissionPage = () => {
         setSortConfig({ key, direction });
     };
 
-    const getUniqueLabels = () => {
+    const uniqueLabels = useMemo(() => {
         const labels = new Set();
         registrations.forEach(reg => {
             reg.user_details?.labels?.forEach(l => labels.add(l.name));
         });
         return Array.from(labels).sort();
-    };
+    }, [registrations]);
 
-    const filteredRegistrations = registrations.filter(reg => {
-        const hybrid = getHybridInfo(reg, event?.form_fields);
-        
-        // Search Filter
-        const searchStr = `${hybrid.name} ${hybrid.email} ${reg.unique_code}`.toLowerCase();
-        if (searchTerm && !searchStr.includes(searchTerm.toLowerCase())) return false;
+    const filteredRegistrations = useMemo(() => {
+        return registrations.filter(reg => {
+            const hybrid = getHybridInfo(reg, event?.form_fields);
+            
+            // Search Filter
+            const searchStr = `${hybrid.name} ${hybrid.email} ${reg.unique_code}`.toLowerCase();
+            if (searchTerm && !searchStr.includes(searchTerm.toLowerCase())) return false;
 
-        // Label Filter
-        if (filters.label && !reg.user_details?.labels?.some(l => l.name === filters.label)) return false;
+            // Label Filter
+            if (filters.label && !reg.user_details?.labels?.some(l => l.name === filters.label)) return false;
 
-        // Gender Filter
-        if (filters.gender) {
-            const genderField = event?.form_fields?.find(f => (f.label || '').toLowerCase().includes('jenis kelamin'));
-            const genderValue = reg.responses?.[genderField?.id]?.toLowerCase();
-            if (genderValue !== filters.gender.toLowerCase()) return false;
-        }
+            // Gender Filter
+            if (filters.gender) {
+                const genderField = event?.form_fields?.find(f => (f.label || '').toLowerCase().includes('jenis kelamin'));
+                const genderValue = reg.responses?.[genderField?.id]?.toLowerCase();
+                if (genderValue !== filters.gender.toLowerCase()) return false;
+            }
 
-        // Attendance Filter
-        if (filters.attendance !== 'all') {
-            const isAttended = reg.is_attended || (reg.attendances_list && reg.attendances_list.length > 0);
-            if (filters.attendance === 'attended' && !isAttended) return false;
-            if (filters.attendance === 'not_attended' && isAttended) return false;
-        }
+            // Attendance Filter
+            if (filters.attendance !== 'all') {
+                const isAttended = reg.is_attended || (reg.attendances_list && reg.attendances_list.length > 0);
+                if (filters.attendance === 'attended' && !isAttended) return false;
+                if (filters.attendance === 'not_attended' && isAttended) return false;
+            }
 
-        return true;
-    });
+            return true;
+        });
+    }, [registrations, event, searchTerm, filters]);
 
-    const sortedRegistrations = [...filteredRegistrations].sort((a, b) => {
-        const { key, direction } = sortConfig;
-        let valA, valB;
+    const sortedRegistrations = useMemo(() => {
+        return [...filteredRegistrations].sort((a, b) => {
+            const { key, direction } = sortConfig;
+            let valA, valB;
 
-        if (key === 'created_at') {
-            valA = new Date(a.created_at);
-            valB = new Date(b.created_at);
-        } else if (key === 'unique_code') {
-            valA = a.unique_code || '';
-            valB = b.unique_code || '';
-        } else if (key === 'name') {
-            valA = getHybridInfo(a, event?.form_fields).name.toLowerCase();
-            valB = getHybridInfo(b, event?.form_fields).name.toLowerCase();
-        } else if (key === 'status') {
-            valA = a.status || '';
-            valB = b.status || '';
-        } else {
-            valA = a[key];
-            valB = b[key];
-        }
+            if (key === 'created_at') {
+                valA = new Date(a.created_at);
+                valB = new Date(b.created_at);
+            } else if (key === 'unique_code') {
+                valA = a.unique_code || '';
+                valB = b.unique_code || '';
+            } else if (key === 'name') {
+                valA = getHybridInfo(a, event?.form_fields).name.toLowerCase();
+                valB = getHybridInfo(b, event?.form_fields).name.toLowerCase();
+            } else if (key === 'status') {
+                valA = a.status || '';
+                valB = b.status || '';
+            } else {
+                valA = a[key];
+                valB = b[key];
+            }
 
-        if (valA < valB) return direction === 'asc' ? -1 : 1;
-        if (valA > valB) return direction === 'asc' ? 1 : -1;
-        return 0;
-    });
+            if (valA < valB) return direction === 'asc' ? -1 : 1;
+            if (valA > valB) return direction === 'asc' ? 1 : -1;
+            return 0;
+        });
+    }, [filteredRegistrations, sortConfig, event]);
 
     const handleSelectAll = (e) => {
         if (e.target.checked) {
@@ -490,7 +494,7 @@ const EventRegistrationSubmissionPage = () => {
                             onChange={(e) => setFilters(prev => ({ ...prev, label: e.target.value }))}
                         >
                             <option value="">Semua Label</option>
-                            {getUniqueLabels().map(label => (
+                            {uniqueLabels.map(label => (
                                 <option key={label} value={label}>{label}</option>
                             ))}
                         </select>

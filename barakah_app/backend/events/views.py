@@ -2166,8 +2166,21 @@ class EventRegistrationViewSet(viewsets.ModelViewSet):
         
         # Event owners and committees can see registrations for their events
         from django.db.models import Q
-        user_events = Event.objects.filter(Q(created_by=user) | Q(committees=user))
-        return EventRegistration.objects.filter(event__in=user_events).distinct()
+        # Optimization: select_related and prefetch_related to avoid N+1 queries in Serializer
+        return EventRegistration.objects.filter(event__in=user_events).distinct().select_related(
+            'user', 
+            'user__profile', 
+            'event',
+            'event__bib_template'
+        ).prefetch_related(
+            'attendances',
+            'attendances__session',
+            'attendances__scanned_by',
+            'attendances__scanned_by__profile',
+            'uploaded_files',
+            'event__form_fields',
+            'user__labels'
+        )
 
     def get_permissions(self):
         # Registration management only for authenticated users (Staff/Creators)
