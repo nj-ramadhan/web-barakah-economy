@@ -324,7 +324,16 @@ class EventViewSet(viewsets.ModelViewSet):
         payment_method = request.data.get('payment_method', 'transfer')
         payment_proof = request.FILES.get('payment_proof')
         payment_amount = request.data.get('payment_amount', 0)
+        price_variation_id = request.data.get('price_variation')
         
+        # Validate Price Variation if provided
+        price_variation = None
+        if price_variation_id:
+            from .models import EventPriceVariation
+            price_variation = EventPriceVariation.objects.filter(id=price_variation_id, event=event).first()
+            if not price_variation:
+                return Response({"error": "Variasi harga tidak valid."}, status=status.HTTP_400_BAD_REQUEST)
+
         # Check if user has free labels
         user_labels = user.labels.all()
         free_labels = event.free_for_labels.all()
@@ -342,7 +351,11 @@ class EventViewSet(viewsets.ModelViewSet):
         if payment_proof and not is_ots_valid and not is_free_by_label:
             import decimal
             try:
-                expected_amount = decimal.Decimal(str(payment_amount))
+                # Prioritize variation price if available
+                if price_variation:
+                    expected_amount = decimal.Decimal(str(price_variation.price))
+                else:
+                    expected_amount = decimal.Decimal(str(payment_amount))
             except:
                 expected_amount = decimal.Decimal('0')
 
@@ -351,9 +364,6 @@ class EventViewSet(viewsets.ModelViewSet):
             
             if '_error' in ocr_result:
                 # If AI fails, we still allow but warn? 
-                # User requested: "kalo tidak sesuai maka berikan info / notif nya"
-                # For now let's be strict if AI works but data is wrong.
-                # If AI itself fails (API error), let it pass as unverified.
                 pass
             else:
                 ocr_data = ocr_result
@@ -394,6 +404,7 @@ class EventViewSet(viewsets.ModelViewSet):
             event=event,
             user=user,
             responses=responses,
+            price_variation=price_variation,
             payment_method=payment_method if not is_free_by_label else 'free_label',
             payment_proof=payment_proof,
             payment_amount=payment_amount,

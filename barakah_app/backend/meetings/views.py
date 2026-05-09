@@ -24,6 +24,16 @@ class MeetingViewSet(viewsets.ModelViewSet):
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['title', 'subtitle', 'description', 'location']
 
+    def get_queryset(self):
+        user = self.request.user
+        if user.is_authenticated:
+            # Admin can see everything, or if they have the internal_meetings menu access
+            if user.is_staff or user.role == 'admin' or user.has_menu_access('internal_meetings'):
+                return Meeting.objects.all().order_by('-start_date')
+            # Otherwise only meetings they created
+            return Meeting.objects.filter(created_by=user).order_by('-start_date')
+        return Meeting.objects.none()
+
     def get_permissions(self):
         if self.action in ['create', 'update', 'partial_update', 'destroy', 'manage_participants', 'blast_whatsapp', 'export_csv', 'update_attendance']:
             return [permissions.IsAuthenticated()]

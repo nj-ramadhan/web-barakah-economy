@@ -10,6 +10,7 @@ import CertificateEditor from '../../components/events/CertificateEditor';
 import BibEditor from '../../components/events/BibEditor';
 import SpecialQREditor from '../../components/events/SpecialQREditor';
 import EventCommitteeModal from '../../components/admin/EventCommitteeModal';
+import { formatCurrency } from '../../utils/formatters';
 import '../../styles/Body.css';
 
 const EventRegistrationSubmissionPage = () => {
@@ -589,6 +590,11 @@ const EventRegistrationSubmissionPage = () => {
                                     }).map(field => (
                                         <th key={field.id} className="p-5 text-[10px] font-black text-gray-400 uppercase tracking-widest min-w-[150px]">{field.label}</th>
                                     ))}
+                                    {event?.price_variations?.length > 0 && (
+                                        <th className="p-5 text-[10px] font-black text-gray-400 uppercase tracking-widest cursor-pointer hover:text-green-700 transition" onClick={() => handleSort('price_variation')}>
+                                            Variasi
+                                        </th>
+                                    )}
                                     {event?.price_type !== 'free' && (
                                         <th className="p-5 text-[10px] font-black text-gray-400 uppercase tracking-widest cursor-pointer hover:text-green-700 transition" onClick={() => handleSort('payment_amount')}>
                                             <div className="flex items-center gap-1">
@@ -729,7 +735,7 @@ const EventRegistrationSubmissionPage = () => {
                                                     }
 
                                                     const file = reg.uploaded_files?.find(f => f.field === field.id);
-
+                                                    
                                                     return (
                                                         <td key={field.id} className="p-5 text-sm text-gray-600">
                                                             {field.field_type === 'file' && file ? (
@@ -746,6 +752,18 @@ const EventRegistrationSubmissionPage = () => {
                                                         </td>
                                                     );
                                                 })}
+                                                {event?.price_variations?.length > 0 && (
+                                                    <td className="p-5 text-xs text-gray-600">
+                                                        <div className="font-bold text-gray-900">
+                                                            {reg.price_variation_details?.title || '-'}
+                                                        </div>
+                                                        {reg.price_variation_details?.price > 0 && (
+                                                            <div className="text-[9px] text-gray-400 font-bold uppercase">
+                                                                Rp {formatCurrency(reg.price_variation_details.price)}
+                                                            </div>
+                                                        )}
+                                                    </td>
+                                                )}
                                                 {event?.price_type !== 'free' && (
                                                     <td className="p-5 text-xs whitespace-nowrap">
                                                         <div className="font-black text-gray-900">Rp {Number(reg.payment_amount || 0).toLocaleString('id-ID')}</div>

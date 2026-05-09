@@ -7,6 +7,7 @@ const EventRegistrationEditModal = ({ isOpen, onClose, event, registration, onSu
     const [formData, setFormData] = useState({
         guest_name: '',
         guest_email: '',
+        price_variation: '',
         responses: {}
     });
 
@@ -15,6 +16,7 @@ const EventRegistrationEditModal = ({ isOpen, onClose, event, registration, onSu
             setFormData({
                 guest_name: registration.guest_name || registration.user_details?.profile?.name_full || registration.user_details?.username || '',
                 guest_email: registration.guest_email || registration.user_details?.email || '',
+                price_variation: registration.price_variation || '',
                 responses: registration.responses || {}
             });
         }
@@ -107,6 +109,27 @@ const EventRegistrationEditModal = ({ isOpen, onClose, event, registration, onSu
                                     placeholder="Email Peserta"
                                 />
                             </div>
+
+                            {/* Price Variation Selection */}
+                            {event.price_variations && event.price_variations.length > 0 && (
+                                <div className="space-y-2">
+                                    <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Variasi Paket</label>
+                                    <div className="relative">
+                                        <select
+                                            name="price_variation"
+                                            value={formData.price_variation || ''}
+                                            onChange={handleFormChange}
+                                            className="w-full px-5 py-3.5 bg-gray-50 border border-transparent rounded-2xl text-sm focus:bg-white focus:border-green-500 focus:ring-4 focus:ring-green-500/10 transition outline-none appearance-none"
+                                        >
+                                            <option value="">Pilih Variasi</option>
+                                            {event.price_variations.map(v => (
+                                                <option key={v.id} value={v.id}>{v.title} (Rp {Number(v.price).toLocaleString('id-ID')})</option>
+                                            ))}
+                                        </select>
+                                        <span className="material-icons absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">expand_more</span>
+                                    </div>
+                                </div>
+                            )}
 
                             {/* Dynamic Event Fields */}
                             {event.form_fields && event.form_fields.length > 0 && (

@@ -35,6 +35,7 @@ MENU_CHOICES = [
     ('submit_campaign', 'Personal: Ajukan Kampanye'),
     ('write_article', 'Personal: Tulis Artikel'),
     ('my_events', 'Personal: Event Barakah'),
+    ('internal_meetings', 'Admin: Rapat & Manajemen Rapat'),
     ('zis_routine', 'Personal: ZIS Rutin'),
 ]
 

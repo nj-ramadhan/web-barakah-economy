@@ -42,6 +42,7 @@ const MENU_OPTIONS = [
     { key: 'submit_campaign', label: 'Personal: Ajukan Charity' },
     { key: 'write_article', label: 'Personal: Tulis Artikel' },
     { key: 'my_events', label: 'Personal: Event Barakah' },
+    { key: 'internal_meetings', label: 'Admin: Rapat & Manajemen Rapat' },
     { key: 'zis_routine', label: 'Personal: ZIS Rutin' },
 ];
 

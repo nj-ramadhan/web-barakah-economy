@@ -939,20 +939,6 @@ const EventSubmissionPage = () => {
                                 {formData.price_type !== 'free' && (
                                     <>
                                         <div className="space-y-1.5 md:col-span-2">
-                                            <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1 mb-2">Izinkan Pembayaran OTS (On The Spot)?</label>
-                                            <div className="flex items-center gap-3">
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setFormData(prev => ({ ...prev, allow_ots_payment: !prev.allow_ots_payment }))}
-                                                    className={`w-12 h-6 rounded-full transition-colors relative ${formData.allow_ots_payment ? 'bg-green-500' : 'bg-gray-300'}`}
-                                                >
-                                                    <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${formData.allow_ots_payment ? 'left-7' : 'left-1'}`}></div>
-                                                </button>
-                                                <span className="text-xs font-bold text-gray-600">{formData.allow_ots_payment ? 'Ya, Aktifkan OTS' : 'Hanya Transfer/QRIS'}</span>
-                                            </div>
-                                            <p className="text-[10px] text-gray-400 ml-1 italic">Jika aktif, pendaftar bisa memilih bayar di lokasi dan melewati upload bukti transfer di awal.</p>
-                                        </div>
-                                        <div className="space-y-1.5 md:col-span-2">
                                             <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1 mb-2">Pengecualian Biaya (Gratis untuk Label Tertentu)</label>
                                             <div className="p-4 bg-blue-50 rounded-2xl border border-blue-100">
                                                 <p className="text-[10px] text-blue-700 font-bold uppercase tracking-wider mb-3 flex items-center gap-1">
@@ -987,6 +973,87 @@ const EventSubmissionPage = () => {
                                                     <p className="text-[10px] text-gray-400 mt-3 italic text-center">Belum ada label yang dipilih</p>
                                                 )}
                                             </div>
+                                        </div>
+
+                                        {/* Price Variations Section */}
+                                        <div className="space-y-4 md:col-span-2 p-6 bg-green-50/50 rounded-[2rem] border border-green-100 mt-2">
+                                            <div className="flex items-center justify-between">
+                                                <div>
+                                                    <p className="text-sm font-black text-green-900">Variasi Harga & Benefit</p>
+                                                    <p className="text-[10px] text-green-600 font-bold uppercase tracking-wider">Tambahkan beberapa pilihan paket biaya (Opsional)</p>
+                                                </div>
+                                                <button
+                                                    type="button"
+                                                    onClick={addPriceVariation}
+                                                    className="text-[10px] font-black text-white bg-green-600 px-4 py-2 rounded-xl hover:bg-green-700 transition flex items-center gap-1 shadow-lg shadow-green-100"
+                                                >
+                                                    <span className="material-icons text-sm">add</span>
+                                                    TAMBAH PAKET
+                                                </button>
+                                            </div>
+                                            
+                                            <div className="space-y-3">
+                                                {formData.price_variations.map((varItem, idx) => (
+                                                    <div key={idx} className="bg-white p-5 rounded-2xl border border-green-100 relative animate-fade-in space-y-4 shadow-sm">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => removePriceVariation(idx)}
+                                                            className="absolute -top-2 -right-2 w-7 h-7 bg-red-500 text-white rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition"
+                                                        >
+                                                            <span className="material-icons text-xs">close</span>
+                                                        </button>
+                                                        
+                                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                                            <div className="space-y-1.5">
+                                                                <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Nama Paket *</label>
+                                                                <input
+                                                                    type="text"
+                                                                    value={varItem.title}
+                                                                    onChange={(e) => updatePriceVariation(idx, { title: e.target.value })}
+                                                                    placeholder="Misal: Paket Early Bird"
+                                                                    className="w-full px-4 py-2.5 bg-gray-50 border-none rounded-xl text-xs focus:ring-2 focus:ring-green-500 transition"
+                                                                />
+                                                            </div>
+                                                            <div className="space-y-1.5">
+                                                                <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Harga (Rp) *</label>
+                                                                <CurrencyInput
+                                                                    value={varItem.price}
+                                                                    onChange={(e) => updatePriceVariation(idx, { price: e.target.value })}
+                                                                    className="w-full px-4 py-2.5 bg-gray-50 border-none rounded-xl text-xs focus:ring-2 focus:ring-green-500 transition"
+                                                                />
+                                                            </div>
+                                                            <div className="space-y-1.5 sm:col-span-2">
+                                                                <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Benefit (Gunakan baris baru untuk memisahkan)</label>
+                                                                <textarea
+                                                                    value={varItem.benefits}
+                                                                    onChange={(e) => updatePriceVariation(idx, { benefits: e.target.value })}
+                                                                    rows="2"
+                                                                    placeholder="E-Sertifikat&#10;Makan Siang&#10;Gantungan Kunci..."
+                                                                    className="w-full px-4 py-2.5 bg-gray-50 border-none rounded-xl text-xs focus:ring-2 focus:ring-green-500 transition"
+                                                                ></textarea>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                                {formData.price_variations.length === 0 && (
+                                                    <p className="text-[10px] text-green-700/50 italic text-center py-2">Gunakan fitur ini jika ingin memberikan pilihan harga yang berbeda-beda bagi peserta.</p>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-1.5 md:col-span-2">
+                                            <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1 mb-2">Izinkan Pembayaran OTS (On The Spot)?</label>
+                                            <div className="flex items-center gap-3">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setFormData(prev => ({ ...prev, allow_ots_payment: !prev.allow_ots_payment }))}
+                                                    className={`w-12 h-6 rounded-full transition-colors relative ${formData.allow_ots_payment ? 'bg-green-500' : 'bg-gray-300'}`}
+                                                >
+                                                    <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${formData.allow_ots_payment ? 'left-7' : 'left-1'}`}></div>
+                                                </button>
+                                                <span className="text-xs font-bold text-gray-600">{formData.allow_ots_payment ? 'Ya, Aktifkan OTS' : 'Hanya Transfer/QRIS'}</span>
+                                            </div>
+                                            <p className="text-[10px] text-gray-400 ml-1 italic">Jika aktif, pendaftar bisa memilih bayar di lokasi dan melewati upload bukti transfer di awal.</p>
                                         </div>
                                     </>
                                 )}
@@ -1212,70 +1279,7 @@ const EventSubmissionPage = () => {
                                     </div>
                                 )}
 
-                                {/* Price Variations Section */}
-                                <div className="space-y-4 md:col-span-2 pt-6">
-                                    <div className="flex items-center justify-between">
-                                        <label className="text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Variasi Harga & Benefit (Opsional)</label>
-                                        <button
-                                            type="button"
-                                            onClick={addPriceVariation}
-                                            className="text-[10px] font-black text-green-700 bg-green-50 px-3 py-1.5 rounded-full hover:bg-green-100 transition flex items-center gap-1"
-                                        >
-                                            <span className="material-icons text-xs">add</span>
-                                            TAMBAH VARIASI
-                                        </button>
-                                    </div>
-                                    
-                                    <div className="space-y-3">
-                                        {formData.price_variations.map((varItem, idx) => (
-                                            <div key={idx} className="bg-gray-50 p-6 rounded-[2rem] border border-gray-100 relative animate-fade-in space-y-4">
-                                                <button
-                                                    type="button"
-                                                    onClick={() => removePriceVariation(idx)}
-                                                    className="absolute top-4 right-4 w-8 h-8 bg-white text-red-500 rounded-full flex items-center justify-center shadow-sm hover:bg-red-50 transition"
-                                                >
-                                                    <span className="material-icons text-sm">close</span>
-                                                </button>
-                                                
-                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                                    <div className="space-y-1.5">
-                                                        <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Nama Variasi / Paket *</label>
-                                                        <input
-                                                            type="text"
-                                                            value={varItem.title}
-                                                            onChange={(e) => updatePriceVariation(idx, { title: e.target.value })}
-                                                            placeholder="Misal: Paket Platinum"
-                                                            className="w-full px-4 py-2.5 bg-white border border-gray-100 rounded-xl text-xs focus:ring-2 focus:ring-green-500 transition"
-                                                        />
-                                                    </div>
-                                                    <div className="space-y-1.5">
-                                                        <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Harga (Rp) *</label>
-                                                        <CurrencyInput
-                                                            value={varItem.price}
-                                                            onChange={(val) => updatePriceVariation(idx, { price: val })}
-                                                            className="w-full px-4 py-2.5 bg-white border border-gray-100 rounded-xl text-xs focus:ring-2 focus:ring-green-500 transition"
-                                                        />
-                                                    </div>
-                                                    <div className="space-y-1.5 sm:col-span-2">
-                                                        <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Keterangan Benefit (Satu per baris)</label>
-                                                        <textarea
-                                                            value={varItem.benefits}
-                                                            onChange={(e) => updatePriceVariation(idx, { benefits: e.target.value })}
-                                                            rows="2"
-                                                            placeholder="Benefit 1&#10;Benefit 2..."
-                                                            className="w-full px-4 py-2.5 bg-white border border-gray-100 rounded-xl text-xs focus:ring-2 focus:ring-green-500 transition"
-                                                        ></textarea>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        ))}
-                                        {formData.price_variations.length === 0 && (
-                                            <div className="p-8 border-2 border-dashed border-gray-100 rounded-[2rem] text-center">
-                                                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Belum ada variasi harga</p>
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
+                                {/* Supporting Gallery Images (Formerly Doc) */}
                             </div>
                         </div>
                         {/* PHASE 7: FORM PENDAFTARAN */}

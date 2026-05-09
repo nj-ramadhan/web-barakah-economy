@@ -523,7 +523,7 @@ const DashboardPage = () => {
                                     </Link>
                                 )}
 
-                                {hasAccess('my_events') && (
+                                 {hasAccess('my_events') && (
                                     <Link
                                         to="/dashboard/my-events"
                                         className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-indigo-50 hover:shadow-md transition"
@@ -538,6 +538,8 @@ const DashboardPage = () => {
                                         <span className="material-icons text-gray-400">chevron_right</span>
                                     </Link>
                                 )}
+
+
 
                                 {hasAccess('business_data') && (
                                     <Link
@@ -788,6 +790,24 @@ const DashboardPage = () => {
                                     color: 'emerald',
                                     title: 'Rekap Global',
                                     desc: 'Data seluruh peserta event & CRM Blast WA'
+                                },
+                                {
+                                    id: 'meetings_list',
+                                    access: hasAccess('internal_meetings'),
+                                    to: '/dashboard/meetings',
+                                    icon: 'groups',
+                                    color: 'blue',
+                                    title: 'Manajemen Rapat',
+                                    desc: 'Kelola agenda rapat internal dan absensi (Admin)'
+                                },
+                                {
+                                    id: 'meeting_create',
+                                    access: hasAccess('internal_meetings'),
+                                    to: '/dashboard/meetings/new',
+                                    icon: 'add_task',
+                                    color: 'indigo',
+                                    title: 'Buat Rapat Baru',
+                                    desc: 'Buat agenda rapat internal baru secara otomatis'
                                 }
                             ]
                         },
