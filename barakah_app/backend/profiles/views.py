@@ -87,6 +87,9 @@ class ProfileViewSet(viewsets.ModelViewSet):
         except Role.DoesNotExist:
             required_fields = {'name_full', 'nik', 'gender', 'birth_place', 'birth_date', 'address', 'address_province'}
 
+        # Always require source of info
+        required_fields.update({'info_source', 'referred_by'})
+
         try:
             profile = Profile.objects.get(user=user)
         except Profile.DoesNotExist:
@@ -215,6 +218,9 @@ def profile_completeness_check(request):
     except Role.DoesNotExist:
         # Fallback if the role doesn't exist
         required_fields = {'name_full', 'nik', 'gender', 'birth_place', 'birth_date', 'address', 'address_province'}
+
+    # Always require source of info
+    required_fields.update({'info_source', 'referred_by'})
 
     try:
         profile = Profile.objects.get(user=user)

@@ -241,7 +241,7 @@ class EventViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'], permission_classes=[permissions.IsAuthenticated])
     def my_events(self, request):
         """List events created by current user."""
-        events = self.queryset.filter(created_by=request.user)
+        events = self.get_queryset().filter(created_by=request.user)
         serializer = self.get_serializer(events, many=True)
         return Response(serializer.data)
 

@@ -93,6 +93,16 @@ class Profile(models.Model):
         ('sejarah', 'Sejarah'),
     ]
 
+    INFO_SOURCE_CHOICES = [
+        ('sosmed', 'Sosial Media (Instagram/FB/TikTok)'),
+        ('wa', 'WhatsApp Group / Chat'),
+        ('teman', 'Teman / Keluarga'),
+        ('iklan', 'Iklan'),
+        ('website', 'Website / Google'),
+        ('event', 'Event / Acara'),
+        ('lainnya', 'Lainnya'),
+    ]
+
     PROVINCE_CHOICES = [
         ('aceh', 'Aceh'),
         ('sumatera_utara', 'Sumatera Utara'),
@@ -169,6 +179,10 @@ class Profile(models.Model):
     address_village_id = models.CharField(max_length=10, blank=True, null=True, help_text="Expedition Village ID")
     address_village_name = models.CharField(max_length=100, blank=True, null=True, help_text="Nama Kelurahan/Desa")
     address_postal_code = models.CharField(max_length=10, blank=True, null=True)
+    
+    # Referral & Info Source
+    info_source = models.CharField(max_length=50, choices=INFO_SOURCE_CHOICES, blank=True, null=True)
+    referred_by = models.CharField(max_length=100, blank=True, null=True, help_text="Nama orang yang mengajak")
     
     # Shop fields for digital product sellers
     shop_thumbnail = models.ImageField(upload_to='shop_thumbnails/', blank=True, null=True)

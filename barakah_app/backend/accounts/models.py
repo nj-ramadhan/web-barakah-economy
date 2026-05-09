@@ -110,6 +110,12 @@ class User(AbstractUser):
 
     @property
     def is_profile_complete(self):
-        """Checks if user has filled mandatory fields: phone and full name."""
+        """Checks if user has filled mandatory fields: phone, full name, info source, and referral."""
         profile = getattr(self, 'profile', None)
-        return bool(self.phone and profile and profile.name_full)
+        return bool(
+            self.phone and 
+            profile and 
+            profile.name_full and 
+            profile.info_source and 
+            profile.referred_by
+        )

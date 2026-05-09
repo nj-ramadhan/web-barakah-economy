@@ -57,6 +57,8 @@ const ProfileEditPage = () => {
     username: '',
     phone: '',
     shop_supported_couriers: 'jne,pos,tiki,jnt',
+    info_source: '',
+    referred_by: '',
   });
 
 
@@ -371,8 +373,8 @@ const ProfileEditPage = () => {
     e.preventDefault();
 
     // Mandatory fields check
-    if (!profile.name_full || !profile.nickname || !profile.phone) {
-      alert('Nama Lengkap, Nama Panggilan, dan HP wajib diisi.');
+    if (!profile.name_full || !profile.nickname || !profile.phone || !profile.info_source || !profile.referred_by) {
+      alert('Nama Lengkap, Nama Panggilan, HP, Sumber Info, dan Nama Pengajak wajib diisi.');
       setActiveTab('general');
       return;
     }
@@ -464,6 +466,7 @@ const ProfileEditPage = () => {
     address_city_name: 'Kota/Kabupaten', address_subdistrict_name: 'Kecamatan',
     address_village_name: 'Kelurahan/Desa',
     marital_status: 'Status Pernikahan', segment: 'Segmen',
+    info_source: 'Sumber Informasi', referred_by: 'Nama Pengajak',
   };
 
   const isFieldMissing = (field) => missingFields.includes(field);
@@ -566,6 +569,48 @@ const ProfileEditPage = () => {
                 <option value="santri">Santri</option><option value="karyawan">Karyawan</option>
                 <option value="umum">Umum</option>
               </select>
+            </div>
+
+            <div className="bg-orange-50 p-4 rounded-2xl border border-orange-100 mt-6">
+              <div className="flex gap-3 mb-4">
+                <span className="material-icons text-orange-600">info</span>
+                <div>
+                  <h4 className="text-sm font-bold text-orange-900">Sumber Informasi</h4>
+                  <p className="text-[11px] text-orange-700 leading-relaxed">Wajib diisi agar dapat mengakses fitur Barakah Economy secara lengkap.</p>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
+                    Dapat info dari mana? <span className="text-red-500">*wajib</span>
+                  </label>
+                  <select name="info_source" value={profile.info_source || ''} onChange={handleChange} className={inputCls('info_source')}>
+                    <option value="">Pilih Sumber Info</option>
+                    <option value="sosmed">Sosial Media (Instagram/FB/TikTok)</option>
+                    <option value="wa">WhatsApp Group / Chat</option>
+                    <option value="teman">Teman / Keluarga</option>
+                    <option value="iklan">Iklan</option>
+                    <option value="website">Website / Google</option>
+                    <option value="event">Event / Acara</option>
+                    <option value="lainnya">Lainnya</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
+                    Siapa yang mengajak? <span className="text-red-500">*wajib</span>
+                  </label>
+                  <input 
+                    type="text" 
+                    name="referred_by" 
+                    placeholder="Nama orang yang merekomendasikan" 
+                    value={profile.referred_by || ''} 
+                    onChange={handleChange} 
+                    className={inputCls('referred_by')} 
+                  />
+                  <p className="text-[9px] text-gray-400 mt-1 italic">Tulis 'Sendiri' jika menemukan sendiri</p>
+                </div>
+              </div>
             </div>
           </div>
         );

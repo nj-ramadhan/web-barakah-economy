@@ -40,6 +40,7 @@ class ProfileSerializer(serializers.ModelSerializer):
     labels = serializers.SerializerMethodField(read_only=True)
     accessible_menus = serializers.SerializerMethodField(read_only=True)
     is_profile_complete = serializers.SerializerMethodField(read_only=True)
+    info_source_display = serializers.CharField(source='get_info_source_display', read_only=True)
 
     class Meta:
         model = Profile

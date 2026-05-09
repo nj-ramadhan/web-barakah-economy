@@ -5,7 +5,7 @@ import Header from '../components/layout/Header';
 import NavigationButton from '../components/layout/Navigation';
 import ImageCropperModal from '../components/common/ImageCropper';
 import { compressImage } from '../components/common/canvasUtils';
-import { createEvent, getEventDetail, updateEvent, getUserLabels } from '../services/eventApi';
+import { createEvent, getEventDetail, updateEvent, getUserLabels, deleteDocumentationImage, deleteGalleryImage } from '../services/eventApi';
 import CKEditorComponent from '../components/common/CKEditor';
 import CurrencyInput from '../components/common/CurrencyInput';
 
@@ -44,6 +44,15 @@ const EventSubmissionPage = () => {
         allow_ots_payment: false,
         free_for_label_ids: [],
         has_special_qr: false,
+        // Added for consistency
+        header_image: null,
+        header_image_full: null,
+        thumbnail: null,
+        thumbnail_full: null,
+        documentation_frame_1_1: null,
+        attachment_file: null,
+        bib_template_image: null,
+        _bib_preview: null
     });
     const [availableLabels, setAvailableLabels] = useState([]);
     const [speakers, setSpeakers] = useState([]);
@@ -65,9 +74,12 @@ const EventSubmissionPage = () => {
     useEffect(() => {
         getUserLabels().then(res => setAvailableLabels(res.data)).catch(err => console.error("Error fetching labels:", err));
     }, []);
+
+    useEffect(() => {
         const user = JSON.parse(localStorage.getItem('user'));
         if (!user) {
-            navigate(`/login?redirect=${isEdit ? `/event/edit/${slug}` : '/event/ajukan'}`);
+            const redirectPath = isEdit ? `/event/edit/${slug}` : '/event/ajukan';
+            navigate(`/login?redirect=${redirectPath}`);
             return;
         }
 
@@ -266,7 +278,6 @@ const EventSubmissionPage = () => {
     const removeDocImage = (index, isExisting = false, imageId = null) => {
         if (isExisting) {
             if (window.confirm('Hapus foto dokumentasi ini?')) {
-                const { deleteDocumentationImage } = require('../services/eventApi');
                 deleteDocumentationImage(slug, imageId).then(() => {
                     setExistingDocImages(prev => prev.filter(img => img.id !== imageId));
                 });
@@ -301,7 +312,6 @@ const EventSubmissionPage = () => {
     const removeGalleryImage = (index, isExisting = false, imageId = null) => {
         if (isExisting) {
             if (window.confirm('Hapus foto pendukung ini?')) {
-                const { deleteGalleryImage } = require('../services/eventApi');
                 deleteGalleryImage(slug, imageId).then(() => {
                     setExistingGalleryImages(prev => prev.filter(img => img.id !== imageId));
                 });
@@ -361,7 +371,7 @@ const EventSubmissionPage = () => {
 
         // Clean up speakers and sessions data
         const cleanedSpeakers = speakers.map(s => {
-            const { ...cleaned } = s;
+            const cleaned = { ...s };
             // Convert empty strings to null for optional fields
             if (cleaned.role === '') cleaned.role = null;
             if (cleaned.link === '') cleaned.link = null;
@@ -373,7 +383,7 @@ const EventSubmissionPage = () => {
         }
 
         const cleanedSessions = sessions.map(s => {
-            const { ...cleaned } = s;
+            const cleaned = { ...s };
             // Convert empty strings to null for datetime fields
             if (cleaned.start_time === '') cleaned.start_time = null;
             if (cleaned.end_time === '') cleaned.end_time = null;
@@ -906,56 +916,58 @@ const EventSubmissionPage = () => {
                                 </div>
 
                                 {formData.price_type !== 'free' && (
-                                    <div className="space-y-1.5 md:col-span-2">
-                                        <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1 mb-2">Izinkan Pembayaran OTS (On The Spot)?</label>
-                                        <div className="flex items-center gap-3">
-                                            <button
-                                                type="button"
-                                                onClick={() => setFormData(prev => ({ ...prev, allow_ots_payment: !prev.allow_ots_payment }))}
-                                                className={`w-12 h-6 rounded-full transition-colors relative ${formData.allow_ots_payment ? 'bg-green-500' : 'bg-gray-300'}`}
-                                            >
-                                                <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${formData.allow_ots_payment ? 'left-7' : 'left-1'}`}></div>
-                                            </button>
-                                            <span className="text-xs font-bold text-gray-600">{formData.allow_ots_payment ? 'Ya, Aktifkan OTS' : 'Hanya Transfer/QRIS'}</span>
-                                        </div>
-                                        <p className="text-[10px] text-gray-400 ml-1 italic">Jika aktif, pendaftar bisa memilih bayar di lokasi dan melewati upload bukti transfer di awal.</p>
-                                    </div>
-                                    <div className="space-y-1.5 md:col-span-2">
-                                        <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1 mb-2">Pengecualian Biaya (Gratis untuk Label Tertentu)</label>
-                                        <div className="p-4 bg-blue-50 rounded-2xl border border-blue-100">
-                                            <p className="text-[10px] text-blue-700 font-bold uppercase tracking-wider mb-3 flex items-center gap-1">
-                                                <span className="material-icons text-xs">info</span>
-                                                Pilih label user yang tidak perlu membayar (auto-lolos pembayaran)
-                                            </p>
-                                            <div className="flex flex-wrap gap-2">
-                                                {availableLabels.map(label => {
-                                                    const isSelected = formData.free_for_label_ids.includes(label.id);
-                                                    return (
-                                                        <button
-                                                            key={label.id}
-                                                            type="button"
-                                                            onClick={() => {
-                                                                const newSelected = isSelected
-                                                                    ? formData.free_for_label_ids.filter(id => id !== label.id)
-                                                                    : [...formData.free_for_label_ids, label.id];
-                                                                setFormData(prev => ({ ...prev, free_for_label_ids: newSelected }));
-                                                            }}
-                                                            className={`px-3 py-1.5 rounded-full text-[10px] font-bold transition-all border ${
-                                                                isSelected 
-                                                                    ? 'bg-blue-600 text-white border-blue-700 shadow-md' 
-                                                                    : 'bg-white text-gray-600 border-gray-200 hover:border-blue-300'
-                                                            }`}
-                                                        >
-                                                            {label.name}
-                                                        </button>
-                                                    );
-                                                })}
+                                    <>
+                                        <div className="space-y-1.5 md:col-span-2">
+                                            <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1 mb-2">Izinkan Pembayaran OTS (On The Spot)?</label>
+                                            <div className="flex items-center gap-3">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setFormData(prev => ({ ...prev, allow_ots_payment: !prev.allow_ots_payment }))}
+                                                    className={`w-12 h-6 rounded-full transition-colors relative ${formData.allow_ots_payment ? 'bg-green-500' : 'bg-gray-300'}`}
+                                                >
+                                                    <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${formData.allow_ots_payment ? 'left-7' : 'left-1'}`}></div>
+                                                </button>
+                                                <span className="text-xs font-bold text-gray-600">{formData.allow_ots_payment ? 'Ya, Aktifkan OTS' : 'Hanya Transfer/QRIS'}</span>
                                             </div>
-                                            {formData.free_for_label_ids.length === 0 && (
-                                                <p className="text-[10px] text-gray-400 mt-3 italic text-center">Belum ada label yang dipilih</p>
-                                            )}
+                                            <p className="text-[10px] text-gray-400 ml-1 italic">Jika aktif, pendaftar bisa memilih bayar di lokasi dan melewati upload bukti transfer di awal.</p>
                                         </div>
-                                    </div>
+                                        <div className="space-y-1.5 md:col-span-2">
+                                            <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1 mb-2">Pengecualian Biaya (Gratis untuk Label Tertentu)</label>
+                                            <div className="p-4 bg-blue-50 rounded-2xl border border-blue-100">
+                                                <p className="text-[10px] text-blue-700 font-bold uppercase tracking-wider mb-3 flex items-center gap-1">
+                                                    <span className="material-icons text-xs">info</span>
+                                                    Pilih label user yang tidak perlu membayar (auto-lolos pembayaran)
+                                                </p>
+                                                <div className="flex flex-wrap gap-2">
+                                                    {availableLabels.map(label => {
+                                                        const isSelected = formData.free_for_label_ids.includes(label.id);
+                                                        return (
+                                                            <button
+                                                                key={label.id}
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    const newSelected = isSelected
+                                                                        ? formData.free_for_label_ids.filter(id => id !== label.id)
+                                                                        : [...formData.free_for_label_ids, label.id];
+                                                                    setFormData(prev => ({ ...prev, free_for_label_ids: newSelected }));
+                                                                }}
+                                                                className={`px-3 py-1.5 rounded-full text-[10px] font-bold transition-all border ${
+                                                                    isSelected 
+                                                                        ? 'bg-blue-600 text-white border-blue-700 shadow-md' 
+                                                                        : 'bg-white text-gray-600 border-gray-200 hover:border-blue-300'
+                                                                }`}
+                                                            >
+                                                                {label.name}
+                                                            </button>
+                                                        );
+                                                    })}
+                                                </div>
+                                                {formData.free_for_label_ids.length === 0 && (
+                                                    <p className="text-[10px] text-gray-400 mt-3 italic text-center">Belum ada label yang dipilih</p>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </>
                                 )}
 
                                 <div className="space-y-1.5 md:col-span-2 p-6 bg-purple-50 rounded-[2rem] border border-purple-100 mt-4">
