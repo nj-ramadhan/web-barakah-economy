@@ -299,3 +299,8 @@ export const regenerateQRImages = (slug) => {
         headers: getAuthHeaders()
     });
 };
+export const markEventSessionFinished = (slug, sessionId) => {
+    return axios.post(`${API_BASE_URL}/api/events/${slug}/mark_session_finished/`, { session_id: sessionId }, {
+        headers: getAuthHeaders()
+    });
+};

@@ -50,7 +50,7 @@ class EventSessionSerializer(serializers.ModelSerializer):
     attendance_count = serializers.SerializerMethodField()
     class Meta:
         model = EventSession
-        fields = ['id', 'title', 'start_time', 'end_time', 'order', 'attendance_count']
+        fields = ['id', 'title', 'start_time', 'end_time', 'order', 'attendance_count', 'is_finished']
 
     def to_internal_value(self, data):
         # Handle empty strings for datetime fields

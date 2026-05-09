@@ -3,7 +3,7 @@ import { useParams, Link, useLocation } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
 import Header from '../../components/layout/Header';
 import NavigationButton from '../../components/layout/Navigation';
-import { getEventRegistrations, getEventDetail, exportRegistrationsCsv, blastEventWhatsapp, bulkDeleteRegistrations, importParticipantsCsv, bulkResendNotifications } from '../../services/eventApi';
+import { getEventRegistrations, getEventDetail, exportRegistrationsCsv, blastEventWhatsapp, bulkDeleteRegistrations, importParticipantsCsv, bulkResendNotifications, markEventSessionFinished } from '../../services/eventApi';
 import EventManualRegistrationModal from '../../components/admin/EventManualRegistrationModal';
 import EventRegistrationEditModal from '../../components/admin/EventRegistrationEditModal';
 import CertificateEditor from '../../components/events/CertificateEditor';
@@ -207,6 +207,19 @@ const EventRegistrationSubmissionPage = () => {
             return 0;
         });
     }, [filteredRegistrations, sortConfig, event]);
+
+    const handleMarkSessionFinished = async (sessionId) => {
+        if (!window.confirm('Tandai sesi ini selesai dan kirim reminder untuk sesi berikutnya (jika ada)?')) return;
+        try {
+            const res = await markEventSessionFinished(slug, sessionId);
+            // Refresh data to update session status
+            fetchData();
+            alert(res.data.message);
+        } catch (err) {
+            console.error(err);
+            alert('Gagal menandai sesi selesai.');
+        }
+    };
 
     const handleSelectAll = (e) => {
         if (e.target.checked) {
@@ -570,8 +583,18 @@ const EventRegistrationSubmissionPage = () => {
                                     <th className="p-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Label</th>
                                     {event?.sessions && event.sessions.length > 0 ? (
                                         event.sessions.map(ses => (
-                                            <th key={ses.id} className="p-5 text-[10px] font-black text-purple-600 uppercase tracking-widest min-w-[100px] text-center bg-purple-50/30">
-                                                {ses.title}
+                                            <th key={ses.id} className="p-5 text-[10px] font-black text-purple-600 uppercase tracking-widest min-w-[120px] text-center bg-purple-50/30 border-x border-purple-100">
+                                                <div className="mb-2">{ses.title}</div>
+                                                <button 
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleMarkSessionFinished(ses.id);
+                                                    }}
+                                                    disabled={ses.is_finished}
+                                                    className={`px-3 py-1 rounded-full text-[8px] font-black transition shadow-sm ${ses.is_finished ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-purple-600 text-white hover:bg-purple-700'}`}
+                                                >
+                                                    {ses.is_finished ? 'SELESAI' : 'SELESAIKAN'}
+                                                </button>
                                             </th>
                                         ))
                                     ) : (

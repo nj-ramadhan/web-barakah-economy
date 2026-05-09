@@ -7,7 +7,8 @@ import {
     addMeetingParticipants, 
     updateMeetingAttendance, 
     blastMeetingWhatsapp, 
-    exportMeetingCsv 
+    exportMeetingCsv,
+    markMeetingSessionFinished
 } from '../services/meetingApi';
 import axios from 'axios'; // For user search
 import Header from '../components/layout/Header';
@@ -146,6 +147,19 @@ const MeetingManagementPage = () => {
         }
     };
 
+    const handleMarkFinished = async (sessionId) => {
+        if (!window.confirm('Tandai sesi ini selesai dan kirim reminder untuk sesi berikutnya (jika ada)?')) return;
+        try {
+            const res = await markMeetingSessionFinished(slug, sessionId);
+            // Refresh meeting data to update session status
+            const meetRes = await getMeetingDetail(slug);
+            setMeeting(meetRes.data);
+            alert(res.data.message);
+        } catch (err) {
+            alert('Gagal menandai sesi selesai.');
+        }
+    };
+
     const handleExport = async () => {
         try {
             const res = await exportMeetingCsv(slug);
@@ -236,7 +250,14 @@ const MeetingManagementPage = () => {
                                     <th className="p-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Info Kontak</th>
                                     {meeting?.sessions?.map(s => (
                                         <th key={s.id} className="p-5 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center min-w-[150px]">
-                                            {s.title}
+                                            <div className="mb-2">{s.title}</div>
+                                            <button 
+                                                onClick={() => handleMarkFinished(s.id)}
+                                                disabled={s.is_finished}
+                                                className={`px-3 py-1 rounded-full text-[8px] font-black transition shadow-sm ${s.is_finished ? 'bg-gray-100 text-gray-300 cursor-not-allowed' : 'bg-blue-600 text-white hover:bg-blue-700'}`}
+                                            >
+                                                {s.is_finished ? 'SELESAI' : 'SELESAIKAN SESSION'}
+                                            </button>
                                         </th>
                                     ))}
 

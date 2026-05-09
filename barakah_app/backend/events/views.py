@@ -7,7 +7,7 @@ from django.conf import settings
 from django.db.models import Q
 from django.http import HttpResponse
 import csv
-from .models import Event, EventFormField, EventRegistration, EventRegistrationFile
+from .models import Event, EventFormField, EventRegistration, EventRegistrationFile, EventSession
 from .serializers import EventSerializer, EventRegistrationSerializer
 from .simple_serializers import EventSimpleSerializer
 from django_filters.rest_framework import DjangoFilterBackend
@@ -2461,3 +2461,80 @@ def event_detail_seo(request, slug):
                 return HttpResponse(f.read())
         except:
             return HttpResponse("Not Found", status=404)
+    @action(detail=True, methods=['post'])
+    def mark_session_finished(self, request, slug=None):
+        event = self.get_object()
+        session_id = request.data.get('session_id')
+        
+        try:
+            session = EventSession.objects.get(id=session_id, event=event)
+            session.is_finished = True
+            session.save()
+            
+            # Find next session
+            next_session = EventSession.objects.filter(
+                event=event,
+                order__gt=session.order
+            ).order_by('order', 'start_time').first()
+            
+            if not next_session:
+                next_session = EventSession.objects.filter(
+                    event=event,
+                    start_time__gt=session.start_time
+                ).order_by('start_time').first()
+
+            if next_session:
+                # Automatic blast for next session
+                self._blast_next_session(event, next_session)
+                return Response({
+                    "message": f"Sesi '{session.title}' selesai. Reminder untuk sesi berikutnya '{next_session.title}' telah dikirim.",
+                    "next_session": next_session.title
+                })
+            
+            return Response({"message": f"Sesi '{session.title}' selesai. Tidak ada sesi berikutnya."})
+        except EventSession.DoesNotExist:
+            return Response({"error": "Sesi tidak ditemukan."}, status=status.HTTP_404_NOT_FOUND)
+
+    def _blast_next_session(self, event, next_session):
+        # Blast only to approved registrations
+        registrations = event.registrations.filter(status='approved').select_related('user', 'user__profile')
+        phone_list = []
+        
+        session_time = timezone.localtime(next_session.start_time).strftime('%d %b %Y %H:%M') if next_session.start_time else "Segera"
+        if next_session.end_time:
+            session_time += f" - {timezone.localtime(next_session.end_time).strftime('%H:%M')}"
+
+        message = (
+            f"🔔 *Peringatan Sesi Berikutnya*\n\n"
+            f"Event: *{event.title}*\n"
+            f"Sesi: *{next_session.title}*\n"
+            f"Waktu: {session_time}\n"
+            f"Lokasi: {event.location}\n\n"
+            f"Mohon kesediaannya untuk segera bergabung kembali.\n\n"
+            f"Detail: https://barakah.cloud/event/{event.slug}"
+        )
+
+        for r in registrations:
+            phone = None
+            profile = getattr(r.user, 'profile', None) if r.user else None
+            if profile:
+                phone = profile.phone
+            
+            # Check response fields if no profile phone (guest)
+            if not phone:
+                phone = r.responses.get('phone') or r.responses.get('whatsapp') or r.guest_email # Email fallback is bad for blast, skip
+
+            if phone and isinstance(phone, str):
+                digits = ''.join(filter(str.isdigit, str(phone)))
+                if digits.startswith('0'): digits = '62' + digits[1:]
+                elif digits.startswith('8'): digits = '62' + digits
+                if digits:
+                    phone_list.append(digits)
+        
+        if phone_list:
+            try:
+                # Deduplicate
+                phone_list = list(set(phone_list))
+                whatsapp_service.blast_messages(phone_list, message, [])
+            except Exception as e:
+                logger.error(f"Error blasting next session reminder for event: {str(e)}")

@@ -41,6 +41,7 @@ class MeetingSession(models.Model):
     start_time = models.DateTimeField(blank=True, null=True)
     end_time = models.DateTimeField(blank=True, null=True)
     order = models.PositiveIntegerField(default=0)
+    is_finished = models.BooleanField(default=False)
 
     class Meta:
         ordering = ['order', 'start_time']

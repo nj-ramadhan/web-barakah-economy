@@ -79,3 +79,8 @@ export const exportMeetingCsv = (slug) => {
         responseType: 'blob'
     });
 };
+export const markMeetingSessionFinished = (slug, sessionId) => {
+    return axios.post(`${API_BASE_URL}/api/meetings/${slug}/mark_session_finished/`, { session_id: sessionId }, {
+        headers: getAuthHeaders()
+    });
+};

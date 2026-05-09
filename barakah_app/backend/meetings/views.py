@@ -133,7 +133,73 @@ class MeetingViewSet(viewsets.ModelViewSet):
             return Response({"error": "Peserta tidak ditemukan."}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+    @action(detail=True, methods=['post'])
+    def mark_session_finished(self, request, slug=None):
+        meeting = self.get_object()
+        session_id = request.data.get('session_id')
+        
+        try:
+            session = MeetingSession.objects.get(id=session_id, meeting=meeting)
+            session.is_finished = True
+            session.save()
+            
+            # Find next session
+            next_session = MeetingSession.objects.filter(
+                meeting=meeting,
+                order__gt=session.order
+            ).order_by('order', 'start_time').first()
+            
+            if not next_session:
+                # If orders are equal or 0, check by start_time
+                next_session = MeetingSession.objects.filter(
+                    meeting=meeting,
+                    start_time__gt=session.start_time
+                ).order_by('start_time').first()
 
+            if next_session:
+                # Automatic blast for next session
+                self._blast_next_session(meeting, next_session)
+                return Response({
+                    "message": f"Sesi '{session.title}' selesai. Reminder untuk sesi berikutnya '{next_session.title}' telah dikirim.",
+                    "next_session": next_session.title
+                })
+            
+            return Response({"message": f"Sesi '{session.title}' selesai. Tidak ada sesi berikutnya."})
+        except MeetingSession.DoesNotExist:
+            return Response({"error": "Sesi tidak ditemukan."}, status=status.HTTP_404_NOT_FOUND)
+
+    def _blast_next_session(self, meeting, next_session):
+        participants = meeting.participants.all().select_related('user', 'user__profile')
+        phone_list = []
+        
+        session_time = timezone.localtime(next_session.start_time).strftime('%d %b %Y %H:%M') if next_session.start_time else "Segera"
+        if next_session.end_time:
+            session_time += f" - {timezone.localtime(next_session.end_time).strftime('%H:%M')}"
+
+        message = (
+            f"🔔 *Peringatan Sesi Berikutnya*\n\n"
+            f"Rapat: *{meeting.title}*\n"
+            f"Sesi: *{next_session.title}*\n"
+            f"Waktu: {session_time}\n"
+            f"Lokasi: {meeting.location}\n\n"
+            f"Mohon kesediaannya untuk segera bergabung kembali.\n\n"
+            f"Detail: https://barakah.cloud/meetings/{meeting.slug}"
+        )
+
+        for p in participants:
+            profile = getattr(p.user, 'profile', None)
+            phone = profile.phone if profile else None
+            if phone:
+                digits = ''.join(filter(str.isdigit, str(phone)))
+                if digits.startswith('0'): digits = '62' + digits[1:]
+                elif digits.startswith('8'): digits = '62' + digits
+                phone_list.append(digits)
+        
+        if phone_list:
+            try:
+                whatsapp_service.blast_messages(phone_list, message, [])
+            except Exception as e:
+                logger.error(f"Error blasting next session reminder: {str(e)}")
     @action(detail=True, methods=['post'])
     def blast_whatsapp(self, request, slug=None):
         try:

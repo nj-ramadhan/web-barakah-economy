@@ -5,7 +5,7 @@ from accounts.serializers import UserSimpleSerializer
 class MeetingSessionSerializer(serializers.ModelSerializer):
     class Meta:
         model = MeetingSession
-        fields = ['id', 'title', 'start_time', 'end_time', 'order']
+        fields = ['id', 'title', 'start_time', 'end_time', 'order', 'is_finished']
 
 class SessionAttendanceSerializer(serializers.ModelSerializer):
     class Meta:
