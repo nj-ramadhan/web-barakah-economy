@@ -799,15 +799,6 @@ const DashboardPage = () => {
                                     color: 'blue',
                                     title: 'Manajemen Rapat',
                                     desc: 'Kelola agenda rapat internal dan absensi (Admin)'
-                                },
-                                {
-                                    id: 'meeting_create',
-                                    access: hasAccess('internal_meetings'),
-                                    to: '/dashboard/meetings/new',
-                                    icon: 'add_task',
-                                    color: 'indigo',
-                                    title: 'Buat Rapat Baru',
-                                    desc: 'Buat agenda rapat internal baru secara otomatis'
                                 }
                             ]
                         },

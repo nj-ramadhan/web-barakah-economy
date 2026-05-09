@@ -118,53 +118,62 @@ class MeetingViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['post'])
     def blast_whatsapp(self, request, slug=None):
-        meeting = self.get_object()
-        custom_message = request.data.get('message')
-        participant_ids = request.data.get('participant_ids') # Optional list of participant IDs
+        try:
+            meeting = self.get_object()
+            custom_message = request.data.get('message')
+            participant_ids = request.data.get('participant_ids') # Optional list of participant IDs
 
-        if not custom_message:
-            return Response({"error": "Pesan tidak boleh kosong."}, status=status.HTTP_400_BAD_REQUEST)
+            if not custom_message:
+                return Response({"error": "Pesan tidak boleh kosong."}, status=status.HTTP_400_BAD_REQUEST)
 
-        if participant_ids:
-            participants = meeting.participants.filter(id__in=participant_ids).select_related('user', 'user__profile')
-        else:
-            participants = meeting.participants.all().select_related('user', 'user__profile')
+            if participant_ids:
+                participants = meeting.participants.filter(id__in=participant_ids).select_related('user', 'user__profile')
+            else:
+                participants = meeting.participants.all().select_related('user', 'user__profile')
 
-        phone_list = []
-        placeholder_data = []
-        
-        # Prepare placeholders
-        meeting_time_str = timezone.localtime(meeting.start_date).strftime('%d %b %Y %H:%M')
-        if meeting.end_date:
-            meeting_time_str += f" - {timezone.localtime(meeting.end_date).strftime('%H:%M')}"
-
-        for p in participants:
-            phone = None
-            name = p.user.username
-            if hasattr(p.user, 'profile'):
-                phone = p.user.profile.phone
-                if p.user.profile.name_full:
-                    name = p.user.profile.name_full
+            phone_list = []
+            placeholder_data = []
             
-            if phone:
-                # Basic normalization
-                digits = ''.join(filter(str.isdigit, str(phone)))
-                if digits.startswith('0'): digits = '62' + digits[1:]
-                elif digits.startswith('8'): digits = '62' + digits
+            # Prepare placeholders
+            meeting_time_str = timezone.localtime(meeting.start_date).strftime('%d %b %Y %H:%M')
+            if meeting.end_date:
+                meeting_time_str += f" - {timezone.localtime(meeting.end_date).strftime('%H:%M')}"
+
+            for p in participants:
+                phone = None
+                name = p.user.username
+                profile = getattr(p.user, 'profile', None)
+                if profile:
+                    phone = profile.phone
+                    if profile.name_full:
+                        name = profile.name_full
                 
-                phone_list.append(digits)
-                placeholder_data.append({
-                    'name': name,
-                    'meeting_title': meeting.title,
-                    'time': meeting_time_str,
-                    'location': meeting.location,
-                })
+                if phone:
+                    # Basic normalization
+                    digits = ''.join(filter(str.isdigit, str(phone)))
+                    if digits.startswith('0'): digits = '62' + digits[1:]
+                    elif digits.startswith('8'): digits = '62' + digits
+                    
+                    phone_list.append(digits)
+                    placeholder_data.append({
+                        'name': name,
+                        'meeting_title': meeting.title,
+                        'time': meeting_time_str,
+                        'location': meeting.location,
+                    })
 
-        if not phone_list:
-            return Response({"error": "Tidak ada nomor WhatsApp peserta yang valid."}, status=status.HTTP_400_BAD_REQUEST)
+            if not phone_list:
+                return Response({"error": "Tidak ada nomor WhatsApp peserta yang valid."}, status=status.HTTP_400_BAD_REQUEST)
 
-        result = whatsapp_service.blast_messages(phone_list, custom_message, placeholder_data)
-        return Response({"message": f"Blast terkirim ke {result['success']} peserta.", "details": result})
+            result = whatsapp_service.blast_messages(phone_list, custom_message, placeholder_data)
+            return Response({"message": f"Blast terkirim ke {result['success']} peserta.", "details": result})
+        except Exception as e:
+            import traceback
+            logger.error(f"Error in meeting blast_whatsapp: {str(e)}\n{traceback.format_exc()}")
+            return Response({
+                "error": "Internal Server Error (Meeting Blast)",
+                "details": str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     @action(detail=True, methods=['get'])
     def export_csv(self, request, slug=None):
