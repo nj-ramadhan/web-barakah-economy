@@ -13,7 +13,7 @@ class EventSimpleSerializer(serializers.ModelSerializer):
             'start_date', 'end_date', 'location', 'organizer_name', 
             'status', 'visibility', 'thumbnail', 'registration_count',
             'attachment_file', 'attachment_link', 'rejection_reason',
-            'created_by_details', 'created_at'
+            'created_by_details', 'created_at', 'has_special_qr', 'has_bib'
         ]
 
     def get_registration_count(self, obj):

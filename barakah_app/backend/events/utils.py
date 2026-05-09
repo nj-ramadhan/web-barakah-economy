@@ -57,11 +57,17 @@ def generate_special_qr_image(registration):
     code_buffer = BytesIO()
     try:
         if special_qr.code_type == 'barcode':
+            if barcode is None:
+                logger.error("Library 'python-barcode' is NOT installed. Please run 'pip install python-barcode' and rebuild.")
+                return None
             # Generate Barcode
-            EAN = barcode.get_barcode_class('code128')
-            ean = EAN(registration.unique_code, writer=ImageWriter())
-            # writer_options = {'write_text': False} # Can hide text if needed
-            ean.write(code_buffer)
+            try:
+                EAN = barcode.get_barcode_class('code128')
+                ean = EAN(registration.unique_code, writer=ImageWriter())
+                ean.write(code_buffer)
+            except Exception as be:
+                logger.error(f"Barcode generation error: {be}")
+                return None
         else:
             # Generate QR Code
             qr = qrcode.QRCode(version=1, box_size=10, border=2)

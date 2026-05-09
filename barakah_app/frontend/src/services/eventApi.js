@@ -8,7 +8,10 @@ const getAuthHeaders = () => {
 };
 
 export const getEvents = (params = {}) => {
-    return axios.get(`${API_BASE_URL}/api/events/`, { params });
+    return axios.get(`${API_BASE_URL}/api/events/`, { 
+        params,
+        headers: getAuthHeaders()
+    });
 };
 
 export const getLandingEvents = () => {
