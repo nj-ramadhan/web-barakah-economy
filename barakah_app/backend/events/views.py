@@ -253,18 +253,9 @@ class EventViewSet(viewsets.ModelViewSet):
             # Direct query using the User object itself
             events_list = Event.objects.filter(created_by=user).order_by('-created_at')
             
-            # Manual serialization for maximum safety
-            data = []
-            for e in events_list:
-                data.append({
-                    "id": e.id,
-                    "title": e.title,
-                    "slug": e.slug,
-                    "status": e.status,
-                    "created_at": e.created_at
-                })
-            
-            return Response(data)
+            # Use EventSimpleSerializer for more complete data
+            serializer = EventSimpleSerializer(events_list, many=True, context={'request': request})
+            return Response(serializer.data)
         except Exception as e:
             import traceback
             error_trace = traceback.format_exc()
@@ -2282,6 +2273,8 @@ class EventRegistrationViewSet(viewsets.ModelViewSet):
         
         # Event owners and committees can see registrations for their events
         from django.db.models import Q
+        user_events = Event.objects.filter(Q(created_by=user) | Q(committees=user))
+        
         # Optimization: select_related and prefetch_related to avoid N+1 queries in Serializer
         return EventRegistration.objects.filter(event__in=user_events).distinct().select_related(
             'user', 

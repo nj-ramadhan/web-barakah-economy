@@ -92,12 +92,15 @@ class User(AbstractUser):
 
     def has_menu_access(self, menu_key):
         """Check if user has access to a specific menu via custom_roles."""
-        if self.role == 'admin':
+        if self.role == 'admin' or self.is_staff:
             return True
-        return self.custom_roles.filter(
-            accessible_menus__contains=[menu_key],
-            is_active=True
-        ).exists()
+        
+        # Check all active custom roles in Python to avoid database-specific JSON lookups
+        active_roles = self.custom_roles.filter(is_active=True)
+        for role in active_roles:
+            if role.accessible_menus and menu_key in role.accessible_menus:
+                return True
+        return False
 
     def get_all_accessible_menus(self):
         """Get all menu keys accessible by this user."""

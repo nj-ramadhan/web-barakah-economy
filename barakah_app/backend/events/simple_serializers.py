@@ -12,6 +12,7 @@ class EventSimpleSerializer(serializers.ModelSerializer):
             'id', 'title', 'slug', 'description', 'short_description', 
             'start_date', 'end_date', 'location', 'organizer_name', 
             'status', 'visibility', 'thumbnail', 'registration_count',
+            'attachment_file', 'attachment_link', 'rejection_reason',
             'created_by_details', 'created_at'
         ]
 
