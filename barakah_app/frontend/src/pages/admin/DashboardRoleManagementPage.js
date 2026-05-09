@@ -18,8 +18,8 @@ const MENU_OPTIONS = [
     { key: 'admin_sinergy', label: 'E-commerce: Manajemen Produk (Admin)' },
     { key: 'withdrawals', label: 'Keuangan: Manajemen Penarikan' },
     { key: 'transactions', label: 'Keuangan: Riwayat Transaksi' },
-    { key: 'charity', label: 'Charity: Manajemen Kampanye & Donasi' },
-    { key: 'campaign_approval', label: 'Charity: Persetujuan Kampanye' },
+    { key: 'charity', label: 'Charity: Manajemen Charity & Donasi' },
+    { key: 'campaign_approval', label: 'Charity: Persetujuan Charity' },
     { key: 'articles', label: 'Konten: Manajemen Artikel' },
     { key: 'activities', label: 'Konten: Manajemen Kegiatan & Berita' },
     { key: 'testimonials', label: 'Konten: Manajemen Testimoni' },
@@ -39,7 +39,7 @@ const MENU_OPTIONS = [
     { key: 'shop_settings', label: 'Bisnis: Pengaturan Toko' },
     { key: 'business_data', label: 'Bisnis: Pendataan Partner Bisnis' },
     { key: 'my_testimonials', label: 'Personal: Testimoni Saya' },
-    { key: 'submit_campaign', label: 'Personal: Ajukan Kampanye' },
+    { key: 'submit_campaign', label: 'Personal: Ajukan Charity' },
     { key: 'write_article', label: 'Personal: Tulis Artikel' },
     { key: 'my_events', label: 'Personal: Event Barakah' },
     { key: 'zis_routine', label: 'Personal: ZIS Rutin' },
@@ -554,11 +554,11 @@ const DashboardRoleManagementPage = () => {
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-1">
                                         <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Nama Role</label>
-                                        <input type="text" required className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm outline-none" value={roleForm.name} onChange={e => setRoleForm({ ...roleForm, name: e.target.value })} placeholder="Contoh: Campaign Creator" />
+                                        <input type="text" required className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm outline-none" value={roleForm.name} onChange={e => setRoleForm({ ...roleForm, name: e.target.value })} placeholder="Contoh: Charity Creator" />
                                     </div>
                                     <div className="space-y-1">
                                         <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Kode</label>
-                                        <input type="text" required className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm outline-none font-mono" value={roleForm.code} onChange={e => setRoleForm({ ...roleForm, code: e.target.value })} placeholder="campaign_creator" />
+                                        <input type="text" required className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm outline-none font-mono" value={roleForm.code} onChange={e => setRoleForm({ ...roleForm, code: e.target.value })} placeholder="charity_creator" />
                                     </div>
                                 </div>
                                 <div className="space-y-1">

@@ -480,7 +480,7 @@ const DashboardPage = () => {
                                     </div>
                                 )}
 
-                                {hasAccess('submit_campaign') && (
+                                 {hasAccess('submit_campaign') && (
                                     <Link
                                         to="/dashboard/my-campaigns"
                                         className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-red-50 hover:shadow-md transition"
@@ -489,8 +489,8 @@ const DashboardPage = () => {
                                             <span className="material-icons text-red-700">campaign</span>
                                         </div>
                                         <div className="flex-1">
-                                            <h3 className="font-bold text-gray-800 text-sm">Ajukan Kampanye</h3>
-                                            <p className="text-[11px] text-gray-500">Buat dan pantau pengajuan kampanye charity Anda</p>
+                                            <h3 className="font-bold text-gray-800 text-sm">Ajukan Charity</h3>
+                                            <p className="text-[11px] text-gray-500">Buat dan pantau pengajuan program charity Anda</p>
                                         </div>
                                         <span className="material-icons text-gray-400">chevron_right</span>
                                     </Link>
@@ -623,7 +623,7 @@ const DashboardPage = () => {
                                     icon: 'volunteer_activism',
                                     color: 'red',
                                     title: 'Realisasi Charity',
-                                    desc: 'Kelola realisasi kampanye sosial (Admin)'
+                                    desc: 'Kelola realisasi program charity (Admin)'
                                 },
                                 {
                                     id: 'transactions',
@@ -804,7 +804,7 @@ const DashboardPage = () => {
                             ]
                         },
                         {
-                            title: 'Admin Kampanye',
+                            title: 'Admin Charity',
                             items: [
                                 {
                                     id: 'admin_campaigns',
@@ -812,8 +812,8 @@ const DashboardPage = () => {
                                     to: '/dashboard/admin/campaigns',
                                     icon: 'campaign',
                                     color: 'red',
-                                    title: 'Manajemen Kampanye',
-                                    desc: 'Kelola semua kampanye yang aktif (Admin)'
+                                    title: 'Manajemen Charity',
+                                    desc: 'Kelola semua program charity yang aktif (Admin)'
                                 },
                                 {
                                     id: 'campaign_approval',
@@ -821,8 +821,8 @@ const DashboardPage = () => {
                                     to: '/dashboard/admin/campaign-approval',
                                     icon: 'assignment_turned_in',
                                     color: 'amber',
-                                    title: 'Persetujuan Kampanye',
-                                    desc: 'Verifikasi pengajuan kampanye dari user (Admin)',
+                                    title: 'Persetujuan Charity',
+                                    desc: 'Verifikasi pengajuan program charity dari user (Admin)',
                                     badge: managementStats.campaign_approval
                                 }
                             ]

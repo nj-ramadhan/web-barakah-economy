@@ -50,10 +50,28 @@ class CampaignViewSet(viewsets.ModelViewSet):
     parser_classes = [MultiPartParser, FormParser]
 
     def get_queryset(self):
-        if self.request.user.is_staff:
-            queryset = Campaign.objects.all()
+        user = self.request.user
+        
+        # Action-based filtering for non-staff
+        if not user.is_staff:
+            # For public listing, ONLY show active & approved
+            if self.action == 'list':
+                return Campaign.objects.filter(is_active=True, approval_status='approved')
+            
+            # For detail/retrieve/update/etc.
+            if user.is_authenticated:
+                # Owners can access their own (for management)
+                # Public can access active & approved
+                queryset = Campaign.objects.filter(
+                    Q(is_active=True, approval_status='approved') |
+                    Q(created_by=user)
+                )
+            else:
+                # Anonymous detail: only active & approved
+                queryset = Campaign.objects.filter(is_active=True, approval_status='approved')
         else:
-            queryset = Campaign.objects.filter(is_active=True, approval_status='approved')
+            # Staff sees everything
+            queryset = Campaign.objects.all()
         
         search = self.request.query_params.get('search', None)
         if search:

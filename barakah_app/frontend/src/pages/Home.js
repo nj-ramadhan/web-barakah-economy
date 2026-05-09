@@ -577,10 +577,10 @@ const Home = () => {
 
       <HeaderHome onSearch={handleSearch} />
 
-      {/* Campaign Slider */}
+      {/* Charity Slider */}
       <div className="px-4 pt-4" style={{ position: 'relative', zIndex: 10 }}>
         <h1 className="text-lg font-medium mb-2 line-clamp-2">Bantu saudaramu, Allah bantu kamu</h1>
-        <h2 className="text-sm font-medium mb-2 line-clamp-2">Sisihkan sebagian harta untuk program sosial dan untuk saudara kita yang membutuhkan</h2>
+        <h2 className="text-sm font-medium mb-2 line-clamp-2">Sisihkan sebagian harta untuk program charity dan untuk saudara kita yang membutuhkan</h2>
         {featuredCampaigns.length > 0 && (
           <div className="relative rounded-lg overflow-hidden h-56">
             {/* Slides */}
@@ -649,7 +649,7 @@ const Home = () => {
         )}
       </div>
 
-      {/* Campaign Swiper */}
+      {/* Charity Swiper */}
       <div className="px-4 py-4">
         {loading ? (
           <div className="flex justify-center items-center py-8">

@@ -155,9 +155,9 @@ const CrowdfundingMainPage = () => {
   return (
     <div className="body">
       <Helmet>
-        <meta name="description" content="Bantu Donasi Program Kepedulian Sosial dan Masyarakat" />
+        <meta name="description" content="Bantu Donasi Program Charity dan Masyarakat" />
         <meta property="og:title" content="BARAKAH CHARITY" />
-        <meta property="og:description" content="Bantu Donasi Program Kepedulian Sosial dan Masyarakat" />
+        <meta property="og:description" content="Bantu Donasi Program Charity dan Masyarakat" />
         <meta property="og:image" content="%PUBLIC_URL%/images/web-thumbnail.jpg" />
         <meta property="og:type" content="website" />
         <meta property="og:url" content={window.location.href} />
@@ -246,7 +246,7 @@ const CrowdfundingMainPage = () => {
         <h2 className="text-xl font-bold mb-6 flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <span className="w-1.5 h-6 bg-green-600 rounded-full"></span>
-            Semua Program Kebaikan
+            Semua Program Charity
           </div>
           <ShareButton slug="charity" title="Barakah Charity" type="charity_page" />
         </h2>

@@ -36,11 +36,11 @@ const DashboardAdminCampaignApprovalPage = () => {
     }, [navigate, fetchPending]);
 
     const handleApprove = async (slug) => {
-        if (!window.confirm('Setujui kampanye ini?')) return;
+        if (!window.confirm('Setujui charity ini?')) return;
         setProcessing(true);
         try {
             await axios.post(`${API}/api/campaigns/${slug}/approve/`, {}, getAuth());
-            alert('Kampanye berhasil disetujui');
+            alert('Charity berhasil disetujui');
             fetchPending();
         } catch (err) { alert('Gagal menyetujui'); }
         setProcessing(false);
@@ -57,7 +57,7 @@ const DashboardAdminCampaignApprovalPage = () => {
         setProcessing(true);
         try {
             await axios.post(`${API}/api/campaigns/${selectedCampaign.slug}/reject/`, { reason: rejectReason }, getAuth());
-            alert('Kampanye ditolak');
+            alert('Charity ditolak');
             setShowRejectModal(false);
             fetchPending();
         } catch (err) { alert('Gagal menolak'); }
@@ -88,7 +88,7 @@ const DashboardAdminCampaignApprovalPage = () => {
 
     return (
         <div className="body bg-gray-50 min-h-screen">
-            <Helmet><title>Persetujuan Kampanye - Admin</title></Helmet>
+            <Helmet><title>Persetujuan Charity - Admin</title></Helmet>
             <Header />
 
             <div className="max-w-5xl mx-auto px-4 py-6 pb-20">
@@ -97,8 +97,8 @@ const DashboardAdminCampaignApprovalPage = () => {
                         <span className="material-icons">arrow_back</span>
                     </button>
                     <div>
-                        <h1 className="text-2xl font-bold text-gray-900">Persetujuan Kampanye</h1>
-                        <p className="text-sm text-gray-500">{campaigns.length} kampanye menunggu verifikasi</p>
+                        <h1 className="text-2xl font-bold text-gray-900">Persetujuan Charity</h1>
+                        <p className="text-sm text-gray-500">{campaigns.length} charity menunggu verifikasi</p>
                     </div>
                 </div>
 
@@ -107,7 +107,7 @@ const DashboardAdminCampaignApprovalPage = () => {
                 ) : campaigns.length === 0 ? (
                     <div className="text-center py-20">
                         <span className="material-icons text-6xl text-gray-300">check_circle</span>
-                        <p className="text-gray-500 mt-4 font-medium">Tidak ada kampanye pending saat ini</p>
+                        <p className="text-gray-500 mt-4 font-medium">Tidak ada charity pending saat ini</p>
                     </div>
                 ) : (
                     <div className="grid gap-4">
@@ -155,7 +155,7 @@ const DashboardAdminCampaignApprovalPage = () => {
                 <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[110] flex items-center justify-center p-4">
                     <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl">
                         <div className="p-6 border-b border-gray-100">
-                            <h2 className="text-xl font-bold text-gray-900">Tolak Kampanye</h2>
+                            <h2 className="text-xl font-bold text-gray-900">Tolak Charity</h2>
                             <p className="text-sm text-gray-500 mt-1">{selectedCampaign?.title}</p>
                         </div>
                         <div className="p-6 space-y-4">

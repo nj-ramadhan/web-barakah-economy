@@ -164,7 +164,7 @@ const DashboardRealizationPage = () => {
 
                 {!selectedCampaign ? (
                     <div className="space-y-3">
-                        <h2 className="text-sm font-semibold text-gray-500 mb-2">Pilih Kampanye:</h2>
+                        <h2 className="text-sm font-semibold text-gray-500 mb-2">Pilih Charity:</h2>
                         {campaigns.map(c => (
                             <div
                                 key={c.id}
@@ -204,7 +204,7 @@ const DashboardRealizationPage = () => {
 
                         <div className="flex justify-between items-center mb-4">
                             <h3 className="font-bold text-gray-700">Daftar Realisasi</h3>
-                            <button onClick={() => setSelectedCampaign(null)} className="text-xs text-green-700 font-bold">Ganti Kampanye</button>
+                            <button onClick={() => setSelectedCampaign(null)} className="text-xs text-green-700 font-bold">Ganti Charity</button>
                         </div>
 
                         <div className="space-y-4">

@@ -264,7 +264,7 @@ const CrowdfundingCampaignDetail = () => {
               {isExpired && (
                 <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm mb-6 flex items-center gap-2">
                   <span className="material-icons text-sm">error_outline</span>
-                  Kampanye ini telah berakhir.
+                  Charity ini telah berakhir.
                 </div>
               )}
             </div>
@@ -438,7 +438,7 @@ const CrowdfundingCampaignDetail = () => {
               ) : !canViewRealizations ? (
                 <div className="text-center py-8">
                   <span className="material-icons text-4xl text-gray-300 mb-2">lock</span>
-                  <p className="text-gray-500">Tab realisasi hanya dapat diakses oleh donatur yang telah berdonasi ke kampanye ini.</p>
+                  <p className="text-gray-500">Tab realisasi hanya dapat diakses oleh donatur yang telah berdonasi ke charity ini.</p>
                   {!localStorage.getItem('user') && (
                     <Link to="/login" className="text-green-600 font-bold mt-2 inline-block">Login sekarang</Link>
                   )}
@@ -485,7 +485,7 @@ const CrowdfundingCampaignDetail = () => {
                       ))}
                     </div>
                   ) : (
-                    <p className="text-gray-500 text-center py-4">Belum ada data realisasi untuk kampanye ini.</p>
+                    <p className="text-gray-500 text-center py-4">Belum ada data realisasi untuk charity ini.</p>
                   )}
                 </>
               )}

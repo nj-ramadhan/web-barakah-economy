@@ -73,16 +73,29 @@ const DashboardMyCampaignsPage = () => {
             await axios.post(`${API}/api/campaigns/submit/`, fd, {
                 headers: { ...getAuth().headers, 'Content-Type': 'multipart/form-data' }
             });
-            alert('Kampanye berhasil diajukan! Menunggu verifikasi admin.');
+            alert('Charity berhasil diajukan! Menunggu verifikasi admin.');
             setShowForm(false);
             setFormData({ title: '', category: 'infak', description: '', target_amount: '', thumbnail: null });
             setPreviewImage(null);
             fetchCampaigns();
         } catch (err) {
             console.error(err);
-            alert('Gagal mengajukan kampanye');
+            alert('Gagal mengajukan charity');
         }
         setSubmitting(false);
+    };
+
+    const toggleVisibility = async (id, currentStatus) => {
+        try {
+            // Using ID instead of slug for patching is often more reliable in these mixin views
+            await axios.patch(`${API}/api/campaigns/${id}/`, {
+                is_active: !currentStatus
+            }, getAuth());
+            fetchCampaigns();
+        } catch (err) {
+            console.error(err);
+            alert('Gagal mengubah status visibilitas');
+        }
     };
 
     const handleImageChange = (e) => {
@@ -98,7 +111,7 @@ const DashboardMyCampaignsPage = () => {
 
     return (
         <div className="body bg-gray-50 min-h-screen">
-            <Helmet><title>Kampanye Saya - BAE</title></Helmet>
+            <Helmet><title>Charity Saya - BAE</title></Helmet>
             <Header />
 
             <div className="max-w-4xl mx-auto px-4 py-6 pb-20">
@@ -107,7 +120,7 @@ const DashboardMyCampaignsPage = () => {
                         <button onClick={() => navigate('/dashboard')} className="w-10 h-10 flex items-center justify-center bg-white rounded-xl shadow-sm border border-gray-100 text-gray-500 hover:text-green-700 transition">
                             <span className="material-icons">arrow_back</span>
                         </button>
-                        <h1 className="text-2xl font-bold text-gray-900">Kampanye Saya</h1>
+                        <h1 className="text-2xl font-bold text-gray-900">Charity Saya</h1>
                     </div>
                     <button onClick={() => setShowForm(!showForm)} className="bg-green-700 text-white px-5 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 shadow-lg shadow-green-100 hover:bg-green-800 transition">
                         <span className="material-icons text-sm">{showForm ? 'close' : 'add'}</span>
@@ -118,11 +131,11 @@ const DashboardMyCampaignsPage = () => {
                 {/* Submit Form */}
                 {showForm && (
                     <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 mb-6">
-                        <h2 className="text-lg font-bold text-gray-900 mb-4">Ajukan Kampanye Baru</h2>
+                        <h2 className="text-lg font-bold text-gray-900 mb-4">Ajukan Charity Baru</h2>
                         <form onSubmit={handleSubmit} className="space-y-4">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-1">
-                                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Judul Kampanye</label>
+                                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Judul Charity</label>
                                     <input type="text" required className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm outline-none" value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} placeholder="Contoh: Peduli Dhuafa" />
                                 </div>
                                 <div className="space-y-1">
@@ -134,7 +147,7 @@ const DashboardMyCampaignsPage = () => {
                             </div>
                             <div className="space-y-1">
                                 <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Deskripsi</label>
-                                <textarea rows="4" required className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm outline-none" value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} placeholder="Jelaskan detail kampanye..." />
+                                <textarea rows="4" required className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm outline-none" value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} placeholder="Jelaskan detail charity..." />
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-1">
@@ -155,7 +168,7 @@ const DashboardMyCampaignsPage = () => {
                             </div>
                             <div className="flex justify-end">
                                 <button type="submit" disabled={submitting} className="bg-green-700 text-white px-8 py-2.5 rounded-xl text-sm font-bold shadow-lg hover:bg-green-800 transition disabled:opacity-50">
-                                    {submitting ? 'Mengirim...' : 'Ajukan Kampanye'}
+                                    {submitting ? 'Mengirim...' : 'Ajukan Charity'}
                                 </button>
                             </div>
                         </form>
@@ -168,7 +181,7 @@ const DashboardMyCampaignsPage = () => {
                 ) : campaigns.length === 0 ? (
                     <div className="text-center py-20">
                         <span className="material-icons text-6xl text-gray-300">campaign</span>
-                        <p className="text-gray-500 mt-4 font-medium">Belum ada kampanye yang diajukan</p>
+                        <p className="text-gray-500 mt-4 font-medium">Belum ada charity yang diajukan</p>
                     </div>
                 ) : (
                     <div className="grid gap-4">
@@ -192,6 +205,25 @@ const DashboardMyCampaignsPage = () => {
                                             <span>Target: Rp {formatCurrency(c.target_amount)}</span>
                                             <span>Terkumpul: Rp {formatCurrency(c.current_amount)}</span>
                                         </div>
+                                        
+                                        {c.approval_status === 'approved' && (
+                                            <div className="mt-3 pt-3 border-t border-gray-50 flex items-center justify-between">
+                                                <div className="flex items-center gap-2">
+                                                    <div className={`w-2 h-2 rounded-full ${c.is_active ? 'bg-green-500 animate-pulse' : 'bg-gray-300'}`}></div>
+                                                    <span className="text-[10px] font-bold text-gray-500 uppercase tracking-tight">
+                                                        {c.is_active ? 'Tampil (Public)' : 'Disembunyikan'}
+                                                    </span>
+                                                </div>
+                                                <button 
+                                                    onClick={() => toggleVisibility(c.id, c.is_active)}
+                                                    className={`px-4 py-1.5 rounded-lg text-[10px] font-bold transition-all border flex items-center gap-1 ${c.is_active ? 'bg-orange-50 text-orange-700 border-orange-200 hover:bg-orange-100' : 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100'}`}
+                                                >
+                                                    <span className="material-icons text-sm">{c.is_active ? 'visibility_off' : 'visibility'}</span>
+                                                    {c.is_active ? 'SEMBUNYIKAN' : 'PUBLIKASIKAN'}
+                                                </button>
+                                            </div>
+                                        )}
+
                                         {c.approval_status === 'rejected' && c.rejection_reason && (
                                             <div className="mt-2 bg-red-50 border border-red-100 rounded-lg px-3 py-2 text-xs text-red-700">
                                                 <b>Alasan ditolak:</b> {c.rejection_reason}

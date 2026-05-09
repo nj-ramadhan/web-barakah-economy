@@ -32,7 +32,7 @@ const DashboardAdminCampaignManagementPage = () => {
             setCampaigns(res.data.results || res.data);
         } catch (err) {
             console.error(err);
-            alert('Gagal mengambil data kampanye');
+            alert('Gagal mengambil data charity');
         }
         setLoading(false);
     }, []);
@@ -47,13 +47,13 @@ const DashboardAdminCampaignManagementPage = () => {
     }, [navigate, fetchAllCampaigns]);
 
     const handleDelete = async (slug, title) => {
-        if (!window.confirm(`Apakah Anda yakin ingin menghapus kampanye "${title}"?`)) return;
+        if (!window.confirm(`Apakah Anda yakin ingin menghapus charity "${title}"?`)) return;
         try {
             await axios.delete(`${API}/api/campaigns/${slug}/`, getAuth());
-            alert('Kampanye berhasil dihapus');
+            alert('Charity berhasil dihapus');
             fetchAllCampaigns();
         } catch (err) {
-            alert('Gagal menghapus kampanye');
+            alert('Gagal menghapus charity');
         }
     };
 
@@ -78,7 +78,7 @@ const DashboardAdminCampaignManagementPage = () => {
 
     return (
         <div className="body bg-gray-50 min-h-screen">
-            <Helmet><title>Manajemen Kampanye - Admin</title></Helmet>
+            <Helmet><title>Manajemen Charity - Admin</title></Helmet>
             <Header />
 
             <div className="max-w-6xl mx-auto px-4 py-6 pb-20">
@@ -88,13 +88,13 @@ const DashboardAdminCampaignManagementPage = () => {
                             <span className="material-icons">arrow_back</span>
                         </button>
                         <div>
-                            <h1 className="text-2xl font-bold text-gray-900">Manajemen Kampanye</h1>
-                            <p className="text-sm text-gray-500">Kelola semua kampanye dan galang dana yang sedang berjalan</p>
+                            <h1 className="text-2xl font-bold text-gray-900">Manajemen Charity</h1>
+                            <p className="text-sm text-gray-500">Kelola semua program charity dan galang dana yang sedang berjalan</p>
                         </div>
                     </div>
                     {/* Reuse NewCampaign if needed, or link to create */}
                     <button onClick={() => navigate('/dashboard/my-campaigns')} className="bg-green-700 text-white px-5 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 shadow-lg shadow-green-100 hover:bg-green-800 transition">
-                        <span className="material-icons text-sm">add</span> Buat Kampanye
+                        <span className="material-icons text-sm">add</span> Buat Charity
                     </button>
                 </div>
 
@@ -104,7 +104,7 @@ const DashboardAdminCampaignManagementPage = () => {
                         <span className="material-icons absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">search</span>
                         <input
                             type="text"
-                            placeholder="Cari judul kampanye..."
+                            placeholder="Cari judul charity..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                             className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-sm outline-none focus:ring-2 focus:ring-green-500 transition"
@@ -131,7 +131,7 @@ const DashboardAdminCampaignManagementPage = () => {
                 ) : filteredCampaigns.length === 0 ? (
                     <div className="text-center py-20 bg-white rounded-3xl border border-dashed border-gray-200">
                         <span className="material-icons text-6xl text-gray-200">campaign</span>
-                        <p className="text-gray-500 mt-4 font-medium">Tidak ada kampanye ditemukan</p>
+                        <p className="text-gray-500 mt-4 font-medium">Tidak ada charity ditemukan</p>
                     </div>
                 ) : (
                     <div className="grid gap-4">
