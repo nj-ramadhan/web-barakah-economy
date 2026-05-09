@@ -98,10 +98,32 @@ const MeetingManagementPage = () => {
         }
     };
 
-    const handleAttendanceChange = async (participantId, status, remarks = '') => {
+    const handleAttendanceChange = async (participantId, status, remarks = '', sessionId = null) => {
         try {
-            await updateMeetingAttendance(slug, { participant_id: participantId, status, remarks });
-            setParticipants(prev => prev.map(p => p.id === participantId ? { ...p, status, remarks } : p));
+            await updateMeetingAttendance(slug, { 
+                participant_id: participantId, 
+                status, 
+                remarks,
+                session_id: sessionId
+            });
+            
+            setParticipants(prev => prev.map(p => {
+                if (p.id !== participantId) return p;
+                
+                if (sessionId) {
+                    const existing = p.session_attendances || [];
+                    const found = existing.find(a => a.session === sessionId);
+                    let newAttendances;
+                    if (found) {
+                        newAttendances = existing.map(a => a.session === sessionId ? { ...a, status, remarks } : a);
+                    } else {
+                        newAttendances = [...existing, { session: sessionId, status, remarks }];
+                    }
+                    return { ...p, session_attendances: newAttendances };
+                } else {
+                    return { ...p, status, remarks };
+                }
+            }));
         } catch (err) {
             alert('Gagal memperbarui absensi.');
         }
@@ -179,7 +201,7 @@ const MeetingManagementPage = () => {
                         </button>
                         <button 
                             onClick={() => {
-                                setBlastMessage(`Yth. Bapak/Ibu/Sdr/i,\n\nKami mengundang Anda untuk menghadiri rapat *${meeting?.title}* yang akan dilaksanakan pada:\n\nHari/Tgl: ${new Date(meeting?.start_date).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}\nJam: ${new Date(meeting?.start_date).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}\nLokasi: ${meeting?.location}\n\nMohon kehadirannya tepat waktu. Terima kasih.\n\n_Pesan otomatis dari Barakah App_`);
+                                setBlastMessage(`Yth. Bapak/Ibu/Sdr/i,\n\nKami mengundang Anda untuk menghadiri rapat *${meeting?.title}* yang akan dilaksanakan pada:\n\nHari/Tgl: ${new Date(meeting?.start_date).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}\nJam: ${new Date(meeting?.start_date).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}\nLokasi: ${meeting?.location}\n\nDetail Agenda & Peserta:\n{meeting_link}\n\nMohon kehadirannya tepat waktu. Terima kasih.\n\n_Pesan otomatis dari Barakah App_`);
                                 setShowBlastModal(true);
                             }}
                             className="flex-1 md:flex-none bg-green-600 text-white px-4 py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-2 hover:bg-green-700 transition shadow-lg shadow-green-100"
@@ -212,8 +234,12 @@ const MeetingManagementPage = () => {
                                     </th>
                                     <th className="p-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Peserta</th>
                                     <th className="p-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Info Kontak</th>
-                                    <th className="p-5 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Status Kehadiran</th>
-                                    <th className="p-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Keterangan</th>
+                                    {meeting?.sessions?.map(s => (
+                                        <th key={s.id} className="p-5 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center min-w-[150px]">
+                                            {s.title}
+                                        </th>
+                                    ))}
+
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-50">
@@ -246,40 +272,56 @@ const MeetingManagementPage = () => {
                                             <p className="text-xs font-bold text-gray-600">{p.user_details?.email}</p>
                                             <p className="text-[10px] text-gray-400">{p.user_details?.profile?.phone || '-'}</p>
                                         </td>
-                                        <td className="p-5 text-center">
-                                            <div className="flex items-center justify-center gap-2">
-                                                <button
-                                                    onClick={() => handleAttendanceChange(p.id, 'present', p.remarks)}
-                                                    className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition ${p.status === 'present' ? 'bg-green-600 text-white shadow-md' : 'bg-gray-100 text-gray-400 hover:bg-green-100 hover:text-green-600'}`}
-                                                >
-                                                    Hadir
-                                                </button>
-                                                <button
-                                                    onClick={() => handleAttendanceChange(p.id, 'absent', p.remarks)}
-                                                    className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition ${p.status === 'absent' ? 'bg-red-600 text-white shadow-md' : 'bg-gray-100 text-gray-400 hover:bg-red-100 hover:text-red-600'}`}
-                                                >
-                                                    Absen
-                                                </button>
-                                            </div>
-                                        </td>
-                                        <td className="p-5">
-                                            <input 
-                                                type="text" 
-                                                value={p.remarks || ''}
-                                                onChange={(e) => {
-                                                    const val = e.target.value;
-                                                    setParticipants(prev => prev.map(x => x.id === p.id ? { ...x, remarks: val } : x));
-                                                }}
-                                                onBlur={(e) => handleAttendanceChange(p.id, p.status, e.target.value)}
-                                                placeholder="Catatan..."
-                                                className="w-full bg-gray-50 border-none rounded-xl px-3 py-2 text-[11px] font-medium focus:ring-1 focus:ring-blue-500"
-                                            />
-                                        </td>
+                                        {meeting?.sessions?.map(session => {
+                                            const att = p.session_attendances?.find(a => a.session === session.id) || { status: 'pending', remarks: '' };
+                                            return (
+                                                <td key={session.id} className="p-5 text-center border-x border-gray-50/50">
+                                                    <div className="flex flex-col gap-2">
+                                                        <div className="flex items-center justify-center gap-1">
+                                                            <button
+                                                                onClick={() => handleAttendanceChange(p.id, 'present', att.remarks, session.id)}
+                                                                className={`w-full py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider transition ${att.status === 'present' ? 'bg-green-600 text-white shadow-md' : 'bg-gray-100 text-gray-400 hover:bg-green-100 hover:text-green-600'}`}
+                                                            >
+                                                                Hadir
+                                                            </button>
+                                                            <button
+                                                                onClick={() => handleAttendanceChange(p.id, 'absent', att.remarks, session.id)}
+                                                                className={`w-full py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider transition ${att.status === 'absent' ? 'bg-red-600 text-white shadow-md' : 'bg-gray-100 text-gray-400 hover:bg-red-100 hover:text-red-600'}`}
+                                                            >
+                                                                Absen
+                                                            </button>
+                                                        </div>
+                                                        <input 
+                                                            type="text" 
+                                                            value={att.remarks || ''}
+                                                            onChange={(e) => {
+                                                                const val = e.target.value;
+                                                                setParticipants(prev => prev.map(x => {
+                                                                    if (x.id !== p.id) return x;
+                                                                    const existingAtts = x.session_attendances || [];
+                                                                    let newAtts;
+                                                                    if (existingAtts.find(a => a.session === session.id)) {
+                                                                        newAtts = existingAtts.map(a => a.session === session.id ? { ...a, remarks: val } : a);
+                                                                    } else {
+                                                                        newAtts = [...existingAtts, { session: session.id, status: 'pending', remarks: val }];
+                                                                    }
+                                                                    return { ...x, session_attendances: newAtts };
+                                                                }));
+                                                            }}
+                                                            onBlur={(e) => handleAttendanceChange(p.id, att.status, e.target.value, session.id)}
+                                                            placeholder="Catatan..."
+                                                            className="w-full bg-gray-50 border-none rounded-lg px-2 py-1 text-[10px] font-medium focus:ring-1 focus:ring-blue-500"
+                                                        />
+                                                    </div>
+                                                </td>
+                                            );
+                                        })}
+
                                     </tr>
                                 ))}
                                 {participants.length === 0 && (
                                     <tr>
-                                        <td colSpan="5" className="p-12 text-center">
+                                        <td colSpan={3 + (meeting?.sessions?.length || 0)} className="p-12 text-center">
                                             <span className="material-icons text-gray-200 text-4xl mb-2">person_off</span>
                                             <p className="text-sm font-bold text-gray-400 uppercase tracking-widest">Belum ada peserta terdaftar</p>
                                             <button onClick={() => setShowAddModal(true)} className="mt-4 text-blue-600 font-black text-[10px] uppercase tracking-widest hover:underline">Tambah Peserta Sekarang</button>

@@ -1,11 +1,16 @@
 from rest_framework import serializers
-from .models import Meeting, MeetingSession, MeetingParticipant
+from .models import Meeting, MeetingSession, MeetingParticipant, SessionAttendance
 from accounts.serializers import UserSimpleSerializer
 
 class MeetingSessionSerializer(serializers.ModelSerializer):
     class Meta:
         model = MeetingSession
         fields = ['id', 'title', 'start_time', 'end_time', 'order']
+
+class SessionAttendanceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SessionAttendance
+        fields = ['id', 'session', 'status', 'remarks', 'marked_at', 'marked_by']
 
 class MeetingSerializer(serializers.ModelSerializer):
     sessions = MeetingSessionSerializer(many=True, required=False)
@@ -50,13 +55,15 @@ class MeetingSerializer(serializers.ModelSerializer):
 class MeetingParticipantSerializer(serializers.ModelSerializer):
     user_details = UserSimpleSerializer(source='user', read_only=True)
     marked_by_name = serializers.SerializerMethodField()
+    session_attendances = SessionAttendanceSerializer(many=True, read_only=True)
 
     class Meta:
         model = MeetingParticipant
         fields = [
             'id', 'meeting', 'user', 'user_details', 
             'status', 'remarks', 'joined_at', 
-            'marked_at', 'marked_by', 'marked_by_name'
+            'marked_at', 'marked_by', 'marked_by_name',
+            'session_attendances'
         ]
         read_only_fields = ['joined_at', 'marked_at', 'marked_by']
 

@@ -10,7 +10,7 @@ import csv
 import json
 import logging
 
-from .models import Meeting, MeetingSession, MeetingParticipant
+from .models import Meeting, MeetingSession, MeetingParticipant, SessionAttendance
 from .serializers import MeetingSerializer, MeetingSessionSerializer, MeetingParticipantSerializer
 from accounts.models import User
 from accounts import whatsapp_service
@@ -101,20 +101,38 @@ class MeetingViewSet(viewsets.ModelViewSet):
     def update_attendance(self, request, slug=None):
         meeting = self.get_object()
         participant_id = request.data.get('participant_id')
+        session_id = request.data.get('session_id')
         status_val = request.data.get('status')
         remarks = request.data.get('remarks')
 
         try:
             participant = MeetingParticipant.objects.get(id=participant_id, meeting=meeting)
-            participant.status = status_val
-            if remarks is not None:
-                participant.remarks = remarks
-            participant.marked_at = timezone.now()
-            participant.marked_by = request.user
-            participant.save()
-            return Response({"message": "Kehadiran berhasil diperbarui."})
+            
+            if session_id:
+                # Per-session attendance
+                attendance, created = SessionAttendance.objects.get_or_create(
+                    participant=participant,
+                    session_id=session_id
+                )
+                attendance.status = status_val
+                if remarks is not None:
+                    attendance.remarks = remarks
+                attendance.marked_by = request.user
+                attendance.save()
+                return Response({"message": "Kehadiran sesi berhasil diperbarui."})
+            else:
+                # Global attendance (legacy/fallback)
+                participant.status = status_val
+                if remarks is not None:
+                    participant.remarks = remarks
+                participant.marked_at = timezone.now()
+                participant.marked_by = request.user
+                participant.save()
+                return Response({"message": "Kehadiran global berhasil diperbarui."})
         except MeetingParticipant.DoesNotExist:
             return Response({"error": "Peserta tidak ditemukan."}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=True, methods=['post'])
     def blast_whatsapp(self, request, slug=None):
@@ -160,6 +178,7 @@ class MeetingViewSet(viewsets.ModelViewSet):
                         'meeting_title': meeting.title,
                         'time': meeting_time_str,
                         'location': meeting.location,
+                        'meeting_link': f"https://barakah.cloud/meetings/{meeting.slug}"
                     })
 
             if not phone_list:
@@ -178,7 +197,17 @@ class MeetingViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['get'])
     def export_csv(self, request, slug=None):
         meeting = self.get_object()
+        sessions = meeting.sessions.all().order_by('order', 'start_time')
         participants = meeting.participants.all().select_related('user', 'user__profile')
+        
+        # Pre-fetch session attendance to avoid N+1
+        attendances = SessionAttendance.objects.filter(participant__meeting=meeting).select_related('participant', 'session')
+        attendance_map = {} # (participant_id, session_id) -> status/remarks
+        for att in attendances:
+            attendance_map[(att.participant_id, att.session_id)] = {
+                'status': att.get_status_display(),
+                'remarks': att.remarks or ""
+            }
 
         response = HttpResponse(content_type='text/csv; charset=utf-8')
         response['Content-Disposition'] = f'attachment; filename="rapat_{meeting.slug}.csv"'
@@ -187,7 +216,13 @@ class MeetingViewSet(viewsets.ModelViewSet):
         response.write('\ufeff'.encode('utf8'))
         writer = csv.writer(response, delimiter=';')
         
-        writer.writerow(['ID', 'Username', 'Nama Lengkap', 'Email', 'No HP', 'Status Kehadiran', 'Keterangan', 'Waktu Gabung', 'Waktu Diabsen', 'Diabsen Oleh'])
+        header = ['ID', 'Username', 'Nama Lengkap', 'Email', 'No HP']
+        for s in sessions:
+            header.append(f"Sesi: {s.title}")
+            header.append(f"Ket: {s.title}")
+        header.extend(['Waktu Gabung', 'Global Status', 'Global Remarks'])
+        
+        writer.writerow(header)
         
         for p in participants:
             profile = getattr(p.user, 'profile', None)
@@ -197,12 +232,18 @@ class MeetingViewSet(viewsets.ModelViewSet):
                 profile.name_full if profile else "-",
                 p.user.email,
                 profile.phone if profile else "-",
-                p.get_status_display(),
-                p.remarks or "-",
-                p.joined_at.strftime('%Y-%m-%d %H:%M:%S'),
-                p.marked_at.strftime('%Y-%m-%d %H:%M:%S') if p.marked_at else "-",
-                p.marked_by.username if p.marked_by else "-"
             ]
+            
+            for s in sessions:
+                att = attendance_map.get((p.id, s.id), {'status': 'Belum Diabsen', 'remarks': '-'})
+                row.append(att['status'])
+                row.append(att['remarks'])
+                
+            row.extend([
+                p.joined_at.strftime('%Y-%m-%d %H:%M:%S'),
+                p.get_status_display(),
+                p.remarks or "-"
+            ])
             writer.writerow(row)
             
         return response

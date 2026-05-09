@@ -48,6 +48,7 @@ import ContactUs from './pages/ContactUs';
 import AcademyMain from './pages/AcademyMain';
 import ActivityListPage from './pages/ActivityListPage';
 import ActivityDetailPage from './pages/ActivityDetailPage';
+import MeetingViewPage from './pages/MeetingViewPage';
 import DashboardUserPage from './pages/admin/DashboardUserPage';
 import DashboardEventPage from './pages/admin/DashboardEventPage';
 import DashboardAboutUsPage from './pages/admin/DashboardAboutUsPage';
@@ -299,6 +300,7 @@ const LayoutWrapper = ({ isDesktop }) => {
         {/* Activity Routes */}
         <Route path="/kegiatan" element={<ResponsiveLayout isDesktop={isDesktop}><ActivityListPage /></ResponsiveLayout>} />
         <Route path="/kegiatan/:id" element={<ResponsiveLayout isDesktop={isDesktop}><ActivityDetailPage /></ResponsiveLayout>} />
+        <Route path="/meetings/:slug" element={<ResponsiveLayout isDesktop={isDesktop}><MeetingViewPage /></ResponsiveLayout>} />
 
         {/* Event Routes */}
         <Route path="/event" element={<ResponsiveLayout isDesktop={isDesktop}><EventLandingPage /></ResponsiveLayout>} />

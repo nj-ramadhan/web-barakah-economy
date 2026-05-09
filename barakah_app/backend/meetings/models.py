@@ -70,3 +70,24 @@ class MeetingParticipant(models.Model):
 
     def __str__(self):
         return f"{self.user.username} in {self.meeting.title}"
+class SessionAttendance(models.Model):
+    ATTENDANCE_STATUS = [
+        ('present', 'Hadir'),
+        ('absent', 'Tidak Hadir'),
+        ('pending', 'Belum Diabsen'),
+    ]
+
+    participant = models.ForeignKey(MeetingParticipant, on_delete=models.CASCADE, related_name='session_attendances')
+    session = models.ForeignKey(MeetingSession, on_delete=models.CASCADE, related_name='attendances')
+    
+    status = models.CharField(max_length=20, choices=ATTENDANCE_STATUS, default='pending')
+    remarks = models.TextField(blank=True, null=True)
+    
+    marked_at = models.DateTimeField(auto_now=True)
+    marked_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='session_marks')
+
+    class Meta:
+        unique_together = ('participant', 'session')
+
+    def __str__(self):
+        return f"{self.participant.user.username} - {self.session.title}"
