@@ -2477,7 +2477,7 @@ def event_detail_seo(request, slug):
                 order__gt=session.order
             ).order_by('order', 'start_time').first()
             
-            if not next_session:
+            if not next_session and session.start_time:
                 next_session = EventSession.objects.filter(
                     event=event,
                     start_time__gt=session.start_time

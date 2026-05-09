@@ -233,6 +233,8 @@ class EventSerializer(serializers.ModelSerializer):
             speakers_data = validated_data.pop('speakers', [])
             sessions_data = validated_data.pop('sessions', [])
             price_variations_data = validated_data.pop('price_variations', [])
+            free_for_labels_data = validated_data.pop('free_for_labels', [])
+            committees_data = validated_data.pop('committees', [])
             
             request = self.context.get('request')
             doc_images = request.FILES.getlist('documentation_images_upload') if request else []
@@ -240,6 +242,11 @@ class EventSerializer(serializers.ModelSerializer):
             
             with transaction.atomic():
                 event = Event.objects.create(**validated_data)
+                
+                if free_for_labels_data:
+                    event.free_for_labels.set(free_for_labels_data)
+                if committees_data:
+                    event.committees.set(committees_data)
                 
                 # Handle Form Fields
                 for field in fields_data:
@@ -288,6 +295,9 @@ class EventSerializer(serializers.ModelSerializer):
 
     @transaction.atomic
     def update(self, instance, validated_data):
+        # M2M fields must be handled separately
+        free_for_labels_data = validated_data.pop('free_for_labels', None)
+        committees_data = validated_data.pop('committees', None)
         fields_data = validated_data.pop('form_fields', None)
         speakers_data = validated_data.pop('speakers', None)
         sessions_data = validated_data.pop('sessions', None)
@@ -296,6 +306,11 @@ class EventSerializer(serializers.ModelSerializer):
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
         instance.save()
+        
+        if free_for_labels_data is not None:
+            instance.free_for_labels.set(free_for_labels_data)
+        if committees_data is not None:
+            instance.committees.set(committees_data)
         
         price_variations_data = validated_data.pop('price_variations', None)
         

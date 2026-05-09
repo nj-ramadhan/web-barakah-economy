@@ -936,6 +936,20 @@ const EventSubmissionPage = () => {
                                     </select>
                                 </div>
 
+                                {['fixed', 'hybrid_1', 'hybrid_2'].includes(formData.price_type) && formData.price_variations.length === 0 && (
+                                    <div className="space-y-1.5 md:col-span-2 animate-fade-in">
+                                        <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Nominal Fix / Minimal (IDR) *</label>
+                                        <CurrencyInput
+                                            name="price_fixed"
+                                            value={formData.price_fixed}
+                                            onChange={handleChange}
+                                            placeholder="Contoh: 20,000"
+                                            className="font-bold bg-white border border-green-100 rounded-2xl py-4"
+                                        />
+                                        <p className="text-[10px] text-gray-400 ml-1 italic">Nominal ini akan digunakan jika Anda tidak menggunakan fitur Variasi Harga di bawah.</p>
+                                    </div>
+                                )}
+
                                 {formData.price_type !== 'free' && (
                                     <>
                                         <div className="space-y-1.5 md:col-span-2">
@@ -1104,18 +1118,6 @@ const EventSubmissionPage = () => {
                                     )}
                                 </div>
 
-                                {['fixed', 'hybrid_1', 'hybrid_2'].includes(formData.price_type) && (
-                                    <div className="space-y-1.5 md:col-span-2">
-                                        <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Nominal Fix / Minimal (IDR) *</label>
-                                        <CurrencyInput
-                                            name="price_fixed"
-                                            value={formData.price_fixed}
-                                            onChange={handleChange}
-                                            placeholder="Contoh: 20,000"
-                                            className="font-bold"
-                                        />
-                                    </div>
-                                )}
 
                                 <div className="space-y-1.5 md:col-span-2">
                                     <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Kapasitas Peserta</label>

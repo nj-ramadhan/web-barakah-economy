@@ -149,7 +149,7 @@ class MeetingViewSet(viewsets.ModelViewSet):
                 order__gt=session.order
             ).order_by('order', 'start_time').first()
             
-            if not next_session:
+            if not next_session and session.start_time:
                 # If orders are equal or 0, check by start_time
                 next_session = MeetingSession.objects.filter(
                     meeting=meeting,

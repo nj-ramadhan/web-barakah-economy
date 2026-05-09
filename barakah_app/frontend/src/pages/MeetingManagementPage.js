@@ -427,7 +427,26 @@ const MeetingManagementPage = () => {
                                 <p className="text-[11px] text-amber-700 leading-relaxed font-medium">Pesan ini akan dikirimkan ke <b>{selectedIds.length > 0 ? selectedIds.length : 'Semua'} peserta</b> yang memiliki nomor WhatsApp terdaftar. Gunakan bahasa yang sopan.</p>
                             </div>
                             <div className="space-y-1.5">
-                                <label className="text-xs font-black text-gray-400 uppercase tracking-widest ml-1">Isi Pesan Blast</label>
+                                <div className="flex items-center justify-between mb-2 px-1">
+                                    <label className="text-xs font-black text-gray-400 uppercase tracking-widest">Isi Pesan Blast</label>
+                                    <div className="flex flex-wrap gap-1.5 justify-end">
+                                        {[
+                                            { p: 'name', color: 'emerald' },
+                                            { p: 'meeting_title', color: 'blue' },
+                                            { p: 'time', color: 'indigo' },
+                                            { p: 'location', color: 'orange' },
+                                            { p: 'meeting_link', color: 'purple' }
+                                        ].map(item => (
+                                            <button 
+                                                key={item.p}
+                                                onClick={() => setBlastMessage(prev => prev + ` {${item.p}}`)}
+                                                className={`text-[9px] font-bold text-${item.color}-700 bg-${item.color}-50 px-2 py-1 rounded-lg hover:bg-${item.color}-100 transition border border-${item.color}-100`}
+                                            >
+                                                +{'{'}{item.p}{'}'}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
                                 <textarea
                                     rows="10"
                                     value={blastMessage}
