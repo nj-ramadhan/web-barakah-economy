@@ -242,7 +242,6 @@ class EventSerializer(serializers.ModelSerializer):
                     mutable_data[field] = []
         
         return super().to_internal_value(mutable_data)
- bitumen_cleanup = calamities_cleanup # Just a dummy ref for the regex if needed
 
     @transaction.atomic
     def create(self, validated_data):
