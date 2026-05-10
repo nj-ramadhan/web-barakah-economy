@@ -59,7 +59,7 @@ const QuizViewer = ({ quizData, onComplete, onReset, isCompleted }) => {
         setCurrentStep('result');
 
         if (finalScore >= (settings.passing_score || 70)) {
-            onComplete();
+            onComplete(userAnswers, finalScore);
         }
     };
 
@@ -248,13 +248,15 @@ const EcourseViewerPage = () => {
         if (window.innerWidth < 1024) setSidebarOpen(false);
     };
 
-    const markAsCompleted = async (materialId) => {
+    const markAsCompleted = async (materialId, quizAnswers = null, quizScore = null) => {
         const user = JSON.parse(localStorage.getItem('user'));
         if (!user) return;
 
         try {
             await api.post('/courses/progress/', {
-                material: materialId
+                material: materialId,
+                quiz_answers: quizAnswers,
+                quiz_score: quizScore
             });
 
             if (!progress.includes(materialId)) {
@@ -402,7 +404,7 @@ const EcourseViewerPage = () => {
                                 <div className="bg-white rounded-[2.5rem] p-8 lg:p-12 shadow-sm border border-gray-100 mb-10 min-h-[400px]">
                                     <QuizViewer 
                                         quizData={currentMaterial.quiz_data} 
-                                        onComplete={() => markAsCompleted(currentMaterial.id)}
+                                        onComplete={(answers, score) => markAsCompleted(currentMaterial.id, answers, score)}
                                         isCompleted={progress.includes(currentMaterial.id)}
                                     />
                                 </div>

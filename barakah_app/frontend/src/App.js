@@ -68,6 +68,7 @@ import DashboardDigitalProductsPage from './pages/DashboardDigitalProductsPage';
 import DashboardEcourseListPage from './pages/DashboardEcourseListPage';
 import DashboardEcourseFormPage from './pages/DashboardEcourseFormPage';
 import DashboardEcourseMaterialsPage from './pages/DashboardEcourseMaterialsPage';
+import DashboardEcourseProgressPage from './pages/DashboardEcourseProgressPage';
 import SellerProfilePage from './pages/SellerProfilePage';
 import DashboardShopSettingsPage from './pages/DashboardShopSettingsPage';
 import DashboardAdminWithdrawalsPage from './pages/DashboardAdminWithdrawalsPage';
@@ -381,6 +382,7 @@ const LayoutWrapper = ({ isDesktop }) => {
         <Route path="/dashboard/ecourses/new" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardEcourseFormPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/ecourses/:id/edit" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardEcourseFormPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/ecourses/:id/materials" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardEcourseMaterialsPage /></ResponsiveLayout></PrivateRoute>} />
+        <Route path="/dashboard/ecourses/:courseId/progress" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardEcourseProgressPage /></ResponsiveLayout></PrivateRoute>} />
         
         {/* ZIS Rutin Routes */}
         <Route path="/dashboard/zis" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><ZISSubmissionPage /></ResponsiveLayout></PrivateRoute>} />

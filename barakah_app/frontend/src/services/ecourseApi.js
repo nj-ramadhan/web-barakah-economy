@@ -92,3 +92,11 @@ export const downloadCourseCertificate = (courseId) =>
 
 export const getCourseBuyers = (courseId) =>
     api.get(`${API_BASE}/${courseId}/buyers/`);
+
+export const getCourseProgressRecap = (courseId) =>
+    api.get(`${API_BASE}/${courseId}/progress-recap/`);
+
+export const exportCourseProgressCsv = (courseId) =>
+    api.get(`${API_BASE}/${courseId}/export-progress-csv/`, {
+        responseType: 'blob'
+    });

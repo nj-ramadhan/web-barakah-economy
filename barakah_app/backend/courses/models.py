@@ -141,6 +141,8 @@ class UserCourseProgress(models.Model):
     course = models.ForeignKey(Course, on_delete=models.CASCADE)
     material = models.ForeignKey(CourseMaterial, on_delete=models.CASCADE)
     is_completed = models.BooleanField(default=False)
+    quiz_answers = models.JSONField(null=True, blank=True, help_text="Store student's answers for quiz")
+    quiz_score = models.FloatField(null=True, blank=True)
     completed_at = models.DateTimeField(auto_now=True)
 
     class Meta:

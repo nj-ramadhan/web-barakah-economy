@@ -194,13 +194,13 @@ const DashboardEcourseListPage = () => {
                                                 >
                                                     <span className="material-icons text-lg">auto_stories</span>
                                                 </Link>
-                                                <button
-                                                    onClick={() => handleViewStudents(course)}
+                                                <Link
+                                                    to={`/dashboard/ecourses/${course.id}/progress`}
                                                     className="w-9 h-9 flex items-center justify-center rounded-xl bg-purple-50 text-purple-600 hover:bg-purple-100 transition"
-                                                    title="Riwayat Siswa"
+                                                    title="Monitoring Progres Siswa"
                                                 >
-                                                    <span className="material-icons text-lg">group</span>
-                                                </button>
+                                                    <span className="material-icons text-lg">insights</span>
+                                                </Link>
                                                 <button
                                                     onClick={() => handleDelete(course.id)}
                                                     className="w-9 h-9 flex items-center justify-center rounded-xl bg-red-50 text-red-600 hover:bg-red-100 transition"

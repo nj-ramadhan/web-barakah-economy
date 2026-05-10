@@ -11,6 +11,8 @@ from .models import Course, CourseEnrollment, CourseMaterial, UserCourseProgress
 from .serializers import CourseSerializer, CourseEnrollmentSerializer, CourseMaterialSerializer, UserCourseProgressSerializer, CertificateRequestSerializer, CourseCertificateSerializer
 from django.conf import settings
 from django.shortcuts import render
+import csv
+from django.http import HttpResponse
 
 class CourseViewSet(viewsets.ModelViewSet):
     serializer_class = CourseSerializer
@@ -132,6 +134,127 @@ class CourseViewSet(viewsets.ModelViewSet):
             enrollments = CourseEnrollment.objects.filter(course=course, payment_status__in=['paid', 'verified'])
             serializer = CourseEnrollmentSerializer(enrollments, many=True)
             return Response(serializer.data)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    @action(detail=True, methods=['get'], url_path='progress-recap')
+    def progress_recap(self, request, pk=None):
+        try:
+            course = self.get_object()
+            if course.instructor != request.user and not request.user.is_staff:
+                return Response({'error': 'Unauthorized'}, status=status.HTTP_403_FORBIDDEN)
+            
+            # Get all enrolled students
+            enrollments = CourseEnrollment.objects.filter(
+                course=course, 
+                payment_status__in=['paid', 'verified']
+            ).select_related('user', 'user__profile')
+            
+            # Get all materials
+            materials = course.materials.all().order_by('order', 'created_at')
+            material_list = CourseMaterialSerializer(materials, many=True).data
+            
+            # Get all progress for this course
+            progress_data = UserCourseProgress.objects.filter(course=course).select_related('user', 'material')
+            
+            # Map progress by user
+            user_progress_map = {}
+            for p in progress_data:
+                if p.user_id not in user_progress_map:
+                    user_progress_map[p.user_id] = {}
+                user_progress_map[p.user_id][p.material_id] = {
+                    'is_completed': p.is_completed,
+                    'completed_at': p.completed_at,
+                    'quiz_score': p.quiz_score,
+                    'quiz_answers': p.quiz_answers
+                }
+            
+            recap = []
+            for e in enrollments:
+                if not e.user: continue
+                
+                profile = getattr(e.user, 'profile', None)
+                user_info = {
+                    'user_id': e.user.id,
+                    'full_name': profile.name_full if profile else e.buyer_name or e.user.username,
+                    'email': e.user.email,
+                    'phone': profile.phone if profile else e.buyer_phone,
+                    'enrolled_at': e.enrolled_at,
+                    'progress': []
+                }
+                
+                for m in materials:
+                    p = user_progress_map.get(e.user.id, {}).get(m.id, {})
+                    user_info['progress'].append({
+                        'material_id': m.id,
+                        'title': m.title,
+                        'type': m.material_type,
+                        'is_completed': p.get('is_completed', False),
+                        'completed_at': p.get('completed_at'),
+                        'quiz_score': p.get('quiz_score'),
+                        'quiz_answers': p.get('quiz_answers')
+                    })
+                
+                recap.append(user_info)
+                
+            return Response({
+                'course_title': course.title,
+                'materials': material_list,
+                'students': recap
+            })
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    @action(detail=True, methods=['get'], url_path='export-progress-csv')
+    def export_progress_csv(self, request, pk=None):
+        try:
+            course = self.get_object()
+            if course.instructor != request.user and not request.user.is_staff:
+                return Response({'error': 'Unauthorized'}, status=status.HTTP_403_FORBIDDEN)
+            
+            # Get data (reusing logic or calling internal)
+            recap_response = self.progress_recap(request, pk=pk)
+            if recap_response.status_code != 200:
+                return recap_response
+                
+            data = recap_response.data
+            materials = data['materials']
+            students = data['students']
+            
+            response = HttpResponse(content_type='text/csv')
+            response['Content-Disposition'] = f'attachment; filename="progress_{course.slug}.csv"'
+            
+            # Use semicolon as delimiter
+            writer = csv.writer(response, delimiter=';')
+            
+            # Header
+            header = ['Nama Siswa', 'Email', 'WhatsApp', 'Tanggal Terdaftar']
+            for m in materials:
+                header.append(f"{m['title']} ({m['material_type']})")
+                if m['material_type'] == 'quiz':
+                    header.append(f"Skor {m['title']}")
+            
+            writer.writerow(header)
+            
+            # Rows
+            for s in students:
+                row = [
+                    s['full_name'],
+                    s['email'],
+                    s['phone'],
+                    s['enrolled_at'].strftime('%Y-%m-%d %H:%M') if hasattr(s['enrolled_at'], 'strftime') else str(s['enrolled_at'])
+                ]
+                
+                for i, m in enumerate(materials):
+                    p = s['progress'][i]
+                    status = 'Selesai' if p['is_completed'] else 'Belum'
+                    row.append(status)
+                    if m['material_type'] == 'quiz':
+                        row.append(p['quiz_score'] if p['quiz_score'] is not None else '-')
+                
+                writer.writerow(row)
+                
+            return response
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
@@ -576,14 +699,26 @@ class UserCourseProgressViewSet(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
         material_id = request.data.get('material')
         material = get_object_or_404(CourseMaterial, id=material_id)
+        
+        quiz_answers = request.data.get('quiz_answers')
+        quiz_score = request.data.get('quiz_score')
+        
         progress, created = UserCourseProgress.objects.get_or_create(
             user=request.user,
             course=material.course,
             material=material,
-            defaults={'is_completed': True}
+            defaults={
+                'is_completed': True,
+                'quiz_answers': quiz_answers,
+                'quiz_score': quiz_score
+            }
         )
         if not created:
             progress.is_completed = True
+            if quiz_answers is not None:
+                progress.quiz_answers = quiz_answers
+            if quiz_score is not None:
+                progress.quiz_score = quiz_score
             progress.save()
         return Response(UserCourseProgressSerializer(progress).data, status=status.HTTP_201_CREATED)
 

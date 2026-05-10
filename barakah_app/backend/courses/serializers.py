@@ -31,7 +31,7 @@ class CourseMaterialSerializer(serializers.ModelSerializer):
 class UserCourseProgressSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserCourseProgress
-        fields = ['id', 'user', 'course', 'material', 'is_completed', 'completed_at']
+        fields = ['id', 'user', 'course', 'material', 'is_completed', 'quiz_answers', 'quiz_score', 'completed_at']
 
 class CertificateSerializer(serializers.ModelSerializer):
     class Meta:
