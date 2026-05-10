@@ -31,3 +31,4 @@ urllib3==2.3.0
 django-filter==24.3
 qrcode==8.2
 python-barcode==0.16.1
+django-cleanup==9.0.0

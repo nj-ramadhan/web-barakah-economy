@@ -199,9 +199,15 @@ const DesktopLandingPage = () => {
                                                                     className="w-full h-full object-cover"
                                                                     autoPlay
                                                                     muted
-                                                                    loop={false}
+                                                                    playsInline
+                                                                    loop={heroBanners.length === 1}
                                                                     onPlay={() => swiperInstance?.autoplay.stop()}
-                                                                    onEnded={() => swiperInstance?.autoplay.start()}
+                                                                    onEnded={() => {
+                                                                        if (heroBanners.length > 1) {
+                                                                            swiperInstance?.slideNext();
+                                                                            swiperInstance?.autoplay.start();
+                                                                        }
+                                                                    }}
                                                                     onClick={() => banner.target_url && window.open(banner.target_url, '_blank')}
                                                                 />
                                                             ) : (

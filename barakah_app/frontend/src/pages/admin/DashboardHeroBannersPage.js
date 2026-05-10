@@ -223,7 +223,7 @@ const DashboardHeroBannersPage = () => {
                                     />
                                 </div>
                                 <div>
-                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1 mb-1 block">Subjudul</label>
+                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1 mb-1 block">Deskripsi / Subjudul</label>
                                     <textarea 
                                         placeholder="Deskripsi singkat yang tampil di bawah judul" 
                                         className="w-full p-3.5 bg-gray-50 border-2 border-gray-50 focus:border-green-500 focus:bg-white rounded-2xl text-sm transition-all" 

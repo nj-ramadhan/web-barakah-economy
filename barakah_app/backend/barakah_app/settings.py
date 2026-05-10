@@ -141,6 +141,7 @@ INSTALLED_APPS = [
     'django_filters',
     'zis',
     'tracking',
+    'django_cleanup.apps.CleanupConfig',
 ]
 
 MIDDLEWARE = [

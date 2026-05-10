@@ -880,6 +880,15 @@ const DashboardPage = () => {
                                     desc: 'Uji coba fitur video conference Jitsi (Admin)'
                                 },
                                 {
+                                    id: 'hero_banners_alt',
+                                    access: hasAccess('announcements'),
+                                    to: '/dashboard/admin/hero-banners',
+                                    icon: 'view_carousel',
+                                    color: 'indigo',
+                                    title: 'Hero Banner',
+                                    desc: 'Kelola gambar & video slide beranda'
+                                },
+                                {
                                     id: 'about_us',
                                     access: hasAccess('about_us'),
                                     to: '/dashboard/admin/about-us',
