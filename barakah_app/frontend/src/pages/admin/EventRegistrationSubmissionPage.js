@@ -791,7 +791,12 @@ const EventRegistrationSubmissionPage = () => {
                                                     <td className="p-5 text-xs whitespace-nowrap">
                                                         <div className="font-black text-gray-900">Rp {Number(reg.payment_amount || 0).toLocaleString('id-ID')}</div>
                                                         <div className="flex flex-col gap-1.5 mt-1.5">
-                                                            {reg.payment_proof ? (
+                                                            {reg.payment_method === 'ots' ? (
+                                                                <div className="flex items-center gap-1 text-orange-600 font-bold py-1">
+                                                                    <span className="material-icons text-xs">payments</span>
+                                                                    OTS
+                                                                </div>
+                                                            ) : reg.payment_proof ? (
                                                                 <button
                                                                     onClick={() => setSelectedPaymentProof(reg.payment_proof)}
                                                                     className="flex items-center gap-1 text-blue-600 font-bold hover:underline py-1"
@@ -799,8 +804,13 @@ const EventRegistrationSubmissionPage = () => {
                                                                     <span className="material-icons text-xs">receipt_long</span>
                                                                     Bukti Transfer
                                                                 </button>
+                                                            ) : reg.payment_amount === 0 ? (
+                                                                <div className="flex items-center gap-1 text-green-600 font-bold py-1">
+                                                                    <span className="material-icons text-xs">verified</span>
+                                                                    Gratis (Label)
+                                                                </div>
                                                             ) : (
-                                                                <span className="text-gray-400 italic">No Proof</span>
+                                                                <span className="text-gray-400 italic text-[8px]">No Proof</span>
                                                             )}
                                                             <span className={`w-fit px-1.5 py-0.5 rounded text-[8px] font-black uppercase ${reg.payment_status === 'verified' ? 'bg-green-50 text-green-700' :
                                                                 reg.payment_status === 'rejected' ? 'bg-red-50 text-red-700' :

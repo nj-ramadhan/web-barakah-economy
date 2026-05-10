@@ -45,7 +45,6 @@ const EventSubmissionPage = () => {
         free_for_label_ids: [],
         has_special_qr: false,
         price_variations: [],
-        // Added for consistency
         header_image: null,
         header_image_full: null,
         thumbnail: null,
@@ -53,9 +52,7 @@ const EventSubmissionPage = () => {
         documentation_frame_1_1: null,
         attachment_file: null,
         bib_template_image: null,
-        _bib_preview: null,
-        price_variations: [],
-        free_for_label_ids: []
+        _bib_preview: null
     });
     const [availableLabels, setAvailableLabels] = useState([]);
     const [speakers, setSpeakers] = useState([]);
@@ -359,7 +356,14 @@ const EventSubmissionPage = () => {
         Object.keys(formData).forEach(key => {
             // Only append non-file fields that are not null/empty
             // Skip thumbnail and header_image if they are just strings (URLs)
-            if (key !== 'thumbnail' && key !== 'header_image' && key !== 'thumbnail_full' && key !== 'header_image_full' && key !== 'documentation_frame_1_1' && key !== 'attachment_file' && key !== 'bib_template_image' && !key.startsWith('_')) {
+            // Skip fields that are handled separately (JSON stringified or multiple appends)
+            const skipFields = [
+                'thumbnail', 'header_image', 'thumbnail_full', 'header_image_full', 
+                'documentation_frame_1_1', 'attachment_file', 'bib_template_image',
+                'price_variations', 'speakers', 'sessions', 'form_fields', 'free_for_label_ids'
+            ];
+            
+            if (!skipFields.includes(key) && !key.startsWith('_')) {
                 const val = formData[key];
                 if (val !== null && val !== undefined && val !== '') {
                     data.append(key, val);
