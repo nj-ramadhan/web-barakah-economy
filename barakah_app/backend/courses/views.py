@@ -13,6 +13,9 @@ from django.conf import settings
 from django.shortcuts import render
 import csv
 from django.http import HttpResponse
+from django.utils.dateparse import parse_datetime
+from django.utils import timezone
+import pytz
 
 class CourseViewSet(viewsets.ModelViewSet):
     serializer_class = CourseSerializer
@@ -237,17 +240,60 @@ class CourseViewSet(viewsets.ModelViewSet):
             writer.writerow(header)
             
             # Rows
+            jakarta_tz = pytz.timezone('Asia/Jakarta')
+            
             for s in students:
+                # Localize enrolled_at
+                enrolled_at_str = s['enrolled_at']
+                dt_enrolled = parse_datetime(enrolled_at_str) if isinstance(enrolled_at_str, str) else enrolled_at_str
+                
+                if dt_enrolled:
+                    if isinstance(dt_enrolled, str):
+                        dt_enrolled = parse_datetime(dt_enrolled)
+                    
+                    if dt_enrolled and timezone.is_naive(dt_enrolled):
+                        dt_enrolled = timezone.make_aware(dt_enrolled)
+                    
+                    if dt_enrolled:
+                        dt_enrolled = dt_enrolled.astimezone(jakarta_tz)
+                        enrolled_at_formatted = dt_enrolled.strftime('%Y-%m-%d %H.%M')
+                    else:
+                        enrolled_at_formatted = str(enrolled_at_str)
+                else:
+                    enrolled_at_formatted = str(enrolled_at_str)
+
                 row = [
                     s['full_name'],
                     s['email'],
                     s['phone'],
-                    s['enrolled_at'].strftime('%Y-%m-%d %H:%M') if hasattr(s['enrolled_at'], 'strftime') else str(s['enrolled_at'])
+                    enrolled_at_formatted
                 ]
                 
                 for i, m in enumerate(materials):
                     p = s['progress'][i]
-                    status = 'Selesai' if p['is_completed'] else 'Belum'
+                    if p['is_completed']:
+                        comp_at_str = p.get('completed_at')
+                        if comp_at_str:
+                            dt_comp = parse_datetime(comp_at_str) if isinstance(comp_at_str, str) else comp_at_str
+                            if dt_comp:
+                                if isinstance(dt_comp, str):
+                                    dt_comp = parse_datetime(dt_comp)
+                                
+                                if dt_comp and timezone.is_naive(dt_comp):
+                                    dt_comp = timezone.make_aware(dt_comp)
+                                
+                                if dt_comp:
+                                    dt_comp = dt_comp.astimezone(jakarta_tz)
+                                    status = f"Selesai ({dt_comp.strftime('%H.%M')})"
+                                else:
+                                    status = 'Selesai (00.00)'
+                            else:
+                                status = 'Selesai (00.00)'
+                        else:
+                            status = 'Selesai (00.00)'
+                    else:
+                        status = 'Belum'
+                        
                     row.append(status)
                     if m['material_type'] == 'quiz':
                         row.append(p['quiz_score'] if p['quiz_score'] is not None else '-')

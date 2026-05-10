@@ -138,8 +138,10 @@ const DashboardEcourseProgressPage = () => {
                                                                     SKOR: {p.quiz_score}%
                                                                 </button>
                                                             )}
-                                                            <p className="text-[8px] text-gray-300 font-bold">
-                                                                {new Date(p.completed_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
+                                                            <p className="text-[8px] text-gray-400 font-bold mt-0.5">
+                                                                {new Date(p.completed_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                                                <span className="mx-1 opacity-30">|</span>
+                                                                {new Date(p.completed_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }).replace(':', '.')}
                                                             </p>
                                                         </div>
                                                     ) : (
