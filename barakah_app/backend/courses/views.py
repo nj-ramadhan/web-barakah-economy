@@ -176,9 +176,9 @@ class CourseViewSet(viewsets.ModelViewSet):
                 profile = getattr(e.user, 'profile', None)
                 user_info = {
                     'user_id': e.user.id,
-                    'full_name': profile.name_full if profile else e.buyer_name or e.user.username,
+                    'full_name': profile.name_full if (profile and profile.name_full) else e.buyer_name or e.user.username,
                     'email': e.user.email,
-                    'phone': profile.phone if profile else e.buyer_phone,
+                    'phone': e.user.phone if (e.user and e.user.phone) else e.buyer_phone,
                     'enrolled_at': e.enrolled_at,
                     'progress': []
                 }
