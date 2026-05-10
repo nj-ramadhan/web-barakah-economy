@@ -15,7 +15,7 @@ import csv
 from django.http import HttpResponse
 from django.utils.dateparse import parse_datetime
 from django.utils import timezone
-import pytz
+from zoneinfo import ZoneInfo
 
 class CourseViewSet(viewsets.ModelViewSet):
     serializer_class = CourseSerializer
@@ -240,7 +240,7 @@ class CourseViewSet(viewsets.ModelViewSet):
             writer.writerow(header)
             
             # Rows
-            jakarta_tz = pytz.timezone('Asia/Jakarta')
+            jakarta_tz = ZoneInfo('Asia/Jakarta')
             
             for s in students:
                 # Localize enrolled_at
