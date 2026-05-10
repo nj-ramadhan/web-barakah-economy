@@ -37,14 +37,14 @@ const DashboardMeetingsPage = () => {
     return (
         <div className="min-h-screen bg-gray-50 flex flex-col pt-16 pb-20">
             <Helmet>
-                <title>Manajemen Rapat | BARAKAH APP</title>
+                <title>Manajemen Agenda Internal | BARAKAH APP</title>
             </Helmet>
             <Header />
 
             <main className="flex-1 max-w-4xl mx-auto w-full px-4 py-8">
                 <div className="flex justify-between items-center mb-8">
                     <div>
-                        <h1 className="text-2xl font-black text-gray-900 leading-tight">Manajemen Rapat</h1>
+                        <h1 className="text-2xl font-black text-gray-900 leading-tight">Manajemen Agenda Internal</h1>
                         <p className="text-sm text-gray-500 font-medium">Kelola rapat internal dan daftar kehadiran</p>
                     </div>
                     <Link 

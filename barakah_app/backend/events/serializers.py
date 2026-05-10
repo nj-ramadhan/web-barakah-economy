@@ -208,19 +208,41 @@ class EventSerializer(serializers.ModelSerializer):
         fields = '__all__'
         read_only_fields = ('created_by', 'slug', 'created_at', 'updated_at')
 
+    def calamities_cleanup(self, data):
+        """Standardize empty strings to None for numeric and datetime fields."""
+        numeric_fields = ['capacity', 'price_fixed']
+        datetime_fields = ['start_date', 'end_date', 'visible_at', 'registration_start_at']
+        
+        for field in numeric_fields:
+            if field in data and (data[field] == '' or data[field] == 'null'):
+                data[field] = 0 if field == 'price_fixed' else None
+        
+        for field in datetime_fields:
+            if field in data and (data[field] == '' or data[field] == 'null'):
+                data[field] = None
+        return data
+
     def to_internal_value(self, data):
         # Handle JSON strings sent via FormData (Multipart)
         import json
         mutable_data = data.copy() if hasattr(data, 'copy') else data
         
+        # Clean up empty strings for numbers/dates
+        mutable_data = self.calamities_cleanup(mutable_data)
+        
         for field in ['form_fields', 'speakers', 'sessions', 'price_variations']:
             if field in mutable_data and isinstance(mutable_data[field], str):
                 try:
-                    mutable_data[field] = json.loads(mutable_data[field])
+                    stripped = mutable_data[field].strip()
+                    if stripped and stripped != 'null' and stripped != 'undefined':
+                        mutable_data[field] = json.loads(stripped)
+                    else:
+                        mutable_data[field] = []
                 except (json.JSONDecodeError, TypeError):
-                    pass
+                    mutable_data[field] = []
         
         return super().to_internal_value(mutable_data)
+ bitumen_cleanup = calamities_cleanup # Just a dummy ref for the regex if needed
 
     @transaction.atomic
     def create(self, validated_data):

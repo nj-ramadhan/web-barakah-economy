@@ -90,6 +90,23 @@ class User(AbstractUser):
     def __str__(self):
         return f"{self.username} ({self.get_role_display()})"
 
+    @property
+    def total_meetings_present(self):
+        from meetings.models import MeetingParticipant
+        return MeetingParticipant.objects.filter(user=self, status='present').count()
+
+    @property
+    def total_meetings_absent(self):
+        from meetings.models import MeetingParticipant
+        return MeetingParticipant.objects.filter(user=self, status='absent').count()
+
+    def get_meeting_attendance_summary(self):
+        return {
+            'present': self.total_meetings_present,
+            'absent': self.total_meetings_absent,
+            'total': self.total_meetings_present + self.total_meetings_absent
+        }
+
     def has_menu_access(self, menu_key):
         """Check if user has access to a specific menu via custom_roles."""
         if not self.is_authenticated:

@@ -54,6 +54,10 @@ class UserAdminSerializer(serializers.ModelSerializer):
     accessible_menus = serializers.SerializerMethodField()
     activities = serializers.SerializerMethodField()
     event_attendance_detail = serializers.SerializerMethodField()
+    meeting_attendance_summary = serializers.SerializerMethodField()
+
+    def get_meeting_attendance_summary(self, obj):
+        return obj.get_meeting_attendance_summary()
 
     def get_accessible_menus(self, obj):
         if not obj:
@@ -156,6 +160,7 @@ class UserAdminSerializer(serializers.ModelSerializer):
             'activities',
             'event_attendance_detail',
             'event_attendance_json',
+            'meeting_attendance_summary',
         )
 
     def update(self, instance, validated_data):

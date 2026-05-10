@@ -457,7 +457,7 @@ const DashboardUserPage = () => {
                             <span className="material-icons">arrow_back</span>
                         </button>
                         <div>
-                            <h1 className="text-2xl font-bold text-gray-900">Manajemen User</h1>
+                            <h1 className="text-2xl font-bold text-gray-900">Manajemen User & Performa</h1>
                             <p className="text-sm text-gray-500">{totalCount} pengguna terdaftar</p>
                         </div>
                     </div>
@@ -823,6 +823,25 @@ const DashboardUserPage = () => {
                                     <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100">
                                         <p className="text-[10px] font-bold text-purple-700 uppercase mb-2">Digital Product</p>
                                         <ActivityList items={selectedUser.activities?.digital_products} />
+                                    </div>
+                                    <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100">
+                                        <p className="text-[10px] font-bold text-teal-700 uppercase mb-2">Agenda Internal (Kehadiran)</p>
+                                        <div className="space-y-2 mt-3">
+                                            <div className="flex justify-between items-center">
+                                                <span className="text-[11px] text-gray-500 font-medium">Total Hadir</span>
+                                                <span className="text-[11px] font-bold text-green-700 bg-green-50 px-2 py-0.5 rounded-lg border border-green-100">{selectedUser.meeting_attendance_summary?.total_present || 0}</span>
+                                            </div>
+                                            <div className="flex justify-between items-center">
+                                                <span className="text-[11px] text-gray-500 font-medium">Total Absen</span>
+                                                <span className="text-[11px] font-bold text-red-700 bg-red-50 px-2 py-0.5 rounded-lg border border-red-100">{selectedUser.meeting_attendance_summary?.total_absent || 0}</span>
+                                            </div>
+                                            <div className="pt-2 border-t border-gray-200 flex justify-between items-center">
+                                                <span className="text-[10px] font-black text-gray-400 uppercase">Persentase Kehadiran</span>
+                                                <span className={`text-[12px] font-black ${selectedUser.meeting_attendance_summary?.attendance_rate >= 80 ? 'text-green-600' : 'text-orange-600'}`}>
+                                                    {selectedUser.meeting_attendance_summary?.attendance_rate || 0}%
+                                                </span>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>

@@ -806,7 +806,7 @@ const DashboardPage = () => {
                                     to: '/dashboard/meetings',
                                     icon: 'groups',
                                     color: 'blue',
-                                    title: 'Manajemen Rapat',
+                                    title: 'Manajemen Agenda Internal',
                                     desc: 'Kelola agenda rapat internal dan absensi (Admin)'
                                 }
                             ]

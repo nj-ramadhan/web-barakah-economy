@@ -51,7 +51,7 @@ const MeetingManagementPage = () => {
                 setParticipants(partRes.data);
             } catch (err) {
                 console.error(err);
-                setError('Gagal memuat data manajemen rapat.');
+                setError('Gagal memuat data manajemen agenda internal.');
             } finally {
                 setLoading(false);
             }

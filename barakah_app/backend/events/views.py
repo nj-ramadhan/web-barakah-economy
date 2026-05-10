@@ -139,11 +139,14 @@ class EventViewSet(viewsets.ModelViewSet):
             for field in ['form_fields', 'speakers', 'sessions', 'price_variations', 'field_layouts']:
                 if field in data and isinstance(data[field], str):
                     stripped = data[field].strip()
-                    if stripped and stripped != 'null':
+                    if stripped and stripped != 'null' and stripped != 'undefined' and stripped != '':
                         try:
                             data[field] = json.loads(stripped)
                         except json.JSONDecodeError:
                             logger.warning(f"Failed to parse {field} as JSON: {stripped}")
+                            data[field] = []
+                    else:
+                        data[field] = []
                             
             return data
         except Exception as e:
@@ -152,10 +155,16 @@ class EventViewSet(viewsets.ModelViewSet):
 
     def create(self, request, *args, **kwargs):
         try:
+            logger.info(f"Event creation attempt by user: {request.user.username} (ID: {request.user.id}, Role: {request.user.role})")
             data = self._get_parsed_data(request)
             serializer = self.get_serializer(data=data)
-            serializer.is_valid(raise_exception=True)
+            
+            if not serializer.is_valid():
+                logger.warning(f"Event validation failed: {serializer.errors}")
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
             self.perform_create(serializer)
+            logger.info(f"Event created successfully: {serializer.data.get('slug')}")
             headers = self.get_success_headers(serializer.data)
             return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
         except serializers.ValidationError as e:
