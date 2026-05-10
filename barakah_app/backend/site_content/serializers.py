@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Partner, Testimonial, Activity, AboutUs, AboutUsLegalDocument, Personnel, PersonnelSocialMedia, Announcement
+from .models import Partner, Testimonial, Activity, AboutUs, AboutUsLegalDocument, Personnel, PersonnelSocialMedia, Announcement, HeroBanner
 
 class AnnouncementSerializer(serializers.ModelSerializer):
     type_display = serializers.CharField(source='get_type_display', read_only=True)
@@ -59,4 +59,9 @@ class TestimonialSerializer(serializers.ModelSerializer):
 class ActivitySerializer(serializers.ModelSerializer):
     class Meta:
         model = Activity
+        fields = '__all__'
+
+class HeroBannerSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = HeroBanner
         fields = '__all__'

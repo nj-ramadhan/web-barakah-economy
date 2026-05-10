@@ -134,3 +134,20 @@ class Announcement(models.Model):
 
     def __str__(self):
         return f"[{self.get_type_display()}] {self.title}"
+
+class HeroBanner(models.Model):
+    title = models.CharField(max_length=255)
+    subtitle = models.CharField(max_length=255, blank=True, null=True)
+    image = models.ImageField(upload_to='hero_banners/', blank=True, null=True)
+    video = models.FileField(upload_to='hero_banners/videos/', blank=True, null=True)
+    target_url = models.URLField(blank=True, null=True, help_text="Link to redirect when clicked")
+    order = models.PositiveIntegerField(default=0)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['order', '-created_at']
+
+    def __str__(self):
+        return self.title

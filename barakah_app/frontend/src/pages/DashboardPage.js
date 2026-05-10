@@ -732,6 +732,15 @@ const DashboardPage = () => {
                                     desc: 'Kelola pop-up pengumuman & iklan aplikasi (Admin)'
                                 },
                                 {
+                                    id: 'hero_banners',
+                                    access: hasAccess('announcements'),
+                                    to: '/dashboard/admin/hero-banners',
+                                    icon: 'view_carousel',
+                                    color: 'indigo',
+                                    title: 'Manajemen Hero Banner',
+                                    desc: 'Kelola slider gambar & video di landing page (Admin)'
+                                },
+                                {
                                     id: 'activities',
                                     access: hasAccess('activities'),
                                     to: '/dashboard/admin/activities',

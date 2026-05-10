@@ -74,8 +74,11 @@ const DesktopLandingPage = () => {
     const [activities, setActivities] = useState([]);
     const [partners, setPartners] = useState([]);
     const [events, setEvents] = useState([]);
+    const [heroBanners, setHeroBanners] = useState([]);
     const [aboutUs, setAboutUs] = useState(null);
     const [selectedPartner, setSelectedPartner] = useState(null);
+    const [isFullscreen, setIsFullscreen] = useState(false);
+    const [swiperInstance, setSwiperInstance] = useState(null);
 
     useEffect(() => {
         // Fetch data
@@ -97,10 +100,11 @@ const DesktopLandingPage = () => {
                     getSafe(axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/site-content/testimonials/`)),
                     getSafe(axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/site-content/activities/`)),
                     getSafe(axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/site-content/partners/`)),
-                    getSafe(axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/events/landing/`))
+                    getSafe(axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/events/landing/`)),
+                    getSafe(axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/site-content/hero-banners/`))
                 ]);
 
-                const [campRes, prodRes, courseRes, articleRes, digiRes, sellerRes, testRes, actRes, partnerRes, eventRes] = results;
+                const [campRes, prodRes, courseRes, articleRes, digiRes, sellerRes, testRes, actRes, partnerRes, eventRes, heroRes] = results;
 
                 setCampaigns(campRes.data.results ? campRes.data.results.slice(0, 8) : campRes.data.slice(0, 8));
                 setProducts(prodRes.data.results ? prodRes.data.results.slice(0, 8) : prodRes.data.slice(0, 8));
@@ -112,6 +116,7 @@ const DesktopLandingPage = () => {
                 setActivities(Array.isArray(actRes.data) ? actRes.data.slice(0, 3) : []);
                 setPartners(Array.isArray(partnerRes.data) ? partnerRes.data : []);
                 setEvents(Array.isArray(eventRes.data) ? eventRes.data : []);
+                setHeroBanners(Array.isArray(heroRes.data) ? heroRes.data.filter(b => b.is_active) : []);
                 
                 // Fetch About Us explicitly
                 const aboutDataRes = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/site-content/about-us/`).catch(() => ({ data: [] }));
@@ -122,6 +127,14 @@ const DesktopLandingPage = () => {
             }
         };
         fetchData();
+    }, []);
+
+    useEffect(() => {
+        const handleEsc = (e) => {
+            if (e.key === 'Escape') setIsFullscreen(false);
+        };
+        window.addEventListener('keydown', handleEsc);
+        return () => window.removeEventListener('keydown', handleEsc);
     }, []);
 
     return (
@@ -160,52 +173,105 @@ const DesktopLandingPage = () => {
                         </div>
 
                         {/* RIGHT: 5/12 (approx) */}
-                        <div className="md:w-[42%] w-full">
-                            <div className="relative group">
-                                <div className="absolute -inset-4 bg-gradient-to-tr from-green-300 to-blue-300 rounded-[2.5rem] blur-2xl opacity-20 group-hover:opacity-30 transition duration-500"></div>
-                                <div className="relative bg-white p-2 rounded-[2rem] shadow-2xl border border-white overflow-hidden">
-                                    <Swiper
-                                        modules={[Autoplay, Pagination]}
-                                        pagination={{ clickable: true }}
-                                        autoplay={{ delay: 3500, disableOnInteraction: false }}
-                                        loop={[activities[0], articles[0], campaigns[0], courses[0], products[0], digitalProducts[0]].filter(Boolean).length > 2}
-                                        className="rounded-[1.8rem] overflow-hidden"
-                                    >
-                                        {/* Dynamic Carousel Items Picker */}
-                                        {[
-                                            activities[0] && { type: 'Kegiatan', title: activities[0].title, img: activities[0].header_image, link: `/kegiatan/${activities[0].id}` },
-                                            events.find(e => e.visibility === 'public') && { 
-                                                type: 'Event', 
-                                                title: events.find(e => e.visibility === 'public').title, 
-                                                img: events.find(e => e.visibility === 'public').thumbnail || events.find(e => e.visibility === 'public').header_image, 
-                                                link: `/event/${events.find(e => e.visibility === 'public').slug}` 
-                                            },
-                                            articles[0] && { type: 'Artikel', title: articles[0].title, img: articles[0].images?.[0]?.path, link: `/articles/${articles[0].id}` },
-                                            campaigns[0] && { type: 'Charity', title: campaigns[0].title, img: campaigns[0].thumbnail, link: `/kampanye/${campaigns[0].slug || campaigns[0].id}` },
-                                            courses[0] && { type: 'Academy', title: courses[0].title, img: courses[0].thumbnail, link: `/kelas/${courses[0].slug || courses[0].id}` },
-                                            products[0] && { type: 'E-commerce', title: products[0].title, img: products[0].thumbnail, link: `/produk/${products[0].slug || products[0].id}` },
-                                            digitalProducts[0] && { type: 'Digital', title: digitalProducts[0].title, img: digitalProducts[0].thumbnail, link: `/digital-products/${digitalProducts[0].slug}` }
-                                        ].filter(Boolean).slice(0, 5).map((item, idx) => (
-                                            <SwiperSlide key={idx}>
-                                                <div className="relative h-[420px] group/slide cursor-pointer" onClick={() => navigate(item.link)}>
-                                                    <img
-                                                        src={getMediaUrl(item.img)}
-                                                        alt={item.title}
-                                                        className="w-full h-full object-cover transition-transform duration-[3s] group-hover/slide:scale-110"
-                                                    />
-                                                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent"></div>
-                                                    <div className="absolute bottom-0 left-0 p-10 w-full text-white">
-                                                        <span className="inline-block bg-white/20 backdrop-blur-md px-4 py-1.5 rounded-full text-[10px] font-black uppercase mb-4 border border-white/30 tracking-widest">
-                                                            {item.type} Terbaru
-                                                        </span>
-                                                        <h3 className="text-2xl font-black leading-tight line-clamp-2 hover:text-green-300 transition-colors">
-                                                            {item.title}
-                                                        </h3>
-                                                    </div>
-                                                </div>
-                                            </SwiperSlide>
-                                        ))}
-                                    </Swiper>
+                        <div className={`md:w-[42%] w-full transition-all duration-700 ${isFullscreen ? 'fixed inset-0 z-[1000] !w-full !h-full bg-black flex items-center justify-center p-0 md:p-10' : ''}`}>
+                            <div className={`relative group w-full ${isFullscreen ? 'max-w-7xl mx-auto' : ''}`}>
+                                {!isFullscreen && (
+                                    <div className="absolute -inset-4 bg-gradient-to-tr from-green-300 to-blue-300 rounded-[2.5rem] blur-2xl opacity-20 group-hover:opacity-30 transition duration-500"></div>
+                                )}
+                                <div className={`relative bg-white ${isFullscreen ? 'p-0 rounded-3xl' : 'p-2 rounded-[2rem]'} shadow-2xl border border-white/10 overflow-hidden`}>
+                                    <div className="relative aspect-video w-full overflow-hidden rounded-[1.8rem]">
+                                        <Swiper
+                                            modules={[Autoplay, Pagination, Navigation]}
+                                            pagination={{ clickable: true }}
+                                            navigation={isFullscreen}
+                                            autoplay={{ delay: 5000, disableOnInteraction: false }}
+                                            onSwiper={setSwiperInstance}
+                                            loop={heroBanners.length > 1}
+                                            className="w-full h-full"
+                                        >
+                                            {heroBanners.length > 0 ? (
+                                                heroBanners.map((banner) => (
+                                                    <SwiperSlide key={banner.id}>
+                                                        <div className="relative w-full h-full group/slide overflow-hidden cursor-pointer">
+                                                            {banner.video ? (
+                                                                <video 
+                                                                    src={getMediaUrl(banner.video)} 
+                                                                    className="w-full h-full object-cover"
+                                                                    autoPlay
+                                                                    muted
+                                                                    loop={false}
+                                                                    onPlay={() => swiperInstance?.autoplay.stop()}
+                                                                    onEnded={() => swiperInstance?.autoplay.start()}
+                                                                    onClick={() => banner.target_url && window.open(banner.target_url, '_blank')}
+                                                                />
+                                                            ) : (
+                                                                <img
+                                                                    src={getMediaUrl(banner.image)}
+                                                                    alt={banner.title}
+                                                                    className="w-full h-full object-cover transition-transform duration-[5s] group-hover/slide:scale-110"
+                                                                    onClick={() => banner.target_url && window.open(banner.target_url, '_blank')}
+                                                                />
+                                                            )}
+                                                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none"></div>
+                                                            <div className="absolute bottom-0 left-0 p-6 md:p-10 w-full text-white pointer-events-none">
+                                                                <h3 className="text-xl md:text-3xl font-black leading-tight mb-2">
+                                                                    {banner.title}
+                                                                </h3>
+                                                                <p className="text-xs md:text-sm opacity-80 line-clamp-2 max-w-lg">
+                                                                    {banner.subtitle}
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                    </SwiperSlide>
+                                                ))
+                                            ) : (
+                                                /* Fallback to old dynamic logic if no hero banners configured */
+                                                [
+                                                    activities[0] && { type: 'Kegiatan', title: activities[0].title, img: activities[0].header_image, link: `/kegiatan/${activities[0].id}` },
+                                                    events.find(e => e.visibility === 'public') && { 
+                                                        type: 'Event', 
+                                                        title: events.find(e => e.visibility === 'public').title, 
+                                                        img: events.find(e => e.visibility === 'public').thumbnail || events.find(e => e.visibility === 'public').header_image, 
+                                                        link: `/event/${events.find(e => e.visibility === 'public').slug}` 
+                                                    },
+                                                    articles[0] && { type: 'Artikel', title: articles[0].title, img: articles[0].images?.[0]?.path, link: `/articles/${articles[0].id}` },
+                                                    campaigns[0] && { type: 'Charity', title: campaigns[0].title, img: campaigns[0].thumbnail, link: `/kampanye/${campaigns[0].slug || campaigns[0].id}` },
+                                                    courses[0] && { type: 'Academy', title: courses[0].title, img: courses[0].thumbnail, link: `/kelas/${courses[0].slug || courses[0].id}` },
+                                                    products[0] && { type: 'E-commerce', title: products[0].title, img: products[0].thumbnail, link: `/produk/${products[0].slug || products[0].id}` },
+                                                    digitalProducts[0] && { type: 'Digital', title: digitalProducts[0].title, img: digitalProducts[0].thumbnail, link: `/digital-products/${digitalProducts[0].slug}` }
+                                                ].filter(Boolean).slice(0, 5).map((item, idx) => (
+                                                    <SwiperSlide key={idx}>
+                                                        <div className="relative w-full h-full group/slide cursor-pointer" onClick={() => navigate(item.link)}>
+                                                            <img
+                                                                src={getMediaUrl(item.img)}
+                                                                alt={item.title}
+                                                                className="w-full h-full object-cover transition-transform duration-[3s] group-hover/slide:scale-110"
+                                                            />
+                                                            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent"></div>
+                                                            <div className="absolute bottom-0 left-0 p-8 w-full text-white">
+                                                                <span className="inline-block bg-white/20 backdrop-blur-md px-4 py-1.5 rounded-full text-[10px] font-black uppercase mb-4 border border-white/30 tracking-widest">
+                                                                    {item.type} Terbaru
+                                                                </span>
+                                                                <h3 className="text-xl md:text-2xl font-black leading-tight line-clamp-2">
+                                                                    {item.title}
+                                                                </h3>
+                                                            </div>
+                                                        </div>
+                                                    </SwiperSlide>
+                                                ))
+                                            )}
+                                        </Swiper>
+
+                                        {/* Fullscreen Toggle Button */}
+                                        <button 
+                                            onClick={() => setIsFullscreen(!isFullscreen)}
+                                            className="absolute top-4 right-4 z-[10] w-10 h-10 bg-black/30 backdrop-blur-md border border-white/20 text-white rounded-full flex items-center justify-center hover:bg-black/50 transition-all active:scale-90"
+                                        >
+                                            <span className="material-icons text-lg">
+                                                {isFullscreen ? 'fullscreen_exit' : 'fullscreen'}
+                                            </span>
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>

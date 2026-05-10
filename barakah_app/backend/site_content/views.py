@@ -2,8 +2,12 @@ from django.db import models
 from rest_framework import viewsets, permissions, status, response
 from rest_framework.decorators import action
 from rest_framework_simplejwt.authentication import JWTAuthentication
-from .models import Partner, Testimonial, Activity, AboutUs, AboutUsLegalDocument, Personnel, PersonnelSocialMedia, Announcement
-from .serializers import PartnerSerializer, TestimonialSerializer, ActivitySerializer, AboutUsSerializer, AboutUsLegalDocumentSerializer, PersonnelSerializer, PersonnelSocialMediaSerializer, AnnouncementSerializer
+from .models import Partner, Testimonial, Activity, AboutUs, AboutUsLegalDocument, Personnel, PersonnelSocialMedia, Announcement, HeroBanner
+from .serializers import (
+    PartnerSerializer, TestimonialSerializer, ActivitySerializer, AboutUsSerializer, 
+    AboutUsLegalDocumentSerializer, PersonnelSerializer, PersonnelSocialMediaSerializer, 
+    AnnouncementSerializer, HeroBannerSerializer
+)
 
 class AnnouncementViewSet(viewsets.ModelViewSet):
     queryset = Announcement.objects.all().order_by('-created_at')
@@ -144,6 +148,22 @@ class ActivityViewSet(viewsets.ModelViewSet):
         instance.refresh_from_db()
         serializer = self.get_serializer(instance)
         return response.Response(serializer.data)
+
+class HeroBannerViewSet(viewsets.ModelViewSet):
+    queryset = HeroBanner.objects.all()
+    serializer_class = HeroBannerSerializer
+    authentication_classes = [JWTAuthentication]
+
+    def get_permissions(self):
+        if self.action in ['list', 'retrieve']:
+            return [permissions.AllowAny()]
+        return [permissions.IsAdminUser()]
+
+    def get_queryset(self):
+        qs = HeroBanner.objects.all()
+        if self.action == 'list' and not self.request.user.is_staff:
+            qs = qs.filter(is_active=True)
+        return qs.order_by('order', '-created_at')
 
 class ActivityShareView(viewsets.ViewSet):
     """
