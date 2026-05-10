@@ -233,9 +233,24 @@ class CourseViewSet(viewsets.ModelViewSet):
             # Header
             header = ['Nama Siswa', 'Email', 'WhatsApp', 'Tanggal Terdaftar']
             for m in materials:
-                header.append(f"{m['title']} ({m['material_type']})")
                 if m['material_type'] == 'quiz':
+                    quiz_data = m.get('quiz_data')
+                    if isinstance(quiz_data, str) and quiz_data:
+                        import json
+                        try: quiz_data = json.loads(quiz_data)
+                        except: quiz_data = {}
+                    
+                    questions = (quiz_data or {}).get('questions', [])
+                    for idx, q in enumerate(questions):
+                        q_text = q.get('question', f'Soal {idx+1}')
+                        # Truncate if too long
+                        q_display = (q_text[:40] + '..') if len(q_text) > 40 else q_text
+                        header.append(f"Jwb: {q_display}")
+                        header.append(f"Kunci: {q_display}")
+                    
                     header.append(f"Skor {m['title']}")
+                else:
+                    header.append(f"{m['title']} ({m['material_type']})")
             
             writer.writerow(header)
             
@@ -271,32 +286,66 @@ class CourseViewSet(viewsets.ModelViewSet):
                 
                 for i, m in enumerate(materials):
                     p = s['progress'][i]
-                    if p['is_completed']:
-                        comp_at_str = p.get('completed_at')
-                        if comp_at_str:
-                            dt_comp = parse_datetime(comp_at_str) if isinstance(comp_at_str, str) else comp_at_str
-                            if dt_comp:
-                                if isinstance(dt_comp, str):
-                                    dt_comp = parse_datetime(dt_comp)
-                                
-                                if dt_comp and timezone.is_naive(dt_comp):
-                                    dt_comp = timezone.make_aware(dt_comp)
-                                
+                    
+                    if m['material_type'] == 'quiz':
+                        quiz_data = m.get('quiz_data')
+                        if isinstance(quiz_data, str) and quiz_data:
+                            import json
+                            try: quiz_data = json.loads(quiz_data)
+                            except: quiz_data = {}
+                        
+                        questions = (quiz_data or {}).get('questions', [])
+                        answers = p.get('quiz_answers', {}) or {}
+                        
+                        for q in questions:
+                            q_id = str(q.get('id'))
+                            ans_idx = answers.get(q_id)
+                            
+                            # Student Answer
+                            if ans_idx is not None:
+                                try:
+                                    ans_text = q['options'][int(ans_idx)]
+                                except:
+                                    ans_text = f"Opsi {ans_idx}"
+                            else:
+                                ans_text = "-"
+                            row.append(ans_text)
+                            
+                            # Correct Answer
+                            try:
+                                correct_idx = q.get('correct_index')
+                                correct_text = q['options'][int(correct_idx)]
+                            except:
+                                correct_text = "-"
+                            row.append(correct_text)
+                        
+                        # Add Score at the end of quiz columns
+                        row.append(p.get('quiz_score') if p.get('quiz_score') is not None else '-')
+                    else:
+                        if p['is_completed']:
+                            comp_at_str = p.get('completed_at')
+                            if comp_at_str:
+                                dt_comp = parse_datetime(comp_at_str) if isinstance(comp_at_str, str) else comp_at_str
                                 if dt_comp:
-                                    dt_comp = dt_comp.astimezone(jakarta_tz)
-                                    status = f"Selesai ({dt_comp.strftime('%H.%M')})"
+                                    if isinstance(dt_comp, str):
+                                        dt_comp = parse_datetime(dt_comp)
+                                    
+                                    if dt_comp and timezone.is_naive(dt_comp):
+                                        dt_comp = timezone.make_aware(dt_comp)
+                                    
+                                    if dt_comp:
+                                        dt_comp = dt_comp.astimezone(jakarta_tz)
+                                        status = f"Selesai ({dt_comp.strftime('%H.%M')})"
+                                    else:
+                                        status = 'Selesai (00.00)'
                                 else:
                                     status = 'Selesai (00.00)'
                             else:
                                 status = 'Selesai (00.00)'
                         else:
-                            status = 'Selesai (00.00)'
-                    else:
-                        status = 'Belum'
-                        
-                    row.append(status)
-                    if m['material_type'] == 'quiz':
-                        row.append(p['quiz_score'] if p['quiz_score'] is not None else '-')
+                            status = 'Belum'
+                            
+                        row.append(status)
                 
                 writer.writerow(row)
                 
