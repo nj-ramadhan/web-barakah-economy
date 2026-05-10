@@ -53,7 +53,9 @@ const EventSubmissionPage = () => {
         documentation_frame_1_1: null,
         attachment_file: null,
         bib_template_image: null,
-        _bib_preview: null
+        _bib_preview: null,
+        price_variations: [],
+        free_for_label_ids: []
     });
     const [availableLabels, setAvailableLabels] = useState([]);
     const [speakers, setSpeakers] = useState([]);

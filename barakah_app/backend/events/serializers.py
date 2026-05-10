@@ -213,7 +213,7 @@ class EventSerializer(serializers.ModelSerializer):
         import json
         mutable_data = data.copy() if hasattr(data, 'copy') else data
         
-        for field in ['form_fields', 'speakers', 'sessions']:
+        for field in ['form_fields', 'speakers', 'sessions', 'price_variations']:
             if field in mutable_data and isinstance(mutable_data[field], str):
                 try:
                     mutable_data[field] = json.loads(mutable_data[field])
