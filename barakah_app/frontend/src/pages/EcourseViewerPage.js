@@ -16,16 +16,50 @@ const QuizViewer = ({ quizData, onComplete, onReset, isCompleted }) => {
     const [score, setScore] = useState(0);
     const [showAnswers, setShowAnswers] = useState(false);
 
-    let questions = quizData?.questions || [];
-    if (typeof quizData === 'string' && quizData) {
-        try { 
-            const parsed = JSON.parse(quizData);
-            questions = parsed.questions || [];
-        } catch(e) { questions = []; }
+    // Robust data extraction
+    let questions = [];
+    let settings = {};
+
+    try {
+        if (quizData) {
+            let dataObj = quizData;
+            
+            // If quizData itself is stringified
+            if (typeof dataObj === 'string') {
+                try { dataObj = JSON.parse(dataObj); } catch(e) {}
+            }
+
+            // Look for questions/settings in multiple possible structures
+            if (dataObj.questions) {
+                // Case: quizData is already the quiz data object
+                questions = dataObj.questions;
+                settings = dataObj.settings || {};
+            } else if (dataObj.quiz_data) {
+                // Case: quizData is the material object containing quiz_data
+                let inner = dataObj.quiz_data;
+                if (typeof inner === 'string') {
+                    try { inner = JSON.parse(inner); } catch(e) {}
+                }
+                questions = inner.questions || [];
+                settings = inner.settings || {};
+            }
+        }
+    } catch (err) {
+        console.error("Error extracting quiz data:", err);
     }
-    const settings = (typeof quizData === 'string' ? {} : quizData?.settings) || {};
-    const passingScore = quizData?.passing_score !== undefined ? quizData.passing_score : (settings.passing_score || 0);
+
+    if (!Array.isArray(questions)) questions = [];
+
+    const passingScore = quizData?.passing_score || settings.passing_score || 0;
     const allowRetake = quizData?.allow_retake !== undefined ? quizData.allow_retake : (settings.allow_reset ?? true);
+
+    // Reset quiz state when switching between different quizzes
+    useEffect(() => {
+        setCurrentStep('start');
+        setUserAnswers({});
+        setScore(0);
+        setShowAnswers(false);
+    }, [quizData?.id]);
 
     const startQuiz = () => {
         if (questions.length === 0) {
