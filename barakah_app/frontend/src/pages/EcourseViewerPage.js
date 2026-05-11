@@ -72,12 +72,22 @@ const QuizViewer = ({ quizData, onComplete, onReset, isCompleted }) => {
                 </div>
                 <h3 className="text-xl font-black text-gray-900 mb-2">Siap untuk Kuis?</h3>
                 <p className="text-sm text-gray-500 mb-8 max-w-sm mx-auto">Selesaikan kuis ini untuk menguji pemahaman Anda. {passingScore > 0 ? `Minimal skor kelulusan adalah ${passingScore}%.` : 'Kuis ini tidak memiliki skor minimum.'}</p>
-                <button 
-                    onClick={startQuiz}
-                    className="bg-purple-600 text-white px-8 py-3.5 rounded-2xl font-black text-sm shadow-xl shadow-purple-100 hover:bg-purple-700 transition transform hover:scale-105"
-                >
-                    MULAI KUIS SEKARANG
-                </button>
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+                    <button 
+                        onClick={startQuiz}
+                        className="bg-purple-600 text-white px-8 py-3.5 rounded-2xl font-black text-sm shadow-xl shadow-purple-100 hover:bg-purple-700 transition transform hover:scale-105"
+                    >
+                        {isCompleted ? 'ULANGI KUIS' : 'MULAI KUIS SEKARANG'}
+                    </button>
+                    {isCompleted && (
+                        <button 
+                            onClick={onReset}
+                            className="bg-gray-900 text-white px-8 py-3.5 rounded-2xl font-black text-sm shadow-xl hover:bg-black transition transform hover:scale-105 flex items-center justify-center gap-2"
+                        >
+                            TASK SELANJUTNYA <span className="material-icons text-sm">arrow_forward</span>
+                        </button>
+                    )}
+                </div>
             </div>
         );
     }
@@ -139,22 +149,31 @@ const QuizViewer = ({ quizData, onComplete, onReset, isCompleted }) => {
             )}
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-8">
+                {isCompleted ? (
+                    <button 
+                        onClick={onReset}
+                        className="w-full sm:w-auto bg-green-700 text-white px-8 py-3 rounded-2xl font-black text-xs shadow-lg shadow-green-100 hover:bg-green-800 transition flex items-center justify-center gap-2"
+                    >
+                        TASK SELANJUTNYA <span className="material-icons text-sm">arrow_forward</span>
+                    </button>
+                ) : (passed && (
+                    <button 
+                        onClick={onReset}
+                        className="w-full sm:w-auto bg-gray-900 text-white px-8 py-3 rounded-2xl font-black text-xs shadow-lg hover:bg-black transition flex items-center justify-center gap-2"
+                    >
+                        TASK SELANJUTNYA <span className="material-icons text-sm">arrow_forward</span>
+                    </button>
+                ))}
+                
                 {allowRetake && !passed && (
                     <button 
                         onClick={startQuiz}
                         className="w-full sm:w-auto bg-purple-600 text-white px-8 py-3 rounded-2xl font-black text-xs shadow-lg shadow-purple-100 hover:bg-purple-700 transition"
                     >
-                        ULANGI KUIS
+                        {isCompleted ? 'COBA LAGI' : 'ULANGI KUIS'}
                     </button>
                 )}
-                {passed && (
-                    <button 
-                        onClick={onReset} // Using onReset as handleNext for now or passed from parent
-                        className="w-full sm:w-auto bg-gray-900 text-white px-8 py-3 rounded-2xl font-black text-xs shadow-lg hover:bg-black transition flex items-center justify-center gap-2"
-                    >
-                        TASK SELANJUTNYA <span className="material-icons text-sm">arrow_forward</span>
-                    </button>
-                )}
+                
                 {settings.show_correct_answers && !showAnswers && (
                     <button 
                         onClick={() => setShowAnswers(true)}
@@ -223,7 +242,7 @@ const EcourseViewerPage = () => {
                 try {
                     const progressRes = await api.get('/courses/progress/');
                     const courseProgress = (progressRes.data || [])
-                        .filter(p => p.course === courseRes.data.id || p.course_id === courseRes.data.id)
+                        .filter(p => (p.course === courseRes.data.id || p.course_id === courseRes.data.id) && p.is_completed)
                         .map(p => p.material);
                     setProgress(courseProgress);
                 } catch (pErr) {

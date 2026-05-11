@@ -751,30 +751,30 @@ class CourseMaterialViewSet(viewsets.ModelViewSet):
     parser_classes = [MultiPartParser, FormParser]
 
     def get_queryset(self):
+        user = self.request.user
+        if user.is_staff:
+            qs = CourseMaterial.objects.all()
+        else:
+            # Show materials if user is instructor OR enrolled
+            enrolled_course_ids = CourseEnrollment.objects.filter(
+                user=user, 
+                payment_status__in=['paid', 'verified']
+            ).values_list('course_id', flat=True)
+            
+            qs = CourseMaterial.objects.filter(
+                Q(course__instructor=user) | Q(course_id__in=enrolled_course_ids)
+            )
+            
         course_id = self.request.query_params.get('course_id')
-        if not course_id:
-            # If no course_id, instructors see their own materials, or return empty
-            return CourseMaterial.objects.filter(course__instructor=self.request.user)
+        if course_id:
+            qs = qs.filter(course_id=course_id)
             
-        course = get_object_or_404(Course, id=course_id)
-        
-        # Check if user is instructor or enrolled with paid/verified status
-        is_instructor = course.instructor == self.request.user
-        is_enrolled = CourseEnrollment.objects.filter(
-            user=self.request.user, 
-            course=course, 
-            payment_status__in=['paid', 'verified']
-        ).exists()
-        
-        if is_instructor or is_enrolled:
-            return CourseMaterial.objects.filter(course=course)
-            
-        return CourseMaterial.objects.none()
+        return qs.order_by('order', 'created_at')
 
     def perform_create(self, serializer):
         # Verify instructor
         course = serializer.validated_data.get('course')
-        if course.instructor != self.request.user:
+        if course.instructor != self.request.user and not self.request.user.is_staff:
             raise permissions.PermissionDenied("You are not the instructor of this course.")
         serializer.save()
 
