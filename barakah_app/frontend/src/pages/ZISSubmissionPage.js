@@ -57,6 +57,11 @@ const ZISSubmissionPage = () => {
     const handleFileChange = (e) => {
         const file = e.target.files[0];
         if (file) {
+            if (file.size > 5 * 1024 * 1024) {
+                alert('Ukuran file terlalu besar. Maksimal 5MB.');
+                e.target.value = null;
+                return;
+            }
             setProof(file);
             setPreview(URL.createObjectURL(file));
         }

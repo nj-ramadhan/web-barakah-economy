@@ -56,13 +56,22 @@ class ProductViewSet(viewsets.ModelViewSet):
                 Q(description__icontains=search)
             )
 
-        # Dashboard Management View
-        if self.request.query_params.get('manage') == 'true':
+        # Dashboard Management View or Detail Actions
+        is_detail = self.action in ['retrieve', 'update', 'partial_update', 'destroy']
+        if self.request.query_params.get('manage') == 'true' or is_detail:
             if not user.is_authenticated:
+                if is_detail: # Public can still retrieve approved products
+                    return queryset.filter(status='approved', is_active=True)
                 return queryset.none()
-            # Only superusers can see all products. Others (even role='admin') see only their own.
+                
+            # Superusers see everything
             if user.is_superuser:
                 return queryset
+                
+            # Owners see their own (all status)
+            if is_detail:
+                # For detail, show my own OR approved products
+                return queryset.filter(Q(seller=user) | Q(status='approved', is_active=True)).distinct()
             return queryset.filter(seller=user)
 
         # Public Marketplace View - Only show approved & active products

@@ -176,8 +176,20 @@ const EventDetailPage = () => {
         setResponses(prev => ({ ...prev, [fieldId]: value }));
     };
 
+    const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+
+    const validateFileSize = (file) => {
+        if (file && file.size > MAX_FILE_SIZE) {
+            alert(`Ukuran file "${file.name}" terlalu besar. Maksimal 5MB.`);
+            return false;
+        }
+        return true;
+    };
+
     const handleFileChange = (fieldId, file) => {
-        setFiles(prev => ({ ...prev, [fieldId]: file }));
+        if (file && validateFileSize(file)) {
+            setFiles(prev => ({ ...prev, [fieldId]: file }));
+        }
     };
 
     const handleCheckboxChange = (fieldId, option, checked) => {
@@ -1468,7 +1480,12 @@ const EventDetailPage = () => {
                                                                 type="file"
                                                                 required={paymentMethod === 'transfer'}
                                                                 accept="image/*"
-                                                                onChange={(e) => setPaymentProof(e.target.files[0])}
+                                                                onChange={(e) => {
+                                                                    const file = e.target.files[0];
+                                                                    if (file && validateFileSize(file)) {
+                                                                        setPaymentProof(file);
+                                                                    }
+                                                                }}
                                                                 className="hidden"
                                                             />
                                                         </label>

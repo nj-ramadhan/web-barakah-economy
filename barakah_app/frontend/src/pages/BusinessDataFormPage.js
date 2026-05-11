@@ -112,6 +112,11 @@ const BusinessDataFormPage = () => {
         const { name, files: selectedFiles } = e.target;
         const file = selectedFiles[0];
         if (file) {
+            if (file.size > 5 * 1024 * 1024) {
+                alert('Ukuran file terlalu besar. Maksimal 5MB.');
+                e.target.value = null;
+                return;
+            }
             setFiles({ ...files, [name]: file });
             setPreviews({ ...previews, [name]: URL.createObjectURL(file) });
         }

@@ -80,9 +80,20 @@ const DashboardSinergySellersPage = () => {
         setVariants(newVariants);
     };
 
+    const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+
+    const validateFileSize = (file) => {
+        if (file && file.size > MAX_FILE_SIZE) {
+            alert(`Ukuran file "${file.name}" terlalu besar. Maksimal 5MB.`);
+            return false;
+        }
+        return true;
+    };
+
     const handleThumbnailChange = (e) => {
         const file = e.target.files[0];
         if (file) {
+            if (!validateFileSize(file)) return;
             setThumbnailFile(file);
             setThumbnailPreview(URL.createObjectURL(file));
         }
@@ -94,6 +105,12 @@ const DashboardSinergySellersPage = () => {
             alert('Maksimal 5 foto galeri');
             return;
         }
+
+        // Validate each file size
+        for (const file of files) {
+            if (!validateFileSize(file)) return;
+        }
+
         setGalleryFiles(files);
         setGalleryPreviews(files.map(file => URL.createObjectURL(file)));
     };
@@ -188,7 +205,7 @@ const DashboardSinergySellersPage = () => {
         
         const user = JSON.parse(localStorage.getItem('user'));
         try {
-            await axios.delete(`${process.env.REACT_APP_API_BASE_URL}/api/products/${id}/`, {
+            await axios.delete(`${process.env.REACT_APP_API_BASE_URL}/api/products/${id}/?manage=true`, {
                 headers: { Authorization: `Bearer ${user.access}` }
             });
             alert('Produk berhasil dihapus');

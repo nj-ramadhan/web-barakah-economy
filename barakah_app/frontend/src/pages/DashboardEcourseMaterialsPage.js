@@ -212,6 +212,10 @@ const DashboardEcourseMaterialsPage = () => {
             fileInput.onchange = async (e) => {
                 const file = e.target.files[0];
                 if (file) {
+                    if (file.size > 5 * 1024 * 1024) {
+                        alert('Ukuran gambar terlalu besar. Maksimal 5MB.');
+                        return;
+                    }
                     const formData = new FormData();
                     formData.append('image', file);
                     try {

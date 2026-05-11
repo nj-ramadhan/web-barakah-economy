@@ -314,6 +314,11 @@ const DashboardArticleEditorPage = () => {
                                             onChange={e => {
                                                 const file = e.target.files[0];
                                                 if (file) {
+                                                    if (file.size > 5 * 1024 * 1024) {
+                                                        alert('Ukuran file icon terlalu besar. Maksimal 5MB.');
+                                                        e.target.value = '';
+                                                        return;
+                                                    }
                                                     const reader = new FileReader();
                                                     reader.onload = () => setCropper({ show: true, image: reader.result });
                                                     reader.readAsDataURL(file);

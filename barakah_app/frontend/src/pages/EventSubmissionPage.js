@@ -172,6 +172,17 @@ const EventSubmissionPage = () => {
         }
     }, [navigate, slug, isEdit]);
 
+    const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+
+    const validateFileSize = (file) => {
+        if (file && file.size > MAX_FILE_SIZE) {
+            setError(`Ukuran file "${file.name}" terlalu besar. Maksimal 5MB.`);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            return false;
+        }
+        return true;
+    };
+
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
@@ -195,6 +206,7 @@ const EventSubmissionPage = () => {
     const handleFileSelect = (e, type) => {
         const file = e.target.files[0];
         if (file) {
+            if (!validateFileSize(file)) return;
             // Store original file immediately
             setFiles(prev => ({ ...prev, [`${type}_full`]: file }));
 
@@ -273,6 +285,12 @@ const EventSubmissionPage = () => {
 
     const handleDocImageUpload = async (e) => {
         const uploadedFiles = Array.from(e.target.files);
+        
+        // Validate each file
+        for (const file of uploadedFiles) {
+            if (!validateFileSize(file)) return;
+        }
+
         setLoading(true);
         try {
             const compressedFiles = await Promise.all(
@@ -307,6 +325,12 @@ const EventSubmissionPage = () => {
 
     const handleGalleryImageUpload = async (e) => {
         const uploadedFiles = Array.from(e.target.files);
+        
+        // Validate each file
+        for (const file of uploadedFiles) {
+            if (!validateFileSize(file)) return;
+        }
+
         setLoading(true);
         try {
             const compressedFiles = await Promise.all(
@@ -634,6 +658,7 @@ const EventSubmissionPage = () => {
                                                     onChange={(e) => {
                                                         const file = e.target.files[0];
                                                         if (file) {
+                                                            if (!validateFileSize(file)) return;
                                                             setFormData({ ...formData, bib_template_image: file });
                                                             // Create a temp preview URL for this session
                                                             const url = URL.createObjectURL(file);
@@ -760,7 +785,12 @@ const EventSubmissionPage = () => {
                                             <div className="flex items-center gap-3">
                                                 <label className="flex-1 text-center py-3.5 bg-white text-blue-700 rounded-2xl text-xs font-bold cursor-pointer hover:bg-blue-50 transition shadow-sm border border-blue-100">
                                                     {files.attachment_file ? (files.attachment_file.name || 'Berkas Terpilih') : 'UNGGAH BERKAS (OPSIONAL)'}
-                                                    <input type="file" name="attachment_file" onChange={(e) => setFiles(prev => ({ ...prev, attachment_file: e.target.files[0] }))} className="hidden" />
+                                                    <input type="file" name="attachment_file" onChange={(e) => {
+                                                        const file = e.target.files[0];
+                                                        if (file && validateFileSize(file)) {
+                                                            setFiles(prev => ({ ...prev, attachment_file: file }));
+                                                        }
+                                                    }} className="hidden" />
                                                 </label>
                                                 {isEdit && formData.attachment_file && (
                                                     <a href={formData.attachment_file} target="_blank" rel="noreferrer" className="w-12 h-12 bg-white text-blue-600 rounded-2xl flex items-center justify-center border border-blue-100 shadow-sm hover:bg-blue-50 transition">
