@@ -60,7 +60,8 @@ class ProductViewSet(viewsets.ModelViewSet):
         if self.request.query_params.get('manage') == 'true':
             if not user.is_authenticated:
                 return queryset.none()
-            if user.role == 'admin':
+            # Only superusers can see all products. Others (even role='admin') see only their own.
+            if user.is_superuser:
                 return queryset
             return queryset.filter(seller=user)
 

@@ -262,7 +262,16 @@ class EventSerializer(serializers.ModelSerializer):
             gallery_images = request.FILES.getlist('gallery_images_upload') if request else []
             
             with transaction.atomic():
-                event = Event.objects.create(**validated_data)
+                # Pop many-to-many and nested fields to handle separately
+                # Ensure created_by is present (it should be added via perform_create -> save(created_by=user))
+                created_by = validated_data.pop('created_by', None)
+                if not created_by and request:
+                    created_by = request.user
+                
+                if not created_by:
+                    raise serializers.ValidationError({"created_by": "User pembuat event tidak ditemukan."})
+
+                event = Event.objects.create(created_by=created_by, **validated_data)
                 
                 if free_for_labels_data:
                     event.free_for_labels.set(free_for_labels_data)

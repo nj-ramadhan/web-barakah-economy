@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { getMeetings } from '../services/meetingApi';
+import { getMeetings, deleteMeeting } from '../services/meetingApi';
 import Header from '../components/layout/Header';
 import NavigationButton from '../components/layout/Navigation';
 import { Helmet } from 'react-helmet';
@@ -33,6 +33,19 @@ const DashboardMeetingsPage = () => {
 
         fetchMeetings();
     }, [navigate]);
+
+    const handleDelete = async (slug, title) => {
+        if (window.confirm(`Apakah Anda yakin ingin menghapus agenda rapat "${title}"? Seluruh data kehadiran dan sesi dalam rapat ini juga akan dihapus. Tindakan ini tidak dapat dibatalkan.`)) {
+            try {
+                await deleteMeeting(slug);
+                setMeetings(meetings.filter(m => m.slug !== slug));
+                alert('Agenda rapat berhasil dihapus.');
+            } catch (err) {
+                console.error('Error deleting meeting:', err);
+                alert('Gagal menghapus rapat. Silakan coba lagi.');
+            }
+        }
+    };
 
     return (
         <div className="min-h-screen bg-gray-50 flex flex-col pt-16 pb-20">
@@ -146,6 +159,13 @@ const DashboardMeetingsPage = () => {
                                                 <span className="material-icons text-sm">edit</span>
                                                 Edit
                                             </Link>
+                                            <button 
+                                                onClick={() => handleDelete(meeting.slug, meeting.title)}
+                                                className="px-4 py-2 bg-red-50 text-red-600 rounded-xl text-xs font-bold hover:bg-red-100 transition flex items-center gap-1.5"
+                                            >
+                                                <span className="material-icons text-sm">delete</span>
+                                                Hapus
+                                            </button>
                                         </div>
                                     </div>
                                 </div>

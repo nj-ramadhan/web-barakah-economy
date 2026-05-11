@@ -47,7 +47,13 @@ const DashboardSinergySellersPage = () => {
 
     useEffect(() => {
         fetchDashboardData();
-    }, []);
+        const user = JSON.parse(localStorage.getItem('user'));
+        // If not admin and no products found after loading, redirect
+        if (!loading && products.length === 0 && user?.role !== 'admin' && !user?.is_staff) {
+            // Optional: redirect to dashboard
+            // navigate('/dashboard'); 
+        }
+    }, [loading, products.length]);
 
     const handleEdit = (product) => {
         setEditingProduct(product);

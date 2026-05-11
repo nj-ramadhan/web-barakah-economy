@@ -79,7 +79,7 @@ const DashboardPage = () => {
                     axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/orders/seller-orders/stats/`, {
                         headers: { Authorization: `Bearer ${user.access}` }
                     }).catch(() => ({ data: { pending_count: 0 } })),
-                    axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/products/`, {
+                    axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/products/?manage=true`, {
                         headers: { Authorization: `Bearer ${user.access}` }
                     }).catch(() => ({ data: [] }))
                 ])
@@ -379,7 +379,7 @@ const DashboardPage = () => {
                         <p className="font-bold text-2xl">{loading ? '...' : courseCount}</p>
                         <p className="text-[10px] opacity-80 uppercase tracking-wider font-semibold">E-Course Saya</p>
                     </Link>
-                    {userProfile?.accessible_menus?.includes('sinergy_products') || userProfile?.username === 'admin' || userProfile?.role === 'admin' ? (
+                    {(userProfile?.role === 'admin' || userProfile?.is_staff || sinergyProductCount > 0) ? (
                         <Link to="/dashboard/sinergy/seller" className="bg-gradient-to-br from-emerald-500 to-emerald-700 rounded-xl p-4 text-white relative">
                             {sinergyPendingCount > 0 && (
                                 <div className="absolute top-2 right-2 bg-red-500 text-white text-[10px] font-black w-6 h-6 rounded-full flex items-center justify-center border-2 border-white shadow-lg animate-bounce">
@@ -573,7 +573,7 @@ const DashboardPage = () => {
                                     </Link>
                                 )}
 
-                                {hasAccess('sinergy_products') && (
+                                {hasAccess('sinergy_products') && (isAdmin || sinergyProductCount > 0) && (
                                     <Link
                                         to="/dashboard/sinergy/seller"
                                         className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-green-100 hover:shadow-md transition relative"

@@ -31,8 +31,8 @@ class EventViewSet(viewsets.ModelViewSet):
             user = request.user
             queryset = Event.objects.all().order_by('-created_at')
             
-            # Admin or staff can see all events
-            if user and user.is_authenticated and (user.is_staff or user.has_menu_access('admin_events')):
+            # Superusers and staff see all events. Regular admins (vendors) only see their own.
+            if user and user.is_authenticated and (user.is_staff or user.is_superuser):
                 return queryset
                 
             # Visibility filtering for others
@@ -80,16 +80,12 @@ class EventViewSet(viewsets.ModelViewSet):
             if self.action in ['list', 'retrieve', 'landing', 'register', 'participants']:
                 return [permissions.AllowAny()]
             
-            # CRUD / Management actions
-            # User must be authenticated
+            # All other actions require authentication
             if not self.request.user or not self.request.user.is_authenticated:
                 return [permissions.IsAuthenticated()]
                 
-            # Check for menu access 'admin_events' or role 'admin'
-            if self.request.user.has_menu_access('admin_events'):
-                return [permissions.IsAuthenticated()]
-
-            # Regular users can create/update their own events and panitia can scan
+            # Allow creation, update, and related management actions for all authenticated users
+            # Ownership/Admin checks are handled within specific methods or get_queryset
             if self.action in [
                 'create', 'update', 'partial_update', 'my_events', 
                 'scan_attendance', 'check_scan_permission', 'manage_committees', 
@@ -97,8 +93,12 @@ class EventViewSet(viewsets.ModelViewSet):
             ]:
                 return [permissions.IsAuthenticated()]
                 
-            # Deny others
-            return [permissions.IsAdminUser()]
+            # Global admin actions (e.g., delete) still require is_staff/superuser
+            if self.action in ['destroy']:
+                return [permissions.IsAdminUser()]
+
+            # Default to IsAuthenticated for safety
+            return [permissions.IsAuthenticated()]
         except Exception as e:
             logger.error(f"Error in get_permissions: {str(e)}")
             return [permissions.IsAuthenticated()]
@@ -155,8 +155,12 @@ class EventViewSet(viewsets.ModelViewSet):
 
     def create(self, request, *args, **kwargs):
         try:
-            logger.info(f"Event creation attempt by user: {request.user.username} (ID: {request.user.id}, Role: {request.user.role})")
+            user = request.user
+            logger.info(f"Event creation attempt by user: {user.username} (ID: {user.id}, Role: {getattr(user, 'role', 'N/A')}, Staff: {user.is_staff})")
+            
             data = self._get_parsed_data(request)
+            logger.info(f"Parsed event data keys: {list(data.keys())}")
+            
             serializer = self.get_serializer(data=data)
             
             if not serializer.is_valid():
@@ -189,7 +193,7 @@ class EventViewSet(viewsets.ModelViewSet):
         instance = self.get_object()
 
         # Authorization check: Admin OR Owner
-        is_admin = request.user.has_menu_access('admin_events') or request.user.is_staff
+        is_admin = request.user.is_superuser or request.user.is_staff
         is_owner = instance.created_by == request.user
         
         if not (is_admin or is_owner):
@@ -454,7 +458,7 @@ class EventViewSet(viewsets.ModelViewSet):
         
         # Check permissions: Admin, Event Creator, or Committee
         is_committee = event.committees.filter(id=request.user.id).exists()
-        if not (request.user.is_staff or event.created_by == request.user or request.user.has_menu_access('admin_events') or is_committee):
+        if not (request.user.is_staff or event.created_by == request.user or request.user.is_superuser or is_committee):
             return Response({"error": "Hanya admin, penyelenggara, atau panitia yang bisa mendaftarkan peserta secara manual."}, status=status.HTTP_403_FORBIDDEN)
 
         # Basic identification
@@ -566,7 +570,7 @@ class EventViewSet(viewsets.ModelViewSet):
         Register multiple users manually (Admin only).
         """
         event = self.get_object()
-        if not (request.user.is_staff or event.created_by == request.user or request.user.has_menu_access('admin_events')):
+        if not (request.user.is_staff or event.created_by == request.user or request.user.is_superuser):
             return Response({"error": "Unauthorized"}, status=status.HTTP_403_FORBIDDEN)
 
         user_ids = request.data.get('user_ids', [])
@@ -607,7 +611,7 @@ class EventViewSet(viewsets.ModelViewSet):
         """Resend QR/BIB notifications to selected participants."""
         event = self.get_object()
         is_committee = event.committees.filter(id=request.user.id).exists()
-        if not (request.user.is_staff or event.created_by == request.user or request.user.has_menu_access('admin_events') or is_committee):
+        if not (request.user.is_staff or event.created_by == request.user or request.user.is_superuser or is_committee):
             return Response({"error": "Unauthorized: Hanya admin, penyelenggara, atau panitia yang bisa mengirim ulang notifikasi."}, status=status.HTTP_403_FORBIDDEN)
 
         registration_ids = request.data.get('registration_ids', [])
@@ -639,7 +643,7 @@ class EventViewSet(viewsets.ModelViewSet):
         """Get users who are NOT yet registered for this event and have complete data with pagination."""
         event = self.get_object()
         is_committee = event.committees.filter(id=request.user.id).exists()
-        if not (request.user.is_staff or event.created_by == request.user or request.user.has_menu_access('admin_events') or is_committee):
+        if not (request.user.is_staff or event.created_by == request.user or request.user.is_superuser or is_committee):
             return Response({"error": "Unauthorized"}, status=status.HTTP_403_FORBIDDEN)
 
         from accounts.models import User
@@ -691,7 +695,7 @@ class EventViewSet(viewsets.ModelViewSet):
         """Import participants from CSV with Create/Update logic."""
         event = self.get_object()
         is_committee = event.committees.filter(id=request.user.id).exists()
-        if not (request.user.is_staff or event.created_by == request.user or request.user.has_menu_access('admin_events') or is_committee):
+        if not (request.user.is_staff or event.created_by == request.user or request.user.is_superuser or is_committee):
             return Response({"error": "Unauthorized: Hanya admin, penyelenggara, atau panitia yang bisa melakukan impor."}, status=status.HTTP_403_FORBIDDEN)
 
         file = request.FILES.get('file')
@@ -1145,7 +1149,7 @@ class EventViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'], permission_classes=[permissions.IsAuthenticated])
     def global_registrations(self, request):
         """Get all registrations across all events for CRM recap."""
-        if not (request.user.is_staff or request.user.has_menu_access('admin_events')):
+        if not (request.user.is_staff or request.user.is_superuser):
             return Response({"error": "Unauthorized"}, status=status.HTTP_403_FORBIDDEN)
         
         event_id = request.query_params.get('event_id')
@@ -1180,7 +1184,7 @@ class EventViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['post'], permission_classes=[permissions.IsAuthenticated])
     def global_blast_whatsapp(self, request):
         """Blast WhatsApp to selected participants from the global recap list."""
-        if not (request.user.is_staff or request.user.has_menu_access('admin_events')):
+        if not (request.user.is_staff or request.user.is_superuser):
             return Response({"error": "Unauthorized"}, status=status.HTTP_403_FORBIDDEN)
             
         custom_message = request.data.get('message')
@@ -1776,7 +1780,7 @@ class EventViewSet(viewsets.ModelViewSet):
         event = self.get_object()
         
         # Authorization check: Admin OR Owner
-        is_admin = request.user.has_menu_access('admin_events') or request.user.is_staff
+        is_admin = request.user.is_superuser or request.user.is_staff
         is_owner = event.created_by == request.user
         
         if not (is_admin or is_owner):
@@ -1815,7 +1819,7 @@ class EventViewSet(viewsets.ModelViewSet):
         event = self.get_object()
         
         # Authorization check: Admin OR Owner
-        is_admin = request.user.has_menu_access('admin_events') or request.user.is_staff
+        is_admin = request.user.is_superuser or request.user.is_staff
         is_owner = event.created_by == request.user
         
         if not (is_admin or is_owner):
@@ -1847,7 +1851,7 @@ class EventViewSet(viewsets.ModelViewSet):
         """Force regenerate all QR/Barcode images for an event."""
         event = self.get_object()
         
-        is_admin = request.user.has_menu_access('admin_events') or request.user.is_staff
+        is_admin = request.user.is_superuser or request.user.is_staff
         is_owner = event.created_by == request.user
         
         if not (is_admin or is_owner):
@@ -1897,7 +1901,7 @@ class EventViewSet(viewsets.ModelViewSet):
         user = request.user
         
         is_committee = event.committees.filter(id=user.id).exists()
-        is_admin = user.is_staff or user.has_menu_access('admin_events')
+        is_admin = user.is_staff or user.is_superuser
         is_owner = event.created_by == user
         
         authorized = is_admin or is_owner or is_committee
@@ -1913,7 +1917,7 @@ class EventViewSet(viewsets.ModelViewSet):
     def manage_committees(self, request, slug=None):
         """Add or remove committee members."""
         event = self.get_object()
-        if not (request.user.is_staff or event.created_by == request.user or request.user.has_menu_access('admin_events')):
+        if not (request.user.is_staff or event.created_by == request.user or request.user.is_superuser):
             return Response({"error": "Unauthorized"}, status=status.HTTP_403_FORBIDDEN)
 
         user_id = request.data.get('user_id')
@@ -1988,7 +1992,7 @@ class EventViewSet(viewsets.ModelViewSet):
     def send_scan_link(self, request, slug=None):
         """Send the scan link to selected or all committees via WhatsApp."""
         event = self.get_object()
-        if not (request.user.is_staff or event.created_by == request.user or request.user.has_menu_access('admin_events')):
+        if not (request.user.is_staff or event.created_by == request.user or request.user.is_superuser):
             return Response({"error": "Unauthorized"}, status=status.HTTP_403_FORBIDDEN)
 
         committee_ids = request.data.get('user_ids') # Optional: if null, send to all
@@ -2023,7 +2027,7 @@ class EventViewSet(viewsets.ModelViewSet):
         
         # Hanya organizer, admin event, atau panitia terpilih
         is_committee = event.committees.filter(id=request.user.id).exists()
-        if not (request.user.is_staff or event.created_by == request.user or request.user.has_menu_access('admin_events') or is_committee):
+        if not (request.user.is_staff or event.created_by == request.user or request.user.is_superuser or is_committee):
             return Response({'error': 'Hanya penyelenggara, admin, atau panitia terpilih yang bisa scan kehadiran.'}, status=status.HTTP_403_FORBIDDEN)
         
         unique_code = request.data.get('unique_code', '').strip().upper()
@@ -2130,7 +2134,7 @@ class EventViewSet(viewsets.ModelViewSet):
         team_field_ids = [str(fid) for fid in team_field_ids]
 
         # Permission check for sensitive data (files, etc)
-        is_admin = request.user.is_authenticated and (request.user.is_staff or request.user.has_menu_access('admin_events'))
+        is_admin = request.user.is_authenticated and (request.user.is_staff or request.user.is_superuser)
         is_owner = request.user.is_authenticated and event.created_by == request.user
         can_see_private = is_admin or is_owner
 
@@ -2181,7 +2185,7 @@ class EventViewSet(viewsets.ModelViewSet):
         
         # Verify ownership: Admin, Organizer, or Committee
         is_committee = event.committees.filter(id=request.user.id).exists()
-        is_admin = request.user.is_staff or request.user.has_menu_access('admin_events')
+        is_admin = request.user.is_staff or request.user.is_superuser
         is_owner = event.created_by == request.user
 
         if not (is_admin or is_owner or is_committee):
@@ -2300,7 +2304,7 @@ class EventRegistrationViewSet(viewsets.ModelViewSet):
         registrations = EventRegistration.objects.filter(id__in=ids)
         
         # Check permissions for each registration (ensure they belong to events managed by searcher)
-        if not (request.user.is_staff or request.user.has_menu_access('admin_events')):
+        if not (request.user.is_staff or request.user.is_superuser):
             managed_events = Event.objects.filter(created_by=request.user)
             unauthorized_count = registrations.exclude(event__in=managed_events).count()
             if unauthorized_count > 0:
@@ -2316,7 +2320,7 @@ class EventRegistrationViewSet(viewsets.ModelViewSet):
         if not user or not user.is_authenticated:
             return EventRegistration.objects.none()
             
-        if user.is_staff or user.has_menu_access('admin_events'):
+        if user.is_staff or user.is_superuser:
             return EventRegistration.objects.all()
         
         # Event owners and committees can see registrations for their events
@@ -2349,7 +2353,7 @@ class EventRegistrationViewSet(viewsets.ModelViewSet):
 
     def update(self, request, *args, **kwargs):
         instance = self.get_object()
-        is_admin = request.user.has_menu_access('admin_events') or request.user.is_staff
+        is_admin = request.user.is_superuser or request.user.is_staff
         if not (is_admin or instance.event.created_by == request.user):
             return Response({"error": "Unauthorized"}, status=status.HTTP_403_FORBIDDEN)
         return super().update(request, *args, **kwargs)
@@ -2358,7 +2362,7 @@ class EventRegistrationViewSet(viewsets.ModelViewSet):
     def approve(self, request, pk=None):
         registration = self.get_object()
         # Verify ownership: Admin OR Event Creator
-        is_admin = request.user.has_menu_access('admin_events') or request.user.is_staff
+        is_admin = request.user.is_superuser or request.user.is_staff
         if not (is_admin or registration.event.created_by == request.user):
             return Response({"error": "Unauthorized"}, status=status.HTTP_403_FORBIDDEN)
             
@@ -2394,7 +2398,7 @@ class EventRegistrationViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['post'])
     def reject(self, request, pk=None):
         registration = self.get_object()
-        is_admin = request.user.has_menu_access('admin_events') or request.user.is_staff
+        is_admin = request.user.is_superuser or request.user.is_staff
         if not (is_admin or registration.event.created_by == request.user):
             return Response({"error": "Unauthorized"}, status=status.HTTP_403_FORBIDDEN)
             

@@ -11,5 +11,5 @@ class IsOwnerOrAdmin(permissions.BasePermission):
         if request.method in permissions.SAFE_METHODS:
             return True
 
-        # Write permissions are only allowed to the owner or admin.
-        return obj.seller == request.user or request.user.role == 'admin'
+        # Write permissions are only allowed to the owner or superuser.
+        return obj.seller == request.user or request.user.is_superuser
