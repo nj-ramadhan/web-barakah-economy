@@ -3,7 +3,7 @@ import { useParams, Link, useLocation } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
 import Header from '../../components/layout/Header';
 import NavigationButton from '../../components/layout/Navigation';
-import { getEventRegistrations, getEventDetail, exportRegistrationsCsv, blastEventWhatsapp, bulkDeleteRegistrations, importParticipantsCsv, bulkResendNotifications, markEventSessionFinished } from '../../services/eventApi';
+import { getEventRegistrations, getEventDetail, exportRegistrationsCsv, blastEventWhatsapp, bulkDeleteRegistrations, importParticipantsCsv, bulkResendNotifications, markEventSessionFinished, updateEventRegistration } from '../../services/eventApi';
 import EventManualRegistrationModal from '../../components/admin/EventManualRegistrationModal';
 import EventRegistrationEditModal from '../../components/admin/EventRegistrationEditModal';
 import CertificateEditor from '../../components/events/CertificateEditor';
@@ -141,6 +141,19 @@ const EventRegistrationSubmissionPage = () => {
             direction = 'desc';
         }
         setSortConfig({ key, direction });
+    };
+
+    const handleVerifyPayment = async (registrationId) => {
+        if (!window.confirm('Verifikasi pembayaran OTS untuk peserta ini?')) return;
+        
+        try {
+            await updateEventRegistration(registrationId, { payment_status: 'verified' });
+            setRegistrations(prev => prev.map(r => r.id === registrationId ? { ...r, payment_status: 'verified' } : r));
+            alert('Pembayaran diverifikasi.');
+        } catch (err) {
+            console.error(err);
+            alert('Gagal verifikasi pembayaran.');
+        }
     };
 
     const uniqueLabels = useMemo(() => {
@@ -792,9 +805,21 @@ const EventRegistrationSubmissionPage = () => {
                                                         <div className="font-black text-gray-900">Rp {Number(reg.payment_amount || 0).toLocaleString('id-ID')}</div>
                                                         <div className="flex flex-col gap-1.5 mt-1.5">
                                                             {reg.payment_method === 'ots' ? (
-                                                                <div className="flex items-center gap-1 text-orange-600 font-bold py-1">
-                                                                    <span className="material-icons text-xs">payments</span>
-                                                                    OTS
+                                                                <div className="flex flex-col gap-1">
+                                                                    <div className="flex items-center gap-1 text-orange-600 font-bold py-1">
+                                                                        <span className="material-icons text-xs">payments</span>
+                                                                        OTS
+                                                                    </div>
+                                                                    {reg.payment_status !== 'verified' && (
+                                                                        <label className="flex items-center gap-2 cursor-pointer group bg-orange-50 border border-orange-100 px-2 py-1.5 rounded-lg hover:bg-orange-100 transition-colors">
+                                                                            <input 
+                                                                                type="checkbox" 
+                                                                                className="w-3.5 h-3.5 rounded border-orange-300 text-orange-600 focus:ring-orange-500"
+                                                                                onChange={() => handleVerifyPayment(reg.id)}
+                                                                            />
+                                                                            <span className="text-[9px] font-black text-orange-700 uppercase tracking-tighter">Sudah Bayar</span>
+                                                                        </label>
+                                                                    )}
                                                                 </div>
                                                             ) : reg.payment_proof ? (
                                                                 <button
@@ -804,7 +829,13 @@ const EventRegistrationSubmissionPage = () => {
                                                                     <span className="material-icons text-xs">receipt_long</span>
                                                                     Bukti Transfer
                                                                 </button>
-                                                            ) : reg.payment_amount === 0 ? (
+                                                            ) : (reg.payment_amount === 0 || (() => {
+                                                                // Label detection for free registration
+                                                                if (!reg.user_details?.labels || !event?.free_for_labels) return false;
+                                                                const userLabelIds = reg.user_details.labels.map(l => l.id);
+                                                                const freeLabelIds = event.free_for_labels.map(l => l.id);
+                                                                return userLabelIds.some(id => freeLabelIds.includes(id));
+                                                            })()) ? (
                                                                 <div className="flex items-center gap-1 text-green-600 font-bold py-1">
                                                                     <span className="material-icons text-xs">verified</span>
                                                                     Gratis (Label)

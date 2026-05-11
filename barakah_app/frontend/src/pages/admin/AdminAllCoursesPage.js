@@ -120,9 +120,23 @@ const AdminAllCoursesPage = () => {
                                                     <Link
                                                         to={`/dashboard/ecourses/${course.id}/edit`}
                                                         className="w-8 h-8 flex items-center justify-center bg-blue-50 text-blue-500 rounded-lg hover:bg-blue-600 hover:text-white transition"
-                                                        title="Edit"
+                                                        title="Edit Pengaturan"
                                                     >
-                                                        <span className="material-icons text-[14px]">edit</span>
+                                                        <span className="material-icons text-[14px]">settings</span>
+                                                    </Link>
+                                                    <Link
+                                                        to={`/dashboard/ecourses/${course.id}/materials`}
+                                                        className="w-8 h-8 flex items-center justify-center bg-purple-50 text-purple-500 rounded-lg hover:bg-purple-600 hover:text-white transition"
+                                                        title="Edit Materi"
+                                                    >
+                                                        <span className="material-icons text-[14px]">auto_stories</span>
+                                                    </Link>
+                                                    <Link
+                                                        to={`/dashboard/ecourses/${course.id}/progress`}
+                                                        className="w-8 h-8 flex items-center justify-center bg-green-50 text-green-500 rounded-lg hover:bg-green-600 hover:text-white transition"
+                                                        title="Data Peserta"
+                                                    >
+                                                        <span className="material-icons text-[14px]">group</span>
                                                     </Link>
                                                     <button
                                                         onClick={() => handleDelete(course.id)}

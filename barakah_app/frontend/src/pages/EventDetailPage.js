@@ -203,15 +203,32 @@ const EventDetailPage = () => {
 
     const isUserFreeByLabel = () => {
         if (!userProfile || !event?.free_for_labels) return false;
-        const userLabelIds = userProfile.labels?.map(l => l.id) || [];
-        const freeLabelIds = event.free_for_labels.map(l => l.id) || [];
-        return userLabelIds.some(id => freeLabelIds.includes(id));
+        
+        const userLabels = userProfile.labels || [];
+        const freeLabels = event.free_for_labels || [];
+
+        // Check by ID if available (objects)
+        if (userLabels.length > 0 && typeof userLabels[0] === 'object') {
+            const userLabelIds = userLabels.map(l => l.id);
+            const freeLabelIds = freeLabels.map(l => l.id);
+            if (userLabelIds.some(id => freeLabelIds.includes(id))) return true;
+        }
+
+        // Fallback: Check by Name (ProfileSerializer returns strings)
+        const userLabelNames = userLabels.map(l => typeof l === 'string' ? l.toLowerCase() : (l.name || '').toLowerCase());
+        const freeLabelNames = freeLabels.map(l => (l.name || '').toLowerCase());
+        
+        return userLabelNames.some(name => freeLabelNames.includes(name));
     };
 
     const matchedLabelNames = () => {
         if (!userProfile || !event?.free_for_labels) return "";
-        const userLabelIds = userProfile.labels?.map(l => l.id) || [];
-        const matched = event.free_for_labels.filter(l => userLabelIds.includes(l.id));
+        const userLabels = userProfile.labels || [];
+        const freeLabels = event.free_for_labels || [];
+        
+        const userLabelNames = userLabels.map(l => typeof l === 'string' ? l.toLowerCase() : (l.name || '').toLowerCase());
+        const matched = freeLabels.filter(l => userLabelNames.includes((l.name || '').toLowerCase()));
+        
         return matched.map(l => l.name).join(', ');
     };
 
@@ -239,7 +256,10 @@ const EventDetailPage = () => {
             data.append('price_variation', selectedPriceVariation.id);
         }
 
-        if (paymentMethod === 'transfer' && paymentProof) {
+        if (isUserFreeByLabel()) {
+            data.append('payment_amount', 0);
+            data.append('payment_method', 'transfer');
+        } else if (paymentMethod === 'transfer' && paymentProof) {
             let fixed = Number(event?.price_fixed) || 0;
             if (selectedPriceVariation) fixed = Number(selectedPriceVariation.price);
             

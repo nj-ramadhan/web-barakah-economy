@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Course, CourseEnrollment, CourseMaterial, UserCourseProgress, Certificate, CertificateRequest, CourseCertificate
+from .models import Course, CourseEnrollment, CourseMaterial, UserCourseProgress, Certificate, CertificateRequest, CourseCertificate, QuizAttempt
 from django.contrib.auth import get_user_model
 
 class CourseMaterialSerializer(serializers.ModelSerializer):
