@@ -24,6 +24,8 @@ const QuizViewer = ({ quizData, onComplete, onReset, isCompleted }) => {
         } catch(e) { questions = []; }
     }
     const settings = (typeof quizData === 'string' ? {} : quizData?.settings) || {};
+    const passingScore = quizData?.passing_score !== undefined ? quizData.passing_score : (settings.passing_score || 0);
+    const allowRetake = quizData?.allow_retake !== undefined ? quizData.allow_retake : (settings.allow_reset ?? true);
 
     const startQuiz = () => {
         if (questions.length === 0) {
@@ -58,9 +60,8 @@ const QuizViewer = ({ quizData, onComplete, onReset, isCompleted }) => {
         setScore(finalScore);
         setCurrentStep('result');
 
-        if (finalScore >= (settings.passing_score || 70)) {
-            onComplete(userAnswers, finalScore);
-        }
+        // Always call onComplete to record attempt, backend will handle completion status
+        onComplete(userAnswers, finalScore);
     };
 
     if (currentStep === 'start') {
@@ -70,7 +71,7 @@ const QuizViewer = ({ quizData, onComplete, onReset, isCompleted }) => {
                     <span className="material-icons text-4xl">quiz</span>
                 </div>
                 <h3 className="text-xl font-black text-gray-900 mb-2">Siap untuk Kuis?</h3>
-                <p className="text-sm text-gray-500 mb-8 max-w-sm mx-auto">Selesaikan kuis ini untuk menguji pemahaman Anda. Minimal skor kelulusan adalah {settings.passing_score || 70}%.</p>
+                <p className="text-sm text-gray-500 mb-8 max-w-sm mx-auto">Selesaikan kuis ini untuk menguji pemahaman Anda. {passingScore > 0 ? `Minimal skor kelulusan adalah ${passingScore}%.` : 'Kuis ini tidak memiliki skor minimum.'}</p>
                 <button 
                     onClick={startQuiz}
                     className="bg-purple-600 text-white px-8 py-3.5 rounded-2xl font-black text-sm shadow-xl shadow-purple-100 hover:bg-purple-700 transition transform hover:scale-105"
@@ -122,7 +123,7 @@ const QuizViewer = ({ quizData, onComplete, onReset, isCompleted }) => {
         );
     }
 
-    const passed = score >= (settings.passing_score || 70);
+    const passed = score >= passingScore;
 
     return (
         <div className="text-center py-10 animate-fade-in">
@@ -133,13 +134,25 @@ const QuizViewer = ({ quizData, onComplete, onReset, isCompleted }) => {
             <h3 className="text-2xl font-black text-gray-900 mb-1">{passed ? 'Selamat! Anda Lulus' : 'Yah, Belum Lulus'}</h3>
             <p className={`text-5xl font-black mb-6 ${passed ? 'text-green-600' : 'text-red-600'}`}>{score}%</p>
             
+            {passingScore > 0 && !passed && (
+                <p className="text-sm font-bold text-red-500 mb-6 uppercase tracking-widest">Minimal skor untuk lulus: {passingScore}%</p>
+            )}
+
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-8">
-                {settings.allow_reset && (
+                {allowRetake && !passed && (
                     <button 
                         onClick={startQuiz}
-                        className="w-full sm:w-auto bg-gray-100 text-gray-700 px-6 py-3 rounded-2xl font-black text-xs hover:bg-gray-200 transition"
+                        className="w-full sm:w-auto bg-purple-600 text-white px-8 py-3 rounded-2xl font-black text-xs shadow-lg shadow-purple-100 hover:bg-purple-700 transition"
                     >
                         ULANGI KUIS
+                    </button>
+                )}
+                {passed && (
+                    <button 
+                        onClick={onReset} // Using onReset as handleNext for now or passed from parent
+                        className="w-full sm:w-auto bg-gray-900 text-white px-8 py-3 rounded-2xl font-black text-xs shadow-lg hover:bg-black transition flex items-center justify-center gap-2"
+                    >
+                        TASK SELANJUTNYA <span className="material-icons text-sm">arrow_forward</span>
                     </button>
                 )}
                 {settings.show_correct_answers && !showAnswers && (
@@ -403,8 +416,9 @@ const EcourseViewerPage = () => {
                             ) : currentMaterial.material_type === 'quiz' ? (
                                 <div className="bg-white rounded-[2.5rem] p-8 lg:p-12 shadow-sm border border-gray-100 mb-10 min-h-[400px]">
                                     <QuizViewer 
-                                        quizData={currentMaterial.quiz_data} 
+                                        quizData={currentMaterial} 
                                         onComplete={(answers, score) => markAsCompleted(currentMaterial.id, answers, score)}
+                                        onReset={handleNext}
                                         isCompleted={progress.includes(currentMaterial.id)}
                                     />
                                 </div>

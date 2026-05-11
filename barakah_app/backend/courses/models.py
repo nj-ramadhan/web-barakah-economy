@@ -122,6 +122,8 @@ class CourseMaterial(models.Model):
     
     # For Quiz type
     quiz_data = models.JSONField(blank=True, null=True, help_text="Store questions, options, and settings")
+    passing_score = models.FloatField(default=0, help_text="Minimum score to pass and continue")
+    allow_retake = models.BooleanField(default=True, help_text="Allow students to retake the quiz if they fail")
     
     # For all types
     pdf_file = models.FileField(upload_to='course_materials/pdf/', blank=True, null=True)
@@ -135,6 +137,21 @@ class CourseMaterial(models.Model):
 
     class Meta:
         ordering = ['order', 'created_at']
+
+class QuizAttempt(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='quiz_attempts')
+    course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='quiz_attempts')
+    material = models.ForeignKey(CourseMaterial, on_delete=models.CASCADE, related_name='quiz_attempts')
+    score = models.FloatField()
+    answers = models.JSONField(help_text="Store student's answers for this attempt")
+    is_passed = models.BooleanField(default=False)
+    attempted_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.user.username} - {self.material.title} - {self.score}%"
+
+    class Meta:
+        ordering = ['-attempted_at']
 
 class UserCourseProgress(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='course_progress')

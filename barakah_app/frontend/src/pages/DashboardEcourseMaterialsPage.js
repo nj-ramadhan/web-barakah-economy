@@ -96,10 +96,12 @@ const DashboardEcourseMaterialsPage = () => {
                 try { qData = JSON.parse(qData); } catch(e) { qData = {}; }
             }
             setQuizQuestions(qData.questions || []);
-            setQuizSettings(qData.settings || {
-                allow_reset: true,
-                show_correct_answers: true,
-                passing_score: 70
+            
+            const settings = qData.settings || {};
+            setQuizSettings({
+                allow_reset: mat.allow_retake !== undefined ? mat.allow_retake : (settings.allow_reset ?? true),
+                show_correct_answers: settings.show_correct_answers ?? true,
+                passing_score: mat.passing_score !== undefined ? mat.passing_score : (settings.passing_score ?? 70)
             });
         }
         
@@ -143,6 +145,8 @@ const DashboardEcourseMaterialsPage = () => {
                 questions: quizQuestions,
                 settings: quizSettings
             }));
+            formData.append('passing_score', quizSettings.passing_score || 0);
+            formData.append('allow_retake', quizSettings.allow_reset); // Mapping allow_reset to allow_retake for backend
         }
 
         if (pdfSourceType === 'file' && pdfFile) {
@@ -466,6 +470,20 @@ const DashboardEcourseMaterialsPage = () => {
                                             onChange={(e) => setQuizSettings({...quizSettings, show_correct_answers: e.target.checked})}
                                             className="w-5 h-5 accent-green-600"
                                         />
+                                    </div>
+                                    <div className="flex items-center justify-between col-span-1 sm:col-span-2 pt-2 border-t border-green-100">
+                                        <span className="text-xs font-bold text-green-800">Minimal Skor Kelulusan (%)</span>
+                                        <div className="flex items-center gap-2">
+                                            <input 
+                                                type="number" 
+                                                min="0"
+                                                max="100"
+                                                value={quizSettings.passing_score}
+                                                onChange={(e) => setQuizSettings({...quizSettings, passing_score: parseInt(e.target.value) || 0})}
+                                                className="w-20 px-3 py-1.5 bg-white border border-green-200 rounded-xl text-xs font-bold text-center outline-none focus:ring-2 focus:ring-green-500"
+                                            />
+                                            <span className="text-[10px] font-bold text-gray-400">%</span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>

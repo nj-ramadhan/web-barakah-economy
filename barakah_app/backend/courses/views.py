@@ -7,8 +7,8 @@ from rest_framework import status
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from rest_framework.decorators import action
-from .models import Course, CourseEnrollment, CourseMaterial, UserCourseProgress, CertificateRequest, CourseCertificate
-from .serializers import CourseSerializer, CourseEnrollmentSerializer, CourseMaterialSerializer, UserCourseProgressSerializer, CertificateRequestSerializer, CourseCertificateSerializer
+from .models import Course, CourseEnrollment, CourseMaterial, UserCourseProgress, CertificateRequest, CourseCertificate, QuizAttempt
+from .serializers import CourseSerializer, CourseEnrollmentSerializer, CourseMaterialSerializer, UserCourseProgressSerializer, CertificateRequestSerializer, CourseCertificateSerializer, QuizAttemptSerializer
 from django.conf import settings
 from django.shortcuts import render
 import csv
@@ -252,6 +252,7 @@ class CourseViewSet(viewsets.ModelViewSet):
                 else:
                     header.append(f"{m['title']} ({m['material_type']})")
             
+            header.append("Histori Semua Upaya Kuis")
             writer.writerow(header)
             
             # Rows
@@ -320,7 +321,12 @@ class CourseViewSet(viewsets.ModelViewSet):
                             row.append(correct_text)
                         
                         # Add Score at the end of quiz columns
-                        row.append(p.get('quiz_score') if p.get('quiz_score') is not None else '-')
+                        score = p.get('quiz_score')
+                        passing_score = m.get('passing_score', 0)
+                        status_str = f"{score}%" if score is not None else "-"
+                        if score is not None:
+                            status_str += " (LULUS)" if score >= passing_score else " (GAGAL)"
+                        row.append(status_str)
                     else:
                         if p['is_completed']:
                             comp_at_str = p.get('completed_at')
@@ -346,6 +352,18 @@ class CourseViewSet(viewsets.ModelViewSet):
                             status = 'Belum'
                             
                         row.append(status)
+                
+                # Add Quiz Attempts details at the end of the row
+                # Get all quiz attempts for this student in this course
+                attempts = QuizAttempt.objects.filter(user_id=s['user_id'], course=course).order_by('attempted_at')
+                if attempts.exists():
+                    attempt_summaries = []
+                    for att in attempts:
+                        att_time = att.attempted_at.astimezone(jakarta_tz).strftime('%d/%m %H:%M')
+                        attempt_summaries.append(f"{att.material.title}: {att.score}% ({'LULUS' if att.is_passed else 'GAGAL'}) pada {att_time}")
+                    row.append(" | ".join(attempt_summaries))
+                else:
+                    row.append("-")
                 
                 writer.writerow(row)
                 
@@ -798,23 +816,51 @@ class UserCourseProgressViewSet(viewsets.ModelViewSet):
         quiz_answers = request.data.get('quiz_answers')
         quiz_score = request.data.get('quiz_score')
         
-        progress, created = UserCourseProgress.objects.get_or_create(
+        # Determine if passed
+        is_passed = True
+        if material.material_type == 'quiz':
+            # If quiz_score is provided, check against passing_score
+            if quiz_score is not None:
+                is_passed = float(quiz_score) >= material.passing_score
+            
+            # Record this attempt
+            QuizAttempt.objects.create(
+                user=request.user,
+                course=material.course,
+                material=material,
+                score=quiz_score if quiz_score is not None else 0,
+                answers=quiz_answers or {},
+                is_passed=is_passed
+            )
+
+        # Update or create progress
+        # If it's a quiz, we only mark as completed if they passed
+        # OR if it was already completed (to avoid losing completion status if they retake and fail)
+        
+        progress = UserCourseProgress.objects.filter(
             user=request.user,
             course=material.course,
-            material=material,
-            defaults={
-                'is_completed': True,
-                'quiz_answers': quiz_answers,
-                'quiz_score': quiz_score
-            }
-        )
-        if not created:
-            progress.is_completed = True
+            material=material
+        ).first()
+        
+        if progress:
+            # Only update is_completed to True if passed or it was already True
+            progress.is_completed = progress.is_completed or is_passed
             if quiz_answers is not None:
                 progress.quiz_answers = quiz_answers
             if quiz_score is not None:
                 progress.quiz_score = quiz_score
             progress.save()
+        else:
+            progress = UserCourseProgress.objects.create(
+                user=request.user,
+                course=material.course,
+                material=material,
+                is_completed=is_passed, # Initial completion depends on passing
+                quiz_answers=quiz_answers,
+                quiz_score=quiz_score
+            )
+            
         return Response(UserCourseProgressSerializer(progress).data, status=status.HTTP_201_CREATED)
 
 class CertificateRequestViewSet(viewsets.ModelViewSet):

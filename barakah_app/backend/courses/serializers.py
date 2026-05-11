@@ -8,7 +8,7 @@ class CourseMaterialSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'course', 'title', 'material_type', 'description', 
             'youtube_link', 'content_text', 'quiz_data', 'pdf_file', 'pdf_link',
-            'order', 'created_at'
+            'order', 'created_at', 'passing_score', 'allow_retake'
         ]
 
     def to_internal_value(self, data):
@@ -27,6 +27,14 @@ class CourseMaterialSerializer(serializers.ModelSerializer):
                 except (ValueError, TypeError):
                     pass
         return super().to_internal_value(data)
+
+class QuizAttemptSerializer(serializers.ModelSerializer):
+    user_name = serializers.ReadOnlyField(source='user.username')
+    material_title = serializers.ReadOnlyField(source='material.title')
+
+    class Meta:
+        model = QuizAttempt
+        fields = ['id', 'user', 'user_name', 'course', 'material', 'material_title', 'score', 'answers', 'is_passed', 'attempted_at']
 
 class UserCourseProgressSerializer(serializers.ModelSerializer):
     class Meta:

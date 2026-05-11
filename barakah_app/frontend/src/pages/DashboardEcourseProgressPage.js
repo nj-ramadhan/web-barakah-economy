@@ -185,9 +185,9 @@ const DashboardEcourseProgressPage = () => {
                                     <p className="text-[10px] font-black text-purple-900 uppercase tracking-widest opacity-60">Skor Akhir</p>
                                     <p className="text-4xl font-black text-purple-700">{selectedStudentQuiz.progress.quiz_score}%</p>
                                 </div>
-                                <div className={`w-16 h-16 rounded-2xl flex items-center justify-center text-white shadow-lg ${selectedStudentQuiz.progress.quiz_score >= 70 ? 'bg-green-500' : 'bg-red-500'}`}>
+                                <div className={`w-16 h-16 rounded-2xl flex items-center justify-center text-white shadow-lg ${selectedStudentQuiz.progress.quiz_score >= (selectedStudentQuiz.material.passing_score || 0) ? 'bg-green-500' : 'bg-red-500'}`}>
                                     <span className="material-icons text-3xl">
-                                        {selectedStudentQuiz.progress.quiz_score >= 70 ? 'verified' : 'error'}
+                                        {selectedStudentQuiz.progress.quiz_score >= (selectedStudentQuiz.material.passing_score || 0) ? 'verified' : 'error'}
                                     </span>
                                 </div>
                             </div>
