@@ -183,6 +183,22 @@ const DashboardSinergySellersPage = () => {
         }
     };
 
+    const handleDeleteProduct = async (id) => {
+        if (!window.confirm('Apakah Anda yakin ingin menghapus produk ini?')) return;
+        
+        const user = JSON.parse(localStorage.getItem('user'));
+        try {
+            await axios.delete(`${process.env.REACT_APP_API_BASE_URL}/api/products/${id}/`, {
+                headers: { Authorization: `Bearer ${user.access}` }
+            });
+            alert('Produk berhasil dihapus');
+            fetchDashboardData();
+        } catch (error) {
+            console.error(error);
+            alert('Gagal menghapus produk');
+        }
+    };
+
     const renderList = () => (
         <div className="space-y-4 animate-fade-in">
             <div className="flex justify-between items-center mb-6">
@@ -256,7 +272,14 @@ const DashboardSinergySellersPage = () => {
                                     setGalleryFiles([]);
                                     setGalleryPreviews(p.images ? p.images.map(img => img.image) : []);
                                     setActiveTab('edit');
-                                }} className="flex-1 py-2 text-xs font-bold text-emerald-700 bg-emerald-50 rounded-xl hover:bg-emerald-100 border border-emerald-100 transition">Edit & Variasi</button>
+                                }} className="flex-[2] py-2 text-xs font-bold text-emerald-700 bg-emerald-50 rounded-xl hover:bg-emerald-100 border border-emerald-100 transition">Edit & Variasi</button>
+                                <button 
+                                    onClick={() => handleDeleteProduct(p.id)}
+                                    className="flex-1 py-2 text-xs font-bold text-red-600 bg-red-50 rounded-xl hover:bg-red-100 border border-red-100 transition flex items-center justify-center"
+                                    title="Hapus Produk"
+                                >
+                                    <span className="material-icons text-sm">delete</span>
+                                </button>
 
                             </div>
                         </div>
