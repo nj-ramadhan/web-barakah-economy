@@ -196,6 +196,7 @@ from campaigns.models import Campaign
 from digital_products.models import WithdrawalRequest
 from events.models import Event
 from donations.models import Donation
+from meetings.models import Meeting
 
 class ManagementStatsView(APIView):
     permission_classes = [permissions.IsAuthenticated]
@@ -279,4 +280,28 @@ class ActivityCalendarView(APIView):
             'url': f"/campaign/{c.slug}"
         } for c in campaigns_qs]
 
-        return Response(event_data + campaign_data)
+        # Fetch Meetings (Internal Agenda)
+        meetings_qs = Meeting.objects.all().annotate(
+            part_count=Count('participants')
+        )
+        if start_param:
+            meetings_qs = meetings_qs.filter(start_date__gte=start_param)
+        if end_param:
+            meetings_qs = meetings_qs.filter(start_date__lte=end_param)
+            
+        meeting_data = [{
+            'id': f"meeting-{m.id}",
+            'title': f"[AGENDA] {m.title}",
+            'type': 'meeting',
+            'category': 'Internal',
+            'start': m.start_date.isoformat(),
+            'end': (m.end_date or m.start_date).isoformat(),
+            'time_str': m.start_date.strftime("%H:%M"),
+            'participants_count': m.part_count,
+            'location': m.location,
+            'status': 'verified',
+            'color': '#7C3AED', # Purple
+            'url': f"/meeting/{m.slug}"
+        } for m in meetings_qs]
+
+        return Response(event_data + campaign_data + meeting_data)

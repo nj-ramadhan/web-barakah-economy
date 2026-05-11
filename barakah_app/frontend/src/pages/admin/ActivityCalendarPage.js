@@ -369,9 +369,11 @@ const ActivityCalendarPage = () => {
                                         <div className="flex-1 p-6 sm:p-8">
                                             <div className="flex flex-wrap items-center gap-3 mb-3">
                                                 <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-wider ${
-                                                    act.type === 'event' ? 'bg-indigo-50 text-indigo-600' : 'bg-rose-50 text-rose-600'
+                                                    act.type === 'event' ? 'bg-indigo-50 text-indigo-600' : 
+                                                    act.type === 'meeting' ? 'bg-purple-50 text-purple-600' : 'bg-rose-50 text-rose-600'
                                                 }`}>
-                                                    {act.type === 'event' ? 'Event Komunitas' : 'Program Charity'}
+                                                    {act.type === 'event' ? 'Event Komunitas' : 
+                                                     act.type === 'meeting' ? 'Agenda Internal' : 'Program Charity'}
                                                 </span>
                                                 <span className="text-[10px] text-gray-400 font-bold uppercase tracking-[0.2em]">{act.category}</span>
                                                 {act.status === 'pending' && (
@@ -460,7 +462,8 @@ const ActivityCalendarPage = () => {
                                             <div key={act.id} className="p-6 bg-gray-50/50 rounded-3xl border border-gray-100 hover:border-indigo-100 transition-all">
                                                 <div className="flex items-center gap-3 mb-4">
                                                     <span className="material-icons p-2 bg-white rounded-xl shadow-sm text-sm" style={{ color: act.color }}>
-                                                        {act.type === 'event' ? 'event' : 'volunteer_activism'}
+                                                        {act.type === 'event' ? 'event' : 
+                                                         act.type === 'meeting' ? 'groups' : 'volunteer_activism'}
                                                     </span>
                                                     <div>
                                                         <h4 className="text-base font-black text-gray-800 line-clamp-1">{act.title}</h4>
@@ -499,7 +502,9 @@ const ActivityCalendarPage = () => {
                                                         Halaman Publik
                                                     </Link>
                                                     <Link 
-                                                        to={act.type === 'event' ? `/dashboard/admin/events?id=${act.id.split('-')[1]}` : `/dashboard/admin/charity?id=${act.id.split('-')[1]}`}
+                                                        to={act.type === 'event' ? `/dashboard/admin/events?id=${act.id.split('-')[1]}` : 
+                                                            act.type === 'meeting' ? `/dashboard/admin/meetings?id=${act.id.split('-')[1]}` :
+                                                            `/dashboard/admin/charity?id=${act.id.split('-')[1]}`}
                                                         className="flex-1 py-3 bg-indigo-600 text-white rounded-xl text-[9px] font-black uppercase tracking-widest text-center hover:bg-indigo-700 transition-all shadow-md shadow-indigo-100"
                                                     >
                                                         Panel Admin
