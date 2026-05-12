@@ -302,20 +302,20 @@ class CourseViewSet(viewsets.ModelViewSet):
                             q_id = str(q.get('id'))
                             ans_idx = answers.get(q_id)
                             
-                            # Student Answer
+                            # Student Answer Label (A, B, C, D)
                             if ans_idx is not None:
                                 try:
-                                    ans_text = q['options'][int(ans_idx)]
+                                    ans_text = chr(65 + int(ans_idx)) # 65 is 'A'
                                 except:
                                     ans_text = f"Opsi {ans_idx}"
                             else:
                                 ans_text = "-"
                             row.append(ans_text)
                             
-                            # Correct Answer
+                            # Correct Answer Label (A, B, C, D)
                             try:
                                 correct_idx = q.get('correct_index')
-                                correct_text = q['options'][int(correct_idx)]
+                                correct_text = chr(65 + int(correct_idx))
                             except:
                                 correct_text = "-"
                             row.append(correct_text)

@@ -115,6 +115,47 @@ const ProfileEditPage = () => {
     init();
   }, [navigate, isCompleteMode]);
 
+  // Auto-scroll to first missing field when in complete mode
+  useEffect(() => {
+    if (isCompleteMode && missingFields.length > 0 && !loading) {
+      const firstMissing = missingFields[0];
+      
+      // Map fields to tabs
+      const fieldTabs = {
+        name_full: 'general',
+        nickname: 'general',
+        phone: 'general',
+        gender: 'general',
+        birth_place: 'general',
+        birth_date: 'general',
+        info_source: 'general',
+        referred_by: 'general',
+        address: 'address',
+        address_province: 'address',
+        address_city_name: 'address',
+        address_subdistrict_name: 'address',
+        address_village_name: 'address',
+        marital_status: 'general',
+        segment: 'general',
+      };
+
+      if (fieldTabs[firstMissing] && fieldTabs[firstMissing] !== activeTab) {
+        setActiveTab(fieldTabs[firstMissing]);
+      }
+
+      // Small delay to allow tab content to render
+      const timer = setTimeout(() => {
+        const element = document.getElementsByName(firstMissing)[0];
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          element.focus();
+        }
+      }, 300);
+
+      return () => clearTimeout(timer);
+    }
+  }, [missingFields, isCompleteMode, loading, activeTab]);
+
   // Expedition API Fetchers
 
   // Lazy Expedition API Fetchers
@@ -503,13 +544,13 @@ const ProfileEditPage = () => {
               <input type="text" name="phone" placeholder="Contoh: 081234567890" value={profile.phone || ''} onChange={handleChange} className={inputCls('phone')} />
             </div>
             {/* Start File Upload KTP inside tab */}
-            <div className="bg-blue-50 rounded-xl p-4 border border-blue-100 flex flex-col sm:flex-row items-start sm:items-center gap-4">
-              <div className="bg-blue-100 text-blue-600 w-12 h-12 rounded-full flex items-center justify-center shrink-0">
+            <div className="bg-gray-50 rounded-xl p-4 border border-gray-100 flex flex-col sm:flex-row items-start sm:items-center gap-4">
+              <div className="bg-gray-100 text-gray-500 w-12 h-12 rounded-full flex items-center justify-center shrink-0">
                 <span className="material-icons">badge</span>
               </div>
               <div className="flex-1">
-                <h4 className="text-sm font-bold text-blue-900">Scan KTP Otomatis</h4>
-                <p className="text-xs text-blue-700 mt-0.5">Isi data lebih cepat dengan mengunggah foto KTP Anda.</p>
+                <h4 className="text-sm font-bold text-gray-900">Scan KTP Otomatis</h4>
+                <p className="text-xs text-gray-600 mt-0.5">Isi data lebih cepat dengan mengunggah foto KTP Anda.</p>
 
                 {ktpResult && (
                   <div className={`mt-2 p-2 rounded-lg text-xs font-medium ${ktpResult.success ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
@@ -517,7 +558,7 @@ const ProfileEditPage = () => {
                   </div>
                 )}
               </div>
-              <label className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-bold cursor-pointer transition shadow-sm whitespace-nowrap self-stretch sm:self-auto text-center flex items-center justify-center gap-2">
+              <label className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg text-sm font-bold cursor-pointer transition shadow-sm whitespace-nowrap self-stretch sm:self-auto text-center flex items-center justify-center gap-2">
                 <span className="material-icons text-sm">photo_camera</span>
                 {ktpScanning ? 'Memproses...' : 'Scan KTP'}
                 <input type="file" accept="image/*" capture="environment" onChange={handleKtpScan} className="hidden" disabled={ktpScanning} />

@@ -57,7 +57,7 @@ const LoginPage = () => {
             setIsLoggedIn(true);
             alert('Berhasil Login!');
             if (response.is_profile_complete === false) {
-                navigate('/profile/edit', { replace: true });
+                navigate('/profile/edit?complete=1', { replace: true });
             } else {
                 navigate(nextPath);
             }
@@ -90,7 +90,7 @@ const LoginPage = () => {
             setIsLoggedIn(true);
             alert('Berhasil Login dengan akun google!');
             if (response.is_profile_complete === false) {
-                navigate('/profile/edit', { replace: true });
+                navigate('/profile/edit?complete=1', { replace: true });
             } else {
                 navigate(nextPath);
             }
