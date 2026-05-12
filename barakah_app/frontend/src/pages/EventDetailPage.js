@@ -1081,6 +1081,48 @@ const EventDetailPage = () => {
                                                 </>
                                             )}
 
+                                            {event.attachment_file && (
+                                                <>
+                                                    {event.user_registration && event.user_registration.status === 'approved' ? (
+                                                        <a
+                                                            href={getMediaUrl(event.attachment_file)}
+                                                            target="_blank"
+                                                            rel="noreferrer"
+                                                            className="bg-amber-100 text-amber-700 px-5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 hover:bg-amber-200 transition shadow-lg shadow-amber-50"
+                                                        >
+                                                            <span className="material-icons text-sm">description</span>
+                                                            {event.attachment_file_title || 'Download Materi'}
+                                                        </a>
+                                                    ) : (
+                                                        <div className="bg-gray-50 text-gray-400 px-5 py-2.5 rounded-xl text-[10px] font-bold flex items-center gap-2 italic border border-gray-100">
+                                                            <span className="material-icons text-sm">lock</span>
+                                                            Materi tersedia bagi peserta
+                                                        </div>
+                                                    )}
+                                                </>
+                                            )}
+
+                                            {event.attachment_link && (
+                                                <>
+                                                    {event.user_registration && event.user_registration.status === 'approved' ? (
+                                                        <a
+                                                            href={event.attachment_link}
+                                                            target="_blank"
+                                                            rel="noreferrer"
+                                                            className="bg-indigo-100 text-indigo-700 px-5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 hover:bg-indigo-200 transition shadow-lg shadow-indigo-50"
+                                                        >
+                                                            <span className="material-icons text-sm">link</span>
+                                                            {event.attachment_link_title || 'Link Materi'}
+                                                        </a>
+                                                    ) : (
+                                                        <div className="bg-gray-50 text-gray-400 px-5 py-2.5 rounded-xl text-[10px] font-bold flex items-center gap-2 italic border border-gray-100">
+                                                            <span className="material-icons text-sm">lock</span>
+                                                            Link Materi tersedia bagi peserta
+                                                        </div>
+                                                    )}
+                                                </>
+                                            )}
+
                                             {event.documentation_link && (
                                                 <>
                                                     {event.user_registration && event.user_registration.status === 'approved' ? (
@@ -1094,7 +1136,7 @@ const EventDetailPage = () => {
                                                             Download Berkas
                                                         </a>
                                                     ) : (
-                                                        <div className="bg-gray-50 text-gray-400 px-5 py-2.5 rounded-xl text-[10px] font-bold flex items-center gap-2 italic">
+                                                        <div className="bg-gray-50 text-gray-400 px-5 py-2.5 rounded-xl text-[10px] font-bold flex items-center gap-2 italic border border-gray-100">
                                                             <span className="material-icons text-sm">lock</span>
                                                             Berkas tersedia bagi peserta
                                                         </div>
