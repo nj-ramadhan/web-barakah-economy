@@ -182,55 +182,55 @@ const DashboardPartnersPage = () => {
                         <h3 className="text-lg font-bold mb-4">{formData.id ? 'Edit Partner' : 'Tambah Partner Baru'}</h3>
                         <form onSubmit={handleSubmit}>
                             <div className="space-y-4">
-                                <input 
-                                    type="text" 
-                                    placeholder="Nama Partner" 
-                                    required 
-                                    className="w-full p-3 bg-gray-50 border-none rounded-xl text-sm" 
+                                <input
+                                    type="text"
+                                    placeholder="Nama Partner"
+                                    required
+                                    className="w-full p-3 bg-gray-50 border-none rounded-xl text-sm"
                                     value={formData.name}
-                                    onChange={(e) => setFormData({ ...formData, name: e.target.value })} 
+                                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                                 />
                                 <div className="grid grid-cols-2 gap-3">
-                                    <select 
+                                    <select
                                         className="w-full p-3 bg-gray-50 border-none rounded-xl text-sm appearance-none"
                                         value={formData.type || 'partner'}
                                         onChange={(e) => setFormData({ ...formData, type: e.target.value })}
                                     >
-                                        <option value="partner">Partner Kami</option>
-                                        <option value="mitra">Mitra Kami</option>
+                                        <option value="partner">Mitra Kebaikan Barakah</option>
+                                        <option value="mitra">Mitra Bisnis Barakah</option>
                                     </select>
-                                    <input 
-                                        type="number" 
-                                        placeholder="Order" 
-                                        className="w-full p-3 bg-gray-50 border-none rounded-xl text-sm" 
+                                    <input
+                                        type="number"
+                                        placeholder="Order"
+                                        className="w-full p-3 bg-gray-50 border-none rounded-xl text-sm"
                                         value={formData.order}
-                                        onChange={(e) => setFormData({ ...formData, order: e.target.value })} 
+                                        onChange={(e) => setFormData({ ...formData, order: e.target.value })}
                                     />
                                 </div>
-                                <textarea 
-                                    placeholder="Deskripsi Partner (untuk modal)" 
-                                    className="w-full p-3 bg-gray-50 border-none rounded-xl text-sm" 
+                                <textarea
+                                    placeholder="Deskripsi Partner (untuk modal)"
+                                    className="w-full p-3 bg-gray-50 border-none rounded-xl text-sm"
                                     rows="3"
                                     value={formData.description || ''}
                                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                                 ></textarea>
-                                <input 
-                                    type="url" 
-                                    placeholder="Link Website Partner (https://...)" 
-                                    className="w-full p-3 bg-gray-50 border-none rounded-xl text-sm" 
+                                <input
+                                    type="url"
+                                    placeholder="Link Website Partner (https://...)"
+                                    className="w-full p-3 bg-gray-50 border-none rounded-xl text-sm"
                                     value={formData.link || ''}
-                                    onChange={(e) => setFormData({ ...formData, link: e.target.value })} 
+                                    onChange={(e) => setFormData({ ...formData, link: e.target.value })}
                                 />
-                                
+
                                 <div className="space-y-1">
                                     <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Logo Partner (1:1 Recommended)</label>
                                     <div className="flex items-center gap-3">
                                         <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center overflow-hidden border border-gray-200">
                                             {formData.logo ? (
-                                                <img 
-                                                    src={formData.logo instanceof File ? URL.createObjectURL(formData.logo) : getMediaUrl(formData.logo)} 
-                                                    alt="Preview" 
-                                                    className="w-full h-full object-contain" 
+                                                <img
+                                                    src={formData.logo instanceof File ? URL.createObjectURL(formData.logo) : getMediaUrl(formData.logo)}
+                                                    alt="Preview"
+                                                    className="w-full h-full object-contain"
                                                 />
                                             ) : <span className="material-icons text-gray-300 text-lg">image</span>}
                                         </div>
@@ -250,7 +250,7 @@ const DashboardPartnersPage = () => {
                                                 }
                                             }}
                                         />
-                                        <label 
+                                        <label
                                             htmlFor="partner-logo-upload"
                                             className="flex-1 py-2 text-center bg-green-50 text-green-700 rounded-xl text-xs font-bold cursor-pointer hover:bg-green-100 transition"
                                         >
@@ -263,9 +263,9 @@ const DashboardPartnersPage = () => {
                                     <button type="submit" className="flex-1 py-3 bg-green-700 text-white rounded-xl font-bold shadow-lg shadow-green-100 hover:bg-green-800 transition">
                                         {formData.id ? 'Simpan' : 'Tambah'}
                                     </button>
-                                    <button 
-                                        type="button" 
-                                        onClick={() => { setShowModal(false); setFormData({ name: '', logo: null, order: 0, description: '', type: 'partner' }); }} 
+                                    <button
+                                        type="button"
+                                        onClick={() => { setShowModal(false); setFormData({ name: '', logo: null, order: 0, description: '', type: 'partner' }); }}
                                         className="flex-1 py-3 bg-gray-100 text-gray-600 rounded-xl font-bold hover:bg-gray-200 transition"
                                     >
                                         Batal
@@ -278,7 +278,7 @@ const DashboardPartnersPage = () => {
             )}
 
             {cropper.active && (
-                <ImageCropperModal 
+                <ImageCropperModal
                     image={cropper.image}
                     aspect={1}
                     maxWidth={512}

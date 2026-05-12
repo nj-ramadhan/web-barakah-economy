@@ -28,7 +28,7 @@ const getEventStatus = (startStr, endStr) => {
     const end = endStr ? new Date(endStr) : new Date(start.getTime() + 4 * 60 * 60 * 1000);
 
     const isFinished = now > end;
-    
+
     if (now < start) {
         return { label: 'Akan Datang', color: 'bg-blue-600', isFinished };
     } else if (now >= start && now <= end) {
@@ -117,7 +117,7 @@ const DesktopLandingPage = () => {
                 setPartners(Array.isArray(partnerRes.data) ? partnerRes.data : []);
                 setEvents(Array.isArray(eventRes.data) ? eventRes.data : []);
                 setHeroBanners(Array.isArray(heroRes.data) ? heroRes.data.filter(b => b.is_active) : []);
-                
+
                 // Fetch About Us explicitly
                 const aboutDataRes = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/site-content/about-us/`).catch(() => ({ data: [] }));
                 const items = Array.isArray(aboutDataRes.data) ? aboutDataRes.data : [aboutDataRes.data];
@@ -194,8 +194,8 @@ const DesktopLandingPage = () => {
                                                     <SwiperSlide key={banner.id}>
                                                         <div className="relative w-full h-full group/slide overflow-hidden cursor-pointer">
                                                             {banner.video ? (
-                                                                <video 
-                                                                    src={getMediaUrl(banner.video)} 
+                                                                <video
+                                                                    src={getMediaUrl(banner.video)}
                                                                     className="w-full h-full object-cover"
                                                                     autoPlay
                                                                     muted
@@ -234,11 +234,11 @@ const DesktopLandingPage = () => {
                                                 /* Fallback to old dynamic logic if no hero banners configured */
                                                 [
                                                     activities[0] && { type: 'Kegiatan', title: activities[0].title, img: activities[0].header_image, link: `/kegiatan/${activities[0].id}` },
-                                                    events.find(e => e.visibility === 'public') && { 
-                                                        type: 'Event', 
-                                                        title: events.find(e => e.visibility === 'public').title, 
-                                                        img: events.find(e => e.visibility === 'public').thumbnail || events.find(e => e.visibility === 'public').header_image, 
-                                                        link: `/event/${events.find(e => e.visibility === 'public').slug}` 
+                                                    events.find(e => e.visibility === 'public') && {
+                                                        type: 'Event',
+                                                        title: events.find(e => e.visibility === 'public').title,
+                                                        img: events.find(e => e.visibility === 'public').thumbnail || events.find(e => e.visibility === 'public').header_image,
+                                                        link: `/event/${events.find(e => e.visibility === 'public').slug}`
                                                     },
                                                     articles[0] && { type: 'Artikel', title: articles[0].title, img: articles[0].images?.[0]?.path, link: `/articles/${articles[0].id}` },
                                                     campaigns[0] && { type: 'Charity', title: campaigns[0].title, img: campaigns[0].thumbnail, link: `/kampanye/${campaigns[0].slug || campaigns[0].id}` },
@@ -269,7 +269,7 @@ const DesktopLandingPage = () => {
                                         </Swiper>
 
                                         {/* Fullscreen Toggle Button */}
-                                        <button 
+                                        <button
                                             onClick={() => setIsFullscreen(!isFullscreen)}
                                             className="absolute top-4 right-4 z-[10] w-10 h-10 bg-black/30 backdrop-blur-md border border-white/20 text-white rounded-full flex items-center justify-center hover:bg-black/50 transition-all active:scale-90"
                                         >
@@ -905,14 +905,14 @@ const DesktopLandingPage = () => {
                             {partners.some(p => p.type === 'partner') && (
                                 <div>
                                     <div className="text-center mb-10">
-                                        <h2 className="text-3xl font-bold text-gray-900 mb-2">Partner Kami</h2>
+                                        <h2 className="text-3xl font-bold text-gray-900 mb-2">Mitra Kebaikan Barakah</h2>
                                         <div className="w-16 h-1 bg-green-600 mx-auto rounded-full mb-4"></div>
                                         <p className="text-gray-500 text-sm">Kolaborasi strategis untuk kemajuan ekonomi syariah</p>
                                     </div>
                                     <div className="flex flex-wrap justify-center items-center gap-8 md:gap-12">
                                         {partners.filter(p => p.type === 'partner').map((partner) => (
-                                            <div 
-                                                key={partner.id} 
+                                            <div
+                                                key={partner.id}
                                                 onClick={() => {
                                                     if (partner.link) {
                                                         window.open(partner.link, '_blank');
@@ -939,14 +939,14 @@ const DesktopLandingPage = () => {
                             {partners.some(p => p.type === 'mitra') && (
                                 <div>
                                     <div className="text-center mb-10">
-                                        <h2 className="text-2xl font-bold text-gray-800 mb-2">Mitra Kami</h2>
+                                        <h2 className="text-2xl font-bold text-gray-800 mb-2">Mitra Bisnis Barakah</h2>
                                         <div className="w-12 h-1 bg-blue-500 mx-auto rounded-full mb-4"></div>
                                         <p className="text-gray-500 text-sm">Bertumbuh bersama ekosistem Barakah Economy</p>
                                     </div>
                                     <div className="flex flex-wrap justify-center items-center gap-6 md:gap-10">
                                         {partners.filter(p => p.type === 'mitra').map((partner) => (
-                                            <div 
-                                                key={partner.id} 
+                                            <div
+                                                key={partner.id}
                                                 onClick={() => {
                                                     if (partner.link) {
                                                         window.open(partner.link, '_blank');
@@ -975,12 +975,12 @@ const DesktopLandingPage = () => {
                 {/* ============ ABOUT US (paling bawah) ============ */}
                 <section id="about" className="py-20 px-8 lg:px-24 bg-white border-t border-gray-100">
                     <div className="max-w-6xl mx-auto">
-                        <div 
+                        <div
                             onClick={() => navigate('/about')}
                             className="bg-gray-50 rounded-[3rem] p-10 md:p-16 flex flex-col md:flex-row items-center gap-12 cursor-pointer hover:shadow-2xl hover:-translate-y-1 transition duration-500 group relative overflow-hidden"
                         >
                             <div className="absolute top-0 right-0 w-64 h-64 bg-green-100/50 rounded-full -mr-32 -mt-32 blur-3xl group-hover:bg-green-200/50 transition duration-500"></div>
-                            
+
                             <div className="md:w-1/2 space-y-8 relative z-10">
                                 <div>
                                     <h2 className="text-4xl font-black text-gray-900 mb-6 flex items-center gap-4">
@@ -1002,16 +1002,16 @@ const DesktopLandingPage = () => {
                                     </div>
                                 </div>
                                 <button className="inline-flex items-center gap-2 text-green-700 font-black text-lg group-hover:gap-4 transition-all">
-                                    Selengkapnya 
+                                    Selengkapnya
                                     <span className="material-icons">arrow_forward</span>
                                 </button>
                             </div>
 
                             <div className="md:w-1/2 w-full relative">
                                 <div className="aspect-[4/3] rounded-[2.5rem] overflow-hidden shadow-2xl border-8 border-white group-hover:scale-[1.02] transition duration-700 relative z-20">
-                                    <img 
-                                        src={aboutUs?.hero_image ? getMediaUrl(aboutUs.hero_image) : '/icon-512x512.png'} 
-                                        alt="Tentang Kami" 
+                                    <img
+                                        src={aboutUs?.hero_image ? getMediaUrl(aboutUs.hero_image) : '/icon-512x512.png'}
+                                        alt="Tentang Kami"
                                         className="w-full h-full object-cover"
                                     />
                                 </div>
@@ -1059,15 +1059,15 @@ const DesktopLandingPage = () => {
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm animate-fade-in">
                     <div className="bg-white rounded-[2.5rem] shadow-2xl max-w-lg w-full overflow-hidden animate-scale-up border border-white">
                         <div className="relative h-48 bg-gradient-to-br from-green-600 to-green-800 flex items-center justify-center p-8">
-                            <button 
+                            <button
                                 onClick={() => setSelectedPartner(null)}
                                 className="absolute top-6 right-6 w-10 h-10 bg-white/20 hover:bg-white/30 text-white rounded-full flex items-center justify-center backdrop-blur-md transition"
                             >
                                 <span className="material-icons">close</span>
                             </button>
-                            <img 
-                                src={getMediaUrl(selectedPartner.logo)} 
-                                alt={selectedPartner.name} 
+                            <img
+                                src={getMediaUrl(selectedPartner.logo)}
+                                alt={selectedPartner.name}
                                 className="max-w-full max-h-full object-contain"
                             />
                         </div>
@@ -1083,9 +1083,9 @@ const DesktopLandingPage = () => {
                             </div>
                             <div className="pt-4 flex flex-col gap-3">
                                 {selectedPartner.link && (
-                                    <a 
-                                        href={selectedPartner.link} 
-                                        target="_blank" 
+                                    <a
+                                        href={selectedPartner.link}
+                                        target="_blank"
                                         rel="noreferrer"
                                         className="w-full bg-green-700 text-white py-4 rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-green-800 transition shadow-lg shadow-green-100"
                                     >
@@ -1093,7 +1093,7 @@ const DesktopLandingPage = () => {
                                         Kunjungi Website
                                     </a>
                                 )}
-                                <button 
+                                <button
                                     onClick={() => setSelectedPartner(null)}
                                     className="w-full py-4 text-gray-500 font-bold hover:bg-gray-50 rounded-2xl transition"
                                 >

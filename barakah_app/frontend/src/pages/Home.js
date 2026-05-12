@@ -1480,7 +1480,7 @@ const Home = () => {
           <div className="absolute top-0 right-0 w-64 h-64 bg-green-50 rounded-full blur-3xl opacity-30 -mr-32 -mt-32"></div>
           <h2 className="text-2xl font-extrabold mb-8 text-center text-gray-900 flex items-center justify-center gap-3">
             <span className="w-8 h-1 bg-green-600 rounded-full"></span>
-            Partner Kami
+            Mitra Kebaikan Barakah
             <span className="w-8 h-1 bg-green-600 rounded-full"></span>
           </h2>
           <Swiper
@@ -1522,7 +1522,7 @@ const Home = () => {
           <div className="absolute top-0 left-0 w-64 h-64 bg-green-50 rounded-full blur-3xl opacity-30 -ml-32 -mt-32"></div>
           <h2 className="text-2xl font-extrabold mb-8 text-center text-gray-900 flex items-center justify-center gap-3">
             <span className="w-8 h-1 bg-green-600 rounded-full"></span>
-            Mitra Kami
+            Mitra Bisnis Barakah
             <span className="w-8 h-1 bg-green-600 rounded-full"></span>
           </h2>
           <Swiper
