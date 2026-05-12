@@ -990,7 +990,7 @@ const DesktopLandingPage = () => {
                                             </SwiperSlide>
                                         ))}
                                     </Swiper>
- Broadway                                </div>
+                                </div>
                             )}
                         </div>
                     </section>
