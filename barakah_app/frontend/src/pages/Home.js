@@ -1486,11 +1486,11 @@ const Home = () => {
           <Swiper
             modules={[Navigation, Pagination, Autoplay]}
             spaceBetween={20}
-            slidesPerView={2}
+            slidesPerView={3}
             autoplay={{ delay: 3000 }}
             breakpoints={{
-              640: { slidesPerView: 3 },
-              1024: { slidesPerView: 5 },
+              640: { slidesPerView: 4 },
+              1024: { slidesPerView: 7 },
             }}
           >
             {onlyPartners.map(partner => (
@@ -1503,7 +1503,7 @@ const Home = () => {
                       setSelectedPartner(partner);
                     }
                   }}
-                  className="flex flex-col items-center justify-center p-4 grayscale hover:grayscale-0 transition duration-300 cursor-pointer group"
+                  className="flex flex-col items-center justify-center p-4 hover:scale-105 transition duration-300 cursor-pointer group"
                 >
                   <div className="h-16 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
                     <img src={getMediaUrl(partner.logo)} alt={partner.name} className="h-full object-contain" title={partner.link ? 'Klik untuk buka link' : 'Klik untuk lihat detail'} />
@@ -1528,11 +1528,11 @@ const Home = () => {
           <Swiper
             modules={[Navigation, Pagination, Autoplay]}
             spaceBetween={20}
-            slidesPerView={2}
+            slidesPerView={3}
             autoplay={{ delay: 3500 }}
             breakpoints={{
-              640: { slidesPerView: 3 },
-              1024: { slidesPerView: 5 },
+              640: { slidesPerView: 4 },
+              1024: { slidesPerView: 7 },
             }}
           >
             {onlyMitra.map(mitra => (
@@ -1545,7 +1545,7 @@ const Home = () => {
                       setSelectedPartner(mitra);
                     }
                   }}
-                  className="flex flex-col items-center justify-center p-4 grayscale hover:grayscale-0 transition duration-300 cursor-pointer group"
+                  className="flex flex-col items-center justify-center p-4 hover:scale-105 transition duration-300 cursor-pointer group"
                 >
                   <div className="h-16 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
                     <img src={getMediaUrl(mitra.logo)} alt={mitra.name} className="h-full object-contain" title={mitra.link ? 'Klik untuk buka link' : 'Klik untuk lihat detail'} />

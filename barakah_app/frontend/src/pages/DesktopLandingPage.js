@@ -909,29 +909,41 @@ const DesktopLandingPage = () => {
                                         <div className="w-16 h-1 bg-green-600 mx-auto rounded-full mb-4"></div>
                                         <p className="text-gray-500 text-sm">Kolaborasi strategis untuk kemajuan ekonomi syariah</p>
                                     </div>
-                                    <div className="flex flex-wrap justify-center items-center gap-8 md:gap-12">
+                                    <Swiper
+                                        modules={[Autoplay]}
+                                        spaceBetween={20}
+                                        slidesPerView={3}
+                                        autoplay={{ delay: 3000, disableOnInteraction: false }}
+                                        breakpoints={{
+                                            640: { slidesPerView: 4 },
+                                            768: { slidesPerView: 5 },
+                                            1024: { slidesPerView: 7 },
+                                        }}
+                                        className="partners-swiper px-4"
+                                    >
                                         {partners.filter(p => p.type === 'partner').map((partner) => (
-                                            <div
-                                                key={partner.id}
-                                                onClick={() => {
-                                                    if (partner.link) {
-                                                        window.open(partner.link, '_blank');
-                                                    } else {
-                                                        setSelectedPartner(partner);
-                                                    }
-                                                }}
-                                                className="w-24 h-24 md:w-28 md:h-28 bg-white rounded-2xl shadow-sm border border-gray-100 p-3 flex items-center justify-center hover:shadow-md hover:border-green-200 transition-all group cursor-pointer"
-                                            >
-                                                <img
-                                                    src={getMediaUrl(partner.logo)}
-                                                    alt={partner.name}
-                                                    className="max-w-full max-h-full object-contain grayscale group-hover:grayscale-0 transition-all duration-300"
-                                                    title={partner.name}
-                                                    onError={(e) => { e.target.src = '/placeholder-image.jpg'; }}
-                                                />
-                                            </div>
+                                            <SwiperSlide key={partner.id}>
+                                                <div
+                                                    onClick={() => {
+                                                        if (partner.link) {
+                                                            window.open(partner.link, '_blank');
+                                                        } else {
+                                                            setSelectedPartner(partner);
+                                                        }
+                                                    }}
+                                                    className="w-full aspect-square bg-white rounded-2xl shadow-sm border border-gray-100 p-3 flex items-center justify-center hover:shadow-md hover:border-green-200 transition-all group cursor-pointer"
+                                                >
+                                                    <img
+                                                        src={getMediaUrl(partner.logo)}
+                                                        alt={partner.name}
+                                                        className="max-w-full max-h-full object-contain transition-all duration-300 group-hover:scale-110"
+                                                        title={partner.name}
+                                                        onError={(e) => { e.target.src = '/placeholder-image.jpg'; }}
+                                                    />
+                                                </div>
+                                            </SwiperSlide>
                                         ))}
-                                    </div>
+                                    </Swiper>
                                 </div>
                             )}
 
@@ -943,30 +955,42 @@ const DesktopLandingPage = () => {
                                         <div className="w-12 h-1 bg-blue-500 mx-auto rounded-full mb-4"></div>
                                         <p className="text-gray-500 text-sm">Bertumbuh bersama ekosistem Barakah Economy</p>
                                     </div>
-                                    <div className="flex flex-wrap justify-center items-center gap-6 md:gap-10">
+                                    <Swiper
+                                        modules={[Autoplay]}
+                                        spaceBetween={15}
+                                        slidesPerView={4}
+                                        autoplay={{ delay: 3500, disableOnInteraction: false }}
+                                        breakpoints={{
+                                            640: { slidesPerView: 5 },
+                                            768: { slidesPerView: 6 },
+                                            1024: { slidesPerView: 8 },
+                                        }}
+                                        className="mitra-swiper px-4"
+                                    >
                                         {partners.filter(p => p.type === 'mitra').map((partner) => (
-                                            <div
-                                                key={partner.id}
-                                                onClick={() => {
-                                                    if (partner.link) {
-                                                        window.open(partner.link, '_blank');
-                                                    } else {
-                                                        setSelectedPartner(partner);
-                                                    }
-                                                }}
-                                                className="w-20 h-20 md:w-24 md:h-24 bg-white rounded-2xl shadow-sm border border-gray-100 p-2.5 flex items-center justify-center hover:shadow-md hover:border-blue-100 transition-all group cursor-pointer"
-                                            >
-                                                <img
-                                                    src={getMediaUrl(partner.logo)}
-                                                    alt={partner.name}
-                                                    className="max-w-full max-h-full object-contain grayscale group-hover:grayscale-0 transition-all duration-300"
-                                                    title={partner.name}
-                                                    onError={(e) => { e.target.src = '/placeholder-image.jpg'; }}
-                                                />
-                                            </div>
+                                            <SwiperSlide key={partner.id}>
+                                                <div
+                                                    onClick={() => {
+                                                        if (partner.link) {
+                                                            window.open(partner.link, '_blank');
+                                                        } else {
+                                                            setSelectedPartner(partner);
+                                                        }
+                                                    }}
+                                                    className="w-full aspect-square bg-white rounded-2xl shadow-sm border border-gray-100 p-2.5 flex items-center justify-center hover:shadow-md hover:border-blue-100 transition-all group cursor-pointer"
+                                                >
+                                                    <img
+                                                        src={getMediaUrl(partner.logo)}
+                                                        alt={partner.name}
+                                                        className="max-w-full max-h-full object-contain transition-all duration-300 group-hover:scale-110"
+                                                        title={partner.name}
+                                                        onError={(e) => { e.target.src = '/placeholder-image.jpg'; }}
+                                                    />
+                                                </div>
+                                            </SwiperSlide>
                                         ))}
-                                    </div>
-                                </div>
+                                    </Swiper>
+ Broadway                                </div>
                             )}
                         </div>
                     </section>
