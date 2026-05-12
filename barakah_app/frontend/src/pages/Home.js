@@ -1487,6 +1487,8 @@ const Home = () => {
             modules={[Navigation, Pagination, Autoplay]}
             spaceBetween={20}
             slidesPerView={3}
+            centeredSlides={true}
+            loop={true}
             autoplay={{ delay: 3000 }}
             breakpoints={{
               640: { slidesPerView: 4 },
@@ -1529,6 +1531,8 @@ const Home = () => {
             modules={[Navigation, Pagination, Autoplay]}
             spaceBetween={20}
             slidesPerView={3}
+            centeredSlides={true}
+            loop={true}
             autoplay={{ delay: 3500 }}
             breakpoints={{
               640: { slidesPerView: 4 },

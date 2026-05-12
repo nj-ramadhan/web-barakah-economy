@@ -913,6 +913,8 @@ const DesktopLandingPage = () => {
                                         modules={[Autoplay]}
                                         spaceBetween={20}
                                         slidesPerView={3}
+                                        centeredSlides={true}
+                                        loop={true}
                                         autoplay={{ delay: 3000, disableOnInteraction: false }}
                                         breakpoints={{
                                             640: { slidesPerView: 4 },
@@ -959,6 +961,8 @@ const DesktopLandingPage = () => {
                                         modules={[Autoplay]}
                                         spaceBetween={15}
                                         slidesPerView={4}
+                                        centeredSlides={true}
+                                        loop={true}
                                         autoplay={{ delay: 3500, disableOnInteraction: false }}
                                         breakpoints={{
                                             640: { slidesPerView: 5 },
