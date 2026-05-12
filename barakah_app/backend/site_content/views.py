@@ -149,10 +149,13 @@ class ActivityViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(instance)
         return response.Response(serializer.data)
 
+from rest_framework.parsers import MultiPartParser, FormParser
+
 class HeroBannerViewSet(viewsets.ModelViewSet):
     queryset = HeroBanner.objects.all()
     serializer_class = HeroBannerSerializer
     authentication_classes = [JWTAuthentication]
+    parser_classes = [MultiPartParser, FormParser]
 
     def get_permissions(self):
         if self.action in ['list', 'retrieve']:

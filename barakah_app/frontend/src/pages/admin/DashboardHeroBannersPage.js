@@ -59,18 +59,20 @@ const DashboardHeroBannersPage = () => {
         try {
             if (formData.id) {
                 await axios.patch(`${process.env.REACT_APP_API_BASE_URL}/api/site-content/hero-banners/${formData.id}/`, data, {
-                    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' }
+                    headers: { Authorization: `Bearer ${token}` }
                 });
             } else {
                 await axios.post(`${process.env.REACT_APP_API_BASE_URL}/api/site-content/hero-banners/`, data, {
-                    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' }
+                    headers: { Authorization: `Bearer ${token}` }
                 });
             }
             setShowModal(false);
             resetForm();
             fetchBanners();
         } catch (err) {
-            alert(`Gagal ${formData.id ? 'mengupdate' : 'menambah'} banner`);
+            console.error(err);
+            const errorMsg = err.response?.data ? JSON.stringify(err.response.data) : err.message;
+            alert(`Gagal ${formData.id ? 'mengupdate' : 'menambah'} banner: ${errorMsg}`);
         }
     };
 
