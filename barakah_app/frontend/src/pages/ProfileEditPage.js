@@ -119,7 +119,7 @@ const ProfileEditPage = () => {
   useEffect(() => {
     if (isCompleteMode && missingFields.length > 0 && !loading) {
       const firstMissing = missingFields[0];
-      
+
       // Map fields to tabs
       const fieldTabs = {
         name_full: 'general',
@@ -525,6 +525,45 @@ const ProfileEditPage = () => {
       case 'general':
         return (
           <div className="space-y-4">
+            <div className="bg-orange-50 p-4 rounded-2xl border border-orange-100 mb-6">
+              <div className="flex gap-3 mb-4">
+                <span className="material-icons text-orange-600">info</span>
+                <div>
+                  <h4 className="text-sm font-bold text-orange-900">Sumber Informasi</h4>
+                  <p className="text-[11px] text-orange-700 leading-relaxed">Wajib diisi agar dapat mengakses fitur Barakah Economy secara lengkap.</p>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
+                    Dapat info dari mana? <span className="text-red-500">*wajib</span>
+                  </label>
+                  <select name="info_source" value={profile.info_source || ''} onChange={handleChange} className={inputCls('info_source')}>
+                    <option value="">Pilih Sumber Info</option>
+                    <option value="sosmed">Sosial Media (Instagram/FB/TikTok)</option>
+                    <option value="teman">Teman / Keluarga</option>
+                    <option value="iklan">Iklan</option>
+                    <option value="website">Website / Google</option>
+                    <option value="lainnya">Lainnya</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
+                    Siapa yang mengajak? <span className="text-red-500">*wajib</span>
+                  </label>
+                  <input
+                    type="text"
+                    name="referred_by"
+                    placeholder="Nama orang yang merekomendasikan"
+                    value={profile.referred_by || ''}
+                    onChange={handleChange}
+                    className={inputCls('referred_by')}
+                  />
+                  <p className="text-[9px] text-gray-400 mt-1 italic">Tulis nama teman/rekan/keluarga yang mengajak, jika tidak ada tulis 'Tidak Ada'</p>
+                </div>
+              </div>
+            </div>
             <div>
               <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
                 Nama Panggilan <span className="text-red-500">*wajib</span>
@@ -612,47 +651,6 @@ const ProfileEditPage = () => {
               </select>
             </div>
 
-            <div className="bg-orange-50 p-4 rounded-2xl border border-orange-100 mt-6">
-              <div className="flex gap-3 mb-4">
-                <span className="material-icons text-orange-600">info</span>
-                <div>
-                  <h4 className="text-sm font-bold text-orange-900">Sumber Informasi</h4>
-                  <p className="text-[11px] text-orange-700 leading-relaxed">Wajib diisi agar dapat mengakses fitur Barakah Economy secara lengkap.</p>
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
-                    Dapat info dari mana? <span className="text-red-500">*wajib</span>
-                  </label>
-                  <select name="info_source" value={profile.info_source || ''} onChange={handleChange} className={inputCls('info_source')}>
-                    <option value="">Pilih Sumber Info</option>
-                    <option value="sosmed">Sosial Media (Instagram/FB/TikTok)</option>
-                    <option value="wa">WhatsApp Group / Chat</option>
-                    <option value="teman">Teman / Keluarga</option>
-                    <option value="iklan">Iklan</option>
-                    <option value="website">Website / Google</option>
-                    <option value="event">Event / Acara</option>
-                    <option value="lainnya">Lainnya</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
-                    Siapa yang mengajak? <span className="text-red-500">*wajib</span>
-                  </label>
-                  <input 
-                    type="text" 
-                    name="referred_by" 
-                    placeholder="Nama orang yang merekomendasikan" 
-                    value={profile.referred_by || ''} 
-                    onChange={handleChange} 
-                    className={inputCls('referred_by')} 
-                  />
-                  <p className="text-[9px] text-gray-400 mt-1 italic">Tulis 'Sendiri' jika menemukan sendiri</p>
-                </div>
-              </div>
-            </div>
           </div>
         );
 

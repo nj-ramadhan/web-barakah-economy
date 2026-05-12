@@ -570,6 +570,8 @@ const DashboardUserPage = () => {
                                         <SH label="User" field="username" {...{ sortField, sortDir, handleSort, getSortIcon }} />
                                         <SH label="Nama" field="profile__name_full" {...{ sortField, sortDir, handleSort, getSortIcon }} />
                                         <SH label="Panggilan" field="profile__nickname" {...{ sortField, sortDir, handleSort, getSortIcon }} />
+                                        <th className="px-3 py-4 text-gray-600 font-bold uppercase tracking-wider text-[11px] min-w-[120px]">Info dari</th>
+                                        <th className="px-3 py-4 text-gray-600 font-bold uppercase tracking-wider text-[11px] min-w-[120px]">Subject</th>
                                         <th className="px-3 py-4 text-gray-600 font-bold uppercase tracking-wider text-[11px] min-w-[120px]">Kontak</th>
                                         <th className="px-3 py-4 text-gray-600 font-bold uppercase tracking-wider text-[11px] min-w-[80px]">Role</th>
                                         <th className="px-3 py-4 text-gray-600 font-bold uppercase tracking-wider text-[11px] min-w-[100px]">Custom Role</th>
@@ -612,6 +614,25 @@ const DashboardUserPage = () => {
                                             </td>
                                             <td className="px-3 py-3">
                                                 <input type="text" defaultValue={u.profile?.nickname || ''} onBlur={(e) => { if (e.target.value !== (u.profile?.nickname || '')) handleInlineEdit(u.id, 'nickname', e.target.value); }} className="w-full min-w-[80px] bg-transparent border border-transparent hover:border-gray-200 focus:border-green-500 focus:bg-white rounded px-1 py-0.5 text-gray-900 font-bold text-[11px] leading-tight outline-none" placeholder="-" />
+                                            </td>
+                                            <td className="px-3 py-3">
+                                                <select 
+                                                    defaultValue={u.profile?.info_source || ''} 
+                                                    onChange={(e) => { if (e.target.value !== (u.profile?.info_source || '')) handleInlineEdit(u.id, 'info_source', e.target.value); }} 
+                                                    className="w-full min-w-[100px] bg-transparent border border-transparent hover:border-gray-200 focus:border-green-500 focus:bg-white rounded px-1 py-0.5 text-[10px] text-gray-700 outline-none cursor-pointer font-bold uppercase"
+                                                >
+                                                    <option value="">- Pilih -</option>
+                                                    <option value="sosmed">SOSMED</option>
+                                                    <option value="wa">WHATSAPP</option>
+                                                    <option value="teman">TEMAN/KELUARGA</option>
+                                                    <option value="iklan">IKLAN</option>
+                                                    <option value="website">WEBSITE</option>
+                                                    <option value="event">EVENT</option>
+                                                    <option value="lainnya">LAINNYA</option>
+                                                </select>
+                                            </td>
+                                            <td className="px-3 py-3">
+                                                <input type="text" defaultValue={u.profile?.referred_by || ''} onBlur={(e) => { if (e.target.value !== (u.profile?.referred_by || '')) handleInlineEdit(u.id, 'referred_by', e.target.value); }} className="w-full min-w-[100px] bg-transparent border border-transparent hover:border-gray-200 focus:border-green-500 focus:bg-white rounded px-1 py-0.5 text-gray-900 font-bold text-[11px] leading-tight outline-none" placeholder="-" />
                                             </td>
                                             <td className="px-3 py-3 text-gray-600 text-[11px] whitespace-nowrap">
                                                 <input type="text" defaultValue={u.phone || ''} onBlur={(e) => { if (e.target.value !== (u.phone || '')) handleInlineEdit(u.id, 'phone', e.target.value); }} className="w-full min-w-[100px] bg-transparent border border-transparent hover:border-gray-200 focus:border-green-500 focus:bg-white rounded px-1 py-0.5 text-[11px] leading-tight outline-none" placeholder="-" />

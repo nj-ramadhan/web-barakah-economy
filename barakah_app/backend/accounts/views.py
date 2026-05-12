@@ -406,7 +406,7 @@ class UserViewSet(viewsets.ModelViewSet):
 
             writer = csv.writer(response, delimiter=';')
             headers = [
-                'ID', 'IDM', 'Username', 'Full Name', 'Nickname', 'Email', 'Phone', 'Role', 'Verified Member', 'Date Joined',
+                'ID', 'IDM', 'Username', 'Full Name', 'Nickname', 'Info dari', 'Subject', 'Email', 'Phone', 'Role', 'Verified Member', 'Date Joined',
                 'Gender', 'Birth Place', 'Birth Date', 'Registration Date',
                 'Marital Status', 'Segment', 'Study Level', 'Study Campus', 'Study Faculty',
                 'Study Department', 'Study Program', 'Semester', 'Start Year', 'Finish Year',
@@ -429,6 +429,8 @@ class UserViewSet(viewsets.ModelViewSet):
                     user.username,
                     profile.name_full if profile else '',
                     profile.nickname if profile else '',
+                    profile.get_info_source_display() if profile else '',
+                    profile.referred_by if profile else '',
                     user.email,
                     user.phone,
                     user.role,
