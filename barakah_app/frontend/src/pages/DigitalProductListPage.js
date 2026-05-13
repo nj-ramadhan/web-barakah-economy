@@ -19,6 +19,8 @@ const DigitalProductListPage = () => {
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
     const [filteredProducts, setFilteredProducts] = useState([]);
+    const [categories, setCategories] = useState(['Semua']);
+    const [selectedCategory, setSelectedCategory] = useState('Semua');
 
     useEffect(() => {
         const fetchData = async () => {
@@ -27,9 +29,14 @@ const DigitalProductListPage = () => {
                     getDigitalProducts(),
                     getPopularSellers()
                 ]);
-                setProducts(productsRes.data);
-                setFilteredProducts(productsRes.data);
-                setPopularSellers(sellersRes.data);
+                const data = productsRes.data || [];
+                setProducts(data);
+                setFilteredProducts(data);
+                setPopularSellers(sellersRes.data || []);
+                
+                // Extract unique categories
+                const cats = ['Semua', ...new Set(data.map(p => p.category).filter(Boolean))];
+                setCategories(cats);
             } catch (err) {
                 console.error('Error fetching digital products or sellers:', err);
             } finally {
@@ -39,18 +46,27 @@ const DigitalProductListPage = () => {
         fetchData();
     }, []);
 
+    useEffect(() => {
+        let result = products;
+        
+        if (searchQuery) {
+            const query = searchQuery.toLowerCase();
+            result = result.filter(product => 
+                product.title.toLowerCase().includes(query) ||
+                (product.category && product.category.toLowerCase().includes(query)) ||
+                (product.seller_name && product.seller_name.toLowerCase().includes(query))
+            );
+        }
+        
+        if (selectedCategory !== 'Semua') {
+            result = result.filter(product => product.category === selectedCategory);
+        }
+        
+        setFilteredProducts(result);
+    }, [searchQuery, selectedCategory, products]);
+
     const handleSearch = (query) => {
         setSearchQuery(query);
-        if (!query) {
-            setFilteredProducts(products);
-        } else {
-            const filtered = products.filter(product => 
-                product.title.toLowerCase().includes(query.toLowerCase()) ||
-                product.category.toLowerCase().includes(query.toLowerCase()) ||
-                product.seller_name.toLowerCase().includes(query.toLowerCase())
-            );
-            setFilteredProducts(filtered);
-        }
     };
 
     return (
@@ -67,6 +83,27 @@ const DigitalProductListPage = () => {
                     <span className="w-1.5 h-6 bg-green-600 rounded-full"></span>
                     Produk Digital
                 </h1>
+                
+                {/* Category Filter Chips */}
+                {categories.length > 1 && (
+                    <div className="mb-8 overflow-x-auto scrollbar-hide">
+                        <div className="flex gap-2 pb-2">
+                            {categories.map((cat) => (
+                                <button
+                                    key={cat}
+                                    onClick={() => setSelectedCategory(cat)}
+                                    className={`whitespace-nowrap px-5 py-2 rounded-xl text-[10px] font-black transition-all duration-300 border ${
+                                        selectedCategory === cat
+                                            ? 'bg-green-600 text-white border-green-600 shadow-md shadow-green-100 scale-105'
+                                            : 'bg-white text-gray-600 border-gray-100 hover:border-green-200 hover:bg-green-50/50'
+                                    } uppercase tracking-widest`}
+                                >
+                                    {cat}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                )}
 
                 {loading ? (
                     <div className="flex justify-center items-center py-8">

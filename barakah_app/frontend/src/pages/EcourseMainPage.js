@@ -23,6 +23,10 @@ const EcourseMainPage = () => {
   const [searchTimeout, setSearchTimeout] = useState(null);
   const [activeSlide, setActiveSlide] = useState(0);
   const sliderInterval = useRef(null);
+  
+  const [filteredCourses, setFilteredCourses] = useState([]);
+  const [categories, setCategories] = useState(['Semua']);
+  const [selectedCategory, setSelectedCategory] = useState('Semua');
 
   // Fetch featured courses (only once when the component mounts)
   useEffect(() => {
@@ -50,7 +54,15 @@ const EcourseMainPage = () => {
         `${process.env.REACT_APP_API_BASE_URL}/api/courses/`,
         { params: { search } }
       );
-      setCourses(response.data); // Set regular courses (search results)
+      const data = response.data.map(course => ({
+        ...course,
+        category: course.category || 'Pendidikan'
+      }));
+      setCourses(data); // Set regular courses (search results)
+      
+      // Extract unique categories
+      const cats = ['Semua', ...new Set(data.map(c => c.category).filter(Boolean))];
+      setCategories(cats);
     } catch (err) {
       console.error('Error fetching courses:', err);
       setError('Failed to load courses');
@@ -58,6 +70,14 @@ const EcourseMainPage = () => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    let result = courses;
+    if (selectedCategory !== 'Semua') {
+      result = result.filter(c => c.category === selectedCategory);
+    }
+    setFilteredCourses(result);
+  }, [selectedCategory, courses]);
 
   const handleSearch = (query) => {
     setSearchQuery(query);
@@ -183,24 +203,50 @@ const EcourseMainPage = () => {
           <span className="w-1.5 h-6 bg-green-600 rounded-full"></span>
           Semua Kelas Academy
         </h2>
+        
+        {/* Category Filter Chips */}
+        {categories.length > 1 && (
+          <div className="mb-8 overflow-x-auto scrollbar-hide">
+            <div className="flex gap-2 pb-2">
+              {categories.map((cat) => (
+                <button
+                  key={cat}
+                  onClick={() => setSelectedCategory(cat)}
+                  className={`whitespace-nowrap px-5 py-2 rounded-xl text-[10px] font-black transition-all duration-300 border ${
+                    selectedCategory === cat
+                      ? 'bg-green-600 text-white border-green-600 shadow-md shadow-green-100 scale-105'
+                      : 'bg-white text-gray-600 border-gray-100 hover:border-green-200 hover:bg-green-50/50'
+                  } uppercase tracking-widest`}
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
         {loading ? (
           <div className="flex justify-center items-center py-8">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500"></div>
           </div>
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-6">
-            {courses.map(course => {
+            {filteredCourses.map(course => {
               return (
                 <div key={course.id} className="bg-white rounded-lg overflow-hidden shadow">
                   <Link to={`/kelas/${course.slug || course.id}`}>
-                    <img
-                      src={getMediaUrl(course.thumbnail) || '/placeholder-image.jpg'}
-                      alt={course.title}
-                      className="w-full h-28 object-cover"
-                      onError={(e) => {
-                        e.target.src = '/placeholder-image.jpg';
-                      }}
-                    />
+                    <div className="relative">
+                      <img
+                        src={getMediaUrl(course.thumbnail) || '/placeholder-image.jpg'}
+                        alt={course.title}
+                        className="w-full h-28 object-cover"
+                        onError={(e) => {
+                          e.target.src = '/placeholder-image.jpg';
+                        }}
+                      />
+                      <span className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm text-green-700 text-[8px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider border border-green-100">
+                        {course.category}
+                      </span>
+                    </div>
                   </Link>
                   <div className="p-2">
                     <h3 className="text-sm font-medium mb-1 line-clamp-2 min-h-[40px] leading-tight">{course.title}</h3>

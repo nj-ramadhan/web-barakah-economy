@@ -73,15 +73,16 @@ const AboutUs = () => {
 
   const PersonnelCard = ({ person }) => (
     <div className="flex flex-col items-center group w-full">
-      <div className="bg-white p-3 md:p-5 rounded-3xl md:rounded-[2rem] shadow-xl shadow-gray-200/50 border border-gray-100 w-full min-w-[180px] max-w-[240px] text-center relative hover:shadow-2xl transition duration-500 transform hover:-translate-y-2 z-10">
-        <div className="w-20 h-20 md:w-24 md:h-24 rounded-[1.5rem] md:rounded-[2rem] aspect-square overflow-hidden mx-auto mb-4 md:mb-5 shadow-xl border-4 border-white ring-4 ring-gray-50/50 group-hover:ring-green-50 transition-all">
+      {/* Card Body */}
+      <div className="bg-white p-2.5 md:p-5 rounded-2xl md:rounded-[2rem] shadow-xl shadow-gray-200/50 border border-gray-100 w-full min-w-[140px] md:min-w-[180px] max-w-[240px] text-center relative hover:shadow-2xl transition duration-500 transform hover:-translate-y-2 z-10 mx-auto">
+        <div className="w-14 h-14 md:w-24 md:h-24 rounded-xl md:rounded-[2rem] aspect-square overflow-hidden mx-auto mb-3 md:mb-5 shadow-xl border-2 md:border-4 border-white ring-2 md:ring-4 ring-gray-50/50 group-hover:ring-green-50 transition-all">
           <img src={getMediaUrl(person.image)} alt={person.name} className="w-full h-full object-cover" />
         </div>
-        <h4 className="text-base md:text-lg font-black text-gray-900 mb-1 leading-tight">{person.name}</h4>
-        <p className="text-[10px] md:text-xs font-black text-green-600 uppercase tracking-widest mb-3 md:mb-4">{person.job_title}</p>
+        <h4 className="text-[11px] md:text-lg font-black text-gray-900 mb-0.5 md:mb-1 leading-tight">{person.name}</h4>
+        <p className="text-[8px] md:text-xs font-black text-green-600 uppercase tracking-widest mb-2 md:mb-4">{person.job_title}</p>
         
         {person.social_media?.length > 0 && (
-          <div className="flex justify-center gap-4 mt-2 pt-4 border-t border-gray-50">
+          <div className="flex justify-center gap-2 md:gap-4 mt-1 md:mt-2 pt-2 md:pt-4 border-t border-gray-50">
             {person.social_media.map((sm, i) => (
               <a key={i} href={sm.link} target="_blank" rel="noopener noreferrer" className="text-gray-300 hover:text-green-600 transition transform hover:scale-125 flex items-center justify-center">
                 <SocialIcon type={sm.icon} />
@@ -91,13 +92,16 @@ const AboutUs = () => {
         )}
       </div>
       
+      {/* Connector and Children */}
       {person.children?.length > 0 && (
-        <div className="relative pt-10 w-full flex flex-col items-center">
-          <div className="absolute top-0 left-1/2 w-0.5 h-10 bg-green-200 -ml-[1px]"></div>
+        <div className="relative pt-6 md:pt-10 w-full flex flex-col items-center">
+          {/* Vertical line from parent */}
+          <div className="absolute top-0 left-1/2 w-0.5 h-6 md:h-10 bg-green-200 -ml-[1px]"></div>
           
-          <div className="flex justify-center flex-wrap sm:flex-nowrap relative w-full px-4">
+          <div className="flex justify-center flex-nowrap relative w-full px-2">
              {person.children.map((child, i) => (
-               <div key={child.id} className="relative pt-8 px-4 sm:px-6 flex flex-col items-center flex-1 min-w-[240px] max-w-[320px]">
+               <div key={child.id} className="relative pt-6 md:pt-8 px-2 md:px-6 flex flex-col items-center flex-1 min-w-[150px] md:min-w-[240px]">
+                  {/* Horizontal line for siblings */}
                   {person.children.length > 1 && (
                     <>
                       {i === 0 && <div className="absolute top-0 left-1/2 right-0 h-0.5 bg-green-200"></div>}
@@ -105,7 +109,8 @@ const AboutUs = () => {
                       {i > 0 && i < person.children.length - 1 && <div className="absolute top-0 left-0 right-0 h-0.5 bg-green-200"></div>}
                     </>
                   )}
-                  <div className="absolute top-0 left-1/2 w-0.5 h-8 bg-green-200 -ml-[1px]"></div>
+                  {/* Vertical line to child */}
+                  <div className="absolute top-0 left-1/2 w-0.5 h-6 md:h-8 bg-green-200 -ml-[1px]"></div>
                   
                   <PersonnelCard person={child} />
                </div>
