@@ -73,8 +73,8 @@ const AboutUs = () => {
 
   const PersonnelCard = ({ person }) => (
     <div className="inline-flex flex-col items-center group">
-      {/* Card Body */}
-      <div className="bg-white p-2.5 md:p-5 rounded-2xl md:rounded-[2rem] shadow-xl shadow-gray-200/50 border border-gray-100 w-[140px] md:w-[240px] text-center relative hover:shadow-2xl transition duration-500 transform hover:-translate-y-2 z-10 mx-6 md:mx-12">
+      {/* Card Body - Spacing is handled here automatically via margins */}
+      <div className="bg-white p-2.5 md:p-5 rounded-2xl md:rounded-[2rem] shadow-xl shadow-gray-200/50 border border-gray-100 w-[140px] md:w-[240px] text-center relative hover:shadow-2xl transition duration-500 transform hover:-translate-y-2 z-10 mx-6 md:mx-16">
         <div className="w-14 h-14 md:w-24 md:h-24 rounded-xl md:rounded-[2rem] aspect-square overflow-hidden mx-auto mb-3 md:mb-5 shadow-xl border-2 md:border-4 border-white ring-2 md:ring-4 ring-gray-50/50 group-hover:ring-green-50 transition-all">
           <img src={getMediaUrl(person.image)} alt={person.name} className="w-full h-full object-cover" />
         </div>
@@ -94,14 +94,14 @@ const AboutUs = () => {
       
       {/* Connector and Children */}
       {person.children?.length > 0 && (
-        <div className="relative pt-8 md:pt-12 flex flex-col items-center w-full">
+        <div className="relative pt-10 md:pt-14 flex flex-col items-center w-full">
           {/* Vertical line from parent */}
-          <div className="absolute top-0 left-1/2 w-0.5 h-8 md:h-12 bg-green-200 -ml-[1px]"></div>
+          <div className="absolute top-0 left-1/2 w-0.5 h-10 md:h-14 bg-green-200 -ml-[1px]"></div>
           
           <div className="flex justify-center relative min-w-max">
              {person.children.map((child, i) => (
-               <div key={child.id} className="relative pt-8 md:pt-10 flex flex-col items-center">
-                  {/* Horizontal line for siblings */}
+               <div key={child.id} className="relative pt-10 md:pt-12 flex flex-col items-center">
+                  {/* Horizontal line - Spans full width of child container to bridge gaps automatically */}
                   {person.children.length > 1 && (
                     <div className={`absolute top-0 h-0.5 bg-green-200 ${
                         i === 0 ? 'left-1/2 right-0' : 
@@ -110,7 +110,7 @@ const AboutUs = () => {
                     }`}></div>
                   )}
                   {/* Vertical line to child */}
-                  <div className="absolute top-0 left-1/2 w-0.5 h-8 md:h-10 bg-green-200 -ml-[1px]"></div>
+                  <div className="absolute top-0 left-1/2 w-0.5 h-10 md:h-12 bg-green-200 -ml-[1px]"></div>
                   
                   <PersonnelCard person={child} />
                </div>
