@@ -111,6 +111,26 @@ const Home = () => {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [swiperInstance, setSwiperInstance] = useState(null);
 
+  const handleSlideChange = (swiper) => {
+    // Stop all videos in the slider
+    const allVideos = document.querySelectorAll('.hero-video');
+    allVideos.forEach(v => {
+      v.pause();
+      v.currentTime = 0;
+    });
+
+    // Start video in current slide if exists
+    const activeSlide = swiper.slides[swiper.activeIndex];
+    const currentVideo = activeSlide?.querySelector('video');
+    if (currentVideo) {
+      currentVideo.currentTime = 0;
+      currentVideo.play().catch(err => console.log("Video play interrupted", err));
+      swiper.autoplay.stop();
+    } else {
+      swiper.autoplay.start();
+    }
+  };
+
   useEffect(() => {
     const fetchFeaturedProducts = async () => {
       try {
@@ -591,7 +611,7 @@ const Home = () => {
       <HeaderHome onSearch={handleSearch} />
 
       {/* ============ HERO (Desktop Style brought to Mobile) ============ */}
-      <section className="w-full bg-gradient-to-br from-green-50 via-white to-green-100 py-6 px-4 overflow-hidden">
+      <section className="w-full bg-white py-6 px-4 overflow-hidden">
         <div className="max-w-7xl mx-auto">
           {/* Banner Slider - Only Image Carousel on Mobile as requested */}
           <div className={`w-full transition-all duration-700 ${isFullscreen ? 'fixed inset-0 z-[1000] !w-full !h-full bg-black flex items-center justify-center p-0' : ''}`}>
@@ -606,6 +626,7 @@ const Home = () => {
                     pagination={{ clickable: true }}
                     autoplay={{ delay: 5000, disableOnInteraction: false }}
                     onSwiper={setSwiperInstance}
+                    onSlideChange={handleSlideChange}
                     loop={heroBanners.length > 1}
                     className="w-full h-full"
                   >
@@ -616,7 +637,7 @@ const Home = () => {
                             {banner.video ? (
                               <video
                                 src={getMediaUrl(banner.video)}
-                                className="w-full h-full object-cover"
+                                className="w-full h-full object-cover hero-video"
                                 autoPlay
                                 muted
                                 playsInline

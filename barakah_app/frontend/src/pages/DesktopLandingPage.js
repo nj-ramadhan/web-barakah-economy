@@ -80,6 +80,26 @@ const DesktopLandingPage = () => {
     const [isFullscreen, setIsFullscreen] = useState(false);
     const [swiperInstance, setSwiperInstance] = useState(null);
 
+    const handleSlideChange = (swiper) => {
+        // Stop all videos in the slider
+        const allVideos = document.querySelectorAll('.hero-video');
+        allVideos.forEach(v => {
+            v.pause();
+            v.currentTime = 0;
+        });
+
+        // Start video in current slide if exists
+        const activeSlide = swiper.slides[swiper.activeIndex];
+        const currentVideo = activeSlide?.querySelector('video');
+        if (currentVideo) {
+            currentVideo.currentTime = 0;
+            currentVideo.play().catch(err => console.log("Video play interrupted", err));
+            swiper.autoplay.stop();
+        } else {
+            swiper.autoplay.start();
+        }
+    };
+
     useEffect(() => {
         // Fetch data
 
@@ -188,6 +208,7 @@ const DesktopLandingPage = () => {
                                             navigation={isFullscreen}
                                             autoplay={{ delay: 5000, disableOnInteraction: false }}
                                             onSwiper={setSwiperInstance}
+                                            onSlideChange={handleSlideChange}
                                             loop={heroBanners.length > 1}
                                             className="w-full h-full"
                                         >
@@ -198,7 +219,7 @@ const DesktopLandingPage = () => {
                                                             {banner.video ? (
                                                                 <video
                                                                     src={getMediaUrl(banner.video)}
-                                                                    className="w-full h-full object-cover"
+                                                                    className="w-full h-full object-cover hero-video"
                                                                     autoPlay
                                                                     muted
                                                                     playsInline
