@@ -107,6 +107,9 @@ const Home = () => {
   const [aboutUs, setAboutUs] = useState(null);
   const [selectedPartner, setSelectedPartner] = useState(null);
   const [events, setEvents] = useState([]);
+  const [heroBanners, setHeroBanners] = useState([]);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [swiperInstance, setSwiperInstance] = useState(null);
 
   useEffect(() => {
     const fetchFeaturedProducts = async () => {
@@ -209,6 +212,16 @@ const Home = () => {
       }
     };
     fetchEvents();
+
+    const fetchHeroBanners = async () => {
+      try {
+        const response = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/site-content/hero-banners/`);
+        setHeroBanners(Array.isArray(response.data) ? response.data.filter(b => b.is_active) : []);
+      } catch (err) {
+        console.error('Error fetching hero banners:', err);
+      }
+    };
+    fetchHeroBanners();
   }, []);
 
   const handleTestimonialSubmit = async (e) => {
@@ -576,6 +589,145 @@ const Home = () => {
       </Helmet>
 
       <HeaderHome onSearch={handleSearch} />
+
+      {/* ============ HERO (Desktop Style brought to Mobile) ============ */}
+      <section className="w-full bg-gradient-to-br from-green-50 via-white to-green-100 py-10 px-4 overflow-hidden">
+        <div className="max-w-7xl mx-auto flex flex-col items-center gap-8">
+          {/* Text Content */}
+          <div className="w-full space-y-6 animate-fade-in text-center sm:text-left">
+            <div className="space-y-4">
+              <span className="inline-block bg-green-100 text-green-700 px-4 py-1.5 rounded-full text-[10px] font-bold tracking-wider uppercase">
+                Solusi Ekonomi Syariah Terintegrasi
+              </span>
+              <h1 className="text-3xl font-extrabold text-gray-900 leading-tight">
+                Bersama Membangun <br />
+                <span className="text-green-700 relative inline-block">
+                  Ekonomi Umat
+                  <div className="absolute -bottom-1 left-0 w-full h-1.5 bg-green-200/50 -rotate-1"></div>
+                </span> yang Barakah
+              </h1>
+              <p className="text-sm text-gray-600 leading-relaxed max-w-xl mx-auto sm:mx-0">
+                Aplikasi super untuk kebutuhan ibadah harta Anda. Zakat, Infaq, Sedekah, Wakaf hingga belanja produk halal dan thoyyib dalam satu genggaman.
+              </p>
+            </div>
+            <div className="flex flex-wrap justify-center sm:justify-start gap-3 pt-2">
+              <Link to="/charity" className="flex-1 sm:flex-none px-6 py-3.5 bg-green-700 text-white text-xs font-bold rounded-2xl shadow-xl shadow-green-200 flex items-center justify-center gap-2">
+                Donasi <span className="material-icons text-sm">volunteer_activism</span>
+              </Link>
+              <Link to="/sinergy" className="flex-1 sm:flex-none px-6 py-3.5 bg-white text-green-700 text-xs font-bold rounded-2xl shadow-sm border border-green-200 flex items-center justify-center gap-2">
+                Belanja <span className="material-icons text-sm">shopping_bag</span>
+              </Link>
+            </div>
+          </div>
+
+          {/* Banner Slider */}
+          <div className={`w-full transition-all duration-700 ${isFullscreen ? 'fixed inset-0 z-[1000] !w-full !h-full bg-black flex items-center justify-center p-0 md:p-10' : ''}`}>
+            <div className={`relative group w-full ${isFullscreen ? 'max-w-7xl mx-auto' : ''}`}>
+              {!isFullscreen && (
+                <div className="absolute -inset-4 bg-gradient-to-tr from-green-300 to-blue-300 rounded-[2.5rem] blur-2xl opacity-20 transition duration-500"></div>
+              )}
+              <div className={`relative bg-white ${isFullscreen ? 'p-0 rounded-3xl' : 'p-1 rounded-[1.8rem]'} shadow-2xl border border-white/10 overflow-hidden`}>
+                <div className="relative aspect-video w-full overflow-hidden rounded-[1.6rem]">
+                  <Swiper
+                    modules={[Navigation, Pagination, Autoplay]}
+                    pagination={{ clickable: true }}
+                    autoplay={{ delay: 5000, disableOnInteraction: false }}
+                    onSwiper={setSwiperInstance}
+                    loop={heroBanners.length > 1}
+                    className="w-full h-full"
+                  >
+                    {heroBanners.length > 0 ? (
+                      heroBanners.map((banner) => (
+                        <SwiperSlide key={banner.id}>
+                          <div className="relative w-full h-full group/slide overflow-hidden cursor-pointer">
+                            {banner.video ? (
+                              <video
+                                src={getMediaUrl(banner.video)}
+                                className="w-full h-full object-cover"
+                                autoPlay
+                                muted
+                                playsInline
+                                loop={heroBanners.length === 1}
+                                onPlay={() => swiperInstance?.autoplay.stop()}
+                                onEnded={() => {
+                                  if (heroBanners.length > 1) {
+                                    swiperInstance?.slideNext();
+                                    swiperInstance?.autoplay.start();
+                                  }
+                                }}
+                                onClick={() => banner.target_url && window.open(banner.target_url, '_blank')}
+                              />
+                            ) : (
+                              <img
+                                src={getMediaUrl(banner.image)}
+                                alt={banner.title}
+                                className="w-full h-full object-cover"
+                                onClick={() => banner.target_url && window.open(banner.target_url, '_blank')}
+                              />
+                            )}
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none"></div>
+                            <div className="absolute bottom-0 left-0 p-5 w-full text-white pointer-events-none">
+                              <h3 className="text-lg font-black leading-tight mb-1">
+                                {banner.title}
+                              </h3>
+                              <p className="text-[10px] opacity-80 line-clamp-1">
+                                {banner.subtitle}
+                              </p>
+                            </div>
+                          </div>
+                        </SwiperSlide>
+                      ))
+                    ) : (
+                      /* Fallback to dynamic logic if no hero banners */
+                      [
+                        activities[0] && { type: 'Kegiatan', title: activities[0].title, img: activities[0].header_image, link: `/kegiatan/${activities[0].id}` },
+                        events.find(e => e.visibility === 'public') && {
+                          type: 'Event',
+                          title: events.find(e => e.visibility === 'public').title,
+                          img: events.find(e => e.visibility === 'public').thumbnail || events.find(e => e.visibility === 'public').header_image,
+                          link: `/event/${events.find(e => e.visibility === 'public').slug}`
+                        },
+                        campaigns[0] && { type: 'Charity', title: campaigns[0].title, img: campaigns[0].thumbnail, link: `/kampanye/${campaigns[0].slug || campaigns[0].id}` },
+                        courses[0] && { type: 'Academy', title: courses[0].title, img: courses[0].thumbnail, link: `/kelas/${courses[0].slug || courses[0].id}` },
+                        products[0] && { type: 'E-commerce', title: products[0].title, img: products[0].thumbnail, link: `/produk/${products[0].slug || products[0].id}` },
+                      ].filter(Boolean).slice(0, 5).map((item, idx) => (
+                        <SwiperSlide key={idx}>
+                          <div className="relative w-full h-full group/slide cursor-pointer" onClick={() => navigate(item.link)}>
+                            <img
+                              src={getMediaUrl(item.img)}
+                              alt={item.title}
+                              className="w-full h-full object-cover"
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent"></div>
+                            <div className="absolute bottom-0 left-0 p-5 w-full text-white">
+                              <span className="inline-block bg-white/20 backdrop-blur-md px-3 py-1 rounded-full text-[8px] font-black uppercase mb-2 border border-white/30 tracking-widest">
+                                {item.type} Terbaru
+                              </span>
+                              <h3 className="text-base font-black leading-tight line-clamp-1">
+                                {item.title}
+                              </h3>
+                            </div>
+                          </div>
+                        </SwiperSlide>
+                      ))
+                    )}
+                  </Swiper>
+
+                  {/* Fullscreen Toggle */}
+                  <button
+                    onClick={() => setIsFullscreen(!isFullscreen)}
+                    className="absolute top-3 right-3 z-[10] w-8 h-8 bg-black/30 backdrop-blur-md border border-white/20 text-white rounded-full flex items-center justify-center transition-all"
+                  >
+                    <span className="material-icons text-sm">
+                      {isFullscreen ? 'fullscreen_exit' : 'fullscreen'}
+                    </span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
 
       {/* Charity Slider */}
       <div className="px-4 pt-4" style={{ position: 'relative', zIndex: 10 }}>

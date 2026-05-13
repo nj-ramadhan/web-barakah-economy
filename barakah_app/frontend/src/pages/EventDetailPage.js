@@ -563,40 +563,35 @@ const EventDetailPage = () => {
                     {/* Gradient Overlay - Subtle */}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none"></div>
 
-                    {/* Desktop Info Overlay */}
-                    <div className="hidden sm:block absolute bottom-0 left-0 w-full p-8 text-white">
-                        <div className="flex sm:items-end justify-between gap-6">
+                    {/* Info Overlay - Now visible on both mobile and desktop */}
+                    <div className="absolute bottom-0 left-0 w-full p-4 sm:p-8 text-white z-10">
+                        <div className="flex items-end justify-between gap-4 sm:gap-6">
                             <div className="max-w-3xl">
-                                <div className="flex items-center gap-2 mb-4">
-                                    <span className="px-3 py-1 bg-green-600 rounded-full text-[10px] font-bold uppercase tracking-widest inline-block shadow-lg shadow-green-900/40">
+                                <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mb-2 sm:mb-4">
+                                    <span className="px-2 sm:px-3 py-0.5 sm:py-1 bg-green-600 rounded-full text-[8px] sm:text-[10px] font-bold uppercase tracking-widest inline-block shadow-lg shadow-green-900/40">
                                         {event.category || 'Event'}
                                     </span>
-                                    <span className="px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-[10px] font-bold uppercase tracking-widest inline-block">{event.status}</span>
+                                    {event.has_certificate && (
+                                        <span className="px-2 sm:px-3 py-0.5 sm:py-1 bg-amber-500 rounded-full text-[8px] sm:text-[10px] font-bold uppercase tracking-widest text-white flex items-center gap-1 shadow-lg shadow-amber-900/20">
+                                            <span className="material-icons text-[10px] sm:text-xs">verified</span>
+                                            Sertifikat
+                                        </span>
+                                    )}
+                                    <span className="px-2 sm:px-3 py-0.5 sm:py-1 bg-white/20 backdrop-blur-md rounded-full text-[8px] sm:text-[10px] font-bold uppercase tracking-widest inline-block">{event.status}</span>
                                 </div>
-                                <h1 className="text-2xl sm:text-4xl font-extrabold leading-tight drop-shadow-lg">{event.title}</h1>
-                                </div>
+                                <h1 className="text-xl sm:text-4xl font-extrabold leading-tight drop-shadow-lg">{event.title}</h1>
                             </div>
+                        </div>
                     </div>
                 </div>
 
                 {/* Mobile Info & Actions */}
                 <div className="sm:hidden p-6 bg-white border-b border-gray-100 shadow-sm relative z-10">
-                    <div className="flex items-center gap-2 mb-3">
-                        <span className="px-3 py-1 bg-green-600 rounded-full text-[8px] font-bold uppercase tracking-widest text-white">
-                            {event.category || 'Event'}
-                        </span>
-                        {event.has_certificate && (
-                            <span className="px-3 py-1 bg-amber-500 rounded-full text-[8px] font-bold uppercase tracking-widest text-white flex items-center gap-1">
-                                <span className="material-icons text-[10px]">verified</span>
-                                Sertifikat
-                            </span>
-                        )}
-                        <span className="px-3 py-1 bg-gray-100 rounded-full text-[8px] font-bold uppercase tracking-widest text-gray-500">{event.status}</span>
-                    </div>
-                    <h1 className="text-2xl font-extrabold text-gray-900 leading-tight mb-4">{event.title}</h1>
+                    {/* Event info moved to hero overlay, removed redundant title here */}
                     
                     {event.capacity > 0 && (
                         <div className="mb-6 p-4 bg-blue-50 rounded-2xl border border-blue-100 flex items-center justify-between">
+
                             <div className="flex items-center gap-3">
                                 <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-blue-600 shadow-sm border border-blue-100">
                                     <span className="material-icons text-xl">event_seat</span>
