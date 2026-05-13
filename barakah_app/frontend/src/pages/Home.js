@@ -659,15 +659,7 @@ const Home = () => {
                                 onClick={() => banner.target_url && window.open(banner.target_url, '_blank')}
                               />
                             )}
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none"></div>
-                            <div className="absolute bottom-0 left-0 p-5 w-full text-white pointer-events-none">
-                              <h3 className="text-lg font-black leading-tight mb-1">
-                                {banner.title}
-                              </h3>
-                              <p className="text-[10px] opacity-80 line-clamp-1">
-                                {banner.subtitle}
-                              </p>
-                            </div>
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none"></div>
                           </div>
                         </SwiperSlide>
                       ))
@@ -692,15 +684,7 @@ const Home = () => {
                               alt={item.title}
                               className="w-full h-full object-cover"
                             />
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent"></div>
-                            <div className="absolute bottom-0 left-0 p-5 w-full text-white">
-                              <span className="inline-block bg-white/20 backdrop-blur-md px-3 py-1 rounded-full text-[8px] font-black uppercase mb-2 border border-white/30 tracking-widest">
-                                {item.type} Terbaru
-                              </span>
-                              <h3 className="text-base font-black leading-tight line-clamp-1">
-                                {item.title}
-                              </h3>
-                            </div>
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent"></div>
                           </div>
                         </SwiperSlide>
                       ))
