@@ -143,37 +143,38 @@ const DesktopLandingPage = () => {
 
             <main className="flex-1 pt-20">
                 {/* ============ HERO ============ */}
-                <section className="w-full bg-gradient-to-br from-green-50 via-white to-green-100 py-24 lg:py-40 px-8 lg:px-24 overflow-hidden">
-                    <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center gap-16 lg:gap-24">
-                        {/* LEFT: Content area enlarged */}
-                        <div className="md:w-[55%] space-y-10 animate-fade-in">
-                            <div className="space-y-6">
-                                <span className="inline-block bg-green-100 text-green-700 px-5 py-2 rounded-full text-sm font-bold tracking-widest uppercase">
+                <section className="w-full bg-gradient-to-br from-green-50 via-white to-green-100 py-16 lg:py-24 px-8 lg:px-24">
+                    <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center gap-12">
+                        {/* LEFT: 5/12 approx, smaller text area */}
+                        <div className="md:w-[45%] space-y-8 animate-fade-in">
+                            <div className="space-y-4">
+                                <span className="inline-block bg-green-100 text-green-700 px-4 py-1.5 rounded-full text-xs font-bold tracking-wider uppercase">
                                     Solusi Ekonomi Syariah Terintegrasi
                                 </span>
-                                <h1 className="text-5xl md:text-7xl lg:text-8xl font-black text-gray-900 leading-[1.1] tracking-tight">
+                                <h1 className="text-4xl md:text-6xl font-extrabold text-gray-900 leading-tight">
                                     Bersama Membangun <br />
                                     <span className="text-green-700 relative inline-block">
                                         Ekonomi Umat
-                                        <div className="absolute -bottom-3 left-0 w-full h-3 bg-green-200/60 -rotate-1"></div>
+                                        <div className="absolute -bottom-2 left-0 w-full h-2 bg-green-200/50 -rotate-1"></div>
                                     </span> yang Barakah
                                 </h1>
-                                <p className="text-xl text-gray-600 leading-relaxed max-w-2xl font-medium opacity-90">
+                                <p className="text-lg text-gray-600 leading-relaxed max-w-xl">
                                     Aplikasi super untuk kebutuhan ibadah harta Anda. Zakat, Infaq, Sedekah, Wakaf hingga belanja produk halal dan thoyyib dalam satu genggaman.
                                 </p>
                             </div>
-                            <div className="flex flex-wrap gap-5 pt-4">
-                                <Link to="/charity" className="px-10 py-5 bg-green-700 text-white font-black rounded-3xl shadow-2xl shadow-green-900/20 hover:bg-green-800 hover:-translate-y-1.5 transition transform duration-300 flex items-center gap-3 text-lg">
-                                    Mulai Donasi <span className="material-icons">volunteer_activism</span>
+                            <div className="flex flex-wrap gap-4 pt-2">
+                                <Link to="/charity" className="px-8 py-4 bg-green-700 text-white font-bold rounded-2xl shadow-xl shadow-green-200 hover:bg-green-800 hover:-translate-y-1 transition transform duration-300 flex items-center gap-2">
+                                    Mulai Donasi <span className="material-icons text-sm">volunteer_activism</span>
                                 </Link>
-                                <Link to="/sinergy" className="px-10 py-5 bg-white text-green-700 font-black rounded-3xl shadow-xl border border-green-100 hover:bg-green-50 hover:-translate-y-1.5 transition transform duration-300 flex items-center gap-3 text-lg">
-                                    Belanja Halal <span className="material-icons">shopping_bag</span>
+                                <Link to="/sinergy" className="px-8 py-4 bg-white text-green-700 font-bold rounded-2xl shadow-sm border border-green-200 hover:bg-green-50 hover:-translate-y-1 transition transform duration-300 flex items-center gap-2">
+                                    Belanja Halal <span className="material-icons text-sm">shopping_bag</span>
                                 </Link>
                             </div>
                         </div>
 
-                        {/* RIGHT: Banner area slightly larger */}
-                        <div className={`md:w-[45%] w-full transition-all duration-700 ${isFullscreen ? 'fixed inset-0 z-[1000] !w-full !h-full bg-black flex items-center justify-center p-0 md:p-10' : ''}`}>
+                        {/* RIGHT: Larger Banner (55%) */}
+                        <div className={`md:w-[55%] w-full transition-all duration-700 ${isFullscreen ? 'fixed inset-0 z-[1000] !w-full !h-full bg-black flex items-center justify-center p-0 md:p-10' : ''}`}>
+
 
                             <div className={`relative group w-full ${isFullscreen ? 'max-w-7xl mx-auto' : ''}`}>
                                 {!isFullscreen && (

@@ -591,43 +591,16 @@ const Home = () => {
       <HeaderHome onSearch={handleSearch} />
 
       {/* ============ HERO (Desktop Style brought to Mobile) ============ */}
-      <section className="w-full bg-gradient-to-br from-green-50 via-white to-green-100 py-10 px-4 overflow-hidden">
-        <div className="max-w-7xl mx-auto flex flex-col items-center gap-8">
-          {/* Text Content */}
-          <div className="w-full space-y-6 animate-fade-in text-center sm:text-left">
-            <div className="space-y-4">
-              <span className="inline-block bg-green-100 text-green-700 px-4 py-1.5 rounded-full text-[10px] font-bold tracking-wider uppercase">
-                Solusi Ekonomi Syariah Terintegrasi
-              </span>
-              <h1 className="text-3xl font-extrabold text-gray-900 leading-tight">
-                Bersama Membangun <br />
-                <span className="text-green-700 relative inline-block">
-                  Ekonomi Umat
-                  <div className="absolute -bottom-1 left-0 w-full h-1.5 bg-green-200/50 -rotate-1"></div>
-                </span> yang Barakah
-              </h1>
-              <p className="text-sm text-gray-600 leading-relaxed max-w-xl mx-auto sm:mx-0">
-                Aplikasi super untuk kebutuhan ibadah harta Anda. Zakat, Infaq, Sedekah, Wakaf hingga belanja produk halal dan thoyyib dalam satu genggaman.
-              </p>
-            </div>
-            <div className="flex flex-wrap justify-center sm:justify-start gap-3 pt-2">
-              <Link to="/charity" className="flex-1 sm:flex-none px-6 py-3.5 bg-green-700 text-white text-xs font-bold rounded-2xl shadow-xl shadow-green-200 flex items-center justify-center gap-2">
-                Donasi <span className="material-icons text-sm">volunteer_activism</span>
-              </Link>
-              <Link to="/sinergy" className="flex-1 sm:flex-none px-6 py-3.5 bg-white text-green-700 text-xs font-bold rounded-2xl shadow-sm border border-green-200 flex items-center justify-center gap-2">
-                Belanja <span className="material-icons text-sm">shopping_bag</span>
-              </Link>
-            </div>
-          </div>
-
-          {/* Banner Slider */}
-          <div className={`w-full transition-all duration-700 ${isFullscreen ? 'fixed inset-0 z-[1000] !w-full !h-full bg-black flex items-center justify-center p-0 md:p-10' : ''}`}>
+      <section className="w-full bg-gradient-to-br from-green-50 via-white to-green-100 py-6 px-4 overflow-hidden">
+        <div className="max-w-7xl mx-auto">
+          {/* Banner Slider - Only Image Carousel on Mobile as requested */}
+          <div className={`w-full transition-all duration-700 ${isFullscreen ? 'fixed inset-0 z-[1000] !w-full !h-full bg-black flex items-center justify-center p-0' : ''}`}>
             <div className={`relative group w-full ${isFullscreen ? 'max-w-7xl mx-auto' : ''}`}>
               {!isFullscreen && (
                 <div className="absolute -inset-4 bg-gradient-to-tr from-green-300 to-blue-300 rounded-[2.5rem] blur-2xl opacity-20 transition duration-500"></div>
               )}
-              <div className={`relative bg-white ${isFullscreen ? 'p-0 rounded-3xl' : 'p-1 rounded-[1.8rem]'} shadow-2xl border border-white/10 overflow-hidden`}>
-                <div className="relative aspect-video w-full overflow-hidden rounded-[1.6rem]">
+              <div className={`relative bg-white ${isFullscreen ? 'p-0 rounded-none' : 'p-1 rounded-[1.8rem]'} shadow-2xl border border-white/10 overflow-hidden`}>
+                <div className={`relative ${isFullscreen ? 'h-screen w-screen' : 'aspect-video'} w-full overflow-hidden ${isFullscreen ? 'rounded-none' : 'rounded-[1.6rem]'}`}>
                   <Swiper
                     modules={[Navigation, Pagination, Autoplay]}
                     pagination={{ clickable: true }}
@@ -712,7 +685,6 @@ const Home = () => {
                       ))
                     )}
                   </Swiper>
-
                   {/* Fullscreen Toggle */}
                   <button
                     onClick={() => setIsFullscreen(!isFullscreen)}
@@ -728,6 +700,7 @@ const Home = () => {
           </div>
         </div>
       </section>
+
 
       {/* Charity Slider */}
       <div className="px-4 pt-4" style={{ position: 'relative', zIndex: 10 }}>
