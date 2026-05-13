@@ -74,7 +74,7 @@ const AboutUs = () => {
   const PersonnelCard = ({ person }) => (
     <div className="flex flex-col items-center group w-full">
       {/* Card Body */}
-      <div className="bg-white p-2.5 md:p-5 rounded-2xl md:rounded-[2rem] shadow-xl shadow-gray-200/50 border border-gray-100 w-full min-w-[140px] md:min-w-[180px] max-w-[240px] text-center relative hover:shadow-2xl transition duration-500 transform hover:-translate-y-2 z-10 mx-auto">
+      <div className="bg-white p-2.5 md:p-5 rounded-2xl md:rounded-[2rem] shadow-xl shadow-gray-200/50 border border-gray-100 w-full min-w-[130px] md:min-w-[180px] max-w-[200px] md:max-w-[240px] text-center relative hover:shadow-2xl transition duration-500 transform hover:-translate-y-2 z-10 mx-auto">
         <div className="w-14 h-14 md:w-24 md:h-24 rounded-xl md:rounded-[2rem] aspect-square overflow-hidden mx-auto mb-3 md:mb-5 shadow-xl border-2 md:border-4 border-white ring-2 md:ring-4 ring-gray-50/50 group-hover:ring-green-50 transition-all">
           <img src={getMediaUrl(person.image)} alt={person.name} className="w-full h-full object-cover" />
         </div>
@@ -94,13 +94,13 @@ const AboutUs = () => {
       
       {/* Connector and Children */}
       {person.children?.length > 0 && (
-        <div className="relative pt-6 md:pt-10 w-full flex flex-col items-center">
+        <div className="relative pt-8 md:pt-12 w-full flex flex-col items-center">
           {/* Vertical line from parent */}
-          <div className="absolute top-0 left-1/2 w-0.5 h-6 md:h-10 bg-green-200 -ml-[1px]"></div>
+          <div className="absolute top-0 left-1/2 w-0.5 h-8 md:h-12 bg-green-200 -ml-[1px]"></div>
           
-          <div className="flex justify-center flex-nowrap relative w-full px-2">
+          <div className="flex justify-center flex-nowrap relative w-full px-8 md:px-12">
              {person.children.map((child, i) => (
-               <div key={child.id} className="relative pt-6 md:pt-8 px-2 md:px-6 flex flex-col items-center flex-1 min-w-[150px] md:min-w-[240px]">
+               <div key={child.id} className="relative pt-8 md:pt-10 px-6 md:px-16 flex flex-col items-center flex-shrink-0 min-w-[200px] md:min-w-[340px]">
                   {/* Horizontal line for siblings */}
                   {person.children.length > 1 && (
                     <>
@@ -110,7 +110,7 @@ const AboutUs = () => {
                     </>
                   )}
                   {/* Vertical line to child */}
-                  <div className="absolute top-0 left-1/2 w-0.5 h-6 md:h-8 bg-green-200 -ml-[1px]"></div>
+                  <div className="absolute top-0 left-1/2 w-0.5 h-8 md:h-10 bg-green-200 -ml-[1px]"></div>
                   
                   <PersonnelCard person={child} />
                </div>
