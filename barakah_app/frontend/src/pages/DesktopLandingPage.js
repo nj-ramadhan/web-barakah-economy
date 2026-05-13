@@ -5,6 +5,10 @@ import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Pagination, Autoplay } from 'swiper/modules';
 import 'swiper/swiper-bundle.css';
 import DesktopHeader from '../components/layout/DesktopHeader';
+import HeaderHome from '../components/layout/HeaderHome';
+import NavigationButton from '../components/layout/Navigation';
+import DesktopFooter from '../components/layout/DesktopFooter';
+import { useMediaQuery } from 'react-responsive';
 import { getMediaUrl } from '../utils/mediaUtils';
 
 const formatIDR = (amount) => {
@@ -79,6 +83,7 @@ const DesktopLandingPage = () => {
     const [selectedPartner, setSelectedPartner] = useState(null);
     const [isFullscreen, setIsFullscreen] = useState(false);
     const [swiperInstance, setSwiperInstance] = useState(null);
+    const isDesktop = useMediaQuery({ minWidth: 1024 });
 
     const handleSlideChange = (swiper) => {
         // Stop all videos in the slider
@@ -159,14 +164,14 @@ const DesktopLandingPage = () => {
 
     return (
         <div className="w-full min-h-screen bg-gray-50 flex flex-col font-sans">
-            <DesktopHeader />
+            {isDesktop ? <DesktopHeader /> : <HeaderHome />}
 
-            <main className="flex-1 pt-20">
+            <main className={`flex-1 ${isDesktop ? 'pt-20' : 'pb-24'}`}>
                 {/* ============ HERO ============ */}
-                <section className="w-full bg-gradient-to-br from-green-50 via-white to-green-100 py-16 lg:py-24 px-8 lg:px-24">
-                    <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center gap-12">
-                        {/* LEFT: 5/12 approx, smaller text area */}
-                        <div className="md:w-[45%] space-y-8 animate-fade-in">
+                <section className={`w-full ${isDesktop ? 'bg-gradient-to-br from-green-50 via-white to-green-100 py-16 lg:py-24' : 'bg-white py-6'} px-4 lg:px-24`}>
+                    <div className="max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-12">
+                        {/* LEFT: Hidden on mobile as per request */}
+                        <div className="hidden lg:block lg:w-[45%] space-y-8 animate-fade-in">
                             <div className="space-y-4">
                                 <span className="inline-block bg-green-100 text-green-700 px-4 py-1.5 rounded-full text-xs font-bold tracking-wider uppercase">
                                     Solusi Ekonomi Syariah Terintegrasi
@@ -192,8 +197,8 @@ const DesktopLandingPage = () => {
                             </div>
                         </div>
 
-                        {/* RIGHT: Larger Banner (55%) */}
-                        <div className={`md:w-[55%] w-full transition-all duration-700 ${isFullscreen ? 'fixed inset-0 z-[1000] !w-full !h-full bg-black flex items-center justify-center p-0 md:p-10' : ''}`}>
+                        {/* RIGHT: Full width on mobile, 55% on desktop */}
+                        <div className={`w-full lg:w-[55%] transition-all duration-700 ${isFullscreen ? 'fixed inset-0 z-[1000] !w-full !h-full bg-black flex items-center justify-center p-0 md:p-10' : ''}`}>
 
 
                             <div className={`relative group w-full ${isFullscreen ? 'max-w-7xl mx-auto' : ''}`}>

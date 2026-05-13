@@ -245,7 +245,7 @@ const LayoutWrapper = ({ isDesktop }) => {
     <div className="w-full">
       <ProfileNotice />
       <Routes>
-        <Route path="/" element={isDesktop ? <DesktopLandingPage /> : <MobileContainer><Home /></MobileContainer>} />
+        <Route path="/" element={<DesktopLandingPage />} />
 
         {/* Account Routes */}
         <Route path="/dashboard/admin/about-us" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardAboutUsPage /></ResponsiveLayout></PrivateRoute>} />
