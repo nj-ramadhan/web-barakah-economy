@@ -17,7 +17,8 @@ const DashboardAboutUsPage = () => {
         vision: '',
         mission: '',
         legal_description: '',
-        hero_image: null
+        hero_image: null,
+        organization_structure_image: null
     });
     
 
@@ -38,7 +39,8 @@ const DashboardAboutUsPage = () => {
                     vision: data.vision || '',
                     mission: data.mission || '',
                     legal_description: data.legal_description || '',
-                    hero_image: null
+                    hero_image: null,
+                    organization_structure_image: null
                 });
             }
         } catch (err) {
@@ -55,9 +57,39 @@ const DashboardAboutUsPage = () => {
     const handleFileChange = (e, target, aspect, personnelIdx = null) => {
         const file = e.target.files[0];
         if (file) {
+            // Skip cropper if aspect is null
+            if (aspect === null) {
+                if (target === 'legal_doc') {
+                    uploadLegalDocDirect(file);
+                } else {
+                    setFormData(prev => ({ ...prev, [target]: file }));
+                }
+                return;
+            }
             const reader = new FileReader();
             reader.onload = () => setCropper({ show: true, image: reader.result, target, aspect, personnelIdx });
             reader.readAsDataURL(file);
+        }
+    };
+
+    const uploadLegalDocDirect = async (file) => {
+        setUploadingDoc(true);
+        const user = JSON.parse(localStorage.getItem('user'));
+        const token = user?.access;
+        const fd = new FormData();
+        fd.append('about_us', aboutData.id);
+        fd.append('title', `Doc ${aboutData?.legal_documents?.length + 1}`);
+        fd.append('image', file, `legal_doc_${Date.now()}.jpg`);
+        try {
+            await axios.post(`${API}/api/site-content/about-us-legal-docs/`, fd, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            fetchAboutUs();
+        } catch (err) {
+            console.error(err);
+            alert('Gagal mengunggah dokumen.');
+        } finally {
+            setUploadingDoc(false);
         }
     };
 
@@ -74,10 +106,17 @@ const DashboardAboutUsPage = () => {
         fd.append('mission', formData.mission);
         fd.append('legal_description', formData.legal_description);
         if (formData.hero_image) {
-            if (formData.hero_image instanceof File && formData.hero_image.name) {
+            if (formData.hero_image instanceof File) {
                 fd.append('hero_image', formData.hero_image);
             } else if (formData.hero_image instanceof Blob) {
                 fd.append('hero_image', formData.hero_image, 'hero_image.jpg');
+            }
+        }
+        if (formData.organization_structure_image) {
+            if (formData.organization_structure_image instanceof File) {
+                fd.append('organization_structure_image', formData.organization_structure_image);
+            } else if (formData.organization_structure_image instanceof Blob) {
+                fd.append('organization_structure_image', formData.organization_structure_image, 'structure.jpg');
             }
         }
 
@@ -117,6 +156,16 @@ const DashboardAboutUsPage = () => {
     };
 
     const [fullPhoto, setFullPhoto] = useState(null);
+
+    const getImagePreview = (dbValue, newValue) => {
+        if (newValue) {
+            if (newValue instanceof File || newValue instanceof Blob) {
+                return URL.createObjectURL(newValue);
+            }
+            return newValue;
+        }
+        return getMediaUrl(dbValue);
+    };
 
     if (loading) {
         return (
@@ -232,7 +281,7 @@ const DashboardAboutUsPage = () => {
                                     </div>
                                 ))}
                                 <label className="border-4 border-dashed border-gray-100 rounded-[2rem] flex flex-col items-center justify-center bg-gray-50 aspect-[3/4] cursor-pointer hover:bg-green-50 hover:border-green-200 transition group">
-                                    <input type="file" className="hidden" accept="image/*" onChange={e => handleFileChange(e, 'legal_doc', 3/4)} />
+                                    <input type="file" className="hidden" accept="image/*" onChange={e => handleFileChange(e, 'legal_doc', null)} />
                                     <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-sm text-gray-300 group-hover:text-green-500 transition mb-3">
                                         <span className="material-icons text-3xl">add_photo_alternate</span>
                                     </div>
@@ -248,13 +297,13 @@ const DashboardAboutUsPage = () => {
                             <h3 className="text-xl font-black text-gray-900 border-b border-gray-50 pb-4">Foto Utama (Hero)</h3>
                             <div className="relative group rounded-[2rem] overflow-hidden aspect-video bg-gray-100 border-4 border-white shadow-inner flex items-center justify-center cursor-pointer">
                                 <img 
-                                    src={getMediaUrl(aboutData?.hero_image, formData.hero_image)} 
+                                    src={getImagePreview(aboutData?.hero_image, formData.hero_image)} 
                                     className="absolute inset-0 w-full h-full object-cover transition duration-700 opacity-80 group-hover:opacity-100" 
                                     alt="Hero Preview" 
                                 />
                                 <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition"></div>
                                 <div className="relative z-10 bg-white/95 backdrop-blur px-6 py-3 rounded-full text-[10px] font-black uppercase tracking-widest shadow-2xl group-hover:scale-110 transition">Pilih Foto Hero</div>
-                                <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" accept="image/*" onChange={e => handleFileChange(e, 'hero_image', 16/9)} />
+                                <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" accept="image/*" onChange={e => handleFileChange(e, 'hero_image', null)} />
                             </div>
                             <p className="text-[9px] text-gray-400 font-bold text-center uppercase tracking-widest">Rasio 16:9 agar tampilan optimal</p>
                         </div>
@@ -263,7 +312,7 @@ const DashboardAboutUsPage = () => {
                             <h3 className="text-xl font-black text-gray-900 border-b border-gray-50 pb-4">Foto Team / Struktur</h3>
                             <div className="relative group rounded-[2.5rem] overflow-hidden aspect-[3/4] bg-gray-100 border-4 border-white flex items-center justify-center cursor-pointer">
                                 <img 
-                                    src={getMediaUrl(aboutData?.organization_structure_image, formData.organization_structure_image)} 
+                                    src={getImagePreview(aboutData?.organization_structure_image, formData.organization_structure_image)} 
                                     className="absolute inset-0 w-full h-full object-cover transition duration-700 opacity-80 group-hover:opacity-100" 
                                     alt="Structure Preview" 
                                 />

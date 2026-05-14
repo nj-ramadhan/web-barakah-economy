@@ -954,13 +954,7 @@ const DesktopLandingPage = () => {
                                         {partners.filter(p => p.type === 'partner').map((partner) => (
                                             <SwiperSlide key={partner.id}>
                                                 <div
-                                                    onClick={() => {
-                                                        if (partner.link) {
-                                                            window.open(partner.link, '_blank');
-                                                        } else {
-                                                            setSelectedPartner(partner);
-                                                        }
-                                                    }}
+                                                    onClick={() => setSelectedPartner(partner)}
                                                     className="w-full aspect-square bg-white rounded-2xl shadow-sm border border-gray-100 p-3 flex items-center justify-center hover:shadow-md hover:border-green-200 transition-all group cursor-pointer"
                                                 >
                                                     <img
@@ -1002,13 +996,7 @@ const DesktopLandingPage = () => {
                                         {partners.filter(p => p.type === 'mitra').map((partner) => (
                                             <SwiperSlide key={partner.id}>
                                                 <div
-                                                    onClick={() => {
-                                                        if (partner.link) {
-                                                            window.open(partner.link, '_blank');
-                                                        } else {
-                                                            setSelectedPartner(partner);
-                                                        }
-                                                    }}
+                                                    onClick={() => setSelectedPartner(partner)}
                                                     className="w-full aspect-square bg-white rounded-2xl shadow-sm border border-gray-100 p-2.5 flex items-center justify-center hover:shadow-md hover:border-blue-100 transition-all group cursor-pointer"
                                                 >
                                                     <img
@@ -1146,7 +1134,7 @@ const DesktopLandingPage = () => {
                                         className="w-full bg-green-700 text-white py-4 rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-green-800 transition shadow-lg shadow-green-100"
                                     >
                                         <span className="material-icons text-sm">public</span>
-                                        Kunjungi Website
+                                        Lihat Profile Disini
                                     </a>
                                 )}
                                 <button

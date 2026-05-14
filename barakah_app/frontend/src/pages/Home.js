@@ -1628,13 +1628,7 @@ const Home = () => {
             {onlyPartners.map(partner => (
               <SwiperSlide key={partner.id}>
                 <div
-                  onClick={() => {
-                    if (partner.link) {
-                      window.open(partner.link, '_blank');
-                    } else {
-                      setSelectedPartner(partner);
-                    }
-                  }}
+                  onClick={() => setSelectedPartner(partner)}
                   className="flex flex-col items-center justify-center p-4 hover:scale-105 transition duration-300 cursor-pointer group"
                 >
                   <div className="h-16 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
@@ -1672,13 +1666,7 @@ const Home = () => {
             {onlyMitra.map(mitra => (
               <SwiperSlide key={mitra.id}>
                 <div
-                  onClick={() => {
-                    if (mitra.link) {
-                      window.open(mitra.link, '_blank');
-                    } else {
-                      setSelectedPartner(mitra);
-                    }
-                  }}
+                  onClick={() => setSelectedPartner(mitra)}
                   className="flex flex-col items-center justify-center p-4 hover:scale-105 transition duration-300 cursor-pointer group"
                 >
                   <div className="h-16 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
@@ -1824,7 +1812,7 @@ const Home = () => {
                   className="w-full flex items-center justify-center gap-2 py-4 bg-green-700 text-white rounded-2xl text-sm font-bold shadow-lg shadow-green-100 hover:bg-green-800 transition mb-3"
                 >
                   <span className="material-icons text-lg">public</span>
-                  Kunjungi Website
+                  Lihat Profile Disini
                 </a>
               )}
               <button
