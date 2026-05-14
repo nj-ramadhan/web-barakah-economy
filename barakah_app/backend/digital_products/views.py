@@ -31,6 +31,7 @@ from rest_framework.views import APIView
 from django.shortcuts import render, get_object_or_404
 from accounts.models import User
 from profiles.models import Profile
+from orders.models import Order
 
 class SellerShareView(APIView):
     """
@@ -449,7 +450,7 @@ class WithdrawalViewSet(viewsets.ModelViewSet):
             # Add Course sales (using the new persistent instructor field)
             total_course_sales = CourseEnrollment.objects.filter(
                 instructor=request.user,
-                payment_status='verified'
+                payment_status__in=['verified', 'paid']
             ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
             
             total_sinergy_completed = Order.objects.filter(
@@ -459,7 +460,7 @@ class WithdrawalViewSet(viewsets.ModelViewSet):
                 total=Sum(F('total_price') - F('voucher_nominal'), output_field=DecimalField())
             )['total'] or Decimal('0')
 
-            total_sales = total_sales + total_course_sales + Decimal(total_sinergy_completed)
+            total_sales = total_sales + total_course_sales + total_sinergy_completed
         except Exception as e:
             logger.error(f"Error calculating total sales: {e}")
             total_sales = Decimal('0')
@@ -514,10 +515,9 @@ class WithdrawalViewSet(viewsets.ModelViewSet):
             
             total_course_sales = CourseEnrollment.objects.filter(
                 instructor=request.user,
-                payment_status='verified'
+                payment_status__in=['verified', 'paid']
             ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
             
-            from orders.models import Order
             # Completed Sinergy Sales (Available to withdraw)
             total_sinergy_completed = Order.objects.filter(
                 seller=request.user,

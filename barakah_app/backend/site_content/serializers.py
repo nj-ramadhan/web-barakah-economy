@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Partner, Testimonial, Activity, AboutUs, AboutUsLegalDocument, Personnel, PersonnelSocialMedia, Announcement, HeroBanner
+from .models import Partner, Testimonial, Activity, AboutUs, AboutUsLegalDocument, Announcement, HeroBanner
 
 class AnnouncementSerializer(serializers.ModelSerializer):
     type_display = serializers.CharField(source='get_type_display', read_only=True)
@@ -12,20 +12,9 @@ class AboutUsLegalDocumentSerializer(serializers.ModelSerializer):
         model = AboutUsLegalDocument
         fields = '__all__'
 
-class PersonnelSocialMediaSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = PersonnelSocialMedia
-        fields = '__all__'
-
-class PersonnelSerializer(serializers.ModelSerializer):
-    social_media = PersonnelSocialMediaSerializer(many=True, read_only=True)
-    class Meta:
-        model = Personnel
-        fields = '__all__'
 
 class AboutUsSerializer(serializers.ModelSerializer):
     legal_documents = AboutUsLegalDocumentSerializer(many=True, read_only=True)
-    personnel = PersonnelSerializer(many=True, read_only=True)
     class Meta:
         model = AboutUs
         fields = '__all__'

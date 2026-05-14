@@ -20,18 +20,6 @@ const DashboardAboutUsPage = () => {
         hero_image: null
     });
     
-    // Personnel States
-    const [personnelList, setPersonnelList] = useState([]);
-    const [editingPersonnel, setEditingPersonnel] = useState(null);
-    const [showPersonnelModal, setShowPersonnelModal] = useState(false);
-    const [personnelFormData, setPersonnelFormData] = useState({
-        name: '',
-        job_title: '',
-        hierarchy_code: '',
-        order: 0,
-        image: null,
-        social_media: []
-    });
 
     const [newLegalDoc, setNewLegalDoc] = useState({ title: '', image: null });
     const [uploadingDoc, setUploadingDoc] = useState(false);
@@ -52,7 +40,6 @@ const DashboardAboutUsPage = () => {
                     legal_description: data.legal_description || '',
                     hero_image: null
                 });
-                setPersonnelList(data.personnel || []);
             }
         } catch (err) {
             console.error('Error fetching About Us:', err);
@@ -114,140 +101,6 @@ const DashboardAboutUsPage = () => {
         }
     };
 
-    // --- Personnel Management ---
-    const handleOpenPersonnelModal = (person = null) => {
-        if (person) {
-            setEditingPersonnel(person);
-            setPersonnelFormData({
-                name: person.name,
-                job_title: person.job_title,
-                hierarchy_code: person.hierarchy_code,
-                order: person.order || 0,
-                image: null,
-                social_media: person.social_media || []
-            });
-        } else {
-            setEditingPersonnel(null);
-            setPersonnelFormData({
-                name: '',
-                job_title: '',
-                hierarchy_code: '',
-                order: 0,
-                image: null,
-                social_media: []
-            });
-        }
-        setShowPersonnelModal(true);
-    };
-
-    const handleSavePersonnel = async () => {
-        if (!personnelFormData.name || !personnelFormData.job_title || !personnelFormData.hierarchy_code) {
-            alert('Lengkapi nama, jabatan, dan kode hierarki');
-            return;
-        }
-
-        setSaving(true);
-        const user = JSON.parse(localStorage.getItem('user'));
-        const token = user?.access;
-
-        const fd = new FormData();
-        fd.append('about_us', aboutData.id);
-        fd.append('name', personnelFormData.name);
-        fd.append('job_title', personnelFormData.job_title);
-        fd.append('hierarchy_code', personnelFormData.hierarchy_code);
-        fd.append('order', personnelFormData.order);
-        
-        if (personnelFormData.image) {
-            if (personnelFormData.image instanceof File && personnelFormData.image.name) {
-                fd.append('image', personnelFormData.image);
-            } else if (personnelFormData.image instanceof Blob) {
-                fd.append('image', personnelFormData.image, 'personnel_image.jpg');
-            }
-        }
-
-        try {
-            let personId = editingPersonnel?.id;
-            if (personId) {
-                await axios.patch(`${API}/api/site-content/personnel/${personId}/`, fd, {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
-            } else {
-                const res = await axios.post(`${API}/api/site-content/personnel/`, fd, {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
-                personId = res.data.id;
-            }
-
-            // Save Social Media
-            // Strategy: Get existing IDs and delete them, then add from personnelFormData.social_media
-            if (editingPersonnel?.id && editingPersonnel.social_media) {
-                for (const sm of editingPersonnel.social_media) {
-                    await axios.delete(`${API}/api/site-content/personnel-social-media/${sm.id}/`, {
-                        headers: { Authorization: `Bearer ${token}` }
-                    });
-                }
-            }
-
-            for (const sm of personnelFormData.social_media) {
-                if (!sm.link) continue;
-                
-                let link = sm.link;
-                if (!link.startsWith('http')) {
-                    link = 'https://' + link;
-                }
-
-                await axios.post(`${API}/api/site-content/personnel-social-media/`, {
-                    personnel: personId,
-                    icon: sm.icon === 'website' ? 'language' : sm.icon,
-                    link: link
-                }, {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
-            }
-            
-            setShowPersonnelModal(false);
-            fetchAboutUs();
-        } catch (err) {
-            console.error('Error saving personnel:', err);
-            alert('Gagal menyimpan data personil');
-        } finally {
-            setSaving(false);
-        }
-    };
-
-    const handleDeletePersonnel = async (id) => {
-        if (!window.confirm('Hapus personil ini?')) return;
-        const user = JSON.parse(localStorage.getItem('user'));
-        const token = user?.access;
-        try {
-            await axios.delete(`${API}/api/site-content/personnel/${id}/`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            fetchAboutUs();
-        } catch (err) {
-            console.error('Error deleting personnel:', err);
-        }
-    };
-
-    const addSocialMedia = () => {
-        setPersonnelFormData({
-            ...personnelFormData,
-            social_media: [...personnelFormData.social_media, { icon: 'instagram', link: '' }]
-        });
-    };
-
-    const handleSocialChange = (idx, field, val) => {
-        const newList = [...personnelFormData.social_media];
-        newList[idx][field] = val;
-        setPersonnelFormData({ ...personnelFormData, social_media: newList });
-    };
-
-    const removeSocial = (idx) => {
-        setPersonnelFormData({
-            ...personnelFormData,
-            social_media: personnelFormData.social_media.filter((_, i) => i !== idx)
-        });
-    };
 
     const handleDeleteLegalDoc = async (id) => {
         if (!window.confirm('Hapus dokumen ini?')) return;
@@ -348,44 +201,6 @@ const DashboardAboutUsPage = () => {
                             </div>
                         </div>
 
-                        {/* Section 2: Personnel Management */}
-                        <div className="bg-white rounded-[3rem] p-8 md:p-12 shadow-xl shadow-gray-200/40 border border-white">
-                            <div className="flex items-center justify-between mb-10">
-                                <div>
-                                    <h2 className="text-2xl font-black text-gray-900">Daftar Personil (Bagan)</h2>
-                                    <p className="text-gray-400 text-xs font-medium uppercase tracking-widest mt-1">Gunakan kode hirarki (1, 1.1, 1.1.1) untuk bagan pohon</p>
-                                </div>
-                                <button 
-                                    onClick={() => handleOpenPersonnelModal()}
-                                    className="w-14 h-14 bg-green-100 text-green-700 rounded-2xl flex items-center justify-center hover:bg-green-700 hover:text-white transition shadow-lg shadow-green-50"
-                                >
-                                    <span className="material-icons text-3xl">person_add</span>
-                                </button>
-                            </div>
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                {personnelList.length > 0 ? (
-                                    personnelList.map((p) => (
-                                        <div key={p.id} className="p-5 bg-gray-50 rounded-3xl border border-gray-100 flex items-center gap-5 group hover:bg-white hover:shadow-xl hover:border-green-100 transition-all duration-300">
-                                            <div className="w-16 h-16 rounded-2xl overflow-hidden shadow-md flex-shrink-0">
-                                                <img src={getMediaUrl(p.image)} alt={p.name} className="w-full h-full object-cover" />
-                                            </div>
-                                            <div className="flex-1 min-w-0">
-                                                <p className="text-[10px] font-black text-green-600 uppercase tracking-widest leading-none mb-1">{p.hierarchy_code}</p>
-                                                <h4 className="font-black text-gray-900 truncate">{p.name}</h4>
-                                                <p className="text-xs text-gray-500 font-medium truncate">{p.job_title}</p>
-                                            </div>
-                                            <div className="flex gap-2">
-                                                <button onClick={() => handleOpenPersonnelModal(p)} className="p-2 text-blue-400 hover:bg-blue-50 rounded-lg transition"><span className="material-icons text-sm">edit</span></button>
-                                                <button onClick={() => handleDeletePersonnel(p.id)} className="p-2 text-red-300 hover:bg-red-50 rounded-lg transition"><span className="material-icons text-sm">delete</span></button>
-                                            </div>
-                                        </div>
-                                    ))
-                                ) : (
-                                    <div className="col-span-2 py-10 text-center text-gray-300 italic font-medium">Belum ada personil yang ditambahkan.</div>
-                                )}
-                            </div>
-                        </div>
 
                         {/* Section 3: Legal Docs (GRID PHOTO) */}
                         <div className="bg-white rounded-[3rem] p-8 md:p-12 shadow-xl shadow-gray-200/40 border border-white space-y-8">
@@ -445,7 +260,7 @@ const DashboardAboutUsPage = () => {
                         </div>
 
                         <div className="bg-white rounded-[3rem] p-8 shadow-xl shadow-gray-200/40 border border-white space-y-6">
-                            <h3 className="text-xl font-black text-gray-900 border-b border-gray-50 pb-4">Struktur (Bagan Fix)</h3>
+                            <h3 className="text-xl font-black text-gray-900 border-b border-gray-50 pb-4">Foto Team / Struktur</h3>
                             <div className="relative group rounded-[2.5rem] overflow-hidden aspect-[3/4] bg-gray-100 border-4 border-white flex items-center justify-center cursor-pointer">
                                 <img 
                                     src={getMediaUrl(aboutData?.organization_structure_image, formData.organization_structure_image)} 
@@ -453,10 +268,10 @@ const DashboardAboutUsPage = () => {
                                     alt="Structure Preview" 
                                 />
                                 <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition"></div>
-                                <div className="relative z-10 bg-white/95 backdrop-blur px-6 py-3 rounded-full text-[10px] font-black uppercase tracking-widest shadow-2xl group-hover:scale-110 transition">Ubah Gambar Bagan</div>
-                                <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" accept="image/*" onChange={e => handleFileChange(e, 'organization_structure_image', 3/4)} />
+                                <div className="relative z-10 bg-white/95 backdrop-blur px-6 py-3 rounded-full text-[10px] font-black uppercase tracking-widest shadow-2xl group-hover:scale-110 transition">Pilih Gambar Tim</div>
+                                <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" accept="image/*" onChange={e => handleFileChange(e, 'organization_structure_image', null)} />
                             </div>
-                            <p className="text-[9px] text-gray-400 font-bold text-center uppercase tracking-widest">Gunakan Gambar PNG/JPG resolusi tinggi</p>
+                            <p className="text-[9px] text-gray-400 font-bold text-center uppercase tracking-widest">Ukuran Bebas. Tampil di Beranda & Tentang Kami.</p>
                         </div>
                     </div>
                 </div>
@@ -472,94 +287,6 @@ const DashboardAboutUsPage = () => {
                 </div>
             )}
 
-            {/* PERSONNEL MODAL */}
-            {showPersonnelModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-300">
-                    <div className="bg-white w-full max-w-2xl rounded-[3rem] overflow-hidden shadow-2xl animate-in zoom-in-95 duration-300 flex flex-col max-h-[90vh]">
-                        <div className="p-8 pb-4 flex justify-between items-center bg-gray-50/50">
-                            <h3 className="text-2xl font-black text-gray-900">{editingPersonnel ? 'Edit Personil' : 'Tambah Personil'}</h3>
-                            <button onClick={() => setShowPersonnelModal(false)} className="w-10 h-10 flex items-center justify-center text-gray-400 hover:text-red-500 transition"><span className="material-icons">close</span></button>
-                        </div>
-                        <div className="p-8 pt-0 overflow-y-auto flex-1 space-y-6">
-                            <div className="flex flex-col md:flex-row gap-8 mt-4">
-                                <div className="md:w-1/3 flex flex-col items-center">
-                                    <div className="relative w-full aspect-square rounded-[2rem] overflow-hidden bg-gray-100 border-4 border-white shadow-xl group cursor-pointer">
-                                        <img 
-                                            src={getMediaUrl(editingPersonnel?.image, personnelFormData.image)} 
-                                            className="w-full h-full object-cover group-hover:scale-110 transition duration-700"
-                                            alt="Profile"
-                                        />
-                                        <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition">
-                                            <span className="material-icons text-white">add_a_photo</span>
-                                        </div>
-                                        <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" accept="image/*" onChange={e => handleFileChange(e, 'personnel_image', 1/1)} />
-                                    </div>
-                                    <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mt-3">Pass Foto (1:1)</p>
-                                </div>
-                                <div className="md:w-2/3 space-y-4">
-                                    <div className="space-y-1">
-                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Nama Lengkap</label>
-                                        <input type="text" className="w-full p-4 bg-gray-50 border-none rounded-2xl text-base font-black outline-none focus:ring-2 focus:ring-green-500 transition" value={personnelFormData.name} onChange={e => setPersonnelFormData({...personnelFormData, name: e.target.value})} />
-                                    </div>
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div className="space-y-1">
-                                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Jabatan</label>
-                                            <input type="text" className="w-full p-4 bg-gray-50 border-none rounded-2xl text-sm font-bold outline-none focus:ring-2 focus:ring-green-500 transition" value={personnelFormData.job_title} onChange={e => setPersonnelFormData({...personnelFormData, job_title: e.target.value})} placeholder="CEO, Manager, dll" />
-                                        </div>
-                                        <div className="space-y-1">
-                                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Hirarki (1.1, 1.2...)</label>
-                                            <input type="text" className="w-full p-4 bg-gray-50 border-none rounded-2xl text-sm font-black outline-none focus:ring-2 focus:ring-green-500 transition" value={personnelFormData.hierarchy_code} onChange={e => setPersonnelFormData({...personnelFormData, hierarchy_code: e.target.value})} placeholder="Contoh: 1.1" />
-                                        </div>
-                                    </div>
-                                    <div className="space-y-1">
-                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Urutan (Angka)</label>
-                                        <input type="number" className="w-full p-4 bg-gray-50 border-none rounded-2xl text-sm font-black outline-none focus:ring-2 focus:ring-green-500 transition" value={personnelFormData.order} onChange={e => setPersonnelFormData({...personnelFormData, order: parseInt(e.target.value)})} />
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="border-t pt-6 space-y-4">
-                                <div className="flex justify-between items-center">
-                                    <h4 className="font-black text-gray-900 border-l-4 border-green-600 pl-3">Media Sosial</h4>
-                                    <button onClick={addSocialMedia} className="px-4 py-2 bg-green-100 text-green-700 rounded-xl text-xs font-black hover:bg-green-700 hover:text-white transition">+ Tambah Sosmed</button>
-                                </div>
-                                <div className="space-y-3">
-                                    {personnelFormData.social_media.map((sm, idx) => (
-                                        <div key={idx} className="flex gap-2 items-center">
-                                            <select 
-                                                className="p-3 bg-gray-50 border-none rounded-xl text-xs font-bold outline-none"
-                                                value={sm.icon}
-                                                onChange={(e) => handleSocialChange(idx, 'icon', e.target.value)}
-                                            >
-                                                <option value="instagram">Instagram</option>
-                                                <option value="facebook">Facebook</option>
-                                                <option value="linkedin">LinkedIn</option>
-                                                <option value="twitter">X (Twitter)</option>
-                                                <option value="whatsapp">WhatsApp</option>
-                                                <option value="language">Website</option>
-                                            </select>
-                                            <input 
-                                                type="text" 
-                                                className="flex-1 p-3 bg-gray-50 border-none rounded-xl text-xs font-medium outline-none focus:ring-1 focus:ring-blue-400"
-                                                placeholder="https://..."
-                                                value={sm.link}
-                                                onChange={(e) => handleSocialChange(idx, 'link', e.target.value)}
-                                            />
-                                            <button onClick={() => removeSocial(idx)} className="text-red-300 hover:text-red-500 transition"><span className="material-icons">delete_outline</span></button>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        </div>
-                        <div className="p-8 pt-4 bg-gray-50/50 flex gap-4">
-                            <button onClick={() => setShowPersonnelModal(false)} className="flex-1 py-4 bg-white border border-gray-200 text-gray-500 rounded-2xl font-black transition hover:bg-gray-100">Batal</button>
-                            <button onClick={handleSavePersonnel} disabled={saving} className="flex-1 py-4 bg-green-700 text-white rounded-2xl font-black shadow-xl shadow-green-100 hover:bg-green-800 transition transform active:scale-95 disabled:opacity-50">
-                                {saving ? 'Ganti Menyimpan...' : 'Simpan Data'}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
 
             <NavigationButton />
             
@@ -588,8 +315,6 @@ const DashboardAboutUsPage = () => {
                                 } catch (err) { console.error(err); } finally { setUploadingDoc(false); }
                             };
                             autoUpload();
-                        } else if (cropper.target === 'personnel_image') {
-                            setPersonnelFormData({ ...personnelFormData, image: croppedFile });
                         } else {
                             setFormData({ ...formData, [cropper.target]: croppedFile });
                         }

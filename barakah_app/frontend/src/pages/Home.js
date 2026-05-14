@@ -1888,7 +1888,7 @@ const Home = () => {
       </div>
 
       {/* Struktur Team Section */}
-      {personnelTree.length > 0 && (
+      {aboutUs?.organization_structure_image && (
         <section className="py-20 px-4 md:px-8 bg-[#fcfdfe] overflow-hidden">
           <div className="max-w-7xl mx-auto">
             <div className="text-center mb-16">
@@ -1896,10 +1896,16 @@ const Home = () => {
               <div className="w-24 h-1.5 bg-green-600 mx-auto rounded-full"></div>
             </div>
 
-            <div className="flex flex-col items-center">
-              {personnelTree.map(root => (
-                <PersonnelCard key={root.id} person={root} />
-              ))}
+            <div className="flex justify-center">
+              <div className="bg-white p-4 md:p-8 rounded-[2rem] md:rounded-[3.5rem] shadow-2xl shadow-gray-200/50 border border-gray-100 max-w-4xl">
+                <img 
+                  src={getMediaUrl(aboutUs.organization_structure_image)} 
+                  alt="Struktur Team" 
+                  className="w-full h-auto rounded-2xl md:rounded-[2.5rem] shadow-inner"
+                  onClick={() => window.location.href = '/about?tab=team'}
+                  style={{ cursor: 'pointer' }}
+                />
+              </div>
             </div>
           </div>
         </section>

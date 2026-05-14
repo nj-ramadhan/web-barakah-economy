@@ -2,10 +2,10 @@ from django.db import models
 from rest_framework import viewsets, permissions, status, response
 from rest_framework.decorators import action
 from rest_framework_simplejwt.authentication import JWTAuthentication
-from .models import Partner, Testimonial, Activity, AboutUs, AboutUsLegalDocument, Personnel, PersonnelSocialMedia, Announcement, HeroBanner
+from .models import Partner, Testimonial, Activity, AboutUs, AboutUsLegalDocument, Announcement, HeroBanner
 from .serializers import (
     PartnerSerializer, TestimonialSerializer, ActivitySerializer, AboutUsSerializer, 
-    AboutUsLegalDocumentSerializer, PersonnelSerializer, PersonnelSocialMediaSerializer, 
+    AboutUsLegalDocumentSerializer, 
     AnnouncementSerializer, HeroBannerSerializer
 )
 
@@ -33,25 +33,6 @@ class AnnouncementViewSet(viewsets.ModelViewSet):
             return [permissions.AllowAny()]
         return [permissions.IsAdminUser()]
 
-class PersonnelViewSet(viewsets.ModelViewSet):
-    queryset = Personnel.objects.all()
-    serializer_class = PersonnelSerializer
-    authentication_classes = [JWTAuthentication]
-
-    def get_permissions(self):
-        if self.action in ['list', 'retrieve']:
-            return [permissions.AllowAny()]
-        return [permissions.IsAdminUser()]
-
-class PersonnelSocialMediaViewSet(viewsets.ModelViewSet):
-    queryset = PersonnelSocialMedia.objects.all()
-    serializer_class = PersonnelSocialMediaSerializer
-    authentication_classes = [JWTAuthentication]
-
-    def get_permissions(self):
-        if self.action in ['list', 'retrieve']:
-            return [permissions.AllowAny()]
-        return [permissions.IsAdminUser()]
 
 class AboutUsViewSet(viewsets.ModelViewSet):
     queryset = AboutUs.objects.all()

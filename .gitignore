@@ -47,3 +47,4 @@ static/js/
 .env.production
 .env.development
 barakah_app/frontend/package-lock.json
+barakah_app/frontend/package-lock.json
