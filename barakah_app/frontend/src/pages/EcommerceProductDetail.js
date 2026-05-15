@@ -9,6 +9,7 @@ import { formatCurrency } from '../utils/formatters';
 import FloatingCartModal from '../components/layout/FloatingCartModal';
 import UserProfileModal from '../components/modals/UserProfileModal';
 import { getMediaUrl } from '../utils/mediaUtils';
+import { toggleLikeProduct } from '../services/productApi';
 import '../styles/Body.css';
 
 function getCsrfToken() {
@@ -61,6 +62,9 @@ const EcommerceProductDetail = () => {
   const [selectedImage, setSelectedImage] = useState(null);
   const [selectedUserId, setSelectedUserId] = useState(null);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [isLiked, setIsLiked] = useState(false);
+  const [likesCount, setLikesCount] = useState(0);
+  const [liking, setLiking] = useState(false);
 
   const baseUrl = process.env.REACT_APP_API_BASE_URL;
 
@@ -78,6 +82,8 @@ const EcommerceProductDetail = () => {
         // Fetch product details
         const productResponse = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/products/${slug}/`);
         setProduct(productResponse.data);
+        setIsLiked(productResponse.data.is_liked);
+        setLikesCount(productResponse.data.likes_count);
 
       } catch (err) {
         console.error('Error fetching product details:', err);
@@ -148,6 +154,34 @@ const EcommerceProductDetail = () => {
     } catch (error) {
       console.error('Error adding product to wishlist:', error);
       alert('Gagal menambahkan ke Incaran, ' + error['response']['data']['message']);
+    }
+  };
+
+  const handleToggleLike = async () => {
+    const userStr = localStorage.getItem('user');
+    if (!userStr) {
+      alert('Anda harus login terlebih dahulu untuk memberikan like.');
+      return;
+    }
+
+    setLiking(true);
+    // Optimistic UI
+    const prevIsLiked = isLiked;
+    const prevLikesCount = likesCount;
+    setIsLiked(!prevIsLiked);
+    setLikesCount(prevLikesCount + (prevIsLiked ? -1 : 1));
+
+    try {
+      const res = await toggleLikeProduct(product.id);
+      setIsLiked(res.data.liked);
+      setLikesCount(res.data.likes_count);
+    } catch (err) {
+      console.error('Error toggling like:', err);
+      // Rollback
+      setIsLiked(prevIsLiked);
+      setLikesCount(prevLikesCount);
+    } finally {
+      setLiking(false);
     }
   };
 
@@ -384,10 +418,19 @@ const EcommerceProductDetail = () => {
                       {isOutOfStock ? 'Stok Habis' : 'Keranjang'}
                     </button>
                     <button 
+                      className={`px-4 py-3 border-2 transition-all rounded-xl flex items-center justify-center gap-1.5 active:scale-90 shadow-sm ${isLiked ? 'border-red-500 bg-red-50 text-red-600' : 'border-gray-200 text-gray-400 hover:border-red-200 hover:text-red-400'}`}
+                      onClick={handleToggleLike}
+                      disabled={liking}
+                    >
+                      <span className="material-icons text-xl">{isLiked ? 'favorite' : 'favorite_border'}</span>
+                      <span className="text-xs font-bold">{likesCount}</span>
+                    </button>
+                    <button 
                       className="px-6 py-3 border-2 border-green-600 text-green-700 font-bold rounded-xl flex items-center justify-center gap-2 hover:bg-green-50 transition-all whitespace-nowrap"
                       onClick={() => addToWishlist(product.id)}
+                      title="Simpan ke Incaran"
                     >
-                      <span className="material-icons text-xl">favorite_border</span>
+                      <span className="material-icons text-xl">bookmark_border</span>
                     </button>
 
                     <button 

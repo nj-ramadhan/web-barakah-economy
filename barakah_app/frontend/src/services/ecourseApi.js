@@ -100,3 +100,6 @@ export const exportCourseProgressCsv = (courseId) =>
     api.get(`${API_BASE}/${courseId}/export-progress-csv/`, {
         responseType: 'blob'
     });
+
+export const toggleLikeCourse = (slug) =>
+    api.post(`${API_BASE}/${slug}/like/`);

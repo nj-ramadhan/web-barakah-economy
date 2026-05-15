@@ -12,6 +12,7 @@ class Thread(models.Model):
     views = models.PositiveIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    likes = models.ManyToManyField(User, related_name='liked_threads', blank=True)
 
     def save(self, *args, **kwargs):
         if not self.slug:
@@ -37,6 +38,7 @@ class Reply(models.Model):
     parent = models.ForeignKey('self', null=True, blank=True, on_delete=models.CASCADE, related_name='children')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    likes = models.ManyToManyField(User, related_name='liked_replies', blank=True)
 
     @property
     def is_expert(self):

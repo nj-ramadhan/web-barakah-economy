@@ -307,3 +307,9 @@ export const markEventSessionFinished = (slug, sessionId) => {
         headers: getAuthHeaders()
     });
 };
+
+export const toggleLikeEvent = (slug) => {
+    return axios.post(`${API_BASE_URL}/api/events/${slug}/like/`, {}, {
+        headers: getAuthHeaders()
+    });
+};

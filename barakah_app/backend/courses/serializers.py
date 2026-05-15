@@ -89,6 +89,8 @@ class CourseSerializer(serializers.ModelSerializer):
     students = serializers.SerializerMethodField()
     student_count = serializers.SerializerMethodField()
     material_count = serializers.SerializerMethodField()
+    likes_count = serializers.SerializerMethodField()
+    is_liked = serializers.SerializerMethodField()
     instructor_name = serializers.ReadOnlyField(source='instructor.username')
     certificate_design = serializers.SerializerMethodField()
 
@@ -98,7 +100,8 @@ class CourseSerializer(serializers.ModelSerializer):
             'id', 'title', 'slug', 'description', 'instructor', 'instructor_name',
             'thumbnail', 'price', 'discount', 'is_active', 'is_featured', 'category',
             'duration', 'has_certificate', 'certificate_info', 'view_count', 'created_at', 
-            'materials', 'student_count', 'material_count', 'students', 'certificate_design'
+            'materials', 'student_count', 'material_count', 'students', 'certificate_design',
+            'likes_count', 'is_liked'
         ]
         read_only_fields = ['instructor']
 
@@ -143,5 +146,14 @@ class CourseSerializer(serializers.ModelSerializer):
             return None
         except Exception:
             return None
+
+    def get_likes_count(self, obj):
+        return obj.likes.count()
+
+    def get_is_liked(self, obj):
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            return obj.likes.filter(id=request.user.id).exists()
+        return False
 
 

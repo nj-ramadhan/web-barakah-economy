@@ -6,6 +6,7 @@ import axios from 'axios';
 import Header from '../components/layout/Header';
 import NavigationButton from '../components/layout/Navigation';
 import ShareButton from '../components/campaigns/ShareButton';
+import { toggleLikeCampaign } from '../services/campaigns';
 import '../styles/Body.css';
 
 const getTimeElapsed = (createdAt) => {
@@ -77,6 +78,9 @@ const CrowdfundingCampaignDetail = () => {
   const [realizations, setRealizations] = useState([]);
   const [canViewRealizations, setCanViewRealizations] = useState(false);
   const [loadingRealizations, setLoadingRealizations] = useState(false);
+  const [isLiked, setIsLiked] = useState(false);
+  const [likesCount, setLikesCount] = useState(0);
+  const [liking, setLiking] = useState(false);
 
   const baseUrl = process.env.REACT_APP_API_BASE_URL;
 
@@ -85,6 +89,8 @@ const CrowdfundingCampaignDetail = () => {
       try {
         const campaignResponse = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/campaigns/${slug}/`);
         setCampaign(campaignResponse.data);
+        setIsLiked(campaignResponse.data.is_liked);
+        setLikesCount(campaignResponse.data.likes_count);
 
         const donationsResponse = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/donations/campaign/${slug}/donations/`);
         setDonations(donationsResponse.data);
@@ -137,6 +143,34 @@ const CrowdfundingCampaignDetail = () => {
 
   const isExpired = isCampaignExpired(campaign.deadline);
   const deadlineText = formatDeadline(campaign.deadline);
+
+  const handleToggleLike = async () => {
+    const userStr = localStorage.getItem('user');
+    if (!userStr) {
+      alert('Anda harus login terlebih dahulu untuk memberikan like.');
+      return;
+    }
+
+    setLiking(true);
+    // Optimistic UI
+    const prevIsLiked = isLiked;
+    const prevLikesCount = likesCount;
+    setIsLiked(!prevIsLiked);
+    setLikesCount(prevLikesCount + (prevIsLiked ? -1 : 1));
+
+    try {
+      const res = await toggleLikeCampaign(slug);
+      setIsLiked(res.data.liked);
+      setLikesCount(res.data.likes_count);
+    } catch (err) {
+      console.error('Error toggling like:', err);
+      // Rollback
+      setIsLiked(prevIsLiked);
+      setLikesCount(prevLikesCount);
+    } finally {
+      setLiking(false);
+    }
+  };
 
   const toggleDescription = () => {
     setShowFullDescription(!showFullDescription);
@@ -287,6 +321,16 @@ const CrowdfundingCampaignDetail = () => {
                   </Link>
                 )}
               </div>
+              <button 
+                onClick={handleToggleLike}
+                disabled={liking}
+                className={`flex items-center gap-1.5 px-4 py-3 rounded-xl transition-all active:scale-90 shadow-sm border ${isLiked ? 'bg-red-50 text-red-600 border-red-100' : 'bg-gray-50 text-gray-500 border-gray-100'}`}
+              >
+                <span className={`material-icons text-[20px] ${isLiked ? 'text-red-500' : 'text-gray-400'}`}>
+                  {isLiked ? 'favorite' : 'favorite_border'}
+                </span>
+                <span className="text-sm font-bold">{likesCount}</span>
+              </button>
               <ShareButton slug={campaign.slug} title={campaign.title} />
             </div>
           </div>

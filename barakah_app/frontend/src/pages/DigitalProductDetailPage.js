@@ -4,7 +4,7 @@ import { useParams, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
 import Header from '../components/layout/Header';
 import NavigationButton from '../components/layout/Navigation';
-import { getDigitalProductBySlug } from '../services/digitalProductApi';
+import { getDigitalProductBySlug, toggleLikeDigitalProduct } from '../services/digitalProductApi';
 import { getMediaUrl } from '../utils/mediaUtils';
 import UserProfileModal from '../components/modals/UserProfileModal';
 import '../styles/Body.css';
@@ -20,6 +20,9 @@ const DigitalProductDetailPage = () => {
     const [shareMessage, setShareMessage] = useState('');
     const [selectedUserId, setSelectedUserId] = useState(null);
     const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+    const [isLiked, setIsLiked] = useState(false);
+    const [likesCount, setLikesCount] = useState(0);
+    const [liking, setLiking] = useState(false);
 
     const handleShare = () => {
         const shareUrl = `${window.location.origin}/api/digital-products/share/${product.seller_name}/${product.slug}`;
@@ -47,6 +50,8 @@ const DigitalProductDetailPage = () => {
             try {
                 const res = await getDigitalProductBySlug(slug);
                 setProduct(res.data);
+                setIsLiked(res.data.is_liked);
+                setLikesCount(res.data.likes_count);
             } catch (err) {
                 console.error('Error fetching digital product:', err);
             } finally {
@@ -55,6 +60,34 @@ const DigitalProductDetailPage = () => {
         };
         fetchProduct();
     }, [slug]);
+
+    const handleToggleLike = async () => {
+        const userStr = localStorage.getItem('user');
+        if (!userStr) {
+            alert('Anda harus login terlebih dahulu untuk memberikan like.');
+            return;
+        }
+
+        setLiking(true);
+        // Optimistic UI
+        const prevIsLiked = isLiked;
+        const prevLikesCount = likesCount;
+        setIsLiked(!prevIsLiked);
+        setLikesCount(prevLikesCount + (prevIsLiked ? -1 : 1));
+
+        try {
+            const res = await toggleLikeDigitalProduct(product.slug || product.id);
+            setIsLiked(res.data.liked);
+            setLikesCount(res.data.likes_count);
+        } catch (err) {
+            console.error('Error toggling like:', err);
+            // Rollback
+            setIsLiked(prevIsLiked);
+            setLikesCount(prevLikesCount);
+        } finally {
+            setLiking(false);
+        }
+    };
 
     if (loading) {
         return (
@@ -120,18 +153,28 @@ const DigitalProductDetailPage = () => {
 
                             <div className="flex items-center gap-4 mb-4">
                                 <p className="text-3xl font-bold text-green-700">{formatIDR(product.price)}</p>
-                                <button
-                                    onClick={handleShare}
-                                    className="p-2 bg-gray-100 text-gray-600 rounded-full hover:bg-gray-200 transition relative flex items-center justify-center"
-                                    title="Bagikan produk"
-                                >
-                                    <span className="material-icons">share</span>
-                                    {shareMessage && (
-                                        <span className="absolute -top-10 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-xs py-1 px-2 rounded whitespace-nowrap">
-                                            {shareMessage}
+                                    <button
+                                        onClick={handleToggleLike}
+                                        disabled={liking}
+                                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-all active:scale-90 ${isLiked ? 'bg-red-50 text-red-600 border border-red-100' : 'bg-gray-50 text-gray-500 border border-gray-100'}`}
+                                    >
+                                        <span className={`material-icons text-[18px] ${isLiked ? 'text-red-500' : 'text-gray-400'}`}>
+                                            {isLiked ? 'favorite' : 'favorite_border'}
                                         </span>
-                                    )}
-                                </button>
+                                        <span className="text-xs font-bold">{likesCount}</span>
+                                    </button>
+                                    <button
+                                        onClick={handleShare}
+                                        className="p-2 bg-gray-100 text-gray-600 rounded-full hover:bg-gray-200 transition relative flex items-center justify-center"
+                                        title="Bagikan produk"
+                                    >
+                                        <span className="material-icons">share</span>
+                                        {shareMessage && (
+                                            <span className="absolute -top-10 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-xs py-1 px-2 rounded whitespace-nowrap">
+                                                {shareMessage}
+                                            </span>
+                                        )}
+                                    </button>
                             </div>
 
                             <div className="bg-gray-50 rounded-xl p-6 mb-6">

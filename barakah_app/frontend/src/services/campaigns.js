@@ -31,3 +31,6 @@ export const getCampaignBySlug = async (slug) => {
     throw error;
   }
 };
+
+export const toggleLikeCampaign = (slug) =>
+  api.post(`/campaigns/${slug}/like/`);

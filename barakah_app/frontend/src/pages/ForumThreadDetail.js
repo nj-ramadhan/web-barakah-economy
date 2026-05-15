@@ -20,7 +20,8 @@ const RenderReply = ({
     handleMentionSelect, 
     renderContentWithMentions, 
     formatDate,
-    onOpenProfile 
+    onOpenProfile,
+    handleLikeReply 
 }) => {
     const isExpert = reply.is_expert;
 
@@ -57,7 +58,16 @@ const RenderReply = ({
 
                 {user && (
                     <div className="mt-3 flex justify-between items-center">
-                        <div className="flex gap-4">
+                        <div className="flex gap-4 items-center">
+                            <button
+                                onClick={() => handleLikeReply(reply.id)}
+                                className={`flex items-center gap-1 text-sm font-medium transition-colors ${reply.is_liked ? 'text-red-500' : 'text-gray-500 hover:text-red-500'}`}
+                            >
+                                <span className="material-icons text-[18px]">
+                                    {reply.is_liked ? 'favorite' : 'favorite_border'}
+                                </span>
+                                <span>{reply.likes_count || 0}</span>
+                            </button>
                             {(isAdmin || user.id === reply.author?.id) && (
                                 <button
                                     onClick={() => handleReplyDelete(reply.id)}
@@ -150,6 +160,7 @@ const RenderReply = ({
                             renderContentWithMentions={renderContentWithMentions}
                             formatDate={formatDate}
                             onOpenProfile={onOpenProfile}
+                            handleLikeReply={handleLikeReply}
                         />
                     ))}
                 </div>
@@ -227,6 +238,59 @@ const ForumThreadDetail = () => {
             fetchThread();
         } catch (error) {
             alert('Gagal menghapus balasan');
+        }
+    };
+    
+    const handleLikeThread = async () => {
+        if (!user) {
+            alert('Silakan login untuk memberikan like');
+            return;
+        }
+        try {
+            const res = await forumApi.likeThread(slug);
+            if (res.data.status === 'success') {
+                // Update local state for immediate feedback
+                setThread(prev => ({
+                    ...prev,
+                    is_liked: res.data.liked,
+                    likes_count: res.data.likes_count
+                }));
+            }
+        } catch (error) {
+            console.error('Failed to like thread', error);
+        }
+    };
+
+    const handleLikeReply = async (replyId) => {
+        if (!user) {
+            alert('Silakan login untuk memberikan like');
+            return;
+        }
+        try {
+            const res = await forumApi.likeReply(replyId);
+            if (res.data.status === 'success') {
+                // We need to update the reply in the thread.replies tree
+                // Easiest is to refetch, but for better UX we can update deep state
+                // Since it's a tree, it's a bit complex. Let's try deep update.
+                const updateReplyInList = (replies) => {
+                    return replies.map(r => {
+                        if (r.id === replyId) {
+                            return { ...r, is_liked: res.data.liked, likes_count: res.data.likes_count };
+                        }
+                        if (r.children && r.children.length > 0) {
+                            return { ...r, children: updateReplyInList(r.children) };
+                        }
+                        return r;
+                    });
+                };
+                
+                setThread(prev => ({
+                    ...prev,
+                    replies: updateReplyInList(prev.replies)
+                }));
+            }
+        } catch (error) {
+            console.error('Failed to like reply', error);
         }
     };
 
@@ -385,6 +449,35 @@ const ForumThreadDetail = () => {
                             {renderContentWithMentions(thread.content)}
                         </div>
 
+                        <div className="flex items-center gap-6 mb-8 py-4 border-t border-b border-gray-50">
+                            <button
+                                onClick={handleLikeThread}
+                                className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all duration-200 ${
+                                    thread.is_liked 
+                                    ? 'bg-red-50 text-red-600 shadow-sm' 
+                                    : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
+                                }`}
+                            >
+                                <span className={`material-icons ${thread.is_liked ? 'text-red-600' : 'text-gray-400'}`}>
+                                    {thread.is_liked ? 'favorite' : 'favorite_border'}
+                                </span>
+                                <span className="font-bold">{thread.likes_count || 0}</span>
+                                <span className="text-sm font-medium">Suka</span>
+                            </button>
+
+                            <button 
+                                onClick={() => {
+                                    const el = document.getElementById('reply-form');
+                                    if(el) el.scrollIntoView({ behavior: 'smooth' });
+                                }}
+                                className="flex items-center gap-2 px-4 py-2 rounded-full bg-gray-50 text-gray-600 hover:bg-gray-100 transition-all duration-200"
+                            >
+                                <span className="material-icons text-gray-400">forum</span>
+                                <span className="font-bold">{thread.replies_count}</span>
+                                <span className="text-sm font-medium">Balasan</span>
+                            </button>
+                        </div>
+
                         <div className="mt-8 flex items-center gap-4 text-xs text-gray-400 border-t border-gray-50 pt-6">
                             <div className="flex items-center gap-1">
                                 <span className="material-icons text-sm">visibility</span>
@@ -399,7 +492,7 @@ const ForumThreadDetail = () => {
                     </div>
                 </div>
 
-                <div className="mt-8">
+                <div className="mt-8" id="reply-form">
                     <h3 className="text-lg font-bold text-gray-900 mb-4">
                         {user ? (replyingTo ? 'Tambahkan Balasan Baru' : 'Tambahkan Balasan') : 'Login untuk membalas'}
                     </h3>
@@ -497,6 +590,7 @@ const ForumThreadDetail = () => {
                                         setSelectedUserId(id);
                                         setIsProfileModalOpen(true);
                                     }}
+                                    handleLikeReply={handleLikeReply}
                                 />
                             ))}
                         </div>

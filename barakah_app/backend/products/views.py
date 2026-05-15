@@ -7,6 +7,7 @@ from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from .models import Product, ShopVoucher
 from .serializers import ProductSerializer, ShopVoucherSerializer
+from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 
 class ShopVoucherViewSet(viewsets.ModelViewSet):
@@ -86,6 +87,22 @@ class ProductViewSet(viewsets.ModelViewSet):
         instance.refresh_from_db()
         serializer = self.get_serializer(instance)
         return Response(serializer.data)
+
+    @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
+    def like(self, request, pk=None):
+        product = self.get_object()
+        user = request.user
+        if product.likes.filter(id=user.id).exists():
+            product.likes.remove(user)
+            liked = False
+        else:
+            product.likes.add(user)
+            liked = True
+        return Response({
+            'status': 'success',
+            'liked': liked,
+            'likes_count': product.likes.count()
+        })
 
     def perform_create(self, serializer):
         product = serializer.save(seller=self.request.user, status='pending')

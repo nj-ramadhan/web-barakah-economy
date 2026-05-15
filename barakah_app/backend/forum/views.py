@@ -53,6 +53,22 @@ class ThreadViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(instance)
         return Response(serializer.data)
 
+    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
+    def like(self, request, slug=None):
+        thread = self.get_object()
+        user = request.user
+        if thread.likes.filter(id=user.id).exists():
+            thread.likes.remove(user)
+            liked = False
+        else:
+            thread.likes.add(user)
+            liked = True
+        return Response({
+            'status': 'success',
+            'liked': liked,
+            'likes_count': thread.likes.count()
+        })
+
 class ReplyViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsAuthorOrAdminOrReadOnly]
     serializer_class = ReplySerializer
@@ -75,6 +91,22 @@ class ReplyViewSet(viewsets.ModelViewSet):
     def perform_update(self, serializer):
         instance = serializer.save()
         process_mentions(instance.content, self.request.user, instance.thread.slug, instance.thread.title)
+
+    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
+    def like(self, request, pk=None):
+        reply = self.get_object()
+        user = request.user
+        if reply.likes.filter(id=user.id).exists():
+            reply.likes.remove(user)
+            liked = False
+        else:
+            reply.likes.add(user)
+            liked = True
+        return Response({
+            'status': 'success',
+            'liked': liked,
+            'likes_count': reply.likes.count()
+        })
 
 class MentionNotificationViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]

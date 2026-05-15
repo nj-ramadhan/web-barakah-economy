@@ -113,6 +113,8 @@ class EventSerializer(serializers.ModelSerializer):
     committees_details = serializers.SerializerMethodField()
     registration_count = serializers.SerializerMethodField()
     attended_count = serializers.SerializerMethodField()
+    likes_count = serializers.SerializerMethodField()
+    is_liked = serializers.SerializerMethodField()
     free_for_labels = UserLabelSerializer(many=True, read_only=True)
     free_for_label_ids = serializers.PrimaryKeyRelatedField(
         many=True, queryset=UserLabel.objects.all(), write_only=True, required=False, source='free_for_labels'
@@ -170,6 +172,15 @@ class EventSerializer(serializers.ModelSerializer):
             return obj.registrations.filter(is_attended=True).count()
         except Exception:
             return 0
+
+    def get_likes_count(self, obj):
+        return obj.likes.count()
+
+    def get_is_liked(self, obj):
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            return obj.likes.filter(id=request.user.id).exists()
+        return False
 
     def get_committees_details(self, obj):
         try:

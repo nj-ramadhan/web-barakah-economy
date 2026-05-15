@@ -20,11 +20,13 @@ class AuthorSerializer(serializers.ModelSerializer):
 class ReplySerializer(serializers.ModelSerializer):
     author = AuthorSerializer(read_only=True)
     is_expert = serializers.BooleanField(read_only=True)
+    likes_count = serializers.SerializerMethodField()
+    is_liked = serializers.SerializerMethodField()
     children = serializers.SerializerMethodField()
 
     class Meta:
         model = Reply
-        fields = ['id', 'thread', 'author', 'content', 'parent', 'created_at', 'updated_at', 'is_expert', 'children']
+        fields = ['id', 'thread', 'author', 'content', 'parent', 'created_at', 'updated_at', 'is_expert', 'likes_count', 'is_liked', 'children']
         read_only_fields = ['thread', 'author']
 
     def get_children(self, obj):
@@ -36,17 +38,37 @@ class ReplySerializer(serializers.ModelSerializer):
             return ReplySerializer(obj.children.all(), many=True).data
         return []
 
+    def get_likes_count(self, obj):
+        return obj.likes.count()
+
+    def get_is_liked(self, obj):
+        user = self.context.get('request').user if 'request' in self.context else None
+        if user and user.is_authenticated:
+            return obj.likes.filter(id=user.id).exists()
+        return False
+
 class ThreadSerializer(serializers.ModelSerializer):
     author = AuthorSerializer(read_only=True)
     replies_count = serializers.SerializerMethodField()
+    likes_count = serializers.SerializerMethodField()
+    is_liked = serializers.SerializerMethodField()
 
     class Meta:
         model = Thread
-        fields = ['id', 'title', 'slug', 'content', 'author', 'image', 'views', 'created_at', 'updated_at', 'replies_count']
+        fields = ['id', 'title', 'slug', 'content', 'author', 'image', 'views', 'created_at', 'updated_at', 'replies_count', 'likes_count', 'is_liked']
         read_only_fields = ['author', 'slug', 'views']
 
     def get_replies_count(self, obj):
         return obj.replies.count()
+
+    def get_likes_count(self, obj):
+        return obj.likes.count()
+
+    def get_is_liked(self, obj):
+        user = self.context.get('request').user if 'request' in self.context else None
+        if user and user.is_authenticated:
+            return obj.likes.filter(id=user.id).exists()
+        return False
 
 class ThreadDetailSerializer(ThreadSerializer):
     replies = serializers.SerializerMethodField()

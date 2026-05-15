@@ -313,6 +313,10 @@ const ForumMainPage = () => {
                             <div className="bg-gray-50 px-4 py-3 border-t border-gray-100 flex justify-between items-center text-xs text-gray-500">
                                 <div className="flex gap-4">
                                     <div className="flex items-center gap-1">
+                                        <span className="material-icons text-gray-400 text-[16px]">favorite</span>
+                                        <span>{thread.likes_count || 0} Suka</span>
+                                    </div>
+                                    <div className="flex items-center gap-1">
                                         <span className="material-icons text-gray-400 text-[16px]">chat</span>
                                         <span>{thread.replies_count} Balasan</span>
                                     </div>

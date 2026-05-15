@@ -5,6 +5,8 @@ from .models import DigitalProduct, DigitalOrder
 
 class DigitalProductSerializer(serializers.ModelSerializer):
     seller_name = serializers.CharField(source='user.username', read_only=True)
+    likes_count = serializers.SerializerMethodField()
+    is_liked = serializers.SerializerMethodField()
 
     class Meta:
         model = DigitalProduct
@@ -12,8 +14,18 @@ class DigitalProductSerializer(serializers.ModelSerializer):
             'id', 'user', 'seller_name', 'title', 'slug', 'description',
             'category', 'visibility', 'thumbnail', 'price', 'digital_link',
             'is_active', 'view_count', 'created_at', 'updated_at',
+            'likes_count', 'is_liked',
         ]
         read_only_fields = ['id', 'slug', 'user', 'created_at', 'updated_at']
+
+    def get_likes_count(self, obj):
+        return obj.likes.count()
+
+    def get_is_liked(self, obj):
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            return obj.likes.filter(id=request.user.id).exists()
+        return False
 
 
 class DigitalProductPublicSerializer(serializers.ModelSerializer):

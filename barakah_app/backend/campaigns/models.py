@@ -48,6 +48,7 @@ class Campaign(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     deadline = models.DateTimeField(null=True, blank=True)
     view_count = models.PositiveIntegerField(default=0)
+    likes = models.ManyToManyField('accounts.User', related_name='liked_campaigns', blank=True)
 
     # User submission fields
     created_by = models.ForeignKey(

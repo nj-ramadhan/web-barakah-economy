@@ -121,6 +121,22 @@ class CourseViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(instance)
         return Response(serializer.data)
 
+    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
+    def like(self, request, slug=None):
+        course = self.get_object()
+        user = request.user
+        if course.likes.filter(id=user.id).exists():
+            course.likes.remove(user)
+            liked = False
+        else:
+            course.likes.add(user)
+            liked = True
+        return Response({
+            'status': 'success',
+            'liked': liked,
+            'likes_count': course.likes.count()
+        })
+
     @action(detail=False, methods=['get'])
     def my_courses(self, request):
         courses = self.get_queryset()

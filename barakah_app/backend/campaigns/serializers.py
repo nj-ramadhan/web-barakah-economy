@@ -22,6 +22,8 @@ class CampaignSerializer(serializers.ModelSerializer):
     donations = DonationSerializer(many=True, read_only=True)
     updates = UpdateSerializer(many=True, read_only=True)
     has_unlimited_deadline = serializers.SerializerMethodField()
+    likes_count = serializers.SerializerMethodField()
+    is_liked = serializers.SerializerMethodField()
     created_by_username = serializers.CharField(source='created_by.username', read_only=True, default=None)
 
     class Meta:
@@ -31,9 +33,19 @@ class CampaignSerializer(serializers.ModelSerializer):
             'target_amount', 'current_amount', 'is_featured', 'is_active',
             'created_at', 'deadline', 'donations', 'updates',
             'has_unlimited_deadline', 'total_realization', 'view_count',
-            'created_by', 'created_by_username', 'approval_status', 'rejection_reason'
+            'created_by', 'created_by_username', 'approval_status', 'rejection_reason',
+            'likes_count', 'is_liked'
         ]
         read_only_fields = ['created_by', 'approval_status', 'rejection_reason']
 
     def get_has_unlimited_deadline(self, obj):
         return obj.deadline is None
+
+    def get_likes_count(self, obj):
+        return obj.likes.count()
+
+    def get_is_liked(self, obj):
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            return obj.likes.filter(id=request.user.id).exists()
+        return False

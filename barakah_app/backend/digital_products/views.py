@@ -159,6 +159,22 @@ class DigitalProductViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(instance)
         return Response(serializer.data)
 
+    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
+    def like(self, request, slug=None):
+        product = self.get_object()
+        user = request.user
+        if product.likes.filter(id=user.id).exists():
+            product.likes.remove(user)
+            liked = False
+        else:
+            product.likes.add(user)
+            liked = True
+        return Response({
+            'status': 'success',
+            'liked': liked,
+            'likes_count': product.likes.count()
+        })
+
     def get_permissions(self):
         if self.action in ['list', 'retrieve', 'popular_sellers', 'public_profile']:
             return [permissions.AllowAny()]

@@ -18,4 +18,6 @@ export const forumApi = {
     searchUsers: (query) => api.get(`${API_ROOT}/users/search/?q=${query}`),
     getNotifications: () => api.get(`${API_ROOT}/notifications/`),
     markNotificationRead: (id) => api.post(`${API_ROOT}/notifications/${id}/mark_read/`, {}),
+    likeThread: (slug) => api.post(`${API_ROOT}/threads/${slug}/like/`, {}),
+    likeReply: (id) => api.post(`${API_ROOT}/replies/${id}/like/`, {}),
 };

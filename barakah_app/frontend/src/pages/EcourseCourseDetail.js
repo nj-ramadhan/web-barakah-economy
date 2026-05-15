@@ -5,7 +5,7 @@ import { Helmet } from 'react-helmet';
 import Header from '../components/layout/Header';
 import NavigationButton from '../components/layout/Navigation';
 import ShareButton from '../components/campaigns/ShareButton';
-import { getCourseBySlug, getMyEnrolledCourses, createEnrollment } from '../services/ecourseApi';
+import { getCourseBySlug, getMyEnrolledCourses, createEnrollment, toggleLikeCourse } from '../services/ecourseApi';
 import { formatCurrency } from '../utils/formatters';
 import { getMediaUrl } from '../utils/mediaUtils';
 import UserProfileModal from '../components/modals/UserProfileModal';
@@ -31,6 +31,9 @@ const EcourseCourseDetail = () => {
   const [shareMessage, setShareMessage] = useState('');
   const [selectedUserId, setSelectedUserId] = useState(null);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [isLiked, setIsLiked] = useState(false);
+  const [likesCount, setLikesCount] = useState(0);
+  const [liking, setLiking] = useState(false);
 
   const handleShare = () => {
     const shareUrl = `${window.location.origin}/api/courses/share/${slug}`;
@@ -109,6 +112,8 @@ const EcourseCourseDetail = () => {
       try {
         const res = await getCourseBySlug(slug);
         setCourse(res.data);
+        setIsLiked(res.data.is_liked);
+        setLikesCount(res.data.likes_count);
       } catch (err) {
         setError('Failed to load course details');
       } finally {
@@ -157,6 +162,34 @@ const EcourseCourseDetail = () => {
       }
     } catch (err) {
       alert('Gagal mendaftar kelas. Silakan coba lagi.');
+    }
+  };
+
+  const handleToggleLike = async () => {
+    const user = JSON.parse(localStorage.getItem('user'));
+    if (!user) {
+      alert('Anda harus login terlebih dahulu untuk memberikan like.');
+      return;
+    }
+
+    setLiking(true);
+    // Optimistic UI
+    const prevIsLiked = isLiked;
+    const prevLikesCount = likesCount;
+    setIsLiked(!prevIsLiked);
+    setLikesCount(prevLikesCount + (prevIsLiked ? -1 : 1));
+
+    try {
+      const res = await toggleLikeCourse(course.slug || course.id);
+      setIsLiked(res.data.liked);
+      setLikesCount(res.data.likes_count);
+    } catch (err) {
+      console.error('Error toggling like:', err);
+      // Rollback
+      setIsLiked(prevIsLiked);
+      setLikesCount(prevLikesCount);
+    } finally {
+      setLiking(false);
     }
   };
 
@@ -228,7 +261,17 @@ const EcourseCourseDetail = () => {
           <div className="p-4">
             <div className="flex justify-between items-start mb-2">
               <h1 className="text-xl font-bold">{course.title}</h1>
-              <div className="flex-shrink-0">
+              <div className="flex-shrink-0 flex items-center gap-2">
+                <button 
+                  onClick={handleToggleLike}
+                  disabled={liking}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-all active:scale-90 ${isLiked ? 'bg-red-50 text-red-600 border border-red-100' : 'bg-gray-50 text-gray-500 border border-gray-100'}`}
+                >
+                  <span className={`material-icons text-[18px] ${isLiked ? 'text-red-500' : 'text-gray-400'}`}>
+                    {isLiked ? 'favorite' : 'favorite_border'}
+                  </span>
+                  <span className="text-xs font-bold">{likesCount}</span>
+                </button>
                 <ShareButton slug={course.slug} title={course.title} type="course" />
               </div>
             </div>

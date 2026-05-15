@@ -25,6 +25,8 @@ class ProductSerializer(serializers.ModelSerializer):
     seller_city_name = serializers.CharField(source='seller.profile.address_city_name', read_only=True)
     seller_village_id = serializers.CharField(source='seller.profile.address_village_id', read_only=True)
     seller_avatar = serializers.SerializerMethodField()
+    likes_count = serializers.SerializerMethodField()
+    is_liked = serializers.SerializerMethodField()
     
     min_price = serializers.SerializerMethodField()
     max_price = serializers.SerializerMethodField()
@@ -76,6 +78,15 @@ class ProductSerializer(serializers.ModelSerializer):
         if not variations.exists():
             return obj.stock
         return sum(v.stock for v in variations)
+
+    def get_likes_count(self, obj):
+        return obj.likes.count()
+
+    def get_is_liked(self, obj):
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            return obj.likes.filter(id=request.user.id).exists()
+        return False
 
 class ShopVoucherSerializer(serializers.ModelSerializer):
     class Meta:

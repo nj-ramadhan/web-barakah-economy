@@ -4,7 +4,7 @@ import { Helmet } from 'react-helmet';
 import { QRCodeSVG } from 'qrcode.react';
 import Header from '../components/layout/Header';
 import NavigationButton from '../components/layout/Navigation';
-import { getEventDetail, registerForEvent, getEventParticipants, downloadCertificate, downloadBib } from '../services/eventApi';
+import { getEventDetail, registerForEvent, getEventParticipants, downloadCertificate, downloadBib, toggleLikeEvent } from '../services/eventApi';
 import authService from '../services/auth';
 import Footer from '../components/layout/Footer';
 import CurrencyInput from '../components/common/CurrencyInput';
@@ -46,6 +46,9 @@ const EventDetailPage = () => {
     const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
     const [userProfile, setUserProfile] = useState(null);
     const [selectedPriceVariation, setSelectedPriceVariation] = useState(null);
+    const [isLiked, setIsLiked] = useState(false);
+    const [likesCount, setLikesCount] = useState(0);
+    const [liking, setLiking] = useState(false);
 
     const calculateTimeLeft = (targetDate) => {
         if (!targetDate) return { total: 0 };
@@ -94,6 +97,8 @@ const EventDetailPage = () => {
         try {
             const res = await getEventDetail(slug);
             setEvent(res.data);
+            setIsLiked(res.data.is_liked);
+            setLikesCount(res.data.likes_count);
         } catch (err) {
             console.error(err);
             setError('Event tidak ditemukan.');
@@ -305,6 +310,34 @@ const EventDetailPage = () => {
             setError(msg);
         } finally {
             setSubmitting(false);
+        }
+    };
+
+    const handleToggleLike = async () => {
+        const userStr = localStorage.getItem('user');
+        if (!userStr) {
+            alert('Anda harus login terlebih dahulu untuk memberikan like.');
+            return;
+        }
+
+        setLiking(true);
+        // Optimistic UI
+        const prevIsLiked = isLiked;
+        const prevLikesCount = likesCount;
+        setIsLiked(!prevIsLiked);
+        setLikesCount(prevLikesCount + (prevIsLiked ? -1 : 1));
+
+        try {
+            const res = await toggleLikeEvent(slug);
+            setIsLiked(res.data.liked);
+            setLikesCount(res.data.likes_count);
+        } catch (err) {
+            console.error('Error toggling like:', err);
+            // Rollback
+            setIsLiked(prevIsLiked);
+            setLikesCount(prevLikesCount);
+        } finally {
+            setLiking(false);
         }
     };
 
@@ -580,6 +613,18 @@ const EventDetailPage = () => {
                                     <span className="px-2 sm:px-3 py-0.5 sm:py-1 bg-white/20 backdrop-blur-md rounded-full text-[8px] sm:text-[10px] font-bold uppercase tracking-widest inline-block">{event.status}</span>
                                 </div>
                                 <h1 className="text-xl sm:text-4xl font-extrabold leading-tight drop-shadow-lg">{event.title}</h1>
+                            </div>
+                            <div className="flex-shrink-0 flex items-center gap-2">
+                                <button 
+                                    onClick={handleToggleLike}
+                                    disabled={liking}
+                                    className={`flex items-center gap-1.5 px-4 py-2 sm:px-6 sm:py-3 rounded-2xl transition-all active:scale-90 shadow-lg ${isLiked ? 'bg-red-600 text-white shadow-red-900/40' : 'bg-white/20 backdrop-blur-md text-white border border-white/30'}`}
+                                >
+                                    <span className={`material-icons text-sm sm:text-lg ${isLiked ? 'text-white' : 'text-white/80'}`}>
+                                        {isLiked ? 'favorite' : 'favorite_border'}
+                                    </span>
+                                    <span className="text-[10px] sm:text-xs font-black uppercase tracking-widest">{likesCount} Suka</span>
+                                </button>
                             </div>
                         </div>
                     </div>

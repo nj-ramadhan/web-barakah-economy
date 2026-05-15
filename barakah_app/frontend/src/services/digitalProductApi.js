@@ -100,3 +100,6 @@ export const processAdminWithdrawal = (id, data) =>
 // Admin Transactions
 export const getAdminAllTransactions = () =>
     api.get(`${API_BASE}/admin-products/all_transactions/`);
+
+export const toggleLikeDigitalProduct = (slug) =>
+    api.post(`${API_BASE}/products/${slug}/like/`);

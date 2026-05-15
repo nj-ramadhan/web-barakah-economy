@@ -57,6 +57,7 @@ class DigitalProduct(models.Model):
     digital_link = models.URLField(max_length=500, help_text="Link produk digital (e.g., lynk.id, Google Drive, dll)")
     is_active = models.BooleanField(default=True)
     view_count = models.PositiveIntegerField(default=0)
+    likes = models.ManyToManyField(User, related_name='liked_digital_products', blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

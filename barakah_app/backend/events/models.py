@@ -58,6 +58,7 @@ class Event(models.Model):
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='created_events')
     rejection_reason = models.TextField(blank=True, null=True)
     view_count = models.PositiveIntegerField(default=0)
+    likes = models.ManyToManyField(User, related_name='liked_events', blank=True)
     
     # New Fields for Attachments & Visibility
     attachment_file = models.FileField(upload_to='events/attachments/', blank=True, null=True, help_text="Lampiran berkas pendukung (PDF/Gambar/Dokumen)")

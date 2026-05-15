@@ -110,6 +110,22 @@ class CampaignViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(instance)
         return Response(serializer.data)
 
+    @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
+    def like(self, request, slug=None):
+        campaign = self.get_object()
+        user = request.user
+        if campaign.likes.filter(id=user.id).exists():
+            campaign.likes.remove(user)
+            liked = False
+        else:
+            campaign.likes.add(user)
+            liked = True
+        return Response({
+            'status': 'success',
+            'liked': liked,
+            'likes_count': campaign.likes.count()
+        })
+
     @action(detail=False, methods=['post'], permission_classes=[IsAuthenticated])
     def submit(self, request):
         """User submits a new campaign for admin approval."""

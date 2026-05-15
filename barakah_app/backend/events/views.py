@@ -117,6 +117,22 @@ class EventViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(instance)
         return Response(serializer.data)
 
+    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
+    def like(self, request, slug=None):
+        event = self.get_object()
+        user = request.user
+        if event.likes.filter(id=user.id).exists():
+            event.likes.remove(user)
+            liked = False
+        else:
+            event.likes.add(user)
+            liked = True
+        return Response({
+            'status': 'success',
+            'liked': liked,
+            'likes_count': event.likes.count()
+        })
+
     def _get_parsed_data(self, request):
         """Returns a dict from request.data with JSON fields correctly parsed."""
         import json
