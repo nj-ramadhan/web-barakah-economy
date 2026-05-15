@@ -31,7 +31,9 @@ urlpatterns = [
     path('vouchers/<int:pk>/', voucher_detail, name='voucher-detail'),
     path('vouchers/validate/', VoucherValidateView.as_view(), name='voucher-validate'),
     path('', product_list, name='product-list'),  # List dan create
+    path('<int:pk>/like/', ProductViewSet.as_view({'post': 'like'}), name='product-like'),
     path('<int:pk>/', product_detail, name='product-detail-id'),  # Detail berdasarkan ID
+    path('<slug:slug>/like/', ProductViewSet.as_view({'post': 'like'}), name='product-like-slug'),
     path('share/<slug:slug>/', ProductShareView.as_view(), name='product-share-slug'),  # Share preview endpoint
     path('<slug:slug>/', ProductDetailView.as_view(), name='product-detail-slug'),  # Detail berdasarkan slug
 ]

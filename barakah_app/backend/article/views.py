@@ -59,6 +59,22 @@ class ArticleViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(instance)
         return Response(serializer.data)
 
+    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
+    def like(self, request, slug=None):
+        article = self.get_object()
+        user = request.user
+        if article.likes.filter(id=user.id).exists():
+            article.likes.remove(user)
+            liked = False
+        else:
+            article.likes.add(user)
+            liked = True
+        return Response({
+            'status': 'success',
+            'liked': liked,
+            'likes_count': article.likes.count()
+        })
+
     @action(detail=True, methods=['post'], url_path='upload-images', parser_classes=[MultiPartParser, FormParser])
     def upload_images(self, request, slug=None):
         article = self.get_object()

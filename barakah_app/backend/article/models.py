@@ -39,6 +39,7 @@ class Article(models.Model):
     rejection_reason = models.TextField(blank=True, null=True)
     view_count = models.PositiveIntegerField(default=0)
     date = models.DateField()
+    likes = models.ManyToManyField('accounts.User', related_name='liked_articles', blank=True)
 
     class Meta:
         db_table = 'article'

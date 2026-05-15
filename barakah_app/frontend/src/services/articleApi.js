@@ -20,3 +20,6 @@ export const uploadArticleImages = (id, files, title) => {
     headers: { "Content-Type": "multipart/form-data" },
   });
 };
+
+export const toggleLikeArticle = (slug) =>
+  api.post(`/articles/${slug}/like/`);

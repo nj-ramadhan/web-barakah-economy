@@ -6,11 +6,15 @@ import HeaderHome from "../components/layout/HeaderHome";
 import NavigationButton from "../components/layout/Navigation";
 import FloatingBubble from '../components/common/FloatingBubble';
 import ShareButton from '../components/campaigns/ShareButton';
+import { toggleLikeArticle } from "../services/articleApi";
 
 const ArticleDetailPage = () => {
   const { id } = useParams(); // Bisa berupa ID angka atau Slug
   const [article, setArticle] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isLiked, setIsLiked] = useState(false);
+  const [likesCount, setLikesCount] = useState(0);
+  const [liking, setLiking] = useState(false);
 
   // Ref untuk memanipulasi elemen HTML konten setelah di-render
   const contentRef = useRef(null);
@@ -23,6 +27,8 @@ const ArticleDetailPage = () => {
           `${process.env.REACT_APP_API_BASE_URL}/api/articles/${id}`
         );
         setArticle(res.data);
+        setIsLiked(res.data.is_liked || false);
+        setLikesCount(res.data.likes_count || 0);
       } catch (err) {
         console.error("Failed to fetch article:", err);
       } finally {
@@ -54,6 +60,36 @@ const ArticleDetailPage = () => {
       });
     }
   }, [article]);
+
+  const handleToggleLike = async () => {
+    const userStr = localStorage.getItem('user');
+    if (!userStr) {
+      alert('Anda harus login terlebih dahulu untuk memberikan like.');
+      return;
+    }
+
+    if (liking) return;
+
+    setLiking(true);
+    // Optimistic UI
+    const prevIsLiked = isLiked;
+    const prevLikesCount = likesCount;
+    setIsLiked(!prevIsLiked);
+    setLikesCount(prevLikesCount + (prevIsLiked ? -1 : 1));
+
+    try {
+      const res = await toggleLikeArticle(article.slug || article.id);
+      setIsLiked(res.data.liked);
+      setLikesCount(res.data.likes_count);
+    } catch (err) {
+      console.error('Error toggling like:', err);
+      // Rollback
+      setIsLiked(prevIsLiked);
+      setLikesCount(prevLikesCount);
+    } finally {
+      setLiking(false);
+    }
+  };
 
   if (loading) return <div className="p-4 text-center">Loading...</div>;
   if (!article) return <div className="p-4 text-center">Article not found</div>;
@@ -96,9 +132,25 @@ const ArticleDetailPage = () => {
           </div>
         </div>
         <div className="flex justify-between items-center mb-6 pb-4 border-b border-gray-100">
-          <p className="text-gray-500 text-sm">
-            {article.date}
-          </p>
+          <div className="flex items-center gap-4">
+            <p className="text-gray-500 text-sm">
+              {article.date}
+            </p>
+            <button
+              onClick={handleToggleLike}
+              disabled={liking}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-all duration-300 ${
+                isLiked 
+                  ? 'bg-red-50 text-red-600 shadow-sm border border-red-100' 
+                  : 'bg-gray-50 text-gray-500 hover:bg-gray-100 border border-transparent'
+              }`}
+            >
+              <span className={`material-icons text-[18px] transition-transform duration-300 ${liking ? 'scale-125' : ''}`}>
+                {isLiked ? 'favorite' : 'favorite_border'}
+              </span>
+              <span className="text-xs font-bold">{likesCount}</span>
+            </button>
+          </div>
           <div className="flex items-center gap-1.5 opacity-60">
             <span className="material-icons text-[18px]">visibility</span>
             <span className="text-sm font-medium">{article.view_count || 0} kali dilihat</span>

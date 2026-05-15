@@ -72,9 +72,15 @@ const ArticleListPage = () => {
                     </div>
                     <div className="flex justify-between items-center mt-2">
                       <span className="text-gray-400 text-[10px]">{a.date}</span>
-                      <div className="flex items-center gap-1 opacity-40">
-                        <span className="material-icons text-[12px]">visibility</span>
-                        <span className="text-[10px]">{a.view_count || 0}</span>
+                      <div className="flex items-center gap-2 opacity-50">
+                        <div className="flex items-center gap-1">
+                          <span className="material-icons text-[12px]">visibility</span>
+                          <span className="text-[10px]">{a.view_count || 0}</span>
+                        </div>
+                        <div className="flex items-center gap-1 text-red-500">
+                          <span className="material-icons text-[12px]">favorite</span>
+                          <span className="text-[10px] font-bold">{a.likes_count || 0}</span>
+                        </div>
                       </div>
                     </div>
                   </div>

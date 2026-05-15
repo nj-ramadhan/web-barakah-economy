@@ -138,6 +138,10 @@ const DigitalProductListPage = () => {
                                                 <span className="material-icons text-[10px]">visibility</span>
                                                 {product.view_count || 0}
                                             </p>
+                                            <p className="text-gray-400 text-[10px] flex items-center gap-1">
+                                                <span className="material-icons text-[10px] text-red-400">favorite</span>
+                                                {product.likes_count || 0}
+                                            </p>
                                         </div>
                                     </div>
                                 </div>

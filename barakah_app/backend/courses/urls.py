@@ -39,7 +39,9 @@ urlpatterns = [
     path('<int:pk>/progress-recap/', CourseViewSet.as_view({'get': 'progress_recap'}), name='course-progress-recap'),
     path('<int:pk>/export-progress-csv/', CourseViewSet.as_view({'get': 'export_progress_csv'}), name='course-export-progress-csv'),
     path('<int:pk>/buyers/', CourseViewSet.as_view({'get': 'buyers'}), name='course-buyers'),
+    path('<int:pk>/like/', CourseViewSet.as_view({'post': 'like'}), name='course-like-id'),
     path('<int:pk>/', course_detail, name='course-detail-id'),  # Detail by ID
+    path('<slug:slug>/like/', CourseViewSet.as_view({'post': 'like'}), name='course-like-slug'),
     path('<slug:slug>/', CourseDetailViewSet.as_view(), name='course-detail-slug'),  # Detail by slug   
     path('', course_list, name='course-list'),  # List and create
 ]
