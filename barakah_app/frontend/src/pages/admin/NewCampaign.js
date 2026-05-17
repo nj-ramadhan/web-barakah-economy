@@ -20,16 +20,28 @@ const NewCampaign = () => {
     isFeatured: false
   });
 
+  const categoryAdditionalAmounts = {
+    infak: { value: 25 }, sedekah: { value: 50 }, zakat: { value: 75 }, donasi: { value: 100 },
+    bencana: { value: 125 }, kemanusiaan: { value: 150 }, kesehatan: { value: 175 }, lingkungan: { value: 200 },
+    pembangunan: { value: 225 }, sosial: { value: 250 }, lainnya: { value: 275 }, default: { value: 300 }
+  };
+  
   const categories = [
-    { value: 'dhuafa', label: 'Peduli Dhuafa' },
-    { value: 'yatim', label: 'Peduli Anak Yatim' },
-    { value: 'quran', label: 'Wakaf Mushaf Al Quran' },
-    { value: 'qurban', label: 'Qurban Peduli' },
-    { value: 'palestine', label: 'Bantuan Palestina' },
-    { value: 'education', label: 'Bantuan Pendidikan' },
-    { value: 'iftar', label: 'Berbagi Iftar' },
-    { value: 'jumat', label: 'Jumat Berkah' }
-  ];
+    { value: 'infak', label: 'Infak Barakah' },
+    { value: 'sedekah', label: 'Sedekah Barakah' },
+    { value: 'zakat', label: 'Zakat Barakah' },
+    { value: 'donasi', label: 'Donasi Barakah' },
+    { value: 'bencana', label: 'Bantuan Bencana Alam' },
+    { value: 'kemanusiaan', label: 'Bantuan Kemanusiaan' },
+    { value: 'kesehatan', label: 'Bantuan Kesehatan' },
+    { value: 'lingkungan', label: 'Bantuan Lingkungan' },
+    { value: 'pembangunan', label: 'Bantuan Pembangunan' },
+    { value: 'sosial', label: 'Bantuan Sosial' },
+    { value: 'lainnya', label: 'Lainnya' },
+  ].map(c => ({
+      ...c,
+      label: `${c.label} - ${categoryAdditionalAmounts[c.value]?.value || 300}`
+  }));
 
   const handleInputChange = (e) => {
     const { name, value, type, checked, files } = e.target;

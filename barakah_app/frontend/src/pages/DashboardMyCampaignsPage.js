@@ -5,6 +5,7 @@ import axios from 'axios';
 import Header from '../components/layout/Header';
 import NavigationButton from '../components/layout/Navigation';
 import CurrencyInput from '../components/common/CurrencyInput';
+import CKEditorComponent from '../components/common/CKEditor';
 import { formatCurrency } from '../utils/formatters';
 
 const API = process.env.REACT_APP_API_BASE_URL;
@@ -30,6 +31,12 @@ const DashboardMyCampaignsPage = () => {
         title: '', category: 'infak', description: '', target_amount: '', thumbnail: null
     });
 
+    const categoryAdditionalAmounts = {
+        infak: { value: 25 }, sedekah: { value: 50 }, zakat: { value: 75 }, donasi: { value: 100 },
+        bencana: { value: 125 }, kemanusiaan: { value: 150 }, kesehatan: { value: 175 }, lingkungan: { value: 200 },
+        pembangunan: { value: 225 }, sosial: { value: 250 }, lainnya: { value: 275 }, default: { value: 300 }
+    };
+    
     const categories = [
         { value: 'infak', label: 'Infak Barakah' },
         { value: 'sedekah', label: 'Sedekah Barakah' },
@@ -42,7 +49,10 @@ const DashboardMyCampaignsPage = () => {
         { value: 'pembangunan', label: 'Bantuan Pembangunan' },
         { value: 'sosial', label: 'Bantuan Sosial' },
         { value: 'lainnya', label: 'Lainnya' },
-    ];
+    ].map(c => ({
+        ...c,
+        label: `${c.label} - ${categoryAdditionalAmounts[c.value]?.value || 300}`
+    }));
 
     const fetchCampaigns = useCallback(async () => {
         setLoading(true);
@@ -147,7 +157,7 @@ const DashboardMyCampaignsPage = () => {
                             </div>
                             <div className="space-y-1">
                                 <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Deskripsi</label>
-                                <textarea rows="4" required className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm outline-none" value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} placeholder="Jelaskan detail charity..." />
+                                <CKEditorComponent content={formData.description} onChange={(val) => setFormData({...formData, description: val})} placeholder="Jelaskan detail charity..." />
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-1">
