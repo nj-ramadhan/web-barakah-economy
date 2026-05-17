@@ -342,6 +342,7 @@ class EventSerializer(serializers.ModelSerializer):
         fields_data = validated_data.pop('form_fields', None)
         speakers_data = validated_data.pop('speakers', None)
         sessions_data = validated_data.pop('sessions', None)
+        price_variations_data = validated_data.pop('price_variations', None)
         
         # Update event basic fields
         for attr, value in validated_data.items():
@@ -352,8 +353,6 @@ class EventSerializer(serializers.ModelSerializer):
             instance.free_for_labels.set(free_for_labels_data)
         if committees_data is not None:
             instance.committees.set(committees_data)
-        
-        price_variations_data = validated_data.pop('price_variations', None)
         
         # Sync form fields
         if fields_data is not None:
