@@ -56,6 +56,12 @@ export const getMyEvents = () => {
 };
 
 // Registration Logic
+export const validateEventVoucher = (slug, code) => {
+    return axios.post(`${API_BASE_URL}/api/events/${slug}/validate_voucher/`, { code }, {
+        headers: getAuthHeaders()
+    });
+};
+
 export const registerForEvent = (slug, formData) => {
     return axios.post(`${API_BASE_URL}/api/events/${slug}/register/`, formData, {
         headers: {

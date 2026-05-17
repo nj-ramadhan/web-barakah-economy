@@ -2,11 +2,17 @@ from rest_framework import serializers
 from .models import (
     Event, EventFormField, EventRegistration, EventRegistrationFile, 
     EventDocumentationImage, EventGalleryImage, EventCertificate, 
-    EventBib, EventSpecialQR, EventPriceVariation
+    EventBib, EventSpecialQR, EventPriceVariation, EventVoucher
 )
 from accounts.serializers import UserAdminSerializer, UserLabelSerializer, UserSimpleSerializer
 from accounts.models import UserLabel
 from django.db import transaction
+
+class EventVoucherSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EventVoucher
+        fields = ['id', 'code', 'discount_type', 'discount_value', 'quota', 'used_count', 'is_active', 'valid_from', 'valid_until']
+
 
 class EventFormFieldSerializer(serializers.ModelSerializer):
     class Meta:
@@ -120,6 +126,7 @@ class EventSerializer(serializers.ModelSerializer):
         many=True, queryset=UserLabel.objects.all(), write_only=True, required=False, source='free_for_labels'
     )
     price_variations = EventPriceVariationSerializer(many=True, required=False)
+    vouchers = EventVoucherSerializer(many=True, required=False)
     user_registration = serializers.SerializerMethodField()
     certificate = serializers.SerializerMethodField()
     bib_template = serializers.SerializerMethodField()
@@ -241,7 +248,7 @@ class EventSerializer(serializers.ModelSerializer):
         # Clean up empty strings for numbers/dates
         mutable_data = self.calamities_cleanup(mutable_data)
         
-        for field in ['form_fields', 'speakers', 'sessions', 'price_variations']:
+        for field in ['form_fields', 'speakers', 'sessions', 'price_variations', 'vouchers']:
             if field in mutable_data and isinstance(mutable_data[field], str):
                 try:
                     stripped = mutable_data[field].strip()
@@ -265,6 +272,7 @@ class EventSerializer(serializers.ModelSerializer):
             speakers_data = validated_data.pop('speakers', [])
             sessions_data = validated_data.pop('sessions', [])
             price_variations_data = validated_data.pop('price_variations', [])
+            vouchers_data = validated_data.pop('vouchers', [])
             free_for_labels_data = validated_data.pop('free_for_labels', [])
             committees_data = validated_data.pop('committees', [])
             
@@ -304,6 +312,10 @@ class EventSerializer(serializers.ModelSerializer):
                 # Handle Price Variations
                 for var in price_variations_data:
                     EventPriceVariation.objects.create(event=event, **var)
+
+                # Handle Vouchers
+                for v in vouchers_data:
+                    EventVoucher.objects.create(event=event, **v)
                 
             from .models import EventDocumentationImage, EventGalleryImage
             logger.info(f"Creating documentation images: {len(doc_images)}")
@@ -343,6 +355,7 @@ class EventSerializer(serializers.ModelSerializer):
         speakers_data = validated_data.pop('speakers', None)
         sessions_data = validated_data.pop('sessions', None)
         price_variations_data = validated_data.pop('price_variations', None)
+        vouchers_data = validated_data.pop('vouchers', None)
         
         # Update event basic fields
         for attr, value in validated_data.items():
@@ -414,6 +427,24 @@ class EventSerializer(serializers.ModelSerializer):
                     new_var = EventPriceVariation.objects.create(event=instance, **var_item)
                     new_var_ids.append(new_var.id)
             instance.price_variations.exclude(id__in=new_var_ids).delete()
+
+        # Sync vouchers
+        if vouchers_data is not None:
+            existing_vouchers = {v.code.lower(): v for v in instance.vouchers.all()}
+            new_voucher_ids = []
+            for v_item in vouchers_data:
+                v_item.pop('id', None)
+                code = v_item.get('code', '').lower()
+                if code in existing_vouchers:
+                    v_obj = existing_vouchers[code]
+                    for attr, val in v_item.items():
+                        setattr(v_obj, attr, val)
+                    v_obj.save()
+                    new_voucher_ids.append(v_obj.id)
+                else:
+                    new_v = EventVoucher.objects.create(event=instance, **v_item)
+                    new_voucher_ids.append(new_v.id)
+            instance.vouchers.exclude(id__in=new_voucher_ids).delete()
 
         # Handle new documentation images
         request = self.context.get('request')

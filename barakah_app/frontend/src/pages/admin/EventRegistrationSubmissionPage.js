@@ -633,14 +633,18 @@ const EventRegistrationSubmissionPage = () => {
                                         </th>
                                     )}
                                     {event?.price_type !== 'free' && (
-                                        <th className="p-5 text-[10px] font-black text-gray-400 uppercase tracking-widest cursor-pointer hover:text-green-700 transition" onClick={() => handleSort('payment_amount')}>
-                                            <div className="flex items-center gap-1">
-                                                Pembayaran
-                                                {sortConfig.key === 'payment_amount' && (
-                                                    <span className="material-icons text-xs">{sortConfig.direction === 'asc' ? 'arrow_upward' : 'arrow_downward'}</span>
-                                                )}
-                                            </div>
-                                        </th>
+                                        <>
+                                            <th className="p-5 text-[10px] font-black text-gray-400 uppercase tracking-widest cursor-pointer hover:text-green-700 transition" onClick={() => handleSort('payment_amount')}>
+                                                <div className="flex items-center gap-1">
+                                                    Pembayaran
+                                                    {sortConfig.key === 'payment_amount' && (
+                                                        <span className="material-icons text-xs">{sortConfig.direction === 'asc' ? 'arrow_upward' : 'arrow_downward'}</span>
+                                                    )}
+                                                </div>
+                                            </th>
+                                            <th className="p-5 text-[10px] font-black text-gray-400 uppercase tracking-widest min-w-[100px]">Voucher</th>
+                                            <th className="p-5 text-[10px] font-black text-gray-400 uppercase tracking-widest min-w-[100px]">Diskon</th>
+                                        </>
                                     )}
                                     <th className="p-5 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Pesanan Selesai</th>
                                     <th className="p-5 text-[10px] font-black text-gray-400 uppercase tracking-widest min-w-[150px]">Catatan Panitia</th>
@@ -813,7 +817,8 @@ const EventRegistrationSubmissionPage = () => {
                                                     </td>
                                                 )}
                                                 {event?.price_type !== 'free' && (
-                                                    <td className="p-5 text-xs whitespace-nowrap">
+                                                    <>
+                                                        <td className="p-5 text-xs whitespace-nowrap">
                                                         <div className="font-black text-gray-900">Rp {Number(reg.payment_amount || 0).toLocaleString('id-ID')}</div>
                                                         <div className="flex flex-col gap-1.5 mt-1.5">
                                                             {reg.payment_method === 'ots' ? (
@@ -865,6 +870,17 @@ const EventRegistrationSubmissionPage = () => {
                                                             </span>
                                                         </div>
                                                     </td>
+                                                    <td className="p-5 text-xs whitespace-nowrap">
+                                                        {reg.applied_voucher ? (
+                                                            <span className="px-2 py-1 bg-green-50 text-green-700 font-bold rounded-md uppercase tracking-wider">{reg.applied_voucher.code}</span>
+                                                        ) : '-'}
+                                                    </td>
+                                                    <td className="p-5 text-xs whitespace-nowrap">
+                                                        {Number(reg.discount_amount) > 0 ? (
+                                                            <span className="font-bold text-red-500">- Rp {Number(reg.discount_amount).toLocaleString('id-ID')}</span>
+                                                        ) : '-'}
+                                                    </td>
+                                                </>
                                                 )}
                                                 <td className="p-5 text-center">
                                                     <label className="flex items-center justify-center cursor-pointer">

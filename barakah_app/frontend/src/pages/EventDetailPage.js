@@ -4,7 +4,7 @@ import { Helmet } from 'react-helmet';
 import { QRCodeSVG } from 'qrcode.react';
 import Header from '../components/layout/Header';
 import NavigationButton from '../components/layout/Navigation';
-import { getEventDetail, registerForEvent, getEventParticipants, downloadCertificate, downloadBib, toggleLikeEvent } from '../services/eventApi';
+import { getEventDetail, registerForEvent, getEventParticipants, downloadCertificate, downloadBib, toggleLikeEvent, validateEventVoucher } from '../services/eventApi';
 import authService from '../services/auth';
 import Footer from '../components/layout/Footer';
 import CurrencyInput from '../components/common/CurrencyInput';
@@ -49,6 +49,10 @@ const EventDetailPage = () => {
     const [isLiked, setIsLiked] = useState(false);
     const [likesCount, setLikesCount] = useState(0);
     const [liking, setLiking] = useState(false);
+    const [voucherCode, setVoucherCode] = useState('');
+    const [appliedVoucher, setAppliedVoucher] = useState(null);
+    const [voucherLoading, setVoucherLoading] = useState(false);
+    const [voucherError, setVoucherError] = useState('');
 
     const calculateTimeLeft = (targetDate) => {
         if (!targetDate) return { total: 0 };
@@ -237,6 +241,25 @@ const EventDetailPage = () => {
         return matched.map(l => l.name).join(', ');
     };
 
+    const handleApplyVoucher = async () => {
+        if (!voucherCode.trim()) return;
+        setVoucherLoading(true);
+        setVoucherError('');
+        try {
+            const res = await validateEventVoucher(slug, voucherCode);
+            setAppliedVoucher(res.data.voucher);
+            setVoucherSuccess('Voucher berhasil diaplikasikan!');
+            setTimeout(() => setVoucherSuccess(''), 3000);
+        } catch (err) {
+            setVoucherError(err.response?.data?.error || 'Gagal validasi voucher.');
+            setAppliedVoucher(null);
+        } finally {
+            setVoucherLoading(false);
+        }
+    };
+
+    const [voucherSuccess, setVoucherSuccess] = useState('');
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setSubmitting(true);
@@ -259,6 +282,10 @@ const EventDetailPage = () => {
 
         if (selectedPriceVariation) {
             data.append('price_variation', selectedPriceVariation.id);
+        }
+
+        if (appliedVoucher) {
+            data.append('voucher_code', appliedVoucher.code);
         }
 
         if (isUserFreeByLabel()) {
@@ -1483,7 +1510,6 @@ const EventDetailPage = () => {
                                                                 required={field.required}
                                                                 type="text"
                                                                 value={responses[field.id] || ''}
-                                                                placeholder={field.placeholder}
                                                                 onChange={(e) => handleResponseChange(field.id, e.target.value)}
                                                                 className="w-full px-5 py-3.5 bg-gray-50 border border-transparent rounded-2xl text-sm outline-none focus:bg-white focus:border-green-500 focus:ring-4 focus:ring-green-500/10 transition shadow-inner"
                                                             />
@@ -1492,11 +1518,10 @@ const EventDetailPage = () => {
                                                         {field.field_type === 'textarea' && (
                                                             <textarea
                                                                 required={field.required}
+                                                                rows="3"
                                                                 value={responses[field.id] || ''}
-                                                                placeholder={field.placeholder}
                                                                 onChange={(e) => handleResponseChange(field.id, e.target.value)}
-                                                                rows="4"
-                                                                className="w-full px-5 py-3.5 bg-gray-50 border border-transparent rounded-2xl text-sm outline-none focus:bg-white focus:border-green-500 focus:ring-4 focus:ring-green-500/10 transition shadow-inner resize-none"
+                                                                className="w-full px-5 py-3.5 bg-gray-50 border border-transparent rounded-2xl text-sm outline-none focus:bg-white focus:border-green-500 focus:ring-4 focus:ring-green-500/10 transition shadow-inner resize-none custom-scrollbar"
                                                             ></textarea>
                                                         )}
 
@@ -1565,6 +1590,93 @@ const EventDetailPage = () => {
                                                                 <span className="material-icons absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">expand_more</span>
                                                             </div>
                                                         )}
+                                                        
+                                                        {field.field_type === 'checkbox' && (
+                                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
+                                                                {(() => {
+                                                                    let opts = field.options || [];
+                                                                    if (typeof opts === 'string') {
+                                                                        try { opts = JSON.parse(opts); } catch (e) { opts = []; }
+                                                                    }
+                                                                    return Array.isArray(opts) ? opts.map((opt, i) => {
+                                                                        const isObj = typeof opt === 'object';
+                                                                        const label = isObj ? opt.label : opt;
+                                                                        const price = isObj && opt.price ? ` (+ Rp ${formatCurrency(opt.price)})` : '';
+                                                                        return (
+                                                                            <label key={label} className={`flex items-center gap-3 px-4 py-3 rounded-2xl border cursor-pointer transition ${(responses[field.id] || []).includes(label) ? 'bg-green-50 border-green-200 text-green-700' : 'bg-white border-gray-100 text-gray-500 hover:border-gray-200'}`}>
+                                                                                <input
+                                                                                    type="checkbox"
+                                                                                    onChange={(e) => handleCheckboxChange(field.id, label, e.target.checked)}
+                                                                                    className="w-4 h-4 text-green-600 rounded"
+                                                                                />
+                                                                                <span className="text-xs font-bold truncate">
+                                                                                    {label}{price}
+                                                                                </span>
+                                                                            </label>
+                                                                        )
+                                                                    }) : null;
+                                                                })()}
+                                                            </div>
+                                                        )}
+
+                                                        {field.field_type === 'file' && (
+                                                            <div className="flex items-center justify-center w-full">
+                                                                <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-100 border-dashed rounded-3xl cursor-pointer bg-gray-50 hover:bg-white hover:border-green-300 transition-all">
+                                                                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                                                                        <span className="material-icons text-gray-400 mb-2">cloud_upload</span>
+                                                                        <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Click to upload file</p>
+                                                                        {files[field.id] && <p className="mt-1 text-xs text-green-600 font-bold max-w-[200px] truncate">{files[field.id].name}</p>}
+                                                                    </div>
+                                                                    <input
+                                                                        required={field.required}
+                                                                        type="file"
+                                                                        onChange={(e) => handleFileChange(field.id, e.target.files[0])}
+                                                                        className="hidden"
+                                                                    />
+                                                                </label>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+
+                                        {event.price_type !== 'free' && !isUserFreeByLabel() && (
+                                            <div className="p-6 bg-gray-50 rounded-[2rem] border border-gray-200 space-y-6">
+                                                <div className="flex items-center justify-between">
+                                                    <h3 className="text-sm font-bold text-gray-900 flex items-center gap-2">
+                                                        <span className="material-icons text-green-600">payments</span>
+                                                        Metode Pembayaran
+                                                    </h3>
+                                                    <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-[10px] font-black uppercase">{event.price_type}</span>
+                                                </div>
+
+                                                {/* Price Variations Selection */}
+                                                {event.price_variations && event.price_variations.length > 0 && (
+                                                    <div className="space-y-3">
+                                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Pilih Paket / Variasi HTM</label>
+                                                        <div className="grid grid-cols-1 gap-3">
+                                                            {event.price_variations.map((v, idx) => (
+                                                                <button
+                                                                    key={idx}
+                                                                    type="button"
+                                                                    onClick={() => setSelectedPriceVariation(v)}
+                                                                    className={`p-4 rounded-2xl border-2 text-left transition-all relative overflow-hidden group ${selectedPriceVariation?.id === v.id ? 'border-green-600 bg-green-50 shadow-md' : 'border-gray-100 bg-white hover:border-green-200'}`}
+                                                                >
+                                                                    <div className="flex justify-between items-start mb-2 relative z-10">
+                                                                        <h4 className={`text-xs font-black uppercase tracking-wider ${selectedPriceVariation?.id === v.id ? 'text-green-700' : 'text-gray-900'}`}>{v.title}</h4>
+                                                                        <span className={`text-sm font-black ${selectedPriceVariation?.id === v.id ? 'text-green-600' : 'text-gray-400'}`}>Rp {formatCurrency(v.price)}</span>
+                                                                    </div>
+                                                                    {v.benefits && (
+                                                                        <div className="space-y-1 relative z-10">
+                                                                            {v.benefits.split('\n').map((b, i) => (
+                                                                                <div key={i} className="flex items-center gap-2 text-[10px] text-gray-500 font-medium">
+                                                                                    <span className="material-icons text-[10px] text-green-500">check_circle</span>
+                                                                                    {b}
+                                                                                </div>
+                                                                            ))}
+                                                                        </div>
+                                                                    )}
                                                                     {selectedPriceVariation?.id === v.id && (
                                                                         <div className="absolute top-0 right-0 w-12 h-12 bg-green-600/10 rounded-bl-[2rem] flex items-center justify-center">
                                                                             <span className="material-icons text-green-600 text-sm">check</span>
@@ -1648,55 +1760,149 @@ const EventDetailPage = () => {
                                                                 value={paymentAmount}
                                                                 onChange={(e) => setPaymentAmount(e.target.value)}
                                                                 required={event.price_type === 'voluntary'}
-                                                                placeholder="Masukkan nominal..."
                                                             />
                                                         </div>
                                                     )}
                                                 </div>
 
-                                                {/* Total Display */}
-                                                <div className="flex flex-col gap-1 p-5 bg-green-50 rounded-2xl border-2 border-green-200 shadow-inner">
-                                                    <p className="text-[10px] font-black text-green-600 uppercase tracking-[0.2em] text-center">Total yang {paymentMethod === 'ots' ? 'Dibayar di Lokasi' : 'Harus Ditransfer'}</p>
-                                                    <p className="text-2xl font-black text-green-800 text-center">
-                                                        Rp {(() => {
-                                                            let fixed = Number(event?.price_fixed) || 0;
-                                                            if (selectedPriceVariation) fixed = Number(selectedPriceVariation.price);
-                                                            
-                                                            let extraFormPrice = 0;
-                                                            if (event?.form_fields) {
-                                                                event.form_fields.forEach(f => {
-                                                                    if (['select', 'radio', 'checkbox'].includes(f.field_type) && f.options && responses[f.id]) {
-                                                                        const opts = Array.isArray(f.options) ? f.options : [];
-                                                                        if (f.field_type === 'checkbox') {
-                                                                            const selected = responses[f.id] || [];
-                                                                            selected.forEach(s => {
-                                                                                const match = opts.find(o => (typeof o === 'object' ? o.label : o) === s);
-                                                                                if (match && typeof match === 'object' && match.price) extraFormPrice += Number(match.price);
-                                                                            });
-                                                                        } else {
-                                                                            const match = opts.find(o => (typeof o === 'object' ? o.label : o) === responses[f.id]);
-                                                                            if (match && typeof match === 'object' && match.price) extraFormPrice += Number(match.price);
-                                                                        }
+                                                
+                                                {/* Voucher Input */}
+                                                <div className="space-y-2">
+                                                    <label className="text-[10px] font-bold text-gray-600 uppercase ml-1">Kode Voucher (Opsional)</label>
+                                                    <div className="flex gap-2">
+                                                        <input
+                                                            type="text"
+                                                            value={voucherCode}
+                                                            onChange={(e) => setVoucherCode(e.target.value.toUpperCase())}
+                                                            placeholder="Masukkan kode promo"
+                                                            className="flex-1 bg-white border-2 border-gray-100 rounded-xl px-4 py-3 text-sm font-bold text-gray-900 focus:border-green-500 focus:ring-0 transition-colors uppercase"
+                                                            disabled={appliedVoucher || voucherLoading}
+                                                        />
+                                                        {appliedVoucher ? (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => { setAppliedVoucher(null); setVoucherCode(''); }}
+                                                                className="px-4 py-2 bg-red-50 text-red-600 rounded-xl text-sm font-bold hover:bg-red-100 transition"
+                                                            >
+                                                                Batal
+                                                            </button>
+                                                        ) : (
+                                                            <button
+                                                                type="button"
+                                                                onClick={handleApplyVoucher}
+                                                                disabled={!voucherCode.trim() || voucherLoading}
+                                                                className="px-4 py-2 bg-green-600 text-white rounded-xl text-sm font-bold hover:bg-green-700 disabled:opacity-50 transition"
+                                                            >
+                                                                {voucherLoading ? 'Cek...' : 'Gunakan'}
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                    {voucherError && <p className="text-xs text-red-500 font-bold ml-1">{voucherError}</p>}
+                                                    {voucherSuccess && <p className="text-xs text-green-600 font-bold ml-1">{voucherSuccess}</p>}
+                                                </div>
+
+                                                <div className="flex flex-col gap-2 bg-green-50 px-5 py-4 rounded-2xl border border-green-100">
+                                                    {appliedVoucher && (
+                                                        <div className="flex items-center justify-between border-b border-green-200 pb-2 mb-1">
+                                                            <span className="text-xs font-bold text-green-700 uppercase">Diskon Voucher ({appliedVoucher.code})</span>
+                                                            <span className="text-sm font-black text-red-500">
+                                                                - Rp {(() => {
+                                                                    let fixed = Number(event?.price_fixed) || 0;
+                                                                    if (selectedPriceVariation) fixed = Number(selectedPriceVariation.price);
+                                                                    
+                                                                    let extraFormPrice = 0;
+                                                                    if (event?.form_fields) {
+                                                                        event.form_fields.forEach(f => {
+                                                                            if (['select', 'radio', 'checkbox'].includes(f.field_type) && f.options && responses[f.id]) {
+                                                                                const opts = Array.isArray(f.options) ? f.options : [];
+                                                                                if (f.field_type === 'checkbox') {
+                                                                                    const selected = responses[f.id] || [];
+                                                                                    selected.forEach(s => {
+                                                                                        const match = opts.find(o => o.label === s || o === s);
+                                                                                        if (match && match.price) extraFormPrice += Number(match.price);
+                                                                                    });
+                                                                                } else {
+                                                                                    const match = opts.find(o => o.label === responses[f.id] || o === responses[f.id]);
+                                                                                    if (match && match.price) extraFormPrice += Number(match.price);
+                                                                                }
+                                                                            }
+                                                                        });
                                                                     }
-                                                                });
-                                                            }
-                                                            
-                                                            const extra = Number(paymentAmount) || 0;
-                                                            const total = fixed + extraFormPrice + extra;
-                                                            if (event?.price_type === 'fixed') return formatCurrency(fixed + extraFormPrice);
-                                                            if (event?.price_type === 'hybrid_1') return formatCurrency(total);
-                                                            return formatCurrency(extra + extraFormPrice);
-                                                        })()}
-                                                    </p>
+                                                                    
+                                                                    const extra = Number(paymentAmount) || 0;
+                                                                    let baseTotal = 0;
+                                                                    if (event?.price_type === 'fixed') baseTotal = fixed + extraFormPrice;
+                                                                    else if (event?.price_type === 'hybrid_1') baseTotal = fixed + extraFormPrice + extra;
+                                                                    else baseTotal = extra + extraFormPrice;
+                                                                    
+                                                                    if (appliedVoucher.discount_type === 'percentage') {
+                                                                        return formatCurrency(baseTotal * (Number(appliedVoucher.discount_value) / 100));
+                                                                    }
+                                                                    return formatCurrency(Number(appliedVoucher.discount_value));
+                                                                })()}
+                                                            </span>
+                                                        </div>
+                                                    )}
+                                                    <div className="flex items-center justify-between">
+                                                        <span className="text-xs font-bold text-green-800 uppercase">Total Dibayar</span>
+                                                        <span className="text-xl font-black text-green-700">
+                                                            Rp {(() => {
+                                                                let fixed = Number(event?.price_fixed) || 0;
+                                                                if (selectedPriceVariation) fixed = Number(selectedPriceVariation.price);
+                                                                
+                                                                let extraFormPrice = 0;
+                                                                if (event?.form_fields) {
+                                                                    event.form_fields.forEach(f => {
+                                                                        if (['select', 'radio', 'checkbox'].includes(f.field_type) && f.options && responses[f.id]) {
+                                                                            const opts = Array.isArray(f.options) ? f.options : [];
+                                                                            if (f.field_type === 'checkbox') {
+                                                                                const selected = responses[f.id] || [];
+                                                                                selected.forEach(s => {
+                                                                                    const match = opts.find(o => o.label === s || o === s);
+                                                                                    if (match && match.price) extraFormPrice += Number(match.price);
+                                                                                });
+                                                                            } else {
+                                                                                const match = opts.find(o => o.label === responses[f.id] || o === responses[f.id]);
+                                                                                if (match && match.price) extraFormPrice += Number(match.price);
+                                                                            }
+                                                                        }
+                                                                    });
+                                                                }
+                                                                
+                                                                const extra = Number(paymentAmount) || 0;
+                                                                let baseTotal = 0;
+                                                                if (event?.price_type === 'fixed') baseTotal = fixed + extraFormPrice;
+                                                                else if (event?.price_type === 'hybrid_1') baseTotal = fixed + extraFormPrice + extra;
+                                                                else baseTotal = extra + extraFormPrice;
+                                                                
+                                                                if (appliedVoucher) {
+                                                                    let discount = 0;
+                                                                    if (appliedVoucher.discount_type === 'percentage') {
+                                                                        discount = baseTotal * (Number(appliedVoucher.discount_value) / 100);
+                                                                    } else {
+                                                                        discount = Number(appliedVoucher.discount_value);
+                                                                    }
+                                                                    baseTotal -= discount;
+                                                                    if (baseTotal < 0) baseTotal = 0;
+                                                                }
+                                                                
+                                                                return formatCurrency(baseTotal);
+                                                            })()}
+                                                        </span>
+                                                    </div>
                                                 </div>
 
                                                 {paymentMethod === 'transfer' && (
-                                                    <div className="space-y-2 animate-fade-in">
+                                                    <div className="space-y-2">
                                                         <label className="text-[10px] font-bold text-gray-600 uppercase ml-1">Upload Bukti Transfer *</label>
-                                                        <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-200 border-dashed rounded-3xl cursor-pointer bg-white hover:bg-gray-50 transition-all">
+                                                        <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-200 border-dashed rounded-3xl cursor-pointer bg-white hover:bg-gray-50 hover:border-green-300 transition-all">
                                                             <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                                                                <span className="material-icons text-gray-400 mb-2">add_a_photo</span>
-                                                                <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Pilih Foto Bukti</p>
+                                                                <span className={`material-icons mb-2 ${paymentProof ? 'text-green-500' : 'text-gray-400'}`}>
+                                                                    {paymentProof ? 'check_circle' : 'receipt_long'}
+                                                                </span>
+                                                                <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">
+                                                                    {paymentProof ? 'Bukti Terpilih' : 'Klik untuk upload bukti'}
+                                                                </p>
                                                                 {paymentProof && <p className="mt-1 text-xs text-green-600 font-bold">{paymentProof.name}</p>}
                                                             </div>
                                                             <input
@@ -1716,81 +1922,6 @@ const EventDetailPage = () => {
                                                 )}
                                             </div>
                                         )}
-
-                                        {event.price_type !== 'free' && !isUserFreeByLabel() && (
-                                            <div className="p-6 bg-gray-50 rounded-[2rem] border border-gray-200 space-y-6">
-                                                <div className="flex items-center justify-between">
-                                                    <h3 className="text-sm font-bold text-gray-900 flex items-center gap-2">
-                                                        <span className="material-icons text-green-600">payments</span>
-                                                        Metode Pembayaran
-                                                    </h3>
-                                                    <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-[10px] font-black uppercase">{event.price_type}</span>
-                                                </div>
-
-                                                {/* Price Variations Selection */}
-                                                {event.price_variations && event.price_variations.length > 0 && (
-                                                    <div className="space-y-3">
-                                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Pilih Paket / Variasi HTM</label>
-                                                        <div className="grid grid-cols-1 gap-3">
-                                                            {event.price_variations.map((v, idx) => (
-                                                                <button
-                                                                    key={idx}
-                                                                    type="button"
-                                                                    onClick={() => setSelectedPriceVariation(v)}
-                                                                    className={`p-4 rounded-2xl border-2 text-left transition-all relative overflow-hidden group ${selectedPriceVariation?.id === v.id ? 'border-green-600 bg-green-50 shadow-md' : 'border-gray-100 bg-white hover:border-green-200'}`}
-                                                                >
-                                                                    <div className="flex justify-between items-start mb-2 relative z-10">
-                                                                        <h4 className={`text-xs font-black uppercase tracking-wider ${selectedPriceVariation?.id === v.id ? 'text-green-700' : 'text-gray-900'}`}>{v.title}</h4>
-                                                                        <span className={`text-sm font-black ${selectedPriceVariation?.id === v.id ? 'text-green-600' : 'text-gray-400'}`}>Rp {formatCurrency(v.price)}</span>
-                                                                    </div>
-                                                                    {v.benefits && (
-                                                                        <div className="space-y-1 relative z-10">
-                                                                            {v.benefits.split('\n').map((b, i) => (
-                                                                                <div key={i} className="flex items-center gap-2 text-[10px] text-gray-500 font-medium">
-                                                                                    <span className="material-icons text-[10px] text-green-500">check_circle</span>
-                                                                                    {b}
-                                                                                </div>
-                                                                            ))}
-                                                                        </div>
-                                                                    )}
-
-                                                        {field.field_type === 'checkbox' && (
-                                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
-                                                                {(field.options || []).map(opt => (
-                                                                    <label key={opt} className={`flex items-center gap-3 px-4 py-3 rounded-2xl border cursor-pointer transition ${(responses[field.id] || []).includes(opt) ? 'bg-green-50 border-green-200 text-green-700' : 'bg-white border-gray-100 text-gray-500 hover:border-gray-200'}`}>
-                                                                        <input
-                                                                            type="checkbox"
-                                                                            onChange={(e) => handleCheckboxChange(field.id, opt, e.target.checked)}
-                                                                            className="w-4 h-4 text-green-600 rounded"
-                                                                        />
-                                                                        <span className="text-xs font-bold truncate">{opt}</span>
-                                                                    </label>
-                                                                ))}
-                                                            </div>
-                                                        )}
-
-                                                        {field.field_type === 'file' && (
-                                                            <div className="flex items-center justify-center w-full">
-                                                                <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-100 border-dashed rounded-3xl cursor-pointer bg-gray-50 hover:bg-white hover:border-green-300 transition-all">
-                                                                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                                                                        <span className="material-icons text-gray-400 mb-2">cloud_upload</span>
-                                                                        <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Click to upload file</p>
-                                                                        {files[field.id] && <p className="mt-1 text-xs text-green-600 font-bold max-w-[200px] truncate">{files[field.id].name}</p>}
-                                                                    </div>
-                                                                    <input
-                                                                        required={field.required}
-                                                                        type="file"
-                                                                        onChange={(e) => handleFileChange(field.id, e.target.files[0])}
-                                                                        className="hidden"
-                                                                    />
-                                                                </label>
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        )}
-
                                         <div className="pt-4 border-t border-gray-100 flex flex-col gap-4">
                                             <button
                                                 type="submit"

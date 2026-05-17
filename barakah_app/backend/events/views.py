@@ -284,6 +284,44 @@ class EventViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
 
+
+    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
+    def validate_voucher(self, request, slug=None):
+        event = self.get_object()
+        code = request.data.get('code')
+        
+        if not code:
+            return Response({"error": "Kode voucher tidak boleh kosong."}, status=status.HTTP_400_BAD_REQUEST)
+            
+        from .models import EventVoucher
+        try:
+            voucher = EventVoucher.objects.get(event=event, code=code)
+        except EventVoucher.DoesNotExist:
+            return Response({"error": "Kode voucher tidak valid untuk event ini."}, status=status.HTTP_404_NOT_FOUND)
+            
+        if not voucher.is_active:
+            return Response({"error": "Voucher ini sudah tidak aktif."}, status=status.HTTP_400_BAD_REQUEST)
+            
+        if voucher.used_count >= voucher.quota:
+            return Response({"error": "Kuota voucher ini sudah habis."}, status=status.HTTP_400_BAD_REQUEST)
+            
+        from django.utils import timezone
+        now = timezone.now()
+        if voucher.valid_from and now < voucher.valid_from:
+            return Response({"error": "Voucher ini belum bisa digunakan."}, status=status.HTTP_400_BAD_REQUEST)
+        if voucher.valid_until and now > voucher.valid_until:
+            return Response({"error": "Voucher ini sudah kadaluarsa."}, status=status.HTTP_400_BAD_REQUEST)
+            
+        return Response({
+            "status": "success",
+            "message": "Voucher berhasil diaplikasikan.",
+            "voucher": {
+                "code": voucher.code,
+                "discount_type": voucher.discount_type,
+                "discount_value": str(voucher.discount_value)
+            }
+        })
+
     @action(detail=False, methods=['get'], permission_classes=[permissions.IsAuthenticated])
     def my_events(self, request):
         """List events created by current user."""
@@ -374,27 +412,85 @@ class EventViewSet(viewsets.ModelViewSet):
         if event.price_type != 'free' and not is_ots_valid and not is_free_by_label and not payment_proof:
             return Response({"error": "Bukti pembayaran wajib diunggah untuk event berbayar."}, status=status.HTTP_400_BAD_REQUEST)
 
-        # 2b. OCR Validation (Only for transfer and NOT free by label)
+        
+        # 2b. Expected Amount Calculation
+        import decimal
+        expected_amount = decimal.Decimal('0')
+        extra_form_price = decimal.Decimal('0')
+        
+        # Calculate extraFormPrice
+        for field in form_fields:
+            if field.field_type in ['select', 'radio', 'checkbox'] and field.options:
+                resp_val = responses.get(str(field.id))
+                if not resp_val: continue
+                
+                opts = field.options if isinstance(field.options, list) else []
+                
+                if field.field_type == 'checkbox':
+                    selected_vals = resp_val if isinstance(resp_val, list) else []
+                    for s in selected_vals:
+                        for opt in opts:
+                            opt_label = opt.get('label') if isinstance(opt, dict) else opt
+                            if str(opt_label) == str(s) and isinstance(opt, dict) and opt.get('price'):
+                                extra_form_price += decimal.Decimal(str(opt.get('price')))
+                else:
+                    for opt in opts:
+                        opt_label = opt.get('label') if isinstance(opt, dict) else opt
+                        if str(opt_label) == str(resp_val) and isinstance(opt, dict) and opt.get('price'):
+                            extra_form_price += decimal.Decimal(str(opt.get('price')))
+
+        try:
+            if price_variation:
+                base_price = decimal.Decimal(str(price_variation.price))
+            elif event.price_type in ['fixed', 'hybrid_1']:
+                base_price = decimal.Decimal(str(event.price_fixed))
+            else:
+                base_price = decimal.Decimal('0')
+            
+            extra_pay = decimal.Decimal(str(payment_amount)) if payment_amount else decimal.Decimal('0')
+            
+            if event.price_type == 'fixed':
+                expected_amount = base_price + extra_form_price
+            elif event.price_type == 'hybrid_1':
+                expected_amount = base_price + extra_form_price + extra_pay
+            else:
+                expected_amount = extra_pay + extra_form_price
+        except:
+            expected_amount = decimal.Decimal('0')
+
+        # 2c. Voucher Validation
+        voucher_code = request.data.get('voucher_code')
+        applied_voucher = None
+        discount_amount = decimal.Decimal('0')
+        
+        if voucher_code:
+            from .models import EventVoucher
+            try:
+                applied_voucher = EventVoucher.objects.get(event=event, code=voucher_code)
+                if not applied_voucher.is_active or applied_voucher.used_count >= applied_voucher.quota:
+                    return Response({"error": "Voucher sudah tidak valid atau kuota habis."}, status=status.HTTP_400_BAD_REQUEST)
+                if (applied_voucher.valid_from and now < applied_voucher.valid_from) or (applied_voucher.valid_until and now > applied_voucher.valid_until):
+                    return Response({"error": "Voucher tidak berada dalam masa berlaku."}, status=status.HTTP_400_BAD_REQUEST)
+                
+                if applied_voucher.discount_type == 'percentage':
+                    discount_amount = expected_amount * (decimal.Decimal(str(applied_voucher.discount_value)) / decimal.Decimal('100.0'))
+                else:
+                    discount_amount = decimal.Decimal(str(applied_voucher.discount_value))
+                
+                expected_amount -= discount_amount
+                if expected_amount < 0:
+                    expected_amount = decimal.Decimal('0')
+            except EventVoucher.DoesNotExist:
+                return Response({"error": "Voucher tidak valid untuk event ini."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # 2d. OCR Validation
         ocr_data = None
         ocr_verified = False
         if payment_proof and not is_ots_valid and not is_free_by_label:
-            import decimal
-            try:
-                # Prioritize variation price if available
-                if price_variation:
-                    expected_amount = decimal.Decimal(str(price_variation.price))
-                else:
-                    expected_amount = decimal.Decimal(str(payment_amount))
-            except:
-                expected_amount = decimal.Decimal('0')
-
             # Call OCR Service
             ocr_result = extract_payment_data(payment_proof)
             
-            if '_error' in ocr_result:
-                # If AI fails, we still allow but warn? 
-                pass
-            else:
+            if '_error' not in ocr_result:
                 ocr_data = ocr_result
                 extracted_name = str(ocr_result.get('recipient_name', '')).lower()
                 extracted_amount = ocr_result.get('amount')
@@ -410,7 +506,6 @@ class EventViewSet(viewsets.ModelViewSet):
                 if extracted_amount:
                     try:
                         extracted_amount_float = float(extracted_amount)
-                        # Convert both to float for comparison if they are numbers
                         is_amount_valid = abs(extracted_amount_float - expected_amount_float) < 1
                     except:
                         pass
@@ -428,7 +523,6 @@ class EventViewSet(viewsets.ModelViewSet):
                 ocr_verified = True
 
         # 3. Create registration
-        # Status defaults to 'pending' as defined in model
         registration = EventRegistration.objects.create(
             event=event,
             user=user,
@@ -440,9 +534,15 @@ class EventViewSet(viewsets.ModelViewSet):
             ocr_data=ocr_data,
             ocr_verified=ocr_verified,
             status='approved', # Force auto-approve
-            payment_status='verified' if is_free_by_label else 'pending'
+            payment_status='verified' if is_free_by_label else 'pending',
+            applied_voucher=applied_voucher,
+            discount_amount=discount_amount
         )
         
+        if applied_voucher:
+            applied_voucher.used_count += 1
+            applied_voucher.save()
+
         # 4. Handle File Uploads for dynamic fields
         for field in form_fields:
             if field.field_type == 'file' and str(field.id) in request.FILES:
@@ -2220,7 +2320,7 @@ class EventViewSet(viewsets.ModelViewSet):
         writer = csv.writer(response, delimiter=';')
         
         # CSV Header
-        header = ['ID', 'Waktu Daftar', 'ID Peserta', 'Kode Tiket', 'Nama', 'Email', 'Label User', 'Status', 'Kehadiran Umum', 'Payment Amount', 'Payment Status', 'Pesanan Selesai', 'Catatan Panitia']
+        header = ['ID', 'Waktu Daftar', 'ID Peserta', 'Kode Tiket', 'Nama', 'Email', 'Label User', 'Status', 'Kehadiran Umum', 'Payment Amount', 'Kode Voucher', 'Potongan Harga', 'Payment Status', 'Pesanan Selesai', 'Catatan Panitia']
         for field in form_fields:
             header.append(field.label)
         

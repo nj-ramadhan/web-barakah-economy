@@ -294,6 +294,10 @@ class EventRegistration(models.Model):
     is_order_completed = models.BooleanField(default=False, help_text="Tandai jika pesanan/form sudah diselesaikan (misal: makanan sudah diberikan)")
     committee_notes = models.TextField(blank=True, null=True, help_text="Catatan internal dari panitia untuk pendaftar ini")
     
+    # Voucher Tracking
+    applied_voucher = models.ForeignKey('EventVoucher', on_delete=models.SET_NULL, null=True, blank=True, related_name='registrations', help_text="Voucher yang digunakan")
+    discount_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0, help_text="Nominal diskon dari voucher")
+    
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -451,3 +455,28 @@ class EventSpecialQR(models.Model):
 
     def __str__(self):
         return f"Special QR for {self.event.title}"
+
+class EventVoucher(models.Model):
+    DISCOUNT_TYPES = (
+        ('percentage', 'Persentase (%)'),
+        ('fixed', 'Nominal Tetap (Rp)'),
+    )
+    event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name='vouchers')
+    code = models.CharField(max_length=50)
+    discount_type = models.CharField(max_length=20, choices=DISCOUNT_TYPES, default='fixed')
+    discount_value = models.DecimalField(max_digits=12, decimal_places=2)
+    quota = models.PositiveIntegerField(default=100, help_text="Jumlah maksimal voucher ini bisa digunakan")
+    used_count = models.PositiveIntegerField(default=0)
+    is_active = models.BooleanField(default=True)
+    valid_from = models.DateTimeField(null=True, blank=True)
+    valid_until = models.DateTimeField(null=True, blank=True)
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        unique_together = ('event', 'code')
+        ordering = ['-created_at']
+        
+    def __str__(self):
+        return f"{self.code} - {self.event.title}"
