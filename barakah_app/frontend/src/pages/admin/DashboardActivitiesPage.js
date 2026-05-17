@@ -184,88 +184,89 @@ const DashboardActivitiesPage = () => {
 
             {showModal && (
                 <div className="fixed inset-0 bg-black/60 z-[100] flex items-center justify-center p-4 backdrop-blur-sm">
-                    <div className="bg-white w-full max-w-2xl rounded-3xl p-8 shadow-2xl animate-slide-up max-h-[90vh] overflow-y-auto">
-                        <div className="flex justify-between items-center mb-6">
+                    <div className="bg-white w-full max-w-2xl rounded-3xl shadow-2xl animate-slide-up flex flex-col max-h-[90vh] md:max-h-[85vh]">
+                        <div className="flex justify-between items-center p-6 md:p-8 border-b border-gray-100 shrink-0">
                             <h3 className="text-xl font-bold text-gray-800">{isEditing ? 'Edit Kegiatan' : 'Tambah Kegiatan Baru'}</h3>
-                            <button onClick={() => setShowModal(false)} className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:bg-gray-200 transition">
+                            <button type="button" onClick={() => setShowModal(false)} className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:bg-gray-200 transition">
                                 <span className="material-icons">close</span>
                             </button>
                         </div>
 
-                        <form onSubmit={handleSubmit} className="space-y-5">
-                            <div className="space-y-1">
-                                <label className="text-xs font-bold text-gray-500 ml-1">Judul Kegiatan</label>
-                                <input
-                                    type="text"
-                                    placeholder="Masukkan judul menarik..."
-                                    required
-                                    className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl text-sm focus:ring-2 focus:ring-green-500 focus:bg-white transition"
-                                    value={formData.title}
-                                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                                />
-                            </div>
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="p-6 md:p-8 overflow-y-auto">
+                            <form onSubmit={handleSubmit} className="space-y-5">
                                 <div className="space-y-1">
-                                    <label className="text-xs font-bold text-gray-500 ml-1">Tanggal Kegiatan</label>
+                                    <label className="text-xs font-bold text-gray-500 ml-1">Judul Kegiatan</label>
                                     <input
-                                        type="date"
+                                        type="text"
+                                        placeholder="Masukkan judul menarik..."
                                         required
                                         className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl text-sm focus:ring-2 focus:ring-green-500 focus:bg-white transition"
-                                        value={formData.date}
-                                        onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                                        value={formData.title}
+                                        onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                                     />
                                 </div>
-                                <div className="space-y-1">
-                                    <label className="text-xs font-bold text-gray-500 ml-1">Gambar Header</label>
-                                    <div className="relative">
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="space-y-1">
+                                        <label className="text-xs font-bold text-gray-500 ml-1">Tanggal Kegiatan</label>
                                         <input
-                                            type="file"
-                                            accept="image/*"
-                                            required={!isEditing}
-                                            className="hidden"
-                                            id="header_image"
-                                            onChange={handleFileChange}
+                                            type="date"
+                                            required
+                                            className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl text-sm focus:ring-2 focus:ring-green-500 focus:bg-white transition"
+                                            value={formData.date}
+                                            onChange={(e) => setFormData({ ...formData, date: e.target.value })}
                                         />
-                                        <label htmlFor="header_image" className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl text-sm flex items-center gap-3 cursor-pointer hover:bg-gray-100 transition truncate">
-                                            <span className="material-icons text-green-700">image</span>
-                                            {formData.header_image ? (formData.header_image.name || 'Ganti Gambar') : 'Pilih Gambar...'}
-                                        </label>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label className="text-xs font-bold text-gray-500 ml-1">Gambar Header</label>
+                                        <div className="relative">
+                                            <input
+                                                type="file"
+                                                accept="image/*"
+                                                required={!isEditing}
+                                                className="hidden"
+                                                id="header_image"
+                                                onChange={handleFileChange}
+                                            />
+                                            <label htmlFor="header_image" className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl text-sm flex items-center gap-3 cursor-pointer hover:bg-gray-100 transition truncate">
+                                                <span className="material-icons text-green-700">image</span>
+                                                {formData.header_image ? (formData.header_image.name || 'Ganti Gambar') : 'Pilih Gambar...'}
+                                            </label>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
 
-                            <div className="space-y-1">
-                                <label className="text-xs font-bold text-gray-500 ml-1">Keterangan / Konten</label>
-                                <div className="border border-gray-100 rounded-2xl overflow-hidden focus-within:ring-2 focus-within:ring-green-500 transition">
-                                    {/* Placeholder for Rich Text Editor Note */}
-                                    <div className="bg-gray-100 px-4 py-2 border-b border-gray-200 flex gap-2">
-                                        <button type="button" className="material-icons text-sm text-gray-400">format_bold</button>
-                                        <button type="button" className="material-icons text-sm text-gray-400">format_italic</button>
-                                        <button type="button" className="material-icons text-sm text-gray-400">format_list_bulleted</button>
-                                        <span className="text-[10px] text-gray-400 italic ml-auto pt-1">Rich content supported</span>
+                                <div className="space-y-1">
+                                    <label className="text-xs font-bold text-gray-500 ml-1">Keterangan / Konten</label>
+                                    <div className="border border-gray-100 rounded-2xl overflow-hidden focus-within:ring-2 focus-within:ring-green-500 transition">
+                                        <div className="bg-gray-100 px-4 py-2 border-b border-gray-200 flex gap-2">
+                                            <button type="button" className="material-icons text-sm text-gray-400">format_bold</button>
+                                            <button type="button" className="material-icons text-sm text-gray-400">format_italic</button>
+                                            <button type="button" className="material-icons text-sm text-gray-400">format_list_bulleted</button>
+                                            <span className="text-[10px] text-gray-400 italic ml-auto pt-1">Rich content supported</span>
+                                        </div>
+                                        <textarea
+                                            placeholder="Tulis detail kegiatan di sini... (Mendukung HTML)"
+                                            required
+                                            rows="8"
+                                            className="w-full p-4 bg-gray-50 border-none rounded-b-2xl text-sm focus:ring-0 transition"
+                                            value={formData.content}
+                                            onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+                                        ></textarea>
                                     </div>
-                                    <textarea
-                                        placeholder="Tulis detail kegiatan di sini... (Mendukung HTML)"
-                                        required
-                                        rows="8"
-                                        className="w-full p-4 bg-gray-50 border-none rounded-b-2xl text-sm focus:ring-0 transition"
-                                        value={formData.content}
-                                        onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                                    ></textarea>
+                                    <p className="text-[10px] text-gray-400 mt-1 ml-1">* Gunakan format [Judul Link | URL] untuk membuat link, atau masukkan URL biasa.</p>
                                 </div>
-                                <p className="text-[10px] text-gray-400 mt-1 ml-1">* Gunakan format [Judul Link | URL] untuk membuat link, atau masukkan URL biasa.</p>
-                            </div>
 
-                            <div className="flex gap-3 pt-2">
-                                <button type="submit" className="flex-1 py-4 bg-green-700 text-white rounded-2xl font-bold shadow-lg shadow-green-100 hover:bg-green-800 transition transform active:scale-95">
-                                    {isEditing ? 'Update Kegiatan' : 'Simpan Kegiatan'}
-                                </button>
-                                <button type="button" onClick={() => setShowModal(false)} className="px-8 py-4 bg-gray-100 text-gray-600 rounded-2xl font-bold hover:bg-gray-200 transition">
-                                    Batal
-                                </button>
-                            </div>
-                        </form>
+                                <div className="flex gap-3 pt-2">
+                                    <button type="submit" className="flex-1 py-4 bg-green-700 text-white rounded-2xl font-bold shadow-lg shadow-green-100 hover:bg-green-800 transition transform active:scale-95">
+                                        {isEditing ? 'Update Kegiatan' : 'Simpan Kegiatan'}
+                                    </button>
+                                    <button type="button" onClick={() => setShowModal(false)} className="px-8 py-4 bg-gray-100 text-gray-600 rounded-2xl font-bold hover:bg-gray-200 transition">
+                                        Batal
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
                     </div>
                 </div>
             )}

@@ -5,6 +5,7 @@ import {
     getMeetingDetail, 
     getMeetingParticipants, 
     addMeetingParticipants, 
+    removeMeetingParticipant,
     updateMeetingAttendance, 
     blastMeetingWhatsapp, 
     exportMeetingCsv,
@@ -96,6 +97,18 @@ const MeetingManagementPage = () => {
             alert('Gagal menambahkan peserta.');
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleRemoveParticipant = async (participantId, name) => {
+        if (!window.confirm(`Apakah Anda yakin ingin menghapus peserta "${name}" dari rapat ini?`)) return;
+        try {
+            await removeMeetingParticipant(slug, participantId);
+            setParticipants(prev => prev.filter(p => p.id !== participantId));
+            setSelectedIds(prev => prev.filter(id => id !== participantId));
+            alert('Peserta berhasil dihapus.');
+        } catch (err) {
+            alert('Gagal menghapus peserta.');
         }
     };
 
@@ -248,6 +261,7 @@ const MeetingManagementPage = () => {
                                     </th>
                                     <th className="p-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Peserta</th>
                                     <th className="p-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Info Kontak</th>
+                                    <th className="p-5 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center w-20">Aksi</th>
                                     {meeting?.sessions?.map(s => (
                                         <th key={s.id} className="p-5 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center min-w-[150px]">
                                             <div className="mb-2">{s.title}</div>
@@ -292,6 +306,15 @@ const MeetingManagementPage = () => {
                                         <td className="p-5">
                                             <p className="text-xs font-bold text-gray-600">{p.user_details?.email}</p>
                                             <p className="text-[10px] text-gray-400">{p.user_details?.profile?.phone || '-'}</p>
+                                        </td>
+                                        <td className="p-5 text-center">
+                                            <button
+                                                onClick={() => handleRemoveParticipant(p.id, p.user_details?.profile?.name_full || p.user_details?.username)}
+                                                className="w-8 h-8 rounded-xl bg-red-50 text-red-500 flex items-center justify-center hover:bg-red-100 transition mx-auto"
+                                                title="Hapus Peserta"
+                                            >
+                                                <span className="material-icons text-sm">delete</span>
+                                            </button>
                                         </td>
                                         {meeting?.sessions?.map(session => {
                                             const att = p.session_attendances?.find(a => a.session === session.id) || { status: 'pending', remarks: '' };
@@ -342,7 +365,7 @@ const MeetingManagementPage = () => {
                                 ))}
                                 {participants.length === 0 && (
                                     <tr>
-                                        <td colSpan={3 + (meeting?.sessions?.length || 0)} className="p-12 text-center">
+                                        <td colSpan={4 + (meeting?.sessions?.length || 0)} className="p-12 text-center">
                                             <span className="material-icons text-gray-200 text-4xl mb-2">person_off</span>
                                             <p className="text-sm font-bold text-gray-400 uppercase tracking-widest">Belum ada peserta terdaftar</p>
                                             <button onClick={() => setShowAddModal(true)} className="mt-4 text-blue-600 font-black text-[10px] uppercase tracking-widest hover:underline">Tambah Peserta Sekarang</button>
@@ -359,8 +382,8 @@ const MeetingManagementPage = () => {
             {showAddModal && (
                 <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
                     <div className="absolute inset-0 bg-gray-900/60 backdrop-blur-sm" onClick={() => setShowAddModal(false)}></div>
-                    <div className="relative bg-white w-full max-w-xl rounded-[2.5rem] shadow-2xl overflow-hidden animate-bounce-in flex flex-col max-h-[80vh]">
-                        <div className="p-6 border-b border-gray-100 flex items-center justify-between">
+                    <div className="relative bg-white w-full max-w-xl rounded-[2.5rem] shadow-2xl overflow-hidden animate-bounce-in flex flex-col max-h-[90vh] md:max-h-[80vh]">
+                        <div className="p-6 border-b border-gray-100 flex items-center justify-between shrink-0">
                             <h3 className="text-xl font-black text-gray-900">Tambah Peserta Rapat</h3>
                             <button onClick={() => setShowAddModal(false)} className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-400"><span className="material-icons text-sm">close</span></button>
                         </div>
@@ -399,7 +422,7 @@ const MeetingManagementPage = () => {
                                 )}
                             </div>
                         </div>
-                        <div className="p-6 bg-gray-50 border-t border-gray-100">
+                        <div className="p-6 bg-gray-50 border-t border-gray-100 shrink-0">
                             <button 
                                 onClick={handleAddParticipants}
                                 disabled={selectedUserIds.length === 0}
@@ -416,12 +439,12 @@ const MeetingManagementPage = () => {
             {showBlastModal && (
                 <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
                     <div className="absolute inset-0 bg-gray-900/60 backdrop-blur-sm" onClick={() => setShowBlastModal(false)}></div>
-                    <div className="relative bg-white w-full max-w-xl rounded-[2.5rem] shadow-2xl overflow-hidden animate-bounce-in">
-                        <div className="p-6 border-b border-gray-100 flex items-center justify-between">
+                    <div className="relative bg-white w-full max-w-xl rounded-[2.5rem] shadow-2xl overflow-hidden animate-bounce-in flex flex-col max-h-[90vh] md:max-h-[80vh]">
+                        <div className="p-6 border-b border-gray-100 flex items-center justify-between shrink-0">
                             <h3 className="text-xl font-black text-gray-900">Blast WhatsApp</h3>
                             <button onClick={() => setShowBlastModal(false)} className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-400"><span className="material-icons text-sm">close</span></button>
                         </div>
-                        <div className="p-8 space-y-6">
+                        <div className="p-6 md:p-8 space-y-6 overflow-y-auto">
                             <div className="bg-amber-50 border border-amber-100 p-4 rounded-2xl flex items-start gap-3">
                                 <span className="material-icons text-amber-600 text-sm">info</span>
                                 <p className="text-[11px] text-amber-700 leading-relaxed font-medium">Pesan ini akan dikirimkan ke <b>{selectedIds.length > 0 ? selectedIds.length : 'Semua'} peserta</b> yang memiliki nomor WhatsApp terdaftar. Gunakan bahasa yang sopan.</p>
@@ -456,7 +479,7 @@ const MeetingManagementPage = () => {
                                 ></textarea>
                             </div>
                         </div>
-                        <div className="p-8 bg-gray-50 border-t border-gray-100">
+                        <div className="p-6 md:p-8 bg-gray-50 border-t border-gray-100 shrink-0">
                             <button 
                                 onClick={handleBlast}
                                 disabled={blasting || !blastMessage}
