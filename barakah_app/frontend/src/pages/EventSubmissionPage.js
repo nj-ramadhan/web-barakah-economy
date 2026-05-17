@@ -57,6 +57,7 @@ const EventSubmissionPage = () => {
     const [availableLabels, setAvailableLabels] = useState([]);
     const [speakers, setSpeakers] = useState([]);
     const [sessions, setSessions] = useState([]);
+    const [vouchers, setVouchers] = useState([]);
 
     const [formFields, setFormFields] = useState([]);
     const [files, setFiles] = useState({
@@ -129,6 +130,7 @@ const EventSubmissionPage = () => {
 
                     if (d.speakers && d.speakers.length > 0) setSpeakers(d.speakers);
                     if (d.sessions && d.sessions.length > 0) setSessions(d.sessions);
+                    if (d.vouchers && d.vouchers.length > 0) setVouchers(d.vouchers);
 
                     // Populate form fields
                     if (d.form_fields && d.form_fields.length > 0) {
@@ -455,6 +457,9 @@ const EventSubmissionPage = () => {
 
         if (cleanedSessions.length > 0) {
             data.append('sessions', JSON.stringify(cleanedSessions));
+        }
+        if (vouchers && vouchers.length > 0) {
+            data.append('vouchers', JSON.stringify(vouchers));
         }
 
         if (files.thumbnail_full instanceof File) data.append('thumbnail_full', files.thumbnail_full);
@@ -1103,6 +1108,148 @@ const EventSubmissionPage = () => {
                                             </div>
                                         </div>
 
+                                        
+                                        {/* Voucher Management */}
+                                        <div className="md:col-span-2 mt-4 space-y-4 p-6 bg-green-50/50 rounded-[2rem] border border-green-100">
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-10 h-10 bg-white text-green-600 rounded-xl flex items-center justify-center shadow-sm border border-green-100">
+                                                        <span className="material-icons">confirmation_number</span>
+                                                    </div>
+                                                    <div>
+                                                        <label className="text-sm font-black text-gray-900">Kode Voucher Diskon</label>
+                                                        <p className="text-[10px] text-green-700 font-bold uppercase tracking-wider">Berikan potongan harga khusus</p>
+                                                    </div>
+                                                </div>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setVouchers(prev => [...prev, { 
+                                                        code: '', discount_type: 'percentage', discount_value: 0, 
+                                                        quota: 100, valid_from: '', valid_until: '', is_active: true 
+                                                    }])}
+                                                    className="flex items-center gap-1.5 px-4 py-2 bg-green-600 text-white rounded-xl text-xs font-bold hover:bg-green-700 transition shadow-lg shadow-green-200"
+                                                >
+                                                    <span className="material-icons text-sm">add</span> Tambah Voucher
+                                                </button>
+                                            </div>
+
+                                            <div className="space-y-4">
+                                                {vouchers.map((voucher, idx) => (
+                                                    <div key={idx} className="relative p-5 bg-white rounded-2xl border border-gray-200 shadow-sm">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setVouchers(prev => prev.filter((_, i) => i !== idx))}
+                                                            className="absolute -top-3 -right-3 w-8 h-8 bg-red-100 text-red-600 rounded-full flex items-center justify-center hover:bg-red-200 transition border border-white"
+                                                        >
+                                                            <span className="material-icons text-sm">close</span>
+                                                        </button>
+                                                        
+                                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                            <div className="space-y-1.5">
+                                                                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Kode Voucher</label>
+                                                                <input
+                                                                    type="text"
+                                                                    value={voucher.code}
+                                                                    onChange={(e) => {
+                                                                        const newArr = [...vouchers];
+                                                                        newArr[idx].code = e.target.value.toUpperCase();
+                                                                        setVouchers(newArr);
+                                                                    }}
+                                                                    placeholder="Misal: PROMO2024"
+                                                                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2 text-sm uppercase focus:ring-green-500 focus:border-green-500 font-bold"
+                                                                />
+                                                            </div>
+                                                            <div className="space-y-1.5">
+                                                                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Kuota Penggunaan</label>
+                                                                <input
+                                                                    type="number"
+                                                                    min="1"
+                                                                    value={voucher.quota}
+                                                                    onChange={(e) => {
+                                                                        const newArr = [...vouchers];
+                                                                        newArr[idx].quota = e.target.value;
+                                                                        setVouchers(newArr);
+                                                                    }}
+                                                                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2 text-sm focus:ring-green-500 focus:border-green-500 font-bold"
+                                                                />
+                                                            </div>
+                                                            <div className="space-y-1.5">
+                                                                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Tipe Diskon</label>
+                                                                <select
+                                                                    value={voucher.discount_type}
+                                                                    onChange={(e) => {
+                                                                        const newArr = [...vouchers];
+                                                                        newArr[idx].discount_type = e.target.value;
+                                                                        setVouchers(newArr);
+                                                                    }}
+                                                                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2 text-sm focus:ring-green-500 focus:border-green-500 font-bold"
+                                                                >
+                                                                    <option value="percentage">Persentase (%)</option>
+                                                                    <option value="fixed">Nominal (Rp)</option>
+                                                                </select>
+                                                            </div>
+                                                            <div className="space-y-1.5">
+                                                                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Nilai Diskon</label>
+                                                                <input
+                                                                    type="number"
+                                                                    min="0"
+                                                                    value={voucher.discount_value}
+                                                                    onChange={(e) => {
+                                                                        const newArr = [...vouchers];
+                                                                        newArr[idx].discount_value = e.target.value;
+                                                                        setVouchers(newArr);
+                                                                    }}
+                                                                    placeholder={voucher.discount_type === 'percentage' ? 'Contoh: 10' : 'Contoh: 50000'}
+                                                                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2 text-sm focus:ring-green-500 focus:border-green-500 font-bold"
+                                                                />
+                                                            </div>
+                                                            <div className="space-y-1.5">
+                                                                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Berlaku Dari (Opsional)</label>
+                                                                <input
+                                                                    type="datetime-local"
+                                                                    value={voucher.valid_from ? voucher.valid_from.substring(0, 16) : ''}
+                                                                    onChange={(e) => {
+                                                                        const newArr = [...vouchers];
+                                                                        newArr[idx].valid_from = e.target.value;
+                                                                        setVouchers(newArr);
+                                                                    }}
+                                                                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2 text-sm focus:ring-green-500 focus:border-green-500 font-bold"
+                                                                />
+                                                            </div>
+                                                            <div className="space-y-1.5">
+                                                                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Berlaku Sampai (Opsional)</label>
+                                                                <input
+                                                                    type="datetime-local"
+                                                                    value={voucher.valid_until ? voucher.valid_until.substring(0, 16) : ''}
+                                                                    onChange={(e) => {
+                                                                        const newArr = [...vouchers];
+                                                                        newArr[idx].valid_until = e.target.value;
+                                                                        setVouchers(newArr);
+                                                                    }}
+                                                                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2 text-sm focus:ring-green-500 focus:border-green-500 font-bold"
+                                                                />
+                                                            </div>
+                                                            <div className="md:col-span-2 flex items-center gap-2 mt-2">
+                                                                <input
+                                                                    type="checkbox"
+                                                                    checked={voucher.is_active}
+                                                                    onChange={(e) => {
+                                                                        const newArr = [...vouchers];
+                                                                        newArr[idx].is_active = e.target.checked;
+                                                                        setVouchers(newArr);
+                                                                    }}
+                                                                    className="w-4 h-4 text-green-600 rounded border-gray-300 focus:ring-green-500"
+                                                                />
+                                                                <label className="text-xs font-bold text-gray-600">Voucher Aktif</label>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                                {vouchers.length === 0 && (
+                                                    <p className="text-[10px] text-green-700/50 italic text-center py-2">Belum ada voucher yang ditambahkan.</p>
+                                                )}
+                                            </div>
+                                        </div>
                                         <div className="space-y-1.5 md:col-span-2">
                                             <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1 mb-2">Izinkan Pembayaran OTS (On The Spot)?</label>
                                             <div className="flex items-center gap-3">

@@ -1478,7 +1478,7 @@ const EventDetailPage = () => {
                                     <form onSubmit={handleSubmit} className="space-y-8">
                                         {/* HTM / Payment Section */}
                                         {event.price_type !== 'free' && isUserFreeByLabel() && (
-                                            <div className="p-6 bg-blue-600 rounded-[2.5rem] border border-blue-500 shadow-xl shadow-blue-200/50 animate-bounce-in">
+                                            <div className="p-6 bg-blue-600 rounded-[2.5rem] border border-blue-500 shadow-xl shadow-blue-200/50 animate-fade-in">
                                                 <div className="flex items-center gap-4">
                                                     <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center shrink-0">
                                                         <span className="material-icons text-white">card_membership</span>
