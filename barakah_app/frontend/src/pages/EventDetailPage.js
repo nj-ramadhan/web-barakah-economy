@@ -299,7 +299,10 @@ const EventDetailPage = () => {
             if (event?.form_fields) {
                 event.form_fields.forEach(f => {
                     if (['select', 'radio', 'checkbox'].includes(f.field_type) && f.options && responses[f.id]) {
-                        const opts = Array.isArray(f.options) ? f.options : [];
+                        let opts = [];
+                        if (Array.isArray(f.options)) opts = f.options;
+                        else if (typeof f.options === 'string') { try { opts = JSON.parse(f.options); } catch(e) { opts = []; } }
+                        
                         if (f.field_type === 'checkbox') {
                             const selected = responses[f.id] || [];
                             selected.forEach(s => {
@@ -331,7 +334,10 @@ const EventDetailPage = () => {
             if (event?.form_fields) {
                 event.form_fields.forEach(f => {
                     if (['select', 'radio', 'checkbox'].includes(f.field_type) && f.options && responses[f.id]) {
-                        const opts = Array.isArray(f.options) ? f.options : [];
+                        let opts = [];
+                        if (Array.isArray(f.options)) opts = f.options;
+                        else if (typeof f.options === 'string') { try { opts = JSON.parse(f.options); } catch(e) { opts = []; } }
+                        
                         if (f.field_type === 'checkbox') {
                             const selected = responses[f.id] || [];
                             selected.forEach(s => {
@@ -1745,7 +1751,7 @@ const EventDetailPage = () => {
                                                     {(event.price_type === 'fixed' || event.price_type === 'hybrid_1') && (
                                                         <div className="flex items-center justify-between bg-white px-5 py-4 rounded-2xl border border-gray-100">
                                                             <span className="text-xs font-bold text-gray-500 uppercase">HTM {event.price_type === 'hybrid_1' ? 'Minimal' : ''}</span>
-                                                            <span className="text-lg font-black text-green-700">Rp {formatCurrency(event.price_fixed)}</span>
+                                                            <span className="text-lg font-black text-green-700">Rp {formatCurrency(selectedPriceVariation ? selectedPriceVariation.price : event.price_fixed)}</span>
                                                         </div>
                                                     )}
 
@@ -1753,8 +1759,8 @@ const EventDetailPage = () => {
                                                         <div className="space-y-2">
                                                             <label className="text-[10px] font-bold text-gray-600 uppercase ml-1">
                                                                 {event.price_type === 'hybrid_1' ? 'Tambah Infaq (Opsional)' :
-                                                                    event.price_type === 'hybrid_2' ? 'Pilih Nominal Bayar (Min. Rp 0)' :
-                                                                        'Nominal Sukarela *'}
+                                                                    event.price_type === 'hybrid_2' ? 'Tambahan Infaq (Min. Rp 0)' :
+                                                                        'Tambahan Infaq / Sukarela *'}
                                                             </label>
                                                             <CurrencyInput
                                                                 value={paymentAmount}
@@ -1814,16 +1820,19 @@ const EventDetailPage = () => {
                                                                     if (event?.form_fields) {
                                                                         event.form_fields.forEach(f => {
                                                                             if (['select', 'radio', 'checkbox'].includes(f.field_type) && f.options && responses[f.id]) {
-                                                                                const opts = Array.isArray(f.options) ? f.options : [];
+                                                                                let opts = [];
+                                                                                if (Array.isArray(f.options)) opts = f.options;
+                                                                                else if (typeof f.options === 'string') { try { opts = JSON.parse(f.options); } catch(e) { opts = []; } }
+                                                                                
                                                                                 if (f.field_type === 'checkbox') {
                                                                                     const selected = responses[f.id] || [];
                                                                                     selected.forEach(s => {
-                                                                                        const match = opts.find(o => o.label === s || o === s);
-                                                                                        if (match && match.price) extraFormPrice += Number(match.price);
+                                                                                        const match = opts.find(o => (typeof o === 'object' ? o.label : o) === s);
+                                                                                        if (match && typeof match === 'object' && match.price) extraFormPrice += Number(match.price);
                                                                                     });
                                                                                 } else {
-                                                                                    const match = opts.find(o => o.label === responses[f.id] || o === responses[f.id]);
-                                                                                    if (match && match.price) extraFormPrice += Number(match.price);
+                                                                                    const match = opts.find(o => (typeof o === 'object' ? o.label : o) === responses[f.id]);
+                                                                                    if (match && typeof match === 'object' && match.price) extraFormPrice += Number(match.price);
                                                                                 }
                                                                             }
                                                                         });
@@ -1878,7 +1887,8 @@ const EventDetailPage = () => {
                                                                 if (appliedVoucher) {
                                                                     let discount = 0;
                                                                     if (appliedVoucher.discount_type === 'percentage') {
-                                                                        discount = baseTotal * (Number(appliedVoucher.discount_value) / 100);
+                                                                        const discountBase = appliedVoucher.apply_to_extras ? (fixed + extraFormPrice) : fixed;
+                                                                        discount = discountBase * (Number(appliedVoucher.discount_value) / 100);
                                                                     } else {
                                                                         discount = Number(appliedVoucher.discount_value);
                                                                     }

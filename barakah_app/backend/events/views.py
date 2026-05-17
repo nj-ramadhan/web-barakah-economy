@@ -473,7 +473,8 @@ class EventViewSet(viewsets.ModelViewSet):
                     return Response({"error": "Voucher tidak berada dalam masa berlaku."}, status=status.HTTP_400_BAD_REQUEST)
                 
                 if applied_voucher.discount_type == 'percentage':
-                    discount_amount = expected_amount * (decimal.Decimal(str(applied_voucher.discount_value)) / decimal.Decimal('100.0'))
+                    discount_base = base_price + extra_form_price if applied_voucher.apply_to_extras else base_price
+                    discount_amount = discount_base * (decimal.Decimal(str(applied_voucher.discount_value)) / decimal.Decimal('100.0'))
                 else:
                     discount_amount = decimal.Decimal(str(applied_voucher.discount_value))
                 

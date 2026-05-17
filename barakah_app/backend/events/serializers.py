@@ -11,7 +11,7 @@ from django.db import transaction
 class EventVoucherSerializer(serializers.ModelSerializer):
     class Meta:
         model = EventVoucher
-        fields = ['id', 'code', 'discount_type', 'discount_value', 'quota', 'used_count', 'is_active', 'valid_from', 'valid_until']
+        fields = ['id', 'code', 'discount_type', 'discount_value', 'quota', 'used_count', 'is_active', 'valid_from', 'valid_until', 'apply_to_extras']
 
 
 class EventFormFieldSerializer(serializers.ModelSerializer):

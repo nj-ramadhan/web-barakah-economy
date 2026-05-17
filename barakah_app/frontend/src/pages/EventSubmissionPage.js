@@ -1229,6 +1229,21 @@ const EventSubmissionPage = () => {
                                                                     className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2 text-sm focus:ring-green-500 focus:border-green-500 font-bold"
                                                                 />
                                                             </div>
+                                                            {voucher.discount_type === 'percentage' && (
+                                                                <div className="md:col-span-2 flex items-center gap-2 mt-2 border-t border-gray-100 pt-2">
+                                                                    <input
+                                                                        type="checkbox"
+                                                                        checked={voucher.apply_to_extras}
+                                                                        onChange={(e) => {
+                                                                            const newArr = [...vouchers];
+                                                                            newArr[idx].apply_to_extras = e.target.checked;
+                                                                            setVouchers(newArr);
+                                                                        }}
+                                                                        className="w-4 h-4 text-green-600 rounded border-gray-300 focus:ring-green-500"
+                                                                    />
+                                                                    <label className="text-xs font-bold text-gray-600">Berlaku untuk Tambahan Form (Pertanyaan Banyak Pilih berbayar)</label>
+                                                                </div>
+                                                            )}
                                                             <div className="md:col-span-2 flex items-center gap-2 mt-2">
                                                                 <input
                                                                     type="checkbox"

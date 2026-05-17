@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import ReactDOM from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
 import axios from 'axios';
@@ -1337,10 +1338,14 @@ const ActivityList = ({ items }) => {
 const MultiSelectCell = ({ selectedItems, allOptions, onSave, color = "blue" }) => {
     const [isOpen, setIsOpen] = useState(false);
     const containerRef = useRef(null);
+    const dropdownRef = useRef(null);
 
     useEffect(() => {
         const handleClickOutside = (event) => {
-            if (containerRef.current && !containerRef.current.contains(event.target)) setIsOpen(false);
+            if (containerRef.current && !containerRef.current.contains(event.target) &&
+                dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+                setIsOpen(false);
+            }
         };
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
@@ -1375,8 +1380,16 @@ const MultiSelectCell = ({ selectedItems, allOptions, onSave, color = "blue" }) 
                 <span className="material-icons text-gray-300 text-[12px] ml-auto self-center opacity-0 group-hover:opacity-100 transition-opacity">expand_more</span>
             </div>
 
-            {isOpen && (
-                <div className="absolute z-[100] left-0 mt-2 w-48 bg-white border border-gray-100 shadow-2xl rounded-2xl p-2 animate-in fade-in slide-in-from-top-2 duration-200 overflow-hidden">
+            {isOpen && ReactDOM.createPortal(
+                <div 
+                    ref={dropdownRef} 
+                    className="fixed z-[9999] bg-white border border-gray-100 shadow-2xl rounded-2xl p-2 animate-in fade-in slide-in-from-top-2 duration-200 overflow-hidden" 
+                    style={{
+                        top: containerRef.current ? containerRef.current.getBoundingClientRect().bottom + window.scrollY + 5 : 0,
+                        left: containerRef.current ? containerRef.current.getBoundingClientRect().left + window.scrollX : 0,
+                        width: '250px'
+                    }}
+                >
                     <div className="max-h-48 overflow-y-auto custom-scrollbar p-1 space-y-0.5">
                         {allOptions.map(opt => (
                             <label key={opt.id} className={`flex items-center gap-2 px-3 py-2 rounded-xl cursor-pointer transition ${selectedIds.includes(opt.id) ? colorClasses.bg : 'hover:bg-gray-50'}`}>
@@ -1386,7 +1399,8 @@ const MultiSelectCell = ({ selectedItems, allOptions, onSave, color = "blue" }) 
                             </label>
                         ))}
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
         </div>
     );

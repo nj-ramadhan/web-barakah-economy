@@ -470,6 +470,7 @@ class EventVoucher(models.Model):
     is_active = models.BooleanField(default=True)
     valid_from = models.DateTimeField(null=True, blank=True)
     valid_until = models.DateTimeField(null=True, blank=True)
+    apply_to_extras = models.BooleanField(default=False, help_text="Jika diskon %, apakah juga berlaku untuk tambahan harga dari form (opsi berbayar)?")
     
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
