@@ -46,9 +46,18 @@ class TestimonialSerializer(serializers.ModelSerializer):
         return obj.name or 'Anonim'
 
 class ActivitySerializer(serializers.ModelSerializer):
+    likes_count = serializers.IntegerField(source='likes.count', read_only=True)
+    is_liked = serializers.SerializerMethodField()
+
     class Meta:
         model = Activity
         fields = '__all__'
+
+    def get_is_liked(self, obj):
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            return obj.likes.filter(id=request.user.id).exists()
+        return False
 
 class HeroBannerSerializer(serializers.ModelSerializer):
     class Meta:

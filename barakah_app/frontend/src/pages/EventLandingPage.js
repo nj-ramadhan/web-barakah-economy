@@ -200,6 +200,16 @@ const EventLandingPage = () => {
                                                 <span className="material-icons text-[12px]">location_on</span>
                                                 <span className="line-clamp-1">{ev.location || 'Online'}</span>
                                             </div>
+                                            <div className="flex items-center gap-2 mt-1">
+                                                <div className="flex items-center gap-1 text-white/60 text-[10px]">
+                                                    <span className="material-icons text-[12px]">visibility</span>
+                                                    <span>{ev.view_count || 0}</span>
+                                                </div>
+                                                <div className="flex items-center gap-1 text-white/60 text-[10px]">
+                                                    <span className="material-icons text-[12px] text-red-400">favorite</span>
+                                                    <span>{ev.likes_count || 0}</span>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </Link>

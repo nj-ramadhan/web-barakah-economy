@@ -130,6 +130,22 @@ class ActivityViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(instance)
         return response.Response(serializer.data)
 
+    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
+    def like(self, request, pk=None):
+        activity = self.get_object()
+        user = request.user
+        if activity.likes.filter(id=user.id).exists():
+            activity.likes.remove(user)
+            liked = False
+        else:
+            activity.likes.add(user)
+            liked = True
+        return response.Response({
+            'status': 'success',
+            'liked': liked,
+            'likes_count': activity.likes.count()
+        })
+
 from rest_framework.parsers import MultiPartParser, FormParser
 
 class HeroBannerViewSet(viewsets.ModelViewSet):

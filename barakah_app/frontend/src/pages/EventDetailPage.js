@@ -268,12 +268,31 @@ const EventDetailPage = () => {
             let fixed = Number(event?.price_fixed) || 0;
             if (selectedPriceVariation) fixed = Number(selectedPriceVariation.price);
             
+            let extraFormPrice = 0;
+            if (event?.form_fields) {
+                event.form_fields.forEach(f => {
+                    if (['select', 'radio', 'checkbox'].includes(f.field_type) && f.options && responses[f.id]) {
+                        const opts = Array.isArray(f.options) ? f.options : [];
+                        if (f.field_type === 'checkbox') {
+                            const selected = responses[f.id] || [];
+                            selected.forEach(s => {
+                                const match = opts.find(o => (typeof o === 'object' ? o.label : o) === s);
+                                if (match && typeof match === 'object' && match.price) extraFormPrice += Number(match.price);
+                            });
+                        } else {
+                            const match = opts.find(o => (typeof o === 'object' ? o.label : o) === responses[f.id]);
+                            if (match && typeof match === 'object' && match.price) extraFormPrice += Number(match.price);
+                        }
+                    }
+                });
+            }
+            
             const extra = Number(paymentAmount) || 0;
             let totalToSave = 0;
 
-            if (event?.price_type === 'fixed') totalToSave = fixed;
-            else if (event?.price_type === 'hybrid_1') totalToSave = fixed + extra;
-            else totalToSave = extra;
+            if (event?.price_type === 'fixed') totalToSave = fixed + extraFormPrice;
+            else if (event?.price_type === 'hybrid_1') totalToSave = fixed + extraFormPrice + extra;
+            else totalToSave = extra + extraFormPrice;
 
             data.append('payment_proof', paymentProof);
             data.append('payment_amount', totalToSave);
@@ -281,12 +300,31 @@ const EventDetailPage = () => {
             let fixed = Number(event?.price_fixed) || 0;
             if (selectedPriceVariation) fixed = Number(selectedPriceVariation.price);
             
+            let extraFormPrice = 0;
+            if (event?.form_fields) {
+                event.form_fields.forEach(f => {
+                    if (['select', 'radio', 'checkbox'].includes(f.field_type) && f.options && responses[f.id]) {
+                        const opts = Array.isArray(f.options) ? f.options : [];
+                        if (f.field_type === 'checkbox') {
+                            const selected = responses[f.id] || [];
+                            selected.forEach(s => {
+                                const match = opts.find(o => (typeof o === 'object' ? o.label : o) === s);
+                                if (match && typeof match === 'object' && match.price) extraFormPrice += Number(match.price);
+                            });
+                        } else {
+                            const match = opts.find(o => (typeof o === 'object' ? o.label : o) === responses[f.id]);
+                            if (match && typeof match === 'object' && match.price) extraFormPrice += Number(match.price);
+                        }
+                    }
+                });
+            }
+            
             const extra = Number(paymentAmount) || 0;
             let totalToSave = 0;
 
-            if (event?.price_type === 'fixed') totalToSave = fixed;
-            else if (event?.price_type === 'hybrid_1') totalToSave = fixed + extra;
-            else totalToSave = extra;
+            if (event?.price_type === 'fixed') totalToSave = fixed + extraFormPrice;
+            else if (event?.price_type === 'hybrid_1') totalToSave = fixed + extraFormPrice + extra;
+            else totalToSave = extra + extraFormPrice;
             
             data.append('payment_amount', totalToSave);
         }
@@ -1428,42 +1466,105 @@ const EventDetailPage = () => {
                                             </div>
                                         )}
 
-                                        {event.price_type !== 'free' && !isUserFreeByLabel() && (
-                                            <div className="p-6 bg-gray-50 rounded-[2rem] border border-gray-200 space-y-6">
-                                                <div className="flex items-center justify-between">
-                                                    <h3 className="text-sm font-bold text-gray-900 flex items-center gap-2">
-                                                        <span className="material-icons text-green-600">payments</span>
-                                                        Metode Pembayaran
-                                                    </h3>
-                                                    <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-[10px] font-black uppercase">{event.price_type}</span>
-                                                </div>
+                                        {event.form_fields?.length > 0 && (
+                                            <div className="space-y-6">
+                                                <h3 className="text-sm font-bold text-gray-900 border-l-4 border-green-600 pl-4 py-1">Data Pendaftaran</h3>
+                                                {event.form_fields.map((field) => (
+                                                    <div key={field.id} className="space-y-2">
+                                                        <div className="flex justify-between items-center px-1">
+                                                            <label className="text-[11px] font-bold text-gray-700 uppercase tracking-wider">
+                                                                {field.label} {field.required && <span className="text-red-500">*</span>}
+                                                            </label>
+                                                            <span className="text-[9px] font-bold text-gray-300 uppercase">{field.field_type}</span>
+                                                        </div>
 
-                                                {/* Price Variations Selection */}
-                                                {event.price_variations && event.price_variations.length > 0 && (
-                                                    <div className="space-y-3">
-                                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Pilih Paket / Variasi HTM</label>
-                                                        <div className="grid grid-cols-1 gap-3">
-                                                            {event.price_variations.map((v, idx) => (
-                                                                <button
-                                                                    key={idx}
-                                                                    type="button"
-                                                                    onClick={() => setSelectedPriceVariation(v)}
-                                                                    className={`p-4 rounded-2xl border-2 text-left transition-all relative overflow-hidden group ${selectedPriceVariation?.id === v.id ? 'border-green-600 bg-green-50 shadow-md' : 'border-gray-100 bg-white hover:border-green-200'}`}
+                                                        {field.field_type === 'text' && (
+                                                            <input
+                                                                required={field.required}
+                                                                type="text"
+                                                                value={responses[field.id] || ''}
+                                                                placeholder={field.placeholder}
+                                                                onChange={(e) => handleResponseChange(field.id, e.target.value)}
+                                                                className="w-full px-5 py-3.5 bg-gray-50 border border-transparent rounded-2xl text-sm outline-none focus:bg-white focus:border-green-500 focus:ring-4 focus:ring-green-500/10 transition shadow-inner"
+                                                            />
+                                                        )}
+
+                                                        {field.field_type === 'textarea' && (
+                                                            <textarea
+                                                                required={field.required}
+                                                                value={responses[field.id] || ''}
+                                                                placeholder={field.placeholder}
+                                                                onChange={(e) => handleResponseChange(field.id, e.target.value)}
+                                                                rows="4"
+                                                                className="w-full px-5 py-3.5 bg-gray-50 border border-transparent rounded-2xl text-sm outline-none focus:bg-white focus:border-green-500 focus:ring-4 focus:ring-green-500/10 transition shadow-inner resize-none"
+                                                            ></textarea>
+                                                        )}
+
+                                                        {field.field_type === 'number' && (
+                                                            <input
+                                                                required={field.required}
+                                                                type="number"
+                                                                value={responses[field.id] || ''}
+                                                                onChange={(e) => handleResponseChange(field.id, e.target.value)}
+                                                                className="w-full px-5 py-3.5 bg-gray-50 border border-transparent rounded-2xl text-sm outline-none focus:bg-white focus:border-green-500 focus:ring-4 focus:ring-green-500/10 transition shadow-inner"
+                                                            />
+                                                        )}
+
+                                                        {field.field_type === 'email' && (
+                                                            <input
+                                                                required={field.required}
+                                                                type="email"
+                                                                value={responses[field.id] || ''}
+                                                                onChange={(e) => handleResponseChange(field.id, e.target.value)}
+                                                                className="w-full px-5 py-3.5 bg-gray-50 border border-transparent rounded-2xl text-sm outline-none focus:bg-white focus:border-green-500 focus:ring-4 focus:ring-green-500/10 transition shadow-inner"
+                                                            />
+                                                        )}
+
+                                                        {field.field_type === 'phone' && (
+                                                            <input
+                                                                required={field.required}
+                                                                type="tel"
+                                                                value={responses[field.id] || ''}
+                                                                onChange={(e) => handleResponseChange(field.id, e.target.value)}
+                                                                className="w-full px-5 py-3.5 bg-gray-50 border border-transparent rounded-2xl text-sm outline-none focus:bg-white focus:border-green-500 focus:ring-4 focus:ring-green-500/10 transition shadow-inner"
+                                                            />
+                                                        )}
+
+                                                        {field.field_type === 'date' && (
+                                                            <input
+                                                                required={field.required}
+                                                                type="date"
+                                                                value={responses[field.id] || ''}
+                                                                onChange={(e) => handleResponseChange(field.id, e.target.value)}
+                                                                className="w-full px-5 py-3.5 bg-gray-50 border border-transparent rounded-2xl text-sm outline-none focus:bg-white focus:border-green-500 focus:ring-4 focus:ring-green-500/10 transition shadow-inner"
+                                                            />
+                                                        )}
+
+                                                        {(field.field_type === 'select' || field.field_type === 'radio') && (
+                                                            <div className="relative">
+                                                                <select
+                                                                    required={field.required}
+                                                                    value={responses[field.id] || ''}
+                                                                    onChange={(e) => handleResponseChange(field.id, e.target.value)}
+                                                                    className="w-full px-5 py-3.5 bg-gray-50 border border-transparent rounded-2xl text-sm outline-none focus:bg-white focus:border-green-500 focus:ring-4 focus:ring-green-500/10 transition shadow-inner appearance-none pr-10"
                                                                 >
-                                                                    <div className="flex justify-between items-start mb-2 relative z-10">
-                                                                        <h4 className={`text-xs font-black uppercase tracking-wider ${selectedPriceVariation?.id === v.id ? 'text-green-700' : 'text-gray-900'}`}>{v.title}</h4>
-                                                                        <span className={`text-sm font-black ${selectedPriceVariation?.id === v.id ? 'text-green-600' : 'text-gray-400'}`}>Rp {formatCurrency(v.price)}</span>
-                                                                    </div>
-                                                                    {v.benefits && (
-                                                                        <div className="space-y-1 relative z-10">
-                                                                            {v.benefits.split('\n').map((b, i) => (
-                                                                                <div key={i} className="flex items-center gap-2 text-[10px] text-gray-500 font-medium">
-                                                                                    <span className="material-icons text-[10px] text-green-500">check_circle</span>
-                                                                                    {b}
-                                                                                </div>
-                                                                            ))}
-                                                                        </div>
-                                                                    )}
+                                                                    <option value="">Pilih Opsi</option>
+                                                                    {(() => {
+                                                                        let opts = field.options || [];
+                                                                        if (typeof opts === 'string') {
+                                                                            try { opts = JSON.parse(opts); } catch (e) { opts = []; }
+                                                                        }
+                                                                        return Array.isArray(opts) ? opts.map(opt => {
+                                                                            const isObj = typeof opt === 'object';
+                                                                            const label = isObj ? opt.label : opt;
+                                                                            const price = isObj && opt.price ? ` (+ Rp ${formatCurrency(opt.price)})` : '';
+                                                                            return <option key={label} value={label}>{label}{price}</option>
+                                                                        }) : null;
+                                                                    })()}
+                                                                </select>
+                                                                <span className="material-icons absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">expand_more</span>
+                                                            </div>
+                                                        )}
                                                                     {selectedPriceVariation?.id === v.id && (
                                                                         <div className="absolute top-0 right-0 w-12 h-12 bg-green-600/10 rounded-bl-[2rem] flex items-center justify-center">
                                                                             <span className="material-icons text-green-600 text-sm">check</span>
@@ -1561,10 +1662,30 @@ const EventDetailPage = () => {
                                                             let fixed = Number(event?.price_fixed) || 0;
                                                             if (selectedPriceVariation) fixed = Number(selectedPriceVariation.price);
                                                             
+                                                            let extraFormPrice = 0;
+                                                            if (event?.form_fields) {
+                                                                event.form_fields.forEach(f => {
+                                                                    if (['select', 'radio', 'checkbox'].includes(f.field_type) && f.options && responses[f.id]) {
+                                                                        const opts = Array.isArray(f.options) ? f.options : [];
+                                                                        if (f.field_type === 'checkbox') {
+                                                                            const selected = responses[f.id] || [];
+                                                                            selected.forEach(s => {
+                                                                                const match = opts.find(o => (typeof o === 'object' ? o.label : o) === s);
+                                                                                if (match && typeof match === 'object' && match.price) extraFormPrice += Number(match.price);
+                                                                            });
+                                                                        } else {
+                                                                            const match = opts.find(o => (typeof o === 'object' ? o.label : o) === responses[f.id]);
+                                                                            if (match && typeof match === 'object' && match.price) extraFormPrice += Number(match.price);
+                                                                        }
+                                                                    }
+                                                                });
+                                                            }
+                                                            
                                                             const extra = Number(paymentAmount) || 0;
-                                                            if (event?.price_type === 'fixed') return formatCurrency(fixed);
-                                                            if (event?.price_type === 'hybrid_1') return formatCurrency(fixed + extra);
-                                                            return formatCurrency(extra);
+                                                            const total = fixed + extraFormPrice + extra;
+                                                            if (event?.price_type === 'fixed') return formatCurrency(fixed + extraFormPrice);
+                                                            if (event?.price_type === 'hybrid_1') return formatCurrency(total);
+                                                            return formatCurrency(extra + extraFormPrice);
                                                         })()}
                                                     </p>
                                                 </div>
@@ -1596,102 +1717,42 @@ const EventDetailPage = () => {
                                             </div>
                                         )}
 
-                                        {event.form_fields?.length > 0 && (
-                                            <div className="space-y-6">
-                                                <h3 className="text-sm font-bold text-gray-900 border-l-4 border-green-600 pl-4 py-1">Data Pendaftaran</h3>
-                                                {event.form_fields.map((field) => (
-                                                    <div key={field.id} className="space-y-2">
-                                                        <div className="flex justify-between items-center px-1">
-                                                            <label className="text-[11px] font-bold text-gray-700 uppercase tracking-wider">
-                                                                {field.label} {field.required && <span className="text-red-500">*</span>}
-                                                            </label>
-                                                            <span className="text-[9px] font-bold text-gray-300 uppercase">{field.field_type}</span>
-                                                        </div>
+                                        {event.price_type !== 'free' && !isUserFreeByLabel() && (
+                                            <div className="p-6 bg-gray-50 rounded-[2rem] border border-gray-200 space-y-6">
+                                                <div className="flex items-center justify-between">
+                                                    <h3 className="text-sm font-bold text-gray-900 flex items-center gap-2">
+                                                        <span className="material-icons text-green-600">payments</span>
+                                                        Metode Pembayaran
+                                                    </h3>
+                                                    <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-[10px] font-black uppercase">{event.price_type}</span>
+                                                </div>
 
-                                                        {field.field_type === 'text' && (
-                                                            <input
-                                                                required={field.required}
-                                                                type="text"
-                                                                value={responses[field.id] || ''}
-                                                                placeholder={field.placeholder}
-                                                                onChange={(e) => handleResponseChange(field.id, e.target.value)}
-                                                                className="w-full px-5 py-3.5 bg-gray-50 border border-transparent rounded-2xl text-sm outline-none focus:bg-white focus:border-green-500 focus:ring-4 focus:ring-green-500/10 transition shadow-inner"
-                                                            />
-                                                        )}
-
-                                                        {field.field_type === 'textarea' && (
-                                                            <textarea
-                                                                required={field.required}
-                                                                value={responses[field.id] || ''}
-                                                                placeholder={field.placeholder}
-                                                                onChange={(e) => handleResponseChange(field.id, e.target.value)}
-                                                                rows="4"
-                                                                className="w-full px-5 py-3.5 bg-gray-50 border border-transparent rounded-2xl text-sm outline-none focus:bg-white focus:border-green-500 focus:ring-4 focus:ring-green-500/10 transition shadow-inner resize-none"
-                                                            ></textarea>
-                                                        )}
-
-                                                        {field.field_type === 'number' && (
-                                                            <input
-                                                                required={field.required}
-                                                                type="number"
-                                                                value={responses[field.id] || ''}
-                                                                onChange={(e) => handleResponseChange(field.id, e.target.value)}
-                                                                className="w-full px-5 py-3.5 bg-gray-50 border border-transparent rounded-2xl text-sm outline-none focus:bg-white focus:border-green-500 focus:ring-4 focus:ring-green-500/10 transition shadow-inner"
-                                                            />
-                                                        )}
-
-                                                        {field.field_type === 'email' && (
-                                                            <input
-                                                                required={field.required}
-                                                                type="email"
-                                                                value={responses[field.id] || ''}
-                                                                onChange={(e) => handleResponseChange(field.id, e.target.value)}
-                                                                className="w-full px-5 py-3.5 bg-gray-50 border border-transparent rounded-2xl text-sm outline-none focus:bg-white focus:border-green-500 focus:ring-4 focus:ring-green-500/10 transition shadow-inner"
-                                                            />
-                                                        )}
-
-                                                        {field.field_type === 'phone' && (
-                                                            <input
-                                                                required={field.required}
-                                                                type="tel"
-                                                                value={responses[field.id] || ''}
-                                                                onChange={(e) => handleResponseChange(field.id, e.target.value)}
-                                                                className="w-full px-5 py-3.5 bg-gray-50 border border-transparent rounded-2xl text-sm outline-none focus:bg-white focus:border-green-500 focus:ring-4 focus:ring-green-500/10 transition shadow-inner"
-                                                            />
-                                                        )}
-
-                                                        {field.field_type === 'date' && (
-                                                            <input
-                                                                required={field.required}
-                                                                type="date"
-                                                                value={responses[field.id] || ''}
-                                                                onChange={(e) => handleResponseChange(field.id, e.target.value)}
-                                                                className="w-full px-5 py-3.5 bg-gray-50 border border-transparent rounded-2xl text-sm outline-none focus:bg-white focus:border-green-500 focus:ring-4 focus:ring-green-500/10 transition shadow-inner"
-                                                            />
-                                                        )}
-
-                                                        {(field.field_type === 'select' || field.field_type === 'radio') && (
-                                                            <div className="relative">
-                                                                <select
-                                                                    required={field.required}
-                                                                    value={responses[field.id] || ''}
-                                                                    onChange={(e) => handleResponseChange(field.id, e.target.value)}
-                                                                    className="w-full px-5 py-3.5 bg-gray-50 border border-transparent rounded-2xl text-sm outline-none focus:bg-white focus:border-green-500 focus:ring-4 focus:ring-green-500/10 transition shadow-inner appearance-none pr-10"
+                                                {/* Price Variations Selection */}
+                                                {event.price_variations && event.price_variations.length > 0 && (
+                                                    <div className="space-y-3">
+                                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Pilih Paket / Variasi HTM</label>
+                                                        <div className="grid grid-cols-1 gap-3">
+                                                            {event.price_variations.map((v, idx) => (
+                                                                <button
+                                                                    key={idx}
+                                                                    type="button"
+                                                                    onClick={() => setSelectedPriceVariation(v)}
+                                                                    className={`p-4 rounded-2xl border-2 text-left transition-all relative overflow-hidden group ${selectedPriceVariation?.id === v.id ? 'border-green-600 bg-green-50 shadow-md' : 'border-gray-100 bg-white hover:border-green-200'}`}
                                                                 >
-                                                                    <option value="">Pilih Opsi</option>
-                                                                    {(() => {
-                                                                        let opts = field.options || [];
-                                                                        if (typeof opts === 'string') {
-                                                                            try { opts = JSON.parse(opts); } catch (e) { opts = []; }
-                                                                        }
-                                                                        return Array.isArray(opts) ? opts.map(opt => (
-                                                                            <option key={opt} value={opt}>{opt}</option>
-                                                                        )) : null;
-                                                                    })()}
-                                                                </select>
-                                                                <span className="material-icons absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">expand_more</span>
-                                                            </div>
-                                                        )}
+                                                                    <div className="flex justify-between items-start mb-2 relative z-10">
+                                                                        <h4 className={`text-xs font-black uppercase tracking-wider ${selectedPriceVariation?.id === v.id ? 'text-green-700' : 'text-gray-900'}`}>{v.title}</h4>
+                                                                        <span className={`text-sm font-black ${selectedPriceVariation?.id === v.id ? 'text-green-600' : 'text-gray-400'}`}>Rp {formatCurrency(v.price)}</span>
+                                                                    </div>
+                                                                    {v.benefits && (
+                                                                        <div className="space-y-1 relative z-10">
+                                                                            {v.benefits.split('\n').map((b, i) => (
+                                                                                <div key={i} className="flex items-center gap-2 text-[10px] text-gray-500 font-medium">
+                                                                                    <span className="material-icons text-[10px] text-green-500">check_circle</span>
+                                                                                    {b}
+                                                                                </div>
+                                                                            ))}
+                                                                        </div>
+                                                                    )}
 
                                                         {field.field_type === 'checkbox' && (
                                                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">

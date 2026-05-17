@@ -259,6 +259,10 @@ const EcourseMainPage = () => {
                         <span className="material-icons text-[10px]">visibility</span>
                         <span className="text-[10px]">{course.view_count || 0}</span>
                       </div>
+                      <div className="flex items-center gap-1">
+                        <span className="material-icons text-[10px] text-red-400">favorite</span>
+                        <span className="text-[10px]">{course.likes_count || 0}</span>
+                      </div>
                     </div>
                     <p className="text-xs font-black text-green-700 line-clamp-1 mb-2">{formatIDR(course.price)}</p>
                     <div className="flex gap-2 items-center w-full mt-2">

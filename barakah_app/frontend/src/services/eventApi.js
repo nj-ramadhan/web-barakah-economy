@@ -103,6 +103,12 @@ export const rejectRegistration = (id) => {
     });
 };
 
+export const toggleOrderCompleted = (id) => {
+    return axios.post(`${API_BASE_URL}/api/events/registrations/${id}/toggle_order_completed/`, {}, {
+        headers: getAuthHeaders()
+    });
+};
+
 export const updateEventRegistration = (id, data) => {
     return axios.patch(`${API_BASE_URL}/api/events/registrations/${id}/`, data, {
         headers: getAuthHeaders()

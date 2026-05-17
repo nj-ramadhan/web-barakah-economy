@@ -132,7 +132,19 @@ const EventSubmissionPage = () => {
 
                     // Populate form fields
                     if (d.form_fields && d.form_fields.length > 0) {
-                        setFormFields(d.form_fields);
+                        const processedFields = d.form_fields.map(f => {
+                            let newOptions = [];
+                            if (f.options && Array.isArray(f.options)) {
+                                newOptions = f.options.map(opt => {
+                                    if (typeof opt === 'string') {
+                                        return { label: opt, price: 0 };
+                                    }
+                                    return opt;
+                                });
+                            }
+                            return { ...f, options: newOptions };
+                        });
+                        setFormFields(processedFields);
                     } else {
                         // Default if empty
                         setFormFields([{
@@ -1375,18 +1387,60 @@ const EventSubmissionPage = () => {
                                             </div>
 
                                             {['select', 'radio', 'checkbox'].includes(field.field_type) && (
-                                                <div className="md:col-span-2 space-y-1">
-                                                    <label className="text-[10px] font-bold text-gray-400 uppercase">Opsi (Pisahkan dengan koma) *</label>
-                                                    <input
-                                                        type="text"
-                                                        placeholder="S, M, L, XL"
-                                                        value={field.options?.join(', ') || ''}
-                                                        onChange={(e) => {
-                                                            const val = e.target.value;
-                                                            updateFormField(index, { options: val ? val.split(',').map(s => s.trim()) : [] });
-                                                        }}
-                                                        className="w-full px-4 py-2.5 bg-white border-none rounded-xl text-sm"
-                                                    />
+                                                <div className="md:col-span-2 space-y-2 mt-2 border border-gray-100 p-3 rounded-xl bg-white/50">
+                                                    <div className="flex items-center justify-between">
+                                                        <label className="text-[10px] font-bold text-gray-400 uppercase">Opsi Pilihan & Harga Tambahan</label>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                const newOptions = [...(field.options || []), { label: '', price: 0 }];
+                                                                updateFormField(index, { options: newOptions });
+                                                            }}
+                                                            className="text-[10px] bg-blue-50 text-blue-600 px-3 py-1.5 rounded-lg font-bold hover:bg-blue-100 transition flex items-center gap-1"
+                                                        >
+                                                            <span className="material-icons text-xs">add</span> TAMBAH OPSI
+                                                        </button>
+                                                    </div>
+                                                    <div className="space-y-2">
+                                                        {(field.options || []).map((opt, optIndex) => (
+                                                            <div key={optIndex} className="flex items-center gap-2">
+                                                                <input
+                                                                    type="text"
+                                                                    placeholder="Label (misal: L, VIP, Nasi Kotak)"
+                                                                    value={opt.label || ''}
+                                                                    onChange={(e) => {
+                                                                        const newOptions = [...field.options];
+                                                                        newOptions[optIndex] = { ...opt, label: e.target.value };
+                                                                        updateFormField(index, { options: newOptions });
+                                                                    }}
+                                                                    className="flex-1 px-3 py-2 bg-gray-50 border-none rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
+                                                                />
+                                                                <CurrencyInput
+                                                                    value={opt.price || 0}
+                                                                    onChange={(e) => {
+                                                                        const newOptions = [...field.options];
+                                                                        newOptions[optIndex] = { ...opt, price: e.target.value };
+                                                                        updateFormField(index, { options: newOptions });
+                                                                    }}
+                                                                    placeholder="Harga"
+                                                                    className="w-32 px-3 py-2 bg-gray-50 border-none rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
+                                                                />
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => {
+                                                                        const newOptions = field.options.filter((_, i) => i !== optIndex);
+                                                                        updateFormField(index, { options: newOptions });
+                                                                    }}
+                                                                    className="w-9 h-9 flex items-center justify-center text-red-500 bg-red-50 hover:bg-red-100 rounded-lg transition"
+                                                                >
+                                                                    <span className="material-icons text-sm">close</span>
+                                                                </button>
+                                                            </div>
+                                                        ))}
+                                                        {(!field.options || field.options.length === 0) && (
+                                                            <p className="text-xs text-gray-400 italic text-center py-2">Belum ada opsi ditambahkan. Klik tombol Tambah Opsi.</p>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             )}
 

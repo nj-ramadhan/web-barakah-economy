@@ -143,6 +143,27 @@ class DigitalProductViewSet(viewsets.ModelViewSet):
     serializer_class = DigitalProductPublicSerializer
     lookup_field = 'slug'
 
+    def get_object(self):
+        queryset = self.filter_queryset(self.get_queryset())
+        lookup_url_kwarg = self.lookup_url_kwarg or self.lookup_field
+        lookup_value = self.kwargs.get(lookup_url_kwarg) or self.kwargs.get('pk') or self.kwargs.get('slug')
+        
+        if not lookup_value:
+            from django.http import Http404
+            raise Http404
+
+        # Try ID first if numeric
+        if str(lookup_value).isdigit():
+            obj = queryset.filter(pk=lookup_value).first()
+            if obj:
+                self.check_object_permissions(self.request, obj)
+                return obj
+        
+        # Try Slug
+        obj = get_object_or_404(queryset, slug=lookup_value)
+        self.check_object_permissions(self.request, obj)
+        return obj
+
     def get_queryset(self):
         # Public list: only global active products
         if self.action == 'list':

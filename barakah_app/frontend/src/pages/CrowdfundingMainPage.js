@@ -286,6 +286,10 @@ const CrowdfundingMainPage = () => {
                           <span className="material-icons text-[14px]">visibility</span>
                           <span className="text-[10px] font-bold">{campaign.view_count || 0}</span>
                         </div>
+                        <div className="flex items-center gap-1 opacity-40">
+                          <span className="material-icons text-[14px] text-red-500">favorite</span>
+                          <span className="text-[10px] font-bold">{campaign.likes_count || 0}</span>
+                        </div>
                       </div>
                     )}
                     {/* Progress bar */}

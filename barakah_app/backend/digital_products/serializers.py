@@ -31,6 +31,8 @@ class DigitalProductSerializer(serializers.ModelSerializer):
 class DigitalProductPublicSerializer(serializers.ModelSerializer):
     """Public serializer — hides digital_link from non-owners"""
     seller_name = serializers.CharField(source='user.username', read_only=True)
+    likes_count = serializers.SerializerMethodField()
+    is_liked = serializers.SerializerMethodField()
 
     class Meta:
         model = DigitalProduct
@@ -38,7 +40,17 @@ class DigitalProductPublicSerializer(serializers.ModelSerializer):
             'id', 'user', 'seller_name', 'title', 'slug', 'description',
             'category', 'visibility', 'thumbnail', 'price',
             'is_active', 'view_count', 'created_at',
+            'likes_count', 'is_liked'
         ]
+
+    def get_likes_count(self, obj):
+        return obj.likes.count()
+
+    def get_is_liked(self, obj):
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            return obj.likes.filter(id=request.user.id).exists()
+        return False
 
 
 class DigitalOrderSerializer(serializers.ModelSerializer):

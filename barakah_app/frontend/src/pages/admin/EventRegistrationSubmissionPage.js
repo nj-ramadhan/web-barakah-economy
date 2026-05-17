@@ -3,7 +3,7 @@ import { useParams, Link, useLocation } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
 import Header from '../../components/layout/Header';
 import NavigationButton from '../../components/layout/Navigation';
-import { getEventRegistrations, getEventDetail, exportRegistrationsCsv, blastEventWhatsapp, bulkDeleteRegistrations, importParticipantsCsv, bulkResendNotifications, markEventSessionFinished, updateEventRegistration } from '../../services/eventApi';
+import { getEventRegistrations, getEventDetail, exportRegistrationsCsv, blastEventWhatsapp, bulkDeleteRegistrations, importParticipantsCsv, bulkResendNotifications, markEventSessionFinished, updateEventRegistration, toggleOrderCompleted } from '../../services/eventApi';
 import EventManualRegistrationModal from '../../components/admin/EventManualRegistrationModal';
 import EventRegistrationEditModal from '../../components/admin/EventRegistrationEditModal';
 import CertificateEditor from '../../components/events/CertificateEditor';
@@ -569,6 +569,7 @@ const EventRegistrationSubmissionPage = () => {
                                             checked={sortedRegistrations.length > 0 && selectedIds.length === sortedRegistrations.length}
                                         />
                                     </th>
+                                    <th className="p-5 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center w-10">No</th>
                                     <th className="p-5 text-[10px] font-black text-gray-400 uppercase tracking-widest cursor-pointer hover:text-green-700 transition" onClick={() => handleSort('created_at')}>
                                         <div className="flex items-center gap-1">
                                             Waktu
@@ -641,6 +642,8 @@ const EventRegistrationSubmissionPage = () => {
                                             </div>
                                         </th>
                                     )}
+                                    <th className="p-5 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Pesanan Selesai</th>
+                                    <th className="p-5 text-[10px] font-black text-gray-400 uppercase tracking-widest min-w-[150px]">Catatan Panitia</th>
                                     <th className="p-5 text-[10px] font-black text-gray-400 uppercase tracking-widest text-right cursor-pointer hover:text-green-700 transition" onClick={() => handleSort('status')}>
                                         <div className="flex items-center justify-end gap-1">
                                             Status
@@ -660,7 +663,7 @@ const EventRegistrationSubmissionPage = () => {
                                         </td>
                                     </tr>
                                 ) : (
-                                    sortedRegistrations.map((reg) => {
+                                    sortedRegistrations.map((reg, index) => {
                                         const hybrid = getHybridInfo(reg, event?.form_fields);
                                         return (
                                             <tr key={reg.id} className={`hover:bg-gray-50/50 transition-colors ${selectedIds.includes(reg.id) ? 'bg-green-50/30' : ''}`}>
@@ -671,6 +674,9 @@ const EventRegistrationSubmissionPage = () => {
                                                         checked={selectedIds.includes(reg.id)}
                                                         onChange={() => handleSelectOne(reg.id)}
                                                     />
+                                                </td>
+                                                <td className="p-5 text-xs text-gray-500 font-bold text-center">
+                                                    {sortedRegistrations.length - index}
                                                 </td>
                                                 <td className="p-5 text-xs text-gray-500">
                                                     {new Date(reg.created_at).toLocaleDateString('id-ID')}
@@ -779,11 +785,17 @@ const EventRegistrationSubmissionPage = () => {
                                                                     <span className="material-icons text-sm">download</span> Lihat File
                                                                 </a>
                                                             ) : Array.isArray(value) ? (
-                                                                <div className="flex flex-wrap gap-1">
-                                                                    {value.map(v => <span key={v} className="px-2 py-0.5 bg-gray-100 rounded text-[10px] font-medium">{v}</span>)}
-                                                                </div>
+                                                                <ul className="list-none space-y-0.5">
+                                                                    {value.map(v => <li key={v} className="text-[10px] font-medium">- {v}</li>)}
+                                                                </ul>
                                                             ) : (
-                                                                <span className="line-clamp-2 italic">{value || '-'}</span>
+                                                                (typeof value === 'string' && value.includes(',')) ? (
+                                                                    <ul className="list-none space-y-0.5">
+                                                                        {value.split(',').map(v => <li key={v.trim()} className="text-[10px] font-medium">- {v.trim()}</li>)}
+                                                                    </ul>
+                                                                ) : (
+                                                                    <span className="line-clamp-2 italic text-[11px]">- {value || '-'}</span>
+                                                                )
                                                             )}
                                                         </td>
                                                     );
@@ -854,6 +866,44 @@ const EventRegistrationSubmissionPage = () => {
                                                         </div>
                                                     </td>
                                                 )}
+                                                <td className="p-5 text-center">
+                                                    <label className="flex items-center justify-center cursor-pointer">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={reg.is_order_completed || false}
+                                                            onChange={async (e) => {
+                                                                const checked = e.target.checked;
+                                                                try {
+                                                                    await toggleOrderCompleted(reg.id);
+                                                                    setRegistrations(prev => prev.map(r => r.id === reg.id ? { ...r, is_order_completed: checked } : r));
+                                                                } catch(err) {
+                                                                    console.error(err);
+                                                                    alert('Gagal mengupdate status pesanan.');
+                                                                }
+                                                            }}
+                                                            className="w-5 h-5 text-green-600 rounded border-gray-300 focus:ring-green-500 transition-all cursor-pointer"
+                                                        />
+                                                    </label>
+                                                </td>
+                                                <td className="p-5">
+                                                    <textarea
+                                                        className="w-full text-[10px] border border-gray-200 rounded p-2 focus:ring-2 focus:ring-green-500 outline-none resize-none bg-gray-50/50 hover:bg-white transition-colors"
+                                                        rows="2"
+                                                        placeholder="Ketik catatan..."
+                                                        defaultValue={reg.committee_notes || ''}
+                                                        onBlur={async (e) => {
+                                                            const newNote = e.target.value;
+                                                            if (newNote !== (reg.committee_notes || '')) {
+                                                                try {
+                                                                    await updateEventRegistration(reg.id, { committee_notes: newNote });
+                                                                    setRegistrations(prev => prev.map(r => r.id === reg.id ? { ...r, committee_notes: newNote } : r));
+                                                                } catch(err) {
+                                                                    console.error(err);
+                                                                }
+                                                            }
+                                                        }}
+                                                    />
+                                                </td>
                                                 <td className="p-5 text-right">
                                                     <div className="flex flex-col items-end gap-1.5">
                                                         <span className={`w-fit px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${reg.status === 'approved' ? 'bg-green-100 text-green-700' :

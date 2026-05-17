@@ -847,6 +847,10 @@ const Home = () => {
                                 ? formatIDR(campaign.current_amount)
                                 : 'Rp 0'}
                             </span>
+                            <div className="flex items-center gap-1.5 opacity-60">
+                              <span className="material-icons text-[10px] text-red-500">favorite</span>
+                              <span className="text-[10px] font-bold">{campaign.likes_count || 0}</span>
+                            </div>
                             <span className="text-xs text-gray-500 mt-1">
                               dari{' '}
                               {campaign.target_amount
@@ -953,9 +957,15 @@ const Home = () => {
                       {/* Bottom Gradient Overlay with Title & Description */}
                       <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-3 pt-10">
                         <h3 className="text-white font-bold text-sm leading-tight line-clamp-1 mb-0.5">{event.title}</h3>
-                        <p className="text-white/70 text-[10px] line-clamp-2 leading-tight">
-                          {event.short_description || event.description?.replace(/<[^>]*>?/gm, '').substring(0, 80)}
-                        </p>
+                        <div className="flex items-center justify-between">
+                          <p className="text-white/70 text-[10px] line-clamp-2 leading-tight">
+                            {event.short_description || event.description?.replace(/<[^>]*>?/gm, '').substring(0, 80)}
+                          </p>
+                          <div className="flex items-center gap-1 opacity-80 ml-2">
+                            <span className="material-icons text-[12px] text-red-400">favorite</span>
+                            <span className="text-[10px] text-white font-bold">{event.likes_count || 0}</span>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </Link>
@@ -1278,10 +1288,14 @@ const Home = () => {
                   </Link>
                   <div className="p-2">
                     <h3 className="text-sm font-medium mb-2 line-clamp-2">{product.title}</h3>
-                    <div className="flex justify-between">
-                      <p className="text-gray-600 text-xs mb-2">{formatIDR(product.price)} / {product.unit}</p>
-                      <p className="text-gray-600 text-xs mb-2">stok{' '} {product.stock > 0 ? product.stock : 'habis'}</p>
-                    </div>
+                     <div className="flex justify-between items-center mb-2">
+                       <p className="text-gray-600 text-[10px]">{formatIDR(product.price)} / {product.unit}</p>
+                       <div className="flex items-center gap-1 opacity-60">
+                         <span className="material-icons text-[12px] text-red-500">favorite</span>
+                         <span className="text-[10px] font-bold">{product.likes_count || 0}</span>
+                       </div>
+                       <p className="text-gray-600 text-[10px]">stok{' '} {product.stock > 0 ? product.stock : 'habis'}</p>
+                     </div>
                     {product.stock <= 0 ? (
                       <div className="flex flex-col gap-2">
                         <button
@@ -1438,7 +1452,13 @@ const Home = () => {
                         <h3 className="text-sm font-medium mb-2 line-clamp-2">
                           {course.title}
                         </h3>
-                        <p className="text-gray-600 text-xs mb-2">{formatIDRCourse(course.price)}</p>
+                        <p className="text-gray-600 text-xs mb-2 flex justify-between items-center">
+                          {formatIDRCourse(course.price)}
+                          <span className="flex items-center gap-1 opacity-60">
+                            <span className="material-icons text-[12px] text-red-500">favorite</span>
+                            <span className="text-[10px] font-bold">{course.likes_count || 0}</span>
+                          </span>
+                        </p>
                         <div className="flex gap-2 items-center w-full mt-2">
                           <div className="flex-1">
                             <Link

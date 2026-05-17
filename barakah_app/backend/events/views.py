@@ -2220,7 +2220,7 @@ class EventViewSet(viewsets.ModelViewSet):
         writer = csv.writer(response, delimiter=';')
         
         # CSV Header
-        header = ['ID', 'Waktu Daftar', 'ID Peserta', 'Kode Tiket', 'Nama', 'Email', 'Label User', 'Status', 'Kehadiran Umum']
+        header = ['ID', 'Waktu Daftar', 'ID Peserta', 'Kode Tiket', 'Nama', 'Email', 'Label User', 'Status', 'Kehadiran Umum', 'Payment Amount', 'Payment Status', 'Pesanan Selesai', 'Catatan Panitia']
         for field in form_fields:
             header.append(field.label)
         
@@ -2269,6 +2269,14 @@ class EventViewSet(viewsets.ModelViewSet):
 
             # Kehadiran Umum
             row.append("Hadir" if reg.is_attended else "Belum")
+
+            # Payment fields
+            row.append(reg.payment_amount)
+            row.append(reg.get_payment_status_display())
+            row.append("Selesai" if reg.is_order_completed else "Belum Selesai")
+            
+            # Catatan Panitia
+            row.append(reg.committee_notes or "")
             
             # Custom Fields (Form Data)
             for field in form_fields:
@@ -2436,6 +2444,22 @@ class EventRegistrationViewSet(viewsets.ModelViewSet):
             print(f"Failed to send rejection email: {e}")
 
         return Response({"message": "Pendaftaran ditolak."})
+
+    @action(detail=True, methods=['post'])
+    def toggle_order_completed(self, request, pk=None):
+        registration = self.get_object()
+        is_admin = request.user.is_superuser or request.user.is_staff
+        if not (is_admin or registration.event.created_by == request.user):
+            return Response({"error": "Unauthorized"}, status=status.HTTP_403_FORBIDDEN)
+            
+        registration.is_order_completed = not registration.is_order_completed
+        registration.save(update_fields=['is_order_completed'])
+        
+        status_msg = "Selesai" if registration.is_order_completed else "Belum Selesai"
+        return Response({
+            "message": f"Status pesanan diubah menjadi {status_msg}.",
+            "is_order_completed": registration.is_order_completed
+        })
 
 def event_detail_seo(request, slug):
     """

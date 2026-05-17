@@ -320,6 +320,10 @@ const EcommerceMainPage = () => {
                           <span className="material-icons text-[12px]">visibility</span>
                           {product.views_count || 0}
                         </div>
+                        <div className="flex items-center text-gray-400 text-[10px] gap-1">
+                          <span className="material-icons text-[12px]">favorite</span>
+                          {product.likes_count || 0}
+                        </div>
                         <div 
                           className="flex items-center gap-1.5 ml-auto cursor-pointer hover:bg-gray-50 p-1 rounded-lg transition-all"
                           onClick={(e) => {

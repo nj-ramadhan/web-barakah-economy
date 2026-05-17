@@ -63,6 +63,7 @@ class Activity(models.Model):
     content = RichTextField()
     date = models.DateField()
     view_count = models.PositiveIntegerField(default=0)
+    likes = models.ManyToManyField(User, related_name='liked_activities', blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     
     # Link to event for automatic documentation

@@ -291,6 +291,8 @@ class EventRegistration(models.Model):
     attended_at = models.DateTimeField(blank=True, null=True, help_text="Waktu scan kehadiran")
     
     bib_number = models.PositiveIntegerField(blank=True, null=True, help_text="Nomor urut pendaftaran (untuk No Peserta/BIB)")
+    is_order_completed = models.BooleanField(default=False, help_text="Tandai jika pesanan/form sudah diselesaikan (misal: makanan sudah diberikan)")
+    committee_notes = models.TextField(blank=True, null=True, help_text="Catatan internal dari panitia untuk pendaftar ini")
     
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
