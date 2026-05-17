@@ -320,9 +320,14 @@ const EventDetailPage = () => {
             const extra = Number(paymentAmount) || 0;
             let totalToSave = 0;
 
-            if (event?.price_type === 'fixed') totalToSave = fixed + extraFormPrice;
-            else if (event?.price_type === 'hybrid_1') totalToSave = fixed + extraFormPrice + extra;
-            else totalToSave = extra + extraFormPrice;
+            if (event?.price_variations?.length > 0) {
+                if (event?.price_type === 'fixed') totalToSave = fixed + extraFormPrice;
+                else totalToSave = fixed + extraFormPrice + extra;
+            } else {
+                if (event?.price_type === 'fixed') totalToSave = fixed + extraFormPrice;
+                else if (event?.price_type === 'hybrid_1') totalToSave = fixed + extraFormPrice + extra;
+                else totalToSave = extra + extraFormPrice;
+            }
 
             data.append('payment_proof', paymentProof);
             data.append('payment_amount', totalToSave);
@@ -355,9 +360,14 @@ const EventDetailPage = () => {
             const extra = Number(paymentAmount) || 0;
             let totalToSave = 0;
 
-            if (event?.price_type === 'fixed') totalToSave = fixed + extraFormPrice;
-            else if (event?.price_type === 'hybrid_1') totalToSave = fixed + extraFormPrice + extra;
-            else totalToSave = extra + extraFormPrice;
+            if (event?.price_variations?.length > 0) {
+                if (event?.price_type === 'fixed') totalToSave = fixed + extraFormPrice;
+                else totalToSave = fixed + extraFormPrice + extra;
+            } else {
+                if (event?.price_type === 'fixed') totalToSave = fixed + extraFormPrice;
+                else if (event?.price_type === 'hybrid_1') totalToSave = fixed + extraFormPrice + extra;
+                else totalToSave = extra + extraFormPrice;
+            }
             
             data.append('payment_amount', totalToSave);
         }
@@ -1880,9 +1890,14 @@ const EventDetailPage = () => {
                                                                 
                                                                 const extra = Number(paymentAmount) || 0;
                                                                 let baseTotal = 0;
-                                                                if (event?.price_type === 'fixed') baseTotal = fixed + extraFormPrice;
-                                                                else if (event?.price_type === 'hybrid_1') baseTotal = fixed + extraFormPrice + extra;
-                                                                else baseTotal = extra + extraFormPrice;
+                                                                if (event?.price_variations?.length > 0) {
+                                                                    if (event?.price_type === 'fixed') baseTotal = fixed + extraFormPrice;
+                                                                    else baseTotal = fixed + extraFormPrice + extra;
+                                                                } else {
+                                                                    if (event?.price_type === 'fixed') baseTotal = fixed + extraFormPrice;
+                                                                    else if (event?.price_type === 'hybrid_1') baseTotal = fixed + extraFormPrice + extra;
+                                                                    else baseTotal = extra + extraFormPrice;
+                                                                }
                                                                 
                                                                 if (appliedVoucher) {
                                                                     let discount = 0;

@@ -318,7 +318,8 @@ class EventViewSet(viewsets.ModelViewSet):
             "voucher": {
                 "code": voucher.code,
                 "discount_type": voucher.discount_type,
-                "discount_value": str(voucher.discount_value)
+                "discount_value": str(voucher.discount_value),
+                "apply_to_extras": getattr(voucher, 'apply_to_extras', False)
             }
         })
 
@@ -449,12 +450,18 @@ class EventViewSet(viewsets.ModelViewSet):
             
             extra_pay = decimal.Decimal(str(payment_amount)) if payment_amount else decimal.Decimal('0')
             
-            if event.price_type == 'fixed':
-                expected_amount = base_price + extra_form_price
-            elif event.price_type == 'hybrid_1':
-                expected_amount = base_price + extra_form_price + extra_pay
+            if price_variation:
+                if event.price_type == 'fixed':
+                    expected_amount = base_price + extra_form_price
+                else:
+                    expected_amount = base_price + extra_form_price + extra_pay
             else:
-                expected_amount = extra_pay + extra_form_price
+                if event.price_type == 'fixed':
+                    expected_amount = base_price + extra_form_price
+                elif event.price_type == 'hybrid_1':
+                    expected_amount = base_price + extra_form_price + extra_pay
+                else:
+                    expected_amount = extra_pay + extra_form_price
         except:
             expected_amount = decimal.Decimal('0')
 
