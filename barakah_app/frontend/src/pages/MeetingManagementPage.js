@@ -382,7 +382,7 @@ const MeetingManagementPage = () => {
             {showAddModal && (
                 <div className="fixed top-0 left-0 w-screen h-[100dvh] z-[1000] flex items-center justify-center p-4">
                     <div className="absolute inset-0 bg-gray-900/60 backdrop-blur-sm" onClick={() => setShowAddModal(false)}></div>
-                    <div className="relative bg-white w-[90%] md:w-full max-w-xl rounded-[2.5rem] shadow-2xl overflow-hidden animate-bounce-in flex flex-col max-h-[90vh] md:max-h-[80vh]">
+                    <div className="relative bg-white w-[90%] md:w-full max-w-xl rounded-[2.5rem] shadow-2xl overflow-hidden animate-fade-in flex flex-col max-h-[90vh] md:max-h-[80vh]">
                         <div className="p-5 md:p-6 border-b border-gray-100 flex items-center justify-between shrink-0">
                             <h3 className="text-lg md:text-xl font-black text-gray-900 truncate pr-4">Tambah Peserta</h3>
                             <button onClick={() => setShowAddModal(false)} className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-400"><span className="material-icons text-sm">close</span></button>
@@ -439,7 +439,7 @@ const MeetingManagementPage = () => {
             {showBlastModal && (
                 <div className="fixed top-0 left-0 w-screen h-[100dvh] z-[1000] flex items-center justify-center p-4">
                     <div className="absolute inset-0 bg-gray-900/60 backdrop-blur-sm" onClick={() => setShowBlastModal(false)}></div>
-                    <div className="relative bg-white w-[90%] md:w-full max-w-xl rounded-[2.5rem] shadow-2xl overflow-hidden animate-bounce-in flex flex-col max-h-[90vh] md:max-h-[80vh]">
+                    <div className="relative bg-white w-[90%] md:w-full max-w-xl rounded-[2.5rem] shadow-2xl overflow-hidden animate-fade-in flex flex-col max-h-[90vh] md:max-h-[80vh]">
                         <div className="p-5 md:p-6 border-b border-gray-100 flex items-center justify-between shrink-0">
                             <h3 className="text-lg md:text-xl font-black text-gray-900 truncate pr-4">Blast WhatsApp</h3>
                             <button onClick={() => setShowBlastModal(false)} className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-400"><span className="material-icons text-sm">close</span></button>
