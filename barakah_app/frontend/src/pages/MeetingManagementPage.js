@@ -201,13 +201,13 @@ const MeetingManagementPage = () => {
     if (loading && !meeting) return <div className="min-h-screen flex items-center justify-center">Memuat...</div>;
 
     return (
-        <div className="min-h-screen bg-gray-50 flex flex-col pt-16 pb-20">
+        <div className="min-h-screen bg-gray-50 flex flex-col pt-16 pb-20 w-full overflow-x-hidden">
             <Helmet>
                 <title>Kelola Rapat: {meeting?.title} | BARAKAH APP</title>
             </Helmet>
             <Header />
 
-            <main className="flex-1 max-w-6xl mx-auto w-full px-4 py-8">
+            <main className="flex-1 max-w-6xl mx-auto w-full px-4 py-8 min-w-0">
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
                     <div>
                         <div className="flex items-center gap-2 mb-1">

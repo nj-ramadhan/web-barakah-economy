@@ -125,9 +125,9 @@ const DashboardActivitiesPage = () => {
     };
 
     return (
-        <div className="body bg-gray-50 min-h-screen">
+        <div className="body bg-gray-50 min-h-screen w-full overflow-x-hidden">
             <Header />
-            <div className="max-w-4xl mx-auto px-4 py-8 pb-24">
+            <div className="max-w-4xl mx-auto w-full px-4 py-8 pb-24 min-w-0">
                 <div className="flex justify-between items-center mb-6">
                     <div>
                         <h1 className="text-xl font-bold text-gray-800">Manajemen Kegiatan</h1>
