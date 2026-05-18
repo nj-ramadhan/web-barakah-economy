@@ -822,6 +822,15 @@ const DashboardPage = () => {
                                     color: 'violet',
                                     title: 'Manajemen Role & Label',
                                     desc: 'Kelola role, akses menu, dan label pengguna (Admin)'
+                                },
+                                {
+                                    id: 'kaderisasi',
+                                    access: isAdmin,
+                                    to: '/dashboard/admin/kaderisasi',
+                                    icon: 'school',
+                                    color: 'teal',
+                                    title: 'Manajemen Kaderisasi',
+                                    desc: 'Kelola data kaderisasi dan perkembangan anggota (Admin)'
                                 }
                             ]
                         },
