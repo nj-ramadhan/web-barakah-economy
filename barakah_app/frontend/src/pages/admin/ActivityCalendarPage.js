@@ -107,10 +107,10 @@ const ActivityCalendarPage = () => {
             const day = now.getDay();
             const diff = now.getDate() - day + (day === 0 ? -6 : 1);
             start = new Date(now.setDate(diff));
-            start.setHours(0,0,0,0);
+            start.setHours(0, 0, 0, 0);
             end = new Date(start);
             end.setDate(end.getDate() + 6);
-            end.setHours(23,59,59,999);
+            end.setHours(23, 59, 59, 999);
         } else if (viewMode === 'monthly') {
             start = new Date(now.getFullYear(), now.getMonth(), 1);
             end = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
@@ -121,7 +121,7 @@ const ActivityCalendarPage = () => {
         } else if (viewMode === 'range') {
             start = new Date(customRange.start);
             end = new Date(customRange.end);
-            end.setHours(23,59,59,999);
+            end.setHours(23, 59, 59, 999);
         }
 
         return activities.filter(act => {
@@ -248,7 +248,7 @@ const ActivityCalendarPage = () => {
                 <title>Kalender Kegiatan Admin - Barakah Economy</title>
             </Helmet>
             <Header />
-            
+
             <div className="max-w-6xl mx-auto px-4 py-8">
                 {/* Header Section */}
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
@@ -269,20 +269,19 @@ const ActivityCalendarPage = () => {
                             <button
                                 key={mode}
                                 onClick={() => setViewMode(mode)}
-                                className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300 ${
-                                    viewMode === mode 
-                                    ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-100 scale-105' 
-                                    : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100/50'
-                                }`}
+                                className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300 ${viewMode === mode
+                                        ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-100 scale-105'
+                                        : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100/50'
+                                    }`}
                             >
                                 {mode === 'weekly' ? 'Mingguan' : mode === 'monthly' ? 'Bulanan' : mode === 'quarterly' ? 'Triwulan' : 'Range'}
                             </button>
                         ))}
                         <div className="w-[1px] h-6 bg-gray-200 mx-1"></div>
-                        <button 
+                        <button
                             onClick={() => {
                                 if (filteredActivities.length === 0) return alert("Tidak ada data untuk di-export");
-                                
+
                                 const headers = ["Tipe", "Judul", "Kategori", "Tanggal", "Jam", "Lokasi", "Peserta", "Status"];
                                 const csvContent = [
                                     headers.join(","),
@@ -315,7 +314,7 @@ const ActivityCalendarPage = () => {
                             <span className="text-[10px] font-black uppercase tracking-widest hidden sm:inline">Export CSV</span>
                         </button>
                         <div className="w-[1px] h-6 bg-gray-200 mx-1"></div>
-                        <button 
+                        <button
                             onClick={fetchActivities}
                             disabled={loading}
                             className="p-2.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all"
@@ -329,8 +328,8 @@ const ActivityCalendarPage = () => {
                 {/* Navigation & Title */}
                 {viewMode !== 'range' && (
                     <div className="flex items-center justify-between mb-8 bg-white/80 backdrop-blur-md rounded-[2rem] p-4 shadow-sm border border-white group">
-                        <button 
-                            onClick={() => changeDate(-1)} 
+                        <button
+                            onClick={() => changeDate(-1)}
                             className="w-12 h-12 flex items-center justify-center rounded-2xl bg-gray-50 text-gray-400 hover:bg-indigo-600 hover:text-white transition-all duration-300 shadow-inner"
                         >
                             <span className="material-icons">chevron_left</span>
@@ -338,13 +337,13 @@ const ActivityCalendarPage = () => {
                         <div className="text-center">
                             <h2 className="text-xl font-black text-gray-800 capitalize tracking-tight">
                                 {viewMode === 'weekly' ? `Minggu ke-${Math.ceil(currentDate.getDate() / 7)} ${formatMonth(currentDate)}` :
-                                 viewMode === 'monthly' ? formatMonth(currentDate) :
-                                 `Triwulan ${Math.floor(currentDate.getMonth() / 3) + 1} ${currentDate.getFullYear()}`}
+                                    viewMode === 'monthly' ? formatMonth(currentDate) :
+                                        `Triwulan ${Math.floor(currentDate.getMonth() / 3) + 1} ${currentDate.getFullYear()}`}
                             </h2>
                             <p className="text-[10px] font-bold text-indigo-500 uppercase tracking-[0.2em] mt-1">Navigasi Periode</p>
                         </div>
-                        <button 
-                            onClick={() => changeDate(1)} 
+                        <button
+                            onClick={() => changeDate(1)}
                             className="w-12 h-12 flex items-center justify-center rounded-2xl bg-gray-50 text-gray-400 hover:bg-indigo-600 hover:text-white transition-all duration-300 shadow-inner"
                         >
                             <span className="material-icons">chevron_right</span>
@@ -360,10 +359,10 @@ const ActivityCalendarPage = () => {
                                     <span className="material-icons text-xs">calendar_today</span>
                                     Mulai Dari
                                 </label>
-                                <input 
-                                    type="date" 
+                                <input
+                                    type="date"
                                     value={customRange.start}
-                                    onChange={e => setCustomRange({...customRange, start: e.target.value})}
+                                    onChange={e => setCustomRange({ ...customRange, start: e.target.value })}
                                     className="w-full px-6 py-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl focus:border-indigo-500 focus:bg-white outline-none transition-all font-bold text-gray-700 shadow-inner"
                                 />
                             </div>
@@ -372,10 +371,10 @@ const ActivityCalendarPage = () => {
                                     <span className="material-icons text-xs">event</span>
                                     Hingga Sampai
                                 </label>
-                                <input 
-                                    type="date" 
+                                <input
+                                    type="date"
                                     value={customRange.end}
-                                    onChange={e => setCustomRange({...customRange, end: e.target.value})}
+                                    onChange={e => setCustomRange({ ...customRange, end: e.target.value })}
                                     className="w-full px-6 py-4 bg-gray-50/50 border-2 border-gray-100 rounded-2xl focus:border-indigo-500 focus:bg-white outline-none transition-all font-bold text-gray-700 shadow-inner"
                                 />
                             </div>
@@ -404,40 +403,37 @@ const ActivityCalendarPage = () => {
                                 </div>
                                 <div className="grid grid-cols-7 auto-rows-[140px]">
                                     {calendarDays.map((dayObj, i) => (
-                                        <div 
-                                            key={i} 
+                                        <div
+                                            key={i}
                                             onClick={() => handleDateClick(dayObj)}
                                             className={`p-3 border-r border-b border-gray-50 group hover:bg-indigo-50/30 transition-all duration-300 relative cursor-pointer ${!dayObj.day ? 'bg-gray-50/30' : ''}`}
                                         >
                                             {dayObj.day && (() => {
                                                 const dStr = toLocalDateStr(dayObj.date);
-                                                const hasNote = !!allNotes[dStr];
+                                                const note = allNotes[dStr];
+                                                const hasNote = !!note;
+                                                const noteText = note?.content || '';
                                                 return (
                                                     <>
-                                                        <div className="flex justify-between items-start mb-2">
+                                                        <div className="flex justify-between items-start mb-1.5">
                                                             <span className={`text-sm font-black transition-transform group-hover:scale-110 ${new Date().toDateString() === dayObj.date.toDateString() ? 'bg-indigo-600 text-white w-8 h-8 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-200' : 'text-gray-300 group-hover:text-indigo-400'}`}>
                                                                 {dayObj.day}
                                                             </span>
-                                                            <div className="flex flex-col items-end gap-0.5">
-                                                                {dayObj.activities.length > 0 && (
-                                                                    <div className="flex flex-col items-end">
-                                                                        <div className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-ping"></div>
-                                                                        <span className="text-[8px] font-black text-indigo-500 mt-1">{dayObj.activities.length} Kegiatan</span>
-                                                                    </div>
-                                                                )}
-                                                                {hasNote && (
-                                                                    <span className="material-icons text-amber-400 text-[13px] mt-0.5" title="Ada catatan rencana">edit_note</span>
-                                                                )}
-                                                            </div>
+                                                            {dayObj.activities.length > 0 && (
+                                                                <div className="flex flex-col items-end">
+                                                                    <div className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-ping"></div>
+                                                                    <span className="text-[8px] font-black text-indigo-500 mt-1">{dayObj.activities.length} Kegiatan</span>
+                                                                </div>
+                                                            )}
                                                         </div>
-                                                        <div className="space-y-1.5 overflow-y-auto max-h-[85px] custom-scrollbar pr-1">
+                                                        <div className={`space-y-1 overflow-y-auto custom-scrollbar pr-0.5 ${hasNote ? 'max-h-[60px]' : 'max-h-[95px]'}`}>
                                                             {dayObj.activities.map(act => (
-                                                                <div 
-                                                                    key={act.id} 
-                                                                    className="px-2.5 py-1.5 rounded-lg text-white cursor-pointer hover:brightness-110 hover:shadow-md transition-all active:scale-95 border border-white/20"
-                                                                    style={{ 
+                                                                <div
+                                                                    key={act.id}
+                                                                    className="px-2 py-1 rounded-md text-white cursor-pointer hover:brightness-110 hover:shadow-md transition-all active:scale-95 border border-white/20"
+                                                                    style={{
                                                                         backgroundColor: act.color,
-                                                                        background: `linear-gradient(135deg, ${act.color}, ${act.color}dd)` 
+                                                                        background: `linear-gradient(135deg, ${act.color}, ${act.color}dd)`
                                                                     }}
                                                                     title={`${act.title} - ${act.time_str}`}
                                                                 >
@@ -445,13 +441,15 @@ const ActivityCalendarPage = () => {
                                                                         <span className="text-[8px] font-black truncate flex-1">{act.title}</span>
                                                                         <span className="text-[7px] font-bold opacity-80 shrink-0">{act.time_str}</span>
                                                                     </div>
-                                                                    <div className="flex items-center gap-1 mt-0.5 opacity-90">
-                                                                        <span className="material-icons text-[7px]">groups</span>
-                                                                        <span className="text-[7px] font-bold">{act.participants_count}</span>
-                                                                    </div>
                                                                 </div>
                                                             ))}
                                                         </div>
+                                                        {hasNote && (
+                                                            <div className="mt-1 px-2 py-1 bg-amber-50 border border-amber-200/70 rounded-md flex items-start gap-1 group-hover:bg-amber-100/80 transition-colors">
+                                                                <span className="material-icons text-amber-400 text-[9px] mt-0.5 shrink-0">edit_note</span>
+                                                                <p className="text-[8px] font-semibold text-amber-700 leading-tight line-clamp-2 flex-1">{noteText}</p>
+                                                            </div>
+                                                        )}
                                                     </>
                                                 );
                                             })()}
@@ -476,24 +474,23 @@ const ActivityCalendarPage = () => {
                                     <div key={act.id} className="group bg-white rounded-[2rem] shadow-sm border border-gray-100 hover:shadow-xl hover:border-indigo-100 transition-all duration-500 overflow-hidden flex flex-col md:flex-row md:items-center">
                                         {/* Color Bar / Indicator */}
                                         <div className="w-full h-2 md:w-3 md:h-32 shrink-0 transition-all duration-500 group-hover:w-4" style={{ backgroundColor: act.color }}></div>
-                                        
+
                                         <div className="flex-1 p-6 sm:p-8">
                                             <div className="flex flex-wrap items-center gap-3 mb-3">
-                                                <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-wider ${
-                                                    act.type === 'event' ? 'bg-indigo-50 text-indigo-600' : 
-                                                    act.type === 'meeting' ? 'bg-purple-50 text-purple-600' : 'bg-rose-50 text-rose-600'
-                                                }`}>
-                                                    {act.type === 'event' ? 'Event Komunitas' : 
-                                                     act.type === 'meeting' ? 'Agenda Internal' : 'Program Charity'}
+                                                <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-wider ${act.type === 'event' ? 'bg-indigo-50 text-indigo-600' :
+                                                        act.type === 'meeting' ? 'bg-purple-50 text-purple-600' : 'bg-rose-50 text-rose-600'
+                                                    }`}>
+                                                    {act.type === 'event' ? 'Event Komunitas' :
+                                                        act.type === 'meeting' ? 'Agenda Internal' : 'Program Charity'}
                                                 </span>
                                                 <span className="text-[10px] text-gray-400 font-bold uppercase tracking-[0.2em]">{act.category}</span>
                                                 {act.status === 'pending' && (
                                                     <span className="bg-amber-50 text-amber-600 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-wider border border-amber-100 animate-pulse">Menunggu Verifikasi</span>
                                                 )}
                                             </div>
-                                            
+
                                             <h3 className="text-lg sm:text-xl font-black text-gray-800 group-hover:text-indigo-600 transition-colors mb-4 line-clamp-2">{act.title}</h3>
-                                            
+
                                             <div className="flex flex-wrap items-center gap-y-3 gap-x-6">
                                                 <div className="flex items-center gap-2 text-[11px] text-gray-500 font-bold">
                                                     <div className="w-7 h-7 rounded-lg bg-gray-50 flex items-center justify-center text-gray-400 group-hover:bg-indigo-50 group-hover:text-indigo-500 transition-colors">
@@ -519,7 +516,7 @@ const ActivityCalendarPage = () => {
                                         </div>
 
                                         <div className="p-6 sm:p-8 border-t md:border-t-0 md:border-l border-gray-50 bg-gray-50/30 md:bg-transparent flex flex-row md:flex-col justify-end gap-3 shrink-0">
-                                            <Link 
+                                            <Link
                                                 to={act.url}
                                                 target="_blank"
                                                 className="flex-1 md:w-32 py-3 bg-white border border-gray-200 text-gray-600 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-gray-50 hover:text-indigo-600 transition-all text-center shadow-sm"
@@ -527,7 +524,7 @@ const ActivityCalendarPage = () => {
                                                 Lihat Laman
                                             </Link>
                                             {act.type === 'event' && (
-                                                <Link 
+                                                <Link
                                                     to={`/dashboard/admin/events?id=${act.id.split('-')[1]}`}
                                                     className="flex-1 md:w-32 py-3 bg-indigo-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-700 hover:shadow-lg hover:shadow-indigo-200 transition-all text-center shadow-md active:scale-95"
                                                 >
@@ -551,152 +548,151 @@ const ActivityCalendarPage = () => {
                                     <h3 className="text-2xl font-black text-gray-800 tracking-tight">Agenda {formatDate(selectedDateData.date)}</h3>
                                     <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">Ditemukan {selectedDateData.activities.length} Kegiatan</p>
                                 </div>
-                                <button 
+                                <button
                                     onClick={() => setShowDetailModal(false)}
                                     className="w-12 h-12 rounded-2xl bg-white border border-gray-100 text-gray-400 hover:text-rose-500 hover:border-rose-100 transition-all shadow-sm"
                                 >
                                     <span className="material-icons">close</span>
                                 </button>
                             </div>
-                            
-                        <div className="max-h-[75vh] overflow-y-auto custom-scrollbar">
-                            {/* Daftar Kegiatan */}
-                            <div className="p-8 pb-4">
-                                {selectedDateData.activities.length === 0 ? (
-                                    <div className="py-8 text-center">
-                                        <div className="w-16 h-16 bg-gray-50 rounded-[1.5rem] flex items-center justify-center mx-auto mb-3">
-                                            <span className="material-icons text-gray-300 text-2xl">event_available</span>
+
+                            <div className="max-h-[75vh] overflow-y-auto custom-scrollbar">
+                                {/* Daftar Kegiatan */}
+                                <div className="p-8 pb-4">
+                                    {selectedDateData.activities.length === 0 ? (
+                                        <div className="py-8 text-center">
+                                            <div className="w-16 h-16 bg-gray-50 rounded-[1.5rem] flex items-center justify-center mx-auto mb-3">
+                                                <span className="material-icons text-gray-300 text-2xl">event_available</span>
+                                            </div>
+                                            <p className="text-gray-400 font-bold text-sm">Tidak ada kegiatan terjadwal di hari ini.</p>
                                         </div>
-                                        <p className="text-gray-400 font-bold text-sm">Tidak ada kegiatan terjadwal di hari ini.</p>
-                                    </div>
-                                ) : (
-                                    <div className="space-y-4">
-                                        {selectedDateData.activities.map(act => (
-                                            <div key={act.id} className="p-5 bg-gray-50/50 rounded-3xl border border-gray-100 hover:border-indigo-100 transition-all">
-                                                <div className="flex items-center gap-3 mb-4">
-                                                    <span className="material-icons p-2 bg-white rounded-xl shadow-sm text-sm" style={{ color: act.color }}>
-                                                        {act.type === 'event' ? 'event' : 
-                                                         act.type === 'meeting' ? 'groups' : 'volunteer_activism'}
-                                                    </span>
-                                                    <div>
-                                                        <h4 className="text-base font-black text-gray-800 line-clamp-1">{act.title}</h4>
-                                                        <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">{act.category}</p>
+                                    ) : (
+                                        <div className="space-y-4">
+                                            {selectedDateData.activities.map(act => (
+                                                <div key={act.id} className="p-5 bg-gray-50/50 rounded-3xl border border-gray-100 hover:border-indigo-100 transition-all">
+                                                    <div className="flex items-center gap-3 mb-4">
+                                                        <span className="material-icons p-2 bg-white rounded-xl shadow-sm text-sm" style={{ color: act.color }}>
+                                                            {act.type === 'event' ? 'event' :
+                                                                act.type === 'meeting' ? 'groups' : 'volunteer_activism'}
+                                                        </span>
+                                                        <div>
+                                                            <h4 className="text-base font-black text-gray-800 line-clamp-1">{act.title}</h4>
+                                                            <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">{act.category}</p>
+                                                        </div>
                                                     </div>
-                                                </div>
-                                                
-                                                <div className="grid grid-cols-2 gap-4 mb-5">
-                                                    <div className="space-y-1">
-                                                        <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest">Waktu & Jam</p>
-                                                        <p className="text-[11px] font-bold text-gray-700 flex items-center gap-1">
-                                                            <span className="material-icons text-[12px]">schedule</span> {act.time_str} WIB
-                                                        </p>
-                                                    </div>
-                                                    <div className="space-y-1">
-                                                        <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest">Jumlah Peserta</p>
-                                                        <p className="text-[11px] font-bold text-gray-700 flex items-center gap-1">
-                                                            <span className="material-icons text-[12px]">groups</span> {act.participants_count} Orang
-                                                        </p>
-                                                    </div>
-                                                    {act.location && (
-                                                        <div className="space-y-1 col-span-2">
-                                                            <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest">Lokasi Kegiatan</p>
+
+                                                    <div className="grid grid-cols-2 gap-4 mb-5">
+                                                        <div className="space-y-1">
+                                                            <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest">Waktu & Jam</p>
                                                             <p className="text-[11px] font-bold text-gray-700 flex items-center gap-1">
-                                                                <span className="material-icons text-[12px]">location_on</span> {act.location}
+                                                                <span className="material-icons text-[12px]">schedule</span> {act.time_str} WIB
                                                             </p>
                                                         </div>
-                                                    )}
-                                                </div>
-                                                
-                                                <div className="flex gap-2">
-                                                    <Link 
-                                                        to={act.url} target="_blank"
-                                                        className="flex-1 py-3 bg-white border border-gray-200 text-gray-600 rounded-xl text-[9px] font-black uppercase tracking-widest text-center hover:bg-gray-50 transition-all"
-                                                    >
-                                                        Halaman Publik
-                                                    </Link>
-                                                    <Link 
-                                                        to={act.type === 'event' ? `/dashboard/admin/events?id=${act.id.split('-')[1]}` : 
-                                                            act.type === 'meeting' ? `/dashboard/admin/meetings?id=${act.id.split('-')[1]}` :
-                                                            `/dashboard/admin/charity?id=${act.id.split('-')[1]}`}
-                                                        className="flex-1 py-3 bg-indigo-600 text-white rounded-xl text-[9px] font-black uppercase tracking-widest text-center hover:bg-indigo-700 transition-all shadow-md shadow-indigo-100"
-                                                    >
-                                                        Panel Admin
-                                                    </Link>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
+                                                        <div className="space-y-1">
+                                                            <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest">Jumlah Peserta</p>
+                                                            <p className="text-[11px] font-bold text-gray-700 flex items-center gap-1">
+                                                                <span className="material-icons text-[12px]">groups</span> {act.participants_count} Orang
+                                                            </p>
+                                                        </div>
+                                                        {act.location && (
+                                                            <div className="space-y-1 col-span-2">
+                                                                <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest">Lokasi Kegiatan</p>
+                                                                <p className="text-[11px] font-bold text-gray-700 flex items-center gap-1">
+                                                                    <span className="material-icons text-[12px]">location_on</span> {act.location}
+                                                                </p>
+                                                            </div>
+                                                        )}
+                                                    </div>
 
-                            {/* ── Catatan / Rencana Kegiatan ── */}
-                            <div className="px-8 pb-8">
-                                <div className="mt-2 bg-amber-50/60 border border-amber-100 rounded-[1.75rem] p-6">
-                                    <div className="flex items-center justify-between mb-4">
-                                        <div className="flex items-center gap-2">
-                                            <div className="w-8 h-8 bg-amber-100 rounded-xl flex items-center justify-center">
-                                                <span className="material-icons text-amber-600 text-sm">edit_note</span>
-                                            </div>
-                                            <div>
-                                                <p className="text-xs font-black text-amber-800">Catatan Rencana Kegiatan</p>
-                                                <p className="text-[9px] font-bold text-amber-500 uppercase tracking-widest">
-                                                    {allNotes[selectedDateStr]?.updated_by_name
-                                                        ? `Diperbarui oleh: ${allNotes[selectedDateStr].updated_by_name}`
-                                                        : 'Tersimpan di database — terlihat semua admin'}
-                                                </p>
-                                            </div>
+                                                    <div className="flex gap-2">
+                                                        <Link
+                                                            to={act.url} target="_blank"
+                                                            className="flex-1 py-3 bg-white border border-gray-200 text-gray-600 rounded-xl text-[9px] font-black uppercase tracking-widest text-center hover:bg-gray-50 transition-all"
+                                                        >
+                                                            Halaman Publik
+                                                        </Link>
+                                                        <Link
+                                                            to={act.type === 'event' ? `/dashboard/admin/events?id=${act.id.split('-')[1]}` :
+                                                                act.type === 'meeting' ? `/dashboard/admin/meetings?id=${act.id.split('-')[1]}` :
+                                                                    `/dashboard/admin/charity?id=${act.id.split('-')[1]}`}
+                                                            className="flex-1 py-3 bg-indigo-600 text-white rounded-xl text-[9px] font-black uppercase tracking-widest text-center hover:bg-indigo-700 transition-all shadow-md shadow-indigo-100"
+                                                        >
+                                                            Panel Admin
+                                                        </Link>
+                                                    </div>
+                                                </div>
+                                            ))}
                                         </div>
-                                        {allNotes[selectedDateStr] && (
-                                            <button
-                                                onClick={handleDeleteNote}
-                                                className="w-8 h-8 rounded-xl bg-white border border-rose-100 text-rose-400 hover:bg-rose-50 hover:text-rose-600 flex items-center justify-center transition-all shadow-sm"
-                                                title="Hapus catatan"
-                                            >
-                                                <span className="material-icons text-sm">delete</span>
-                                            </button>
-                                        )}
-                                    </div>
-                                    <div className="relative">
-                                        <textarea
-                                            rows={4}
-                                            value={noteInput}
-                                            onChange={e => setNoteInput(e.target.value)}
-                                            disabled={noteLoading}
-                                            placeholder="Tulis rencana atau catatan untuk hari ini... (bisa dilihat oleh semua admin)"
-                                            className="w-full bg-white/70 border border-amber-100 rounded-2xl px-4 py-3 text-sm text-gray-700 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-amber-300 focus:bg-white resize-none transition-all leading-relaxed font-medium disabled:opacity-50"
-                                        />
-                                        {noteLoading && (
-                                            <div className="absolute inset-0 flex items-center justify-center bg-white/60 rounded-2xl">
-                                                <span className="material-icons text-amber-400 animate-spin text-xl">refresh</span>
+                                    )}
+                                </div>
+
+                                {/* ── Catatan / Rencana Kegiatan ── */}
+                                <div className="px-8 pb-8">
+                                    <div className="mt-2 bg-amber-50/60 border border-amber-100 rounded-[1.75rem] p-6">
+                                        <div className="flex items-center justify-between mb-4">
+                                            <div className="flex items-center gap-2">
+                                                <div className="w-8 h-8 bg-amber-100 rounded-xl flex items-center justify-center">
+                                                    <span className="material-icons text-amber-600 text-sm">edit_note</span>
+                                                </div>
+                                                <div>
+                                                    <p className="text-xs font-black text-amber-800">Catatan Rencana Kegiatan</p>
+                                                    <p className="text-[9px] font-bold text-amber-500 uppercase tracking-widest">
+                                                        {allNotes[selectedDateStr]?.updated_by_name
+                                                            ? `Diperbarui oleh: ${allNotes[selectedDateStr].updated_by_name}`
+                                                            : 'Terlihat semua admin'}
+                                                    </p>
+                                                </div>
                                             </div>
-                                        )}
-                                    </div>
-                                    <div className="flex items-center justify-between mt-3">
-                                        <p className="text-[9px] text-amber-500 font-bold">
-                                            {noteInput.length > 0 ? `${noteInput.length} karakter` : 'Belum ada catatan'}
-                                        </p>
-                                        <button
-                                            onClick={handleSaveNote}
-                                            disabled={noteSaving || noteLoading}
-                                            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-md ${
-                                                noteSaving 
-                                                    ? 'bg-emerald-500 text-white shadow-emerald-100' 
-                                                    : 'bg-amber-500 text-white hover:bg-amber-600 shadow-amber-100 active:scale-95 disabled:opacity-50'
-                                            }`}
-                                        >
-                                            <span className="material-icons text-sm">
-                                                {noteSaving ? 'check_circle' : 'save'}
-                                            </span>
-                                            {noteSaving ? 'Tersimpan!' : 'Simpan Catatan'}
-                                        </button>
+                                            {allNotes[selectedDateStr] && (
+                                                <button
+                                                    onClick={handleDeleteNote}
+                                                    className="w-8 h-8 rounded-xl bg-white border border-rose-100 text-rose-400 hover:bg-rose-50 hover:text-rose-600 flex items-center justify-center transition-all shadow-sm"
+                                                    title="Hapus catatan"
+                                                >
+                                                    <span className="material-icons text-sm">delete</span>
+                                                </button>
+                                            )}
+                                        </div>
+                                        <div className="relative">
+                                            <textarea
+                                                rows={4}
+                                                value={noteInput}
+                                                onChange={e => setNoteInput(e.target.value)}
+                                                disabled={noteLoading}
+                                                placeholder="Tulis rencana atau catatan untuk hari ini... (bisa dilihat oleh semua admin)"
+                                                className="w-full bg-white/70 border border-amber-100 rounded-2xl px-4 py-3 text-sm text-gray-700 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-amber-300 focus:bg-white resize-none transition-all leading-relaxed font-medium disabled:opacity-50"
+                                            />
+                                            {noteLoading && (
+                                                <div className="absolute inset-0 flex items-center justify-center bg-white/60 rounded-2xl">
+                                                    <span className="material-icons text-amber-400 animate-spin text-xl">refresh</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div className="flex items-center justify-between mt-3">
+                                            <p className="text-[9px] text-amber-500 font-bold">
+                                                {noteInput.length > 0 ? `${noteInput.length} karakter` : 'Belum ada catatan'}
+                                            </p>
+                                            <button
+                                                onClick={handleSaveNote}
+                                                disabled={noteSaving || noteLoading}
+                                                className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-md ${noteSaving
+                                                        ? 'bg-emerald-500 text-white shadow-emerald-100'
+                                                        : 'bg-amber-500 text-white hover:bg-amber-600 shadow-amber-100 active:scale-95 disabled:opacity-50'
+                                                    }`}
+                                            >
+                                                <span className="material-icons text-sm">
+                                                    {noteSaving ? 'check_circle' : 'save'}
+                                                </span>
+                                                {noteSaving ? 'Tersimpan!' : 'Simpan Catatan'}
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        </div>
                     </div>
                 )}
-                
+
                 {/* Legend */}
                 <div className="mt-16 flex flex-wrap items-center justify-center gap-8 bg-white/40 backdrop-blur-sm p-6 rounded-[2rem] border border-white shadow-sm">
                     <div className="flex items-center gap-3">
@@ -721,7 +717,7 @@ const ActivityCalendarPage = () => {
                     </div>
                 </div>
             </div>
-            
+
             <NavigationButton />
 
             <style>{`

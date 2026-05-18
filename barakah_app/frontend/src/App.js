@@ -117,6 +117,7 @@ import DashboardMeetingsPage from './pages/DashboardMeetingsPage';
 import MeetingSubmissionPage from './pages/MeetingSubmissionPage';
 import MeetingManagementPage from './pages/MeetingManagementPage';
 import DashboardHeroBannersPage from './pages/admin/DashboardHeroBannersPage';
+import CalendarWidgetPage from './pages/widget/CalendarWidgetPage';
 
 import FloatingCartModal from './components/layout/FloatingCartModal';
 import ProfileNotice from './components/common/ProfileNotice';
@@ -398,6 +399,9 @@ const LayoutWrapper = ({ isDesktop }) => {
         <Route path="/dashboard/admin/business-partners" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardAdminBusinessPage /></ResponsiveLayout></PrivateRoute>} />
 
         <Route path="/live-meet-test" element={<ResponsiveLayout isDesktop={isDesktop}><AdminJitsiMeetPage /></ResponsiveLayout>} />
+
+        {/* Widget Routes — standalone, auth dikelola di dalam komponen */}
+        <Route path="/widget/calendar" element={<CalendarWidgetPage />} />
       </Routes>
       <FloatingCartModal />
     </div>
