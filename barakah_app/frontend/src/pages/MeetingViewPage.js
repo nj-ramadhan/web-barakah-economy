@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { getMeetingDetail, getMeetingParticipants } from '../services/meetingApi';
+import { getMeetingDetail, getMeetingParticipants, rsvpMeeting } from '../services/meetingApi';
 import Header from '../components/layout/Header';
 import { Helmet } from 'react-helmet';
 import { getMediaUrl } from '../utils/mediaUtils';
@@ -11,6 +11,7 @@ const MeetingViewPage = () => {
     const [participants, setParticipants] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [submittingRsvp, setSubmittingRsvp] = useState(false);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -23,13 +24,36 @@ const MeetingViewPage = () => {
                 setParticipants(partRes.data);
             } catch (err) {
                 console.error(err);
-                setError(err.response?.status === 403 ? 'Anda tidak memiliki akses ke detail rapat ini.' : 'Gagal memuat detail rapat.');
+                const errMsg = err.response?.data?.detail || err.response?.data?.error || (err.response?.status === 403 ? 'Anda tidak terdaftar sebagai peserta rapat ini dan tidak memiliki akses.' : 'Gagal memuat detail rapat.');
+                setError(errMsg);
             } finally {
                 setLoading(false);
             }
         };
         fetchData();
     }, [slug]);
+
+    const currentUser = JSON.parse(localStorage.getItem('user'));
+    const myParticipant = participants.find(p => p.user === currentUser?.id);
+
+    const handleRsvpClick = async (status) => {
+        setSubmittingRsvp(true);
+        try {
+            const res = await rsvpMeeting(slug, status);
+            // Update local participant state rsvp_status
+            setParticipants(prev => prev.map(p => {
+                if (p.user === currentUser?.id) {
+                    return { ...p, rsvp_status: res.data.rsvp_status };
+                }
+                return p;
+            }));
+            alert(res.data.message);
+        } catch (err) {
+            alert(err.response?.data?.error || 'Gagal mengirim konfirmasi kehadiran.');
+        } finally {
+            setSubmittingRsvp(false);
+        }
+    };
 
     if (loading) return <div className="min-h-screen flex items-center justify-center">Memuat...</div>;
     if (error) return (
@@ -102,6 +126,66 @@ const MeetingViewPage = () => {
                         )}
                     </div>
                 </div>
+
+                {/* RSVP Box Section */}
+                {myParticipant && (
+                    <div className="bg-white rounded-[2rem] p-6 md:p-8 shadow-sm border border-gray-100 mb-8 flex flex-col md:flex-row items-center justify-between gap-6 transition hover:shadow-md">
+                        <div className="flex items-center gap-4">
+                            <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 ${
+                                myParticipant.rsvp_status === 'attending' 
+                                    ? 'bg-emerald-50 text-emerald-600' 
+                                    : myParticipant.rsvp_status === 'not_attending'
+                                    ? 'bg-red-50 text-red-600'
+                                    : 'bg-amber-50 text-amber-600'
+                            }`}>
+                                <span className="material-icons text-3xl">
+                                    {myParticipant.rsvp_status === 'attending' 
+                                        ? 'check_circle' 
+                                        : myParticipant.rsvp_status === 'not_attending'
+                                        ? 'cancel'
+                                        : 'help_outline'}
+                                </span>
+                            </div>
+                            <div>
+                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Konfirmasi Kehadiran Rapat</p>
+                                <h3 className="text-base font-black text-gray-800">
+                                    {myParticipant.rsvp_status === 'attending' 
+                                        ? 'Anda menyatakan AKAN HADIR' 
+                                        : myParticipant.rsvp_status === 'not_attending'
+                                        ? 'Anda menyatakan TIDAK HADIR'
+                                        : 'Apakah Anda akan menghadiri rapat ini?'}
+                                </h3>
+                                <p className="text-xs text-gray-500 font-medium mt-0.5">Silakan lakukan konfirmasi kehadiran Anda menggunakan akun yang terdaftar.</p>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-2 w-full md:w-auto">
+                            <button
+                                disabled={submittingRsvp}
+                                onClick={() => handleRsvpClick('attending')}
+                                className={`flex-1 md:flex-none px-6 py-3 rounded-2xl text-xs font-black uppercase tracking-widest transition flex items-center justify-center gap-2 ${
+                                    myParticipant.rsvp_status === 'attending'
+                                        ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-100'
+                                        : 'bg-gray-50 text-gray-700 hover:bg-emerald-50 hover:text-emerald-700'
+                                }`}
+                            >
+                                <span className="material-icons text-sm">done</span>
+                                Akan Hadir
+                            </button>
+                            <button
+                                disabled={submittingRsvp}
+                                onClick={() => handleRsvpClick('not_attending')}
+                                className={`flex-1 md:flex-none px-6 py-3 rounded-2xl text-xs font-black uppercase tracking-widest transition flex items-center justify-center gap-2 ${
+                                    myParticipant.rsvp_status === 'not_attending'
+                                        ? 'bg-red-600 text-white shadow-lg shadow-red-100'
+                                        : 'bg-gray-50 text-gray-700 hover:bg-red-50 hover:text-red-700'
+                                }`}
+                            >
+                                <span className="material-icons text-sm">close</span>
+                                Tidak Hadir
+                            </button>
+                        </div>
+                    </div>
+                )}
 
                 {/* Sessions Section */}
                 {meeting?.sessions && meeting.sessions.length > 0 && (

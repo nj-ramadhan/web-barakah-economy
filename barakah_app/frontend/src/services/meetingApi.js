@@ -90,3 +90,8 @@ export const markMeetingSessionFinished = (slug, sessionId) => {
         headers: getAuthHeaders()
     });
 };
+export const rsvpMeeting = (slug, status) => {
+    return axios.post(`${API_BASE_URL}/api/meetings/${slug}/rsvp/`, { status }, {
+        headers: getAuthHeaders()
+    });
+};

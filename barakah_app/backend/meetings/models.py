@@ -56,11 +56,18 @@ class MeetingParticipant(models.Model):
         ('pending', 'Belum Diabsen'),
     ]
 
+    RSVP_STATUS = [
+        ('pending', 'Belum Konfirmasi'),
+        ('attending', 'Akan Hadir'),
+        ('not_attending', 'Tidak Hadir'),
+    ]
+
     meeting = models.ForeignKey(Meeting, on_delete=models.CASCADE, related_name='participants')
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='meeting_participations')
     
     status = models.CharField(max_length=20, choices=ATTENDANCE_STATUS, default='pending')
     remarks = models.TextField(blank=True, null=True)
+    rsvp_status = models.CharField(max_length=20, choices=RSVP_STATUS, default='pending')
     
     joined_at = models.DateTimeField(auto_now_add=True)
     marked_at = models.DateTimeField(blank=True, null=True)

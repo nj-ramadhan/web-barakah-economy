@@ -30,14 +30,49 @@ class MeetingViewSet(viewsets.ModelViewSet):
             # Admin can see everything, or if they have the internal_meetings menu access
             if user.is_staff or user.role == 'admin' or user.has_menu_access('internal_meetings'):
                 return Meeting.objects.all().order_by('-start_date')
-            # Otherwise only meetings they created
-            return Meeting.objects.filter(created_by=user).order_by('-start_date')
+            # Otherwise meetings they created or they are invited as a participant
+            return Meeting.objects.filter(
+                Q(created_by=user) | Q(participants__user=user)
+            ).distinct().order_by('-start_date')
         return Meeting.objects.none()
 
     def get_permissions(self):
-        if self.action in ['create', 'update', 'partial_update', 'destroy', 'manage_participants', 'blast_whatsapp', 'export_csv', 'update_attendance']:
+        if self.action in ['retrieve', 'participants', 'rsvp', 'create', 'update', 'partial_update', 'destroy', 'manage_participants', 'blast_whatsapp', 'export_csv', 'update_attendance']:
             return [permissions.IsAuthenticated()]
         return [permissions.AllowAny()]
+
+    def retrieve(self, request, *args, **kwargs):
+        instance = get_object_or_404(Meeting, slug=kwargs.get('slug'))
+        
+        user = request.user
+        is_admin_or_staff = user.is_staff or user.role == 'admin' or user.has_menu_access('internal_meetings')
+        is_creator = instance.created_by == user
+        is_participant = instance.participants.filter(user=user).exists()
+        
+        if not (is_admin_or_staff or is_creator or is_participant):
+            return Response({"detail": "Anda tidak terdaftar sebagai peserta rapat ini dan tidak memiliki akses."}, status=status.HTTP_403_FORBIDDEN)
+            
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data)
+
+    @action(detail=True, methods=['post'])
+    def rsvp(self, request, slug=None):
+        meeting = get_object_or_404(Meeting, slug=slug)
+        status_val = request.data.get('status')
+        
+        if status_val not in ['attending', 'not_attending']:
+            return Response({"error": "Status RSVP harus 'attending' atau 'not_attending'."}, status=status.HTTP_400_BAD_REQUEST)
+            
+        try:
+            participant = MeetingParticipant.objects.get(meeting=meeting, user=request.user)
+            participant.rsvp_status = status_val
+            participant.save()
+            return Response({
+                "message": f"Berhasil melakukan konfirmasi kehadiran: {participant.get_rsvp_status_display()}.",
+                "rsvp_status": participant.rsvp_status
+            })
+        except MeetingParticipant.DoesNotExist:
+            return Response({"error": "Anda tidak terdaftar sebagai peserta rapat ini."}, status=status.HTTP_403_FORBIDDEN)
 
     def perform_create(self, serializer):
         serializer.save(created_by=self.request.user)

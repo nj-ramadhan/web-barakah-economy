@@ -229,7 +229,22 @@ const MeetingManagementPage = () => {
                         </button>
                         <button 
                             onClick={() => {
-                                setBlastMessage(`Yth. Bapak/Ibu/Sdr/i,\n\nKami mengundang Anda untuk menghadiri rapat *${meeting?.title}* yang akan dilaksanakan pada:\n\nHari/Tgl: ${new Date(meeting?.start_date).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}\nJam: ${new Date(meeting?.start_date).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}\nLokasi: ${meeting?.location}\n\nDetail Agenda & Peserta:\n{meeting_link}\n\nMohon kehadirannya tepat waktu. Terima kasih.\n\n_Pesan otomatis dari Barakah App_`);
+                                setBlastMessage(`Yth. Bapak/Ibu/Sdr/i,
+
+Kami mengundang Anda untuk menghadiri rapat *${meeting?.title}* yang akan dilaksanakan pada:
+
+Hari/Tgl: ${new Date(meeting?.start_date).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+Jam: ${new Date(meeting?.start_date).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })} WIB
+Lokasi: ${meeting?.location}
+
+Detail Agenda & Peserta:
+{meeting_link}
+
+Harap klik link tersebut untuk konfirmasi akan hadir (gunakan akun yang sudah didaftarkan di Barakah App)
+
+Mohon kehadirannya tepat waktu. Terima kasih.
+
+Pesan otomatis dari Barakah App`);
                                 setShowBlastModal(true);
                             }}
                             className="flex-1 md:flex-none bg-green-600 text-white px-4 py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-2 hover:bg-green-700 transition shadow-lg shadow-green-100"
@@ -271,6 +286,7 @@ const MeetingManagementPage = () => {
                                     </th>
                                     <th className="p-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Peserta</th>
                                     <th className="p-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Info Kontak</th>
+                                    <th className="p-5 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Konfirmasi Kehadiran</th>
                                     {meeting?.sessions?.map(s => (
                                         <th key={s.id} className="p-5 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center min-w-[150px]">
                                             <div className="mb-2">{s.title}</div>
@@ -315,6 +331,24 @@ const MeetingManagementPage = () => {
                                         <td className="p-5">
                                             <p className="text-xs font-bold text-gray-600">{p.user_details?.email}</p>
                                             <p className="text-[10px] text-gray-400">{p.user_details?.profile?.phone || '-'}</p>
+                                        </td>
+                                        <td className="p-5 text-center">
+                                            {p.rsvp_status === 'attending' ? (
+                                                <span className="inline-flex items-center gap-1 px-3 py-1 bg-emerald-100 text-emerald-800 text-[10px] font-black rounded-full uppercase tracking-wider">
+                                                    <span className="material-icons text-[10px]">check_circle</span>
+                                                    Akan Hadir
+                                                </span>
+                                            ) : p.rsvp_status === 'not_attending' ? (
+                                                <span className="inline-flex items-center gap-1 px-3 py-1 bg-rose-100 text-rose-800 text-[10px] font-black rounded-full uppercase tracking-wider">
+                                                    <span className="material-icons text-[10px]">cancel</span>
+                                                    Tidak Hadir
+                                                </span>
+                                            ) : (
+                                                <span className="inline-flex items-center gap-1 px-3 py-1 bg-amber-100 text-amber-800 text-[10px] font-black rounded-full uppercase tracking-wider">
+                                                    <span className="material-icons text-[10px]">help</span>
+                                                    Belum Konfirmasi
+                                                </span>
+                                            )}
                                         </td>
                                         {meeting?.sessions?.map(session => {
                                             const att = p.session_attendances?.find(a => a.session === session.id) || { status: 'pending', remarks: '' };
@@ -365,7 +399,7 @@ const MeetingManagementPage = () => {
                                 ))}
                                 {participants.length === 0 && (
                                     <tr>
-                                        <td colSpan={3 + (meeting?.sessions?.length || 0)} className="p-12 text-center">
+                                        <td colSpan={4 + (meeting?.sessions?.length || 0)} className="p-12 text-center">
                                             <span className="material-icons text-gray-200 text-4xl mb-2">person_off</span>
                                             <p className="text-sm font-bold text-gray-400 uppercase tracking-widest">Belum ada peserta terdaftar</p>
                                             <button onClick={() => setShowAddModal(true)} className="mt-4 text-blue-600 font-black text-[10px] uppercase tracking-widest hover:underline">Tambah Peserta Sekarang</button>

@@ -61,7 +61,7 @@ class MeetingParticipantSerializer(serializers.ModelSerializer):
         model = MeetingParticipant
         fields = [
             'id', 'meeting', 'user', 'user_details', 
-            'status', 'remarks', 'joined_at', 
+            'status', 'remarks', 'rsvp_status', 'joined_at', 
             'marked_at', 'marked_by', 'marked_by_name',
             'session_attendances'
         ]
