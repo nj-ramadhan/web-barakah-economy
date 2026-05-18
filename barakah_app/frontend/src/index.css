@@ -160,6 +160,25 @@ html.dark .bg-emerald-700 {
   background-color: #059669 !important; /* Emerald-600 */
 }
 
+/* Custom dark mode override for desktop and mobile footers */
+html.dark footer,
+html.dark .bg-green-900 {
+  background-color: #0b0f19 !important; /* Matches main dark body background */
+  border-top-color: #1f2937 !important;
+}
+
+html.dark footer a,
+html.dark footer span,
+html.dark footer div,
+html.dark footer h4 {
+  color: #d1d5db !important;
+}
+
+html.dark footer a:hover {
+  color: #34d399 !important; /* Vibrant Emerald green on hover */
+}
+
+
 /* Custom dark mode override for hero section to be a sleek solid color */
 html.dark .hero-section {
   background-color: #0b0f19 !important; /* Matches main dark body background */

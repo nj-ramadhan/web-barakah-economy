@@ -34,7 +34,7 @@ const BaeRunLandingPage = () => {
                         <span className="text-[10px] font-black uppercase tracking-[0.2em] text-green-500">New Experience</span>
                     </div>
                     <h1 className="text-6xl md:text-8xl font-black tracking-tighter leading-[0.9] italic uppercase">
-                        Run for <br/> <span className="text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-blue-500">Barakah</span>
+                        Run for <br /> <span className="text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-blue-500">Barakah</span>
                     </h1>
                     <p className="text-lg text-slate-400 max-w-md leading-relaxed">
                         Lacak setiap langkah Anda, bangun kebiasaan sehat, dan raih keberkahan melalui setiap tetes keringat. Terhubung langsung dengan ekosistem Barakah Economy.
@@ -54,9 +54,9 @@ const BaeRunLandingPage = () => {
                 <div className="relative flex justify-center lg:justify-end animate-in fade-in zoom-in duration-1000">
                     <div className="relative w-72 h-[600px] md:w-80 md:h-[650px] bg-slate-900 rounded-[3rem] border-[8px] border-slate-800 shadow-[0_0_80px_rgba(0,0,0,0.5)] overflow-hidden">
                         {/* Mockup Image */}
-                        <img 
-                            src="/media/bae_run_app_mockup_1777304049543.png" 
-                            alt="BAE RUN App Mockup" 
+                        <img
+                            src="/media/bae_run_app_mockup_1777304049543.png"
+                            alt="BAE RUN App Mockup"
                             className="w-full h-full object-cover"
                         />
                         {/* Glassmorphism Overlay */}
@@ -103,7 +103,7 @@ const BaeRunLandingPage = () => {
                 <div className="max-w-4xl mx-auto bg-gradient-to-br from-green-500 to-blue-600 rounded-[3rem] p-12 md:p-20 text-center shadow-2xl shadow-green-500/20 overflow-hidden relative">
                     <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10"></div>
                     <div className="relative z-10">
-                        <h2 className="text-5xl md:text-7xl font-black tracking-tighter italic uppercase text-slate-950 leading-none mb-8">Ready to <br/> start?</h2>
+                        <h2 className="text-5xl md:text-7xl font-black tracking-tighter italic uppercase text-slate-950 leading-none mb-8">Ready to <br /> start?</h2>
                         <p className="text-slate-900/70 font-bold mb-12 max-w-md mx-auto leading-relaxed">Dapatkan akses eksklusif versi beta untuk Android sekarang juga. Bangun komunitas lari Barakah bersama kami.</p>
                         <div className="flex flex-col md:flex-row gap-6 justify-center items-center">
                             <button className="w-full md:w-auto px-10 py-5 bg-slate-950 text-white rounded-3xl font-black uppercase tracking-widest flex items-center justify-center gap-4 hover:scale-105 transition shadow-2xl">
@@ -128,7 +128,7 @@ const BaeRunLandingPage = () => {
 
             {/* Footer */}
             <footer className="relative z-10 py-20 border-t border-white/5 text-center">
-                <div className="text-xs font-bold text-slate-500 uppercase tracking-[0.5em] mb-4">© 2026 BARAKAH ECONOMY - BAE RUN</div>
+                <div className="text-xs font-bold text-slate-500 uppercase tracking-[0.5em] mb-4">© 2025 BARAKAH ECONOMY - BAE RUN</div>
                 <div className="flex justify-center gap-6 text-slate-400">
                     <span className="material-icons text-sm hover:text-white cursor-pointer">facebook</span>
                     <span className="material-icons text-sm hover:text-white cursor-pointer">instagram</span>
