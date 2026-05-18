@@ -161,6 +161,8 @@ class UserAdminSerializer(serializers.ModelSerializer):
             'event_attendance_detail',
             'event_attendance_json',
             'meeting_attendance_summary',
+            'kelas_academy', 'jenjang_pemahaman', 'jenjang_kesiapan', 'tugas_fungsi',
+            'rombel', 'tgl_alih_jenjang', 'keterangan',
         )
 
     def update(self, instance, validated_data):

@@ -826,3 +826,57 @@ class UserViewSet(viewsets.ModelViewSet):
         
         return response
 
+    @action(detail=True, methods=['patch'])
+    def kaderisasi_update(self, request, pk=None):
+        """Update kaderisasi fields for a single user."""
+        user = self.get_object()
+        allowed_fields = ['kelas_academy', 'jenjang_pemahaman', 'jenjang_kesiapan', 'tugas_fungsi', 'rombel', 'tgl_alih_jenjang', 'keterangan']
+        updated = {}
+        for field in allowed_fields:
+            if field in request.data:
+                val = request.data[field]
+                # Allow clearing the field with empty string -> None
+                setattr(user, field, val if val else None)
+                updated[field] = val if val else None
+        user.save(update_fields=updated.keys())
+        return Response({'message': 'Berhasil diperbarui.', 'updated': updated})
+
+    @action(detail=False, methods=['get'])
+    def export_kaderisasi_csv(self, request):
+        """Export CSV khusus data kaderisasi."""
+        response = HttpResponse(content_type='text/csv; charset=utf-8-sig')
+        response['Content-Disposition'] = 'attachment; filename="kaderisasi.csv"'
+        writer = csv.writer(response, delimiter=';')
+
+        headers = [
+            'ID', 'IDM', 'Nama', 'Username', 'Email',
+            'Label', 'Custom Role',
+            'Kelas Academy', 'Jenjang Pemahaman', 'Jenjang Kesiapan', 'Tugas Fungsi',
+            'Rombel', 'Tgl Alih Jenjang', 'Keterangan',
+        ]
+        writer.writerow(headers)
+
+        queryset = self.get_queryset()
+        for user in queryset:
+            profile = getattr(user, 'profile', None)
+            writer.writerow([
+                user.id,
+                profile.id_m if profile else '',
+                profile.name_full if profile else '',
+                user.username,
+                user.email or '',
+                ' | '.join([l.code for l in user.labels.all()]),
+                ' | '.join([r.code for r in user.custom_roles.all()]),
+                user.kelas_academy or '',
+                user.jenjang_pemahaman or '',
+                user.jenjang_kesiapan or '',
+                user.tugas_fungsi or '',
+                user.rombel or '',
+                user.tgl_alih_jenjang.strftime('%Y-%m-%d') if user.tgl_alih_jenjang else '',
+                user.keterangan or '',
+            ])
+
+        return response
+
+
+

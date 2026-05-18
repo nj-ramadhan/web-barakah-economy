@@ -84,6 +84,7 @@ import AdminConsultantSettingsPage from './pages/admin/AdminConsultantSettingsPa
 import AdminTransactionHistoryPage from './pages/admin/AdminTransactionHistoryPage';
 import DashboardAdminForumPage from './pages/admin/DashboardAdminForumPage';
 import DashboardRoleManagementPage from './pages/admin/DashboardRoleManagementPage';
+import DashboardKaderisasiPage from './pages/admin/DashboardKaderisasiPage';
 import DashboardAdminCampaignApprovalPage from './pages/admin/DashboardAdminCampaignApprovalPage';
 import DashboardAdminArticleManagementPage from './pages/admin/DashboardAdminArticleManagementPage';
 import DashboardAdminCampaignManagementPage from './pages/admin/DashboardAdminCampaignManagementPage';
@@ -359,6 +360,7 @@ const LayoutWrapper = ({ isDesktop }) => {
         <Route path="/dashboard/admin/transactions" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><AdminTransactionHistoryPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/admin/forum" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardAdminForumPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/admin/roles" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardRoleManagementPage /></ResponsiveLayout></PrivateRoute>} />
+        <Route path="/dashboard/admin/kaderisasi" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardKaderisasiPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/admin/campaign-approval" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardAdminCampaignApprovalPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/admin/articles" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardAdminArticleManagementPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/admin/campaigns" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardAdminCampaignManagementPage /></ResponsiveLayout></PrivateRoute>} />

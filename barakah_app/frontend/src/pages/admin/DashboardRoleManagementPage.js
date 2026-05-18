@@ -75,14 +75,14 @@ const DashboardRoleManagementPage = () => {
     const [roleForm, setRoleForm] = useState({
         name: '', code: '', description: '',
         accessible_menus: [], required_profile_fields: [],
-        is_active: true, is_automatic: true
+        is_active: true, is_automatic: true, level: 0
     });
 
     // === LABELS STATE ===
     const [labels, setLabels] = useState([]);
     const [showLabelModal, setShowLabelModal] = useState(false);
     const [editingLabel, setEditingLabel] = useState(null);
-    const [labelForm, setLabelForm] = useState({ name: '', code: '', color: 'gray' });
+    const [labelForm, setLabelForm] = useState({ name: '', code: '', color: 'gray', level: 0 });
 
     // === LINGKUP TUGAS STATE ===
     const [lingkupTugas, setLingkupTugas] = useState([]);
@@ -142,11 +142,12 @@ const DashboardRoleManagementPage = () => {
                 accessible_menus: role.accessible_menus || [],
                 required_profile_fields: role.required_profile_fields || [],
                 is_active: role.is_active,
-                is_automatic: role.is_automatic
+                is_automatic: role.is_automatic,
+                level: role.level || 0
             });
         } else {
             setEditingRole(null);
-            setRoleForm({ name: '', code: '', description: '', accessible_menus: [], required_profile_fields: [], is_active: true, is_automatic: true });
+            setRoleForm({ name: '', code: '', description: '', accessible_menus: [], required_profile_fields: [], is_active: true, is_automatic: true, level: 0 });
         }
         setShowRoleModal(true);
     };
@@ -197,10 +198,10 @@ const DashboardRoleManagementPage = () => {
     const openLabelModal = (label = null) => {
         if (label) {
             setEditingLabel(label);
-            setLabelForm({ name: label.name, code: label.code, color: label.color || 'gray' });
+            setLabelForm({ name: label.name, code: label.code, color: label.color || 'gray', level: label.level || 0 });
         } else {
             setEditingLabel(null);
-            setLabelForm({ name: '', code: '', color: 'gray' });
+            setLabelForm({ name: '', code: '', color: 'gray', level: 0 });
         }
         setShowLabelModal(true);
     };
@@ -411,6 +412,7 @@ const DashboardRoleManagementPage = () => {
                                     <tr>
                                         <th className="px-6 py-4 text-gray-600 font-bold text-[11px] uppercase">Nama</th>
                                         <th className="px-6 py-4 text-gray-600 font-bold text-[11px] uppercase">Kode</th>
+                                        <th className="px-6 py-4 text-gray-600 font-bold text-[11px] uppercase">Level</th>
                                         <th className="px-6 py-4 text-gray-600 font-bold text-[11px] uppercase">Warna</th>
                                         <th className="px-6 py-4 text-gray-600 font-bold text-[11px] uppercase text-center">Aksi</th>
                                     </tr>
@@ -421,6 +423,9 @@ const DashboardRoleManagementPage = () => {
                                             <td className="px-6 py-4 font-bold text-gray-900">{l.name}</td>
                                             <td className="px-6 py-4">
                                                 <span className="text-xs font-mono bg-gray-100 px-2 py-1 rounded">{l.code}</span>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <span className="text-xs font-bold bg-indigo-50 text-indigo-700 px-2.5 py-1 rounded-full">{l.level ?? 0}</span>
                                             </td>
                                             <td className="px-6 py-4">
                                                 <span className={`inline-block w-6 h-6 rounded-full bg-${l.color}-400 border-2 border-white shadow`}></span>
@@ -594,6 +599,13 @@ const DashboardRoleManagementPage = () => {
                                 </div>
 
                                 <div className="flex items-center gap-6">
+                                    <div className="space-y-1 flex-1">
+                                        <label className="text-[10px] font-bold text-indigo-600 uppercase tracking-wider">Level (Tingkatan Role)</label>
+                                        <input type="number" min="0" className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm outline-none" value={roleForm.level} onChange={e => setRoleForm({ ...roleForm, level: parseInt(e.target.value) || 0 })} placeholder="0" />
+                                        <p className="text-[10px] text-gray-400">Hierarki role. Lebih besar = lebih tinggi levelnya.</p>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-6">
                                     <div className="flex items-center gap-2">
                                         <input type="checkbox" id="role_active" checked={roleForm.is_active} onChange={e => setRoleForm({ ...roleForm, is_active: e.target.checked })} className="w-4 h-4 text-green-600 rounded" />
                                         <label htmlFor="role_active" className="text-sm font-medium text-gray-700">Role Aktif</label>
@@ -642,6 +654,11 @@ const DashboardRoleManagementPage = () => {
                                             />
                                         ))}
                                     </div>
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-[10px] font-bold text-indigo-600 uppercase tracking-wider">Level (Tingkatan)</label>
+                                    <input type="number" min="0" className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm outline-none" value={labelForm.level} onChange={e => setLabelForm({ ...labelForm, level: parseInt(e.target.value) || 0 })} placeholder="0" />
+                                    <p className="text-[10px] text-gray-400">Digunakan untuk rumus & filter hierarki. Semakin besar nilainya, semakin tinggi levelnya.</p>
                                 </div>
                             </div>
                             <div className="p-6 bg-gray-50 border-t border-gray-100 flex justify-end gap-3 rounded-b-3xl">

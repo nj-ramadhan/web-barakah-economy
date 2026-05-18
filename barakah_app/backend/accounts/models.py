@@ -8,6 +8,7 @@ class Role(models.Model):
     name = models.CharField(max_length=50, unique=True)
     code = models.CharField(max_length=30, unique=True)
     description = models.TextField(blank=True)
+    level = models.IntegerField(default=0, blank=True, help_text="Tingkatan role untuk hierarki/rumus")
     accessible_menus = models.JSONField(default=list, blank=True,
         help_text="List of menu keys this role can access")
     required_profile_fields = models.JSONField(default=list, blank=True,
@@ -29,6 +30,7 @@ class UserLabel(models.Model):
     name = models.CharField(max_length=50)
     code = models.CharField(max_length=20, unique=True)
     color = models.CharField(max_length=20, default='gray')
+    level = models.IntegerField(default=0, blank=True, help_text="Tingkatan label untuk rumus/filter")
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -86,6 +88,30 @@ class User(AbstractUser):
     bidang_tugas = models.ManyToManyField(BidangTugas, blank=True, related_name='users')
     position = models.CharField(max_length=100, blank=True, null=True, help_text="Jabatan di BAE")
     event_attendance_json = models.JSONField(default=list, blank=True, help_text="Cached list of attended events")
+
+    # Kaderisasi fields
+    KELAS_ACADEMY_CHOICES = [
+        ('PRA', 'PRA'), ('A1-1', 'A1-1'), ('A1-2', 'A1-2'), ('A1-3', 'A1-3'),
+        ('A2-1', 'A2-1'), ('A2-2', 'A2-2'), ('A2-3', 'A2-3'), ('A2P', 'A2P'),
+    ]
+    JENJANG_PEMAHAMAN_CHOICES = [
+        ('1', '1'), ('1J', '1J'), ('2A', '2A'), ('2B', '2B'),
+        ('PI', 'PI'), ('PF', 'PF'), ('MPT', 'MPT'),
+    ]
+    JENJANG_KESIAPAN_CHOICES = [
+        ('0', '0'), ('1', '1'), ('1+', '1+'), ('2', '2'), ('2+', '2+'), ('3', '3'),
+    ]
+    TUGAS_FUNGSI_CHOICES = [
+        ('UP SR', 'UP SR'), ('KASI', 'KASI'), ('UP RM', 'UP RM'), ('KAUR', 'KAUR'),
+        ('AK', 'AK'), ('MPT', 'MPT'), ('MK', 'MK'),
+    ]
+    kelas_academy = models.CharField(max_length=10, blank=True, null=True, choices=KELAS_ACADEMY_CHOICES)
+    jenjang_pemahaman = models.CharField(max_length=10, blank=True, null=True, choices=JENJANG_PEMAHAMAN_CHOICES)
+    jenjang_kesiapan = models.CharField(max_length=10, blank=True, null=True, choices=JENJANG_KESIAPAN_CHOICES)
+    tugas_fungsi = models.CharField(max_length=20, blank=True, null=True, choices=TUGAS_FUNGSI_CHOICES)
+    rombel = models.CharField(max_length=50, blank=True, null=True, help_text="Nama rombongan belajar")
+    tgl_alih_jenjang = models.DateField(blank=True, null=True, help_text="Tanggal alih jenjang terakhir")
+    keterangan = models.TextField(blank=True, null=True, help_text="Keterangan tambahan kaderisasi")
 
     def __str__(self):
         return f"{self.username} ({self.get_role_display()})"
