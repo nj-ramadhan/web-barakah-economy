@@ -20,7 +20,7 @@ const Header = () => {
           <div className="p-1.5 bg-green-50 dark:bg-green-900/30 rounded-xl group-hover:bg-green-100 dark:group-hover:bg-green-900/50 transition shadow-sm">
             <img src="/logo.png" alt="Barakah Economy" className="h-8 w-8 object-contain" />
           </div>
-          <span className="text-xl font-black text-green-800 dark:text-green-400 tracking-tighter">BARAKAH ECONOMY</span>
+          <span className="text-xl font-black text-green-800 dark:text-green-400 tracking-tighter">Barakah App</span>
         </Link>
         <div className="flex items-center gap-2">
           {/* Dark/Light Toggle */}

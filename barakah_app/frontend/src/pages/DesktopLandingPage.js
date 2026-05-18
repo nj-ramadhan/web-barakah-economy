@@ -168,7 +168,7 @@ const DesktopLandingPage = () => {
 
             <main className={`flex-1 ${isDesktop ? 'pt-20' : 'pb-24'}`}>
                 {/* ============ HERO ============ */}
-                <section className={`w-full ${isDesktop ? 'bg-gradient-to-br from-green-50 via-white to-green-100 py-16 lg:py-24' : 'bg-white py-6'} px-4 lg:px-24`}>
+                <section className={`w-full hero-section ${isDesktop ? 'bg-gradient-to-br from-green-50 via-white to-green-100 py-16 lg:py-24' : 'bg-white py-6'} px-4 lg:px-24`}>
                     <div className="max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-12">
                         {/* LEFT: Hidden on mobile as per request */}
                         <div className="hidden lg:block lg:w-[45%] space-y-8 animate-fade-in">

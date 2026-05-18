@@ -611,7 +611,7 @@ const Home = () => {
       <HeaderHome onSearch={handleSearch} />
 
       {/* ============ HERO (Desktop Style brought to Mobile) ============ */}
-      <section className="w-full bg-white py-6 px-4 overflow-hidden">
+      <section className="w-full bg-white hero-section py-6 px-4 overflow-hidden">
         <div className="max-w-7xl mx-auto">
           {/* Banner Slider - Only Image Carousel on Mobile as requested */}
           <div className={`w-full transition-all duration-700 ${isFullscreen ? 'fixed inset-0 z-[1000] !w-full !h-full bg-black flex items-center justify-center p-0' : ''}`}>

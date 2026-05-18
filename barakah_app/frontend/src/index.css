@@ -32,45 +32,73 @@ html.dark body {
   background-color: #0b0f19 !important; /* Premium dark background */
 }
 
-/* General Layouts & Background Elements */
-html.dark .bg-white,
-html.dark .bg-slate-50,
+/* Outer Section & Page Background Elements (Deep space theme) */
 html.dark .bg-gray-50,
+html.dark .bg-slate-50,
+html.dark .bg-zinc-50,
+html.dark .bg-neutral-50,
 html.dark [class*="bg-[#f8fafc]"],
-html.dark [class*="bg-[#f9fafb]"],
-html.dark .bg-gray-100,
-html.dark [class*="bg-indigo-50/30"] {
-  background-color: #111827 !important; /* Premium deep gray-900 card background */
+html.dark [class*="bg-[#f9fafb]"] {
+  background-color: #0b0f19 !important; 
 }
 
+/* Inner Card & Content Container Background Elements (Elegant Slate-900 card contrast) */
+html.dark .bg-white,
+html.dark .bg-gray-100,
+html.dark .bg-slate-100,
+html.dark .bg-zinc-100,
+html.dark .bg-neutral-100,
+html.dark [class*="bg-indigo-50/30"] {
+  background-color: #111827 !important; 
+}
+
+/* Gray Element Backgrounds (Buttons, Badges, Hover states, etc.) */
 html.dark .bg-gray-200,
 html.dark .bg-gray-300,
-html.dark .bg-slate-100,
-html.dark .bg-slate-200 {
-  background-color: #1f2937 !important; /* Premium mid gray-800 for inputs/borders */
+html.dark .bg-slate-200,
+html.dark .bg-slate-300,
+html.dark .bg-zinc-200,
+html.dark .bg-zinc-300,
+html.dark .bg-neutral-200,
+html.dark .bg-neutral-300 {
+  background-color: #1f2937 !important; 
 }
 
-/* Text Element Color Correction */
+/* High Visibility Text Color Correction (Headings & Bold Titles) */
 html.dark .text-gray-900,
 html.dark .text-gray-800,
 html.dark .text-slate-900,
 html.dark .text-slate-800,
+html.dark .text-zinc-900,
+html.dark .text-zinc-800,
+html.dark .text-neutral-900,
+html.dark .text-neutral-800,
 html.dark h1, html.dark h2, html.dark h3, html.dark h4, html.dark h5, html.dark h6 {
-  color: #f9fafb !important; /* Almost pure white for crisp reading */
+  color: #f9fafb !important; /* Crisp off-white */
 }
 
+/* Medium Visibility Text Color Correction (Body copy, Subsections, Labels) */
 html.dark .text-gray-700,
 html.dark .text-gray-600,
 html.dark .text-slate-700,
-html.dark .text-slate-600 {
-  color: #d1d5db !important; /* Muted gray for body texts */
+html.dark .text-slate-600,
+html.dark .text-zinc-700,
+html.dark .text-zinc-600,
+html.dark .text-neutral-700,
+html.dark .text-neutral-600 {
+  color: #d1d5db !important; /* Elegant light gray for reading */
 }
 
+/* Low Visibility Text Color Correction (Subtitles, Captions, Placeholders, Meta-text) */
 html.dark .text-gray-500,
 html.dark .text-gray-400,
 html.dark .text-slate-500,
-html.dark .text-slate-400 {
-  color: #9ca3af !important; /* Subtle gray for captions/subtitles */
+html.dark .text-slate-400,
+html.dark .text-zinc-500,
+html.dark .text-zinc-400,
+html.dark .text-neutral-500,
+html.dark .text-neutral-400 {
+  color: #9ca3af !important; /* Soft muted gray */
 }
 
 /* Input Fields & Textareas */
@@ -87,26 +115,30 @@ html.dark textarea::placeholder {
   color: #6b7280 !important;
 }
 
-/* Borders & Separators */
+/* Borders, Lines & Separators */
 html.dark .border-gray-50,
 html.dark .border-gray-100,
 html.dark .border-gray-200,
+html.dark .border-gray-300,
 html.dark .border-slate-100,
 html.dark .border-slate-200,
+html.dark .border-slate-300,
+html.dark .border-zinc-200,
 html.dark .border-white,
 html.dark hr {
-  border-color: #1f2937 !important; /* dark slate border */
+  border-color: #1f2937 !important; 
 }
 
-/* Global Shadow Mode */
+/* Global Shadow Enhancements (Softer shadows for dark mode) */
 html.dark .shadow-sm,
 html.dark .shadow,
 html.dark .shadow-md,
 html.dark .shadow-lg,
 html.dark .shadow-xl,
 html.dark .shadow-2xl {
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -4px rgba(0, 0, 0, 0.4) !important;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -4px rgba(0, 0, 0, 0.5) !important;
 }
+
 
 /* Keep Green Accents Highly Visible */
 html.dark .text-green-800,
@@ -123,6 +155,12 @@ html.dark .bg-emerald-50 {
 html.dark .bg-green-700,
 html.dark .bg-emerald-700 {
   background-color: #059669 !important; /* Emerald-600 */
+}
+
+/* Custom dark mode override for hero section to be a sleek solid color */
+html.dark .hero-section {
+  background-color: #0b0f19 !important; /* Matches main dark body background */
+  background-image: none !important; /* Removes green-50 to green-100 gradient in dark mode */
 }
 
 
