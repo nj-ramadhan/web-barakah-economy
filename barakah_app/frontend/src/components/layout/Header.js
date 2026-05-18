@@ -11,7 +11,7 @@ const Header = () => {
     i18n.changeLanguage(newLang);
   };
   return (
-    <header className="bg-white shadow-sm sticky top-0 z-[1001] lg:hidden" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
+    <header className="bg-white shadow-sm fixed top-0 left-0 w-full z-[900] lg:hidden" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
       <div className="container px-4 py-2 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-2 group">
           <div className="p-1.5 bg-green-50 rounded-xl group-hover:bg-green-100 transition shadow-sm">
