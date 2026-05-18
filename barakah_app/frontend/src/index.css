@@ -7,7 +7,7 @@
 
 /* Mobile-first global styles */
 body {
-  @apply bg-gray-200 dark:bg-gray-950;
+  @apply bg-gray-200 dark:bg-gray-950 text-gray-900 dark:text-gray-100;
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
@@ -19,6 +19,110 @@ body {
 /* Exclude transitions that would feel laggy */
 button, a, [class*="transition"] {
   transition-duration: inherit;
+}
+
+/* ==========================================================================
+   PREMIUM GLOBAL DARK MODE OVERRIDES (INSTANT INJECTION FOR ALL PAGES)
+   ========================================================================== */
+html.dark {
+  color-scheme: dark;
+}
+
+html.dark body {
+  background-color: #0b0f19 !important; /* Premium dark background */
+}
+
+/* General Layouts & Background Elements */
+html.dark .bg-white,
+html.dark .bg-slate-50,
+html.dark .bg-gray-50,
+html.dark [class*="bg-[#f8fafc]"],
+html.dark [class*="bg-[#f9fafb]"],
+html.dark .bg-gray-100,
+html.dark [class*="bg-indigo-50/30"] {
+  background-color: #111827 !important; /* Premium deep gray-900 card background */
+}
+
+html.dark .bg-gray-200,
+html.dark .bg-gray-300,
+html.dark .bg-slate-100,
+html.dark .bg-slate-200 {
+  background-color: #1f2937 !important; /* Premium mid gray-800 for inputs/borders */
+}
+
+/* Text Element Color Correction */
+html.dark .text-gray-900,
+html.dark .text-gray-800,
+html.dark .text-slate-900,
+html.dark .text-slate-800,
+html.dark h1, html.dark h2, html.dark h3, html.dark h4, html.dark h5, html.dark h6 {
+  color: #f9fafb !important; /* Almost pure white for crisp reading */
+}
+
+html.dark .text-gray-700,
+html.dark .text-gray-600,
+html.dark .text-slate-700,
+html.dark .text-slate-600 {
+  color: #d1d5db !important; /* Muted gray for body texts */
+}
+
+html.dark .text-gray-500,
+html.dark .text-gray-400,
+html.dark .text-slate-500,
+html.dark .text-slate-400 {
+  color: #9ca3af !important; /* Subtle gray for captions/subtitles */
+}
+
+/* Input Fields & Textareas */
+html.dark input,
+html.dark textarea,
+html.dark select {
+  background-color: #1f2937 !important;
+  color: #f9fafb !important;
+  border-color: #374151 !important;
+}
+
+html.dark input::placeholder,
+html.dark textarea::placeholder {
+  color: #6b7280 !important;
+}
+
+/* Borders & Separators */
+html.dark .border-gray-50,
+html.dark .border-gray-100,
+html.dark .border-gray-200,
+html.dark .border-slate-100,
+html.dark .border-slate-200,
+html.dark .border-white,
+html.dark hr {
+  border-color: #1f2937 !important; /* dark slate border */
+}
+
+/* Global Shadow Mode */
+html.dark .shadow-sm,
+html.dark .shadow,
+html.dark .shadow-md,
+html.dark .shadow-lg,
+html.dark .shadow-xl,
+html.dark .shadow-2xl {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -4px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* Keep Green Accents Highly Visible */
+html.dark .text-green-800,
+html.dark .text-green-700,
+html.dark .text-emerald-700 {
+  color: #34d399 !important; /* Vibrant Emerald green in dark mode */
+}
+
+html.dark .bg-green-50,
+html.dark .bg-emerald-50 {
+  background-color: rgba(52, 211, 153, 0.1) !important; /* Muted green highlight */
+}
+
+html.dark .bg-green-700,
+html.dark .bg-emerald-700 {
+  background-color: #059669 !important; /* Emerald-600 */
 }
 
 

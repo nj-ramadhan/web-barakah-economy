@@ -108,11 +108,10 @@ const DesktopHeader = () => {
                 {/* Dark/Light Mode Toggle */}
                 <button
                     onClick={toggleTheme}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-yellow-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-200"
+                    className="w-10 h-10 flex items-center justify-center rounded-full border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-yellow-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-200"
                     title={isDark ? 'Mode Terang' : 'Mode Gelap'}
                 >
-                    <span className="material-icons text-sm">{isDark ? 'light_mode' : 'dark_mode'}</span>
-                    <span className="text-xs font-bold hidden lg:block">{isDark ? 'Terang' : 'Gelap'}</span>
+                    <span className="material-icons text-xl">{isDark ? 'light_mode' : 'dark_mode'}</span>
                 </button>
 
                 {user ? (
