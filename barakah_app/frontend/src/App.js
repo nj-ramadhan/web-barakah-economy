@@ -403,7 +403,7 @@ const LayoutWrapper = ({ isDesktop }) => {
         {/* Widget Routes — standalone, auth dikelola di dalam komponen */}
         <Route path="/widget/calendar" element={<CalendarWidgetPage />} />
       </Routes>
-      <FloatingCartModal />
+      {!location.pathname.startsWith('/widget') && <FloatingCartModal />}
     </div>
   );
 };

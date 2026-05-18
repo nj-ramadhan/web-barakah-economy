@@ -230,24 +230,68 @@ const CalendarWidgetPage = () => {
     const selectedDateStr = selectedDay ? toLocalDateStr(selectedDay) : null;
     const selectedActs = selectedDateStr ? (activityByDate[selectedDateStr] || []) : [];
     const selectedNote = selectedDateStr ? notes[selectedDateStr] : null;
+    const noteLines = selectedNote?.content
+        ? selectedNote.content.split('\n').map(l => l.trim()).filter(Boolean)
+        : [];
 
-    // Sync note input when selection changes
+    // Reset note input when selection changes
     useEffect(() => {
-        if (selectedDateStr) {
-            setNoteInput(notes[selectedDateStr]?.content || '');
-        } else {
-            setNoteInput('');
-        }
-    }, [selectedDateStr, notes]);
+        setNoteInput('');
+    }, [selectedDateStr]);
 
-    const handleSaveNote = async () => {
-        if (!selectedDateStr) return;
+    const handleAddNoteItem = async () => {
+        if (!noteInput.trim() || !selectedDateStr) return;
+        const currentContent = notes[selectedDateStr]?.content || '';
+        const currentLines = currentContent.split('\n').map(l => l.trim()).filter(Boolean);
+        currentLines.push(noteInput.trim());
+        const newContent = currentLines.join('\n');
+
         setNoteSaving(true);
         try {
-            if (noteInput.trim()) {
+            const res = await axios.post(`${API}/api/site-content/calendar-notes/`, {
+                date: selectedDateStr,
+                content: newContent
+            }, authHeader(tokens));
+            setNotes(prev => ({ ...prev, [selectedDateStr]: res.data }));
+            setNoteInput('');
+        } catch (err) {
+            if (err.response?.status === 401) {
+                const refreshed = await refreshToken(tokens);
+                if (refreshed) {
+                    try {
+                        const res = await axios.post(`${API}/api/site-content/calendar-notes/`, {
+                            date: selectedDateStr,
+                            content: newContent
+                        }, authHeader(refreshed));
+                        setNotes(prev => ({ ...prev, [selectedDateStr]: res.data }));
+                        setNoteInput('');
+                    } catch (retryErr) {
+                        console.error('Failed retry add note:', retryErr);
+                        alert('Sesi telah kedaluwarsa. Silakan muat ulang halaman.');
+                    }
+                }
+            } else {
+                console.error('Gagal menambahkan catatan:', err);
+                alert('Gagal menambahkan catatan.');
+            }
+        } finally {
+            setNoteSaving(false);
+        }
+    };
+
+    const handleDeleteNoteItem = async (indexToDelete) => {
+        if (!selectedDateStr || !notes[selectedDateStr]) return;
+        const currentContent = notes[selectedDateStr].content || '';
+        const currentLines = currentContent.split('\n').map(l => l.trim()).filter(Boolean);
+        currentLines.splice(indexToDelete, 1);
+        const newContent = currentLines.join('\n');
+
+        setNoteSaving(true);
+        try {
+            if (newContent.trim()) {
                 const res = await axios.post(`${API}/api/site-content/calendar-notes/`, {
                     date: selectedDateStr,
-                    content: noteInput.trim()
+                    content: newContent
                 }, authHeader(tokens));
                 setNotes(prev => ({ ...prev, [selectedDateStr]: res.data }));
             } else {
@@ -263,10 +307,10 @@ const CalendarWidgetPage = () => {
                 const refreshed = await refreshToken(tokens);
                 if (refreshed) {
                     try {
-                        if (noteInput.trim()) {
+                        if (newContent.trim()) {
                             const res = await axios.post(`${API}/api/site-content/calendar-notes/`, {
                                 date: selectedDateStr,
-                                content: noteInput.trim()
+                                content: newContent
                             }, authHeader(refreshed));
                             setNotes(prev => ({ ...prev, [selectedDateStr]: res.data }));
                         } else {
@@ -278,50 +322,12 @@ const CalendarWidgetPage = () => {
                             });
                         }
                     } catch (retryErr) {
-                        console.error('Gagal menyimpan setelah refresh token:', retryErr);
-                        alert('Sesi telah kedaluwarsa. Silakan muat ulang halaman.');
+                        console.error('Failed retry delete line:', retryErr);
                     }
                 }
             } else {
-                console.error('Gagal menyimpan catatan:', err);
-                alert('Gagal menyimpan catatan. Silakan coba lagi.');
-            }
-        } finally {
-            setNoteSaving(false);
-        }
-    };
-
-    const handleDeleteNote = async () => {
-        if (!selectedDateStr || !notes[selectedDateStr]) return;
-        if (!window.confirm('Apakah Anda yakin ingin menghapus catatan untuk tanggal ini?')) return;
-        setNoteSaving(true);
-        try {
-            await axios.delete(`${API}/api/site-content/calendar-notes/?date=${selectedDateStr}`, authHeader(tokens));
-            setNotes(prev => {
-                const next = { ...prev };
-                delete next[selectedDateStr];
-                return next;
-            });
-            setNoteInput('');
-        } catch (err) {
-            if (err.response?.status === 401) {
-                const refreshed = await refreshToken(tokens);
-                if (refreshed) {
-                    try {
-                        await axios.delete(`${API}/api/site-content/calendar-notes/?date=${selectedDateStr}`, authHeader(refreshed));
-                        setNotes(prev => {
-                            const next = { ...prev };
-                            delete next[selectedDateStr];
-                            return next;
-                        });
-                        setNoteInput('');
-                    } catch (retryErr) {
-                        console.error('Gagal menghapus setelah refresh token:', retryErr);
-                    }
-                }
-            } else {
-                console.error('Gagal menghapus catatan:', err);
-                alert('Gagal menghapus catatan.');
+                console.error('Gagal menghapus item catatan:', err);
+                alert('Gagal menghapus item catatan.');
             }
         } finally {
             setNoteSaving(false);
@@ -530,46 +536,67 @@ const CalendarWidgetPage = () => {
                             ))
                         )}
 
-                        {/* Note Editor */}
+                        {/* Note Editor with multiple items */}
                         <div className="p-4 bg-amber-500/5 border border-amber-500/20 rounded-2xl">
-                            <div className="flex items-center justify-between mb-2">
-                                <div className="flex items-center gap-1.5">
-                                    <span className="material-icons text-amber-400 text-sm">edit_note</span>
-                                    <p className="text-[10px] font-black text-amber-400 uppercase tracking-widest">
-                                        {selectedNote ? `Catatan (Oleh: ${selectedNote.updated_by_name || 'Admin'})` : 'Tambah Catatan Draft'}
-                                    </p>
-                                </div>
-                                {selectedNote && (
-                                    <button
-                                        onClick={handleDeleteNote}
-                                        disabled={noteSaving}
-                                        className="text-[9px] font-bold text-rose-400 hover:text-rose-300 transition-colors uppercase tracking-wider disabled:opacity-50"
-                                    >
-                                        Hapus
-                                    </button>
-                                )}
+                            <div className="flex items-center gap-1.5 mb-3">
+                                <span className="material-icons text-amber-400 text-sm">edit_note</span>
+                                <p className="text-[10px] font-black text-amber-400 uppercase tracking-widest">
+                                    Catatan Rencana ({noteLines.length})
+                                </p>
                             </div>
-                            <textarea
-                                rows={2}
-                                value={noteInput}
-                                onChange={e => setNoteInput(e.target.value)}
-                                disabled={noteSaving}
-                                placeholder="Tulis rencana atau catatan draft untuk hari ini..."
-                                className="w-full bg-white/5 border border-amber-500/10 rounded-xl px-3 py-2 text-xs text-amber-100 placeholder-amber-500/20 focus:outline-none focus:border-amber-500/40 focus:bg-white/[0.08] resize-none transition-all leading-relaxed"
-                            />
-                            <div className="flex items-center justify-between mt-2">
-                                <span className="text-[8px] text-amber-500/40 font-bold">
-                                    {noteInput.length > 0 ? `${noteInput.length} karakter` : 'Belum ada catatan'}
-                                </span>
-                                <button
-                                    onClick={handleSaveNote}
+
+                            {/* List of items */}
+                            {noteLines.length === 0 ? (
+                                <p className="text-amber-500/40 text-[11px] italic mb-3">Belum ada catatan rencana kegiatan.</p>
+                            ) : (
+                                <div className="space-y-2 mb-3">
+                                    {noteLines.map((line, idx) => (
+                                        <div key={idx} className="flex items-start gap-2 bg-white/[0.03] border border-white/5 rounded-xl p-2.5 group">
+                                            <div className="w-1.5 h-1.5 rounded-full bg-amber-400 mt-1.5 shrink-0" />
+                                            <p className="flex-1 text-xs text-amber-100/90 leading-relaxed break-words">{line}</p>
+                                            <button
+                                                onClick={() => handleDeleteNoteItem(idx)}
+                                                disabled={noteSaving}
+                                                className="text-rose-450 hover:text-rose-400 p-0.5 rounded transition-all opacity-60 group-hover:opacity-100 disabled:opacity-30 flex items-center justify-center shrink-0"
+                                                title="Hapus baris ini"
+                                            >
+                                                <span className="material-icons text-xs">close</span>
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+
+                            {/* Add item field */}
+                            <div className="flex gap-2">
+                                <input
+                                    type="text"
+                                    value={noteInput}
+                                    onChange={e => setNoteInput(e.target.value)}
                                     disabled={noteSaving}
-                                    className="px-3 py-1.5 bg-amber-500 text-[#0f172a] text-[9px] font-black rounded-lg hover:opacity-90 active:scale-95 transition-all disabled:opacity-50 flex items-center gap-1"
+                                    placeholder="Tambah catatan rencana..."
+                                    className="flex-1 bg-white/5 border border-amber-500/15 rounded-xl px-3 py-2 text-xs text-amber-100 placeholder-amber-500/25 focus:outline-none focus:border-amber-500/40 focus:bg-white/[0.08] transition-all"
+                                    onKeyDown={e => {
+                                        if (e.key === 'Enter') {
+                                            e.preventDefault();
+                                            handleAddNoteItem();
+                                        }
+                                    }}
+                                />
+                                <button
+                                    onClick={handleAddNoteItem}
+                                    disabled={noteSaving || !noteInput.trim()}
+                                    className="px-3 bg-amber-500 text-[#0f172a] text-[10px] font-black rounded-xl hover:opacity-90 active:scale-95 transition-all disabled:opacity-40 flex items-center justify-center shrink-0"
                                 >
-                                    <span className="material-icons text-[10px]">{noteSaving ? 'refresh' : 'save'}</span>
-                                    {noteSaving ? 'Menyimpan...' : 'Simpan'}
+                                    Tambah
                                 </button>
                             </div>
+
+                            {selectedNote && selectedNote.updated_by_name && (
+                                <p className="text-[9px] text-amber-500/45 mt-2.5 text-right italic">
+                                    Terakhir diperbarui oleh: {selectedNote.updated_by_name}
+                                </p>
+                            )}
                         </div>
                     </div>
                 </div>
