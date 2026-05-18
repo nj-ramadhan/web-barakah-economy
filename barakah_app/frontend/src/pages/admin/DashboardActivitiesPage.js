@@ -183,8 +183,8 @@ const DashboardActivitiesPage = () => {
             </div>
 
             {showModal && (
-                <div className="fixed inset-0 bg-black/60 z-[100] flex items-center justify-center p-4 backdrop-blur-sm">
-                    <div className="bg-white w-full max-w-[95vw] md:max-w-2xl rounded-3xl shadow-2xl animate-slide-up flex flex-col max-h-[90vh] md:max-h-[85vh]">
+                <div className="fixed top-0 left-0 w-screen h-[100dvh] bg-black/60 z-[100] flex items-center justify-center p-4 backdrop-blur-sm">
+                    <div className="bg-white w-[90%] md:w-full max-w-[95vw] md:max-w-2xl rounded-3xl shadow-2xl animate-slide-up flex flex-col max-h-[90vh] md:max-h-[85vh]">
                         <div className="flex justify-between items-center p-5 md:p-6 border-b border-gray-100 shrink-0">
                             <h3 className="text-lg md:text-xl font-bold text-gray-800 truncate pr-4">{isEditing ? 'Edit Kegiatan' : 'Tambah Kegiatan Baru'}</h3>
                             <button type="button" onClick={() => setShowModal(false)} className="w-10 h-10 shrink-0 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:bg-gray-200 transition">
