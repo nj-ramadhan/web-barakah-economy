@@ -5,7 +5,7 @@ import {
     getMeetingDetail, 
     getMeetingParticipants, 
     addMeetingParticipants, 
-    removeMeetingParticipant,
+    removeMeetingParticipants,
     updateMeetingAttendance, 
     blastMeetingWhatsapp, 
     exportMeetingCsv,
@@ -100,12 +100,13 @@ const MeetingManagementPage = () => {
         }
     };
 
-    const handleRemoveParticipant = async (participantId, name) => {
-        if (!window.confirm(`Apakah Anda yakin ingin menghapus peserta "${name}" dari rapat ini?`)) return;
+    const handleRemoveParticipants = async () => {
+        if (selectedIds.length === 0) return;
+        if (!window.confirm(`Apakah Anda yakin ingin menghapus ${selectedIds.length} peserta terpilih dari rapat ini?`)) return;
         try {
-            await removeMeetingParticipant(slug, participantId);
-            setParticipants(prev => prev.filter(p => p.id !== participantId));
-            setSelectedIds(prev => prev.filter(id => id !== participantId));
+            await removeMeetingParticipants(slug, selectedIds);
+            setParticipants(prev => prev.filter(p => !selectedIds.includes(p.id)));
+            setSelectedIds([]);
             alert('Peserta berhasil dihapus.');
         } catch (err) {
             alert('Gagal menghapus peserta.');
@@ -236,6 +237,15 @@ const MeetingManagementPage = () => {
                             <span className="material-icons text-sm">campaign</span>
                             BLAST WA ({selectedIds.length > 0 ? selectedIds.length : 'SEMUA'})
                         </button>
+                        {selectedIds.length > 0 && (
+                            <button 
+                                onClick={handleRemoveParticipants}
+                                className="flex-1 md:flex-none bg-red-600 text-white px-4 py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-2 hover:bg-red-700 transition shadow-lg shadow-red-100"
+                            >
+                                <span className="material-icons text-sm">delete</span>
+                                HAPUS ({selectedIds.length})
+                            </button>
+                        )}
                         <button 
                             onClick={() => setShowAddModal(true)}
                             className="flex-1 md:flex-none bg-blue-600 text-white px-4 py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-2 hover:bg-blue-700 transition shadow-lg shadow-blue-100"
@@ -261,7 +271,6 @@ const MeetingManagementPage = () => {
                                     </th>
                                     <th className="p-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Peserta</th>
                                     <th className="p-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Info Kontak</th>
-                                    <th className="p-5 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center w-20">Aksi</th>
                                     {meeting?.sessions?.map(s => (
                                         <th key={s.id} className="p-5 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center min-w-[150px]">
                                             <div className="mb-2">{s.title}</div>
@@ -306,15 +315,6 @@ const MeetingManagementPage = () => {
                                         <td className="p-5">
                                             <p className="text-xs font-bold text-gray-600">{p.user_details?.email}</p>
                                             <p className="text-[10px] text-gray-400">{p.user_details?.profile?.phone || '-'}</p>
-                                        </td>
-                                        <td className="p-5 text-center">
-                                            <button
-                                                onClick={() => handleRemoveParticipant(p.id, p.user_details?.profile?.name_full || p.user_details?.username)}
-                                                className="w-8 h-8 rounded-xl bg-red-50 text-red-500 flex items-center justify-center hover:bg-red-100 transition mx-auto"
-                                                title="Hapus Peserta"
-                                            >
-                                                <span className="material-icons text-sm">delete</span>
-                                            </button>
                                         </td>
                                         {meeting?.sessions?.map(session => {
                                             const att = p.session_attendances?.find(a => a.session === session.id) || { status: 'pending', remarks: '' };
@@ -365,7 +365,7 @@ const MeetingManagementPage = () => {
                                 ))}
                                 {participants.length === 0 && (
                                     <tr>
-                                        <td colSpan={4 + (meeting?.sessions?.length || 0)} className="p-12 text-center">
+                                        <td colSpan={3 + (meeting?.sessions?.length || 0)} className="p-12 text-center">
                                             <span className="material-icons text-gray-200 text-4xl mb-2">person_off</span>
                                             <p className="text-sm font-bold text-gray-400 uppercase tracking-widest">Belum ada peserta terdaftar</p>
                                             <button onClick={() => setShowAddModal(true)} className="mt-4 text-blue-600 font-black text-[10px] uppercase tracking-widest hover:underline">Tambah Peserta Sekarang</button>
@@ -382,9 +382,9 @@ const MeetingManagementPage = () => {
             {showAddModal && (
                 <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
                     <div className="absolute inset-0 bg-gray-900/60 backdrop-blur-sm" onClick={() => setShowAddModal(false)}></div>
-                    <div className="relative bg-white w-full max-w-xl rounded-[2.5rem] shadow-2xl overflow-hidden animate-bounce-in flex flex-col max-h-[90vh] md:max-h-[80vh]">
-                        <div className="p-6 border-b border-gray-100 flex items-center justify-between shrink-0">
-                            <h3 className="text-xl font-black text-gray-900">Tambah Peserta Rapat</h3>
+                    <div className="relative bg-white w-full max-w-[95vw] md:max-w-xl rounded-[2.5rem] shadow-2xl overflow-hidden animate-bounce-in flex flex-col max-h-[90vh] md:max-h-[80vh]">
+                        <div className="p-5 md:p-6 border-b border-gray-100 flex items-center justify-between shrink-0">
+                            <h3 className="text-lg md:text-xl font-black text-gray-900 truncate pr-4">Tambah Peserta</h3>
                             <button onClick={() => setShowAddModal(false)} className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-400"><span className="material-icons text-sm">close</span></button>
                         </div>
                         <div className="p-6 flex-1 overflow-y-auto">
@@ -408,12 +408,12 @@ const MeetingManagementPage = () => {
                                         onClick={() => setSelectedUserIds(prev => prev.includes(u.id) ? prev.filter(x => x !== u.id) : [...prev, u.id])}
                                         className={`flex items-center gap-4 p-4 rounded-2xl cursor-pointer transition ${selectedUserIds.includes(u.id) ? 'bg-blue-600 text-white' : 'bg-gray-50 hover:bg-gray-100'}`}
                                     >
-                                        <div className="w-4 h-4 rounded border border-gray-300 flex items-center justify-center bg-white">
+                                        <div className="w-4 h-4 shrink-0 rounded border border-gray-300 flex items-center justify-center bg-white">
                                             {selectedUserIds.includes(u.id) && <span className="material-icons text-blue-600 text-xs">check</span>}
                                         </div>
-                                        <div className="flex-1">
-                                            <p className={`text-sm font-black ${selectedUserIds.includes(u.id) ? 'text-white' : 'text-gray-900'}`}>{u.profile?.name_full || u.username}</p>
-                                            <p className={`text-[10px] ${selectedUserIds.includes(u.id) ? 'text-blue-100' : 'text-gray-400'}`}>{u.email}</p>
+                                        <div className="flex-1 min-w-0">
+                                            <p className={`text-sm font-black truncate ${selectedUserIds.includes(u.id) ? 'text-white' : 'text-gray-900'}`}>{u.profile?.name_full || u.username}</p>
+                                            <p className={`text-[10px] truncate ${selectedUserIds.includes(u.id) ? 'text-blue-100' : 'text-gray-400'}`}>{u.email}</p>
                                         </div>
                                     </div>
                                 ))}
@@ -439,9 +439,9 @@ const MeetingManagementPage = () => {
             {showBlastModal && (
                 <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
                     <div className="absolute inset-0 bg-gray-900/60 backdrop-blur-sm" onClick={() => setShowBlastModal(false)}></div>
-                    <div className="relative bg-white w-full max-w-xl rounded-[2.5rem] shadow-2xl overflow-hidden animate-bounce-in flex flex-col max-h-[90vh] md:max-h-[80vh]">
-                        <div className="p-6 border-b border-gray-100 flex items-center justify-between shrink-0">
-                            <h3 className="text-xl font-black text-gray-900">Blast WhatsApp</h3>
+                    <div className="relative bg-white w-full max-w-[95vw] md:max-w-xl rounded-[2.5rem] shadow-2xl overflow-hidden animate-bounce-in flex flex-col max-h-[90vh] md:max-h-[80vh]">
+                        <div className="p-5 md:p-6 border-b border-gray-100 flex items-center justify-between shrink-0">
+                            <h3 className="text-lg md:text-xl font-black text-gray-900 truncate pr-4">Blast WhatsApp</h3>
                             <button onClick={() => setShowBlastModal(false)} className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-400"><span className="material-icons text-sm">close</span></button>
                         </div>
                         <div className="p-6 md:p-8 space-y-6 overflow-y-auto">

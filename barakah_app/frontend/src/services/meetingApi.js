@@ -58,8 +58,8 @@ export const addMeetingParticipants = (slug, userIds) => {
     });
 };
 
-export const removeMeetingParticipant = (slug, participantId) => {
-    return axios.post(`${API_BASE_URL}/api/meetings/${slug}/remove_participant/`, { participant_id: participantId }, {
+export const removeMeetingParticipants = (slug, participantIds) => {
+    return axios.post(`${API_BASE_URL}/api/meetings/${slug}/remove_participants/`, { participant_ids: participantIds }, {
         headers: getAuthHeaders()
     });
 };

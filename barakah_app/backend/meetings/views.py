@@ -98,19 +98,15 @@ class MeetingViewSet(viewsets.ModelViewSet):
         return Response({"message": f"Berhasil menambahkan {added_count} peserta baru."}, status=status.HTTP_201_CREATED)
 
     @action(detail=True, methods=['post'])
-    def remove_participant(self, request, slug=None):
+    def remove_participants(self, request, slug=None):
         meeting = self.get_object()
-        participant_id = request.data.get('participant_id')
+        participant_ids = request.data.get('participant_ids', [])
         
-        if not participant_id:
+        if not participant_ids:
             return Response({"error": "ID Peserta diperlukan."}, status=status.HTTP_400_BAD_REQUEST)
             
-        try:
-            participant = MeetingParticipant.objects.get(id=participant_id, meeting=meeting)
-            participant.delete()
-            return Response({"message": "Peserta berhasil dihapus dari rapat."}, status=status.HTTP_200_OK)
-        except MeetingParticipant.DoesNotExist:
-            return Response({"error": "Peserta tidak ditemukan."}, status=status.HTTP_404_NOT_FOUND)
+        MeetingParticipant.objects.filter(id__in=participant_ids, meeting=meeting).delete()
+        return Response({"message": f"{len(participant_ids)} Peserta berhasil dihapus dari rapat."}, status=status.HTTP_200_OK)
 
     @action(detail=True, methods=['post'])
     def update_attendance(self, request, slug=None):
