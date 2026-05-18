@@ -48,7 +48,7 @@ const LoginScreen = ({ onLogin, sessionExpired }) => {
         setLoading(true);
         setError('');
         try {
-            const res = await axios.post(`${API}/api/accounts/token/`, { username, password });
+            const res = await axios.post(`${API}/api/auth/login/`, { username, password });
             const tokens = { access: res.data.access, refresh: res.data.refresh };
             saveTokens(tokens);
             onLogin(tokens);
@@ -146,7 +146,7 @@ const CalendarWidgetPage = () => {
     // ── Token refresh ────────────────────────────────────────────────────────
     const refreshToken = useCallback(async (currentTokens) => {
         try {
-            const res = await axios.post(`${API}/api/accounts/token/refresh/`, {
+            const res = await axios.post(`${API}/api/auth/token/refresh/`, {
                 refresh: currentTokens.refresh
             });
             const updated = { ...currentTokens, access: res.data.access };
