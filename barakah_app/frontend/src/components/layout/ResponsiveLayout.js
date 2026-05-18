@@ -10,7 +10,7 @@ const MobileContainer = ({ children }) => {
     const shouldShow = isLandingPage && !isSpecialPage;
 
     return (
-        <div className="w-full max-w-md bg-white min-h-screen relative shadow-lg mx-auto">
+        <div className="w-full max-w-md bg-white dark:bg-gray-950 min-h-screen relative shadow-lg mx-auto transition-colors duration-300">
             {children}
             {shouldShow && <GeneralFeedbackBubble />}
         </div>

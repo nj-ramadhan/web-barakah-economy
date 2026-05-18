@@ -220,7 +220,7 @@ const App = () => {
       <ScrollToTop />
       <NotificationHandler />
       <GlobalPopupManager />
-      <div className="min-h-screen bg-gray-100 flex justify-center">
+      <div className="min-h-screen bg-gray-100 dark:bg-gray-950 flex justify-center transition-colors duration-300">
         <Routes>
           <Route path="/*" element={<LayoutWrapper isDesktop={isDesktop} />} />
         </Routes>

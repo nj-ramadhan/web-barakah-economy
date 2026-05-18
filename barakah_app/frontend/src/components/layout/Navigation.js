@@ -53,7 +53,7 @@ const NavigationButton = () => {
       {!isNavVisible && (
         <button
           onClick={() => setIsNavVisible(true)}
-          className="fixed bottom-6 left-1/2 -translate-x-1/2 px-6 py-2 bg-green-700 text-white rounded-full shadow-xl z-[1001] flex items-center justify-center gap-2 animate-bounce-subtle"
+          className="fixed bottom-6 left-1/2 -translate-x-1/2 px-6 py-2 bg-green-700 dark:bg-green-600 text-white rounded-full shadow-xl z-[1001] flex items-center justify-center gap-2 animate-bounce-subtle"
         >
           <span className="material-icons text-sm">keyboard_arrow_up</span>
           <span className="text-sm font-medium">Buka Menu</span>
@@ -61,21 +61,21 @@ const NavigationButton = () => {
       )}
 
       {isNavVisible && (
-        <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 max-w-md mx-auto z-50 rounded-t-3xl shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] transition-transform duration-300" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
+        <nav className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-950 border-t border-gray-100 dark:border-gray-800 max-w-md mx-auto z-50 rounded-t-3xl shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] dark:shadow-[0_-4px_12px_-1px_rgba(0,0,0,0.5)] transition-all duration-300" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
           <div className="grid grid-cols-12 items-center px-4 py-2 relative">
 
             {/* Close Toggle Button */}
             <button
               onClick={() => setIsNavVisible(false)}
-              className="absolute -top-3 left-1/2 -translate-x-1/2 w-8 h-8 bg-white border border-gray-100 rounded-full flex items-center justify-center shadow-sm z-[51]"
+              className="absolute -top-3 left-1/2 -translate-x-1/2 w-8 h-8 bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-700 rounded-full flex items-center justify-center shadow-sm z-[51]"
             >
-              <span className="material-icons text-gray-400 text-sm">keyboard_arrow_down</span>
+              <span className="material-icons text-gray-400 dark:text-gray-500 text-sm">keyboard_arrow_down</span>
             </button>
 
             {/* LAYANAN (Kiri - 3 cols) */}
             <div className="col-span-3 flex flex-col items-center justify-center relative" ref={layananRef}>
               {isLayananOpen && (
-                <div className="absolute bottom-full mb-4 left-0 w-56 bg-white shadow-2xl rounded-2xl border border-gray-100 z-50 p-3">
+                <div className="absolute bottom-full mb-4 left-0 w-56 bg-white dark:bg-gray-900 shadow-2xl dark:shadow-gray-950 rounded-2xl border border-gray-100 dark:border-gray-700 z-50 p-3">
                   <div
                     className="grid grid-cols-3 gap-2 max-h-64 overflow-y-auto"
                     style={{ scrollbarWidth: 'thin' }}
@@ -84,24 +84,24 @@ const NavigationButton = () => {
                       <Link
                         key={item.to}
                         to={item.to}
-                        className="flex flex-col items-center justify-center py-3 px-1 rounded-xl hover:bg-gray-50 transition-colors"
+                        className="flex flex-col items-center justify-center py-3 px-1 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                         onClick={() => setIsLayananOpen(false)}
                       >
-                        <div className={`w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center mb-1`}>
+                        <div className={`w-10 h-10 rounded-xl bg-gray-50 dark:bg-gray-800 flex items-center justify-center mb-1`}>
                           <span className={`material-icons text-xl ${item.color}`}>{item.icon}</span>
                         </div>
-                        <span className="text-[10px] font-medium text-gray-700 text-center leading-tight">{item.label}</span>
+                        <span className="text-[10px] font-medium text-gray-700 dark:text-gray-300 text-center leading-tight">{item.label}</span>
                       </Link>
                     ))}
                   </div>
                   {/* Arrow */}
-                  <div className="absolute -bottom-2 left-8 w-4 h-4 bg-white rotate-45 border-b border-r border-gray-100"></div>
+                  <div className="absolute -bottom-2 left-8 w-4 h-4 bg-white dark:bg-gray-900 rotate-45 border-b border-r border-gray-100 dark:border-gray-700"></div>
                 </div>
               )}
 
               <button
                 onClick={() => setIsLayananOpen(!isLayananOpen)}
-                className={`flex flex-col items-center justify-center focus:outline-none transition-colors ${isLayananOpen ? 'text-green-600' : 'text-gray-500'
+                className={`flex flex-col items-center justify-center focus:outline-none transition-colors ${isLayananOpen ? 'text-green-600 dark:text-green-400' : 'text-gray-500 dark:text-gray-400'
                   }`}
               >
                 <span className="material-icons text-2xl">grid_view</span>
@@ -113,7 +113,7 @@ const NavigationButton = () => {
             <div className="col-span-6 flex justify-center">
               <Link
                 to="/chat"
-                className="w-full flex items-center justify-center gap-1.5 py-2.5 bg-gradient-to-r from-green-500 to-green-700 rounded-2xl shadow-lg shadow-green-200 text-white hover:scale-105 active:scale-95 transition-all -mt-3"
+                className="w-full flex items-center justify-center gap-1.5 py-2.5 bg-gradient-to-r from-green-500 to-green-700 dark:from-green-600 dark:to-green-800 rounded-2xl shadow-lg shadow-green-200 dark:shadow-green-900/50 text-white hover:scale-105 active:scale-95 transition-all -mt-3"
               >
                 <span className="material-icons text-xl">chat</span>
                 <span className="text-sm font-bold">{t('nav.consultation', 'Konsultasi')}</span>
@@ -123,10 +123,10 @@ const NavigationButton = () => {
             {/* PROFILE (Kanan - 3 cols) */}
             <Link
               to={isLoggedIn ? "/profile" : "/login"}
-              className={`col-span-3 flex flex-col items-center justify-center transition-colors ${isActive('/profile') || isActive('/login') ? 'text-green-600' : 'text-gray-500'}`}
+              className={`col-span-3 flex flex-col items-center justify-center transition-colors ${isActive('/profile') || isActive('/login') ? 'text-green-600 dark:text-green-400' : 'text-gray-500 dark:text-gray-400'}`}
             >
               {isLoggedIn && JSON.parse(localStorage.getItem('user'))?.picture ? (
-                <div className="w-7 h-7 rounded-full overflow-hidden border-2 border-transparent bg-gray-100 flex items-center justify-center">
+                <div className="w-7 h-7 rounded-full overflow-hidden border-2 border-transparent bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
                   <img src={JSON.parse(localStorage.getItem('user')).picture} alt="Profile" className="w-full h-full object-cover" />
                 </div>
               ) : (

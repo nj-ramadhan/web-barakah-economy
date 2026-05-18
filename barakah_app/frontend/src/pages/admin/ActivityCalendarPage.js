@@ -252,7 +252,7 @@ const ActivityCalendarPage = () => {
     };
 
     return (
-        <div className="min-h-screen bg-[#f8fafc] pb-24">
+        <div className="min-h-screen bg-[#f8fafc] dark:bg-gray-950 pb-24 transition-colors duration-300">
             <Helmet>
                 <title>Kalender Kegiatan Admin - Barakah Economy</title>
             </Helmet>
@@ -267,26 +267,26 @@ const ActivityCalendarPage = () => {
                                 <span className="material-icons text-white">calendar_month</span>
                             </div>
                             <div>
-                                <h1 className="text-2xl font-black text-gray-900 tracking-tight">Kalender Kegiatan</h1>
-                                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Admin Monitoring Dashboard</p>
+                                <h1 className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">Kalender Kegiatan</h1>
+                                <p className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">Admin Monitoring Dashboard</p>
                             </div>
                         </div>
                     </div>
 
-                    <div className="flex flex-wrap items-center gap-3 bg-white/50 backdrop-blur-md p-1.5 rounded-2xl border border-white shadow-sm">
+                    <div className="flex flex-wrap items-center gap-3 bg-white/50 dark:bg-gray-800/50 backdrop-blur-md p-1.5 rounded-2xl border border-white dark:border-gray-700 shadow-sm">
                         {['weekly', 'monthly', 'quarterly', 'range'].map(mode => (
                             <button
                                 key={mode}
                                 onClick={() => setViewMode(mode)}
                                 className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300 ${viewMode === mode
-                                        ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-100 scale-105'
-                                        : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100/50'
+                                        ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-100 dark:shadow-indigo-900 scale-105'
+                                        : 'text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100/50 dark:hover:bg-gray-700/50'
                                     }`}
                             >
                                 {mode === 'weekly' ? 'Mingguan' : mode === 'monthly' ? 'Bulanan' : mode === 'quarterly' ? 'Triwulan' : 'Range'}
                             </button>
                         ))}
-                        <div className="w-[1px] h-6 bg-gray-200 mx-1"></div>
+                        <div className="w-[1px] h-6 bg-gray-200 dark:bg-gray-700 mx-1"></div>
                         <button
                             onClick={() => {
                                 if (filteredActivities.length === 0) return alert("Tidak ada data untuk di-export");
@@ -404,10 +404,10 @@ const ActivityCalendarPage = () => {
                     <>
                         {/* Monthly Grid View (Desktop Only) */}
                         {viewMode === 'monthly' && (
-                            <div className="hidden md:block bg-white rounded-[2.5rem] shadow-xl border border-gray-100 overflow-hidden mb-12 animate-fade-in">
-                                <div className="grid grid-cols-7 border-b border-gray-100 bg-gray-50/50">
+                            <div className="hidden md:block bg-white dark:bg-gray-900 rounded-[2.5rem] shadow-xl border border-gray-100 dark:border-gray-800 overflow-hidden mb-12 animate-fade-in">
+                                <div className="grid grid-cols-7 border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/50">
                                     {['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'].map(day => (
-                                        <div key={day} className="py-5 text-center text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">{day}</div>
+                                        <div key={day} className="py-5 text-center text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em]">{day}</div>
                                     ))}
                                 </div>
                                 <div className="grid grid-cols-7 auto-rows-[140px]">
@@ -415,7 +415,7 @@ const ActivityCalendarPage = () => {
                                         <div
                                             key={i}
                                             onClick={() => handleDateClick(dayObj)}
-                                            className={`p-3 border-r border-b border-gray-50 group hover:bg-indigo-50/30 transition-all duration-300 relative cursor-pointer ${!dayObj.day ? 'bg-gray-50/30' : ''}`}
+                                            className={`p-3 border-r border-b border-gray-50 dark:border-gray-800 group hover:bg-indigo-50/30 dark:hover:bg-indigo-900/20 transition-all duration-300 relative cursor-pointer ${!dayObj.day ? 'bg-gray-50/30 dark:bg-gray-900/50' : ''}`}
                                         >
                                             {dayObj.day && (() => {
                                                 const dStr = toLocalDateStr(dayObj.date);
@@ -425,7 +425,7 @@ const ActivityCalendarPage = () => {
                                                 return (
                                                     <>
                                                         <div className="flex justify-between items-start mb-1.5">
-                                                            <span className={`text-sm font-black transition-transform group-hover:scale-110 ${new Date().toDateString() === dayObj.date.toDateString() ? 'bg-indigo-600 text-white w-8 h-8 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-200' : 'text-gray-300 group-hover:text-indigo-400'}`}>
+                                                            <span className={`text-sm font-black transition-transform group-hover:scale-110 ${new Date().toDateString() === dayObj.date.toDateString() ? 'bg-indigo-600 text-white w-8 h-8 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-200 dark:shadow-indigo-900' : 'text-gray-300 dark:text-gray-600 group-hover:text-indigo-400 dark:group-hover:text-indigo-400'}`}>
                                                                 {dayObj.day}
                                                             </span>
                                                             {dayObj.activities.length > 0 && (
@@ -454,9 +454,9 @@ const ActivityCalendarPage = () => {
                                                             ))}
                                                         </div>
                                                         {hasNote && (
-                                                            <div className="mt-1 px-2 py-1 bg-amber-50 border border-amber-200/70 rounded-md flex items-start gap-1 group-hover:bg-amber-100/80 transition-colors">
+                                                            <div className="mt-1 px-2 py-1 bg-amber-50 dark:bg-amber-900/20 border border-amber-200/70 dark:border-amber-700/40 rounded-md flex items-start gap-1 group-hover:bg-amber-100/80 dark:group-hover:bg-amber-900/30 transition-colors">
                                                                 <span className="material-icons text-amber-400 text-[9px] mt-0.5 shrink-0">edit_note</span>
-                                                                <p className="text-[8px] font-semibold text-amber-700 leading-tight line-clamp-2 flex-1">{noteText}</p>
+                                                                <p className="text-[8px] font-semibold text-amber-700 dark:text-amber-400 leading-tight line-clamp-2 flex-1">{noteText}</p>
                                                             </div>
                                                         )}
                                                     </>
@@ -551,15 +551,15 @@ const ActivityCalendarPage = () => {
                 {/* Detail Modal */}
                 {showDetailModal && selectedDateData && (
                     <div className="fixed inset-0 z-[2000] flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm animate-fade-in">
-                        <div className="bg-white rounded-[2.5rem] w-full max-w-2xl shadow-2xl overflow-hidden animate-slide-up border border-white">
-                            <div className="p-8 border-b border-gray-50 flex justify-between items-center bg-gray-50/30">
+                        <div className="bg-white dark:bg-gray-900 rounded-[2.5rem] w-full max-w-2xl shadow-2xl overflow-hidden animate-slide-up border border-white dark:border-gray-700">
+                            <div className="p-8 border-b border-gray-50 dark:border-gray-800 flex justify-between items-center bg-gray-50/30 dark:bg-gray-800/30">
                                 <div>
-                                    <h3 className="text-2xl font-black text-gray-800 tracking-tight">Agenda {formatDate(selectedDateData.date)}</h3>
-                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">Ditemukan {selectedDateData.activities.length} Kegiatan</p>
+                                    <h3 className="text-2xl font-black text-gray-800 dark:text-white tracking-tight">Agenda {formatDate(selectedDateData.date)}</h3>
+                                    <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mt-1">Ditemukan {selectedDateData.activities.length} Kegiatan</p>
                                 </div>
                                 <button
                                     onClick={() => setShowDetailModal(false)}
-                                    className="w-12 h-12 rounded-2xl bg-white border border-gray-100 text-gray-400 hover:text-rose-500 hover:border-rose-100 transition-all shadow-sm"
+                                    className="w-12 h-12 rounded-2xl bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 text-gray-400 hover:text-rose-500 dark:hover:text-rose-400 hover:border-rose-100 dark:hover:border-rose-700 transition-all shadow-sm"
                                 >
                                     <span className="material-icons">close</span>
                                 </button>
