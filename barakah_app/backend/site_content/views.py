@@ -2,11 +2,11 @@ from django.db import models
 from rest_framework import viewsets, permissions, status, response
 from rest_framework.decorators import action
 from rest_framework_simplejwt.authentication import JWTAuthentication
-from .models import Partner, Testimonial, Activity, AboutUs, AboutUsLegalDocument, Announcement, HeroBanner
+from .models import Partner, Testimonial, Activity, AboutUs, AboutUsLegalDocument, Announcement, HeroBanner, CalendarNote
 from .serializers import (
     PartnerSerializer, TestimonialSerializer, ActivitySerializer, AboutUsSerializer, 
     AboutUsLegalDocumentSerializer, 
-    AnnouncementSerializer, HeroBannerSerializer
+    AnnouncementSerializer, HeroBannerSerializer, CalendarNoteSerializer
 )
 
 class AnnouncementViewSet(viewsets.ModelViewSet):
@@ -305,3 +305,67 @@ class ActivityCalendarView(APIView):
         } for m in meetings_qs]
 
         return Response(event_data + campaign_data + meeting_data)
+
+
+class CalendarNoteView(APIView):
+    """
+    GET  /api/site-content/calendar-notes/?date=YYYY-MM-DD  — ambil catatan pada tanggal tersebut
+    GET  /api/site-content/calendar-notes/?start=...&end=... — ambil semua catatan dalam rentang
+    POST /api/site-content/calendar-notes/                   — buat/update catatan (upsert by date)
+    DELETE /api/site-content/calendar-notes/?date=YYYY-MM-DD — hapus catatan
+    Hanya dapat diakses oleh staff/admin.
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def _check_admin(self, request):
+        return request.user.is_staff or request.user.role == 'admin'
+
+    def get(self, request):
+        if not self._check_admin(request):
+            return Response({'error': 'Unauthorized'}, status=status.HTTP_403_FORBIDDEN)
+
+        date_param = request.query_params.get('date')
+        start_param = request.query_params.get('start')
+        end_param = request.query_params.get('end')
+
+        qs = CalendarNote.objects.all()
+        if date_param:
+            qs = qs.filter(date=date_param)
+        elif start_param and end_param:
+            qs = qs.filter(date__gte=start_param, date__lte=end_param)
+
+        serializer = CalendarNoteSerializer(qs, many=True)
+        return Response(serializer.data)
+
+    def post(self, request):
+        if not self._check_admin(request):
+            return Response({'error': 'Unauthorized'}, status=status.HTTP_403_FORBIDDEN)
+
+        date_val = request.data.get('date')
+        content_val = request.data.get('content', '').strip()
+
+        if not date_val:
+            return Response({'error': 'Tanggal wajib diisi.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        note, created = CalendarNote.objects.get_or_create(date=date_val)
+        note.content = content_val
+        note.updated_by = request.user
+        if created:
+            note.created_by = request.user
+        note.save()
+
+        serializer = CalendarNoteSerializer(note)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def delete(self, request):
+        if not self._check_admin(request):
+            return Response({'error': 'Unauthorized'}, status=status.HTTP_403_FORBIDDEN)
+
+        date_param = request.query_params.get('date')
+        if not date_param:
+            return Response({'error': 'Tanggal wajib diisi.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        deleted, _ = CalendarNote.objects.filter(date=date_param).delete()
+        if deleted:
+            return Response({'message': 'Catatan berhasil dihapus.'}, status=status.HTTP_200_OK)
+        return Response({'error': 'Catatan tidak ditemukan.'}, status=status.HTTP_404_NOT_FOUND)

@@ -122,3 +122,25 @@ class HeroBanner(models.Model):
 
     def __str__(self):
         return self.title
+
+
+class CalendarNote(models.Model):
+    """Catatan/Draft rencana kegiatan harian pada kalender admin."""
+    date = models.DateField(unique=True, db_index=True)
+    content = models.TextField()
+    created_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='calendar_notes'
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    updated_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='updated_calendar_notes'
+    )
+
+    class Meta:
+        ordering = ['date']
+
+    def __str__(self):
+        return f"Catatan {self.date}"

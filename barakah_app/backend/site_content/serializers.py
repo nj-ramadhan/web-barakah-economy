@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Partner, Testimonial, Activity, AboutUs, AboutUsLegalDocument, Announcement, HeroBanner
+from .models import Partner, Testimonial, Activity, AboutUs, AboutUsLegalDocument, Announcement, HeroBanner, CalendarNote
 
 class AnnouncementSerializer(serializers.ModelSerializer):
     type_display = serializers.CharField(source='get_type_display', read_only=True)
@@ -63,3 +63,29 @@ class HeroBannerSerializer(serializers.ModelSerializer):
     class Meta:
         model = HeroBanner
         fields = '__all__'
+
+class CalendarNoteSerializer(serializers.ModelSerializer):
+    created_by_name = serializers.SerializerMethodField()
+    updated_by_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = CalendarNote
+        fields = ['id', 'date', 'content', 'created_by', 'created_by_name',
+                  'updated_by', 'updated_by_name', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'created_by', 'created_at', 'updated_at', 'updated_by']
+
+    def get_created_by_name(self, obj):
+        if obj.created_by:
+            try:
+                return obj.created_by.profile.name_full or obj.created_by.username
+            except Exception:
+                return obj.created_by.username
+        return None
+
+    def get_updated_by_name(self, obj):
+        if obj.updated_by:
+            try:
+                return obj.updated_by.profile.name_full or obj.updated_by.username
+            except Exception:
+                return obj.updated_by.username
+        return None

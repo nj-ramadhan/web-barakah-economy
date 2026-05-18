@@ -134,6 +134,108 @@ const ActivityCalendarPage = () => {
     const [selectedDateData, setSelectedDateData] = useState(null);
     const [showDetailModal, setShowDetailModal] = useState(false);
 
+    // ── Catatan Harian (Rencana Kegiatan) — berbasis API ────────────────────
+    const NOTES_API = `${API}/api/site-content/calendar-notes/`;
+
+    // allNotes: { 'YYYY-MM-DD': { id, content, updated_by_name, updated_at }, ... }
+    const [allNotes, setAllNotes] = useState({});
+    const [noteInput, setNoteInput] = useState('');
+    const [noteSaving, setNoteSaving] = useState(false);
+    const [noteLoading, setNoteLoading] = useState(false);
+
+    const selectedDateStr = selectedDateData?.date ? toLocalDateStr(selectedDateData.date) : null;
+
+    // Fetch semua catatan untuk bulan yang sedang dilihat (agar indikator muncul di grid)
+    const fetchNotesForMonth = useCallback(async () => {
+        if (viewMode !== 'monthly') return;
+        const year = currentDate.getFullYear();
+        const month = currentDate.getMonth();
+        const start = `${year}-${String(month + 1).padStart(2, '0')}-01`;
+        const lastDay = new Date(year, month + 1, 0).getDate();
+        const end = `${year}-${String(month + 1).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+        try {
+            const res = await axios.get(`${NOTES_API}?start=${start}&end=${end}`, getAuth());
+            const map = {};
+            res.data.forEach(n => { map[n.date] = n; });
+            setAllNotes(map);
+        } catch (err) {
+            console.error('Gagal fetch catatan bulan:', err);
+        }
+    }, [viewMode, currentDate, getAuth]); // eslint-disable-line react-hooks/exhaustive-deps
+
+    useEffect(() => {
+        fetchNotesForMonth();
+    }, [fetchNotesForMonth]);
+
+    // Sync noteInput & fetch detail catatan ketika modal dibuka untuk tanggal tertentu
+    useEffect(() => {
+        if (!selectedDateStr) return;
+        // Isi dari cache dulu, lalu fetch untuk data terbaru
+        setNoteInput(allNotes[selectedDateStr]?.content || '');
+        (async () => {
+            setNoteLoading(true);
+            try {
+                const res = await axios.get(`${NOTES_API}?date=${selectedDateStr}`, getAuth());
+                if (res.data.length > 0) {
+                    const note = res.data[0];
+                    setNoteInput(note.content || '');
+                    setAllNotes(prev => ({ ...prev, [selectedDateStr]: note }));
+                } else {
+                    setNoteInput('');
+                }
+            } catch (err) {
+                console.error('Gagal fetch catatan:', err);
+            } finally {
+                setNoteLoading(false);
+            }
+        })();
+    }, [selectedDateStr]); // eslint-disable-line react-hooks/exhaustive-deps
+
+    const handleSaveNote = async () => {
+        if (!selectedDateStr) return;
+        setNoteSaving(true);
+        try {
+            if (noteInput.trim()) {
+                // Upsert — POST dengan date + content
+                const res = await axios.post(NOTES_API, {
+                    date: selectedDateStr,
+                    content: noteInput.trim(),
+                }, getAuth());
+                setAllNotes(prev => ({ ...prev, [selectedDateStr]: res.data }));
+            } else {
+                // Kosong → hapus
+                await axios.delete(`${NOTES_API}?date=${selectedDateStr}`, getAuth());
+                setAllNotes(prev => {
+                    const next = { ...prev };
+                    delete next[selectedDateStr];
+                    return next;
+                });
+            }
+            setTimeout(() => setNoteSaving(false), 700);
+        } catch (err) {
+            console.error('Gagal menyimpan catatan:', err);
+            setNoteSaving(false);
+            alert('Gagal menyimpan catatan. Silakan coba lagi.');
+        }
+    };
+
+    const handleDeleteNote = async () => {
+        if (!selectedDateStr) return;
+        try {
+            await axios.delete(`${NOTES_API}?date=${selectedDateStr}`, getAuth());
+            setAllNotes(prev => {
+                const next = { ...prev };
+                delete next[selectedDateStr];
+                return next;
+            });
+            setNoteInput('');
+        } catch (err) {
+            console.error('Gagal menghapus catatan:', err);
+            alert('Gagal menghapus catatan.');
+        }
+    };
+    // ─────────────────────────────────────────────────────────────────────────
+
     const handleDateClick = (dayObj) => {
         if (!dayObj.day) return;
         setSelectedDateData(dayObj);
@@ -307,43 +409,52 @@ const ActivityCalendarPage = () => {
                                             onClick={() => handleDateClick(dayObj)}
                                             className={`p-3 border-r border-b border-gray-50 group hover:bg-indigo-50/30 transition-all duration-300 relative cursor-pointer ${!dayObj.day ? 'bg-gray-50/30' : ''}`}
                                         >
-                                            {dayObj.day && (
-                                                <>
-                                                    <div className="flex justify-between items-start mb-2">
-                                                        <span className={`text-sm font-black transition-transform group-hover:scale-110 ${new Date().toDateString() === dayObj.date.toDateString() ? 'bg-indigo-600 text-white w-8 h-8 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-200' : 'text-gray-300 group-hover:text-indigo-400'}`}>
-                                                            {dayObj.day}
-                                                        </span>
-                                                        {dayObj.activities.length > 0 && (
-                                                            <div className="flex flex-col items-end">
-                                                                <div className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-ping"></div>
-                                                                <span className="text-[8px] font-black text-indigo-500 mt-1">{dayObj.activities.length} Kegiatan</span>
+                                            {dayObj.day && (() => {
+                                                const dStr = toLocalDateStr(dayObj.date);
+                                                const hasNote = !!allNotes[dStr];
+                                                return (
+                                                    <>
+                                                        <div className="flex justify-between items-start mb-2">
+                                                            <span className={`text-sm font-black transition-transform group-hover:scale-110 ${new Date().toDateString() === dayObj.date.toDateString() ? 'bg-indigo-600 text-white w-8 h-8 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-200' : 'text-gray-300 group-hover:text-indigo-400'}`}>
+                                                                {dayObj.day}
+                                                            </span>
+                                                            <div className="flex flex-col items-end gap-0.5">
+                                                                {dayObj.activities.length > 0 && (
+                                                                    <div className="flex flex-col items-end">
+                                                                        <div className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-ping"></div>
+                                                                        <span className="text-[8px] font-black text-indigo-500 mt-1">{dayObj.activities.length} Kegiatan</span>
+                                                                    </div>
+                                                                )}
+                                                                {hasNote && (
+                                                                    <span className="material-icons text-amber-400 text-[13px] mt-0.5" title="Ada catatan rencana">edit_note</span>
+                                                                )}
                                                             </div>
-                                                        )}
-                                                    </div>
-                                                    <div className="space-y-1.5 overflow-y-auto max-h-[85px] custom-scrollbar pr-1">
-                                                        {dayObj.activities.map(act => (
-                                                            <div 
-                                                                key={act.id} 
-                                                                className="px-2.5 py-1.5 rounded-lg text-white cursor-pointer hover:brightness-110 hover:shadow-md transition-all active:scale-95 border border-white/20"
-                                                                style={{ 
-                                                                    backgroundColor: act.color,
-                                                                    background: `linear-gradient(135deg, ${act.color}, ${act.color}dd)` 
-                                                                }}
-                                                                title={`${act.title} - ${act.time_str}`}
-                                                            >
-                                                                <div className="flex justify-between items-center gap-1">
-                                                                    <span className="text-[8px] font-black truncate flex-1">{act.title}</span>
-                                                                    <span className="text-[7px] font-bold opacity-80 shrink-0">{act.time_str}</span>
+                                                        </div>
+                                                        <div className="space-y-1.5 overflow-y-auto max-h-[85px] custom-scrollbar pr-1">
+                                                            {dayObj.activities.map(act => (
+                                                                <div 
+                                                                    key={act.id} 
+                                                                    className="px-2.5 py-1.5 rounded-lg text-white cursor-pointer hover:brightness-110 hover:shadow-md transition-all active:scale-95 border border-white/20"
+                                                                    style={{ 
+                                                                        backgroundColor: act.color,
+                                                                        background: `linear-gradient(135deg, ${act.color}, ${act.color}dd)` 
+                                                                    }}
+                                                                    title={`${act.title} - ${act.time_str}`}
+                                                                >
+                                                                    <div className="flex justify-between items-center gap-1">
+                                                                        <span className="text-[8px] font-black truncate flex-1">{act.title}</span>
+                                                                        <span className="text-[7px] font-bold opacity-80 shrink-0">{act.time_str}</span>
+                                                                    </div>
+                                                                    <div className="flex items-center gap-1 mt-0.5 opacity-90">
+                                                                        <span className="material-icons text-[7px]">groups</span>
+                                                                        <span className="text-[7px] font-bold">{act.participants_count}</span>
+                                                                    </div>
                                                                 </div>
-                                                                <div className="flex items-center gap-1 mt-0.5 opacity-90">
-                                                                    <span className="material-icons text-[7px]">groups</span>
-                                                                    <span className="text-[7px] font-bold">{act.participants_count}</span>
-                                                                </div>
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                </>
-                                            )}
+                                                            ))}
+                                                        </div>
+                                                    </>
+                                                );
+                                            })()}
                                         </div>
                                     ))}
                                 </div>
@@ -448,18 +559,20 @@ const ActivityCalendarPage = () => {
                                 </button>
                             </div>
                             
-                            <div className="p-8 max-h-[60vh] overflow-y-auto custom-scrollbar">
+                        <div className="max-h-[75vh] overflow-y-auto custom-scrollbar">
+                            {/* Daftar Kegiatan */}
+                            <div className="p-8 pb-4">
                                 {selectedDateData.activities.length === 0 ? (
-                                    <div className="py-12 text-center">
-                                        <div className="w-20 h-20 bg-gray-50 rounded-[2rem] flex items-center justify-center mx-auto mb-4">
-                                            <span className="material-icons text-gray-300 text-3xl">event_available</span>
+                                    <div className="py-8 text-center">
+                                        <div className="w-16 h-16 bg-gray-50 rounded-[1.5rem] flex items-center justify-center mx-auto mb-3">
+                                            <span className="material-icons text-gray-300 text-2xl">event_available</span>
                                         </div>
                                         <p className="text-gray-400 font-bold text-sm">Tidak ada kegiatan terjadwal di hari ini.</p>
                                     </div>
                                 ) : (
-                                    <div className="space-y-6">
+                                    <div className="space-y-4">
                                         {selectedDateData.activities.map(act => (
-                                            <div key={act.id} className="p-6 bg-gray-50/50 rounded-3xl border border-gray-100 hover:border-indigo-100 transition-all">
+                                            <div key={act.id} className="p-5 bg-gray-50/50 rounded-3xl border border-gray-100 hover:border-indigo-100 transition-all">
                                                 <div className="flex items-center gap-3 mb-4">
                                                     <span className="material-icons p-2 bg-white rounded-xl shadow-sm text-sm" style={{ color: act.color }}>
                                                         {act.type === 'event' ? 'event' : 
@@ -471,7 +584,7 @@ const ActivityCalendarPage = () => {
                                                     </div>
                                                 </div>
                                                 
-                                                <div className="grid grid-cols-2 gap-4 mb-6">
+                                                <div className="grid grid-cols-2 gap-4 mb-5">
                                                     <div className="space-y-1">
                                                         <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest">Waktu & Jam</p>
                                                         <p className="text-[11px] font-bold text-gray-700 flex items-center gap-1">
@@ -515,6 +628,71 @@ const ActivityCalendarPage = () => {
                                     </div>
                                 )}
                             </div>
+
+                            {/* ── Catatan / Rencana Kegiatan ── */}
+                            <div className="px-8 pb-8">
+                                <div className="mt-2 bg-amber-50/60 border border-amber-100 rounded-[1.75rem] p-6">
+                                    <div className="flex items-center justify-between mb-4">
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-8 h-8 bg-amber-100 rounded-xl flex items-center justify-center">
+                                                <span className="material-icons text-amber-600 text-sm">edit_note</span>
+                                            </div>
+                                            <div>
+                                                <p className="text-xs font-black text-amber-800">Catatan Rencana Kegiatan</p>
+                                                <p className="text-[9px] font-bold text-amber-500 uppercase tracking-widest">
+                                                    {allNotes[selectedDateStr]?.updated_by_name
+                                                        ? `Diperbarui oleh: ${allNotes[selectedDateStr].updated_by_name}`
+                                                        : 'Tersimpan di database — terlihat semua admin'}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        {allNotes[selectedDateStr] && (
+                                            <button
+                                                onClick={handleDeleteNote}
+                                                className="w-8 h-8 rounded-xl bg-white border border-rose-100 text-rose-400 hover:bg-rose-50 hover:text-rose-600 flex items-center justify-center transition-all shadow-sm"
+                                                title="Hapus catatan"
+                                            >
+                                                <span className="material-icons text-sm">delete</span>
+                                            </button>
+                                        )}
+                                    </div>
+                                    <div className="relative">
+                                        <textarea
+                                            rows={4}
+                                            value={noteInput}
+                                            onChange={e => setNoteInput(e.target.value)}
+                                            disabled={noteLoading}
+                                            placeholder="Tulis rencana atau catatan untuk hari ini... (bisa dilihat oleh semua admin)"
+                                            className="w-full bg-white/70 border border-amber-100 rounded-2xl px-4 py-3 text-sm text-gray-700 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-amber-300 focus:bg-white resize-none transition-all leading-relaxed font-medium disabled:opacity-50"
+                                        />
+                                        {noteLoading && (
+                                            <div className="absolute inset-0 flex items-center justify-center bg-white/60 rounded-2xl">
+                                                <span className="material-icons text-amber-400 animate-spin text-xl">refresh</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div className="flex items-center justify-between mt-3">
+                                        <p className="text-[9px] text-amber-500 font-bold">
+                                            {noteInput.length > 0 ? `${noteInput.length} karakter` : 'Belum ada catatan'}
+                                        </p>
+                                        <button
+                                            onClick={handleSaveNote}
+                                            disabled={noteSaving || noteLoading}
+                                            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-md ${
+                                                noteSaving 
+                                                    ? 'bg-emerald-500 text-white shadow-emerald-100' 
+                                                    : 'bg-amber-500 text-white hover:bg-amber-600 shadow-amber-100 active:scale-95 disabled:opacity-50'
+                                            }`}
+                                        >
+                                            <span className="material-icons text-sm">
+                                                {noteSaving ? 'check_circle' : 'save'}
+                                            </span>
+                                            {noteSaving ? 'Tersimpan!' : 'Simpan Catatan'}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                         </div>
                     </div>
                 )}
@@ -536,6 +714,10 @@ const ActivityCalendarPage = () => {
                     <div className="flex items-center gap-3">
                         <div className="w-4 h-4 rounded-lg bg-amber-400 shadow-md shadow-amber-100"></div>
                         <span className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Menunggu Review</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                        <span className="material-icons text-amber-400 text-base">edit_note</span>
+                        <span className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Ada Catatan Bersama</span>
                     </div>
                 </div>
             </div>

@@ -396,7 +396,7 @@ const DesktopLandingPage = () => {
                                     </div>
                                     <h3 className="text-xl font-bold text-gray-900 mb-3">Relawan BAE</h3>
                                     <p className="text-gray-600 mb-4 text-sm">Jadilah bagian dari perubahan positif. Bergabunglah sebagai relawan Barakah Economy.</p>
-                                    <Link className="text-red-700 font-semibold hover:underline text-sm" to="#">Daftar Relawan →</Link>
+                                    <Link className="text-red-700 font-semibold hover:underline text-sm" to="/register">Daftar Relawan →</Link>
                                 </div>
                             </SwiperSlide>
                             {/* Barakah Event */}
