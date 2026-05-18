@@ -39,9 +39,11 @@ html.dark .bg-slate-50,
 html.dark .bg-zinc-50,
 html.dark .bg-neutral-50,
 html.dark [class*="bg-[#f8fafc]"],
-html.dark [class*="bg-[#f9fafb]"] {
+html.dark [class*="bg-[#f9fafb]"],
+html.dark [class*="bg-[#fcfdfe]"] {
   background-color: #0b0f19 !important; 
 }
+
 
 /* Inner Card & Content Container Background Elements (Elegant Slate-900 card contrast) */
 html.dark .bg-white,

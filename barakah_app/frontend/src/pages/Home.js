@@ -12,6 +12,8 @@ import ShareButton from '../components/campaigns/ShareButton';
 import { getDigitalProducts, getPopularSellers } from '../services/digitalProductApi';
 import FloatingCartModal from '../components/layout/FloatingCartModal';
 import { getMediaUrl } from '../utils/mediaUtils';
+import { forumApi } from '../services/forumApi';
+
 
 function getCsrfToken() {
   const cookies = document.cookie.split(';');
@@ -110,6 +112,9 @@ const Home = () => {
   const [heroBanners, setHeroBanners] = useState([]);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [swiperInstance, setSwiperInstance] = useState(null);
+  const [threads, setThreads] = useState([]);
+  const [articles, setArticles] = useState([]);
+
 
   const handleSlideChange = (swiper) => {
     // Stop all videos in the slider
@@ -217,6 +222,17 @@ const Home = () => {
             }
           }).catch(err => console.error("Error fetching my testimonial:", err));
         }
+        
+        // Fetch latest forum threads for mobile carousel
+        forumApi.getThreads().then(res => {
+          setThreads(res.data.slice(0, 6));
+        }).catch(err => console.error("Error fetching threads:", err));
+
+        // Fetch latest articles for mobile carousel
+        axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/articles/`).then(res => {
+          setArticles(res.data.slice(0, 6));
+        }).catch(err => console.error("Error fetching articles:", err));
+
       } catch (err) {
         console.error("Error fetching site content:", err);
       }
@@ -1875,25 +1891,178 @@ const Home = () => {
       )}
 
       {/* Forum Tanya Jawab */}
-      <div className="px-4 py-8 mb-4 border-t border-gray-100">
-        <div className="flex justify-between items-center mb-4">
+      <div className="px-4 py-8 mb-4 border-t border-gray-100 dark:border-gray-800">
+        <div className="flex justify-between items-center mb-6">
           <div>
-            <h1 className="text-xl font-bold text-gray-800">Forum Tanya Jawab</h1>
-            <h2 className="text-sm text-gray-500 mt-1">Diskusikan topik bersama para pakar</h2>
+            <h1 className="text-xl font-bold text-gray-800 dark:text-white">Forum Tanya Jawab</h1>
+            <h2 className="text-xs text-gray-500 dark:text-gray-400 mt-1">Diskusikan topik bersama para pakar</h2>
           </div>
-        </div>
-        <div className="bg-indigo-50 p-6 rounded-2xl flex flex-col items-center justify-center text-center border border-indigo-100">
-          <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mb-4 shadow-sm">
-            <span className="material-icons text-indigo-600 text-3xl">forum</span>
-          </div>
-          <p className="text-sm text-gray-700 mb-6">
-            Dapatkan jawaban atas pertanyaan seputar bisnis, fiqih, dan masalah keseharian dari para ahlinya.
-          </p>
-          <Link to="/forum" className="w-full max-w-[200px] py-3 bg-indigo-600 text-white rounded-xl text-sm font-bold shadow-md hover:bg-indigo-700 transition">
-            Buka Forum
+          <Link to="/forum" className="text-xs font-bold text-green-700 dark:text-green-400 flex items-center gap-0.5">
+            Lihat Semua <span className="material-icons text-[14px]">arrow_forward</span>
           </Link>
         </div>
+
+        {threads && threads.length > 0 ? (
+          <div className="mb-6">
+            <Swiper
+              modules={[Navigation, Pagination, Autoplay]}
+              spaceBetween={16}
+              slidesPerView={1.2}
+              breakpoints={{
+                640: { slidesPerView: 2.2 },
+                768: { slidesPerView: 3.2 }
+              }}
+              autoplay={{ delay: 4000, disableOnInteraction: false }}
+              className="py-2"
+            >
+              {threads.map(thread => (
+                <SwiperSlide key={thread.id}>
+                  <Link
+                    to={`/forum/${thread.slug}`}
+                    className="block bg-white dark:bg-[#111827] p-4 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 hover:shadow-md transition h-48 flex flex-col justify-between"
+                  >
+                    <div>
+                      {/* Author */}
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="w-6 h-6 rounded-full bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center text-indigo-700 dark:text-indigo-300 font-bold text-xs flex-shrink-0">
+                          {thread.author?.full_name?.charAt(0) || 'U'}
+                        </div>
+                        <span className="text-[10px] font-semibold text-gray-600 dark:text-gray-300 truncate max-w-[80px]">
+                          {thread.author?.full_name}
+                        </span>
+                        {thread.author?.is_expert && (
+                          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[8px] font-medium bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400 scale-90">
+                            Pakar
+                          </span>
+                        )}
+                      </div>
+                      {/* Title */}
+                      <h3 className="text-xs font-bold text-gray-900 dark:text-white line-clamp-2 mb-1">
+                        {thread.title}
+                      </h3>
+                      {/* Snippet */}
+                      <p className="text-[10px] text-gray-500 dark:text-gray-400 line-clamp-3">
+                        {thread.content}
+                      </p>
+                    </div>
+
+                    {/* Stats Footer */}
+                    <div className="flex gap-3 text-[9px] text-gray-400 dark:text-gray-500 border-t border-gray-50 dark:border-gray-800/80 pt-2 mt-2">
+                      <div className="flex items-center gap-0.5">
+                        <span className="material-icons text-[12px]">favorite</span>
+                        <span>{thread.likes_count || 0}</span>
+                      </div>
+                      <div className="flex items-center gap-0.5">
+                        <span className="material-icons text-[12px]">chat</span>
+                        <span>{thread.replies_count || 0}</span>
+                      </div>
+                    </div>
+                  </Link>
+                </SwiperSlide>
+              ))}
+            </Swiper>
+          </div>
+        ) : (
+          <div className="bg-indigo-50 dark:bg-indigo-950/20 p-6 rounded-2xl flex flex-col items-center justify-center text-center border border-indigo-100 dark:border-indigo-900/50">
+            <div className="w-16 h-16 bg-white dark:bg-[#111827] rounded-full flex items-center justify-center mb-4 shadow-sm">
+              <span className="material-icons text-indigo-600 dark:text-indigo-400 text-3xl">forum</span>
+            </div>
+            <p className="text-xs text-gray-700 dark:text-gray-300 mb-6">
+              Dapatkan jawaban atas pertanyaan seputar bisnis, fiqih, dan masalah keseharian dari para ahlinya.
+            </p>
+            <Link to="/forum" className="w-full max-w-[200px] py-2.5 bg-indigo-600 text-white rounded-xl text-xs font-bold shadow-md hover:bg-indigo-700 transition">
+              Buka Forum
+            </Link>
+          </div>
+        )}
       </div>
+
+      {/* Artikel & Edukasi Section */}
+      {articles && articles.length > 0 && (
+        <div className="px-4 py-8 mb-4 border-t border-gray-100 dark:border-gray-800">
+          <div className="flex justify-between items-center mb-6">
+            <div>
+              <h1 className="text-xl font-bold text-gray-800 dark:text-white">Artikel Terbaru</h1>
+              <h2 className="text-xs text-gray-500 dark:text-gray-400 mt-1">Kembangkan wawasan bisnis dan ilmu syariah</h2>
+            </div>
+            <Link to="/academy/articles" className="text-xs font-bold text-green-700 dark:text-green-400 flex items-center gap-0.5">
+              Lihat Semua <span className="material-icons text-[14px]">arrow_forward</span>
+            </Link>
+          </div>
+
+          <Swiper
+            modules={[Navigation, Pagination, Autoplay]}
+            spaceBetween={16}
+            slidesPerView={1.2}
+            breakpoints={{
+              640: { slidesPerView: 2.2 },
+              768: { slidesPerView: 3.2 }
+            }}
+            autoplay={{ delay: 5000, disableOnInteraction: false }}
+            className="py-2"
+          >
+            {articles.map(article => {
+              const stripHtml = (html) => {
+                if (!html) return "";
+                const doc = new DOMParser().parseFromString(html, 'text/html');
+                return doc.body.textContent || "";
+              };
+              const hasImage = article.images && article.images.length > 0;
+              return (
+                <SwiperSlide key={article.id}>
+                  <Link
+                    to={`/academy/articles/${article.slug || article.id}`}
+                    className="block bg-white dark:bg-[#111827] rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 overflow-hidden hover:shadow-md transition h-64 flex flex-col justify-between"
+                  >
+                    {/* Header Image */}
+                    <div className="h-28 w-full relative bg-gray-100 dark:bg-gray-800 flex-shrink-0">
+                      {hasImage ? (
+                        <img
+                          src={article.images[0].full_path}
+                          alt={article.title}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-gray-400 dark:text-gray-600 text-xs">
+                          No Image
+                        </div>
+                      )}
+                      <span className="absolute top-2 right-2 bg-black/60 backdrop-blur-sm text-white text-[8px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider">
+                        {article.date}
+                      </span>
+                    </div>
+
+                    {/* Content */}
+                    <div className="p-3 flex-grow flex flex-col justify-between">
+                      <div>
+                        <h3 className="text-xs font-bold text-gray-900 dark:text-white line-clamp-2 mb-1 leading-tight">
+                          {article.title}
+                        </h3>
+                        <p className="text-[10px] text-gray-500 dark:text-gray-400 line-clamp-3">
+                          {stripHtml(article.content)}
+                        </p>
+                      </div>
+
+                      {/* Stats */}
+                      <div className="flex justify-between items-center text-[9px] text-gray-400 dark:text-gray-500 border-t border-gray-50 dark:border-gray-800/80 pt-2 mt-2">
+                        <div className="flex items-center gap-1">
+                          <span className="material-icons text-[12px]">visibility</span>
+                          <span>{article.view_count || 0}</span>
+                        </div>
+                        <div className="flex items-center gap-1 text-red-400">
+                          <span className="material-icons text-[12px]">favorite</span>
+                          <span className="font-bold">{article.likes_count || 0}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </Link>
+                </SwiperSlide>
+              );
+            })}
+          </Swiper>
+        </div>
+      )}
+
 
       {/* Struktur Team Section */}
       {aboutUs?.organization_structure_image && (
