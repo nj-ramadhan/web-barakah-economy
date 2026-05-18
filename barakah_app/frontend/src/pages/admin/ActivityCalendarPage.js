@@ -144,6 +144,9 @@ const ActivityCalendarPage = () => {
     const [noteLoading, setNoteLoading] = useState(false);
 
     const selectedDateStr = selectedDateData?.date ? toLocalDateStr(selectedDateData.date) : null;
+    const noteLines = allNotes[selectedDateStr]?.content
+        ? allNotes[selectedDateStr].content.split('\n').map(l => l.trim()).filter(Boolean)
+        : [];
 
     // Fetch semua catatan untuk bulan yang sedang dilihat (agar indikator muncul di grid)
     const fetchNotesForMonth = useCallback(async () => {
@@ -167,21 +170,17 @@ const ActivityCalendarPage = () => {
         fetchNotesForMonth();
     }, [fetchNotesForMonth]);
 
-    // Sync noteInput & fetch detail catatan ketika modal dibuka untuk tanggal tertentu
+    // Reset note input & sync cache ketika modal dibuka untuk tanggal tertentu
     useEffect(() => {
         if (!selectedDateStr) return;
-        // Isi dari cache dulu, lalu fetch untuk data terbaru
-        setNoteInput(allNotes[selectedDateStr]?.content || '');
+        setNoteInput('');
         (async () => {
             setNoteLoading(true);
             try {
                 const res = await axios.get(`${NOTES_API}?date=${selectedDateStr}`, getAuth());
                 if (res.data.length > 0) {
                     const note = res.data[0];
-                    setNoteInput(note.content || '');
                     setAllNotes(prev => ({ ...prev, [selectedDateStr]: note }));
-                } else {
-                    setNoteInput('');
                 }
             } catch (err) {
                 console.error('Gagal fetch catatan:', err);
@@ -191,19 +190,45 @@ const ActivityCalendarPage = () => {
         })();
     }, [selectedDateStr]); // eslint-disable-line react-hooks/exhaustive-deps
 
-    const handleSaveNote = async () => {
-        if (!selectedDateStr) return;
+    const handleAddNoteItem = async () => {
+        if (!noteInput.trim() || !selectedDateStr) return;
+        const currentContent = allNotes[selectedDateStr]?.content || '';
+        const currentLines = currentContent.split('\n').map(l => l.trim()).filter(Boolean);
+        currentLines.push(noteInput.trim());
+        const newContent = currentLines.join('\n');
+
         setNoteSaving(true);
         try {
-            if (noteInput.trim()) {
-                // Upsert — POST dengan date + content
+            const res = await axios.post(NOTES_API, {
+                date: selectedDateStr,
+                content: newContent
+            }, getAuth());
+            setAllNotes(prev => ({ ...prev, [selectedDateStr]: res.data }));
+            setNoteInput('');
+        } catch (err) {
+            console.error('Gagal menambahkan catatan:', err);
+            alert('Gagal menambahkan catatan. Silakan coba lagi.');
+        } finally {
+            setNoteSaving(false);
+        }
+    };
+
+    const handleDeleteNoteItem = async (indexToDelete) => {
+        if (!selectedDateStr || !allNotes[selectedDateStr]) return;
+        const currentContent = allNotes[selectedDateStr].content || '';
+        const currentLines = currentContent.split('\n').map(l => l.trim()).filter(Boolean);
+        currentLines.splice(indexToDelete, 1);
+        const newContent = currentLines.join('\n');
+
+        setNoteSaving(true);
+        try {
+            if (newContent.trim()) {
                 const res = await axios.post(NOTES_API, {
                     date: selectedDateStr,
-                    content: noteInput.trim(),
+                    content: newContent
                 }, getAuth());
                 setAllNotes(prev => ({ ...prev, [selectedDateStr]: res.data }));
             } else {
-                // Kosong → hapus
                 await axios.delete(`${NOTES_API}?date=${selectedDateStr}`, getAuth());
                 setAllNotes(prev => {
                     const next = { ...prev };
@@ -211,27 +236,11 @@ const ActivityCalendarPage = () => {
                     return next;
                 });
             }
-            setTimeout(() => setNoteSaving(false), 700);
         } catch (err) {
-            console.error('Gagal menyimpan catatan:', err);
+            console.error('Gagal menghapus item catatan:', err);
+            alert('Gagal menghapus item catatan.');
+        } finally {
             setNoteSaving(false);
-            alert('Gagal menyimpan catatan. Silakan coba lagi.');
-        }
-    };
-
-    const handleDeleteNote = async () => {
-        if (!selectedDateStr) return;
-        try {
-            await axios.delete(`${NOTES_API}?date=${selectedDateStr}`, getAuth());
-            setAllNotes(prev => {
-                const next = { ...prev };
-                delete next[selectedDateStr];
-                return next;
-            });
-            setNoteInput('');
-        } catch (err) {
-            console.error('Gagal menghapus catatan:', err);
-            alert('Gagal menghapus catatan.');
         }
     };
     // ─────────────────────────────────────────────────────────────────────────
@@ -635,55 +644,67 @@ const ActivityCalendarPage = () => {
                                                     <span className="material-icons text-amber-600 text-sm">edit_note</span>
                                                 </div>
                                                 <div>
-                                                    <p className="text-xs font-black text-amber-800">Catatan Rencana Kegiatan</p>
+                                                    <p className="text-xs font-black text-amber-800">Catatan Rencana Kegiatan ({noteLines.length})</p>
                                                     <p className="text-[9px] font-bold text-amber-500 uppercase tracking-widest">
                                                         {allNotes[selectedDateStr]?.updated_by_name
-                                                            ? `Diperbarui oleh: ${allNotes[selectedDateStr].updated_by_name}`
+                                                            ? `Terakhir diperbarui oleh: ${allNotes[selectedDateStr].updated_by_name}`
                                                             : 'Terlihat semua admin'}
                                                     </p>
                                                 </div>
                                             </div>
-                                            {allNotes[selectedDateStr] && (
-                                                <button
-                                                    onClick={handleDeleteNote}
-                                                    className="w-8 h-8 rounded-xl bg-white border border-rose-100 text-rose-400 hover:bg-rose-50 hover:text-rose-600 flex items-center justify-center transition-all shadow-sm"
-                                                    title="Hapus catatan"
-                                                >
-                                                    <span className="material-icons text-sm">delete</span>
-                                                </button>
-                                            )}
                                         </div>
-                                        <div className="relative">
-                                            <textarea
-                                                rows={4}
-                                                value={noteInput}
-                                                onChange={e => setNoteInput(e.target.value)}
-                                                disabled={noteLoading}
-                                                placeholder="Tulis rencana atau catatan untuk hari ini... (bisa dilihat oleh semua admin)"
-                                                className="w-full bg-white/70 border border-amber-100 rounded-2xl px-4 py-3 text-sm text-gray-700 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-amber-300 focus:bg-white resize-none transition-all leading-relaxed font-medium disabled:opacity-50"
-                                            />
-                                            {noteLoading && (
-                                                <div className="absolute inset-0 flex items-center justify-center bg-white/60 rounded-2xl">
-                                                    <span className="material-icons text-amber-400 animate-spin text-xl">refresh</span>
-                                                </div>
-                                            )}
-                                        </div>
-                                        <div className="flex items-center justify-between mt-3">
-                                            <p className="text-[9px] text-amber-500 font-bold">
-                                                {noteInput.length > 0 ? `${noteInput.length} karakter` : 'Belum ada catatan'}
-                                            </p>
+
+                                        {/* List of items */}
+                                        {noteLines.length === 0 ? (
+                                            <p className="text-amber-600/40 text-[11px] italic mb-4">Belum ada catatan rencana kegiatan.</p>
+                                        ) : (
+                                            <div className="space-y-2.5 mb-4">
+                                                {noteLines.map((line, idx) => (
+                                                    <div key={idx} className="flex items-start gap-2 bg-white/80 border border-amber-100/40 rounded-2xl p-3.5 group shadow-sm">
+                                                        <div className="w-1.5 h-1.5 rounded-full bg-amber-400 mt-1.5 shrink-0" />
+                                                        <p className="flex-1 text-xs text-gray-700 leading-relaxed break-words font-medium">{line}</p>
+                                                        <button
+                                                            onClick={() => handleDeleteNoteItem(idx)}
+                                                            disabled={noteSaving}
+                                                            className="text-rose-500 hover:text-rose-700 p-0.5 rounded transition-all opacity-40 group-hover:opacity-100 disabled:opacity-30 flex items-center justify-center shrink-0"
+                                                            title="Hapus baris ini"
+                                                        >
+                                                            <span className="material-icons text-sm">close</span>
+                                                        </button>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+
+                                        {/* Add item field */}
+                                        <div className="relative flex gap-2">
+                                            <div className="relative flex-1">
+                                                <input
+                                                    type="text"
+                                                    value={noteInput}
+                                                    onChange={e => setNoteInput(e.target.value)}
+                                                    disabled={noteSaving || noteLoading}
+                                                    placeholder="Tambah catatan rencana baru..."
+                                                    className="w-full bg-white/90 border border-amber-100 rounded-xl px-4 py-2.5 text-xs text-gray-700 placeholder-amber-500/30 focus:outline-none focus:ring-2 focus:ring-amber-300 transition-all font-medium"
+                                                    onKeyDown={e => {
+                                                        if (e.key === 'Enter') {
+                                                            e.preventDefault();
+                                                            handleAddNoteItem();
+                                                        }
+                                                    }}
+                                                />
+                                                {noteLoading && (
+                                                    <div className="absolute right-3 top-2.5">
+                                                        <span className="material-icons text-amber-400 animate-spin text-sm">refresh</span>
+                                                    </div>
+                                                )}
+                                            </div>
                                             <button
-                                                onClick={handleSaveNote}
-                                                disabled={noteSaving || noteLoading}
-                                                className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-md ${noteSaving
-                                                        ? 'bg-emerald-500 text-white shadow-emerald-100'
-                                                        : 'bg-amber-500 text-white hover:bg-amber-600 shadow-amber-100 active:scale-95 disabled:opacity-50'
-                                                    }`}
+                                                onClick={handleAddNoteItem}
+                                                disabled={noteSaving || noteLoading || !noteInput.trim()}
+                                                className="px-4 py-2.5 bg-amber-500 hover:bg-amber-600 text-white text-[10px] font-black rounded-xl hover:shadow-lg hover:shadow-amber-100 active:scale-95 transition-all disabled:opacity-55 flex items-center justify-center shrink-0 uppercase tracking-wider"
                                             >
-                                                <span className="material-icons text-sm">
-                                                    {noteSaving ? 'check_circle' : 'save'}
-                                                </span>
-                                                {noteSaving ? 'Tersimpan!' : 'Simpan Catatan'}
+                                                Tambah
                                             </button>
                                         </div>
                                     </div>
