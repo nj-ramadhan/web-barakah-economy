@@ -1337,33 +1337,31 @@ const ActivityList = ({ items }) => {
 
 const MultiSelectCell = ({ selectedItems, allOptions, onSave, color = "blue" }) => {
     const [isOpen, setIsOpen] = useState(false);
-    const [coords, setCoords] = useState({ top: 0, left: 0 });
     const containerRef = useRef(null);
     const dropdownRef = useRef(null);
 
-    const updateCoords = useCallback(() => {
-        if (containerRef.current) {
+    const updatePosition = useCallback(() => {
+        if (containerRef.current && dropdownRef.current) {
             const rect = containerRef.current.getBoundingClientRect();
-            const dropdownWidth = 250;
+            const dropdownWidth = 220;
             const dropdownHeight = 210; // estimate max height (192px max-h-48 + padding)
             const viewportWidth = window.innerWidth;
             const viewportHeight = window.innerHeight;
             
-            // Default left positioning relative to document body
-            let left = rect.left + window.scrollX;
             // Align / clamp left to stay fully on screen
+            let left = rect.left;
             if (rect.left + dropdownWidth > viewportWidth) {
-                left = Math.max(10, viewportWidth - dropdownWidth - 10) + window.scrollX;
+                left = Math.max(10, viewportWidth - dropdownWidth - 10);
             }
             
-            // Default top positioning relative to document body
-            let top = rect.bottom + window.scrollY + 5;
-            // Position above if going off bottom viewport and enough space above
+            // Position above if going off bottom viewport
+            let top = rect.bottom + 5;
             if (rect.bottom + dropdownHeight > viewportHeight && rect.top > dropdownHeight) {
-                top = rect.top + window.scrollY - dropdownHeight - 5;
+                top = rect.top - dropdownHeight - 5;
             }
             
-            setCoords({ top, left });
+            dropdownRef.current.style.top = `${top}px`;
+            dropdownRef.current.style.left = `${left}px`;
         }
     }, []);
 
@@ -1380,18 +1378,19 @@ const MultiSelectCell = ({ selectedItems, allOptions, onSave, color = "blue" }) 
 
     useEffect(() => {
         if (isOpen) {
-            updateCoords();
+            // Initial position update
+            updatePosition();
             
-            // Capture all scroll events (including nested table horizontal scroll)
-            window.addEventListener('scroll', updateCoords, true);
-            window.addEventListener('resize', updateCoords);
+            // Capture all scroll events (including nested table horizontal scroll) in real-time
+            window.addEventListener('scroll', updatePosition, true);
+            window.addEventListener('resize', updatePosition);
             
             return () => {
-                window.removeEventListener('scroll', updateCoords, true);
-                window.removeEventListener('resize', updateCoords);
+                window.removeEventListener('scroll', updatePosition, true);
+                window.removeEventListener('resize', updatePosition);
             };
         }
-    }, [isOpen, updateCoords]);
+    }, [isOpen, updatePosition]);
 
     const selectedIds = (selectedItems || []).map(i => i.id);
     const handleToggle = (id) => {
@@ -1425,11 +1424,9 @@ const MultiSelectCell = ({ selectedItems, allOptions, onSave, color = "blue" }) 
             {isOpen && ReactDOM.createPortal(
                 <div 
                     ref={dropdownRef} 
-                    className="absolute z-[9999] bg-white border border-gray-100 shadow-2xl rounded-2xl p-2 animate-in fade-in slide-in-from-top-2 duration-200 overflow-hidden" 
+                    className="fixed z-[9999] bg-white border border-gray-100 shadow-2xl rounded-2xl p-2 animate-in fade-in slide-in-from-top-2 duration-200 overflow-hidden" 
                     style={{
-                        top: coords.top,
-                        left: coords.left,
-                        width: '250px'
+                        width: '220px'
                     }}
                 >
                     <div className="max-h-48 overflow-y-auto custom-scrollbar p-1 space-y-0.5">
