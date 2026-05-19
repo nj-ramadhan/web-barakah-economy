@@ -15,9 +15,9 @@ logger = logging.getLogger('accounts')
 
 # Config from settings/env with defaults from the PHP reference
 WA_API_URL = getattr(settings, 'WHATSAPP_API_URL', 
-    'http://notif-gowhatsappwebmultidevice-g19qsd-b2e86e-159-65-58-54.nip.io')
+    'https://bae.dailykas.com')
 WA_API_USER = getattr(settings, 'WHATSAPP_API_USER', 'admin')
-WA_API_PASS = getattr(settings, 'WHATSAPP_API_PASS', 'reh1sspkbdgul0ebtax6vwxjqnzhzek7')
+WA_API_PASS = getattr(settings, 'WHATSAPP_API_PASS', 'admin123')
 
 
 def send_message(phone, message):

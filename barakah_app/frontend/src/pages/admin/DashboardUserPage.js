@@ -1337,8 +1337,35 @@ const ActivityList = ({ items }) => {
 
 const MultiSelectCell = ({ selectedItems, allOptions, onSave, color = "blue" }) => {
     const [isOpen, setIsOpen] = useState(false);
+    const [coords, setCoords] = useState({ top: 0, left: 0 });
     const containerRef = useRef(null);
     const dropdownRef = useRef(null);
+
+    const updateCoords = useCallback(() => {
+        if (containerRef.current) {
+            const rect = containerRef.current.getBoundingClientRect();
+            const dropdownWidth = 250;
+            const dropdownHeight = 210; // estimate max height (192px max-h-48 + padding)
+            const viewportWidth = window.innerWidth;
+            const viewportHeight = window.innerHeight;
+            
+            // Default left positioning relative to document body
+            let left = rect.left + window.scrollX;
+            // Align / clamp left to stay fully on screen
+            if (rect.left + dropdownWidth > viewportWidth) {
+                left = Math.max(10, viewportWidth - dropdownWidth - 10) + window.scrollX;
+            }
+            
+            // Default top positioning relative to document body
+            let top = rect.bottom + window.scrollY + 5;
+            // Position above if going off bottom viewport and enough space above
+            if (rect.bottom + dropdownHeight > viewportHeight && rect.top > dropdownHeight) {
+                top = rect.top + window.scrollY - dropdownHeight - 5;
+            }
+            
+            setCoords({ top, left });
+        }
+    }, []);
 
     useEffect(() => {
         const handleClickOutside = (event) => {
@@ -1350,6 +1377,21 @@ const MultiSelectCell = ({ selectedItems, allOptions, onSave, color = "blue" }) 
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
+
+    useEffect(() => {
+        if (isOpen) {
+            updateCoords();
+            
+            // Capture all scroll events (including nested table horizontal scroll)
+            window.addEventListener('scroll', updateCoords, true);
+            window.addEventListener('resize', updateCoords);
+            
+            return () => {
+                window.removeEventListener('scroll', updateCoords, true);
+                window.removeEventListener('resize', updateCoords);
+            };
+        }
+    }, [isOpen, updateCoords]);
 
     const selectedIds = (selectedItems || []).map(i => i.id);
     const handleToggle = (id) => {
@@ -1383,10 +1425,10 @@ const MultiSelectCell = ({ selectedItems, allOptions, onSave, color = "blue" }) 
             {isOpen && ReactDOM.createPortal(
                 <div 
                     ref={dropdownRef} 
-                    className="fixed z-[9999] bg-white border border-gray-100 shadow-2xl rounded-2xl p-2 animate-in fade-in slide-in-from-top-2 duration-200 overflow-hidden" 
+                    className="absolute z-[9999] bg-white border border-gray-100 shadow-2xl rounded-2xl p-2 animate-in fade-in slide-in-from-top-2 duration-200 overflow-hidden" 
                     style={{
-                        top: containerRef.current ? containerRef.current.getBoundingClientRect().bottom + window.scrollY + 5 : 0,
-                        left: containerRef.current ? containerRef.current.getBoundingClientRect().left + window.scrollX : 0,
+                        top: coords.top,
+                        left: coords.left,
                         width: '250px'
                     }}
                 >

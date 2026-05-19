@@ -53,6 +53,7 @@ const EventDetailPage = () => {
     const [appliedVoucher, setAppliedVoucher] = useState(null);
     const [voucherLoading, setVoucherLoading] = useState(false);
     const [voucherError, setVoucherError] = useState('');
+    const [activeImageIndex, setActiveImageIndex] = useState(0);
 
     const calculateTimeLeft = (targetDate) => {
         if (!targetDate) return { total: 0 };
@@ -628,14 +629,15 @@ const EventDetailPage = () => {
                 </Link>
             </div>
             <div className="relative w-full max-w-6xl mx-auto sm:px-4">
-                {/* Image Container with Carousel - Square 1:1 */}
-                <div className="relative aspect-square w-full overflow-hidden bg-gray-900 rounded-3xl shadow-2xl border border-white/10">
+                {/* Image Container with Carousel - Portrait 4:5 */}
+                <div className="relative aspect-[4/5] w-full max-w-xl sm:max-w-2xl mx-auto overflow-hidden bg-gray-900 rounded-3xl shadow-2xl border border-white/10">
                     <Swiper
                         modules={[Navigation, Pagination, Autoplay, EffectFade]}
                         effect="fade"
                         navigation
                         pagination={{ clickable: true }}
                         autoplay={{ delay: 5000, disableOnInteraction: false }}
+                        onSlideChange={(swiper) => setActiveImageIndex(swiper.realIndex)}
                         className="h-full w-full"
                     >
                         {/* Combine all available images into the carousel and remove duplicates */}
@@ -652,14 +654,6 @@ const EventDetailPage = () => {
                                     className="w-full h-full object-cover"
                                     onError={(e) => { e.target.onerror = null; e.target.src = '/images/event-header-default.jpg'; }}
                                 />
-                                {/* View Full Image Button */}
-                                <button
-                                    onClick={(e) => { e.stopPropagation(); window.open(getMediaUrl(img), '_blank'); }}
-                                    className="absolute top-6 right-6 bg-black/60 hover:bg-black/80 backdrop-blur-md text-white px-4 py-2.5 rounded-xl border border-white/20 flex items-center gap-2 text-xs font-bold transition-all shadow-xl z-20"
-                                >
-                                    <span className="material-icons text-sm">zoom_out_map</span>
-                                    Lihat Ukuran Penuh
-                                </button>
                             </SwiperSlide>
                         ))}
                         
@@ -674,40 +668,60 @@ const EventDetailPage = () => {
                             </SwiperSlide>
                         )}
                     </Swiper>
-                    {/* Gradient Overlay - Subtle */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none"></div>
+                </div>
 
-                    {/* Info Overlay - Now visible on both mobile and desktop */}
-                    <div className="absolute bottom-0 left-0 w-full p-4 sm:p-8 text-white z-10">
-                        <div className="flex items-end justify-between gap-4 sm:gap-6">
-                            <div className="max-w-3xl">
-                                <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mb-2 sm:mb-4">
-                                    <span className="px-2 sm:px-3 py-0.5 sm:py-1 bg-green-600 rounded-full text-[8px] sm:text-[10px] font-bold uppercase tracking-widest inline-block shadow-lg shadow-green-900/40">
-                                        {event.category || 'Event'}
-                                    </span>
-                                    {event.has_certificate && (
-                                        <span className="px-2 sm:px-3 py-0.5 sm:py-1 bg-amber-500 rounded-full text-[8px] sm:text-[10px] font-bold uppercase tracking-widest text-white flex items-center gap-1 shadow-lg shadow-amber-900/20">
-                                            <span className="material-icons text-[10px] sm:text-xs">verified</span>
-                                            Sertifikat
-                                        </span>
-                                    )}
-                                    <span className="px-2 sm:px-3 py-0.5 sm:py-1 bg-white/20 backdrop-blur-md rounded-full text-[8px] sm:text-[10px] font-bold uppercase tracking-widest inline-block">{event.status}</span>
-                                </div>
-                                <h1 className="text-xl sm:text-4xl font-extrabold leading-tight drop-shadow-lg">{event.title}</h1>
-                            </div>
-                            <div className="flex-shrink-0 flex items-center gap-2">
-                                <button 
-                                    onClick={handleToggleLike}
-                                    disabled={liking}
-                                    className={`flex items-center gap-1.5 px-4 py-2 sm:px-6 sm:py-3 rounded-2xl transition-all active:scale-90 shadow-lg ${isLiked ? 'bg-red-600 text-white shadow-red-900/40' : 'bg-white/20 backdrop-blur-md text-white border border-white/30'}`}
-                                >
-                                    <span className={`material-icons text-sm sm:text-lg ${isLiked ? 'text-white' : 'text-white/80'}`}>
-                                        {isLiked ? 'favorite' : 'favorite_border'}
-                                    </span>
-                                    <span className="text-[10px] sm:text-xs font-black uppercase tracking-widest">{likesCount} Suka</span>
-                                </button>
-                            </div>
-                        </div>
+                {/* Event Info Card - Clean and Uncovering the Image */}
+                <div className="bg-white p-6 sm:p-8 rounded-[2.5rem] shadow-xl border border-gray-100 mt-6 max-w-xl sm:max-w-2xl mx-auto relative z-20">
+                    <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mb-4">
+                        <span className="px-3 py-1 bg-green-600 rounded-full text-[10px] font-bold uppercase tracking-widest text-white shadow-lg shadow-green-900/10">
+                            {event.category || 'Event'}
+                        </span>
+                        {event.has_certificate && (
+                            <span className="px-3 py-1 bg-amber-500 rounded-full text-[10px] font-bold uppercase tracking-widest text-white flex items-center gap-1 shadow-lg shadow-amber-900/10">
+                                <span className="material-icons text-xs">verified</span>
+                                Sertifikat
+                            </span>
+                        )}
+                        <span className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-[10px] font-bold uppercase tracking-widest">{event.status}</span>
+                    </div>
+                    
+                    <h1 className="text-xl sm:text-3xl font-extrabold text-gray-900 leading-tight mb-6">{event.title}</h1>
+                    
+                    <div className="flex flex-wrap items-center gap-3">
+                        <button 
+                            onClick={handleToggleLike}
+                            disabled={liking}
+                            className={`flex items-center gap-2 px-5 py-3 rounded-2xl transition-all active:scale-95 shadow-md ${isLiked ? 'bg-red-600 text-white shadow-red-900/20' : 'bg-gray-50 hover:bg-gray-100 text-gray-700 border border-gray-200'}`}
+                        >
+                            <span className={`material-icons text-sm sm:text-base ${isLiked ? 'text-white' : 'text-gray-500'}`}>
+                                {isLiked ? 'favorite' : 'favorite_border'}
+                            </span>
+                            <span className="text-xs font-black uppercase tracking-widest">{likesCount} Suka</span>
+                        </button>
+
+                        {Array.from(new Set([
+                            event.thumbnail,
+                            event.header_image,
+                            ...(event.gallery_images?.map(img => img.image) || []),
+                            ...(event.documentation_images?.map(img => img.image) || [])
+                        ].filter(img => img))).length > 0 && (
+                            <button
+                                onClick={() => {
+                                    const carouselImages = Array.from(new Set([
+                                        event.thumbnail,
+                                        event.header_image,
+                                        ...(event.gallery_images?.map(img => img.image) || []),
+                                        ...(event.documentation_images?.map(img => img.image) || [])
+                                    ].filter(img => img)));
+                                    const currentImg = carouselImages[activeImageIndex];
+                                    if (currentImg) window.open(getMediaUrl(currentImg), '_blank');
+                                }}
+                                className="flex items-center gap-2 px-5 py-3 rounded-2xl bg-gray-50 hover:bg-gray-100 text-gray-700 border border-gray-200 transition-all active:scale-95 shadow-md"
+                            >
+                                <span className="material-icons text-sm sm:text-base text-gray-500">zoom_out_map</span>
+                                <span className="text-xs font-black uppercase tracking-widest font-bold">Lihat Ukuran Penuh</span>
+                            </button>
+                        )}
                     </div>
                 </div>
 
@@ -788,7 +802,7 @@ const EventDetailPage = () => {
                 </div>
             </div>
 
-            <div className="max-w-6xl mx-auto px-4 -mt-10 relative z-10 pb-20">
+            <div className="max-w-6xl mx-auto px-4 mt-10 relative z-10 pb-20">
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
                     {/* Left Column (8 cols) */}
                     <div className="lg:col-span-8 space-y-8 min-w-0">
