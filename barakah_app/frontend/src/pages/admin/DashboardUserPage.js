@@ -561,7 +561,7 @@ const DashboardUserPage = () => {
                         <UserSkeleton />
                     ) : (
                         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                        <div className="overflow-x-auto">
+                        <div className="overflow-x-auto min-h-[480px] pb-44">
                             <table className="w-full text-left text-sm">
                                 <thead className="bg-gray-50 border-b border-gray-100">
                                     <tr>
@@ -1338,59 +1338,16 @@ const ActivityList = ({ items }) => {
 const MultiSelectCell = ({ selectedItems, allOptions, onSave, color = "blue" }) => {
     const [isOpen, setIsOpen] = useState(false);
     const containerRef = useRef(null);
-    const dropdownRef = useRef(null);
-
-    const updatePosition = useCallback(() => {
-        if (containerRef.current && dropdownRef.current) {
-            const rect = containerRef.current.getBoundingClientRect();
-            const dropdownWidth = 220;
-            const dropdownHeight = 210; // estimate max height (192px max-h-48 + padding)
-            const viewportWidth = window.innerWidth;
-            const viewportHeight = window.innerHeight;
-            
-            // Align / clamp left to stay fully on screen
-            let left = rect.left;
-            if (rect.left + dropdownWidth > viewportWidth) {
-                left = Math.max(10, viewportWidth - dropdownWidth - 10);
-            }
-            
-            // Position above if going off bottom viewport
-            let top = rect.bottom + 5;
-            if (rect.bottom + dropdownHeight > viewportHeight && rect.top > dropdownHeight) {
-                top = rect.top - dropdownHeight - 5;
-            }
-            
-            dropdownRef.current.style.top = `${top}px`;
-            dropdownRef.current.style.left = `${left}px`;
-        }
-    }, []);
 
     useEffect(() => {
         const handleClickOutside = (event) => {
-            if (containerRef.current && !containerRef.current.contains(event.target) &&
-                dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+            if (containerRef.current && !containerRef.current.contains(event.target)) {
                 setIsOpen(false);
             }
         };
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
-
-    useEffect(() => {
-        if (isOpen) {
-            // Initial position update
-            updatePosition();
-            
-            // Capture all scroll events (including nested table horizontal scroll) in real-time
-            window.addEventListener('scroll', updatePosition, true);
-            window.addEventListener('resize', updatePosition);
-            
-            return () => {
-                window.removeEventListener('scroll', updatePosition, true);
-                window.removeEventListener('resize', updatePosition);
-            };
-        }
-    }, [isOpen, updatePosition]);
 
     const selectedIds = (selectedItems || []).map(i => i.id);
     const handleToggle = (id) => {
@@ -1421,12 +1378,13 @@ const MultiSelectCell = ({ selectedItems, allOptions, onSave, color = "blue" }) 
                 <span className="material-icons text-gray-300 text-[12px] ml-auto self-center opacity-0 group-hover:opacity-100 transition-opacity">expand_more</span>
             </div>
 
-            {isOpen && ReactDOM.createPortal(
+            {isOpen && (
                 <div 
-                    ref={dropdownRef} 
-                    className="fixed z-[9999] bg-white border border-gray-100 shadow-2xl rounded-2xl p-2 animate-in fade-in slide-in-from-top-2 duration-200 overflow-hidden" 
+                    className="absolute z-50 bg-white border border-gray-100 shadow-2xl rounded-2xl p-2 mt-1 animate-in fade-in slide-in-from-top-2 duration-200 overflow-hidden" 
                     style={{
-                        width: '220px'
+                        top: '100%',
+                        left: 0,
+                        width: '200px'
                     }}
                 >
                     <div className="max-h-48 overflow-y-auto custom-scrollbar p-1 space-y-0.5">
@@ -1438,11 +1396,11 @@ const MultiSelectCell = ({ selectedItems, allOptions, onSave, color = "blue" }) 
                             </label>
                         ))}
                     </div>
-                </div>,
-                document.body
+                </div>
             )}
         </div>
     );
 };
 
 export default DashboardUserPage;
+
