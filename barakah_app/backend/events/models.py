@@ -230,6 +230,19 @@ class EventAttendance(models.Model):
     def __str__(self):
         return f"Attendance {self.registration.id} Sesi: {self.session.title if self.session else 'Umum'}"
 
+class EventTeam(models.Model):
+    event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name='teams')
+    name = models.CharField(max_length=255, help_text="Nama Tim (Misal: Team A)")
+    capacity = models.PositiveIntegerField(default=10, help_text="Kapasitas maksimal pendaftar untuk tim ini")
+    price_modifier = models.DecimalField(max_digits=12, decimal_places=2, default=0, help_text="Bisa bernilai minus untuk diskon, atau plus untuk biaya tambahan")
+    order = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ['order', 'name']
+
+    def __str__(self):
+        return f"{self.name} - {self.event.title}"
+
 class EventFormField(models.Model):
     FIELD_TYPES = [
         ('text', 'Short Text'),
@@ -268,6 +281,7 @@ class EventRegistration(models.Model):
     event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name='registrations')
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='event_registrations')
     price_variation = models.ForeignKey(EventPriceVariation, on_delete=models.SET_NULL, null=True, blank=True, related_name='registrations')
+    team = models.ForeignKey(EventTeam, on_delete=models.SET_NULL, null=True, blank=True, related_name='registrations', help_text="Pilihan tim peserta")
     
     unique_code = models.CharField(max_length=20, unique=True, blank=True)
     guest_name = models.CharField(max_length=255, blank=True, null=True)
@@ -436,7 +450,7 @@ class EventSpecialQR(models.Model):
     )
     event = models.OneToOneField(Event, on_delete=models.CASCADE, related_name='special_qr_template')
     template_image = models.ImageField(upload_to='events/special_qr/templates/', blank=True, null=True)
-    
+    show_code = models.BooleanField(default=True, help_text="Tampilkan QR Code atau Barcode pada tiket")
     code_type = models.CharField(max_length=10, choices=CODE_TYPES, default='qr')
     
     # Position in percentage (0-100)

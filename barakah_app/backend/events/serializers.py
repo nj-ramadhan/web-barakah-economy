@@ -2,7 +2,7 @@ from rest_framework import serializers
 from .models import (
     Event, EventFormField, EventRegistration, EventRegistrationFile, 
     EventDocumentationImage, EventGalleryImage, EventCertificate, 
-    EventBib, EventSpecialQR, EventPriceVariation, EventVoucher
+    EventBib, EventSpecialQR, EventPriceVariation, EventVoucher, EventTeam
 )
 from accounts.serializers import UserAdminSerializer, UserLabelSerializer, UserSimpleSerializer
 from accounts.models import UserLabel
@@ -109,6 +109,16 @@ class EventPriceVariationSerializer(serializers.ModelSerializer):
         model = EventPriceVariation
         fields = ['id', 'title', 'price', 'benefits', 'order']
 
+class EventTeamSerializer(serializers.ModelSerializer):
+    registered_count = serializers.SerializerMethodField()
+    class Meta:
+        model = EventTeam
+        fields = ['id', 'name', 'capacity', 'price_modifier', 'order', 'registered_count']
+
+    def get_registered_count(self, obj):
+        # We only count approved or pending registrations
+        return obj.registrations.filter(status__in=['approved', 'pending']).count()
+
 class EventSerializer(serializers.ModelSerializer):
     created_by_details = UserSimpleSerializer(source='created_by', read_only=True)
     form_fields = EventFormFieldSerializer(many=True, required=False)
@@ -126,6 +136,7 @@ class EventSerializer(serializers.ModelSerializer):
         many=True, queryset=UserLabel.objects.all(), write_only=True, required=False, source='free_for_labels'
     )
     price_variations = EventPriceVariationSerializer(many=True, required=False)
+    teams = EventTeamSerializer(many=True, required=False)
     vouchers = EventVoucherSerializer(many=True, required=False)
     user_registration = serializers.SerializerMethodField()
     certificate = serializers.SerializerMethodField()
@@ -248,7 +259,7 @@ class EventSerializer(serializers.ModelSerializer):
         # Clean up empty strings for numbers/dates
         mutable_data = self.calamities_cleanup(mutable_data)
         
-        for field in ['form_fields', 'speakers', 'sessions', 'price_variations', 'vouchers']:
+        for field in ['form_fields', 'speakers', 'sessions', 'price_variations', 'vouchers', 'teams']:
             if field in mutable_data and isinstance(mutable_data[field], str):
                 try:
                     stripped = mutable_data[field].strip()
@@ -272,6 +283,7 @@ class EventSerializer(serializers.ModelSerializer):
             speakers_data = validated_data.pop('speakers', [])
             sessions_data = validated_data.pop('sessions', [])
             price_variations_data = validated_data.pop('price_variations', [])
+            teams_data = validated_data.pop('teams', [])
             vouchers_data = validated_data.pop('vouchers', [])
             free_for_labels_data = validated_data.pop('free_for_labels', [])
             committees_data = validated_data.pop('committees', [])
@@ -312,6 +324,10 @@ class EventSerializer(serializers.ModelSerializer):
                 # Handle Price Variations
                 for var in price_variations_data:
                     EventPriceVariation.objects.create(event=event, **var)
+
+                # Handle Teams
+                for tm in teams_data:
+                    EventTeam.objects.create(event=event, **tm)
 
                 # Handle Vouchers
                 for v in vouchers_data:
@@ -355,6 +371,7 @@ class EventSerializer(serializers.ModelSerializer):
         speakers_data = validated_data.pop('speakers', None)
         sessions_data = validated_data.pop('sessions', None)
         price_variations_data = validated_data.pop('price_variations', None)
+        teams_data = validated_data.pop('teams', None)
         vouchers_data = validated_data.pop('vouchers', None)
         
         # Update event basic fields
@@ -428,6 +445,24 @@ class EventSerializer(serializers.ModelSerializer):
                     new_var_ids.append(new_var.id)
             instance.price_variations.exclude(id__in=new_var_ids).delete()
 
+        # Sync teams
+        if teams_data is not None:
+            existing_teams = {t.name.lower(): t for t in instance.teams.all()}
+            new_team_ids = []
+            for t_item in teams_data:
+                t_item.pop('id', None)
+                name = t_item.get('name', '').lower()
+                if name in existing_teams:
+                    t_obj = existing_teams[name]
+                    for attr, val in t_item.items():
+                        setattr(t_obj, attr, val)
+                    t_obj.save()
+                    new_team_ids.append(t_obj.id)
+                else:
+                    new_t = EventTeam.objects.create(event=instance, **t_item)
+                    new_team_ids.append(new_t.id)
+            instance.teams.exclude(id__in=new_team_ids).delete()
+
         # Sync vouchers
         if vouchers_data is not None:
             existing_vouchers = {v.code.lower(): v for v in instance.vouchers.all()}
@@ -483,6 +518,7 @@ class EventRegistrationSerializer(serializers.ModelSerializer):
     attendances_list = EventAttendanceSerializer(source='attendances', many=True, read_only=True)
     formatted_bib = serializers.SerializerMethodField()
     price_variation_details = EventPriceVariationSerializer(source='price_variation', read_only=True)
+    team_details = EventTeamSerializer(source='team', read_only=True)
 
     def get_formatted_bib(self, obj):
         if not obj.bib_number:

@@ -8,16 +8,34 @@ const EventRegistrationEditModal = ({ isOpen, onClose, event, registration, onSu
         guest_name: '',
         guest_email: '',
         price_variation: '',
+        team: '',
         responses: {}
     });
 
     useEffect(() => {
         if (registration) {
+            let parsedResponses = {};
+            if (registration.responses) {
+                try {
+                    parsedResponses = typeof registration.responses === 'string' 
+                        ? JSON.parse(registration.responses) 
+                        : registration.responses;
+                    
+                    if (typeof parsedResponses !== 'object' || parsedResponses === null) {
+                        parsedResponses = {};
+                    }
+                } catch (e) {
+                    console.error("Error parsing responses", e);
+                    parsedResponses = {};
+                }
+            }
+
             setFormData({
                 guest_name: registration.guest_name || registration.user_details?.profile?.name_full || registration.user_details?.username || '',
                 guest_email: registration.guest_email || registration.user_details?.email || '',
                 price_variation: registration.price_variation || '',
-                responses: registration.responses || {}
+                team: registration.team || '',
+                responses: parsedResponses
             });
         }
     }, [registration]);
@@ -131,6 +149,27 @@ const EventRegistrationEditModal = ({ isOpen, onClose, event, registration, onSu
                                 </div>
                             )}
 
+                            {/* Team Selection */}
+                            {event.teams && event.teams.length > 0 && (
+                                <div className="space-y-2">
+                                    <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Tim / Kelompok</label>
+                                    <div className="relative">
+                                        <select
+                                            name="team"
+                                            value={formData.team || ''}
+                                            onChange={handleFormChange}
+                                            className="w-full px-5 py-3.5 bg-gray-50 border border-transparent rounded-2xl text-sm focus:bg-white focus:border-green-500 focus:ring-4 focus:ring-green-500/10 transition outline-none appearance-none"
+                                        >
+                                            <option value="">Pilih Tim (Opsional)</option>
+                                            {event.teams.map(t => (
+                                                <option key={t.id} value={t.id}>{t.name} (Sisa Slot: {Math.max(0, t.capacity - t.registered_count)})</option>
+                                            ))}
+                                        </select>
+                                        <span className="material-icons absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">expand_more</span>
+                                    </div>
+                                </div>
+                            )}
+
                             {/* Dynamic Event Fields */}
                             {event.form_fields && event.form_fields.length > 0 && (
                                 <div className="pt-4 border-t border-gray-100 mt-4">
@@ -150,7 +189,7 @@ const EventRegistrationEditModal = ({ isOpen, onClose, event, registration, onSu
                                                     {field.field_type === 'select' || field.field_type === 'radio' ? (
                                                         <select
                                                             required={field.required}
-                                                            value={formData.responses[field.id] || ''}
+                                                            value={(formData.responses || {})[field.id] || ''}
                                                             onChange={(e) => handleResponseChange(field.id, e.target.value)}
                                                             className="w-full px-5 py-3.5 bg-gray-50 border border-transparent rounded-2xl text-sm focus:bg-white focus:border-green-500 focus:ring-4 focus:ring-green-500/10 transition outline-none appearance-none"
                                                         >
@@ -162,7 +201,7 @@ const EventRegistrationEditModal = ({ isOpen, onClose, event, registration, onSu
                                                     ) : field.field_type === 'textarea' ? (
                                                         <textarea
                                                             required={field.required}
-                                                            value={formData.responses[field.id] || ''}
+                                                            value={(formData.responses || {})[field.id] || ''}
                                                             onChange={(e) => handleResponseChange(field.id, e.target.value)}
                                                             className="w-full px-5 py-3.5 bg-gray-50 border border-transparent rounded-2xl text-sm focus:bg-white focus:border-green-500 focus:ring-4 focus:ring-green-500/10 transition outline-none resize-none"
                                                             rows="3"
@@ -172,7 +211,7 @@ const EventRegistrationEditModal = ({ isOpen, onClose, event, registration, onSu
                                                         <input
                                                             required={field.required}
                                                             type={field.field_type === 'number' ? 'number' : 'text'}
-                                                            value={formData.responses[field.id] || ''}
+                                                            value={(formData.responses || {})[field.id] || ''}
                                                             onChange={(e) => handleResponseChange(field.id, e.target.value)}
                                                             className="w-full px-5 py-3.5 bg-gray-50 border border-transparent rounded-2xl text-sm focus:bg-white focus:border-green-500 focus:ring-4 focus:ring-green-500/10 transition outline-none"
                                                             placeholder={field.placeholder || field.label}

@@ -402,6 +402,26 @@ class EventViewSet(viewsets.ModelViewSet):
             if not price_variation:
                 return Response({"error": "Variasi harga tidak valid."}, status=status.HTTP_400_BAD_REQUEST)
 
+        # Validate Team if provided
+        team_id = request.data.get('team_id')
+        team = None
+        if team_id:
+            from .models import EventTeam
+            team = EventTeam.objects.filter(id=team_id, event=event).first()
+            if not team:
+                return Response({"error": "Tim/Kelompok tidak valid."}, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Check team capacity
+            current_team_count = team.registrations.filter(status__in=['approved', 'pending']).count()
+            if current_team_count >= team.capacity:
+                return Response({"error": f"Mohon maaf, kuota untuk tim {team.name} sudah penuh."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Check main event capacity
+        if event.capacity > 0:
+            current_total_count = event.registrations.filter(status__in=['approved', 'pending']).count()
+            if current_total_count >= event.capacity:
+                return Response({"error": "Mohon maaf, kuota peserta event sudah penuh."}, status=status.HTTP_400_BAD_REQUEST)
+
         # Check if user has free labels
         user_labels = user.labels.all()
         free_labels = event.free_for_labels.all()
@@ -448,6 +468,12 @@ class EventViewSet(viewsets.ModelViewSet):
             else:
                 base_price = decimal.Decimal('0')
             
+            # Add Team price modifier if any
+            if team:
+                base_price += decimal.Decimal(str(team.price_modifier))
+                if base_price < 0:
+                    base_price = decimal.Decimal('0')
+            
             extra_pay = decimal.Decimal(str(payment_amount)) if payment_amount else decimal.Decimal('0')
             
             if price_variation:
@@ -461,7 +487,10 @@ class EventViewSet(viewsets.ModelViewSet):
                 elif event.price_type == 'hybrid_1':
                     expected_amount = base_price + extra_form_price + extra_pay
                 else:
-                    expected_amount = extra_pay + extra_form_price
+                    expected_amount = extra_pay + extra_form_price + base_price # Added base_price to cover Team price modification in non-fixed scenarios
+
+            if expected_amount < 0:
+                expected_amount = decimal.Decimal('0')
         except:
             expected_amount = decimal.Decimal('0')
 
@@ -536,6 +565,7 @@ class EventViewSet(viewsets.ModelViewSet):
             user=user,
             responses=responses,
             price_variation=price_variation,
+            team=team,
             payment_method=payment_method if not is_free_by_label else 'free_label',
             payment_proof=payment_proof,
             payment_amount=payment_amount,
@@ -2328,7 +2358,7 @@ class EventViewSet(viewsets.ModelViewSet):
         writer = csv.writer(response, delimiter=';')
         
         # CSV Header
-        header = ['ID', 'Waktu Daftar', 'ID Peserta', 'Kode Tiket', 'Nama', 'Email', 'Label User', 'Status', 'Kehadiran Umum', 'Payment Amount', 'Kode Voucher', 'Potongan Harga', 'Payment Status', 'Pesanan Selesai', 'Catatan Panitia']
+        header = ['ID', 'Waktu Daftar', 'ID Peserta', 'Kode Tiket', 'Nama', 'Email', 'Label User', 'Status', 'Tim/Kelompok', 'Kehadiran Umum', 'Payment Amount', 'Kode Voucher', 'Potongan Harga', 'Payment Status', 'Pesanan Selesai', 'Catatan Panitia']
         for field in form_fields:
             header.append(field.label)
         
@@ -2374,6 +2404,24 @@ class EventViewSet(viewsets.ModelViewSet):
             
             # Status
             row.append(reg.get_status_display())
+
+            # Tim/Kelompok
+            team = ""
+            if reg.team:
+                team = reg.team.name
+            else:
+                # Fallback for old events
+                team_field_ids = list(event.form_fields.filter(
+                    Q(label__icontains='team') | Q(label__icontains='tim') | Q(label__icontains='kelompok') | Q(label__icontains='regu') | Q(label__icontains='group')
+                ).values_list('id', flat=True))
+                team_field_ids = [str(fid) for fid in team_field_ids]
+                if reg.responses:
+                    for fid in team_field_ids:
+                        val = reg.responses.get(fid)
+                        if val:
+                            team = str(val)
+                            break
+            row.append(team)
 
             # Kehadiran Umum
             row.append("Hadir" if reg.is_attended else "Belum")

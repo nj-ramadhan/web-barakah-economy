@@ -33,6 +33,7 @@ const SpecialQREditor = ({ slug }) => {
         code_y: 50,
         code_width: 20,
         code_height: 20,
+        show_code: true,
         field_layouts: [],
         is_active: true
     });
@@ -237,26 +238,28 @@ const SpecialQREditor = ({ slug }) => {
                                 />
                                 
                                 {/* Code (QR/Barcode) Placeholder */}
-                                <div
-                                    className="absolute cursor-move border-2 border-purple-500 bg-white/80 flex items-center justify-center select-none overflow-hidden"
-                                    style={{
-                                        left: `${settings.code_x}%`,
-                                        top: `${settings.code_y}%`,
-                                        width: `${settings.code_width}%`,
-                                        height: `${settings.code_height}%`,
-                                        transform: 'translate(-50%, -50%)',
-                                    }}
-                                    onMouseDown={(e) => handleDrag(e, 'code')}
-                                >
-                                    <div className="flex flex-col items-center justify-center text-purple-600">
-                                        <span className="material-icons" style={{ fontSize: '3vw' }}>
-                                            {settings.code_type === 'barcode' ? 'barcode' : 'qr_code_2'}
-                                        </span>
-                                        <span className="text-[0.6vw] font-black uppercase mt-1">
-                                            {settings.code_type === 'barcode' ? 'BARCODE' : 'QR CODE'}
-                                        </span>
+                                {settings.show_code && (
+                                    <div
+                                        className="absolute cursor-move border-2 border-purple-500 bg-white/80 flex items-center justify-center select-none overflow-hidden"
+                                        style={{
+                                            left: `${settings.code_x}%`,
+                                            top: `${settings.code_y}%`,
+                                            width: `${settings.code_width}%`,
+                                            height: `${settings.code_height}%`,
+                                            transform: 'translate(-50%, -50%)',
+                                        }}
+                                        onMouseDown={(e) => handleDrag(e, 'code')}
+                                    >
+                                        <div className="flex flex-col items-center justify-center text-purple-600">
+                                            <span className="material-icons" style={{ fontSize: '3vw' }}>
+                                                {settings.code_type === 'barcode' ? 'barcode' : 'qr_code_2'}
+                                            </span>
+                                            <span className="text-[0.6vw] font-black uppercase mt-1">
+                                                {settings.code_type === 'barcode' ? 'BARCODE' : 'QR CODE'}
+                                            </span>
+                                        </div>
                                     </div>
-                                </div>
+                                )}
 
                                 {/* Dynamic Fields Placeholders */}
                                 {settings.field_layouts.map(f => (
@@ -313,8 +316,23 @@ const SpecialQREditor = ({ slug }) => {
                         <hr className="border-gray-200" />
 
                         <div>
-                            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">2. Jenis Kode</label>
-                            <div className="grid grid-cols-2 gap-2">
+                            <div className="flex items-center justify-between mb-3">
+                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">2. Jenis Kode</label>
+                                <label className="flex items-center gap-2 cursor-pointer group">
+                                    <span className="text-[9px] font-bold text-gray-400 uppercase">Tampilkan Kode</span>
+                                    <div className="relative">
+                                        <input 
+                                            type="checkbox" 
+                                            className="sr-only" 
+                                            checked={settings.show_code !== false}
+                                            onChange={(e) => setSettings({ ...settings, show_code: e.target.checked })}
+                                        />
+                                        <div className={`block w-8 h-4 rounded-full transition-colors ${settings.show_code !== false ? 'bg-purple-500' : 'bg-gray-300'}`}></div>
+                                        <div className={`dot absolute left-1 top-1 bg-white w-2 h-2 rounded-full transition-transform ${settings.show_code !== false ? 'transform translate-x-4' : ''}`}></div>
+                                    </div>
+                                </label>
+                            </div>
+                            <div className={`grid grid-cols-2 gap-2 transition-opacity ${settings.show_code !== false ? 'opacity-100' : 'opacity-50 pointer-events-none'}`}>
                                 <button 
                                     onClick={() => setSettings({...settings, code_type: 'qr'})}
                                     className={`py-2 px-3 rounded-xl text-[10px] font-black uppercase transition-all border ${settings.code_type === 'qr' ? 'bg-purple-600 text-white border-purple-700 shadow-md' : 'bg-white text-gray-500 border-gray-100 hover:border-purple-200'}`}

@@ -126,6 +126,7 @@ const EventSubmissionPage = () => {
                         free_for_label_ids: d.free_for_labels ? d.free_for_labels.map(l => l.id) : [],
                         has_special_qr: d.has_special_qr || false,
                         price_variations: d.price_variations || [],
+                        teams: d.teams || [],
                     });
 
                     if (d.speakers && d.speakers.length > 0) setSpeakers(d.speakers);
@@ -291,10 +292,30 @@ const EventSubmissionPage = () => {
         ...prev, 
         price_variations: prev.price_variations.filter((_, i) => i !== index) 
     }));
-    const updatePriceVariation = (index, updates) => {
+    const updatePriceVariation = (index, updatedVariation) => {
         const newArr = [...formData.price_variations];
-        newArr[index] = { ...newArr[index], ...updates };
+        newArr[index] = { ...newArr[index], ...updatedVariation };
         setFormData(prev => ({ ...prev, price_variations: newArr }));
+    };
+
+    // Teams Management
+    const addTeam = () => {
+        setFormData(prev => ({
+            ...prev,
+            teams: [...prev.teams, { name: '', capacity: 10, price_modifier: 0 }]
+        }));
+    };
+
+    const removeTeam = (index) => {
+        const newArr = [...formData.teams];
+        newArr.splice(index, 1);
+        setFormData(prev => ({ ...prev, teams: newArr }));
+    };
+
+    const updateTeam = (index, updatedTeam) => {
+        const newArr = [...formData.teams];
+        newArr[index] = { ...newArr[index], ...updatedTeam };
+        setFormData(prev => ({ ...prev, teams: newArr }));
     };
 
     const handleDocImageUpload = async (e) => {
@@ -398,7 +419,7 @@ const EventSubmissionPage = () => {
             const skipFields = [
                 'thumbnail', 'header_image', 'thumbnail_full', 'header_image_full', 
                 'documentation_frame_1_1', 'attachment_file', 'bib_template_image',
-                'price_variations', 'speakers', 'sessions', 'form_fields', 'free_for_label_ids'
+                'price_variations', 'teams', 'speakers', 'sessions', 'form_fields', 'free_for_label_ids'
             ];
             
             if (!skipFields.includes(key) && !key.startsWith('_')) {
@@ -427,6 +448,10 @@ const EventSubmissionPage = () => {
         // Append price variations as JSON
         if (formData.price_variations && formData.price_variations.length > 0) {
             data.append('price_variations', JSON.stringify(formData.price_variations));
+        }
+
+        if (formData.teams && formData.teams.length > 0) {
+            data.append('teams', JSON.stringify(formData.teams));
         }
 
         // Append form fields as JSON string (backend will handle)
@@ -1104,6 +1129,77 @@ const EventSubmissionPage = () => {
                                                 ))}
                                                 {formData.price_variations.length === 0 && (
                                                     <p className="text-[10px] text-green-700/50 italic text-center py-2">Gunakan fitur ini jika ingin memberikan pilihan harga yang berbeda-beda bagi peserta.</p>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        {/* Teams Section */}
+                                        <div className="space-y-4 md:col-span-2 p-6 bg-purple-50/50 rounded-[2rem] border border-purple-100 mt-2">
+                                            <div className="flex items-center justify-between">
+                                                <div>
+                                                    <p className="text-sm font-black text-purple-900">Manajemen Tim / Kelompok</p>
+                                                    <p className="text-[10px] text-purple-600 font-bold uppercase tracking-wider">Membagi slot peserta ke dalam beberapa tim</p>
+                                                </div>
+                                                <button
+                                                    type="button"
+                                                    onClick={addTeam}
+                                                    className="text-[10px] font-black text-white bg-purple-600 px-4 py-2 rounded-xl hover:bg-purple-700 transition flex items-center gap-1 shadow-lg shadow-purple-100"
+                                                >
+                                                    <span className="material-icons text-sm">add</span>
+                                                    TAMBAH TIM
+                                                </button>
+                                            </div>
+                                            
+                                            <div className="space-y-3">
+                                                {formData.teams && formData.teams.map((tm, idx) => (
+                                                    <div key={idx} className="bg-white p-5 rounded-2xl border border-purple-100 relative animate-fade-in space-y-4 shadow-sm">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => removeTeam(idx)}
+                                                            className="absolute -top-2 -right-2 w-7 h-7 bg-red-500 text-white rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition"
+                                                        >
+                                                            <span className="material-icons text-xs">close</span>
+                                                        </button>
+                                                        
+                                                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                                            <div className="space-y-1.5">
+                                                                <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Nama Tim *</label>
+                                                                <input
+                                                                    type="text"
+                                                                    value={tm.name}
+                                                                    onChange={(e) => updateTeam(idx, { name: e.target.value })}
+                                                                    placeholder="Misal: Team Alpha"
+                                                                    className="w-full px-4 py-2.5 bg-gray-50 border-none rounded-xl text-xs focus:ring-2 focus:ring-purple-500 transition"
+                                                                />
+                                                            </div>
+                                                            <div className="space-y-1.5">
+                                                                <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Kapasitas Peserta *</label>
+                                                                <input
+                                                                    type="number"
+                                                                    min="1"
+                                                                    value={tm.capacity}
+                                                                    onChange={(e) => updateTeam(idx, { capacity: parseInt(e.target.value) || 0 })}
+                                                                    className="w-full px-4 py-2.5 bg-gray-50 border-none rounded-xl text-xs focus:ring-2 focus:ring-purple-500 transition"
+                                                                />
+                                                                {tm.id && (
+                                                                    <p className="text-[9px] text-purple-600 font-bold ml-1 mt-1">Terisi: {tm.registered_count || 0}</p>
+                                                                )}
+                                                            </div>
+                                                            <div className="space-y-1.5">
+                                                                <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Penyesuaian Harga (+/-)</label>
+                                                                <CurrencyInput
+                                                                    value={tm.price_modifier}
+                                                                    onChange={(e) => updateTeam(idx, { price_modifier: e.target.value })}
+                                                                    placeholder="Contoh: -50000 atau 100000"
+                                                                    className="w-full px-4 py-2.5 bg-gray-50 border-none rounded-xl text-xs focus:ring-2 focus:ring-purple-500 transition"
+                                                                />
+                                                                <p className="text-[8px] text-gray-400 leading-tight mt-1 ml-1">Beri tanda minus (-) untuk diskon, atau positif untuk biaya tambahan ke base price.</p>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                                {(!formData.teams || formData.teams.length === 0) && (
+                                                    <p className="text-[10px] text-purple-700/50 italic text-center py-2">Tambahkan tim jika peserta perlu mendaftar pada slot regu/kelompok tertentu.</p>
                                                 )}
                                             </div>
                                         </div>

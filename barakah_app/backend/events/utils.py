@@ -53,48 +53,49 @@ def generate_special_qr_image(registration):
     draw = ImageDraw.Draw(img)
     width, height = img.size
 
-    # 1. Draw QR or Barcode
-    code_buffer = BytesIO()
-    try:
-        if special_qr.code_type == 'barcode':
-            if barcode is None:
-                logger.error("Library 'python-barcode' is NOT installed. Please run 'pip install python-barcode' and rebuild.")
-                return None
-            # Generate Barcode
-            try:
-                EAN = barcode.get_barcode_class('code128')
-                ean = EAN(registration.unique_code, writer=ImageWriter())
-                ean.write(code_buffer)
-            except Exception as be:
-                logger.error(f"Barcode generation error: {be}")
-                return None
-        else:
-            # Generate QR Code
-            qr = qrcode.QRCode(version=1, box_size=10, border=2)
-            qr.add_data(registration.unique_code)
-            qr.make(fit=True)
-            qr_img = qr.make_image(fill_color="black", back_color="white")
-            qr_img.save(code_buffer, format="PNG")
-    except Exception as e:
-        logger.error(f"Error generating code for special QR: {e}")
-        return None
+    # 1. Draw QR or Barcode (if enabled)
+    if getattr(special_qr, 'show_code', True):
+        code_buffer = BytesIO()
+        try:
+            if special_qr.code_type == 'barcode':
+                if barcode is None:
+                    logger.error("Library 'python-barcode' is NOT installed. Please run 'pip install python-barcode' and rebuild.")
+                    return None
+                # Generate Barcode
+                try:
+                    EAN = barcode.get_barcode_class('code128')
+                    ean = EAN(registration.unique_code, writer=ImageWriter())
+                    ean.write(code_buffer)
+                except Exception as be:
+                    logger.error(f"Barcode generation error: {be}")
+                    return None
+            else:
+                # Generate QR Code
+                qr = qrcode.QRCode(version=1, box_size=10, border=2)
+                qr.add_data(registration.unique_code)
+                qr.make(fit=True)
+                qr_img = qr.make_image(fill_color="black", back_color="white")
+                qr_img.save(code_buffer, format="PNG")
+        except Exception as e:
+            logger.error(f"Error generating code for special QR: {e}")
+            return None
 
-    code_buffer.seek(0)
-    code_img = Image.open(code_buffer).convert("RGBA")
-    
-    # Calculate pixel position
-    cx = int(special_qr.code_x * width / 100)
-    cy = int(special_qr.code_y * height / 100)
-    cw = int(special_qr.code_width * width / 100)
-    ch = int(special_qr.code_height * height / 100)
-    
-    # Resize code image
-    code_img = code_img.resize((cw, ch), Image.Resampling.LANCZOS)
-    
-    # Paste code (cx, cy are center coordinates)
-    paste_x = cx - (cw // 2)
-    paste_y = cy - (ch // 2)
-    img.paste(code_img, (paste_x, paste_y), code_img)
+        code_buffer.seek(0)
+        code_img = Image.open(code_buffer).convert("RGBA")
+        
+        # Calculate pixel position
+        cx = int(special_qr.code_x * width / 100)
+        cy = int(special_qr.code_y * height / 100)
+        cw = int(special_qr.code_width * width / 100)
+        ch = int(special_qr.code_height * height / 100)
+        
+        # Resize code image
+        code_img = code_img.resize((cw, ch), Image.Resampling.LANCZOS)
+        
+        # Paste code (cx, cy are center coordinates)
+        paste_x = cx - (cw // 2)
+        paste_y = cy - (ch // 2)
+        img.paste(code_img, (paste_x, paste_y), code_img)
 
     # 2. Draw Dynamic Fields & Photos
     for layout in special_qr.field_layouts:

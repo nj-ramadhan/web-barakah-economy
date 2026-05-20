@@ -46,6 +46,7 @@ const EventDetailPage = () => {
     const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
     const [userProfile, setUserProfile] = useState(null);
     const [selectedPriceVariation, setSelectedPriceVariation] = useState(null);
+    const [selectedTeam, setSelectedTeam] = useState(null);
     const [isLiked, setIsLiked] = useState(false);
     const [likesCount, setLikesCount] = useState(0);
     const [liking, setLiking] = useState(false);
@@ -285,6 +286,10 @@ const EventDetailPage = () => {
             data.append('price_variation', selectedPriceVariation.id);
         }
 
+        if (selectedTeam) {
+            data.append('team_id', selectedTeam.id);
+        }
+
         if (appliedVoucher) {
             data.append('voucher_code', appliedVoucher.code);
         }
@@ -320,15 +325,19 @@ const EventDetailPage = () => {
             
             const extra = Number(paymentAmount) || 0;
             let totalToSave = 0;
+            
+            const teamMod = selectedTeam ? Number(selectedTeam.price_modifier) : 0;
 
             if (event?.price_variations?.length > 0) {
-                if (event?.price_type === 'fixed') totalToSave = fixed + extraFormPrice;
-                else totalToSave = fixed + extraFormPrice + extra;
+                if (event?.price_type === 'fixed') totalToSave = fixed + extraFormPrice + teamMod;
+                else totalToSave = fixed + extraFormPrice + extra + teamMod;
             } else {
-                if (event?.price_type === 'fixed') totalToSave = fixed + extraFormPrice;
-                else if (event?.price_type === 'hybrid_1') totalToSave = fixed + extraFormPrice + extra;
-                else totalToSave = extra + extraFormPrice;
+                if (event?.price_type === 'fixed') totalToSave = fixed + extraFormPrice + teamMod;
+                else if (event?.price_type === 'hybrid_1') totalToSave = fixed + extraFormPrice + extra + teamMod;
+                else totalToSave = extra + extraFormPrice + fixed + teamMod;
             }
+
+            if (totalToSave < 0) totalToSave = 0;
 
             data.append('payment_proof', paymentProof);
             data.append('payment_amount', totalToSave);
@@ -360,15 +369,19 @@ const EventDetailPage = () => {
             
             const extra = Number(paymentAmount) || 0;
             let totalToSave = 0;
+            
+            const teamMod = selectedTeam ? Number(selectedTeam.price_modifier) : 0;
 
             if (event?.price_variations?.length > 0) {
-                if (event?.price_type === 'fixed') totalToSave = fixed + extraFormPrice;
-                else totalToSave = fixed + extraFormPrice + extra;
+                if (event?.price_type === 'fixed') totalToSave = fixed + extraFormPrice + teamMod;
+                else totalToSave = fixed + extraFormPrice + extra + teamMod;
             } else {
-                if (event?.price_type === 'fixed') totalToSave = fixed + extraFormPrice;
-                else if (event?.price_type === 'hybrid_1') totalToSave = fixed + extraFormPrice + extra;
-                else totalToSave = extra + extraFormPrice;
+                if (event?.price_type === 'fixed') totalToSave = fixed + extraFormPrice + teamMod;
+                else if (event?.price_type === 'hybrid_1') totalToSave = fixed + extraFormPrice + extra + teamMod;
+                else totalToSave = extra + extraFormPrice + fixed + teamMod;
             }
+
+            if (totalToSave < 0) totalToSave = 0;
             
             data.append('payment_amount', totalToSave);
         }
@@ -1673,6 +1686,46 @@ const EventDetailPage = () => {
 
                                         {event.price_type !== 'free' && !isUserFreeByLabel() && (
                                             <div className="p-6 bg-gray-50 rounded-[2rem] border border-gray-200 space-y-6">
+                                                {event.teams && event.teams.length > 0 && (
+                                                    <div className="space-y-4">
+                                                        <h3 className="text-sm font-bold text-gray-900 flex items-center gap-2">
+                                                            <span className="material-icons text-purple-600">groups</span>
+                                                            Pilih Tim / Kelompok
+                                                        </h3>
+                                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                                            {event.teams.map((tm, idx) => {
+                                                                const isFull = tm.registered_count >= tm.capacity;
+                                                                const isSelected = selectedTeam?.id === tm.id;
+                                                                return (
+                                                                    <div 
+                                                                        key={idx}
+                                                                        onClick={() => !isFull && setSelectedTeam(tm)}
+                                                                        className={`p-4 rounded-2xl border-2 transition relative ${isFull ? 'bg-gray-100 border-gray-200 opacity-60 cursor-not-allowed' : isSelected ? 'bg-purple-50 border-purple-500 cursor-pointer shadow-md' : 'bg-white border-gray-200 cursor-pointer hover:border-purple-300'}`}
+                                                                    >
+                                                                        {isSelected && <div className="absolute top-2 right-2 w-5 h-5 bg-purple-500 rounded-full flex items-center justify-center"><span className="material-icons text-white text-[10px]">check</span></div>}
+                                                                        <p className="font-extrabold text-sm text-gray-900">{tm.name}</p>
+                                                                        <div className="flex justify-between items-center mt-2">
+                                                                            <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Sisa {Math.max(0, tm.capacity - tm.registered_count)} Slot</p>
+                                                                            {Number(tm.price_modifier) !== 0 && (
+                                                                                <p className={`text-xs font-black ${Number(tm.price_modifier) > 0 ? 'text-red-500' : 'text-green-600'}`}>
+                                                                                    {Number(tm.price_modifier) > 0 ? '+' : '-'} Rp {formatCurrency(Math.abs(tm.price_modifier))}
+                                                                                </p>
+                                                                            )}
+                                                                        </div>
+                                                                        {isFull && <div className="mt-2 text-center text-[9px] text-red-500 font-bold uppercase tracking-widest bg-red-50 py-1 rounded-md">Penuh</div>}
+                                                                    </div>
+                                                                )
+                                                            })}
+                                                        </div>
+                                                        <button 
+                                                            type="button" 
+                                                            onClick={() => setSelectedTeam(null)} 
+                                                            className={`text-[10px] uppercase font-bold tracking-widest px-3 py-1.5 rounded-lg ${!selectedTeam ? 'bg-gray-200 text-gray-500' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'} transition`}
+                                                        >
+                                                            Tanpa Tim
+                                                        </button>
+                                                    </div>
+                                                )}
                                                 <div className="flex items-center justify-between">
                                                     <h3 className="text-sm font-bold text-gray-900 flex items-center gap-2">
                                                         <span className="material-icons text-green-600">payments</span>
@@ -1880,10 +1933,8 @@ const EventDetailPage = () => {
                                                         <span className="text-xs font-bold text-green-800 uppercase">Total Dibayar</span>
                                                         <span className="text-xl font-black text-green-700">
                                                             Rp {(() => {
-                                                                let fixed = Number(event?.price_fixed) || 0;
-                                                                if (selectedPriceVariation) fixed = Number(selectedPriceVariation.price);
-                                                                
-                                                                let extraFormPrice = 0;
+                                                                const fixedPrice = selectedPriceVariation ? Number(selectedPriceVariation.price) : Number(event?.price_fixed || 0);
+                                                                let extraFields = 0;
                                                                 if (event?.form_fields) {
                                                                     event.form_fields.forEach(f => {
                                                                         if (['select', 'radio', 'checkbox'].includes(f.field_type) && f.options && responses[f.id]) {
@@ -1891,28 +1942,28 @@ const EventDetailPage = () => {
                                                                             if (f.field_type === 'checkbox') {
                                                                                 const selected = responses[f.id] || [];
                                                                                 selected.forEach(s => {
-                                                                                    const match = opts.find(o => o.label === s || o === s);
-                                                                                    if (match && match.price) extraFormPrice += Number(match.price);
+                                                                                    const match = opts.find(o => (typeof o === 'object' ? o.label : o) === s);
+                                                                                    if (match && typeof match === 'object' && match.price) extraFields += Number(match.price);
                                                                                 });
                                                                             } else {
-                                                                                const match = opts.find(o => o.label === responses[f.id] || o === responses[f.id]);
-                                                                                if (match && match.price) extraFormPrice += Number(match.price);
+                                                                                const match = opts.find(o => (typeof o === 'object' ? o.label : o) === responses[f.id]);
+                                                                                if (match && typeof match === 'object' && match.price) extraFields += Number(match.price);
                                                                             }
                                                                         }
                                                                     });
                                                                 }
-                                                                
-                                                                const extra = Number(paymentAmount) || 0;
-                                                                let baseTotal = 0;
+                                                                let totalCalc = 0;
+                                                                const teamMod = selectedTeam ? Number(selectedTeam.price_modifier) : 0;
+                                                                const basePriceWithTeam = fixedPrice + teamMod;
                                                                 if (event?.price_variations?.length > 0) {
-                                                                    if (event?.price_type === 'fixed') baseTotal = fixed + extraFormPrice;
-                                                                    else baseTotal = fixed + extraFormPrice + extra;
+                                                                    if (event?.price_type === 'fixed') totalCalc = basePriceWithTeam + extraFields;
+                                                                    else totalCalc = basePriceWithTeam + extraFields + Number(paymentAmount || 0);
                                                                 } else {
-                                                                    if (event?.price_type === 'fixed') baseTotal = fixed + extraFormPrice;
-                                                                    else if (event?.price_type === 'hybrid_1') baseTotal = fixed + extraFormPrice + extra;
-                                                                    else baseTotal = extra + extraFormPrice;
+                                                                    if (event?.price_type === 'fixed') totalCalc = basePriceWithTeam + extraFields;
+                                                                    else if (event?.price_type === 'hybrid_1') totalCalc = basePriceWithTeam + extraFields + Number(paymentAmount || 0);
+                                                                    else totalCalc = Number(paymentAmount || 0) + extraFields + basePriceWithTeam;
                                                                 }
-                                                                
+                                                                if (totalCalc < 0) totalCalc = 0;
                                                                 if (appliedVoucher) {
                                                                     let discount = 0;
                                                                     if (appliedVoucher.discount_type === 'percentage') {
