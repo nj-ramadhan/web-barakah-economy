@@ -1080,7 +1080,7 @@ const EventDetailPage = () => {
                                                 };
 
                                                 // Group participants by team
-                                                const hasTeams = (participants || []).some(p => p.team);
+                                                const hasTeams = (participants || []).some(p => p.team) || (event.teams && event.teams.length > 0);
 
                                                 if (!hasTeams) {
                                                     return (
@@ -1112,12 +1112,23 @@ const EventDetailPage = () => {
                                                     );
                                                 }
 
-                                                const grouped = (participants || []).reduce((acc, p) => {
+                                                const grouped = {};
+                                                
+                                                // Pre-populate with defined event teams if they exist
+                                                if (event.teams && event.teams.length > 0) {
+                                                    event.teams.forEach(tm => {
+                                                        grouped[tm.name] = [];
+                                                    });
+                                                }
+
+                                                // Distribute participants into groups
+                                                (participants || []).forEach(p => {
                                                     const teamName = p.team || 'Individu';
-                                                    if (!acc[teamName]) acc[teamName] = [];
-                                                    acc[teamName].push(p);
-                                                    return acc;
-                                                }, {});
+                                                    if (!grouped[teamName]) {
+                                                        grouped[teamName] = [];
+                                                    }
+                                                    grouped[teamName].push(p);
+                                                });
 
                                                 // Sort teams (Individu first, then alphabetically)
                                                 const teamNames = Object.keys(grouped).sort((a, b) => {
@@ -1145,33 +1156,39 @@ const EventDetailPage = () => {
                                                             </div>
 
                                                             {/* Members Grid */}
-                                                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                                                                {members.map((p) => (
-                                                                    <div key={p.id} className={`${color.bg} px-5 py-4 rounded-2xl border ${color.border} flex items-center gap-4 hover:shadow-lg transition-all duration-300 group relative overflow-hidden`}>
-                                                                        {/* Subtle Accent Line */}
-                                                                        <div className={`absolute left-0 top-0 bottom-0 w-1 ${color.bullet} opacity-20`}></div>
+                                                            {members.length > 0 ? (
+                                                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                                                                    {members.map((p) => (
+                                                                        <div key={p.id} className={`${color.bg} px-5 py-4 rounded-2xl border ${color.border} flex items-center gap-4 hover:shadow-lg transition-all duration-300 group relative overflow-hidden`}>
+                                                                            {/* Subtle Accent Line */}
+                                                                            <div className={`absolute left-0 top-0 bottom-0 w-1 ${color.bullet} opacity-20`}></div>
 
-                                                                        <div className="min-w-0">
-                                                                            <p 
-                                                                                className={`font-extrabold ${color.text} break-words text-sm sm:text-base ${p.user_id ? 'cursor-pointer hover:underline' : ''}`}
-                                                                                onClick={() => {
-                                                                                    if (p.user_id) {
-                                                                                        setSelectedUserId(p.user_id);
-                                                                                        setIsProfileModalOpen(true);
-                                                                                    }
-                                                                                }}
-                                                                            >
-                                                                                {p.name || 'Peserta'}
-                                                                            </p>
-                                                                            <div className="flex flex-wrap gap-1 mt-0.5">
-                                                                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
-                                                                                    Terdaftar
+                                                                            <div className="min-w-0">
+                                                                                <p 
+                                                                                    className={`font-extrabold ${color.text} break-words text-sm sm:text-base ${p.user_id ? 'cursor-pointer hover:underline' : ''}`}
+                                                                                    onClick={() => {
+                                                                                        if (p.user_id) {
+                                                                                            setSelectedUserId(p.user_id);
+                                                                                            setIsProfileModalOpen(true);
+                                                                                        }
+                                                                                    }}
+                                                                                >
+                                                                                    {p.name || 'Peserta'}
                                                                                 </p>
+                                                                                <div className="flex flex-wrap gap-1 mt-0.5">
+                                                                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                                                                                        Terdaftar
+                                                                                    </p>
+                                                                                </div>
                                                                             </div>
                                                                         </div>
-                                                                    </div>
-                                                                ))}
-                                                            </div>
+                                                                    ))}
+                                                                </div>
+                                                            ) : (
+                                                                <div className="text-center py-6 bg-gray-50/30 rounded-2xl border border-dashed border-gray-200">
+                                                                    <p className="text-xs text-gray-400 italic font-medium">Belum ada peserta terdaftar di tim ini</p>
+                                                                </div>
+                                                            )}
                                                         </div>
                                                     );
                                                 });

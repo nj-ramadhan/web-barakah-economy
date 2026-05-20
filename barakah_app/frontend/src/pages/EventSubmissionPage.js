@@ -77,6 +77,15 @@ const EventSubmissionPage = () => {
     }, []);
 
     useEffect(() => {
+        if (formData.teams && formData.teams.length > 0) {
+            const totalCapacity = formData.teams.reduce((sum, tm) => sum + (parseInt(tm.capacity) || 0), 0);
+            if (formData.capacity !== totalCapacity) {
+                setFormData(prev => ({ ...prev, capacity: totalCapacity }));
+            }
+        }
+    }, [formData.teams, formData.capacity]);
+
+    useEffect(() => {
         const user = JSON.parse(localStorage.getItem('user'));
         if (!user) {
             const redirectPath = isEdit ? `/event/edit/${slug}` : '/event/ajukan';
@@ -1186,14 +1195,30 @@ const EventSubmissionPage = () => {
                                                                 )}
                                                             </div>
                                                             <div className="space-y-1.5">
-                                                                <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Penyesuaian Harga (+/-)</label>
-                                                                <CurrencyInput
-                                                                    value={tm.price_modifier}
-                                                                    onChange={(e) => updateTeam(idx, { price_modifier: e.target.value })}
-                                                                    placeholder="Contoh: -50000 atau 100000"
-                                                                    className="w-full px-4 py-2.5 bg-gray-50 border-none rounded-xl text-xs focus:ring-2 focus:ring-purple-500 transition"
-                                                                />
-                                                                <p className="text-[8px] text-gray-400 leading-tight mt-1 ml-1">Beri tanda minus (-) untuk diskon, atau positif untuk biaya tambahan ke base price.</p>
+                                                                <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Penyesuaian Harga</label>
+                                                                <div className="flex bg-gray-50 rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-purple-500 transition">
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => {
+                                                                            const val = Math.abs(Number(tm.price_modifier || 0));
+                                                                            updateTeam(idx, { price_modifier: Number(tm.price_modifier || 0) < 0 ? val : -val });
+                                                                        }}
+                                                                        className={`px-4 font-black text-sm flex items-center justify-center ${Number(tm.price_modifier || 0) < 0 ? 'bg-red-500 text-white' : 'bg-green-500 text-white'} transition`}
+                                                                    >
+                                                                        {Number(tm.price_modifier || 0) < 0 ? '-' : '+'}
+                                                                    </button>
+                                                                    <CurrencyInput
+                                                                        value={Math.abs(Number(tm.price_modifier || 0))}
+                                                                        onChange={(e) => {
+                                                                            const isNeg = Number(tm.price_modifier || 0) < 0;
+                                                                            const val = Math.abs(Number(e.target.value || 0));
+                                                                            updateTeam(idx, { price_modifier: isNeg ? -val : val });
+                                                                        }}
+                                                                        placeholder="0"
+                                                                        className="w-full px-4 py-2.5 bg-transparent border-none text-xs outline-none"
+                                                                    />
+                                                                </div>
+                                                                <p className="text-[8px] text-gray-400 leading-tight mt-1 ml-1">Klik tombol +/- untuk mengubah antara Diskon (-) atau Biaya Tambahan (+).</p>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -1432,10 +1457,22 @@ const EventSubmissionPage = () => {
                                         name="capacity"
                                         value={formData.capacity}
                                         onChange={handleChange}
-                                        placeholder="Kosongkan atau isi 0 jika tak terbatas"
-                                        className="w-full px-5 py-3.5 bg-gray-50 border-none rounded-2xl text-sm focus:ring-2 focus:ring-green-500 transition"
+                                        disabled={formData.teams && formData.teams.length > 0}
+                                        placeholder={formData.teams && formData.teams.length > 0 ? "Otomatis dari total kapasitas tim" : "Kosongkan atau isi 0 jika tak terbatas"}
+                                        className={`w-full px-5 py-3.5 border-none rounded-2xl text-sm focus:ring-2 focus:ring-green-500 transition ${
+                                            formData.teams && formData.teams.length > 0 
+                                                ? 'bg-purple-50 text-purple-900 font-bold border border-purple-100 cursor-not-allowed shadow-sm shadow-purple-50' 
+                                                : 'bg-gray-50 text-gray-800'
+                                        }`}
                                     />
-                                    <p className="text-[10px] text-gray-400 ml-1 italic">Kosong/0 = Tanpa batas kuota.</p>
+                                    {formData.teams && formData.teams.length > 0 ? (
+                                        <p className="text-[10px] text-purple-600 font-bold ml-1 flex items-center gap-1">
+                                            <span className="material-icons text-[12px]">lock</span>
+                                            Kapasitas terkunci dan terisi otomatis dari total kuota seluruh tim ({formData.capacity} peserta).
+                                        </p>
+                                    ) : (
+                                        <p className="text-[10px] text-gray-400 ml-1 italic">Kosong/0 = Tanpa batas kuota.</p>
+                                    )}
                                 </div>
                             </div>
                         </div>

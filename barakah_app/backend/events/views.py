@@ -2273,7 +2273,7 @@ class EventViewSet(viewsets.ModelViewSet):
         """Public list of approved participants for this event."""
         event = self.get_object()
         # Remove status='approved' filter to show everyone who registered
-        registrations = EventRegistration.objects.filter(event=event).prefetch_related('user', 'user__profile')
+        registrations = EventRegistration.objects.filter(event=event).select_related('team').prefetch_related('user', 'user__profile')
         
         # Identify team-related fields
         team_field_ids = list(event.form_fields.filter(
@@ -2303,7 +2303,9 @@ class EventViewSet(viewsets.ModelViewSet):
                 name = reg.guest_name or "Tamu"
             
             team = None
-            if reg.responses:
+            if reg.team:
+                team = reg.team.name
+            elif reg.responses:
                 for fid in team_field_ids:
                     val = reg.responses.get(fid)
                     if val:
