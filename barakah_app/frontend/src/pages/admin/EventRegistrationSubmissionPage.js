@@ -595,6 +595,7 @@ const EventRegistrationSubmissionPage = () => {
                                         </div>
                                     </th>
                                     <th className="p-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Label</th>
+                                    <th className="p-5 text-[10px] font-black text-gray-400 uppercase tracking-widest min-w-[120px]">Tim / Kelompok</th>
                                     {event?.sessions && event.sessions.length > 0 ? (
                                         event.sessions.map(ses => (
                                             <th key={ses.id} className="p-5 text-[10px] font-black text-purple-600 uppercase tracking-widest min-w-[120px] text-center bg-purple-50/30 border-x border-purple-100">
@@ -712,6 +713,30 @@ const EventRegistrationSubmissionPage = () => {
                                                             <span className="text-gray-300 italic text-[10px]">-</span>
                                                         )}
                                                     </div>
+                                                </td>
+                                                <td className="p-5">
+                                                    {(() => {
+                                                        const teamName = reg.team_details?.name || reg.team?.name || reg.team || (() => {
+                                                            if (event?.form_fields && reg.responses) {
+                                                                const teamField = event.form_fields.find(field => {
+                                                                    const label = (field.label || '').toLowerCase();
+                                                                    return label.includes('team') || label.includes('tim') || label.includes('kelompok') || label.includes('regu') || label.includes('group');
+                                                                });
+                                                                if (teamField) {
+                                                                    const val = reg.responses[teamField.id];
+                                                                    if (val) return String(val);
+                                                                }
+                                                            }
+                                                            return null;
+                                                        })();
+                                                        return teamName ? (
+                                                            <span className="bg-purple-50 text-purple-700 px-2.5 py-1 rounded-xl text-[10px] font-black uppercase tracking-wider border border-purple-100 inline-block font-bold">
+                                                                {teamName}
+                                                            </span>
+                                                        ) : (
+                                                            <span className="text-gray-300 italic text-xs">-</span>
+                                                        );
+                                                    })()}
                                                 </td>
                                                 {/* Dynamic Session Attendance Columns */}
                                                 {event?.sessions && event.sessions.length > 0 ? (

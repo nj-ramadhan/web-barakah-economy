@@ -2347,7 +2347,7 @@ class EventViewSet(viewsets.ModelViewSet):
         if not (is_admin or is_owner or is_committee):
             return Response({"error": "Unauthorized: Anda tidak memiliki akses untuk mengekspor data pendaftaran."}, status=status.HTTP_403_FORBIDDEN)
             
-        registrations = EventRegistration.objects.filter(event=event).select_related('user', 'user__profile').prefetch_related('attendances')
+        registrations = EventRegistration.objects.filter(event=event).select_related('user', 'user__profile', 'team', 'applied_voucher').prefetch_related('attendances')
         form_fields = event.form_fields.all()
         sessions = event.sessions.all().order_by('order', 'start_time')
         
@@ -2430,6 +2430,8 @@ class EventViewSet(viewsets.ModelViewSet):
 
             # Payment fields
             row.append(reg.payment_amount)
+            row.append(reg.applied_voucher.code if reg.applied_voucher else "-")
+            row.append(reg.discount_amount)
             row.append(reg.get_payment_status_display())
             row.append("Selesai" if reg.is_order_completed else "Belum Selesai")
             

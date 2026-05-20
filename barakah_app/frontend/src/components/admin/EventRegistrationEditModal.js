@@ -161,9 +161,19 @@ const EventRegistrationEditModal = ({ isOpen, onClose, event, registration, onSu
                                             className="w-full px-5 py-3.5 bg-gray-50 border border-transparent rounded-2xl text-sm focus:bg-white focus:border-green-500 focus:ring-4 focus:ring-green-500/10 transition outline-none appearance-none"
                                         >
                                             <option value="">Pilih Tim (Opsional)</option>
-                                            {event.teams.map(t => (
-                                                <option key={t.id} value={t.id}>{t.name} (Sisa Slot: {Math.max(0, t.capacity - t.registered_count)})</option>
-                                            ))}
+                                             {event.teams.map(t => {
+                                                 const priceMod = Number(t.price_modifier || 0);
+                                                 const priceText = priceMod > 0 
+                                                     ? ` (+ Rp ${priceMod.toLocaleString('id-ID')})` 
+                                                     : priceMod < 0 
+                                                         ? ` (- Rp ${Math.abs(priceMod).toLocaleString('id-ID')})` 
+                                                         : '';
+                                                 return (
+                                                     <option key={t.id} value={t.id}>
+                                                         {t.name} (Sisa Slot: {Math.max(0, t.capacity - t.registered_count)}){priceText}
+                                                     </option>
+                                                 );
+                                             })}
                                         </select>
                                         <span className="material-icons absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">expand_more</span>
                                     </div>
@@ -194,9 +204,18 @@ const EventRegistrationEditModal = ({ isOpen, onClose, event, registration, onSu
                                                             className="w-full px-5 py-3.5 bg-gray-50 border border-transparent rounded-2xl text-sm focus:bg-white focus:border-green-500 focus:ring-4 focus:ring-green-500/10 transition outline-none appearance-none"
                                                         >
                                                             <option value="">Pilih Opsi</option>
-                                                            {(field.options || []).map(opt => (
-                                                                <option key={opt} value={opt}>{opt}</option>
-                                                            ))}
+                                                            {(() => {
+                                                                let opts = field.options || [];
+                                                                if (typeof opts === 'string') {
+                                                                    try { opts = JSON.parse(opts); } catch (e) { opts = []; }
+                                                                }
+                                                                return Array.isArray(opts) ? opts.map(opt => {
+                                                                    const isObj = typeof opt === 'object' && opt !== null;
+                                                                    const label = isObj ? opt.label : opt;
+                                                                    const price = isObj && opt.price ? ` (+ Rp ${Number(opt.price).toLocaleString('id-ID')})` : '';
+                                                                    return <option key={label} value={label}>{label}{price}</option>;
+                                                                }) : null;
+                                                            })()}
                                                         </select>
                                                     ) : field.field_type === 'textarea' ? (
                                                         <textarea

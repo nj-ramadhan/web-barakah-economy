@@ -302,7 +302,18 @@ const EventManualRegistrationModal = ({ isOpen, onClose, event, registrations = 
                                                         <select required={field.required} value={formData.responses[field.id] || ''} onChange={(e) => handleResponseChange(field.id, e.target.value)}
                                                             className="w-full px-6 py-4 bg-gray-50 border border-transparent rounded-2xl text-sm font-bold focus:bg-white focus:border-green-500 appearance-none outline-none">
                                                             <option value="">Pilih Opsi</option>
-                                                            {(field.options || []).map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                                                            {(() => {
+                                                                let opts = field.options || [];
+                                                                if (typeof opts === 'string') {
+                                                                    try { opts = JSON.parse(opts); } catch (e) { opts = []; }
+                                                                }
+                                                                return Array.isArray(opts) ? opts.map(opt => {
+                                                                    const isObj = typeof opt === 'object' && opt !== null;
+                                                                    const label = isObj ? opt.label : opt;
+                                                                    const price = isObj && opt.price ? ` (+ Rp ${Number(opt.price).toLocaleString('id-ID')})` : '';
+                                                                    return <option key={label} value={label}>{label}{price}</option>;
+                                                                }) : null;
+                                                            })()}
                                                         </select>
                                                         <span className="material-icons absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">expand_more</span>
                                                     </div>
