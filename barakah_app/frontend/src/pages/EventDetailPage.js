@@ -1967,16 +1967,16 @@ const EventDetailPage = () => {
                                                                 if (appliedVoucher) {
                                                                     let discount = 0;
                                                                     if (appliedVoucher.discount_type === 'percentage') {
-                                                                        const discountBase = appliedVoucher.apply_to_extras ? (fixed + extraFormPrice) : fixed;
+                                                                        const discountBase = appliedVoucher.apply_to_extras ? (basePriceWithTeam + extraFields) : basePriceWithTeam;
                                                                         discount = discountBase * (Number(appliedVoucher.discount_value) / 100);
                                                                     } else {
                                                                         discount = Number(appliedVoucher.discount_value);
                                                                     }
-                                                                    baseTotal -= discount;
-                                                                    if (baseTotal < 0) baseTotal = 0;
+                                                                    totalCalc -= discount;
+                                                                    if (totalCalc < 0) totalCalc = 0;
                                                                 }
                                                                 
-                                                                return formatCurrency(baseTotal);
+                                                                return formatCurrency(totalCalc);
                                                             })()}
                                                         </span>
                                                     </div>
