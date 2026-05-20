@@ -430,10 +430,6 @@ class EventViewSet(viewsets.ModelViewSet):
         # Check if event allows OTS
         is_ots_valid = event.allow_ots_payment and payment_method == 'ots'
 
-        if event.price_type != 'free' and not is_ots_valid and not is_free_by_label and not payment_proof:
-            return Response({"error": "Bukti pembayaran wajib diunggah untuk event berbayar."}, status=status.HTTP_400_BAD_REQUEST)
-
-        
         # 2b. Expected Amount Calculation
         import decimal
         expected_amount = decimal.Decimal('0')
@@ -520,10 +516,14 @@ class EventViewSet(viewsets.ModelViewSet):
             except EventVoucher.DoesNotExist:
                 return Response({"error": "Voucher tidak valid untuk event ini."}, status=status.HTTP_400_BAD_REQUEST)
 
-        # 2d. OCR Validation
+        # 2d. Require payment proof only if event is not free, not OTS, not free by label, and expected amount > 0
+        if event.price_type != 'free' and not is_ots_valid and not is_free_by_label and expected_amount > 0 and not payment_proof:
+            return Response({"error": "Bukti pembayaran wajib diunggah untuk event berbayar."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # 2e. OCR Validation (Only if expected_amount > 0 and payment_proof exists)
         ocr_data = None
         ocr_verified = False
-        if payment_proof and not is_ots_valid and not is_free_by_label:
+        if payment_proof and not is_ots_valid and not is_free_by_label and expected_amount > 0:
             # Call OCR Service
             ocr_result = extract_payment_data(payment_proof)
             
@@ -572,7 +572,7 @@ class EventViewSet(viewsets.ModelViewSet):
             ocr_data=ocr_data,
             ocr_verified=ocr_verified,
             status='approved', # Force auto-approve
-            payment_status='verified' if is_free_by_label else 'pending',
+            payment_status='verified' if (is_free_by_label or expected_amount <= 0) else 'pending',
             applied_voucher=applied_voucher,
             discount_amount=discount_amount
         )

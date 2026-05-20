@@ -29,6 +29,23 @@ def seed_data(apps, schema_editor):
 def reverse_seed_data(apps, schema_editor):
     pass
 
+class ConditionalRunSQL(migrations.RunSQL):
+    def database_forwards(self, app_label, schema_editor, from_state, to_state):
+        if schema_editor.connection.vendor == 'sqlite':
+            cursor = schema_editor.connection.cursor()
+            cursor.execute("PRAGMA table_info(accounts_user);")
+            columns = [row[1] for row in cursor.fetchall()]
+            if 'position' not in columns:
+                self.sql = 'ALTER TABLE accounts_user ADD COLUMN position varchar(100) NULL;'
+            else:
+                self.sql = migrations.RunSQL.noop
+        super().database_forwards(app_label, schema_editor, from_state, to_state)
+
+    def database_backwards(self, app_label, schema_editor, from_state, to_state):
+        if schema_editor.connection.vendor == 'sqlite':
+            self.reverse_sql = migrations.RunSQL.noop
+        super().database_backwards(app_label, schema_editor, from_state, to_state)
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -62,7 +79,7 @@ class Migration(migrations.Migration):
                 'ordering': ['name'],
             },
         ),
-        migrations.RunSQL(
+        ConditionalRunSQL(
             sql='ALTER TABLE accounts_user ADD COLUMN IF NOT EXISTS position varchar(100) NULL;',
             reverse_sql='ALTER TABLE accounts_user DROP COLUMN IF EXISTS position;',
             state_operations=[
