@@ -243,6 +243,53 @@ const EventDetailPage = () => {
         return matched.map(l => l.name).join(', ');
     };
 
+    // Centralized total price calculation helper
+    const getCalculatedTotal = () => {
+        if (event?.price_type === 'free' || isUserFreeByLabel()) return 0;
+        const fixedPrice = selectedPriceVariation ? Number(selectedPriceVariation.price) : Number(event?.price_fixed || 0);
+        let extraFields = 0;
+        if (event?.form_fields) {
+            event.form_fields.forEach(f => {
+                if (['select', 'radio', 'checkbox'].includes(f.field_type) && f.options && responses[f.id]) {
+                    const opts = Array.isArray(f.options) ? f.options : (() => { try { return JSON.parse(f.options); } catch(e) { return []; } })();
+                    if (f.field_type === 'checkbox') {
+                        (responses[f.id] || []).forEach(s => {
+                            const match = opts.find(o => (typeof o === 'object' ? o.label : o) === s);
+                            if (match && typeof match === 'object' && match.price) extraFields += Number(match.price);
+                        });
+                    } else {
+                        const match = opts.find(o => (typeof o === 'object' ? o.label : o) === responses[f.id]);
+                        if (match && typeof match === 'object' && match.price) extraFields += Number(match.price);
+                    }
+                }
+            });
+        }
+        const teamMod = selectedTeam ? Number(selectedTeam.price_modifier) : 0;
+        const basePriceWithTeam = fixedPrice + teamMod;
+        let totalCalc = 0;
+        if (event?.price_variations?.length > 0) {
+            if (event?.price_type === 'fixed') totalCalc = basePriceWithTeam + extraFields;
+            else totalCalc = basePriceWithTeam + extraFields + Number(paymentAmount || 0);
+        } else {
+            if (event?.price_type === 'fixed') totalCalc = basePriceWithTeam + extraFields;
+            else if (event?.price_type === 'hybrid_1') totalCalc = basePriceWithTeam + extraFields + Number(paymentAmount || 0);
+            else totalCalc = Number(paymentAmount || 0) + extraFields + basePriceWithTeam;
+        }
+        if (totalCalc < 0) totalCalc = 0;
+        if (appliedVoucher) {
+            let discount = 0;
+            if (appliedVoucher.discount_type === 'percentage') {
+                const discountBase = appliedVoucher.apply_to_extras ? (basePriceWithTeam + extraFields) : basePriceWithTeam;
+                discount = discountBase * (Number(appliedVoucher.discount_value) / 100);
+            } else {
+                discount = Number(appliedVoucher.discount_value);
+            }
+            totalCalc -= discount;
+            if (totalCalc < 0) totalCalc = 0;
+        }
+        return totalCalc;
+    };
+
     const handleApplyVoucher = async () => {
         if (!voucherCode.trim()) return;
         setVoucherLoading(true);
@@ -266,6 +313,13 @@ const EventDetailPage = () => {
         e.preventDefault();
         setSubmitting(true);
         setError(null);
+
+        // Validate: team selection is mandatory when teams exist
+        if (event?.teams?.length > 0 && !selectedTeam) {
+            setError('Silakan pilih tim terlebih dahulu untuk mendaftar.');
+            setSubmitting(false);
+            return;
+        }
 
         const data = new FormData();
         const user = JSON.parse(localStorage.getItem('user'));
@@ -297,93 +351,18 @@ const EventDetailPage = () => {
         if (isUserFreeByLabel()) {
             data.append('payment_amount', 0);
             data.append('payment_method', 'transfer');
-        } else if (paymentMethod === 'transfer' && paymentProof) {
-            let fixed = Number(event?.price_fixed) || 0;
-            if (selectedPriceVariation) fixed = Number(selectedPriceVariation.price);
-            
-            let extraFormPrice = 0;
-            if (event?.form_fields) {
-                event.form_fields.forEach(f => {
-                    if (['select', 'radio', 'checkbox'].includes(f.field_type) && f.options && responses[f.id]) {
-                        let opts = [];
-                        if (Array.isArray(f.options)) opts = f.options;
-                        else if (typeof f.options === 'string') { try { opts = JSON.parse(f.options); } catch(e) { opts = []; } }
-                        
-                        if (f.field_type === 'checkbox') {
-                            const selected = responses[f.id] || [];
-                            selected.forEach(s => {
-                                const match = opts.find(o => (typeof o === 'object' ? o.label : o) === s);
-                                if (match && typeof match === 'object' && match.price) extraFormPrice += Number(match.price);
-                            });
-                        } else {
-                            const match = opts.find(o => (typeof o === 'object' ? o.label : o) === responses[f.id]);
-                            if (match && typeof match === 'object' && match.price) extraFormPrice += Number(match.price);
-                        }
-                    }
-                });
+        } else {
+            const calculatedTotal = getCalculatedTotal();
+            if (calculatedTotal <= 0) {
+                // Total is 0 (e.g. team modifier made it free) — skip payment entirely
+                data.append('payment_amount', 0);
+                data.append('payment_method', 'transfer');
+            } else if (paymentMethod === 'transfer' && paymentProof) {
+                data.append('payment_proof', paymentProof);
+                data.append('payment_amount', calculatedTotal);
+            } else if (paymentMethod === 'ots') {
+                data.append('payment_amount', calculatedTotal);
             }
-            
-            const extra = Number(paymentAmount) || 0;
-            let totalToSave = 0;
-            
-            const teamMod = selectedTeam ? Number(selectedTeam.price_modifier) : 0;
-
-            if (event?.price_variations?.length > 0) {
-                if (event?.price_type === 'fixed') totalToSave = fixed + extraFormPrice + teamMod;
-                else totalToSave = fixed + extraFormPrice + extra + teamMod;
-            } else {
-                if (event?.price_type === 'fixed') totalToSave = fixed + extraFormPrice + teamMod;
-                else if (event?.price_type === 'hybrid_1') totalToSave = fixed + extraFormPrice + extra + teamMod;
-                else totalToSave = extra + extraFormPrice + fixed + teamMod;
-            }
-
-            if (totalToSave < 0) totalToSave = 0;
-
-            data.append('payment_proof', paymentProof);
-            data.append('payment_amount', totalToSave);
-        } else if (paymentMethod === 'ots') {
-            let fixed = Number(event?.price_fixed) || 0;
-            if (selectedPriceVariation) fixed = Number(selectedPriceVariation.price);
-            
-            let extraFormPrice = 0;
-            if (event?.form_fields) {
-                event.form_fields.forEach(f => {
-                    if (['select', 'radio', 'checkbox'].includes(f.field_type) && f.options && responses[f.id]) {
-                        let opts = [];
-                        if (Array.isArray(f.options)) opts = f.options;
-                        else if (typeof f.options === 'string') { try { opts = JSON.parse(f.options); } catch(e) { opts = []; } }
-                        
-                        if (f.field_type === 'checkbox') {
-                            const selected = responses[f.id] || [];
-                            selected.forEach(s => {
-                                const match = opts.find(o => (typeof o === 'object' ? o.label : o) === s);
-                                if (match && typeof match === 'object' && match.price) extraFormPrice += Number(match.price);
-                            });
-                        } else {
-                            const match = opts.find(o => (typeof o === 'object' ? o.label : o) === responses[f.id]);
-                            if (match && typeof match === 'object' && match.price) extraFormPrice += Number(match.price);
-                        }
-                    }
-                });
-            }
-            
-            const extra = Number(paymentAmount) || 0;
-            let totalToSave = 0;
-            
-            const teamMod = selectedTeam ? Number(selectedTeam.price_modifier) : 0;
-
-            if (event?.price_variations?.length > 0) {
-                if (event?.price_type === 'fixed') totalToSave = fixed + extraFormPrice + teamMod;
-                else totalToSave = fixed + extraFormPrice + extra + teamMod;
-            } else {
-                if (event?.price_type === 'fixed') totalToSave = fixed + extraFormPrice + teamMod;
-                else if (event?.price_type === 'hybrid_1') totalToSave = fixed + extraFormPrice + extra + teamMod;
-                else totalToSave = extra + extraFormPrice + fixed + teamMod;
-            }
-
-            if (totalToSave < 0) totalToSave = 0;
-            
-            data.append('payment_amount', totalToSave);
         }
 
         try {
@@ -1707,7 +1686,7 @@ const EventDetailPage = () => {
                                                     <div className="space-y-4">
                                                         <h3 className="text-sm font-bold text-gray-900 flex items-center gap-2">
                                                             <span className="material-icons text-purple-600">groups</span>
-                                                            Pilih Tim / Kelompok
+                                                            Pilih Tim / Kelompok <span className="text-red-500">*</span>
                                                         </h3>
                                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                                             {event.teams.map((tm, idx) => {
@@ -1734,298 +1713,268 @@ const EventDetailPage = () => {
                                                                 )
                                                             })}
                                                         </div>
-                                                        <button 
-                                                            type="button" 
-                                                            onClick={() => setSelectedTeam(null)} 
-                                                            className={`text-[10px] uppercase font-bold tracking-widest px-3 py-1.5 rounded-lg ${!selectedTeam ? 'bg-gray-200 text-gray-500' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'} transition`}
-                                                        >
-                                                            Tanpa Tim
-                                                        </button>
-                                                    </div>
-                                                )}
-                                                <div className="flex items-center justify-between">
-                                                    <h3 className="text-sm font-bold text-gray-900 flex items-center gap-2">
-                                                        <span className="material-icons text-green-600">payments</span>
-                                                        Metode Pembayaran
-                                                    </h3>
-                                                    <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-[10px] font-black uppercase">{event.price_type}</span>
-                                                </div>
-
-                                                {/* Price Variations Selection */}
-                                                {event.price_variations && event.price_variations.length > 0 && (
-                                                    <div className="space-y-3">
-                                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Pilih Paket / Variasi HTM</label>
-                                                        <div className="grid grid-cols-1 gap-3">
-                                                            {event.price_variations.map((v, idx) => (
-                                                                <button
-                                                                    key={idx}
-                                                                    type="button"
-                                                                    onClick={() => setSelectedPriceVariation(v)}
-                                                                    className={`p-4 rounded-2xl border-2 text-left transition-all relative overflow-hidden group ${selectedPriceVariation?.id === v.id ? 'border-green-600 bg-green-50 shadow-md' : 'border-gray-100 bg-white hover:border-green-200'}`}
-                                                                >
-                                                                    <div className="flex justify-between items-start mb-2 relative z-10">
-                                                                        <h4 className={`text-xs font-black uppercase tracking-wider ${selectedPriceVariation?.id === v.id ? 'text-green-700' : 'text-gray-900'}`}>{v.title}</h4>
-                                                                        <span className={`text-sm font-black ${selectedPriceVariation?.id === v.id ? 'text-green-600' : 'text-gray-400'}`}>Rp {formatCurrency(v.price)}</span>
-                                                                    </div>
-                                                                    {v.benefits && (
-                                                                        <div className="space-y-1 relative z-10">
-                                                                            {v.benefits.split('\n').map((b, i) => (
-                                                                                <div key={i} className="flex items-center gap-2 text-[10px] text-gray-500 font-medium">
-                                                                                    <span className="material-icons text-[10px] text-green-500">check_circle</span>
-                                                                                    {b}
-                                                                                </div>
-                                                                            ))}
-                                                                        </div>
-                                                                    )}
-                                                                    {selectedPriceVariation?.id === v.id && (
-                                                                        <div className="absolute top-0 right-0 w-12 h-12 bg-green-600/10 rounded-bl-[2rem] flex items-center justify-center">
-                                                                            <span className="material-icons text-green-600 text-sm">check</span>
-                                                                        </div>
-                                                                    )}
-                                                                </button>
-                                                            ))}
-                                                        </div>
-                                                    </div>
-                                                )}
-
-                                                {event.allow_ots_payment && (
-                                                    <div className="grid grid-cols-2 gap-3">
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => setPaymentMethod('transfer')}
-                                                            className={`flex flex-col items-center justify-center p-4 rounded-2xl border-2 transition-all ${paymentMethod === 'transfer' ? 'border-green-600 bg-green-50 shadow-md' : 'border-gray-100 bg-white text-gray-400'}`}
-                                                        >
-                                                            <span className="material-icons text-xl mb-1">account_balance_wallet</span>
-                                                            <span className="text-[10px] font-bold uppercase tracking-widest">Transfer / QRIS</span>
-                                                        </button>
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => setPaymentMethod('ots')}
-                                                            className={`flex flex-col items-center justify-center p-4 rounded-2xl border-2 transition-all ${paymentMethod === 'ots' ? 'border-green-600 bg-green-50 shadow-md' : 'border-gray-100 bg-white text-gray-400'}`}
-                                                        >
-                                                            <span className="material-icons text-xl mb-1">payments</span>
-                                                            <span className="text-[10px] font-bold uppercase tracking-widest">Bayar di Tempat</span>
-                                                        </button>
-                                                    </div>
-                                                )}
-
-                                                {paymentMethod === 'transfer' ? (
-                                                    <div className="flex flex-col sm:flex-row items-center gap-6 bg-white p-4 rounded-2xl border border-gray-100 animate-fade-in">
-                                                    <div className="w-32 h-32 bg-gray-100 rounded-xl overflow-hidden shrink-0 border border-gray-200">
-                                                        <img src="/images/qris-bae2.png" alt="QRIS BAE" className="w-full h-full object-contain" />
-                                                    </div>
-                                                    <div className="text-center sm:text-left">
-                                                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Pindai QRIS BAE</p>
-                                                        <p className="text-lg font-black text-gray-900 mt-1">Barakah App Economy</p>
-                                                        <p className="text-xs text-gray-500 mt-2 leading-relaxed">Silakan bayar melalui QRIS di atas dan unggah bukti transfernya di bawah ini.</p>
-                                                        <a
-                                                            href="/images/qris-bae2.png"
-                                                            download="QRIS-BAE.png"
-                                                            className="mt-3 inline-flex items-center gap-2 text-[10px] font-bold text-green-700 hover:text-green-800 transition bg-green-50 px-3 py-1.5 rounded-lg border border-green-100"
-                                                        >
-                                                            <span className="material-icons text-sm">download</span>
-                                                            UNDUH QRIS
-                                                         </a>
-                                                     </div>
-                                                 </div>
-                                             ) : (
-                                                 <div className="p-6 bg-blue-50 border border-blue-100 rounded-3xl flex items-start gap-4 animate-fade-in">
-                                                    <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center shrink-0">
-                                                        <span className="material-icons">info</span>
-                                                    </div>
-                                                    <div>
-                                                        <p className="text-[10px] font-bold text-blue-800 uppercase tracking-widest mb-1">Pembayaran OTS (On The Spot)</p>
-                                                        <p className="text-xs text-blue-700 leading-relaxed font-medium">Anda dapat melakukan pendaftaran sekarang dan melakukan pembayaran secara tunai di lokasi acara (Meja Registrasi). Sampai jumpa di lokasi!</p>
-                                                    </div>
-                                                 </div>
-                                             )}
-
-                                                 {/* Price Inputs based on price_type */}
-                                                <div className="space-y-4">
-                                                    {(event.price_type === 'fixed' || event.price_type === 'hybrid_1') && (
-                                                        <div className="flex items-center justify-between bg-white px-5 py-4 rounded-2xl border border-gray-100">
-                                                            <span className="text-xs font-bold text-gray-500 uppercase">HTM {event.price_type === 'hybrid_1' ? 'Minimal' : ''}</span>
-                                                            <span className="text-lg font-black text-green-700">Rp {formatCurrency(selectedPriceVariation ? selectedPriceVariation.price : event.price_fixed)}</span>
-                                                        </div>
-                                                    )}
-
-                                                    {(event.price_type === 'voluntary' || event.price_type === 'hybrid_1' || event.price_type === 'hybrid_2') && (
-                                                        <div className="space-y-2">
-                                                            <label className="text-[10px] font-bold text-gray-600 uppercase ml-1">
-                                                                {event.price_type === 'hybrid_1' ? 'Tambah Infaq (Opsional)' :
-                                                                    event.price_type === 'hybrid_2' ? 'Tambahan Infaq (Min. Rp 0)' :
-                                                                        'Tambahan Infaq / Sukarela *'}
-                                                            </label>
-                                                            <CurrencyInput
-                                                                value={paymentAmount}
-                                                                onChange={(e) => setPaymentAmount(e.target.value)}
-                                                                required={event.price_type === 'voluntary'}
-                                                            />
-                                                        </div>
-                                                    )}
-                                                </div>
-
-                                                
-                                                {/* Voucher Input */}
-                                                <div className="space-y-2">
-                                                    <label className="text-[10px] font-bold text-gray-600 uppercase ml-1">Kode Voucher (Opsional)</label>
-                                                    <div className="flex gap-2">
-                                                        <input
-                                                            type="text"
-                                                            value={voucherCode}
-                                                            onChange={(e) => setVoucherCode(e.target.value.toUpperCase())}
-                                                            placeholder="Masukkan kode promo"
-                                                            className="flex-1 bg-white border-2 border-gray-100 rounded-xl px-4 py-3 text-sm font-bold text-gray-900 focus:border-green-500 focus:ring-0 transition-colors uppercase"
-                                                            disabled={appliedVoucher || voucherLoading}
-                                                        />
-                                                        {appliedVoucher ? (
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => { setAppliedVoucher(null); setVoucherCode(''); }}
-                                                                className="px-4 py-2 bg-red-50 text-red-600 rounded-xl text-sm font-bold hover:bg-red-100 transition"
-                                                            >
-                                                                Batal
-                                                            </button>
-                                                        ) : (
-                                                            <button
-                                                                type="button"
-                                                                onClick={handleApplyVoucher}
-                                                                disabled={!voucherCode.trim() || voucherLoading}
-                                                                className="px-4 py-2 bg-green-600 text-white rounded-xl text-sm font-bold hover:bg-green-700 disabled:opacity-50 transition"
-                                                            >
-                                                                {voucherLoading ? 'Cek...' : 'Gunakan'}
-                                                            </button>
+                                                        {!selectedTeam && (
+                                                            <p className="text-[10px] text-red-500 font-bold uppercase tracking-wider flex items-center gap-1 ml-1">
+                                                                <span className="material-icons text-xs">warning</span>
+                                                                Wajib memilih salah satu tim untuk mendaftar
+                                                            </p>
                                                         )}
                                                     </div>
-                                                    {voucherError && <p className="text-xs text-red-500 font-bold ml-1">{voucherError}</p>}
-                                                    {voucherSuccess && <p className="text-xs text-green-600 font-bold ml-1">{voucherSuccess}</p>}
-                                                </div>
+                                                )}
 
-                                                <div className="flex flex-col gap-2 bg-green-50 px-5 py-4 rounded-2xl border border-green-100">
-                                                    {appliedVoucher && (
-                                                        <div className="flex items-center justify-between border-b border-green-200 pb-2 mb-1">
-                                                            <span className="text-xs font-bold text-green-700 uppercase">Diskon Voucher ({appliedVoucher.code})</span>
-                                                            <span className="text-sm font-black text-red-500">
-                                                                - Rp {(() => {
-                                                                    let fixed = Number(event?.price_fixed) || 0;
-                                                                    if (selectedPriceVariation) fixed = Number(selectedPriceVariation.price);
-                                                                    
-                                                                    let extraFormPrice = 0;
-                                                                    if (event?.form_fields) {
-                                                                        event.form_fields.forEach(f => {
-                                                                            if (['select', 'radio', 'checkbox'].includes(f.field_type) && f.options && responses[f.id]) {
-                                                                                let opts = [];
-                                                                                if (Array.isArray(f.options)) opts = f.options;
-                                                                                else if (typeof f.options === 'string') { try { opts = JSON.parse(f.options); } catch(e) { opts = []; } }
-                                                                                
-                                                                                if (f.field_type === 'checkbox') {
-                                                                                    const selected = responses[f.id] || [];
-                                                                                    selected.forEach(s => {
-                                                                                        const match = opts.find(o => (typeof o === 'object' ? o.label : o) === s);
-                                                                                        if (match && typeof match === 'object' && match.price) extraFormPrice += Number(match.price);
-                                                                                    });
-                                                                                } else {
-                                                                                    const match = opts.find(o => (typeof o === 'object' ? o.label : o) === responses[f.id]);
-                                                                                    if (match && typeof match === 'object' && match.price) extraFormPrice += Number(match.price);
-                                                                                }
-                                                                            }
-                                                                        });
-                                                                    }
-                                                                    
-                                                                    const extra = Number(paymentAmount) || 0;
-                                                                    let baseTotal = 0;
-                                                                    if (event?.price_type === 'fixed') baseTotal = fixed + extraFormPrice;
-                                                                    else if (event?.price_type === 'hybrid_1') baseTotal = fixed + extraFormPrice + extra;
-                                                                    else baseTotal = extra + extraFormPrice;
-                                                                    
-                                                                    if (appliedVoucher.discount_type === 'percentage') {
-                                                                        return formatCurrency(baseTotal * (Number(appliedVoucher.discount_value) / 100));
-                                                                    }
-                                                                    return formatCurrency(Number(appliedVoucher.discount_value));
-                                                                })()}
-                                                            </span>
+                                                {/* Show GRATIS badge when total is 0 */}
+                                                {getCalculatedTotal() <= 0 ? (
+                                                    <div className="flex flex-col items-center gap-3 py-6 bg-gradient-to-br from-green-50 to-emerald-50 rounded-3xl border border-green-200">
+                                                        <div className="w-14 h-14 bg-green-100 rounded-full flex items-center justify-center">
+                                                            <span className="material-icons text-green-600 text-2xl">celebration</span>
                                                         </div>
-                                                    )}
-                                                    <div className="flex items-center justify-between">
-                                                        <span className="text-xs font-bold text-green-800 uppercase">Total Dibayar</span>
-                                                        <span className="text-xl font-black text-green-700">
-                                                            Rp {(() => {
-                                                                const fixedPrice = selectedPriceVariation ? Number(selectedPriceVariation.price) : Number(event?.price_fixed || 0);
-                                                                let extraFields = 0;
-                                                                if (event?.form_fields) {
-                                                                    event.form_fields.forEach(f => {
-                                                                        if (['select', 'radio', 'checkbox'].includes(f.field_type) && f.options && responses[f.id]) {
-                                                                            const opts = Array.isArray(f.options) ? f.options : [];
-                                                                            if (f.field_type === 'checkbox') {
-                                                                                const selected = responses[f.id] || [];
-                                                                                selected.forEach(s => {
-                                                                                    const match = opts.find(o => (typeof o === 'object' ? o.label : o) === s);
-                                                                                    if (match && typeof match === 'object' && match.price) extraFields += Number(match.price);
-                                                                                });
-                                                                            } else {
-                                                                                const match = opts.find(o => (typeof o === 'object' ? o.label : o) === responses[f.id]);
-                                                                                if (match && typeof match === 'object' && match.price) extraFields += Number(match.price);
-                                                                            }
-                                                                        }
-                                                                    });
-                                                                }
-                                                                let totalCalc = 0;
-                                                                const teamMod = selectedTeam ? Number(selectedTeam.price_modifier) : 0;
-                                                                const basePriceWithTeam = fixedPrice + teamMod;
-                                                                if (event?.price_variations?.length > 0) {
-                                                                    if (event?.price_type === 'fixed') totalCalc = basePriceWithTeam + extraFields;
-                                                                    else totalCalc = basePriceWithTeam + extraFields + Number(paymentAmount || 0);
-                                                                } else {
-                                                                    if (event?.price_type === 'fixed') totalCalc = basePriceWithTeam + extraFields;
-                                                                    else if (event?.price_type === 'hybrid_1') totalCalc = basePriceWithTeam + extraFields + Number(paymentAmount || 0);
-                                                                    else totalCalc = Number(paymentAmount || 0) + extraFields + basePriceWithTeam;
-                                                                }
-                                                                if (totalCalc < 0) totalCalc = 0;
-                                                                if (appliedVoucher) {
-                                                                    let discount = 0;
-                                                                    if (appliedVoucher.discount_type === 'percentage') {
-                                                                        const discountBase = appliedVoucher.apply_to_extras ? (basePriceWithTeam + extraFields) : basePriceWithTeam;
-                                                                        discount = discountBase * (Number(appliedVoucher.discount_value) / 100);
-                                                                    } else {
-                                                                        discount = Number(appliedVoucher.discount_value);
-                                                                    }
-                                                                    totalCalc -= discount;
-                                                                    if (totalCalc < 0) totalCalc = 0;
-                                                                }
-                                                                
-                                                                return formatCurrency(totalCalc);
-                                                            })()}
-                                                        </span>
+                                                        <div className="text-center">
+                                                            <p className="text-lg font-black text-green-700 uppercase tracking-widest">GRATIS</p>
+                                                            <p className="text-xs text-green-600 font-medium mt-1">Tidak ada biaya pendaftaran untuk tim ini</p>
+                                                        </div>
                                                     </div>
-                                                </div>
+                                                ) : (
+                                                    <>
+                                                        <div className="flex items-center justify-between">
+                                                            <h3 className="text-sm font-bold text-gray-900 flex items-center gap-2">
+                                                                <span className="material-icons text-green-600">payments</span>
+                                                                Metode Pembayaran
+                                                            </h3>
+                                                            <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-[10px] font-black uppercase">{event.price_type}</span>
+                                                        </div>
 
-                                                {paymentMethod === 'transfer' && (
-                                                    <div className="space-y-2">
-                                                        <label className="text-[10px] font-bold text-gray-600 uppercase ml-1">Upload Bukti Transfer *</label>
-                                                        <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-200 border-dashed rounded-3xl cursor-pointer bg-white hover:bg-gray-50 hover:border-green-300 transition-all">
-                                                            <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                                                                <span className={`material-icons mb-2 ${paymentProof ? 'text-green-500' : 'text-gray-400'}`}>
-                                                                    {paymentProof ? 'check_circle' : 'receipt_long'}
-                                                                </span>
-                                                                <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">
-                                                                    {paymentProof ? 'Bukti Terpilih' : 'Klik untuk upload bukti'}
-                                                                </p>
-                                                                {paymentProof && <p className="mt-1 text-xs text-green-600 font-bold">{paymentProof.name}</p>}
+                                                        {/* Price Variations Selection */}
+                                                        {event.price_variations && event.price_variations.length > 0 && (
+                                                            <div className="space-y-3">
+                                                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Pilih Paket / Variasi HTM</label>
+                                                                <div className="grid grid-cols-1 gap-3">
+                                                                    {event.price_variations.map((v, idx) => (
+                                                                        <button
+                                                                            key={idx}
+                                                                            type="button"
+                                                                            onClick={() => setSelectedPriceVariation(v)}
+                                                                            className={`p-4 rounded-2xl border-2 text-left transition-all relative overflow-hidden group ${selectedPriceVariation?.id === v.id ? 'border-green-600 bg-green-50 shadow-md' : 'border-gray-100 bg-white hover:border-green-200'}`}
+                                                                        >
+                                                                            <div className="flex justify-between items-start mb-2 relative z-10">
+                                                                                <h4 className={`text-xs font-black uppercase tracking-wider ${selectedPriceVariation?.id === v.id ? 'text-green-700' : 'text-gray-900'}`}>{v.title}</h4>
+                                                                                <span className={`text-sm font-black ${selectedPriceVariation?.id === v.id ? 'text-green-600' : 'text-gray-400'}`}>Rp {formatCurrency(v.price)}</span>
+                                                                            </div>
+                                                                            {v.benefits && (
+                                                                                <div className="space-y-1 relative z-10">
+                                                                                    {v.benefits.split('\n').map((b, i) => (
+                                                                                        <div key={i} className="flex items-center gap-2 text-[10px] text-gray-500 font-medium">
+                                                                                            <span className="material-icons text-[10px] text-green-500">check_circle</span>
+                                                                                            {b}
+                                                                                        </div>
+                                                                                    ))}
+                                                                                </div>
+                                                                            )}
+                                                                            {selectedPriceVariation?.id === v.id && (
+                                                                                <div className="absolute top-0 right-0 w-12 h-12 bg-green-600/10 rounded-bl-[2rem] flex items-center justify-center">
+                                                                                    <span className="material-icons text-green-600 text-sm">check</span>
+                                                                                </div>
+                                                                            )}
+                                                                        </button>
+                                                                    ))}
+                                                                </div>
                                                             </div>
-                                                            <input
-                                                                type="file"
-                                                                required={paymentMethod === 'transfer'}
-                                                                accept="image/*"
-                                                                onChange={(e) => {
-                                                                    const file = e.target.files[0];
-                                                                    if (file && validateFileSize(file)) {
-                                                                        setPaymentProof(file);
-                                                                    }
-                                                                }}
-                                                                className="hidden"
-                                                            />
-                                                        </label>
-                                                    </div>
+                                                        )}
+
+                                                        {event.allow_ots_payment && (
+                                                            <div className="grid grid-cols-2 gap-3">
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => setPaymentMethod('transfer')}
+                                                                    className={`flex flex-col items-center justify-center p-4 rounded-2xl border-2 transition-all ${paymentMethod === 'transfer' ? 'border-green-600 bg-green-50 shadow-md' : 'border-gray-100 bg-white text-gray-400'}`}
+                                                                >
+                                                                    <span className="material-icons text-xl mb-1">account_balance_wallet</span>
+                                                                    <span className="text-[10px] font-bold uppercase tracking-widest">Transfer / QRIS</span>
+                                                                </button>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => setPaymentMethod('ots')}
+                                                                    className={`flex flex-col items-center justify-center p-4 rounded-2xl border-2 transition-all ${paymentMethod === 'ots' ? 'border-green-600 bg-green-50 shadow-md' : 'border-gray-100 bg-white text-gray-400'}`}
+                                                                >
+                                                                    <span className="material-icons text-xl mb-1">payments</span>
+                                                                    <span className="text-[10px] font-bold uppercase tracking-widest">Bayar di Tempat</span>
+                                                                </button>
+                                                            </div>
+                                                        )}
+
+                                                        {paymentMethod === 'transfer' ? (
+                                                            <div className="flex flex-col sm:flex-row items-center gap-6 bg-white p-4 rounded-2xl border border-gray-100 animate-fade-in">
+                                                            <div className="w-32 h-32 bg-gray-100 rounded-xl overflow-hidden shrink-0 border border-gray-200">
+                                                                <img src="/images/qris-bae2.png" alt="QRIS BAE" className="w-full h-full object-contain" />
+                                                            </div>
+                                                            <div className="text-center sm:text-left">
+                                                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Pindai QRIS BAE</p>
+                                                                <p className="text-lg font-black text-gray-900 mt-1">Barakah App Economy</p>
+                                                                <p className="text-xs text-gray-500 mt-2 leading-relaxed">Silakan bayar melalui QRIS di atas dan unggah bukti transfernya di bawah ini.</p>
+                                                                <a
+                                                                    href="/images/qris-bae2.png"
+                                                                    download="QRIS-BAE.png"
+                                                                    className="mt-3 inline-flex items-center gap-2 text-[10px] font-bold text-green-700 hover:text-green-800 transition bg-green-50 px-3 py-1.5 rounded-lg border border-green-100"
+                                                                >
+                                                                    <span className="material-icons text-sm">download</span>
+                                                                    UNDUH QRIS
+                                                                 </a>
+                                                             </div>
+                                                         </div>
+                                                     ) : (
+                                                         <div className="p-6 bg-blue-50 border border-blue-100 rounded-3xl flex items-start gap-4 animate-fade-in">
+                                                            <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center shrink-0">
+                                                                <span className="material-icons">info</span>
+                                                            </div>
+                                                            <div>
+                                                                <p className="text-[10px] font-bold text-blue-800 uppercase tracking-widest mb-1">Pembayaran OTS (On The Spot)</p>
+                                                                <p className="text-xs text-blue-700 leading-relaxed font-medium">Anda dapat melakukan pendaftaran sekarang dan melakukan pembayaran secara tunai di lokasi acara (Meja Registrasi). Sampai jumpa di lokasi!</p>
+                                                            </div>
+                                                         </div>
+                                                     )}
+
+                                                         {/* Price Inputs based on price_type */}
+                                                        <div className="space-y-4">
+                                                            {(event.price_type === 'fixed' || event.price_type === 'hybrid_1') && (
+                                                                <div className="flex items-center justify-between bg-white px-5 py-4 rounded-2xl border border-gray-100">
+                                                                    <span className="text-xs font-bold text-gray-500 uppercase">HTM {event.price_type === 'hybrid_1' ? 'Minimal' : ''}</span>
+                                                                    <span className="text-lg font-black text-green-700">Rp {formatCurrency(selectedPriceVariation ? selectedPriceVariation.price : event.price_fixed)}</span>
+                                                                </div>
+                                                            )}
+
+                                                            {(event.price_type === 'voluntary' || event.price_type === 'hybrid_1' || event.price_type === 'hybrid_2') && (
+                                                                <div className="space-y-2">
+                                                                    <label className="text-[10px] font-bold text-gray-600 uppercase ml-1">
+                                                                        {event.price_type === 'hybrid_1' ? 'Tambah Infaq (Opsional)' :
+                                                                            event.price_type === 'hybrid_2' ? 'Tambahan Infaq (Min. Rp 0)' :
+                                                                                'Tambahan Infaq / Sukarela *'}
+                                                                    </label>
+                                                                    <CurrencyInput
+                                                                        value={paymentAmount}
+                                                                        onChange={(e) => setPaymentAmount(e.target.value)}
+                                                                        required={event.price_type === 'voluntary'}
+                                                                    />
+                                                                </div>
+                                                            )}
+                                                        </div>
+
+                                                        
+                                                        {/* Voucher Input */}
+                                                        <div className="space-y-2">
+                                                            <label className="text-[10px] font-bold text-gray-600 uppercase ml-1">Kode Voucher (Opsional)</label>
+                                                            <div className="flex gap-2">
+                                                                <input
+                                                                    type="text"
+                                                                    value={voucherCode}
+                                                                    onChange={(e) => setVoucherCode(e.target.value.toUpperCase())}
+                                                                    placeholder="Masukkan kode promo"
+                                                                    className="flex-1 bg-white border-2 border-gray-100 rounded-xl px-4 py-3 text-sm font-bold text-gray-900 focus:border-green-500 focus:ring-0 transition-colors uppercase"
+                                                                    disabled={appliedVoucher || voucherLoading}
+                                                                />
+                                                                {appliedVoucher ? (
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => { setAppliedVoucher(null); setVoucherCode(''); }}
+                                                                        className="px-4 py-2 bg-red-50 text-red-600 rounded-xl text-sm font-bold hover:bg-red-100 transition"
+                                                                    >
+                                                                        Batal
+                                                                    </button>
+                                                                ) : (
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={handleApplyVoucher}
+                                                                        disabled={!voucherCode.trim() || voucherLoading}
+                                                                        className="px-4 py-2 bg-green-600 text-white rounded-xl text-sm font-bold hover:bg-green-700 disabled:opacity-50 transition"
+                                                                    >
+                                                                        {voucherLoading ? 'Cek...' : 'Gunakan'}
+                                                                    </button>
+                                                                )}
+                                                            </div>
+                                                            {voucherError && <p className="text-xs text-red-500 font-bold ml-1">{voucherError}</p>}
+                                                            {voucherSuccess && <p className="text-xs text-green-600 font-bold ml-1">{voucherSuccess}</p>}
+                                                        </div>
+
+                                                        <div className="flex flex-col gap-2 bg-green-50 px-5 py-4 rounded-2xl border border-green-100">
+                                                            {appliedVoucher && (
+                                                                <div className="flex items-center justify-between border-b border-green-200 pb-2 mb-1">
+                                                                    <span className="text-xs font-bold text-green-700 uppercase">Diskon Voucher ({appliedVoucher.code})</span>
+                                                                    <span className="text-sm font-black text-red-500">
+                                                                        - Rp {(() => {
+                                                                            let fixed = Number(event?.price_fixed) || 0;
+                                                                            if (selectedPriceVariation) fixed = Number(selectedPriceVariation.price);
+                                                                            
+                                                                            let extraFormPrice = 0;
+                                                                            if (event?.form_fields) {
+                                                                                event.form_fields.forEach(f => {
+                                                                                    if (['select', 'radio', 'checkbox'].includes(f.field_type) && f.options && responses[f.id]) {
+                                                                                        let opts = [];
+                                                                                        if (Array.isArray(f.options)) opts = f.options;
+                                                                                        else if (typeof f.options === 'string') { try { opts = JSON.parse(f.options); } catch(e) { opts = []; } }
+                                                                                        
+                                                                                        if (f.field_type === 'checkbox') {
+                                                                                            const selected = responses[f.id] || [];
+                                                                                            selected.forEach(s => {
+                                                                                                const match = opts.find(o => (typeof o === 'object' ? o.label : o) === s);
+                                                                                                if (match && typeof match === 'object' && match.price) extraFormPrice += Number(match.price);
+                                                                                            });
+                                                                                        } else {
+                                                                                            const match = opts.find(o => (typeof o === 'object' ? o.label : o) === responses[f.id]);
+                                                                                            if (match && typeof match === 'object' && match.price) extraFormPrice += Number(match.price);
+                                                                                        }
+                                                                                    }
+                                                                                });
+                                                                            }
+                                                                            
+                                                                            const extra = Number(paymentAmount) || 0;
+                                                                            let baseTotal = 0;
+                                                                            if (event?.price_type === 'fixed') baseTotal = fixed + extraFormPrice;
+                                                                            else if (event?.price_type === 'hybrid_1') baseTotal = fixed + extraFormPrice + extra;
+                                                                            else baseTotal = extra + extraFormPrice;
+                                                                            
+                                                                            if (appliedVoucher.discount_type === 'percentage') {
+                                                                                return formatCurrency(baseTotal * (Number(appliedVoucher.discount_value) / 100));
+                                                                            }
+                                                                            return formatCurrency(Number(appliedVoucher.discount_value));
+                                                                        })()}
+                                                                    </span>
+                                                                </div>
+                                                            )}
+                                                            <div className="flex items-center justify-between">
+                                                                <span className="text-xs font-bold text-green-800 uppercase">Total Dibayar</span>
+                                                                <span className="text-xl font-black text-green-700">
+                                                                    Rp {formatCurrency(getCalculatedTotal())}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+
+                                                        {paymentMethod === 'transfer' && (
+                                                            <div className="space-y-2">
+                                                                <label className="text-[10px] font-bold text-gray-600 uppercase ml-1">Upload Bukti Transfer *</label>
+                                                                <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-200 border-dashed rounded-3xl cursor-pointer bg-white hover:bg-gray-50 hover:border-green-300 transition-all">
+                                                                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                                                                        <span className={`material-icons mb-2 ${paymentProof ? 'text-green-500' : 'text-gray-400'}`}>
+                                                                            {paymentProof ? 'check_circle' : 'receipt_long'}
+                                                                        </span>
+                                                                        <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">
+                                                                            {paymentProof ? 'Bukti Terpilih' : 'Klik untuk upload bukti'}
+                                                                        </p>
+                                                                        {paymentProof && <p className="mt-1 text-xs text-green-600 font-bold">{paymentProof.name}</p>}
+                                                                    </div>
+                                                                    <input
+                                                                        type="file"
+                                                                        required={paymentMethod === 'transfer' && getCalculatedTotal() > 0}
+                                                                        accept="image/*"
+                                                                        onChange={(e) => {
+                                                                            const file = e.target.files[0];
+                                                                            if (file && validateFileSize(file)) {
+                                                                                setPaymentProof(file);
+                                                                            }
+                                                                        }}
+                                                                        className="hidden"
+                                                                    />
+                                                                </label>
+                                                            </div>
+                                                        )}
+                                                    </>
                                                 )}
                                             </div>
                                         )}
