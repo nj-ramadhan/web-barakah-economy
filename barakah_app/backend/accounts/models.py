@@ -91,24 +91,52 @@ class User(AbstractUser):
 
     # Kaderisasi fields
     KELAS_ACADEMY_CHOICES = [
-        ('PRA', 'PRA'), ('A1-1', 'A1-1'), ('A1-2', 'A1-2'), ('A1-3', 'A1-3'),
-        ('A2-1', 'A2-1'), ('A2-2', 'A2-2'), ('A2-3', 'A2-3'), ('A2P', 'A2P'),
+        ('PRA', 'PRA'),
+        ('MUDA-1', 'MUDA-1'),
+        ('MUDA-2', 'MUDA-2'),
+        ('MUDA-3', 'MUDA-3'),
+        ('MADYA-1', 'MADYA-1'),
+        ('MADYA-2', 'MADYA-2'),
+        ('MADYA-3', 'MADYA-3'),
+        ('MADYA-P', 'MADYA-P'),
     ]
     JENJANG_PEMAHAMAN_CHOICES = [
-        ('1', '1'), ('1J', '1J'), ('2A', '2A'), ('2B', '2B'),
-        ('PI', 'PI'), ('PF', 'PF'), ('MPT', 'MPT'),
+        ('PRA', 'PRA'),
+        ('MUDA', 'MUDA'),
+        ('MADYA', 'MADYA'),
+        ('UTAMA', 'UTAMA'),
+        ('PETUGAS', 'PETUGAS'),
+        ('PENGURUS', 'PENGURUS'),
+        ('IBU IBU', 'IBU IBU'),
     ]
     JENJANG_KESIAPAN_CHOICES = [
-        ('0', '0'), ('1', '1'), ('1+', '1+'), ('2', '2'), ('2+', '2+'), ('3', '3'),
+        ('RELAWAN', 'RELAWAN'),
+        ('MUDA', 'MUDA'),
+        ('MUDA+', 'MUDA+'),
+        ('MADYA', 'MADYA'),
+        ('MADYA+', 'MADYA+'),
+        ('UTAMA', 'UTAMA'),
     ]
     TUGAS_FUNGSI_CHOICES = [
-        ('UP SR', 'UP SR'), ('KASI', 'KASI'), ('UP RM', 'UP RM'), ('KAUR', 'KAUR'),
-        ('AK', 'AK'), ('MPT', 'MPT'), ('MK', 'MK'),
+        ('UP SR', 'UP SR'),
+        ('KASI', 'KASI'),
+        ('UP RM', 'UP RM'),
+        ('KAUR', 'KAUR'),
+        ('AK', 'AK'),
+        ('MPT', 'MPT'),
+        ('MK', 'MK'),
+    ]
+    SADAR_DONASI_CHOICES = [
+        ('WI', 'WI'),
+        ('WZU', 'WZU'),
+        ('WZK', 'WZK'),
+        ('W5P', 'W5P'),
     ]
     kelas_academy = models.CharField(max_length=10, blank=True, null=True, choices=KELAS_ACADEMY_CHOICES)
     jenjang_pemahaman = models.CharField(max_length=10, blank=True, null=True, choices=JENJANG_PEMAHAMAN_CHOICES)
     jenjang_kesiapan = models.CharField(max_length=10, blank=True, null=True, choices=JENJANG_KESIAPAN_CHOICES)
     tugas_fungsi = models.CharField(max_length=20, blank=True, null=True, choices=TUGAS_FUNGSI_CHOICES)
+    sadar_donasi = models.CharField(max_length=10, blank=True, null=True, choices=SADAR_DONASI_CHOICES)
     rombel = models.CharField(max_length=50, blank=True, null=True, help_text="Nama rombongan belajar")
     tgl_alih_jenjang = models.DateField(blank=True, null=True, help_text="Tanggal alih jenjang terakhir")
     keterangan = models.TextField(blank=True, null=True, help_text="Keterangan tambahan kaderisasi")

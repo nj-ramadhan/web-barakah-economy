@@ -830,7 +830,7 @@ class UserViewSet(viewsets.ModelViewSet):
     def kaderisasi_update(self, request, pk=None):
         """Update kaderisasi fields for a single user."""
         user = self.get_object()
-        allowed_fields = ['kelas_academy', 'jenjang_pemahaman', 'jenjang_kesiapan', 'tugas_fungsi', 'rombel', 'tgl_alih_jenjang', 'keterangan']
+        allowed_fields = ['kelas_academy', 'jenjang_pemahaman', 'jenjang_kesiapan', 'tugas_fungsi', 'sadar_donasi', 'rombel', 'tgl_alih_jenjang', 'keterangan']
         updated = {}
         for field in allowed_fields:
             if field in request.data:
@@ -852,7 +852,7 @@ class UserViewSet(viewsets.ModelViewSet):
             'ID', 'IDM', 'Nama', 'Username', 'Email',
             'Label', 'Custom Role',
             'Kelas Academy', 'Jenjang Pemahaman', 'Jenjang Kesiapan', 'Tugas Fungsi',
-            'Rombel', 'Tgl Alih Jenjang', 'Keterangan',
+            'Sadar Donasi', 'Rombel', 'Tgl Alih Jenjang', 'Keterangan',
         ]
         writer.writerow(headers)
 
@@ -871,6 +871,7 @@ class UserViewSet(viewsets.ModelViewSet):
                 user.jenjang_pemahaman or '',
                 user.jenjang_kesiapan or '',
                 user.tugas_fungsi or '',
+                user.sadar_donasi or '',
                 user.rombel or '',
                 user.tgl_alih_jenjang.strftime('%Y-%m-%d') if user.tgl_alih_jenjang else '',
                 user.keterangan or '',

@@ -12,10 +12,11 @@ const getAuth = () => {
 };
 
 // ───────── Dropdown options ─────────
-const KELAS_ACADEMY_OPTIONS = ['', 'PRA', 'A1-1', 'A1-2', 'A1-3', 'A2-1', 'A2-2', 'A2-3', 'A2P'];
-const JENJANG_PEMAHAMAN_OPTIONS = ['', '1', '1J', '2A', '2B', 'PI', 'PF', 'MPT'];
-const JENJANG_KESIAPAN_OPTIONS = ['', '0', '1', '1+', '2', '2+', '3'];
+const KELAS_ACADEMY_OPTIONS = ['', 'PRA', 'MUDA-1', 'MUDA-2', 'MUDA-3', 'MADYA-1', 'MADYA-2', 'MADYA-3', 'MADYA-P'];
+const JENJANG_PEMAHAMAN_OPTIONS = ['', 'PRA', 'MUDA', 'MADYA', 'UTAMA', 'PETUGAS', 'PENGURUS', 'IBU IBU'];
+const JENJANG_KESIAPAN_OPTIONS = ['', 'RELAWAN', 'MUDA', 'MUDA+', 'MADYA', 'MADYA+', 'UTAMA'];
 const TUGAS_FUNGSI_OPTIONS = ['', 'UP SR', 'KASI', 'UP RM', 'KAUR', 'AK', 'MPT', 'MK'];
+const SADAR_DONASI_OPTIONS = ['', 'WI', 'WZU', 'WZK', 'W5P'];
 
 // ───────── Inline Dropdown Cell ─────────
 const InlineDropdown = ({ userId, field, value, options, onSaved }) => {
@@ -186,6 +187,10 @@ const UserKaderisasiCard = ({ user, labels, roles, onSaved }) => {
                 <div>
                     <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wider mb-1">Tugas Fungsi</p>
                     <InlineDropdown userId={user.id} field="tugas_fungsi" value={user.tugas_fungsi} options={TUGAS_FUNGSI_OPTIONS} onSaved={onSaved} />
+                </div>
+                <div>
+                    <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wider mb-1">Sadar Donasi</p>
+                    <InlineDropdown userId={user.id} field="sadar_donasi" value={user.sadar_donasi} options={SADAR_DONASI_OPTIONS} onSaved={onSaved} />
                 </div>
             </div>
             {/* Kaderisasi fields — input */}
@@ -364,7 +369,7 @@ const DashboardKaderisasiPage = () => {
                             <thead className="bg-indigo-50 border-b border-indigo-100 sticky top-0 z-10">
                                 <tr>
                                     {['ID', 'IDM', 'Nama', 'Username', 'Email', 'Label', 'Custom Role',
-                                      'Kelas Academy', 'Jenjang Pemahaman', 'Jenjang Kesiapan', 'Tugas Fungsi',
+                                      'Kelas Academy', 'Jenjang Pemahaman', 'Jenjang Kesiapan', 'Tugas Fungsi', 'Sadar Donasi',
                                       'Rombel', 'Tgl Alih Jenjang', 'Keterangan'].map(h => (
                                         <th key={h} className="px-3 py-3.5 text-[10px] font-black text-indigo-700 uppercase tracking-wider whitespace-nowrap">{h}</th>
                                     ))}
@@ -373,14 +378,14 @@ const DashboardKaderisasiPage = () => {
                             <tbody className="divide-y divide-gray-50">
                                 {loading ? (
                                     <tr>
-                                        <td colSpan={14} className="px-6 py-12 text-center text-gray-400 text-sm">
+                                        <td colSpan={15} className="px-6 py-12 text-center text-gray-400 text-sm">
                                             <span className="material-icons animate-spin text-2xl text-indigo-400 block mx-auto mb-2">sync</span>
                                             Memuat data...
                                         </td>
                                     </tr>
                                 ) : users.length === 0 ? (
                                     <tr>
-                                        <td colSpan={14} className="px-6 py-12 text-center text-gray-400 text-sm">Tidak ada data ditemukan.</td>
+                                        <td colSpan={15} className="px-6 py-12 text-center text-gray-400 text-sm">Tidak ada data ditemukan.</td>
                                     </tr>
                                 ) : users.map(user => {
                                     const profile = user.profile || {};
@@ -422,6 +427,9 @@ const DashboardKaderisasiPage = () => {
                                             </td>
                                             <td className="px-3 py-2.5 min-w-[110px]">
                                                 <InlineDropdown userId={user.id} field="tugas_fungsi" value={user.tugas_fungsi} options={TUGAS_FUNGSI_OPTIONS} onSaved={handleSaved} />
+                                            </td>
+                                            <td className="px-3 py-2.5 min-w-[110px]">
+                                                <InlineDropdown userId={user.id} field="sadar_donasi" value={user.sadar_donasi} options={SADAR_DONASI_OPTIONS} onSaved={handleSaved} />
                                             </td>
                                             <td className="px-3 py-2.5 min-w-[120px]">
                                                 <InlineInput userId={user.id} field="rombel" value={user.rombel} type="text" onSaved={handleSaved} />
