@@ -29,9 +29,11 @@ const DashboardArticleEditorPage = () => {
         floating_url: '',
         floating_label: '',
         floating_icon: null,
+        thumbnail: null, // New field for the article thumbnail/main image
     });
     const [cropper, setCropper] = useState({ show: false, image: null });
     const [isAdmin, setIsAdmin] = useState(false);
+    const [thumbnailPreview, setThumbnailPreview] = useState('');
 
     const fetchArticles = useCallback(async () => {
         try {
@@ -50,14 +52,17 @@ const DashboardArticleEditorPage = () => {
             (async () => {
                 try {
                     const res = await axios.get(`${API}/api/articles/${slug}/`, getAuth());
+                    const mainImage = res.data.images && res.data.images.length > 0 ? res.data.images[0].full_path : '';
+                    setThumbnailPreview(mainImage);
                     setFormData({
                         title: res.data.title || '',
                         content: res.data.content || '',
-                        status: res.data.status || 'draft',
+                        status: res.data.status || 'pending',
                         date: res.data.date || new Date().toISOString().split('T')[0],
                         floating_url: res.data.floating_url || '',
                         floating_label: res.data.floating_label || '',
                         floating_icon: null,
+                        thumbnail: null,
                     });
                     setShowEditor(true);
                 } catch (err) { console.error(err); }
@@ -77,7 +82,7 @@ const DashboardArticleEditorPage = () => {
         try {
             const fd = new FormData();
             fd.append('image', file);
-            const res = await axios.post(`${API}/api/articles/upload_content_image/`, fd, {
+            const res = await axios.post(`${API}/api/articles/upload-content-image/`, fd, {
                 headers: { ...getAuth().headers, 'Content-Type': 'multipart/form-data' }
             });
             const imageUrl = res.data.url;
@@ -105,6 +110,11 @@ const DashboardArticleEditorPage = () => {
                 fd.append('floating_icon', formData.floating_icon);
             }
 
+            // Append optional main article thumbnail image
+            if (formData.thumbnail && formData.thumbnail instanceof File) {
+                fd.append('thumbnail', formData.thumbnail);
+            }
+
             if (slug) {
                 await axios.put(`${API}/api/articles/${slug}/`, fd, {
                     headers: { ...getAuth().headers, 'Content-Type': 'multipart/form-data' }
@@ -117,7 +127,8 @@ const DashboardArticleEditorPage = () => {
                 alert('Artikel berhasil dibuat');
             }
             setShowEditor(false);
-            setFormData({ title: '', content: '', status: 'pending', date: new Date().toISOString().split('T')[0], floating_url: '', floating_label: '', floating_icon: null });
+            setFormData({ title: '', content: '', status: 'pending', date: new Date().toISOString().split('T')[0], floating_url: '', floating_label: '', floating_icon: null, thumbnail: null });
+            setThumbnailPreview('');
             fetchArticles();
         } catch (err) {
             console.error(err);
@@ -222,16 +233,56 @@ const DashboardArticleEditorPage = () => {
                 {/* ============ EDITOR ============ */}
                 {showEditor && (
                     <form onSubmit={handleSave} className="space-y-6">
-                        {/* Title */}
-                        <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-                            <input type="text" required placeholder="Judul Artikel..." value={formData.title}
-                                onChange={e => setFormData({...formData, title: e.target.value})}
-                                className="w-full text-2xl font-bold outline-none border-none placeholder-gray-300 text-gray-900" />
-                            <div className="flex gap-3 mt-3">
-                                <div className="space-y-1">
-                                    <label className="text-[9px] font-bold text-gray-400 uppercase">Tanggal</label>
-                                    <input type="date" value={formData.date} onChange={e => setFormData({...formData, date: e.target.value})}
-                                        className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-1.5 text-sm outline-none" />
+                        {/* Thumbnail Upload & Title */}
+                        <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 space-y-4">
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Gambar Utama / Thumbnail Artikel</label>
+                                <div className="flex flex-col md:flex-row gap-5 items-start">
+                                    {thumbnailPreview ? (
+                                        <div className="relative w-full md:w-52 h-36 rounded-2xl overflow-hidden border border-gray-200 shadow-sm shrink-0">
+                                            <img src={thumbnailPreview} alt="Preview" className="w-full h-full object-cover" />
+                                            <button type="button" onClick={() => {
+                                                setFormData(prev => ({ ...prev, thumbnail: null }));
+                                                setThumbnailPreview('');
+                                            }} className="absolute top-2.5 right-2.5 bg-red-600/90 text-white w-7 h-7 flex items-center justify-center rounded-full hover:bg-red-700 transition shadow">
+                                                <span className="material-icons text-base block">delete</span>
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <label htmlFor="article_thumbnail" className="w-full md:w-52 h-36 flex flex-col items-center justify-center border-2 border-dashed border-gray-200 hover:border-green-500 rounded-2xl cursor-pointer bg-gray-50 hover:bg-gray-100 transition shrink-0 select-none">
+                                            <span className="material-icons text-3xl text-gray-400 mb-1">image</span>
+                                            <span className="text-xs text-gray-500 font-bold">Pilih Thumbnail...</span>
+                                            <span className="text-[9px] text-gray-400 mt-1">Maksimal 5MB</span>
+                                        </label>
+                                    )}
+                                    <input type="file" accept="image/*" id="article_thumbnail" className="hidden"
+                                        onChange={e => {
+                                            const file = e.target.files[0];
+                                            if (file) {
+                                                if (file.size > 5 * 1024 * 1024) {
+                                                    alert('Ukuran thumbnail terlalu besar. Maksimal 5MB.');
+                                                    e.target.value = '';
+                                                    return;
+                                                }
+                                                setFormData(prev => ({ ...prev, thumbnail: file }));
+                                                const reader = new FileReader();
+                                                reader.onload = () => setThumbnailPreview(reader.result);
+                                                reader.readAsDataURL(file);
+                                            }
+                                        }} />
+                                    <div className="flex-1 space-y-4 w-full">
+                                        <div className="space-y-1">
+                                            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Judul Artikel</label>
+                                            <input type="text" required placeholder="Tulis judul yang menarik..." value={formData.title}
+                                                onChange={e => setFormData({...formData, title: e.target.value})}
+                                                className="w-full text-xl font-bold outline-none border-b border-gray-100 focus:border-green-600 placeholder-gray-300 text-gray-900 py-1" />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Tanggal Terbit</label>
+                                            <input type="date" value={formData.date} onChange={e => setFormData({...formData, date: e.target.value})}
+                                                className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-2 text-sm outline-none block" />
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
