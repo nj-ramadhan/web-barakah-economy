@@ -31,6 +31,7 @@ const DashboardArticleEditorPage = () => {
         floating_icon: null,
     });
     const [cropper, setCropper] = useState({ show: false, image: null });
+    const [isAdmin, setIsAdmin] = useState(false);
 
     const fetchArticles = useCallback(async () => {
         try {
@@ -42,6 +43,7 @@ const DashboardArticleEditorPage = () => {
     useEffect(() => {
         const user = JSON.parse(localStorage.getItem('user'));
         if (!user) { navigate('/login'); return; }
+        setIsAdmin(user.role === 'admin');
         fetchArticles();
 
         if (slug) {
@@ -237,8 +239,17 @@ const DashboardArticleEditorPage = () => {
                                         className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-1.5 text-sm outline-none">
                                         <option value="draft">Draft</option>
                                         <option value="pending">Ajukan Review (Pending)</option>
-                                        {formData.status === 'approved' && <option value="approved">Approved</option>}
-                                        {formData.status === 'rejected' && <option value="rejected">Rejected</option>}
+                                        {isAdmin ? (
+                                            <>
+                                                <option value="approved">Approved (Publish)</option>
+                                                <option value="rejected">Rejected (Not Published)</option>
+                                            </>
+                                        ) : (
+                                            <>
+                                                {formData.status === 'approved' && <option value="approved">Approved (Publish)</option>}
+                                                {formData.status === 'rejected' && <option value="rejected">Rejected (Not Published)</option>}
+                                            </>
+                                        )}
                                     </select>
                                 </div>
                             </div>

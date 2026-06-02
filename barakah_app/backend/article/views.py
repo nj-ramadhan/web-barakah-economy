@@ -10,10 +10,29 @@ from .serializers import ArticleSerializer, ArticleImageSerializer, ArticleImage
 from barakah_app.utils import send_status_update_email
 
 class ArticleViewSet(viewsets.ModelViewSet):
-    queryset = Article.objects.all().order_by('-id')
     serializer_class = ArticleSerializer
     lookup_field = 'slug'
     parser_classes = [MultiPartParser, FormParser, JSONParser]
+
+    def get_queryset(self):
+        from django.db.models import Q
+        user = self.request.user
+        
+        # Jika user terautentikasi dan merupakan admin, bisa melihat seluruhnya (untuk manajemen)
+        if user.is_authenticated and getattr(user, 'role', '') == 'admin':
+            return Article.objects.all().order_by('-id')
+            
+        # Jika user terautentikasi, mereka bisa melihat artikel milik mereka sendiri ATAU yang sudah approved
+        if user.is_authenticated:
+            return Article.objects.filter(
+                Q(created_by=user) | Q(status='approved')
+            ).distinct().order_by('-id')
+            
+        # Untuk pengguna umum / anonim, hanya tampilkan yang sudah 'approved' (Published)
+        return Article.objects.filter(status='approved').order_by('-id')
+
+    def perform_create(self, serializer):
+        serializer.save(created_by=self.request.user)
     def perform_update(self, serializer):
         instance = self.get_object()
         old_status = instance.status
@@ -102,8 +121,10 @@ class ArticleViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get'], permission_classes=[permissions.IsAuthenticated])
     def my_articles(self, request):
-        """Get articles - for now returns all articles (can be filtered by author later)."""
-        articles = self.queryset.all()
+        """Get articles written by the user, or all articles if user is admin."""
+        articles = self.get_queryset()
+        if getattr(request.user, 'role', '') != 'admin':
+            articles = articles.filter(created_by=request.user)
         serializer = self.get_serializer(articles, many=True, context={'request': request})
         return Response(serializer.data)
 
