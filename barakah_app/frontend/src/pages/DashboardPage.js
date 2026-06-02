@@ -882,7 +882,7 @@ const DashboardPage = () => {
                                 {
                                     id: 'live_streaming',
                                     access: isAdmin,
-                                    to: '/dashboard/admin/kaderisasi#live-stream',
+                                    to: '/dashboard/admin/live-streaming',
                                     icon: 'sensors',
                                     color: 'indigo',
                                     title: 'Manajemen Live Streaming',
