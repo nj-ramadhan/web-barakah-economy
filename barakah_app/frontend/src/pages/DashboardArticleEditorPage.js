@@ -24,7 +24,7 @@ const DashboardArticleEditorPage = () => {
     const [formData, setFormData] = useState({
         title: '',
         content: '',
-        status: 2, // 2 = Draft (Not Active), 1 = Published (Active)
+        status: 'draft', // 'draft' = Draft, 'pending' = Pending Review
         date: new Date().toISOString().split('T')[0],
         floating_url: '',
         floating_label: '',
@@ -51,7 +51,7 @@ const DashboardArticleEditorPage = () => {
                     setFormData({
                         title: res.data.title || '',
                         content: res.data.content || '',
-                        status: res.data.status || 2,
+                        status: res.data.status || 'draft',
                         date: res.data.date || new Date().toISOString().split('T')[0],
                         floating_url: res.data.floating_url || '',
                         floating_label: res.data.floating_label || '',
@@ -95,8 +95,10 @@ const DashboardArticleEditorPage = () => {
             fd.append('content', formData.content);
             fd.append('status', formData.status);
             fd.append('date', formData.date);
-            if (formData.floating_url) fd.append('floating_url', formData.floating_url);
-            if (formData.floating_label) fd.append('floating_label', formData.floating_label);
+            
+            // Append optional floating bubble fields (allow clearing by sending empty string)
+            fd.append('floating_url', formData.floating_url || '');
+            fd.append('floating_label', formData.floating_label || '');
             if (formData.floating_icon && formData.floating_icon instanceof File) {
                 fd.append('floating_icon', formData.floating_icon);
             }
@@ -113,7 +115,7 @@ const DashboardArticleEditorPage = () => {
                 alert('Artikel berhasil dibuat');
             }
             setShowEditor(false);
-            setFormData({ title: '', content: '', status: 2, date: new Date().toISOString().split('T')[0], floating_url: '', floating_label: '', floating_icon: null });
+            setFormData({ title: '', content: '', status: 'draft', date: new Date().toISOString().split('T')[0], floating_url: '', floating_label: '', floating_icon: null });
             fetchArticles();
         } catch (err) {
             console.error(err);
@@ -194,8 +196,15 @@ const DashboardArticleEditorPage = () => {
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-start sm:items-center justify-between gap-2 overflow-hidden">
                                                 <h3 className="font-bold text-gray-900 text-base sm:text-lg truncate flex-1 min-w-0" title={a.title}>{a.title}</h3>
-                                                <span className={`shrink-0 px-2 py-0.5 rounded-full text-[9px] font-bold ${a.status === 1 ? 'bg-green-50 text-green-700' : 'bg-yellow-50 text-yellow-700'}`}>
-                                                    {a.status === 1 ? 'Published' : 'Draft'}
+                                                <span className={`shrink-0 px-2 py-0.5 rounded-full text-[9px] font-bold ${
+                                                    a.status === 'approved' ? 'bg-green-50 text-green-700' :
+                                                    a.status === 'pending' ? 'bg-blue-50 text-blue-700' :
+                                                    a.status === 'rejected' ? 'bg-red-50 text-red-700' :
+                                                    'bg-yellow-50 text-yellow-700'
+                                                }`}>
+                                                    {a.status === 'approved' ? 'Published' :
+                                                     a.status === 'pending' ? 'Pending Review' :
+                                                     a.status === 'rejected' ? 'Rejected' : 'Draft'}
                                                 </span>
                                             </div>
                                             <p className="text-xs text-gray-500 mt-1">{a.date}</p>
@@ -224,10 +233,12 @@ const DashboardArticleEditorPage = () => {
                                 </div>
                                 <div className="space-y-1">
                                     <label className="text-[9px] font-bold text-gray-400 uppercase">Status</label>
-                                    <select value={formData.status} onChange={e => setFormData({...formData, status: parseInt(e.target.value)})}
+                                    <select value={formData.status} onChange={e => setFormData({...formData, status: e.target.value})}
                                         className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-1.5 text-sm outline-none">
-                                        <option value="2">Draft</option>
-                                        <option value="1">Published</option>
+                                        <option value="draft">Draft</option>
+                                        <option value="pending">Ajukan Review (Pending)</option>
+                                        {formData.status === 'approved' && <option value="approved">Approved</option>}
+                                        {formData.status === 'rejected' && <option value="rejected">Rejected</option>}
                                     </select>
                                 </div>
                             </div>

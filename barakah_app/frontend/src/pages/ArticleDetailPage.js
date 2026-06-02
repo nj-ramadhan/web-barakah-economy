@@ -260,12 +260,14 @@ const ArticleDetailPage = () => {
       `}</style>
 
       {/* Floating Bubble dengan Data Lengkap */}
-      <FloatingBubble
-        show={true}
-        link={article.floating_url}
-        label={article.floating_label}
-        icon={article.floating_icon_url}
-      />
+      {article.floating_url && (
+        <FloatingBubble
+          show={true}
+          link={article.floating_url}
+          label={article.floating_label}
+          icon={article.floating_icon_url}
+        />
+      )}
 
       <NavigationButton />
     </div>

@@ -53,7 +53,7 @@ const DashboardAdminArticleManagementPage = () => {
 
     const filteredArticles = articles.filter(a => {
         const matchesSearch = a.title.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesStatus = statusFilter === 'all' || a.status === parseInt(statusFilter);
+        const matchesStatus = statusFilter === 'all' || a.status === statusFilter;
         return matchesSearch && matchesStatus;
     });
 
@@ -97,8 +97,10 @@ const DashboardAdminArticleManagementPage = () => {
                             className="w-full px-4 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-sm outline-none focus:ring-2 focus:ring-green-500 transition"
                         >
                             <option value="all">Semua Status</option>
-                            <option value="1">Published</option>
-                            <option value="2">Draft</option>
+                            <option value="approved">Approved</option>
+                            <option value="pending">Pending Review</option>
+                            <option value="rejected">Rejected</option>
+                            <option value="draft">Draft</option>
                         </select>
                     </div>
                 </div>
@@ -135,9 +137,14 @@ const DashboardAdminArticleManagementPage = () => {
                                             </td>
                                             <td className="px-6 py-4">
                                                 <span className={`px-3 py-1 rounded-full text-[10px] font-bold ${
-                                                    a.status === 1 ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
+                                                    a.status === 'approved' ? 'bg-green-100 text-green-700' :
+                                                    a.status === 'pending' ? 'bg-blue-100 text-blue-700' :
+                                                    a.status === 'rejected' ? 'bg-red-100 text-red-700' :
+                                                    'bg-yellow-100 text-yellow-700'
                                                 }`}>
-                                                    {a.status === 1 ? 'PUBLISHED' : 'DRAFT'}
+                                                    {a.status === 'approved' ? 'APPROVED' :
+                                                     a.status === 'pending' ? 'PENDING' :
+                                                     a.status === 'rejected' ? 'REJECTED' : 'DRAFT'}
                                                 </span>
                                             </td>
                                             <td className="px-6 py-4">

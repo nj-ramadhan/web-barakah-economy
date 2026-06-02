@@ -29,16 +29,20 @@ const DashboardLiveStreamingPage = () => {
     const [savingStream, setSavingStream] = useState(false);
     const [loadingSettings, setLoadingSettings] = useState(true);
 
-    const fetchStreamSettings = useCallback(async () => {
+    const fetchStreamSettings = useCallback(async (isInitial = false) => {
         try {
             const res = await axios.get(`${API}/api/streaming/settings/`, getAuth());
             setStreamSettings(res.data);
-            setStreamTitle(res.data.title || '');
-            setStreamDesc(res.data.description || '');
-            setIsStreamLive(res.data.is_live || false);
-            setLatencyMode(res.data.latency_mode || 'low');
-            setSaveRecording(res.data.save_recording !== false);
-            setThumbnailPreview(res.data.thumbnail ? `${API}${res.data.thumbnail}` : '');
+            
+            // Only overwrite inputs on initial load to prevent wiping out what admin is typing!
+            if (isInitial) {
+                setStreamTitle(res.data.title || '');
+                setStreamDesc(res.data.description || '');
+                setIsStreamLive(res.data.is_live || false);
+                setLatencyMode(res.data.latency_mode || 'low');
+                setSaveRecording(res.data.save_recording !== false);
+                setThumbnailPreview(res.data.thumbnail ? `${API}${res.data.thumbnail}` : '');
+            }
         } catch (err) {
             console.error('Gagal mengambil settings streaming:', err);
         } finally {
@@ -61,12 +65,12 @@ const DashboardLiveStreamingPage = () => {
     useEffect(() => {
         const user = JSON.parse(localStorage.getItem('user'));
         if (!user || user.role !== 'admin') { navigate('/dashboard'); return; }
-        fetchStreamSettings();
+        fetchStreamSettings(true);
         fetchRecordings();
 
         // Poll streaming settings (for active OBS status checks) every 10 seconds
         const pollInterval = setInterval(() => {
-            fetchStreamSettings();
+            fetchStreamSettings(false);
         }, 10000);
 
         return () => clearInterval(pollInterval);
