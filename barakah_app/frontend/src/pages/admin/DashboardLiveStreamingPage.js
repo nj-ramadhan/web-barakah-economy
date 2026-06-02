@@ -22,6 +22,8 @@ const DashboardLiveStreamingPage = () => {
     const [isStreamLive, setIsStreamLive] = useState(false);
     const [latencyMode, setLatencyMode] = useState('low');
     const [saveRecording, setSaveRecording] = useState(true);
+    const [thumbnailFile, setThumbnailFile] = useState(null);
+    const [thumbnailPreview, setThumbnailPreview] = useState('');
     const [recordings, setRecordings] = useState([]);
     const [loadingRec, setLoadingRec] = useState(false);
     const [savingStream, setSavingStream] = useState(false);
@@ -36,6 +38,7 @@ const DashboardLiveStreamingPage = () => {
             setIsStreamLive(res.data.is_live || false);
             setLatencyMode(res.data.latency_mode || 'low');
             setSaveRecording(res.data.save_recording !== false);
+            setThumbnailPreview(res.data.thumbnail ? `${API}${res.data.thumbnail}` : '');
         } catch (err) {
             console.error('Gagal mengambil settings streaming:', err);
         } finally {
@@ -73,19 +76,35 @@ const DashboardLiveStreamingPage = () => {
         e.preventDefault();
         setSavingStream(true);
         try {
+            const formData = new FormData();
+            formData.append('title', streamTitle);
+            formData.append('description', streamDesc);
+            formData.append('is_live', isStreamLive);
+            formData.append('latency_mode', latencyMode);
+            formData.append('save_recording', saveRecording);
+            if (thumbnailFile) {
+                formData.append('thumbnail', thumbnailFile);
+            }
+
+            const auth = getAuth();
+            const config = {
+                headers: {
+                    ...auth.headers,
+                    'Content-Type': 'multipart/form-data'
+                }
+            };
+
             const res = await axios.patch(
                 `${API}/api/streaming/settings/`,
-                {
-                    title: streamTitle,
-                    description: streamDesc,
-                    is_live: isStreamLive,
-                    latency_mode: latencyMode,
-                    save_recording: saveRecording
-                },
-                getAuth()
+                formData,
+                config
             );
             alert('Pengaturan live streaming berhasil disimpan!');
             setStreamSettings(res.data);
+            if (res.data.thumbnail) {
+                setThumbnailPreview(`${API}${res.data.thumbnail}`);
+                setThumbnailFile(null);
+            }
         } catch (err) {
             console.error('Gagal menyimpan setelan streaming:', err);
             alert('Gagal menyimpan setelan.');
@@ -234,6 +253,41 @@ const DashboardLiveStreamingPage = () => {
                                     />
                                 </div>
 
+                                {/* Thumbnail Preview & Upload */}
+                                <div className="space-y-1.5">
+                                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Thumbnail Sharing & Poster</label>
+                                    <div className="flex gap-4 items-center bg-gray-50 border border-gray-200 rounded-2xl p-3">
+                                        {/* Preview Image */}
+                                        <div className="w-16 h-10 bg-gray-200 border border-gray-300 rounded-lg overflow-hidden flex items-center justify-center flex-shrink-0">
+                                            {thumbnailPreview ? (
+                                                <img src={thumbnailPreview} alt="Thumbnail Preview" className="w-full h-full object-cover" />
+                                            ) : (
+                                                <span className="material-icons text-gray-400 text-lg">image</span>
+                                            )}
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <label className="inline-block bg-indigo-50 text-indigo-700 border border-indigo-200 px-3 py-1.5 rounded-xl text-[10px] font-bold cursor-pointer hover:bg-indigo-100 hover:text-indigo-800 transition">
+                                                Pilih Gambar
+                                                <input 
+                                                    type="file" 
+                                                    accept="image/*"
+                                                    className="hidden"
+                                                    onChange={(e) => {
+                                                        const file = e.target.files[0];
+                                                        if (file) {
+                                                            setThumbnailFile(file);
+                                                            setThumbnailPreview(URL.createObjectURL(file));
+                                                        }
+                                                    }}
+                                                />
+                                            </label>
+                                            <p className="text-[8px] text-gray-400 mt-1 truncate">
+                                                {thumbnailFile ? thumbnailFile.name : 'Format JPEG/PNG. Opsional.'}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
                                 {/* Latency Mode Choice */}
                                 <div className="space-y-1">
                                     <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Pilihan Latency (Delay Pemutar)</label>
@@ -368,13 +422,29 @@ const DashboardLiveStreamingPage = () => {
                                     </div>
                                 ) : (
                                     recordings.map(rec => (
-                                        <div key={rec.id} className="flex items-center justify-between p-3.5 bg-gray-50 border border-gray-100 rounded-2xl hover:border-indigo-100 hover:bg-indigo-50/10 transition group">
-                                            <div className="min-w-0 pr-4">
-                                                <p className="font-black text-xs text-gray-800 truncate">{rec.title}</p>
-                                                <div className="flex items-center gap-2 mt-0.5">
-                                                    <span className="font-mono text-[9px] text-gray-400">{rec.file_name}</span>
-                                                    <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
-                                                    <span className="text-[9px] font-black text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded-full">{rec.formatted_size}</span>
+                                        <div key={rec.id} className="flex items-center justify-between p-3 bg-gray-50 border border-gray-100 rounded-2xl hover:border-indigo-100 hover:bg-indigo-50/10 transition group gap-3">
+                                            <div className="flex items-center gap-3 min-w-0">
+                                                {/* Visual Video Thumbnail representation */}
+                                                <div className="w-16 h-10 rounded-xl bg-slate-900 border border-gray-200/60 overflow-hidden flex-shrink-0 flex items-center justify-center relative shadow-sm">
+                                                    {streamSettings?.thumbnail ? (
+                                                        <img src={`${API}${streamSettings.thumbnail}`} alt="Cover" className="w-full h-full object-cover opacity-80" />
+                                                    ) : (
+                                                        <div className="absolute inset-0 bg-gradient-to-tr from-indigo-900 to-indigo-600/80 flex items-center justify-center">
+                                                            <span className="material-icons text-white/90 text-sm">videocam</span>
+                                                        </div>
+                                                    )}
+                                                    <div className="absolute inset-0 bg-black/25 flex items-center justify-center group-hover:bg-black/10 transition">
+                                                        <span className="material-icons text-white text-base">play_circle_filled</span>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div className="min-w-0">
+                                                    <p className="font-black text-xs text-gray-800 truncate">{rec.title}</p>
+                                                    <div className="flex items-center gap-2 mt-0.5">
+                                                        <span className="font-mono text-[9px] text-gray-400">{rec.file_name}</span>
+                                                        <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
+                                                        <span className="text-[9px] font-black text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded-full">{rec.formatted_size}</span>
+                                                    </div>
                                                 </div>
                                             </div>
                                             <div className="flex items-center gap-1.5 flex-shrink-0">

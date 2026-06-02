@@ -156,7 +156,7 @@ const StreamingPage = () => {
         } else {
             setIsPlayerError(true);
         }
-    }, [settings]);
+    }, [settings?.is_live, settings?.stream_key, settings?.hls_url, settings?.latency_mode]);
 
     // Load Hls.js script from CDN dynamically if not available on window
     useEffect(() => {

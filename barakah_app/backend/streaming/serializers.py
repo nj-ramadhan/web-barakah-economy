@@ -7,7 +7,7 @@ User = get_user_model()
 class StreamingSettingsSerializer(serializers.ModelSerializer):
     class Meta:
         model = StreamingSettings
-        fields = ('id', 'is_live', 'title', 'description', 'stream_key', 'latency_mode', 'save_recording', 'updated_at')
+        fields = ('id', 'is_live', 'title', 'description', 'stream_key', 'latency_mode', 'save_recording', 'thumbnail', 'updated_at')
         read_only_fields = ('id', 'stream_key', 'updated_at')
 
 class StreamingRecordingSerializer(serializers.ModelSerializer):

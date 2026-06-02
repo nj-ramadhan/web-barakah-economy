@@ -8,6 +8,7 @@ from rest_framework import viewsets, permissions, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.decorators import action
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 
 from .models import StreamingSettings, StreamingRecording, StreamingChat, StreamingLike
 from .serializers import (
@@ -35,6 +36,7 @@ class IsAdminUser(permissions.BasePermission):
 # --- 1. SETTINGS VIEW ---
 class StreamingSettingsView(APIView):
     permission_classes = [permissions.AllowAny]
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
 
     def get_object(self):
         obj, created = StreamingSettings.objects.get_or_create(id=1)
@@ -65,6 +67,7 @@ class StreamingSettingsView(APIView):
             'description': settings_obj.description,
             'latency_mode': settings_obj.latency_mode,
             'save_recording': settings_obj.save_recording,
+            'thumbnail': settings_obj.thumbnail.url if settings_obj.thumbnail else None,
             'updated_at': settings_obj.updated_at,
             'is_obs_active': is_obs_active,
         }
@@ -298,9 +301,12 @@ def seo_streaming_detail(request):
     title = settings_obj.title if settings_obj.is_live else "Live Streaming Barakah Economy"
     description = settings_obj.description if settings_obj.is_live else "Tonton dan ikuti siaran langsung kajian serta program Barakah Economy."
     
-    # Static cover image
+    # Custom uploaded thumbnail for dynamic share preview (WhatsApp, FB, etc.)
     site_url = request.build_absolute_uri('/')[:-1]
-    image_url = f"{site_url}/images/web-thumbnail.jpg" # default static preview
+    if settings_obj.thumbnail:
+        image_url = f"{site_url}{settings_obj.thumbnail.url}"
+    else:
+        image_url = f"{site_url}/images/web-thumbnail.jpg" # default static preview
     
     metadata = {
         'title': title,
