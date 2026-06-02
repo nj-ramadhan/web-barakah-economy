@@ -136,16 +136,32 @@ const DashboardAdminArticleManagementPage = () => {
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4">
-                                                <span className={`px-3 py-1 rounded-full text-[10px] font-bold ${
-                                                    a.status === 'approved' ? 'bg-green-100 text-green-700' :
-                                                    a.status === 'pending' ? 'bg-blue-100 text-blue-700' :
-                                                    a.status === 'rejected' ? 'bg-red-100 text-red-700' :
-                                                    'bg-yellow-100 text-yellow-700'
-                                                }`}>
-                                                    {a.status === 'approved' ? 'APPROVED' :
-                                                     a.status === 'pending' ? 'PENDING' :
-                                                     a.status === 'rejected' ? 'REJECTED' : 'DRAFT'}
-                                                </span>
+                                                <select
+                                                    value={a.status}
+                                                    onChange={async (e) => {
+                                                        const newStatus = e.target.value;
+                                                        try {
+                                                            await axios.patch(`${API}/api/articles/${a.slug}/`, {
+                                                                status: newStatus
+                                                            }, getAuth());
+                                                            alert('Status artikel berhasil diperbarui');
+                                                            fetchAllArticles();
+                                                        } catch (err) {
+                                                            alert('Gagal memperbarui status artikel');
+                                                        }
+                                                    }}
+                                                    className={`px-2.5 py-1.5 rounded-xl text-[10px] font-bold outline-none border-none cursor-pointer transition ${
+                                                        a.status === 'approved' ? 'bg-green-100 text-green-700' :
+                                                        a.status === 'pending' ? 'bg-blue-100 text-blue-700' :
+                                                        a.status === 'rejected' ? 'bg-red-100 text-red-700' :
+                                                        'bg-yellow-100 text-yellow-700'
+                                                    }`}
+                                                >
+                                                    <option value="draft">DRAFT</option>
+                                                    <option value="pending">PENDING</option>
+                                                    <option value="approved">APPROVED</option>
+                                                    <option value="rejected">REJECTED</option>
+                                                </select>
                                             </td>
                                             <td className="px-6 py-4">
                                                 <span className="text-sm text-gray-600 font-medium">{a.date}</span>

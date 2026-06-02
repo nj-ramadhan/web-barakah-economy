@@ -121,10 +121,8 @@ class ArticleViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get'], permission_classes=[permissions.IsAuthenticated])
     def my_articles(self, request):
-        """Get articles written by the user, or all articles if user is admin."""
-        articles = self.get_queryset()
-        if getattr(request.user, 'role', '') != 'admin':
-            articles = articles.filter(created_by=request.user)
+        """Get articles written only by the logged-in user."""
+        articles = Article.objects.filter(created_by=request.user).order_by('-id')
         serializer = self.get_serializer(articles, many=True, context={'request': request})
         return Response(serializer.data)
 

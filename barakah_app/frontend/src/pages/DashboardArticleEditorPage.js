@@ -24,7 +24,7 @@ const DashboardArticleEditorPage = () => {
     const [formData, setFormData] = useState({
         title: '',
         content: '',
-        status: 'draft', // 'draft' = Draft, 'pending' = Pending Review
+        status: 'pending', // Default to 'pending' (Pending Review)
         date: new Date().toISOString().split('T')[0],
         floating_url: '',
         floating_label: '',
@@ -117,7 +117,7 @@ const DashboardArticleEditorPage = () => {
                 alert('Artikel berhasil dibuat');
             }
             setShowEditor(false);
-            setFormData({ title: '', content: '', status: 'draft', date: new Date().toISOString().split('T')[0], floating_url: '', floating_label: '', floating_icon: null });
+            setFormData({ title: '', content: '', status: 'pending', date: new Date().toISOString().split('T')[0], floating_url: '', floating_label: '', floating_icon: null });
             fetchArticles();
         } catch (err) {
             console.error(err);
@@ -232,25 +232,6 @@ const DashboardArticleEditorPage = () => {
                                     <label className="text-[9px] font-bold text-gray-400 uppercase">Tanggal</label>
                                     <input type="date" value={formData.date} onChange={e => setFormData({...formData, date: e.target.value})}
                                         className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-1.5 text-sm outline-none" />
-                                </div>
-                                <div className="space-y-1">
-                                    <label className="text-[9px] font-bold text-gray-400 uppercase">Status</label>
-                                    <select value={formData.status} onChange={e => setFormData({...formData, status: e.target.value})}
-                                        className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-1.5 text-sm outline-none">
-                                        <option value="draft">Draft</option>
-                                        <option value="pending">Ajukan Review (Pending)</option>
-                                        {isAdmin ? (
-                                            <>
-                                                <option value="approved">Approved (Publish)</option>
-                                                <option value="rejected">Rejected (Not Published)</option>
-                                            </>
-                                        ) : (
-                                            <>
-                                                {formData.status === 'approved' && <option value="approved">Approved (Publish)</option>}
-                                                {formData.status === 'rejected' && <option value="rejected">Rejected (Not Published)</option>}
-                                            </>
-                                        )}
-                                    </select>
                                 </div>
                             </div>
                         </div>
