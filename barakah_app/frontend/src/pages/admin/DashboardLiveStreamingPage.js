@@ -187,7 +187,7 @@ const DashboardLiveStreamingPage = () => {
                                         <span className={`w-2 h-2 rounded-full ${streamSettings.is_obs_active ? 'bg-green-500 animate-ping' : 'bg-gray-400'}`}></span>
                                         <span className={`w-2 h-2 rounded-full ${streamSettings.is_obs_active ? 'bg-green-500' : 'bg-gray-400'} -ml-3`}></span>
                                         <span className={`text-[10px] font-black uppercase tracking-wider ${streamSettings.is_obs_active ? 'text-green-600' : 'text-gray-400'}`}>
-                                            {streamSettings.is_obs_active ? 'ON STREAM' : 'OFF STREAM'}
+                                            {streamSettings.is_obs_active ? `ON STREAM (${streamSettings.viewer_count || 0} Menonton)` : 'OFF STREAM'}
                                         </span>
                                     </div>
                                 )}

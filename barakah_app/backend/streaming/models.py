@@ -49,3 +49,10 @@ class StreamingLike(models.Model):
 
     def __str__(self):
         return f"Like by {self.user.username}"
+
+class StreamingViewer(models.Model):
+    session_key = models.CharField(max_length=100, unique=True)
+    last_seen = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Viewer {self.session_key} - {self.last_seen}"

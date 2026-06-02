@@ -21,6 +21,7 @@ const StreamingPage = () => {
     const [likes, setLikes] = useState({ total_likes: 0, has_liked: false });
     const [isSending, setIsSending] = useState(false);
     const [isPlayerError, setIsPlayerError] = useState(false);
+    const [viewerCount, setViewerCount] = useState(1);
     
     const user = JSON.parse(localStorage.getItem('user'));
     const isLoggedIn = !!user;
@@ -63,20 +64,42 @@ const StreamingPage = () => {
         }
     };
 
-    // Initial Load & Polling for Comments
+    // Initial Load & Polling for Comments and Active Viewers
     useEffect(() => {
         fetchSettings();
         fetchComments();
         fetchLikes();
+
+        // Unique session key for active viewers counter
+        let sessionKey = sessionStorage.getItem('bae_streaming_session_key');
+        if (!sessionKey) {
+            sessionKey = 'viewer_' + Math.random().toString(36).substr(2, 9) + '_' + Date.now();
+            sessionStorage.setItem('bae_streaming_session_key', sessionKey);
+        }
+
+        const sendHeartbeat = async () => {
+            try {
+                const key = sessionStorage.getItem('bae_streaming_session_key');
+                if (!key) return;
+                const res = await axios.post(`${API}/api/streaming/viewers/`, { session_key: key });
+                setViewerCount(res.data.total_viewers || 1);
+            } catch (err) {
+                console.error('Gagal mengirim heartbeat penonton:', err);
+            }
+        };
+
+        // Fire initial heartbeat
+        sendHeartbeat();
 
         // Poll chat comments every 3 seconds
         const chatInterval = setInterval(() => {
             fetchComments();
         }, 3000);
 
-        // Poll live settings status every 10 seconds
+        // Poll settings & viewer heartbeats every 10 seconds
         const settingsInterval = setInterval(() => {
             fetchSettings();
+            sendHeartbeat();
         }, 10000);
 
         return () => {
@@ -212,16 +235,19 @@ const StreamingPage = () => {
         }
     };
 
-    // 7. Share Handler
+    // 7. Share Handler (with dynamic cache-busting to guarantee thumbnail appearance on social media)
     const handleShare = () => {
-        const shareUrl = `${window.location.origin}/streaming`;
+        const timestamp = Math.floor(Date.now() / 1000);
+        const shareUrl = `${window.location.origin}/streaming?t=${timestamp}`;
         navigator.clipboard.writeText(shareUrl);
         alert('Link streaming berhasil disalin ke clipboard!');
     };
 
     const handleWhatsAppShare = () => {
-        const shareUrl = `${window.location.origin}/streaming`;
-        const text = `Yuk tonton siaran langsung live streaming Barakah Economy sekarang di: ${shareUrl}`;
+        const timestamp = Math.floor(Date.now() / 1000);
+        const shareUrl = `${window.location.origin}/streaming?t=${timestamp}`;
+        const titleText = settings?.title ? `"${settings.title}"` : 'Kajian Barakah Economy';
+        const text = `Yuk tonton siaran langsung ${titleText} sekarang di BAE: ${shareUrl}`;
         window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
     };
 
@@ -265,11 +291,17 @@ const StreamingPage = () => {
                             </div>
                         )}
                         
-                        {/* Live Badge indicator */}
+                        {/* Live & Viewers Badge indicator */}
                         {settings?.is_live && (
-                            <div className="absolute top-4 left-4 flex items-center gap-1.5 bg-red-600 text-white text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full shadow-lg shadow-red-600/30">
-                                <span className="w-1.5 h-1.5 bg-white rounded-full animate-ping"></span>
-                                LIVE
+                            <div className="absolute top-4 left-4 flex items-center gap-2">
+                                <div className="flex items-center gap-1.5 bg-red-600 text-white text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full shadow-lg shadow-red-600/30">
+                                    <span className="w-1.5 h-1.5 bg-white rounded-full animate-ping"></span>
+                                    LIVE
+                                </div>
+                                <div className="flex items-center gap-1.5 bg-black/60 backdrop-blur-md text-white text-[10px] font-bold px-3 py-1.5 rounded-full shadow-lg border border-white/10">
+                                    <span className="material-icons text-[11px] text-indigo-400">visibility</span>
+                                    <span>{viewerCount} Menonton</span>
+                                </div>
                             </div>
                         )}
                     </div>

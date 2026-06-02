@@ -4,7 +4,8 @@ from .views import (
     StreamingSettingsView,
     StreamingChatViewSet,
     StreamingLikeView,
-    StreamingRecordingViewSet
+    StreamingRecordingViewSet,
+    StreamingViewersView
 )
 
 router = DefaultRouter()
@@ -14,5 +15,6 @@ router.register(r'recordings', StreamingRecordingViewSet, basename='streaming-re
 urlpatterns = [
     path('settings/', StreamingSettingsView.as_view(), name='streaming-settings'),
     path('likes/', StreamingLikeView.as_view(), name='streaming-likes'),
+    path('viewers/', StreamingViewersView.as_view(), name='streaming-viewers'),
     path('', include(router.urls)),
 ]

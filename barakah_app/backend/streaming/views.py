@@ -1,6 +1,6 @@
 import os
 import uuid
-from datetime import datetime
+from datetime import datetime, timedelta
 from django.conf import settings
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
@@ -54,6 +54,11 @@ class StreamingSettingsView(APIView):
         hls_file_path = os.path.join(settings.MEDIA_ROOT, 'live', f"{settings_obj.stream_key}.m3u8")
         is_obs_active = os.path.exists(hls_file_path)
         
+        # Cleanup inactive viewers and count total active sessions
+        cutoff = timezone.now() - timedelta(seconds=20)
+        StreamingViewer.objects.filter(last_seen__lt=cutoff).delete()
+        viewer_count = StreamingViewer.objects.count()
+        
         # Admin gets stream_key, normal users do NOT (for streaming security)
         # Note: public needs to know the stream_key to fetch the HLS playlist,
         # but we only share the HLS URL when is_live is True.
@@ -70,6 +75,7 @@ class StreamingSettingsView(APIView):
             'thumbnail': settings_obj.thumbnail.url if settings_obj.thumbnail else None,
             'updated_at': settings_obj.updated_at,
             'is_obs_active': is_obs_active,
+            'viewer_count': viewer_count,
         }
         
         if is_admin or settings_obj.is_live:
@@ -317,3 +323,42 @@ def seo_streaming_detail(request):
     }
     
     return get_seo_response(request, metadata)
+
+from .models import StreamingViewer
+
+# --- 6. LIVE VIEWERS COUNTER ---
+class StreamingViewersView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request):
+        """
+        GET /api/streaming/viewers/ returns the total number of active viewers.
+        """
+        # Cleanup viewers inactive for more than 20 seconds
+        cutoff = timezone.now() - timedelta(seconds=20)
+        StreamingViewer.objects.filter(last_seen__lt=cutoff).delete()
+        
+        total_viewers = StreamingViewer.objects.count()
+        return Response({"total_viewers": total_viewers})
+
+    def post(self, request):
+        """
+        POST /api/streaming/viewers/ registers/updates a viewer's heartbeat.
+        Expects {"session_key": "some-unique-browser-uuid"}
+        """
+        session_key = request.data.get('session_key')
+        if not session_key:
+            return Response({"detail": "session_key wajib disertakan."}, status=status.HTTP_400_BAD_REQUEST)
+            
+        # Update or create the active viewer session
+        StreamingViewer.objects.update_or_create(
+            session_key=session_key,
+            defaults={'last_seen': timezone.now()}
+        )
+        
+        # Cleanup viewers inactive for more than 20 seconds
+        cutoff = timezone.now() - timedelta(seconds=20)
+        StreamingViewer.objects.filter(last_seen__lt=cutoff).delete()
+        
+        total_viewers = StreamingViewer.objects.count()
+        return Response({"total_viewers": total_viewers})
