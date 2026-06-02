@@ -2,6 +2,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation, useNavigate } from 'react-router-dom';
 import GlobalPopupManager from './components/common/GlobalPopupManager';
+import GlobalStreamingPopup from './components/common/GlobalStreamingPopup';
 import PrivateRoute from './utils/PrivateRoute';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
@@ -98,6 +99,7 @@ import AdminZISVerifyPage from './pages/admin/AdminZISVerifyPage';
 
 import ForumMainPage from './pages/ForumMainPage';
 import ForumThreadDetail from './pages/ForumThreadDetail';
+import StreamingPage from './pages/StreamingPage';
 
 import DashboardSinergySellersPage from './pages/DashboardSinergySellersPage';
 import DashboardSinergySellerOrdersPage from './pages/DashboardSinergySellerOrdersPage';
@@ -220,6 +222,7 @@ const App = () => {
       <ScrollToTop />
       <NotificationHandler />
       <GlobalPopupManager />
+      <GlobalStreamingPopup />
       <div className="min-h-screen bg-gray-100 dark:bg-gray-950 flex justify-center transition-colors duration-300">
         <Routes>
           <Route path="/*" element={<LayoutWrapper isDesktop={isDesktop} />} />
@@ -301,6 +304,9 @@ const LayoutWrapper = ({ isDesktop }) => {
         {/* Information Routes */}
         <Route path="/about" element={<ResponsiveLayout isDesktop={isDesktop}><AboutUs /></ResponsiveLayout>} />
         <Route path="/hubungi-kami" element={<ResponsiveLayout isDesktop={isDesktop}><ContactUs /></ResponsiveLayout>} />
+
+        {/* Streaming Route */}
+        <Route path="/streaming" element={<ResponsiveLayout isDesktop={isDesktop}><StreamingPage /></ResponsiveLayout>} />
 
         {/* Activity Routes */}
         <Route path="/kegiatan" element={<ResponsiveLayout isDesktop={isDesktop}><ActivityListPage /></ResponsiveLayout>} />

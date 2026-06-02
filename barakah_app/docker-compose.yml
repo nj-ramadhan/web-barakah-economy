@@ -58,6 +58,19 @@ services:
     networks:
       - bae_network
 
+  rtmp:
+    image: tiangolo/nginx-rtmp
+    container_name: bae_rtmp
+    restart: always
+    ports:
+      - "1935:1935"
+    volumes:
+      - ./rtmp/nginx.conf:/etc/nginx/nginx.conf
+      - ./backend/media/live:/opt/media/live
+      - ./backend/media/recordings:/opt/media/recordings
+    networks:
+      - bae_network
+
 networks:
   bae_network:
     driver: bridge

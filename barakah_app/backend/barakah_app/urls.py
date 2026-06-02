@@ -11,6 +11,7 @@ from barakah_app.seo_views import (
     seo_campaign_detail, seo_article_detail, 
     seo_course_detail, seo_event_detail, seo_seller_profile
 )
+from streaming.views import seo_streaming_detail
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -18,6 +19,7 @@ urlpatterns = [
     path('sitemap.xml', sitemap_xml),
     
     # --- SEO Crawler Traps (Frontend Paths Caught by Backend) ---
+    path('streaming/', seo_streaming_detail),
     path('produk/<slug:slug>/', seo_product_detail),
     path('kampanye/<slug:slug>/', seo_campaign_detail),
     path('articles/<slug:slug>/', seo_article_detail),
@@ -28,6 +30,7 @@ urlpatterns = [
 
     path('api/auth/', include('accounts.urls')),
     path('api/profiles/', include('profiles.urls')),
+    path('api/streaming/', include('streaming.urls')),
     path('api/', include(router.urls)),
 
     path('api/', include('article.urls')),
