@@ -48,6 +48,10 @@ class StreamingSettingsView(APIView):
         settings_obj = self.get_object()
         user = request.user
         
+        # Check if the HLS playlist file exists on VPS to detect if OBS is active
+        hls_file_path = os.path.join(settings.MEDIA_ROOT, 'live', f"{settings_obj.stream_key}.m3u8")
+        is_obs_active = os.path.exists(hls_file_path)
+        
         # Admin gets stream_key, normal users do NOT (for streaming security)
         # Note: public needs to know the stream_key to fetch the HLS playlist,
         # but we only share the HLS URL when is_live is True.
@@ -60,7 +64,9 @@ class StreamingSettingsView(APIView):
             'title': settings_obj.title,
             'description': settings_obj.description,
             'latency_mode': settings_obj.latency_mode,
+            'save_recording': settings_obj.save_recording,
             'updated_at': settings_obj.updated_at,
+            'is_obs_active': is_obs_active,
         }
         
         if is_admin or settings_obj.is_live:
@@ -78,6 +84,53 @@ class StreamingSettingsView(APIView):
             return Response({"detail": "Hanya admin yang dapat mengubah pengaturan streaming."}, status=status.HTTP_403_FORBIDDEN)
             
         settings_obj = self.get_object()
+        
+        # Reset chat and likes when a new stream starts (toggled from offline/False to live/True)
+        is_live_before = settings_obj.is_live
+        is_live_now = request.data.get('is_live', is_live_before)
+        if not is_live_before and is_live_now:
+            StreamingChat.objects.all().delete()
+            StreamingLike.objects.all().delete()
+            
+        # Clean up or sync recording when stream ends (toggled from live/True to offline/False)
+        if is_live_before and not is_live_now:
+            should_save = request.data.get('save_recording', settings_obj.save_recording)
+            recordings_dir = os.path.join(settings.MEDIA_ROOT, 'recordings')
+            if os.path.exists(recordings_dir):
+                files = os.listdir(recordings_dir)
+                for file in files:
+                    if file.endswith('_recorded.flv') or file.endswith('.mp4'):
+                        if not StreamingRecording.objects.filter(file_name=file).exists():
+                            if not should_save:
+                                # DISCARD: physically delete the unsynced recording file to save disk space
+                                try:
+                                    os.remove(os.path.join(recordings_dir, file))
+                                except:
+                                    pass
+                            else:
+                                # SAVE: automatically register the unsynced recording in the database
+                                title = "Rekaman Live Streaming"
+                                try:
+                                    parts = file.split('_')
+                                    for p in parts:
+                                        if p.isdigit() and len(p) >= 9:
+                                            epoch = int(p)
+                                            dt = datetime.fromtimestamp(epoch)
+                                            title = f"Streaming {dt.strftime('%d %b %Y - %H:%M')}"
+                                            break
+                                except:
+                                    pass
+                                
+                                try:
+                                    filesize = os.path.getsize(os.path.join(recordings_dir, file))
+                                    StreamingRecording.objects.create(
+                                        title=title,
+                                        file_name=file,
+                                        file_size=filesize
+                                    )
+                                except:
+                                    pass
+            
         serializer = StreamingSettingsSerializer(settings_obj, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()

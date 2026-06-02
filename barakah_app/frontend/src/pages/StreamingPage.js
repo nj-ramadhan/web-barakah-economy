@@ -26,7 +26,7 @@ const StreamingPage = () => {
     const isLoggedIn = !!user;
 
     const videoRef = useRef(null);
-    const chatEndRef = useRef(null);
+    const chatContainerRef = useRef(null);
     const hlsInstanceRef = useRef(null);
 
     // 1. Fetch Streaming Settings (Is Live, Title, Description, HLS URL)
@@ -88,9 +88,11 @@ const StreamingPage = () => {
         };
     }, []);
 
-    // Scroll chat window to bottom on new comments
+    // Scroll chat window to bottom on new comments (only scrolls chat container, preventing page jump)
     useEffect(() => {
-        chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        if (chatContainerRef.current) {
+            chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+        }
     }, [comments]);
 
     // 4. Initialize HLS Video Player
@@ -343,7 +345,10 @@ const StreamingPage = () => {
                     </div>
 
                     {/* Chat Body (Message feed) */}
-                    <div className="flex-1 p-4 overflow-y-auto space-y-3.5 scrollbar-thin scrollbar-thumb-slate-800">
+                    <div 
+                        ref={chatContainerRef}
+                        className="flex-1 p-4 overflow-y-auto space-y-3.5 scrollbar-thin scrollbar-thumb-slate-800"
+                    >
                         {comments.length === 0 ? (
                             <div className="h-full flex flex-col items-center justify-center text-center text-gray-500 px-6">
                                 <span className="material-icons text-slate-700 text-3xl mb-2">forum</span>
@@ -372,7 +377,6 @@ const StreamingPage = () => {
                                 </div>
                             ))
                         )}
-                        <div ref={chatEndRef} />
                     </div>
 
                     {/* Chat Footer / Form */}

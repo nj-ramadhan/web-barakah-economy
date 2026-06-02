@@ -21,6 +21,7 @@ const DashboardLiveStreamingPage = () => {
     const [streamDesc, setStreamDesc] = useState('');
     const [isStreamLive, setIsStreamLive] = useState(false);
     const [latencyMode, setLatencyMode] = useState('low');
+    const [saveRecording, setSaveRecording] = useState(true);
     const [recordings, setRecordings] = useState([]);
     const [loadingRec, setLoadingRec] = useState(false);
     const [savingStream, setSavingStream] = useState(false);
@@ -34,6 +35,7 @@ const DashboardLiveStreamingPage = () => {
             setStreamDesc(res.data.description || '');
             setIsStreamLive(res.data.is_live || false);
             setLatencyMode(res.data.latency_mode || 'low');
+            setSaveRecording(res.data.save_recording !== false);
         } catch (err) {
             console.error('Gagal mengambil settings streaming:', err);
         } finally {
@@ -58,6 +60,13 @@ const DashboardLiveStreamingPage = () => {
         if (!user || user.role !== 'admin') { navigate('/dashboard'); return; }
         fetchStreamSettings();
         fetchRecordings();
+
+        // Poll streaming settings (for active OBS status checks) every 10 seconds
+        const pollInterval = setInterval(() => {
+            fetchStreamSettings();
+        }, 10000);
+
+        return () => clearInterval(pollInterval);
     }, [navigate, fetchStreamSettings, fetchRecordings]);
 
     const handleSaveStreamSettings = async (e) => {
@@ -70,7 +79,8 @@ const DashboardLiveStreamingPage = () => {
                     title: streamTitle,
                     description: streamDesc,
                     is_live: isStreamLive,
-                    latency_mode: latencyMode
+                    latency_mode: latencyMode,
+                    save_recording: saveRecording
                 },
                 getAuth()
             );
@@ -151,7 +161,18 @@ const DashboardLiveStreamingPage = () => {
                         
                         {/* LEFT FORM: Streaming Control */}
                         <div className="lg:col-span-5 bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-4">
-                            <h3 className="text-sm font-black text-gray-900 border-b border-gray-50 pb-3">Kontrol & Parameter Live</h3>
+                            <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+                                <h3 className="text-sm font-black text-gray-900">Kontrol & Parameter Live</h3>
+                                {streamSettings && (
+                                    <div className="flex items-center gap-1">
+                                        <span className={`w-2 h-2 rounded-full ${streamSettings.is_obs_active ? 'bg-green-500 animate-ping' : 'bg-gray-400'}`}></span>
+                                        <span className={`w-2 h-2 rounded-full ${streamSettings.is_obs_active ? 'bg-green-500' : 'bg-gray-400'} -ml-3`}></span>
+                                        <span className={`text-[10px] font-black uppercase tracking-wider ${streamSettings.is_obs_active ? 'text-green-600' : 'text-gray-400'}`}>
+                                            {streamSettings.is_obs_active ? 'ON STREAM' : 'OFF STREAM'}
+                                        </span>
+                                    </div>
+                                )}
+                            </div>
                             
                             <form onSubmit={handleSaveStreamSettings} className="space-y-4">
                                 {/* Toggle Live status */}
@@ -165,6 +186,23 @@ const DashboardLiveStreamingPage = () => {
                                             type="checkbox" 
                                             checked={isStreamLive} 
                                             onChange={(e) => setIsStreamLive(e.target.checked)} 
+                                            className="sr-only peer" 
+                                        />
+                                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                                    </label>
+                                </div>
+
+                                {/* Toggle Save Recording status */}
+                                <div className="flex items-center justify-between p-3.5 bg-gray-50 rounded-2xl border border-gray-100">
+                                    <div>
+                                        <p className="text-xs font-black text-gray-800">Simpan Rekaman Siaran</p>
+                                        <p className="text-[10px] text-gray-400 mt-0.5">Simpan otomatis hasil live di riwayat VPS</p>
+                                    </div>
+                                    <label className="relative inline-flex items-center cursor-pointer">
+                                        <input 
+                                            type="checkbox" 
+                                            checked={saveRecording} 
+                                            onChange={(e) => setSaveRecording(e.target.checked)} 
                                             className="sr-only peer" 
                                         />
                                         <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
@@ -231,6 +269,7 @@ const DashboardLiveStreamingPage = () => {
                                         <button 
                                             onClick={handleRegenerateStreamKey}
                                             className="text-[9px] text-red-500 font-bold hover:underline"
+                                            title="Ganti Stream Key lama. Ini juga akan langsung mematikan/memutuskan koneksi OBS aktif (Force Off-Stream)"
                                         >
                                             Regenerasi Stream Key
                                         </button>
@@ -270,6 +309,9 @@ const DashboardLiveStreamingPage = () => {
                                                     <span className="material-icons text-xs">content_copy</span>
                                                 </button>
                                             </div>
+                                            <p className="text-[8px] text-red-500 font-semibold leading-normal mt-1">
+                                                * Klik "Regenerasi Stream Key" di atas untuk memutuskan siaran OBS aktif secara paksa (Force Off-Stream) dari web.
+                                            </p>
                                         </div>
                                     </div>
                                 </div>
@@ -292,42 +334,7 @@ const DashboardLiveStreamingPage = () => {
                                 </ul>
                             </div>
 
-                            {/* CORS Troubleshooting Guide */}
-                            <div className="mt-4 pt-4 border-t border-gray-100 space-y-2.5 bg-red-50/40 p-3.5 rounded-2xl border border-red-100/60">
-                                <div className="flex items-center gap-1.5 text-red-700">
-                                    <span className="material-icons text-sm">error_outline</span>
-                                    <h4 className="text-[10px] font-black uppercase tracking-wider">Solusi Error CORS HLS (No Access-Control-Allow-Origin)</h4>
-                                </div>
-                                <p className="text-[10px] text-gray-500 leading-normal">
-                                    Error CORS (gagal memuat file <code>.m3u8</code> dari domain API ke web utama) <strong>bukan karena otentikasi (auth)</strong>, melainkan karena Nginx VPS belum mengizinkan CORS. Ikuti langkah mudah berikut untuk memperbaikinya:
-                                </p>
-                                <ol className="text-[10px] text-gray-600 list-decimal list-inside space-y-1.5 mt-1 font-semibold">
-                                    <li>Masuk ke VPS Anda via SSH.</li>
-                                    <li>Buka konfigurasi Nginx: <code>sudo nano /etc/nginx/sites-available/barakah</code></li>
-                                    <li>Cari bagian <code>location /media/</code> dan ganti/tambahkan header CORS berikut:
-                                        <pre className="mt-1 bg-slate-900 text-green-400 p-2.5 rounded-xl text-[9px] overflow-x-auto font-mono select-all block leading-tight">
-{`location /media/ {
-    alias /path/to/barakah_app/backend/media/;
-    add_header 'Access-Control-Allow-Origin' '*' always;
-    add_header 'Access-Control-Allow-Methods' 'GET, HEAD, OPTIONS' always;
-    add_header 'Access-Control-Allow-Headers' 'Origin, X-Requested-With, Content-Type, Accept, Range, Authorization' always;
-    
-    if ($request_method = 'OPTIONS') {
-        add_header 'Access-Control-Allow-Origin' '*';
-        add_header 'Access-Control-Allow-Methods' 'GET, HEAD, OPTIONS';
-        add_header 'Access-Control-Allow-Headers' 'Origin, X-Requested-With, Content-Type, Accept, Range, Authorization';
-        add_header 'Access-Control-Max-Age' 1728000;
-        add_header 'Content-Type' 'text/plain; charset=utf-8';
-        add_header 'Content-Length' 0;
-        return 204;
-    }
-}`}
-                                        </pre>
-                                    </li>
-                                    <li>Jalankan tes konfigurasi: <code>sudo nginx -t</code></li>
-                                    <li>Reload Nginx untuk menerapkan perubahan: <code>sudo systemctl reload nginx</code></li>
-                                </ol>
-                            </div>
+
                         </div>
 
                         {/* RIGHT GRID: Recordings Management */}
