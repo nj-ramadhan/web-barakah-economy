@@ -6,6 +6,7 @@ class StreamingSettings(models.Model):
     title = models.CharField(max_length=255, default="Live Streaming Barakah Economy")
     description = models.TextField(blank=True, default="")
     stream_key = models.CharField(max_length=100, unique=True, default="barakah_stream_key")
+    latency_mode = models.CharField(max_length=20, default="low", choices=[('low', 'Low Latency'), ('standard', 'Standard Latency')])
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:

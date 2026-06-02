@@ -20,6 +20,7 @@ const DashboardLiveStreamingPage = () => {
     const [streamTitle, setStreamTitle] = useState('');
     const [streamDesc, setStreamDesc] = useState('');
     const [isStreamLive, setIsStreamLive] = useState(false);
+    const [latencyMode, setLatencyMode] = useState('low');
     const [recordings, setRecordings] = useState([]);
     const [loadingRec, setLoadingRec] = useState(false);
     const [savingStream, setSavingStream] = useState(false);
@@ -32,6 +33,7 @@ const DashboardLiveStreamingPage = () => {
             setStreamTitle(res.data.title || '');
             setStreamDesc(res.data.description || '');
             setIsStreamLive(res.data.is_live || false);
+            setLatencyMode(res.data.latency_mode || 'low');
         } catch (err) {
             console.error('Gagal mengambil settings streaming:', err);
         } finally {
@@ -67,7 +69,8 @@ const DashboardLiveStreamingPage = () => {
                 {
                     title: streamTitle,
                     description: streamDesc,
-                    is_live: isStreamLive
+                    is_live: isStreamLive,
+                    latency_mode: latencyMode
                 },
                 getAuth()
             );
@@ -193,6 +196,22 @@ const DashboardLiveStreamingPage = () => {
                                     />
                                 </div>
 
+                                {/* Latency Mode Choice */}
+                                <div className="space-y-1">
+                                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Pilihan Latency (Delay Pemutar)</label>
+                                    <select
+                                        value={latencyMode}
+                                        onChange={(e) => setLatencyMode(e.target.value)}
+                                        className="w-full text-xs border border-gray-200 rounded-xl px-3.5 py-2.5 bg-white outline-none focus:ring-2 focus:ring-indigo-400 transition"
+                                    >
+                                        <option value="low">Low Latency (Delay ~2-3 detik, Terbaik untuk Chat Interaktif)</option>
+                                        <option value="standard">Standard Latency (Delay ~10-15 detik, Buffer Tebal & Lebih Stabil)</option>
+                                    </select>
+                                    <p className="text-[9px] text-gray-400 leading-normal mt-0.5">
+                                        * Pilih Standard Latency jika banyak penonton mengeluhkan buffering karena koneksi internet lambat.
+                                    </p>
+                                </div>
+
                                 {/* Save Button */}
                                 <button
                                     type="submit"
@@ -271,6 +290,43 @@ const DashboardLiveStreamingPage = () => {
                                     <li><strong>Tune:</strong> zerolatency (krusial untuk interaksi chat)</li>
                                     <li><strong>Profile:</strong> baseline atau main</li>
                                 </ul>
+                            </div>
+
+                            {/* CORS Troubleshooting Guide */}
+                            <div className="mt-4 pt-4 border-t border-gray-100 space-y-2.5 bg-red-50/40 p-3.5 rounded-2xl border border-red-100/60">
+                                <div className="flex items-center gap-1.5 text-red-700">
+                                    <span className="material-icons text-sm">error_outline</span>
+                                    <h4 className="text-[10px] font-black uppercase tracking-wider">Solusi Error CORS HLS (No Access-Control-Allow-Origin)</h4>
+                                </div>
+                                <p className="text-[10px] text-gray-500 leading-normal">
+                                    Error CORS (gagal memuat file <code>.m3u8</code> dari domain API ke web utama) <strong>bukan karena otentikasi (auth)</strong>, melainkan karena Nginx VPS belum mengizinkan CORS. Ikuti langkah mudah berikut untuk memperbaikinya:
+                                </p>
+                                <ol className="text-[10px] text-gray-600 list-decimal list-inside space-y-1.5 mt-1 font-semibold">
+                                    <li>Masuk ke VPS Anda via SSH.</li>
+                                    <li>Buka konfigurasi Nginx: <code>sudo nano /etc/nginx/sites-available/barakah</code></li>
+                                    <li>Cari bagian <code>location /media/</code> dan ganti/tambahkan header CORS berikut:
+                                        <pre className="mt-1 bg-slate-900 text-green-400 p-2.5 rounded-xl text-[9px] overflow-x-auto font-mono select-all block leading-tight">
+{`location /media/ {
+    alias /path/to/barakah_app/backend/media/;
+    add_header 'Access-Control-Allow-Origin' '*' always;
+    add_header 'Access-Control-Allow-Methods' 'GET, HEAD, OPTIONS' always;
+    add_header 'Access-Control-Allow-Headers' 'Origin, X-Requested-With, Content-Type, Accept, Range, Authorization' always;
+    
+    if ($request_method = 'OPTIONS') {
+        add_header 'Access-Control-Allow-Origin' '*';
+        add_header 'Access-Control-Allow-Methods' 'GET, HEAD, OPTIONS';
+        add_header 'Access-Control-Allow-Headers' 'Origin, X-Requested-With, Content-Type, Accept, Range, Authorization';
+        add_header 'Access-Control-Max-Age' 1728000;
+        add_header 'Content-Type' 'text/plain; charset=utf-8';
+        add_header 'Content-Length' 0;
+        return 204;
+    }
+}`}
+                                        </pre>
+                                    </li>
+                                    <li>Jalankan tes konfigurasi: <code>sudo nginx -t</code></li>
+                                    <li>Reload Nginx untuk menerapkan perubahan: <code>sudo systemctl reload nginx</code></li>
+                                </ol>
                             </div>
                         </div>
 

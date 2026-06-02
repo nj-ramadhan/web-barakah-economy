@@ -108,10 +108,15 @@ const StreamingPage = () => {
 
         // Check if Hls.js is supported in browser
         if (window.Hls) {
+            const isLowLatency = settings.latency_mode === 'low';
             const hls = new window.Hls({
                 enableWorker: true,
-                lowLatencyMode: true,
-                backBufferLength: 90
+                lowLatencyMode: isLowLatency,
+                backBufferLength: 90,
+                maxBufferLength: isLowLatency ? 3 : 30,
+                maxMaxBufferLength: isLowLatency ? 5 : 60,
+                liveSyncDuration: isLowLatency ? 1.5 : 8,
+                liveMaxLatencyDuration: isLowLatency ? 3 : 15,
             });
             hlsInstanceRef.current = hls;
             hls.loadSource(hlsUrl);

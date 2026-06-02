@@ -59,6 +59,7 @@ class StreamingSettingsView(APIView):
             'is_live': settings_obj.is_live,
             'title': settings_obj.title,
             'description': settings_obj.description,
+            'latency_mode': settings_obj.latency_mode,
             'updated_at': settings_obj.updated_at,
         }
         
