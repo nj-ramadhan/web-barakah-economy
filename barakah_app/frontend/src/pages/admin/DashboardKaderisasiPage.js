@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
 import axios from 'axios';
 import Header from '../../components/layout/Header';
@@ -215,8 +215,20 @@ const UserKaderisasiCard = ({ user, labels, roles, onSaved }) => {
 // ───────── Main Page ─────────
 const DashboardKaderisasiPage = () => {
     const navigate = useNavigate();
+    const location = useLocation();
     const [users, setUsers] = useState([]);
     const [labels, setLabels] = useState([]);
+    
+    useEffect(() => {
+        if (location.hash === '#live-stream') {
+            setTimeout(() => {
+                const el = document.getElementById('live-stream-panel');
+                if (el) {
+                    el.scrollIntoView({ behavior: 'smooth' });
+                }
+            }, 600);
+        }
+    }, [location.hash]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
     const [selectedLabelIds, setSelectedLabelIds] = useState([]);
@@ -580,7 +592,7 @@ const DashboardKaderisasiPage = () => {
                     </div>
                 )}
                 {/* ───────── LIVE STREAMING CONTROL PANEL (KHUSUS ADMIN) ───────── */}
-                <div className="mt-8 border-t border-gray-200 pt-8 space-y-6">
+                <div id="live-stream-panel" className="mt-8 border-t border-gray-200 pt-8 space-y-6">
                     <div className="flex items-center gap-3">
                         <div className="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center text-indigo-600 shadow-sm border border-indigo-200">
                             <span className="material-icons">sensors</span>

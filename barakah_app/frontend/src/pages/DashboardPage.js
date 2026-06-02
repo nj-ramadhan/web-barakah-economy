@@ -880,6 +880,15 @@ const DashboardPage = () => {
                                     desc: 'Uji coba fitur video conference Jitsi (Admin)'
                                 },
                                 {
+                                    id: 'live_streaming',
+                                    access: isAdmin,
+                                    to: '/dashboard/admin/kaderisasi#live-stream',
+                                    icon: 'sensors',
+                                    color: 'indigo',
+                                    title: 'Manajemen Live Streaming',
+                                    desc: 'Kelola siaran langsung OBS, status live, dan rekaman video VPS (Admin)'
+                                },
+                                {
                                     id: 'hero_banners_alt',
                                     access: hasAccess('announcements'),
                                     to: '/dashboard/admin/hero-banners',
