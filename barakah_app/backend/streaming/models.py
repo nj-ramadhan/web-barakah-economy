@@ -10,6 +10,9 @@ class StreamingSettings(models.Model):
     save_recording = models.BooleanField(default=True)
     thumbnail = models.ImageField(upload_to='live_thumbnails/', blank=True, null=True)
     updated_at = models.DateTimeField(auto_now=True)
+    # HP/Browser live streaming (WebRTC WHIP via MediaMTX)
+    is_hp_streaming_active = models.BooleanField(default=False)
+    whip_hls_url = models.CharField(max_length=500, blank=True, default="")
 
     class Meta:
         verbose_name = "Streaming Settings"

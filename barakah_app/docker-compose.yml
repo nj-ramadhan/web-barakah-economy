@@ -71,6 +71,23 @@ services:
     networks:
       - bae_network
 
+  # --- MediaMTX: WebRTC/WHIP ingestor for live from HP/browser ---
+  # OBS still uses nginx-rtmp (port 1935), this handles HP browser streams
+  mediamtx:
+    image: bluenviron/mediamtx:latest
+    container_name: bae_mediamtx
+    restart: always
+    environment:
+      - MTX_PROTOCOLS=tcp
+    ports:
+      - "8889:8889"   # WebRTC / WHIP endpoint (browser live streaming)
+      - "8888:8888"   # HLS output (viewers can watch HP stream)
+      - "9997:9997"   # MediaMTX API (for Django backend status check)
+    volumes:
+      - ./mediamtx.yml:/mediamtx.yml
+    networks:
+      - bae_network
+
 networks:
   bae_network:
     driver: bridge

@@ -66,13 +66,31 @@ class RegisterView(generics.CreateAPIView):
 
 class LogoutView(APIView):
     def post(self, request):
+        # --- Guard: prevent logout while admin is actively HP-streaming ---
+        force_logout = request.data.get('force', False)
+        if not force_logout:
+            try:
+                from streaming.models import StreamingSettings
+                stream_settings = StreamingSettings.objects.filter(id=1).first()
+                if stream_settings and stream_settings.is_hp_streaming_active:
+                    # Check if the user trying to logout is actually the streamer (admin)
+                    if request.user and request.user.is_authenticated and request.user.role == 'admin':
+                        return Response({
+                            "detail": "Anda sedang live streaming via HP. Logout dibatalkan untuk menjaga stabilitas siaran.",
+                            "is_streaming": True,
+                            "hint": "Hentikan siaran terlebih dahulu, atau gunakan force=true untuk keluar paksa."
+                        }, status=status.HTTP_409_CONFLICT)
+            except Exception:
+                pass  # If streaming module fails, allow logout normally
+        
         try:
             refresh_token = request.data['refresh_token']
             token = RefreshToken(refresh_token)
             token.blacklist()
             return Response(status=status.HTTP_205_RESET_CONTENT)
         except Exception as e:
-            return Response(status=status.HTTP_400_BAD_REQUEST)    
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+
 
 class GoogleLoginView(APIView):
     def post(self, request):

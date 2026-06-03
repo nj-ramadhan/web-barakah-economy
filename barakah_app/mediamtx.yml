@@ -1,0 +1,49 @@
+###############################################################
+# MediaMTX Configuration for Barakah Economy
+# Supports: WebRTC/WHIP (live via HP/browser), HLS output
+# OBS/RTMP handled separately by nginx-rtmp container
+###############################################################
+
+# Logging
+logLevel: info
+logDestinations: [stdout]
+
+# --- API (for internal status checks from Django backend) ---
+api: yes
+apiAddress: :9997
+
+# --- RTSP (disabled - we use nginx-rtmp for OBS) ---
+rtspDisable: yes
+
+# --- RTMP (disabled on MediaMTX side, nginx-rtmp handles it) ---
+rtmpDisable: yes
+
+# --- HLS Output (for serving live HP streams to viewers) ---
+hls: yes
+hlsAddress: :8888
+hlsAllowOrigin: "*"
+hlsAlwaysRemux: no
+hlsVariant: mpegts
+hlsSegmentCount: 3
+hlsSegmentDuration: 1s
+hlsPartDuration: 200ms
+hlsSegmentMaxSize: 50M
+hlsEncryption: no
+
+# --- WebRTC / WHIP (for live from HP browser) ---
+webrtc: yes
+webrtcAddress: :8889
+webrtcICEServers2: []
+# Allow all origins for WHIP requests from browser
+webrtcAdditionalHosts: []
+
+# --- Paths (dynamic: any stream key is automatically accepted) ---
+paths:
+  "~^[a-zA-Z0-9_-]+$":
+    # Allow WebRTC WHIP publish from any source (auth via stream key in URL)
+    source: publisher
+    # Allow anyone to read (HLS) — viewer auth handled by frontend
+    readUser: ""
+    readPass: ""
+    publishUser: ""
+    publishPass: ""

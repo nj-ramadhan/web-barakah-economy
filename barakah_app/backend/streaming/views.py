@@ -1,5 +1,6 @@
 import os
 import uuid
+import requests as http_requests
 from datetime import datetime, timedelta
 from django.conf import settings
 from django.shortcuts import get_object_or_404
@@ -9,6 +10,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
+from rest_framework_simplejwt.tokens import RefreshToken
 
 from .models import StreamingSettings, StreamingRecording, StreamingChat, StreamingLike
 from .serializers import (
@@ -76,6 +78,8 @@ class StreamingSettingsView(APIView):
             'updated_at': settings_obj.updated_at,
             'is_obs_active': is_obs_active,
             'viewer_count': viewer_count,
+            'is_hp_streaming_active': settings_obj.is_hp_streaming_active,
+            'whip_hls_url': settings_obj.whip_hls_url,
         }
         
         if is_admin or settings_obj.is_live:
@@ -84,6 +88,7 @@ class StreamingSettingsView(APIView):
         
         if is_admin:
             data['rtmp_url'] = "rtmp://barakah.cloud:1935/live"
+            data['whip_url'] = f"https://barakah.cloud:8889/{settings_obj.stream_key}/whip"
             
         return Response(data)
 
@@ -155,12 +160,19 @@ class StreamingSettingsView(APIView):
             return Response({"detail": "Hanya admin yang dapat meregenerasi stream key."}, status=status.HTTP_403_FORBIDDEN)
             
         settings_obj = self.get_object()
+        
+        # If HP stream was active, force-stop it when key is regenerated
+        if settings_obj.is_hp_streaming_active:
+            settings_obj.is_hp_streaming_active = False
+            settings_obj.whip_hls_url = ""
+        
         settings_obj.stream_key = f"bae_{uuid.uuid4().hex[:12]}"
         settings_obj.save()
         return Response({
             "message": "Stream Key berhasil diregenerasi.",
             "stream_key": settings_obj.stream_key,
-            "hls_url": f"/media/live/{settings_obj.stream_key}.m3u8"
+            "hls_url": f"/media/live/{settings_obj.stream_key}.m3u8",
+            "whip_url": f"https://barakah.cloud:8889/{settings_obj.stream_key}/whip"
         })
 
 
@@ -362,3 +374,127 @@ class StreamingViewersView(APIView):
         
         total_viewers = StreamingViewer.objects.count()
         return Response({"total_viewers": total_viewers})
+
+
+# --- 7. HP BROWSER WHIP STATUS & CONTROL ---
+class StreamingWhipStatusView(APIView):
+    """
+    Manages the HP/browser WebRTC live stream status.
+    Uses MediaMTX internal API to verify if stream is truly active.
+    """
+    permission_classes = [IsAdminUser]
+
+    MEDIAMTX_API = "http://mediamtx:9997/v3"
+
+    def _check_mediamtx_stream(self, stream_key):
+        """Check if a stream is actively publishing to MediaMTX."""
+        try:
+            resp = http_requests.get(
+                f"{self.MEDIAMTX_API}/paths/get/{stream_key}",
+                timeout=3
+            )
+            if resp.status_code == 200:
+                data = resp.json()
+                # MediaMTX returns source info when something is publishing
+                return data.get('source') is not None
+            return False
+        except Exception:
+            # If MediaMTX is unreachable (e.g. local dev), trust the DB flag
+            return None
+
+    def get(self, request):
+        """
+        GET /api/streaming/whip-status/
+        Returns current HP stream status + MediaMTX connectivity check.
+        """
+        settings_obj, _ = StreamingSettings.objects.get_or_create(id=1)
+        
+        # Cross-check with MediaMTX if possible
+        mtx_active = self._check_mediamtx_stream(settings_obj.stream_key)
+        
+        # If MediaMTX says stream stopped but DB says active, auto-correct
+        if mtx_active is False and settings_obj.is_hp_streaming_active:
+            settings_obj.is_hp_streaming_active = False
+            settings_obj.whip_hls_url = ""
+            settings_obj.save(update_fields=['is_hp_streaming_active', 'whip_hls_url'])
+        
+        return Response({
+            "is_hp_streaming_active": settings_obj.is_hp_streaming_active,
+            "whip_hls_url": settings_obj.whip_hls_url,
+            "stream_key": settings_obj.stream_key,
+            "whip_url": f"https://barakah.cloud:8889/{settings_obj.stream_key}/whip",
+            "mediamtx_hls_url": f"https://barakah.cloud:8888/{settings_obj.stream_key}",
+            "mediamtx_reachable": mtx_active is not None,
+        })
+
+    def post(self, request):
+        """
+        POST /api/streaming/whip-status/
+        Called by frontend to register that HP stream started or stopped.
+        Body: {"action": "start"} or {"action": "stop"}
+        """
+        action_type = request.data.get('action')
+        settings_obj, _ = StreamingSettings.objects.get_or_create(id=1)
+        
+        if action_type == 'start':
+            settings_obj.is_hp_streaming_active = True
+            settings_obj.whip_hls_url = f"https://barakah.cloud:8888/{settings_obj.stream_key}"
+            # Auto-set is_live to True when HP stream starts
+            if not settings_obj.is_live:
+                settings_obj.is_live = True
+                StreamingChat.objects.all().delete()
+                StreamingLike.objects.all().delete()
+            settings_obj.save()
+            return Response({
+                "status": "started",
+                "message": "Live via HP dimulai. Penonton dapat mulai bergabung.",
+                "whip_url": f"https://barakah.cloud:8889/{settings_obj.stream_key}/whip",
+                "hls_url": settings_obj.whip_hls_url,
+            })
+        
+        elif action_type == 'stop':
+            settings_obj.is_hp_streaming_active = False
+            settings_obj.whip_hls_url = ""
+            settings_obj.save(update_fields=['is_hp_streaming_active', 'whip_hls_url'])
+            return Response({
+                "status": "stopped",
+                "message": "Live via HP dihentikan.",
+            })
+        
+        return Response(
+            {"detail": "action harus 'start' atau 'stop'."},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+
+# --- 8. AUTH SESSION EXTENDER (anti-logout saat live) ---
+class StreamingExtendSessionView(APIView):
+    """
+    POST /api/streaming/extend-session/
+    Called every ~4 minutes while admin is live streaming.
+    Refreshes the JWT access token so the admin session never expires during live.
+    Body: {"refresh": "<refresh_token>"}
+    Returns: {"access": "<new_access_token>"}
+    """
+    permission_classes = [IsAdminUser]
+
+    def post(self, request):
+        refresh_token_str = request.data.get('refresh')
+        if not refresh_token_str:
+            return Response(
+                {"detail": "refresh token wajib disertakan."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            refresh = RefreshToken(refresh_token_str)
+            new_access = str(refresh.access_token)
+            return Response({
+                "access": new_access,
+                "message": "Sesi diperpanjang. Siaran aman berlanjut.",
+            })
+        except Exception as e:
+            return Response(
+                {"detail": f"Token tidak valid atau sudah kedaluwarsa: {str(e)}"},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
