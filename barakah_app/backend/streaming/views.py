@@ -35,6 +35,21 @@ class IsAdminUser(permissions.BasePermission):
     def has_permission(self, request, view):
         return request.user and request.user.is_authenticated and request.user.role == 'admin'
 
+def get_whip_urls(request, settings_obj):
+    host = request.get_host()
+    is_local = 'localhost' in host or '127.0.0.1' in host or '192.168.' in host
+    
+    if is_local:
+        whip_url = f"http://localhost:8889/{settings_obj.stream_key}/whip"
+        hls_url = f"http://localhost:8888/{settings_obj.stream_key}/index.m3u8"
+    else:
+        # On VPS, we use Nginx proxy over HTTPS/SSL (Nginx on api.barakah.cloud terminates SSL)
+        whip_url = f"https://{host}/whip/{settings_obj.stream_key}/whip"
+        hls_url = f"/hls/{settings_obj.stream_key}/index.m3u8"
+        
+    return whip_url, hls_url
+
+
 # --- 1. SETTINGS VIEW ---
 class StreamingSettingsView(APIView):
     permission_classes = [permissions.AllowAny]
@@ -67,6 +82,7 @@ class StreamingSettingsView(APIView):
         # So we include it if they are admin or if stream is live.
         is_admin = user and user.is_authenticated and user.role == 'admin'
         
+        whip_url, _ = get_whip_urls(request, settings_obj)
         data = {
             'id': settings_obj.id,
             'is_live': settings_obj.is_live,
@@ -80,15 +96,19 @@ class StreamingSettingsView(APIView):
             'viewer_count': viewer_count,
             'is_hp_streaming_active': settings_obj.is_hp_streaming_active,
             'whip_hls_url': settings_obj.whip_hls_url,
+            'orientation': settings_obj.orientation,
         }
         
         if is_admin or settings_obj.is_live:
             data['stream_key'] = settings_obj.stream_key
-            data['hls_url'] = f"/media/live/{settings_obj.stream_key}.m3u8"
+            if settings_obj.is_hp_streaming_active:
+                data['hls_url'] = settings_obj.whip_hls_url
+            else:
+                data['hls_url'] = f"/media/live/{settings_obj.stream_key}.m3u8"
         
         if is_admin:
             data['rtmp_url'] = "rtmp://barakah.cloud:1935/live"
-            data['whip_url'] = f"https://barakah.cloud:8889/{settings_obj.stream_key}/whip"
+            data['whip_url'] = whip_url
             
         return Response(data)
 
@@ -168,11 +188,12 @@ class StreamingSettingsView(APIView):
         
         settings_obj.stream_key = f"bae_{uuid.uuid4().hex[:12]}"
         settings_obj.save()
+        whip_url, _ = get_whip_urls(request, settings_obj)
         return Response({
             "message": "Stream Key berhasil diregenerasi.",
             "stream_key": settings_obj.stream_key,
             "hls_url": f"/media/live/{settings_obj.stream_key}.m3u8",
-            "whip_url": f"https://barakah.cloud:8889/{settings_obj.stream_key}/whip"
+            "whip_url": whip_url
         })
 
 
@@ -417,28 +438,38 @@ class StreamingWhipStatusView(APIView):
             settings_obj.is_hp_streaming_active = False
             settings_obj.whip_hls_url = ""
             settings_obj.save(update_fields=['is_hp_streaming_active', 'whip_hls_url'])
+            
+        whip_url, mediamtx_hls_url = get_whip_urls(request, settings_obj)
         
         return Response({
             "is_hp_streaming_active": settings_obj.is_hp_streaming_active,
             "whip_hls_url": settings_obj.whip_hls_url,
             "stream_key": settings_obj.stream_key,
-            "whip_url": f"https://barakah.cloud:8889/{settings_obj.stream_key}/whip",
-            "mediamtx_hls_url": f"https://barakah.cloud:8888/{settings_obj.stream_key}",
+            "whip_url": whip_url,
+            "mediamtx_hls_url": mediamtx_hls_url,
             "mediamtx_reachable": mtx_active is not None,
+            "orientation": settings_obj.orientation,
         })
 
     def post(self, request):
         """
         POST /api/streaming/whip-status/
         Called by frontend to register that HP stream started or stopped.
-        Body: {"action": "start"} or {"action": "stop"}
+        Body: {"action": "start", "orientation": "landscape"/"portrait"} or {"action": "stop"}
         """
         action_type = request.data.get('action')
         settings_obj, _ = StreamingSettings.objects.get_or_create(id=1)
         
         if action_type == 'start':
+            orientation = request.data.get('orientation', 'landscape')
+            if orientation not in ['landscape', 'portrait']:
+                orientation = 'landscape'
+                
+            whip_url, whip_hls_url = get_whip_urls(request, settings_obj)
+            
             settings_obj.is_hp_streaming_active = True
-            settings_obj.whip_hls_url = f"https://barakah.cloud:8888/{settings_obj.stream_key}"
+            settings_obj.whip_hls_url = whip_hls_url
+            settings_obj.orientation = orientation
             # Auto-set is_live to True when HP stream starts
             if not settings_obj.is_live:
                 settings_obj.is_live = True
@@ -448,8 +479,9 @@ class StreamingWhipStatusView(APIView):
             return Response({
                 "status": "started",
                 "message": "Live via HP dimulai. Penonton dapat mulai bergabung.",
-                "whip_url": f"https://barakah.cloud:8889/{settings_obj.stream_key}/whip",
+                "whip_url": whip_url,
                 "hls_url": settings_obj.whip_hls_url,
+                "orientation": settings_obj.orientation,
             })
         
         elif action_type == 'stop':

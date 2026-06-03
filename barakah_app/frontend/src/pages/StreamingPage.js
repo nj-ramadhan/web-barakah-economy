@@ -122,7 +122,7 @@ const StreamingPage = () => {
     useEffect(() => {
         if (!settings || !settings.is_live || !settings.stream_key || !videoRef.current) return;
 
-        const hlsUrl = `${API}${settings.hls_url}`;
+        const hlsUrl = settings.hls_url.startsWith('http') ? settings.hls_url : `${API}${settings.hls_url}`;
         const video = videoRef.current;
 
         // Cleanup existing instance
@@ -264,7 +264,11 @@ const StreamingPage = () => {
                 {/* ── LEFT PANEL: VIDEO PLAYER ── */}
                 <div className="flex-1 flex flex-col space-y-4">
                     {/* Video wrapper */}
-                    <div className="relative aspect-video w-full bg-slate-900 rounded-3xl overflow-hidden shadow-2xl border border-slate-800/80 group">
+                    <div className={`relative bg-slate-900 rounded-3xl overflow-hidden shadow-2xl border border-slate-800/80 group transition-all duration-300 ${
+                        settings?.is_hp_streaming_active && settings?.orientation === 'portrait'
+                            ? 'aspect-[9/16] max-w-[400px] w-full mx-auto'
+                            : 'aspect-video w-full'
+                    }`}>
                         {settings?.is_live ? (
                             <>
                                 <video

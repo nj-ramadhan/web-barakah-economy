@@ -83,6 +83,7 @@ services:
       - "8889:8889"   # WebRTC / WHIP endpoint (browser live streaming)
       - "8888:8888"   # HLS output (viewers can watch HP stream)
       - "9997:9997"   # MediaMTX API (for Django backend status check)
+      - "8189:8189/udp" # WebRTC UDP media port (for audio/video data)
     volumes:
       - ./mediamtx.yml:/mediamtx.yml
     networks:

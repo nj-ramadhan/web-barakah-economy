@@ -35,7 +35,7 @@ webrtc: yes
 webrtcAddress: :8889
 webrtcICEServers2: []
 # Allow all origins for WHIP requests from browser
-webrtcAdditionalHosts: []
+webrtcAdditionalHosts: [barakah.cloud]
 
 # --- Paths (dynamic: any stream key is automatically accepted) ---
 paths:

@@ -64,15 +64,18 @@ const useWhipPublisher = () => {
     const [localStream, setLocalStream] = useState(null);
     const [facingMode, setFacingMode] = useState('environment'); // 'environment'=belakang, 'user'=depan
 
-    const startStream = useCallback(async (whipUrl) => {
+    const startStream = useCallback(async (whipUrl, orientation = 'landscape') => {
         setWhipError('');
         try {
+            const videoWidth = orientation === 'portrait' ? { ideal: 720 } : { ideal: 1280 };
+            const videoHeight = orientation === 'portrait' ? { ideal: 1280 } : { ideal: 720 };
+            
             // 1. Get camera + mic stream from HP
             const stream = await navigator.mediaDevices.getUserMedia({
                 video: {
                     facingMode: facingMode,
-                    width: { ideal: 1280 },
-                    height: { ideal: 720 },
+                    width: videoWidth,
+                    height: videoHeight,
                     frameRate: { ideal: 30 }
                 },
                 audio: true
@@ -190,6 +193,7 @@ const DashboardLiveStreamingPage = () => {
     // HP Live tab state
     const [activeTab, setActiveTab] = useState('obs'); // 'obs' | 'hp'
     const [hpLiveLoading, setHpLiveLoading] = useState(false);
+    const [hpOrientation, setHpOrientation] = useState('landscape'); // 'landscape' | 'portrait'
     const videoPreviewRef = useRef(null);
 
     // WebRTC hook
@@ -238,6 +242,7 @@ const DashboardLiveStreamingPage = () => {
                 setLatencyMode(res.data.latency_mode || 'low');
                 setSaveRecording(res.data.save_recording !== false);
                 setThumbnailPreview(res.data.thumbnail ? `${API}${res.data.thumbnail}` : '');
+                setHpOrientation(res.data.orientation || 'landscape');
             }
         } catch (err) {
             console.error('Gagal mengambil settings streaming:', err);
@@ -358,10 +363,10 @@ const DashboardLiveStreamingPage = () => {
         setHpLiveLoading(true);
         setWhipError('');
         try {
-            const success = await startStream(streamSettings.whip_url);
+            const success = await startStream(streamSettings.whip_url, hpOrientation);
             if (success) {
                 // Notify backend that HP stream has started
-                await axios.post(`${API}/api/streaming/whip-status/`, { action: 'start' }, getAuth());
+                await axios.post(`${API}/api/streaming/whip-status/`, { action: 'start', orientation: hpOrientation }, getAuth());
                 fetchStreamSettings(false);
             }
         } finally {
@@ -518,8 +523,46 @@ const DashboardLiveStreamingPage = () => {
                                     </div>
 
                                     <div className="p-5 space-y-4">
+                                        {/* Orientation Selector */}
+                                        <div className="flex flex-col gap-1.5 mb-3">
+                                            <label className="text-[10px] font-black uppercase tracking-wider text-gray-500">Orientasi Video</label>
+                                            <div className="flex gap-2">
+                                                <button
+                                                    type="button"
+                                                    disabled={isPublishing}
+                                                    onClick={() => setHpOrientation('landscape')}
+                                                    className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl text-xs font-bold border transition ${
+                                                        hpOrientation === 'landscape'
+                                                            ? 'bg-slate-900 border-slate-900 text-white shadow-sm'
+                                                            : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-50'
+                                                    }`}
+                                                >
+                                                    <span className="material-icons text-sm">screen_rotation</span>
+                                                    Landscape (Tidur)
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    disabled={isPublishing}
+                                                    onClick={() => setHpOrientation('portrait')}
+                                                    className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl text-xs font-bold border transition ${
+                                                        hpOrientation === 'portrait'
+                                                            ? 'bg-slate-900 border-slate-900 text-white shadow-sm'
+                                                            : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-50'
+                                                    }`}
+                                                >
+                                                    <span className="material-icons text-sm">stay_current_portrait</span>
+                                                    Portrait (Tegak)
+                                                </button>
+                                            </div>
+                                            {isPublishing && (
+                                                <p className="text-[9px] text-amber-600 italic">Orientasi tidak dapat diubah saat siaran sedang aktif.</p>
+                                            )}
+                                        </div>
+
                                         {/* Camera Preview */}
-                                        <div className="relative w-full aspect-video bg-gray-900 rounded-2xl overflow-hidden border border-gray-200">
+                                        <div className={`relative bg-gray-900 rounded-2xl overflow-hidden border border-gray-200 transition-all duration-300 ${
+                                            hpOrientation === 'portrait' ? 'aspect-[9/16] max-w-[280px] mx-auto' : 'aspect-video w-full'
+                                        }`}>
                                             {localStream ? (
                                                 <video
                                                     ref={videoPreviewRef}
@@ -529,7 +572,7 @@ const DashboardLiveStreamingPage = () => {
                                                     className="w-full h-full object-cover"
                                                 />
                                             ) : (
-                                                <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-slate-800 to-slate-900">
+                                                <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-slate-800 to-slate-900 text-center p-4">
                                                     <span className="material-icons text-white/30 text-5xl mb-3">videocam_off</span>
                                                     <p className="text-white/40 text-xs">Preview kamera akan muncul di sini</p>
                                                     <p className="text-white/25 text-[9px] mt-1">Klik "Mulai Live" untuk mengaktifkan kamera</p>

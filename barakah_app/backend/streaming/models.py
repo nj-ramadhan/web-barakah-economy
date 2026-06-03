@@ -13,6 +13,7 @@ class StreamingSettings(models.Model):
     # HP/Browser live streaming (WebRTC WHIP via MediaMTX)
     is_hp_streaming_active = models.BooleanField(default=False)
     whip_hls_url = models.CharField(max_length=500, blank=True, default="")
+    orientation = models.CharField(max_length=15, default="landscape", choices=[("landscape", "Landscape"), ("portrait", "Portrait")])
 
     class Meta:
         verbose_name = "Streaming Settings"
