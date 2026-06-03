@@ -21,6 +21,7 @@ const StreamingPage = () => {
     const [likes, setLikes] = useState({ total_likes: 0, has_liked: false });
     const [isSending, setIsSending] = useState(false);
     const [isPlayerError, setIsPlayerError] = useState(false);
+    const [hlsRetrying, setHlsRetrying] = useState(false); // Stream sedang mempersiapkan HLS
     const [viewerCount, setViewerCount] = useState(1);
     
     const user = JSON.parse(localStorage.getItem('user'));
@@ -124,6 +125,8 @@ const StreamingPage = () => {
 
         const hlsUrl = settings.hls_url.startsWith('http') ? settings.hls_url : `${API}${settings.hls_url}`;
         const video = videoRef.current;
+        setIsPlayerError(false);
+        setHlsRetrying(false);
 
         // Cleanup existing instance
         if (hlsInstanceRef.current) {
@@ -133,6 +136,7 @@ const StreamingPage = () => {
 
         // Check if Hls.js is supported in browser
         if (window.Hls) {
+            const isHpStream = settings.is_hp_streaming_active;
             const isLowLatency = settings.latency_mode === 'low';
             const hls = new window.Hls({
                 enableWorker: true,
@@ -142,12 +146,26 @@ const StreamingPage = () => {
                 maxMaxBufferLength: isLowLatency ? 5 : 60,
                 liveSyncDuration: isLowLatency ? 1.5 : 8,
                 liveMaxLatencyDuration: isLowLatency ? 3 : 15,
+                // More aggressive retry for HP streams (HLS takes time to generate first segments)
+                manifestLoadingMaxRetry: isHpStream ? 10 : 3,
+                manifestLoadingRetryDelay: isHpStream ? 2000 : 1000,
+                levelLoadingMaxRetry: isHpStream ? 10 : 3,
+                levelLoadingRetryDelay: isHpStream ? 2000 : 1000,
             });
             hlsInstanceRef.current = hls;
             hls.loadSource(hlsUrl);
             hls.attachMedia(video);
+
+            // Show retrying state while HLS manifest isn't available yet
+            let retryTimer = null;
+            if (isHpStream) {
+                setHlsRetrying(true);
+                retryTimer = setTimeout(() => setHlsRetrying(false), 20000); // clear after 20s
+            }
             
             hls.on(window.Hls.Events.MANIFEST_PARSED, () => {
+                clearTimeout(retryTimer);
+                setHlsRetrying(false);
                 video.play().catch(err => console.log("Auto-play blocked by browser. User gesture required."));
             });
 
@@ -163,6 +181,8 @@ const StreamingPage = () => {
                             hls.recoverMediaError();
                             break;
                         default:
+                            clearTimeout(retryTimer);
+                            setHlsRetrying(false);
                             setIsPlayerError(true);
                             hls.destroy();
                             break;
@@ -179,7 +199,7 @@ const StreamingPage = () => {
         } else {
             setIsPlayerError(true);
         }
-    }, [settings?.is_live, settings?.stream_key, settings?.hls_url, settings?.latency_mode]);
+    }, [settings?.is_live, settings?.stream_key, settings?.hls_url, settings?.latency_mode, settings?.is_hp_streaming_active]);
 
     // Load Hls.js script from CDN dynamically if not available on window
     useEffect(() => {
@@ -277,6 +297,14 @@ const StreamingPage = () => {
                                     className="w-full h-full object-cover"
                                     playsInline
                                 />
+                                {/* HLS Preparing overlay — shown while MediaMTX generates first segments */}
+                                {hlsRetrying && (
+                                    <div className="absolute inset-0 bg-slate-900/85 backdrop-blur-sm flex flex-col items-center justify-center text-center p-6">
+                                        <div className="w-16 h-16 border-4 border-red-500/30 border-t-red-500 rounded-full animate-spin mb-4"></div>
+                                        <p className="text-white font-black text-base">Stream Sedang Mempersiapkan...</p>
+                                        <p className="text-slate-400 text-xs mt-2 max-w-xs">Segmen video sedang dibuat. Silakan tunggu 5–15 detik hingga pemutaran dimulai otomatis.</p>
+                                    </div>
+                                )}
                                 {isPlayerError && (
                                     <div className="absolute inset-0 bg-slate-900/90 flex flex-col items-center justify-center text-center p-6">
                                         <span className="material-icons text-red-500 text-5xl animate-bounce mb-3">error_outline</span>

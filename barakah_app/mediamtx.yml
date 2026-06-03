@@ -22,7 +22,7 @@ rtmpDisable: yes
 hls: yes
 hlsAddress: :8888
 hlsAllowOrigin: "*"
-hlsAlwaysRemux: no
+hlsAlwaysRemux: yes
 hlsVariant: mpegts
 hlsSegmentCount: 3
 hlsSegmentDuration: 1s

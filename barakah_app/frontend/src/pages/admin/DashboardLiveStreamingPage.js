@@ -56,6 +56,19 @@ const useKeepAlive = (isLiveActive) => {
     return { sessionWarning };
 };
 
+// Quality presets for HP Live streaming
+const QUALITY_PRESETS = {
+    low:    { label: 'Hemat Data (480p)',  fps: 24, maxBitrate: 500_000,  dims: { landscape: [854, 480],   portrait: [480, 854]  } },
+    medium: { label: 'Standar (720p)',     fps: 30, maxBitrate: 1_500_000, dims: { landscape: [1280, 720],  portrait: [720, 1280] } },
+    high:   { label: 'Tinggi (1080p)',     fps: 30, maxBitrate: 3_000_000, dims: { landscape: [1920, 1080], portrait: [1080, 1920] } },
+};
+
+const getVideoConstraints = (orientation, quality) => {
+    const preset = QUALITY_PRESETS[quality] || QUALITY_PRESETS.medium;
+    const [w, h] = preset.dims[orientation] || preset.dims.landscape;
+    return { width: { ideal: w }, height: { ideal: h }, frameRate: { ideal: preset.fps } };
+};
+
 // ─── Hook: WebRTC WHIP Publisher ──────────────────────────────────────────────
 const useWhipPublisher = () => {
     const pcRef = useRef(null);
@@ -64,21 +77,17 @@ const useWhipPublisher = () => {
     const [localStream, setLocalStream] = useState(null);
     const [facingMode, setFacingMode] = useState('environment'); // 'environment'=belakang, 'user'=depan
 
-    const startStream = useCallback(async (whipUrl, orientation = 'landscape') => {
+    const startStream = useCallback(async (whipUrl, orientation = 'landscape', quality = 'medium') => {
         setWhipError('');
         try {
-            const videoWidth = orientation === 'portrait' ? { ideal: 720 } : { ideal: 1280 };
-            const videoHeight = orientation === 'portrait' ? { ideal: 1280 } : { ideal: 720 };
-            
-            // 1. Get camera + mic stream from HP
+            // 1. Get camera + mic with quality constraints
+            const videoConstraints = {
+                facingMode: facingMode,
+                ...getVideoConstraints(orientation, quality),
+            };
             const stream = await navigator.mediaDevices.getUserMedia({
-                video: {
-                    facingMode: facingMode,
-                    width: videoWidth,
-                    height: videoHeight,
-                    frameRate: { ideal: 30 }
-                },
-                audio: true
+                video: videoConstraints,
+                audio: { echoCancellation: true, noiseSuppression: true, sampleRate: 44100 }
             });
             setLocalStream(stream);
 
@@ -95,7 +104,7 @@ const useWhipPublisher = () => {
             const offer = await pc.createOffer();
             await pc.setLocalDescription(offer);
 
-            // 5. Wait for ICE gathering to complete
+            // 5. Wait for ICE gathering to complete (max 6 seconds)
             await new Promise((resolve) => {
                 if (pc.iceGatheringState === 'complete') {
                     resolve();
@@ -103,8 +112,7 @@ const useWhipPublisher = () => {
                     pc.addEventListener('icegatheringstatechange', () => {
                         if (pc.iceGatheringState === 'complete') resolve();
                     });
-                    // Timeout fallback after 5 seconds
-                    setTimeout(resolve, 5000);
+                    setTimeout(resolve, 6000);
                 }
             });
 
@@ -123,6 +131,22 @@ const useWhipPublisher = () => {
             // 7. Apply SDP answer from server
             const answerSdp = await response.text();
             await pc.setRemoteDescription({ type: 'answer', sdp: answerSdp });
+
+            // 8. Apply bitrate limit via RTCRtpSender parameters
+            const maxBitrate = (QUALITY_PRESETS[quality] || QUALITY_PRESETS.medium).maxBitrate;
+            const senders = pc.getSenders();
+            for (const sender of senders) {
+                if (sender.track?.kind === 'video') {
+                    try {
+                        const params = sender.getParameters();
+                        if (!params.encodings || params.encodings.length === 0) {
+                            params.encodings = [{}];
+                        }
+                        params.encodings[0].maxBitrate = maxBitrate;
+                        await sender.setParameters(params);
+                    } catch (e) { console.warn('Bitrate limit not supported:', e); }
+                }
+            }
 
             setIsPublishing(true);
             return true;
@@ -194,6 +218,7 @@ const DashboardLiveStreamingPage = () => {
     const [activeTab, setActiveTab] = useState('obs'); // 'obs' | 'hp'
     const [hpLiveLoading, setHpLiveLoading] = useState(false);
     const [hpOrientation, setHpOrientation] = useState('landscape'); // 'landscape' | 'portrait'
+    const [hpQuality, setHpQuality] = useState('medium'); // 'low' | 'medium' | 'high'
     const videoPreviewRef = useRef(null);
 
     // WebRTC hook
@@ -363,9 +388,8 @@ const DashboardLiveStreamingPage = () => {
         setHpLiveLoading(true);
         setWhipError('');
         try {
-            const success = await startStream(streamSettings.whip_url, hpOrientation);
+            const success = await startStream(streamSettings.whip_url, hpOrientation, hpQuality);
             if (success) {
-                // Notify backend that HP stream has started
                 await axios.post(`${API}/api/streaming/whip-status/`, { action: 'start', orientation: hpOrientation }, getAuth());
                 fetchStreamSettings(false);
             }
@@ -643,6 +667,37 @@ const DashboardLiveStreamingPage = () => {
                                                 </div>
                                             </div>
                                         )}
+
+                                        {/* Quality Selector */}
+                                        <div className="flex flex-col gap-1.5">
+                                            <label className="text-[10px] font-black uppercase tracking-wider text-gray-500">Kualitas Stream</label>
+                                            <div className="grid grid-cols-3 gap-1.5">
+                                                {Object.entries(QUALITY_PRESETS).map(([key, preset]) => (
+                                                    <button
+                                                        key={key}
+                                                        type="button"
+                                                        disabled={isPublishing}
+                                                        onClick={() => setHpQuality(key)}
+                                                        className={`flex flex-col items-center py-2 px-1 rounded-xl text-[9px] font-bold border transition ${
+                                                            hpQuality === key
+                                                                ? 'bg-slate-900 border-slate-900 text-white shadow-sm'
+                                                                : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-50'
+                                                        }`}
+                                                    >
+                                                        <span className="material-icons text-sm mb-0.5">
+                                                            {key === 'low' ? 'signal_cellular_1_bar' : key === 'medium' ? 'signal_cellular_3_bar' : 'signal_cellular_4_bar'}
+                                                        </span>
+                                                        {key === 'low' ? '480p' : key === 'medium' ? '720p' : '1080p'}
+                                                        <span className="text-[7px] opacity-70 mt-0.5">
+                                                            {key === 'low' ? '~500kbps' : key === 'medium' ? '~1.5Mbps' : '~3Mbps'}
+                                                        </span>
+                                                    </button>
+                                                ))}
+                                            </div>
+                                            {isPublishing && (
+                                                <p className="text-[9px] text-amber-600 italic">Kualitas tidak dapat diubah saat siaran aktif.</p>
+                                            )}
+                                        </div>
 
                                         {/* Start / Stop Button */}
                                         {!isPublishing ? (
