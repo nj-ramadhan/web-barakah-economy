@@ -14,6 +14,7 @@ import {
 import axios from 'axios'; // For user search
 import Header from '../components/layout/Header';
 import NavigationButton from '../components/layout/Navigation';
+import WarningModal from '../components/popup/WarningModal';
 import { Helmet } from 'react-helmet';
 import { formatCurrency } from '../utils/formatters';
 
@@ -25,6 +26,7 @@ const MeetingManagementPage = () => {
     const [participants, setParticipants] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [forbidden, setForbidden] = useState(false);
 
     // Selection
     const [selectedIds, setSelectedIds] = useState([]);
@@ -52,13 +54,18 @@ const MeetingManagementPage = () => {
                 setParticipants(partRes.data);
             } catch (err) {
                 console.error(err);
-                setError('Gagal memuat data manajemen agenda internal.');
+                if (err.response?.status === 403 || err.response?.status === 401) {
+                    setForbidden(true);
+                } else {
+                    setError('Gagal memuat data manajemen agenda internal.');
+                }
             } finally {
                 setLoading(false);
             }
         };
         fetchData();
     }, [slug]);
+
 
     // User Search
     useEffect(() => {
@@ -83,6 +90,10 @@ const MeetingManagementPage = () => {
             return () => clearTimeout(delayDebounceFn);
         }
     }, [searchQuery, showAddModal, participants]);
+
+    if (forbidden) {
+        return <WarningModal redirectPath={window.location.pathname + window.location.search} />;
+    }
 
     const handleAddParticipants = async () => {
         if (selectedUserIds.length === 0) return;

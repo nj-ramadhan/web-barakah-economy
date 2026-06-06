@@ -6,6 +6,7 @@ import { Helmet } from 'react-helmet';
 import { Html5Qrcode } from 'html5-qrcode';
 import Header from '../components/layout/Header';
 import NavigationButton from '../components/layout/Navigation';
+import WarningModal from '../components/popup/WarningModal';
 
 const API = process.env.REACT_APP_API_BASE_URL;
 
@@ -20,6 +21,7 @@ const EventScanPage = () => {
     const [scanResult, setScanResult] = useState(null); // { status, message, registration }
     const [recentScans, setRecentScans] = useState([]);
     const [selectedSession, setSelectedSession] = useState('');
+    const [forbidden, setForbidden] = useState(false);
     const inputRef = useRef(null);
     const scannerRef = useRef(null); // To store Html5Qrcode instance
 
@@ -39,10 +41,12 @@ const EventScanPage = () => {
                 setSelectedSession(res.data.sessions[0].id);
             }
         } catch (err) {
-            if (err.response?.status === 403) {
-                alert('Anda tidak memiliki akses sebagai panitia untuk event ini.');
+            console.error(err);
+            if (err.response?.status === 403 || err.response?.status === 401) {
+                setForbidden(true);
+            } else {
+                navigate('/dashboard/my-events');
             }
-            navigate('/dashboard/my-events');
         } finally {
             setLoading(false);
         }
@@ -53,6 +57,7 @@ const EventScanPage = () => {
         if (!user) { navigate('/login'); return; }
         fetchEvent();
     }, [fetchEvent]);
+
 
     // Auto-focus input saat halaman dibuka
     useEffect(() => {
@@ -204,6 +209,10 @@ const EventScanPage = () => {
             stopScanner();
         };
     }, [isCameraOpen]);
+
+    if (forbidden) {
+        return <WarningModal redirectPath={window.location.pathname + window.location.search} />;
+    }
 
     if (loading) return (
         <div className="min-h-screen bg-gray-50 flex items-center justify-center">

@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { createMeeting, updateMeeting, getMeetingDetail } from '../services/meetingApi';
+import { createMeeting, updateMeeting, getMeetingDetail, getMeetings } from '../services/meetingApi';
 import Header from '../components/layout/Header';
 import NavigationButton from '../components/layout/Navigation';
+import WarningModal from '../components/popup/WarningModal';
 import { Helmet } from 'react-helmet';
 import { getMediaUrl } from '../utils/mediaUtils';
 import CurrencyInput from '../components/common/CurrencyInput';
@@ -12,9 +13,10 @@ const MeetingSubmissionPage = () => {
     const navigate = useNavigate();
     const isEdit = !!slug;
 
-    const [loading, setLoading] = useState(isEdit);
+    const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState(null);
+    const [forbidden, setForbidden] = useState(false);
 
     const [formData, setFormData] = useState({
         title: '',
@@ -31,9 +33,9 @@ const MeetingSubmissionPage = () => {
     const [preview, setPreview] = useState(null);
 
     useEffect(() => {
-        if (isEdit) {
-            const fetchDetail = async () => {
-                try {
+        const checkAccess = async () => {
+            try {
+                if (isEdit) {
                     const res = await getMeetingDetail(slug);
                     const d = res.data;
                     setFormData({
@@ -47,16 +49,26 @@ const MeetingSubmissionPage = () => {
                     });
                     setSessions(d.sessions || []);
                     if (d.thumbnail) setPreview(getMediaUrl(d.thumbnail));
-                } catch (err) {
-                    console.error(err);
-                    setError('Gagal memuat data rapat.');
-                } finally {
-                    setLoading(false);
+                } else {
+                    await getMeetings();
                 }
-            };
-            fetchDetail();
-        }
+            } catch (err) {
+                console.error(err);
+                if (err.response?.status === 403 || err.response?.status === 401) {
+                    setForbidden(true);
+                } else {
+                    setError('Gagal memuat data rapat.');
+                }
+            } finally {
+                setLoading(false);
+            }
+        };
+        checkAccess();
     }, [slug, isEdit]);
+
+    if (forbidden) {
+        return <WarningModal redirectPath={window.location.pathname + window.location.search} />;
+    }
 
     const handleChange = (e) => {
         const { name, value } = e.target;

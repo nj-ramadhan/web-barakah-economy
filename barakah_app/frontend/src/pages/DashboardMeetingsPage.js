@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { getMeetings, deleteMeeting } from '../services/meetingApi';
 import Header from '../components/layout/Header';
 import NavigationButton from '../components/layout/Navigation';
+import WarningModal from '../components/popup/WarningModal';
 import { Helmet } from 'react-helmet';
 import { getMediaUrl } from '../utils/mediaUtils';
 
@@ -10,6 +11,7 @@ const DashboardMeetingsPage = () => {
     const [meetings, setMeetings] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [forbidden, setForbidden] = useState(false);
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -25,7 +27,11 @@ const DashboardMeetingsPage = () => {
                 setMeetings(res.data);
             } catch (err) {
                 console.error('Error fetching meetings:', err);
-                setError('Gagal memuat daftar rapat.');
+                if (err.response?.status === 403 || err.response?.status === 401) {
+                    setForbidden(true);
+                } else {
+                    setError('Gagal memuat daftar rapat.');
+                }
             } finally {
                 setLoading(false);
             }
@@ -33,6 +39,10 @@ const DashboardMeetingsPage = () => {
 
         fetchMeetings();
     }, [navigate]);
+
+    if (forbidden) {
+        return <WarningModal redirectPath={window.location.pathname + window.location.search} />;
+    }
 
     const handleDelete = async (slug, title) => {
         if (window.confirm(`Apakah Anda yakin ingin menghapus agenda rapat "${title}"? Seluruh data kehadiran dan sesi dalam rapat ini juga akan dihapus. Tindakan ini tidak dapat dibatalkan.`)) {

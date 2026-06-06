@@ -3,6 +3,7 @@ import { useParams, Link, useLocation } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
 import Header from '../../components/layout/Header';
 import NavigationButton from '../../components/layout/Navigation';
+import WarningModal from '../../components/popup/WarningModal';
 import { getEventRegistrations, getEventDetail, exportRegistrationsCsv, blastEventWhatsapp, bulkDeleteRegistrations, importParticipantsCsv, bulkResendNotifications, markEventSessionFinished, updateEventRegistration, toggleOrderCompleted } from '../../services/eventApi';
 import EventManualRegistrationModal from '../../components/admin/EventManualRegistrationModal';
 import EventRegistrationEditModal from '../../components/admin/EventRegistrationEditModal';
@@ -23,6 +24,9 @@ const EventRegistrationSubmissionPage = () => {
     const [registrations, setRegistrations] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [forbidden, setForbidden] = useState(false);
+
+
     const [isExporting, setIsExporting] = useState(false);
     const [showBlastModal, setShowBlastModal] = useState(false);
     const [isBlasting, setIsBlasting] = useState(false);
@@ -69,7 +73,11 @@ const EventRegistrationSubmissionPage = () => {
             setRegistrations(regRes.data);
         } catch (err) {
             console.error(err);
-            setError('Gagal memuat data pendaftaran.');
+            if (err.response?.status === 403 || err.response?.status === 401) {
+                setForbidden(true);
+            } else {
+                setError('Gagal memuat data pendaftaran.');
+            }
         } finally {
             setLoading(false);
         }
@@ -369,6 +377,10 @@ const EventRegistrationSubmissionPage = () => {
         setEditingRegistration(reg);
         setShowEditModal(true);
     };
+
+    if (forbidden) {
+        return <WarningModal redirectPath={window.location.pathname + window.location.search} />;
+    }
 
     if (loading) return <div className="body flex items-center justify-center min-h-screen text-green-700">Memuat data pendaftaran...</div>;
 

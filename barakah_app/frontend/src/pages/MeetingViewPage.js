@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { getMeetingDetail, getMeetingParticipants, rsvpMeeting } from '../services/meetingApi';
 import Header from '../components/layout/Header';
+import WarningModal from '../components/popup/WarningModal';
 import { Helmet } from 'react-helmet';
 import { getMediaUrl } from '../utils/mediaUtils';
 
@@ -11,6 +12,7 @@ const MeetingViewPage = () => {
     const [participants, setParticipants] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [forbidden, setForbidden] = useState(false);
     const [submittingRsvp, setSubmittingRsvp] = useState(false);
 
     useEffect(() => {
@@ -24,14 +26,22 @@ const MeetingViewPage = () => {
                 setParticipants(partRes.data);
             } catch (err) {
                 console.error(err);
-                const errMsg = err.response?.data?.detail || err.response?.data?.error || (err.response?.status === 403 ? 'Anda tidak terdaftar sebagai peserta rapat ini dan tidak memiliki akses.' : 'Gagal memuat detail rapat.');
-                setError(errMsg);
+                if (err.response?.status === 403 || err.response?.status === 401) {
+                    setForbidden(true);
+                } else {
+                    const errMsg = err.response?.data?.detail || err.response?.data?.error || 'Gagal memuat detail rapat.';
+                    setError(errMsg);
+                }
             } finally {
                 setLoading(false);
             }
         };
         fetchData();
     }, [slug]);
+
+    if (forbidden) {
+        return <WarningModal redirectPath={window.location.pathname + window.location.search} />;
+    }
 
     const currentUser = JSON.parse(localStorage.getItem('user'));
     const myParticipant = participants.find(p => p.user === currentUser?.id);
