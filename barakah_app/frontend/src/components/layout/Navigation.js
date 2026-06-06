@@ -122,7 +122,7 @@ const NavigationButton = () => {
 
             {/* PROFILE (Kanan - 3 cols) */}
             <Link
-              to={isLoggedIn ? "/profile" : "/login"}
+              to={isLoggedIn ? "/profile" : `/login?next=${encodeURIComponent(location.pathname + location.search)}`}
               className={`col-span-3 flex flex-col items-center justify-center transition-colors ${isActive('/profile') || isActive('/login') ? 'text-green-600 dark:text-green-400' : 'text-gray-500 dark:text-gray-400'}`}
             >
               {isLoggedIn && JSON.parse(localStorage.getItem('user'))?.picture ? (

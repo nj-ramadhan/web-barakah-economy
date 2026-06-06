@@ -1,5 +1,5 @@
 // components/layout/Header.js
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import '../../styles/Header.css';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../context/ThemeContext';
@@ -7,6 +7,7 @@ import { useTheme } from '../../context/ThemeContext';
 const Header = () => {
   const { i18n } = useTranslation();
   const { isDark, toggleTheme } = useTheme();
+  const location = useLocation();
 
   const toggleLanguage = () => {
     const newLang = i18n.language === 'en' ? 'id' : 'en';
@@ -40,8 +41,8 @@ const Header = () => {
             {i18n.language === 'en' ? 'EN' : 'ID'}
           </button>
           {/* Profile */}
-          <a
-            href={localStorage.getItem('user') ? "/profile" : "/login"}
+          <Link
+            to={localStorage.getItem('user') ? "/profile" : `/login?next=${encodeURIComponent(location.pathname + location.search)}`}
             className="w-10 h-10 flex items-center justify-center text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 rounded-full overflow-hidden border border-gray-200 dark:border-gray-700"
           >
             {(() => {
@@ -57,7 +58,7 @@ const Header = () => {
               }
               return <span className="material-icons text-xl">login</span>;
             })()}
-          </a>
+          </Link>
         </div>
       </div>
     </header>

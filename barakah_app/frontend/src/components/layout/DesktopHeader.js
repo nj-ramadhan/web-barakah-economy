@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../context/ThemeContext';
 
@@ -42,6 +42,7 @@ const DesktopHeader = () => {
     const [showProfileMenu, setShowProfileMenu] = useState(false);
     const { t, i18n } = useTranslation();
     const { isDark, toggleTheme } = useTheme();
+    const location = useLocation();
 
     useEffect(() => {
         const userData = JSON.parse(localStorage.getItem('user'));
@@ -155,7 +156,7 @@ const DesktopHeader = () => {
                     </div>
                 ) : (
                     <div className="flex gap-2 items-center pl-4 border-l border-gray-200 dark:border-gray-700">
-                        <Link to="/login" className="px-5 py-2 text-gray-600 dark:text-gray-300 font-bold hover:text-green-700 dark:hover:text-green-400 transition">Masuk</Link>
+                        <Link to={`/login?next=${encodeURIComponent(location.pathname + location.search)}`} className="px-5 py-2 text-gray-600 dark:text-gray-300 font-bold hover:text-green-700 dark:hover:text-green-400 transition">Masuk</Link>
                         <Link to="/register" className="px-5 py-2 bg-green-700 dark:bg-green-600 text-white font-bold rounded-full shadow-lg shadow-green-200 dark:shadow-green-900/30 hover:bg-green-800 dark:hover:bg-green-500 hover:-translate-y-0.5 transition-all active:scale-95">Daftar</Link>
                     </div>
                 )}

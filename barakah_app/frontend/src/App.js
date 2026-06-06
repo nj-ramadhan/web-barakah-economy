@@ -247,6 +247,15 @@ const LayoutWrapper = ({ isDesktop }) => {
     }
   }, [user, location.pathname, navigate]);
 
+  React.useEffect(() => {
+    const authPaths = ['/login', '/register', '/lupa-password', '/reset-password'];
+    const isAuthPath = authPaths.includes(location.pathname);
+    const isWidgetPath = location.pathname.startsWith('/widget');
+    if (!isAuthPath && !isWidgetPath) {
+      sessionStorage.setItem('lastAccessedPage', location.pathname + location.search);
+    }
+  }, [location.pathname, location.search]);
+
   return (
     <div className="w-full">
       <ProfileNotice />

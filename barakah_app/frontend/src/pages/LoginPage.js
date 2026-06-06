@@ -16,7 +16,21 @@ const LoginPage = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const queryParams = new URLSearchParams(location.search);
-    const nextPath = queryParams.get('next') || '/';
+    let nextPath = queryParams.get('next');
+    if (!nextPath) {
+        const savedPath = sessionStorage.getItem('lastAccessedPage');
+        const isAuthPath = savedPath && (
+            savedPath.startsWith('/login') ||
+            savedPath.startsWith('/register') ||
+            savedPath.startsWith('/lupa-password') ||
+            savedPath.startsWith('/reset-password')
+        );
+        if (savedPath && !isAuthPath) {
+            nextPath = savedPath;
+        } else {
+            nextPath = '/';
+        }
+    }
 
     useEffect(() => {
         const userStr = localStorage.getItem('user');
@@ -25,13 +39,14 @@ const LoginPage = () => {
                 const user = JSON.parse(userStr);
                 if (user && user.access) {
                     setIsLoggedIn(true);
-                    navigate('/profile', { replace: true });
+                    sessionStorage.removeItem('lastAccessedPage');
+                    navigate(nextPath, { replace: true });
                 }
             } catch (e) {
                 localStorage.removeItem('user');
             }
         }
-    }, [navigate]);
+    }, [navigate, nextPath]);
 
     const handleLogin = async (e) => {
         e.preventDefault();
@@ -59,6 +74,7 @@ const LoginPage = () => {
             if (response.is_profile_complete === false) {
                 navigate('/profile/edit?complete=1', { replace: true });
             } else {
+                sessionStorage.removeItem('lastAccessedPage');
                 navigate(nextPath);
             }
         } catch (error) {
@@ -92,6 +108,7 @@ const LoginPage = () => {
             if (response.is_profile_complete === false) {
                 navigate('/profile/edit?complete=1', { replace: true });
             } else {
+                sessionStorage.removeItem('lastAccessedPage');
                 navigate(nextPath);
             }
         } catch (error) {
@@ -107,20 +124,7 @@ const LoginPage = () => {
         navigate('/login');
     };
 
-    useEffect(() => {
-        const userStr = localStorage.getItem('user');
-        if (userStr) {
-            try {
-                const user = JSON.parse(userStr);
-                if (user && user.access) {
-                    setIsLoggedIn(true);
-                    navigate('/profile', { replace: true });
-                }
-            } catch (e) {
-                localStorage.removeItem('user');
-            }
-        }
-    }, [navigate]);
+
 
     return (
         <div className="body">

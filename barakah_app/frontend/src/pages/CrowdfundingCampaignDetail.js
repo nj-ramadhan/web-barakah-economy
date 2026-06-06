@@ -484,7 +484,7 @@ const CrowdfundingCampaignDetail = () => {
                   <span className="material-icons text-4xl text-gray-300 mb-2">lock</span>
                   <p className="text-gray-500">Tab realisasi hanya dapat diakses oleh donatur yang telah berdonasi ke charity ini.</p>
                   {!localStorage.getItem('user') && (
-                    <Link to="/login" className="text-green-600 font-bold mt-2 inline-block">Login sekarang</Link>
+                    <Link to={`/login?next=${encodeURIComponent(window.location.pathname + window.location.search)}`} className="text-green-600 font-bold mt-2 inline-block">Login sekarang</Link>
                   )}
                 </div>
               ) : (

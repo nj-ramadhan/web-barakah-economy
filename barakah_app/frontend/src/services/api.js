@@ -66,7 +66,11 @@ api.interceptors.response.use(
           // Don't interrupt the meeting if refresh fails
           if (!window.location.pathname.includes('/live-meet-test')) {
             alert('Sesi Anda telah berakhir. Silakan login kembali.');
-            window.location.reload();
+            if (window.location.pathname !== '/login' && window.location.pathname !== '/register') {
+              window.location.href = `/login?next=${encodeURIComponent(window.location.pathname + window.location.search)}`;
+            } else {
+              window.location.reload();
+            }
           }
         }
       }
