@@ -78,7 +78,6 @@ const DonationForm = ({ campaign }) => {
   
   const paymentMethods = [
     { id: 'bsi', name: 'BSI', logo: '/images/bsi-logo.png' },
-    { id: 'bjb', name: 'BJB Syariah', logo: '/images/bjb-logo.png' },
   ];
 
   const formik = useFormik({

@@ -34,17 +34,10 @@ const formatIDR = (amount) => {
 const bankAccounts = {
   bsi: {
     name: 'bsi',
-    number: '1040 4974 08',
+    number: '2220606662',
     fullName: 'Bank Syariah Indonesia',
     logo: '/images/bsi-logo.png',
-    owner: 'Deny Setiawan',
-  },
-  bjb: {
-    name: 'bjb',
-    number: '5130 1020 01161',
-    fullName: 'Bank Jabar Banten Syariah',
-    logo: '/images/bjb-logo.png',
-    owner: 'Deny Setiawan',
+    owner: 'Barakah Economy Community',
   },
   qris: {
     name: 'qris',
@@ -241,7 +234,6 @@ const EcoursePaymentConfirmation = () => {
             className="w-full p-3 rounded-lg border border-gray-300 focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none"
           >
             <option value="bsi">Bank Syariah Indonesia (BSI)</option>
-            <option value="bjb">Bank Jabar Banten Syariah (BJB)</option>
             <option value="qris">QRIS</option>
           </select>
         </div>

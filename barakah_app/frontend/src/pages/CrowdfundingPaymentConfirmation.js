@@ -60,13 +60,9 @@ const CrowdfundingPaymentConfirmation = () => {
   const bankAccounts = {
     bsi: {
       name: 'bsi',
-      number: '1040 4974 08',
-      fullName: 'Bank Syariah Indonesia'
-    },
-    bjb: {
-      name: 'bjb',
-      number: '5130 1020 01161',
-      fullName: 'Bank Jabar Banten Syariah'
+      number: '2220606662',
+      fullName: 'Bank Syariah Indonesia',
+      owner: 'Barakah Economy Community'
     },
     qris: {
       name: 'qris',
@@ -251,7 +247,7 @@ Semoga dapat menjadi amal ibadah bagi saya dan bermanfaat untuk program serta pe
                   )}
                 </div>
                 <p className="text-gray-600">
-                  {selectedBankInfo.isQRIS ? 'Scan QRIS untuk pembayaran' : `a.n. ${selectedBankInfo.owner || 'Deny Setiawan'}`}
+                  {selectedBankInfo.isQRIS ? 'Scan QRIS untuk pembayaran' : `a.n. ${selectedBankInfo.owner || 'Barakah Economy Community'}`}
                 </p>
               </div>
             </div>

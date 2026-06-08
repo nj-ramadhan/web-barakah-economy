@@ -81,7 +81,7 @@ const DigitalProductPaymentPage = () => {
             const lowerText = text.toLowerCase();
             console.log("Hasil OCR:", text);
 
-            const isBaeCommunityPresent = lowerText.includes('bae community');
+            const isBaeCommunityPresent = lowerText.includes('bae community') || lowerText.includes('barakah economy');
             const isDenySetiawanPresent = lowerText.includes('deny setiawan');
 
             const numericTotal = Math.floor(Number(order.amount));
@@ -96,7 +96,7 @@ const DigitalProductPaymentPage = () => {
                 scrubbedOCR.includes(totalStr);
 
             if (!isBaeCommunityPresent && !isDenySetiawanPresent) {
-                setOcrError('Validasi Gagal: Struk tidak mencantumkan nama "BAE Community" atau "DENY SETIAWAN". Pastikan Anda transfer ke rekening yang benar.');
+                setOcrError('Validasi Gagal: Struk tidak mencantumkan nama "BAE Community", "Barakah Economy Community" atau "DENY SETIAWAN". Pastikan Anda transfer ke rekening yang benar.');
                 setUploading(false);
                 setOcrLoading(false);
                 return;
@@ -230,39 +230,15 @@ const DigitalProductPaymentPage = () => {
                         <div className="flex justify-between items-center bg-emerald-50 p-3 rounded-lg border border-emerald-100">
                             <div>
                                 <p className="text-xs text-emerald-600">No. Rekening BSI</p>
-                                <p className="font-bold text-emerald-900">1040497408</p>
-                                <p className="text-xs text-emerald-700">an. DENY SETIAWAN</p>
+                                <p className="font-bold text-emerald-900">2220606662</p>
+                                <p className="text-xs text-emerald-700">an. Barakah Economy Community</p>
                             </div>
                             <button
                                 onClick={() => {
-                                    navigator.clipboard.writeText('1040497408');
+                                    navigator.clipboard.writeText('2220606662');
                                     alert('No. Rekening berhasil disalin!');
                                 }}
                                 className="bg-emerald-600 text-white text-[10px] px-3 py-1 rounded-full font-bold shadow-sm"
-                            >
-                                SALIN
-                            </button>
-                        </div>
-                    </div>
-
-                    {/* BJB */}
-                    <div className="bg-white rounded-lg p-4 border border-gray-200">
-                        <div className="flex items-center gap-2 mb-2">
-                            <img src="/images/bjb-logo.png" alt="BJB" className="h-4" onError={(e) => e.target.style.display='none'} />
-                            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">TRANSFER BANK BJB SYARIAH</p>
-                        </div>
-                        <div className="flex justify-between items-center bg-blue-50 p-3 rounded-lg border border-blue-100">
-                            <div>
-                                <p className="text-xs text-blue-600">No. Rekening BJB</p>
-                                <p className="font-bold text-blue-900">5130102001161</p>
-                                <p className="text-xs text-blue-700">an. DENY SETIAWAN</p>
-                            </div>
-                            <button
-                                onClick={() => {
-                                    navigator.clipboard.writeText('5130102001161');
-                                    alert('No. Rekening berhasil disalin!');
-                                }}
-                                className="bg-blue-600 text-white text-[10px] px-3 py-1 rounded-full font-bold shadow-sm"
                             >
                                 SALIN
                             </button>

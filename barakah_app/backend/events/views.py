@@ -533,7 +533,7 @@ class EventViewSet(viewsets.ModelViewSet):
                 extracted_amount = ocr_result.get('amount')
                 
                 # Validation logic
-                valid_names = ['bae community', 'deny setiawan']
+                valid_names = ['bae community', 'barakah economy community', 'deny setiawan']
                 is_name_valid = any(vn in extracted_name for vn in valid_names)
                 
                 # Amount validation

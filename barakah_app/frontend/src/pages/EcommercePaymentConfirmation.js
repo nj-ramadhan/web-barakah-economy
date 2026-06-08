@@ -50,15 +50,9 @@ const EcommercePaymentConfirmation = () => {
   const bankAccounts = {
     bsi: {
       name: 'bsi',
-      number: '1040 4974 08',
+      number: '2220606662',
       fullName: 'Bank Syariah Indonesia',
-      owner: 'DENY SETIAWAN'
-    },
-    bjb: {
-      name: 'bjb',
-      number: '5130 1020 01161',
-      fullName: 'Bank Jabar Banten Syariah',
-      owner: 'DENY SETIAWAN'
+      owner: 'Barakah Economy Community'
     },
     qris: {
       name: 'qris',
@@ -113,7 +107,7 @@ const EcommercePaymentConfirmation = () => {
       const lowerText = text.toLowerCase();
       console.log("OCR Result:", text);
 
-      const isBaeCommunityPresent = lowerText.includes('bae community');
+      const isBaeCommunityPresent = lowerText.includes('bae community') || lowerText.includes('barakah economy');
       const isDenySetiawanPresent = lowerText.includes('deny setiawan');
 
       const numericTotal = Math.floor(Number(amount));
@@ -127,7 +121,7 @@ const EcommercePaymentConfirmation = () => {
         scrubbedText.includes(totalStr);
 
       if (!isBaeCommunityPresent && !isDenySetiawanPresent) {
-        setOcrError('Validasi Gagal: Struk tidak mencantumkan nama "BAE Community" atau "DENY SETIAWAN". Pastikan Anda transfer ke rekening yang benar.');
+        setOcrError('Validasi Gagal: Struk tidak mencantumkan nama "BAE Community", "Barakah Economy Community" atau "DENY SETIAWAN". Pastikan Anda transfer ke rekening yang benar.');
         setUploading(false);
         setOcrLoading(false);
         return;
