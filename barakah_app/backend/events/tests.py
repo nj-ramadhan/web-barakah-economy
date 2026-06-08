@@ -127,3 +127,90 @@ class EventRegistrationPaymentTests(APITestCase):
         # Verify voucher used count incremented
         voucher.refresh_from_db()
         self.assertEqual(voucher.used_count, 1)
+
+
+class OnlineEventVisibilityTests(APITestCase):
+    def setUp(self):
+        self.creator = User.objects.create_user(
+            username="creator",
+            email="creator@example.com",
+            password="password123"
+        )
+        self.participant = User.objects.create_user(
+            username="participant",
+            email="participant@example.com",
+            password="password123",
+            phone="08999999999"
+        )
+        
+        now = timezone.now()
+        self.online_event = Event.objects.create(
+            title="Online Seminar",
+            description="Testing online seminar",
+            start_date=now + timezone.timedelta(days=1),
+            end_date=now + timezone.timedelta(days=1, hours=2),
+            location="Sengaja diisi salah",
+            location_url="https://zoom.us/j/123456789",
+            is_online=True,
+            organizer_name="BAE Community",
+            status="approved",
+            created_by=self.creator,
+            visibility="public"
+        )
+        
+    def test_online_event_forces_location_to_online(self):
+        self.online_event.refresh_from_db()
+        self.assertEqual(self.online_event.location, "Online")
+
+    def test_anonymous_user_cannot_see_location_url(self):
+        url = reverse("events-detail", kwargs={"slug": self.online_event.slug})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["location"], "Online")
+        self.assertIsNone(response.data["location_url"])
+
+    def test_unregistered_user_cannot_see_location_url(self):
+        self.client.force_authenticate(user=self.participant)
+        url = reverse("events-detail", kwargs={"slug": self.online_event.slug})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIsNone(response.data["location_url"])
+
+    def test_registered_user_cannot_see_location_url_before_event_starts(self):
+        EventRegistration.objects.create(
+            event=self.online_event,
+            user=self.participant,
+            status="approved"
+        )
+        
+        self.client.force_authenticate(user=self.participant)
+        url = reverse("events-detail", kwargs={"slug": self.online_event.slug})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIsNone(response.data["location_url"])
+
+    def test_registered_user_can_see_location_url_during_event(self):
+        EventRegistration.objects.create(
+            event=self.online_event,
+            user=self.participant,
+            status="approved"
+        )
+        
+        now = timezone.now()
+        self.online_event.start_date = now - timezone.timedelta(minutes=30)
+        self.online_event.end_date = now + timezone.timedelta(hours=1)
+        self.online_event.save()
+        
+        self.client.force_authenticate(user=self.participant)
+        url = reverse("events-detail", kwargs={"slug": self.online_event.slug})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["location_url"], "https://zoom.us/j/123456789")
+
+    def test_creator_can_always_see_location_url(self):
+        self.client.force_authenticate(user=self.creator)
+        url = reverse("events-detail", kwargs={"slug": self.online_event.slug})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["location_url"], "https://zoom.us/j/123456789")
+

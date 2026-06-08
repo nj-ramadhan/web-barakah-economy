@@ -237,6 +237,41 @@ class EventSerializer(serializers.ModelSerializer):
         fields = '__all__'
         read_only_fields = ('created_by', 'slug', 'created_at', 'updated_at')
 
+    def to_representation(self, instance):
+        rep = super().to_representation(instance)
+        if getattr(instance, 'is_online', False):
+            rep['location'] = "Online"
+            request = self.context.get('request')
+            has_access = False
+            if request and request.user and request.user.is_authenticated:
+                user = request.user
+                if (user.is_staff or 
+                    user.is_superuser or 
+                    instance.created_by == user or 
+                    instance.committees.filter(id=user.id).exists()):
+                    has_access = True
+                else:
+                    from .models import EventRegistration
+                    registration = EventRegistration.objects.filter(
+                        event=instance,
+                        user=user,
+                        status='approved'
+                    ).first()
+                    if registration:
+                        from django.utils import timezone
+                        now = timezone.now()
+                        start_time = instance.start_date
+                        end_time = instance.end_date
+                        if end_time:
+                            if start_time <= now <= end_time:
+                                has_access = True
+                        else:
+                            if start_time <= now:
+                                has_access = True
+            if not has_access:
+                rep['location_url'] = None
+        return rep
+
     def calamities_cleanup(self, data):
         """Standardize empty strings to None for numeric and datetime fields."""
         numeric_fields = ['capacity', 'price_fixed']

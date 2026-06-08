@@ -28,6 +28,7 @@ class Event(models.Model):
     end_date = models.DateTimeField(blank=True, null=True)
     location = models.CharField(max_length=255)
     location_url = models.URLField(blank=True, null=True)
+    is_online = models.BooleanField(default=False, help_text="Apakah event ini diadakan secara online (Zoom/GMeet/dll)?")
     
     organizer_name = models.CharField(max_length=100)
     organizer_contact = models.CharField(max_length=50, blank=True)
@@ -92,6 +93,9 @@ class Event(models.Model):
         return self.title
 
     def save(self, *args, **kwargs):
+        if self.is_online:
+            self.location = "Online"
+            
         if not self.slug:
             from django.utils.text import slugify
             import uuid

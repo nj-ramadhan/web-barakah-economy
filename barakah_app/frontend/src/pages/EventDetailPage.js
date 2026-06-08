@@ -848,8 +848,19 @@ const EventDetailPage = () => {
                                     <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 flex items-start gap-3">
                                         <span className="material-icons text-orange-600 bg-orange-50 p-2 rounded-xl">location_on</span>
                                         <div>
-                                            <p className="text-[10px] font-bold text-gray-400 uppercase">Lokasi *klik untuk buka link</p>
-                                            <a href={event.location_url} target="_blank" rel="noreferrer" className="text-sm font-extrabold text-green-700 hover:underline line-clamp-1">{event.location}</a>
+                                            <p className="text-[10px] font-bold text-gray-400 uppercase">
+                                                {event.location_url ? 'Lokasi *klik untuk buka link' : 'Lokasi'}
+                                            </p>
+                                            {event.location_url ? (
+                                                <a href={event.location_url} target="_blank" rel="noreferrer" className="text-sm font-extrabold text-green-700 hover:underline line-clamp-1">{event.location}</a>
+                                            ) : (
+                                                <div>
+                                                    <span className="text-sm font-extrabold text-gray-800">{event.location}</span>
+                                                    {event.is_online && (
+                                                        <p className="text-[10px] text-red-500 font-bold uppercase mt-1 leading-tight">Link meeting hanya bisa diakses oleh peserta terdaftar saat acara dimulai</p>
+                                                    )}
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 </div>

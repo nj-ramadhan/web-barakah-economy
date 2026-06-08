@@ -1067,7 +1067,7 @@ class EventViewSet(viewsets.ModelViewSet):
                 f"📷 QR Code tiket bisa dilihat di halaman detail event.\n\n"
                 f"📅 Waktu: {time_str}\n"
                 f"📍 Lokasi: {registration.event.location}\n"
-                f"🔗 Link Lokasi: {registration.event.location_url or '-'}"
+                f"🔗 Link Lokasi: {'Bisa diakses di web saat event dimulai' if getattr(registration.event, 'is_online', False) else (registration.event.location_url or '-')}"
                 f"{sessions_str}\n\n"
                 f"Salam,\nBarakah Economy"
             )
@@ -1178,7 +1178,7 @@ class EventViewSet(viewsets.ModelViewSet):
                 f"- Judul: {registration.event.title}\n"
                 f"- Lokasi: {registration.event.location}\n"
                 f"- Waktu: {time_str}\n\n"
-                f"🔗 Link Lokasi: {registration.event.location_url or '-'}\n\n"
+                f"🔗 Link Lokasi: {'Bisa diakses di web saat event dimulai' if getattr(registration.event, 'is_online', False) else (registration.event.location_url or '-')}\n\n"
                 f"QR Code tiket Anda terlampir pada email ini.\n"
                 f"Terima kasih,\nTim Barakah Economy"
             )
@@ -1284,7 +1284,7 @@ class EventViewSet(viewsets.ModelViewSet):
                         'event': event.title,
                         'sessions': sessions_str,
                         'event_link': event_link,
-                        'location_link': event.location_url or '-',
+                        'location_link': 'Bisa diakses di web saat event dimulai' if getattr(event, 'is_online', False) else (event.location_url or '-'),
                         'time': event_time_str
                     })
         
@@ -1385,7 +1385,7 @@ class EventViewSet(viewsets.ModelViewSet):
                         'name': detected_name, 
                         'event': ev.title,
                         'event_link': ev_link,
-                        'location_link': ev.location_url or '-',
+                        'location_link': 'Bisa diakses di web saat event dimulai' if getattr(ev, 'is_online', False) else (ev.location_url or '-'),
                         'time': ev_time_str
                     })
         

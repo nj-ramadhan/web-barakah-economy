@@ -24,6 +24,7 @@ const EventSubmissionPage = () => {
         end_date: '',
         location: '',
         location_url: '',
+        is_online: false,
         organizer_name: '',
         organizer_contact: '',
         price_type: 'free',
@@ -108,6 +109,7 @@ const EventSubmissionPage = () => {
                         end_date: d.end_date ? d.end_date.substring(0, 16) : '',
                         location: d.location || '',
                         location_url: d.location_url || '',
+                        is_online: d.is_online || false,
                         organizer_name: d.organizer_name || '',
                         organizer_contact: d.organizer_contact || '',
                         price_type: d.price_type || 'free',
@@ -758,6 +760,26 @@ const EventSubmissionPage = () => {
                                         className="w-full px-5 py-3.5 bg-gray-50 border-none rounded-2xl text-sm focus:ring-2 focus:ring-green-500 transition"
                                     />
                                 </div>
+                                <div className="space-y-1.5 md:col-span-2 flex flex-col justify-center p-4 bg-green-50/50 rounded-2xl border border-green-100">
+                                    <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1 mb-2">Acara Online (Zoom / Google Meet)?</label>
+                                    <div className="flex items-center gap-3">
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                const newIsOnline = !formData.is_online;
+                                                setFormData(prev => ({ 
+                                                    ...prev, 
+                                                    is_online: newIsOnline,
+                                                    location: newIsOnline ? 'Online' : (prev.location === 'Online' ? '' : prev.location)
+                                                }));
+                                            }}
+                                            className={`w-12 h-6 rounded-full transition-colors relative ${formData.is_online ? 'bg-green-500' : 'bg-gray-300'}`}
+                                        >
+                                            <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${formData.is_online ? 'left-7' : 'left-1'}`}></div>
+                                        </button>
+                                        <span className="text-xs font-bold text-gray-600">{formData.is_online ? 'Ya (Link meeting hanya bisa diakses peserta terdaftar saat acara)' : 'Tidak (Acara Offline)'}</span>
+                                    </div>
+                                </div>
                                 <div className="space-y-1.5 md:col-span-2">
                                     <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Lokasi / Venue *</label>
                                     <input
@@ -766,18 +788,22 @@ const EventSubmissionPage = () => {
                                         name="location"
                                         value={formData.location}
                                         onChange={handleChange}
-                                        placeholder="Contoh: Gedung Sate, Bandung atau Online via Zoom"
-                                        className="w-full px-5 py-3.5 bg-gray-50 border-none rounded-2xl text-sm focus:ring-2 focus:ring-green-500 transition"
+                                        disabled={formData.is_online}
+                                        placeholder={formData.is_online ? "Otomatis diatur ke 'Online'" : "Contoh: Gedung Sate, Bandung"}
+                                        className={`w-full px-5 py-3.5 border-none rounded-2xl text-sm focus:ring-2 focus:ring-green-500 transition ${formData.is_online ? 'bg-gray-200 text-gray-500 cursor-not-allowed' : 'bg-gray-50'}`}
                                     />
                                 </div>
                                 <div className="space-y-1.5 md:col-span-2">
-                                    <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">URL Lokasi (Maps/Link Zoom)</label>
+                                    <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">
+                                        {formData.is_online ? 'Link Meeting (Zoom/GMeet/dsb) *' : 'URL Lokasi (Maps/Link Zoom)'}
+                                    </label>
                                     <input
+                                        required={formData.is_online}
                                         type="url"
                                         name="location_url"
                                         value={formData.location_url}
                                         onChange={handleChange}
-                                        placeholder="https://maps.google.com/..."
+                                        placeholder={formData.is_online ? "https://zoom.us/j/... atau https://meet.google.com/..." : "https://maps.google.com/..."}
                                         className="w-full px-5 py-3.5 bg-gray-50 border-none rounded-2xl text-sm focus:ring-2 focus:ring-green-500 transition"
                                     />
                                 </div>
