@@ -44,7 +44,7 @@ const bankAccounts = {
     number: 'QRIS BAE COMMUNITY',
     fullName: 'QRIS',
     logo: '/images/qris-bae2.png',
-    owner: 'BAE COMMUNITY, DIGITAL & KREATIF',
+    owner: 'BAE COMMUNITY',
     isQRIS: true,
   },
 };

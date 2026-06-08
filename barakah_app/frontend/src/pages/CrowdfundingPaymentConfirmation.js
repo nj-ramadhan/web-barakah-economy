@@ -68,7 +68,7 @@ const CrowdfundingPaymentConfirmation = () => {
       name: 'qris',
       number: 'QRIS BAE COMMUNITY',
       fullName: 'QRIS',
-      owner: 'BAE COMMUNITY, DIGITAL & KREATIF',
+      owner: 'BAE COMMUNITY',
       isQRIS: true
     }
   };
