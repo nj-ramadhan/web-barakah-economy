@@ -511,6 +511,47 @@ const EventDetailPage = () => {
     );
     const isCompleted = event?.end_date ? new Date() > new Date(event.end_date) : false;
 
+    // Check meeting visibility access rules on frontend
+    const loggedInUser = JSON.parse(localStorage.getItem('user'));
+    const isOnlineEvent = event?.is_online || event?.location?.toLowerCase() === 'online' || event?.location_url?.includes('zoom.us') || event?.location_url?.includes('meet.google.com') || event?.location_url?.includes('meet.jit.si');
+    
+    let showMeetingLink = false;
+    if (event?.location_url) {
+        if (isOnlineEvent) {
+            if (loggedInUser) {
+                // Admin, staff, creator, or committee always has access
+                const isCreator = event.created_by === loggedInUser.id || event.created_by_details?.id === loggedInUser.id;
+                const isAdminOrStaff = ['admin', 'staff', 'superadmin', 'organizer'].includes(loggedInUser.role?.toLowerCase());
+                const isCommittee = event.committees?.some(c => c.id === loggedInUser.id) || event.committees_details?.some(c => c.id === loggedInUser.id);
+                
+                if (isCreator || isAdminOrStaff || isCommittee) {
+                    showMeetingLink = true;
+                } else {
+                    // Participant must be registered & status is approved
+                    const isRegisteredApproved = event.user_registration && event.user_registration.status === 'approved';
+                    
+                    if (isRegisteredApproved) {
+                        const now = new Date();
+                        const startTime = new Date(event.start_date);
+                        const endTime = event.end_date ? new Date(event.end_date) : null;
+                        
+                        if (endTime) {
+                            if (now >= startTime && now <= endTime) {
+                                showMeetingLink = true;
+                            }
+                        } else {
+                            if (now >= startTime) {
+                                showMeetingLink = true;
+                            }
+                        }
+                    }
+                }
+            }
+        } else {
+            showMeetingLink = true;
+        }
+    }
+
     return (
         <div className="body bg-gray-50 min-h-screen overflow-x-hidden">
             <Helmet>
@@ -849,14 +890,14 @@ const EventDetailPage = () => {
                                         <span className="material-icons text-orange-600 bg-orange-50 p-2 rounded-xl">location_on</span>
                                         <div>
                                             <p className="text-[10px] font-bold text-gray-400 uppercase">
-                                                {event.location_url ? 'Lokasi *klik untuk buka link' : 'Lokasi'}
+                                                {showMeetingLink ? 'Lokasi *klik untuk buka link' : 'Lokasi'}
                                             </p>
-                                            {event.location_url ? (
+                                            {showMeetingLink ? (
                                                 <a href={event.location_url} target="_blank" rel="noreferrer" className="text-sm font-extrabold text-green-700 hover:underline line-clamp-1">{event.location}</a>
                                             ) : (
                                                 <div>
                                                     <span className="text-sm font-extrabold text-gray-800">{event.location}</span>
-                                                    {event.is_online && (
+                                                    {isOnlineEvent && (
                                                         <p className="text-[10px] text-red-500 font-bold uppercase mt-1 leading-tight">Link meeting hanya bisa diakses oleh peserta terdaftar saat acara dimulai</p>
                                                     )}
                                                 </div>

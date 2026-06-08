@@ -595,10 +595,11 @@ const EventSubmissionPage = () => {
                             </div>
                         )}
 
+                        {/* Seksi 1: Informasi Dasar & Penyelenggara */}
                         <div className="space-y-4">
                             <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
                                 <span className="w-6 h-6 bg-green-100 text-green-700 rounded-lg flex items-center justify-center text-xs">1</span>
-                                Informasi Umum
+                                Informasi Dasar & Penyelenggara
                             </h3>
 
                             <div className="grid grid-cols-1 gap-4">
@@ -614,7 +615,6 @@ const EventSubmissionPage = () => {
                                         className="w-full px-5 py-3.5 bg-gray-50 border-none rounded-2xl text-sm focus:ring-2 focus:ring-green-500 transition"
                                     />
                                 </div>
-
                                 <div className="space-y-1.5">
                                     <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Ringkasan Singkat *</label>
                                     <textarea
@@ -627,7 +627,6 @@ const EventSubmissionPage = () => {
                                         className="w-full px-5 py-3.5 bg-gray-50 border-none rounded-2xl text-sm focus:ring-2 focus:ring-green-500 transition"
                                     ></textarea>
                                 </div>
-
                                 <div className="space-y-1.5">
                                     <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Deskripsi Lengkap *</label>
                                     <div className="rounded-2xl overflow-hidden border border-gray-100">
@@ -637,7 +636,6 @@ const EventSubmissionPage = () => {
                                         />
                                     </div>
                                 </div>
-
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div className="space-y-1.5">
                                         <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Kategori Event</label>
@@ -650,94 +648,40 @@ const EventSubmissionPage = () => {
                                             className="w-full px-5 py-3.5 bg-gray-50 border-none rounded-2xl text-sm focus:ring-2 focus:ring-green-500 transition"
                                         />
                                     </div>
-                                    <div className="space-y-1.5 flex flex-col justify-center">
-                                        <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1 mb-2">Tersedia Sertifikat?</label>
-                                        <div className="flex items-center gap-3">
-                                            <button
-                                                type="button"
-                                                onClick={() => setFormData(prev => ({ ...prev, has_certificate: !prev.has_certificate }))}
-                                                className={`w-12 h-6 rounded-full transition-colors relative ${formData.has_certificate ? 'bg-green-500' : 'bg-gray-300'}`}
-                                            >
-                                                <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${formData.has_certificate ? 'left-7' : 'left-1'}`}></div>
-                                            </button>
-                                            <span className="text-xs font-bold text-gray-600">{formData.has_certificate ? 'Ya' : 'Tidak'}</span>
-                                        </div>
-                                    </div>
-                                    <div className="space-y-1.5 flex flex-col justify-center">
-                                        <div className="flex items-center justify-between p-4 bg-blue-50 rounded-2xl border border-blue-100">
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-10 h-10 bg-blue-600 text-white rounded-xl flex items-center justify-center shadow-lg shadow-blue-200">
-                                                    <span className="material-icons">badge</span>
-                                                </div>
-                                                <div>
-                                                    <h4 className="text-sm font-black text-gray-900">Fitur No peserta (BIB)</h4>
-                                                    <p className="text-[10px] text-blue-600 font-bold uppercase tracking-wider">Otomatis tambah kolom Foto di pendaftaran</p>
-                                                </div>
-                                            </div>
-                                            <button
-                                                type="button"
-                                                onClick={() => {
-                                                    const newValue = !formData.has_bib;
-                                                    setFormData({ ...formData, has_bib: newValue });
-
-                                                    // Automatically add "Pas Foto" field if enabled
-                                                    if (newValue) {
-                                                        const hasPhotoField = formFields.some(f => f.label.toLowerCase().includes('pas foto'));
-                                                        if (!hasPhotoField) {
-                                                            const newField = {
-                                                                id: Date.now(),
-                                                                label: 'Foto Peserta',
-                                                                field_type: 'file',
-                                                                required: true,
-                                                                placeholder: 'Upload foto format JPG/PNG'
-                                                            };
-                                                            setFormFields([...formFields, newField]);
-                                                        }
-                                                    }
-                                                }}
-                                                className={`w-12 h-6 rounded-full transition-colors relative ${formData.has_bib ? 'bg-blue-600' : 'bg-gray-300'}`}
-                                            >
-                                                <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${formData.has_bib ? 'left-7' : 'left-1'}`}></div>
-                                            </button>
-                                        </div>
-
-                                        {formData.has_bib && (
-                                            <div className="p-6 bg-white border border-blue-100 rounded-3xl space-y-4 shadow-sm animate-fade-in">
-                                                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Upload Desain BIB (Opsional)</label>
-                                                <p className="text-[10px] text-gray-500 italic">Anda juga bisa mengatur ini nanti di menu Kelola Event {'>'} BIB</p>
-                                                <input
-                                                    type="file"
-                                                    accept="image/*"
-                                                    onChange={(e) => {
-                                                        const file = e.target.files[0];
-                                                        if (file) {
-                                                            if (!validateFileSize(file)) return;
-                                                            setFormData({ ...formData, bib_template_image: file });
-                                                            // Create a temp preview URL for this session
-                                                            const url = URL.createObjectURL(file);
-                                                            setFormData(prev => ({ ...prev, _bib_preview: url }));
-                                                        }
-                                                    }}
-                                                    className="w-full text-xs font-bold text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-[10px] file:font-black file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer"
-                                                />
-                                                {formData._bib_preview && (
-                                                    <div className="mt-2 rounded-xl overflow-hidden border border-gray-100 max-h-40 flex items-center justify-center bg-gray-50">
-                                                        <img src={formData._bib_preview} alt="BIB Preview" className="max-w-full max-h-40 object-contain" />
-                                                    </div>
-                                                )}
-                                            </div>
-                                        )}
-                                    </div>
+                                    <div className="space-y-1.5">
+                                    <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Nama Penyelenggara *</label>
+                                    <input
+                                        required
+                                        type="text"
+                                        name="organizer_name"
+                                        value={formData.organizer_name}
+                                        onChange={handleChange}
+                                        placeholder="Contoh: BAE Regional Bandung"
+                                        className="w-full px-5 py-3.5 bg-gray-50 border-none rounded-2xl text-sm focus:ring-2 focus:ring-green-500 transition"
+                                    />
+                                </div>
+                                    <div className="space-y-1.5">
+                                    <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Kontak (WhatsApp/Email) *</label>
+                                    <input
+                                        required
+                                        type="text"
+                                        name="organizer_contact"
+                                        value={formData.organizer_contact}
+                                        onChange={handleChange}
+                                        placeholder="08123xxx / email@test.com"
+                                        className="w-full px-5 py-3.5 bg-gray-50 border-none rounded-2xl text-sm focus:ring-2 focus:ring-green-500 transition"
+                                    />
+                                </div>
                                 </div>
                             </div>
                         </div>
 
+                        {/* Seksi 2: Waktu & Lokasi */}
                         <div className="space-y-4 pt-4">
                             <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
                                 <span className="w-6 h-6 bg-green-100 text-green-700 rounded-lg flex items-center justify-center text-xs">2</span>
                                 Waktu & Lokasi
                             </h3>
-
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-1.5">
                                     <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Waktu Mulai *</label>
@@ -810,228 +754,12 @@ const EventSubmissionPage = () => {
                             </div>
                         </div>
 
-                        {/* PHASE: BERKAS & VISIBILITAS */}
-                        <div className="space-y-6 pt-4">
-                            <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                                <span className="w-6 h-6 bg-blue-100 text-blue-700 rounded-lg flex items-center justify-center text-xs">3</span>
-                                Berkas & Visibilitas
-                            </h3>
-                            <div className="p-6 bg-blue-50/50 rounded-[2.5rem] border border-blue-100 space-y-6">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div className="space-y-1.5 md:col-span-2">
-                                        <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Visibilitas Event *</label>
-                                        <select
-                                            name="visibility"
-                                            value={formData.visibility}
-                                            onChange={handleChange}
-                                            className="w-full px-5 py-3.5 bg-white border border-blue-100 rounded-2xl text-sm focus:ring-2 focus:ring-blue-500 transition shadow-sm"
-                                        >
-                                            <option value="public">Umum (Tampil di Beranda & Daftar)</option>
-                                            <option value="private">Privat (Hanya lewat link langsung)</option>
-                                        </select>
-                                        <p className="text-[10px] text-blue-800/60 ml-1 italic font-medium">Link event tetap bisa diakses meskipun diset Privat.</p>
-                                    </div>
-
-                                    <div className="space-y-1.5">
-                                        <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Kapan Event Tampil di Publik? (Visibility Countdown)</label>
-                                        <input
-                                            type="datetime-local"
-                                            name="visible_at"
-                                            value={formData.visible_at}
-                                            onChange={handleChange}
-                                            className="w-full px-5 py-3.5 bg-white border border-blue-100 rounded-2xl text-sm focus:ring-2 focus:ring-blue-500 transition shadow-sm"
-                                        />
-                                        <p className="text-[10px] text-blue-800/60 ml-1 italic font-medium">Kosongkan jika ingin langsung tampil.</p>
-                                    </div>
-
-                                    <div className="space-y-1.5">
-                                        <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Kapan Pendaftaran Dibuka? (Registration Countdown)</label>
-                                        <input
-                                            type="datetime-local"
-                                            name="registration_start_at"
-                                            value={formData.registration_start_at}
-                                            onChange={handleChange}
-                                            className="w-full px-5 py-3.5 bg-white border border-blue-100 rounded-2xl text-sm focus:ring-2 focus:ring-blue-500 transition shadow-sm"
-                                        />
-                                        <p className="text-[10px] text-blue-800/60 ml-1 italic font-medium">Kosongkan jika ingin langsung dibuka.</p>
-                                    </div>
-
-                                    <div className="space-y-1.5">
-                                        <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Lampiran Berkas (PDF/Gambar/Dokumen)</label>
-                                        <div className="flex flex-col gap-2">
-                                            <div className="flex items-center gap-3">
-                                                <label className="flex-1 text-center py-3.5 bg-white text-blue-700 rounded-2xl text-xs font-bold cursor-pointer hover:bg-blue-50 transition shadow-sm border border-blue-100">
-                                                    {files.attachment_file ? (files.attachment_file.name || 'Berkas Terpilih') : 'UNGGAH BERKAS (OPSIONAL)'}
-                                                    <input type="file" name="attachment_file" onChange={(e) => {
-                                                        const file = e.target.files[0];
-                                                        if (file && validateFileSize(file)) {
-                                                            setFiles(prev => ({ ...prev, attachment_file: file }));
-                                                        }
-                                                    }} className="hidden" />
-                                                </label>
-                                                {isEdit && formData.attachment_file && (
-                                                    <a href={formData.attachment_file} target="_blank" rel="noreferrer" className="w-12 h-12 bg-white text-blue-600 rounded-2xl flex items-center justify-center border border-blue-100 shadow-sm hover:bg-blue-50 transition">
-                                                        <span className="material-icons">visibility</span>
-                                                    </a>
-                                                )}
-                                            </div>
-                                            <input
-                                                type="text"
-                                                name="attachment_file_title"
-                                                value={formData.attachment_file_title}
-                                                onChange={handleChange}
-                                                placeholder="Judul Berkas (misal: Daftar Menu)"
-                                                className="w-full px-4 py-2.5 bg-white border border-blue-100 rounded-xl text-xs focus:ring-2 focus:ring-blue-500 transition shadow-sm"
-                                            />
-                                        </div>
-                                    </div>
-
-                                    <div className="space-y-1.5">
-                                        <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Tautan Eksternal Pendukung (Link)</label>
-                                        <div className="flex flex-col gap-2">
-                                            <input
-                                                type="url"
-                                                name="attachment_link"
-                                                value={formData.attachment_link}
-                                                onChange={handleChange}
-                                                placeholder="https://..."
-                                                className="w-full px-5 py-3.5 bg-white border border-blue-100 rounded-2xl text-sm focus:ring-2 focus:ring-blue-500 transition shadow-sm"
-                                            />
-                                            <input
-                                                type="text"
-                                                name="attachment_link_title"
-                                                value={formData.attachment_link_title}
-                                                onChange={handleChange}
-                                                placeholder="Judul Link (misal: Lokasi Gmaps)"
-                                                className="w-full px-4 py-2.5 bg-white border border-blue-100 rounded-xl text-xs focus:ring-2 focus:ring-blue-500 transition shadow-sm"
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
+                        {/* Seksi 3: Biaya & Tiket (HTM) */}
                         <div className="space-y-4 pt-4">
                             <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                                <span className="w-6 h-6 bg-green-100 text-green-700 rounded-lg flex items-center justify-center text-xs">4</span>
-                                Media & Penyelenggara
+                                <span className="w-6 h-6 bg-green-100 text-green-700 rounded-lg flex items-center justify-center text-xs">3</span>
+                                Biaya & Tiket (HTM)
                             </h3>
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div className="space-y-1.5 md:col-span-2">
-                                    <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Gambar Poster / Thumbnail (16:9) *</label>
-                                    <div className="flex flex-col gap-3">
-                                        <div
-                                            className={`w-full aspect-video bg-gray-100 rounded-2xl overflow-hidden border border-gray-200 ${files.thumbnail ? 'cursor-pointer' : ''}`}
-                                            onClick={() => (files.thumbnail || formData.thumbnail) && openPreview(files.thumbnail || formData.thumbnail, 'thumbnail')}
-                                            title={files.thumbnail ? 'Klik untuk lihat detail' : ''}
-                                        >
-                                            {files.thumbnail || formData.thumbnail ? (
-                                                <img
-                                                    src={files.thumbnail instanceof File ? URL.createObjectURL(files.thumbnail) : formData.thumbnail}
-                                                    className="w-full h-full object-cover"
-                                                    alt="Thumbnail Preview"
-                                                />
-                                            ) : (
-                                                <div className="flex flex-col items-center justify-center h-full text-gray-400 gap-2">
-                                                    <span className="material-icons text-4xl">image</span>
-                                                    <p className="text-[10px] font-bold">BELUM ADA GAMBAR</p>
-                                                </div>
-                                            )}
-                                        </div>
-                                        <input
-                                            type="file"
-                                            accept="image/*"
-                                            className="hidden"
-                                            id="thumb-upload"
-                                            onChange={(e) => handleFileSelect(e, 'thumbnail')}
-                                        />
-                                        <label htmlFor="thumb-upload" className="w-full text-center py-4 bg-green-50 text-green-700 rounded-2xl text-xs font-black cursor-pointer hover:bg-green-100 transition shadow-sm border border-green-100 uppercase tracking-widest">PILIH & POTONG FOTO POSTER</label>
-                                    </div>
-                                </div>
-
-                                <div className="space-y-1.5 md:col-span-2 mt-4">
-                                    <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Foto Galeri Pendukung (Akan jadi Carousel di Detail)</label>
-                                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                                        {/* Existing Gallery Images */}
-                                        {existingGalleryImages.map((img) => (
-                                            <div key={img.id} className="relative aspect-video rounded-xl overflow-hidden border border-gray-100 shadow-sm group">
-                                                <img
-                                                    src={img.image}
-                                                    className="w-full h-full object-cover cursor-pointer"
-                                                    alt="Gallery"
-                                                    onClick={() => openPreview(img.image)}
-                                                />
-                                                <button
-                                                    type="button"
-                                                    onClick={(e) => { e.stopPropagation(); removeGalleryImage(null, true, img.id); }}
-                                                    className="absolute top-1 right-1 w-6 h-6 bg-red-600/80 text-white rounded-full opacity-0 group-hover:opacity-100 transition flex items-center justify-center shadow-lg"
-                                                >
-                                                    <span className="material-icons text-xs">delete</span>
-                                                </button>
-                                            </div>
-                                        ))}
-
-                                        {/* New Gallery Uploads */}
-                                        {files.gallery_images.map((img, idx) => (
-                                            <div key={idx} className="relative aspect-video rounded-xl overflow-hidden border border-green-100 shadow-sm group">
-                                                <img
-                                                    src={URL.createObjectURL(img)}
-                                                    className="w-full h-full object-cover cursor-pointer"
-                                                    alt="New Gallery"
-                                                    onClick={() => openPreview(img)}
-                                                />
-                                                <button
-                                                    type="button"
-                                                    onClick={(e) => { e.stopPropagation(); removeGalleryImage(idx, false); }}
-                                                    className="absolute top-1 right-1 bg-red-500/80 text-white rounded-full w-6 h-6 shadow-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition"
-                                                >
-                                                    <span className="material-icons text-xs">close</span>
-                                                </button>
-                                            </div>
-                                        ))}
-
-                                        <label className="aspect-video rounded-xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center cursor-pointer hover:border-green-500 hover:bg-green-50 text-gray-400 hover:text-green-600 transition-all">
-                                            <span className="material-icons text-2xl">add_photo_alternate</span>
-                                            <span className="text-[9px] font-black mt-1 uppercase tracking-widest">TAMBAH FOTO</span>
-                                            <input type="file" accept="image/*" className="hidden" onChange={handleGalleryImageUpload} multiple />
-                                        </label>
-                                    </div>
-                                    <p className="text-[10px] text-gray-400 ml-1 italic mt-2">Gambar-gambar ini akan muncul sebagai slide (carousel) di bagian atas halaman detail event.</p>
-                                </div>
-                                <div className="space-y-1.5">
-                                    <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Nama Penyelenggara *</label>
-                                    <input
-                                        required
-                                        type="text"
-                                        name="organizer_name"
-                                        value={formData.organizer_name}
-                                        onChange={handleChange}
-                                        placeholder="Contoh: BAE Regional Bandung"
-                                        className="w-full px-5 py-3.5 bg-gray-50 border-none rounded-2xl text-sm focus:ring-2 focus:ring-green-500 transition"
-                                    />
-                                </div>
-                                <div className="space-y-1.5">
-                                    <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Kontak (WhatsApp/Email) *</label>
-                                    <input
-                                        required
-                                        type="text"
-                                        name="organizer_contact"
-                                        value={formData.organizer_contact}
-                                        onChange={handleChange}
-                                        placeholder="08123xxx / email@test.com"
-                                        className="w-full px-5 py-3.5 bg-gray-50 border-none rounded-2xl text-sm focus:ring-2 focus:ring-green-500 transition"
-                                    />
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="space-y-4 pt-4">
-                            <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                                <span className="w-6 h-6 bg-green-100 text-green-700 rounded-lg flex items-center justify-center text-xs">5</span>
-                                Pengaturan Biaya (HTM)
-                            </h3>
-
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-1.5 md:col-span-2">
                                     <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Jenis Biaya *</label>
@@ -1048,7 +776,6 @@ const EventSubmissionPage = () => {
                                         <option value="hybrid_2">Hybrid 2 (Pilihan Fix/Sukarela)</option>
                                     </select>
                                 </div>
-
                                 {['fixed', 'hybrid_1', 'hybrid_2'].includes(formData.price_type) && formData.price_variations.length === 0 && (
                                     <div className="space-y-1.5 md:col-span-2 animate-fade-in">
                                         <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Nominal Fix / Minimal (IDR) *</label>
@@ -1062,7 +789,6 @@ const EventSubmissionPage = () => {
                                         <p className="text-[10px] text-gray-400 ml-1 italic">Nominal ini akan digunakan jika Anda tidak menggunakan fitur Variasi Harga di bawah.</p>
                                     </div>
                                 )}
-
                                 {formData.price_type !== 'free' && (
                                     <>
                                         <div className="space-y-1.5 md:col-span-2">
@@ -1428,7 +1154,118 @@ const EventSubmissionPage = () => {
                                         </div>
                                     </>
                                 )}
+                            </div>
+                        </div>
 
+                        {/* Seksi 4: Kapasitas & Desain Tiket */}
+                        <div className="space-y-4 pt-4">
+                            <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                                <span className="w-6 h-6 bg-green-100 text-green-700 rounded-lg flex items-center justify-center text-xs">4</span>
+                                Kapasitas & Desain Tiket
+                            </h3>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="space-y-1.5 md:col-span-2">
+                                    <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Kapasitas Peserta</label>
+                                    <input
+                                        type="number"
+                                        name="capacity"
+                                        value={formData.capacity}
+                                        onChange={handleChange}
+                                        disabled={formData.teams && formData.teams.length > 0}
+                                        placeholder={formData.teams && formData.teams.length > 0 ? "Otomatis dari total kapasitas tim" : "Kosongkan atau isi 0 jika tak terbatas"}
+                                        className={`w-full px-5 py-3.5 border-none rounded-2xl text-sm focus:ring-2 focus:ring-green-500 transition ${
+                                            formData.teams && formData.teams.length > 0 
+                                                ? 'bg-purple-50 text-purple-900 font-bold border border-purple-100 cursor-not-allowed shadow-sm shadow-purple-50' 
+                                                : 'bg-gray-50 text-gray-800'
+                                        }`}
+                                    />
+                                    {formData.teams && formData.teams.length > 0 ? (
+                                        <p className="text-[10px] text-purple-600 font-bold ml-1 flex items-center gap-1">
+                                            <span className="material-icons text-[12px]">lock</span>
+                                            Kapasitas terkunci dan terisi otomatis dari total kuota seluruh tim ({formData.capacity} peserta).
+                                        </p>
+                                    ) : (
+                                        <p className="text-[10px] text-gray-400 ml-1 italic">Kosong/0 = Tanpa batas kuota.</p>
+                                    )}
+                                </div>
+                                <div className="space-y-1.5 flex flex-col justify-center">
+                                        <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1 mb-2">Tersedia Sertifikat?</label>
+                                        <div className="flex items-center gap-3">
+                                            <button
+                                                type="button"
+                                                onClick={() => setFormData(prev => ({ ...prev, has_certificate: !prev.has_certificate }))}
+                                                className={`w-12 h-6 rounded-full transition-colors relative ${formData.has_certificate ? 'bg-green-500' : 'bg-gray-300'}`}
+                                            >
+                                                <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${formData.has_certificate ? 'left-7' : 'left-1'}`}></div>
+                                            </button>
+                                            <span className="text-xs font-bold text-gray-600">{formData.has_certificate ? 'Ya' : 'Tidak'}</span>
+                                        </div>
+                                    </div>
+                                <div className="space-y-1.5 flex flex-col justify-center md:col-span-2">
+                                        <div className="flex items-center justify-between p-4 bg-blue-50 rounded-2xl border border-blue-100">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 bg-blue-600 text-white rounded-xl flex items-center justify-center shadow-lg shadow-blue-200">
+                                                    <span className="material-icons">badge</span>
+                                                </div>
+                                                <div>
+                                                    <h4 className="text-sm font-black text-gray-900">Fitur No peserta (BIB)</h4>
+                                                    <p className="text-[10px] text-blue-600 font-bold uppercase tracking-wider">Otomatis tambah kolom Foto di pendaftaran</p>
+                                                </div>
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    const newValue = !formData.has_bib;
+                                                    setFormData({ ...formData, has_bib: newValue });
+
+                                                    // Automatically add "Pas Foto" field if enabled
+                                                    if (newValue) {
+                                                        const hasPhotoField = formFields.some(f => f.label.toLowerCase().includes('pas foto'));
+                                                        if (!hasPhotoField) {
+                                                            const newField = {
+                                                                id: Date.now(),
+                                                                label: 'Foto Peserta',
+                                                                field_type: 'file',
+                                                                required: true,
+                                                                placeholder: 'Upload foto format JPG/PNG'
+                                                            };
+                                                            setFormFields([...formFields, newField]);
+                                                        }
+                                                    }
+                                                }}
+                                                className={`w-12 h-6 rounded-full transition-colors relative ${formData.has_bib ? 'bg-blue-600' : 'bg-gray-300'}`}
+                                            >
+                                                <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${formData.has_bib ? 'left-7' : 'left-1'}`}></div>
+                                            </button>
+                                        </div>
+
+                                        {formData.has_bib && (
+                                            <div className="p-6 bg-white border border-blue-100 rounded-3xl space-y-4 shadow-sm animate-fade-in">
+                                                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Upload Desain BIB (Opsional)</label>
+                                                <p className="text-[10px] text-gray-500 italic">Anda juga bisa mengatur ini nanti di menu Kelola Event {'>'} BIB</p>
+                                                <input
+                                                    type="file"
+                                                    accept="image/*"
+                                                    onChange={(e) => {
+                                                        const file = e.target.files[0];
+                                                        if (file) {
+                                                            if (!validateFileSize(file)) return;
+                                                            setFormData({ ...formData, bib_template_image: file });
+                                                            // Create a temp preview URL for this session
+                                                            const url = URL.createObjectURL(file);
+                                                            setFormData(prev => ({ ...prev, _bib_preview: url }));
+                                                        }
+                                                    }}
+                                                    className="w-full text-xs font-bold text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-[10px] file:font-black file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer"
+                                                />
+                                                {formData._bib_preview && (
+                                                    <div className="mt-2 rounded-xl overflow-hidden border border-gray-100 max-h-40 flex items-center justify-center bg-gray-50">
+                                                        <img src={formData._bib_preview} alt="BIB Preview" className="max-w-full max-h-40 object-contain" />
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
                                 <div className="space-y-1.5 md:col-span-2 p-6 bg-purple-50 rounded-[2rem] border border-purple-100 mt-4">
                                     <div className="flex items-center justify-between mb-4">
                                         <div className="flex items-center gap-3">
@@ -1474,42 +1311,202 @@ const EventSubmissionPage = () => {
                                         </div>
                                     )}
                                 </div>
+                            </div>
+                        </div>
 
-
+                        {/* Seksi 5: Media & Berkas Pendukung */}
+                        <div className="space-y-4 pt-4">
+                            <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                                <span className="w-6 h-6 bg-green-100 text-green-700 rounded-lg flex items-center justify-center text-xs">5</span>
+                                Media & Berkas Pendukung
+                            </h3>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-1.5 md:col-span-2">
-                                    <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Kapasitas Peserta</label>
-                                    <input
-                                        type="number"
-                                        name="capacity"
-                                        value={formData.capacity}
-                                        onChange={handleChange}
-                                        disabled={formData.teams && formData.teams.length > 0}
-                                        placeholder={formData.teams && formData.teams.length > 0 ? "Otomatis dari total kapasitas tim" : "Kosongkan atau isi 0 jika tak terbatas"}
-                                        className={`w-full px-5 py-3.5 border-none rounded-2xl text-sm focus:ring-2 focus:ring-green-500 transition ${
-                                            formData.teams && formData.teams.length > 0 
-                                                ? 'bg-purple-50 text-purple-900 font-bold border border-purple-100 cursor-not-allowed shadow-sm shadow-purple-50' 
-                                                : 'bg-gray-50 text-gray-800'
-                                        }`}
-                                    />
-                                    {formData.teams && formData.teams.length > 0 ? (
-                                        <p className="text-[10px] text-purple-600 font-bold ml-1 flex items-center gap-1">
-                                            <span className="material-icons text-[12px]">lock</span>
-                                            Kapasitas terkunci dan terisi otomatis dari total kuota seluruh tim ({formData.capacity} peserta).
-                                        </p>
-                                    ) : (
-                                        <p className="text-[10px] text-gray-400 ml-1 italic">Kosong/0 = Tanpa batas kuota.</p>
-                                    )}
+                                    <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Gambar Poster / Thumbnail (16:9) *</label>
+                                    <div className="flex flex-col gap-3">
+                                        <div
+                                            className={`w-full aspect-video bg-gray-100 rounded-2xl overflow-hidden border border-gray-200 ${files.thumbnail ? 'cursor-pointer' : ''}`}
+                                            onClick={() => (files.thumbnail || formData.thumbnail) && openPreview(files.thumbnail || formData.thumbnail, 'thumbnail')}
+                                            title={files.thumbnail ? 'Klik untuk lihat detail' : ''}
+                                        >
+                                            {files.thumbnail || formData.thumbnail ? (
+                                                <img
+                                                    src={files.thumbnail instanceof File ? URL.createObjectURL(files.thumbnail) : formData.thumbnail}
+                                                    className="w-full h-full object-cover"
+                                                    alt="Thumbnail Preview"
+                                                />
+                                            ) : (
+                                                <div className="flex flex-col items-center justify-center h-full text-gray-400 gap-2">
+                                                    <span className="material-icons text-4xl">image</span>
+                                                    <p className="text-[10px] font-bold">BELUM ADA GAMBAR</p>
+                                                </div>
+                                            )}
+                                        </div>
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            className="hidden"
+                                            id="thumb-upload"
+                                            onChange={(e) => handleFileSelect(e, 'thumbnail')}
+                                        />
+                                        <label htmlFor="thumb-upload" className="w-full text-center py-4 bg-green-50 text-green-700 rounded-2xl text-xs font-black cursor-pointer hover:bg-green-100 transition shadow-sm border border-green-100 uppercase tracking-widest">PILIH & POTONG FOTO POSTER</label>
+                                    </div>
+                                </div>
+                                <div className="space-y-1.5 md:col-span-2 mt-4">
+                                    <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Foto Galeri Pendukung (Akan jadi Carousel di Detail)</label>
+                                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                                        {/* Existing Gallery Images */}
+                                        {existingGalleryImages.map((img) => (
+                                            <div key={img.id} className="relative aspect-video rounded-xl overflow-hidden border border-gray-100 shadow-sm group">
+                                                <img
+                                                    src={img.image}
+                                                    className="w-full h-full object-cover cursor-pointer"
+                                                    alt="Gallery"
+                                                    onClick={() => openPreview(img.image)}
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={(e) => { e.stopPropagation(); removeGalleryImage(null, true, img.id); }}
+                                                    className="absolute top-1 right-1 w-6 h-6 bg-red-600/80 text-white rounded-full opacity-0 group-hover:opacity-100 transition flex items-center justify-center shadow-lg"
+                                                >
+                                                    <span className="material-icons text-xs">delete</span>
+                                                </button>
+                                            </div>
+                                        ))}
+
+                                        {/* New Gallery Uploads */}
+                                        {files.gallery_images.map((img, idx) => (
+                                            <div key={idx} className="relative aspect-video rounded-xl overflow-hidden border border-green-100 shadow-sm group">
+                                                <img
+                                                    src={URL.createObjectURL(img)}
+                                                    className="w-full h-full object-cover cursor-pointer"
+                                                    alt="New Gallery"
+                                                    onClick={() => openPreview(img)}
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={(e) => { e.stopPropagation(); removeGalleryImage(idx, false); }}
+                                                    className="absolute top-1 right-1 bg-red-500/80 text-white rounded-full w-6 h-6 shadow-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition"
+                                                >
+                                                    <span className="material-icons text-xs">close</span>
+                                                </button>
+                                            </div>
+                                        ))}
+
+                                        <label className="aspect-video rounded-xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center cursor-pointer hover:border-green-500 hover:bg-green-50 text-gray-400 hover:text-green-600 transition-all">
+                                            <span className="material-icons text-2xl">add_photo_alternate</span>
+                                            <span className="text-[9px] font-black mt-1 uppercase tracking-widest">TAMBAH FOTO</span>
+                                            <input type="file" accept="image/*" className="hidden" onChange={handleGalleryImageUpload} multiple />
+                                        </label>
+                                    </div>
+                                    <p className="text-[10px] text-gray-400 ml-1 italic mt-2">Gambar-gambar ini akan muncul sebagai slide (carousel) di bagian atas halaman detail event.</p>
+                                </div>
+                                <div className="space-y-1.5">
+                                        <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Lampiran Berkas (PDF/Gambar/Dokumen)</label>
+                                        <div className="flex flex-col gap-2">
+                                            <div className="flex items-center gap-3">
+                                                <label className="flex-1 text-center py-3.5 bg-white text-blue-700 rounded-2xl text-xs font-bold cursor-pointer hover:bg-blue-50 transition shadow-sm border border-blue-100">
+                                                    {files.attachment_file ? (files.attachment_file.name || 'Berkas Terpilih') : 'UNGGAH BERKAS (OPSIONAL)'}
+                                                    <input type="file" name="attachment_file" onChange={(e) => {
+                                                        const file = e.target.files[0];
+                                                        if (file && validateFileSize(file)) {
+                                                            setFiles(prev => ({ ...prev, attachment_file: file }));
+                                                        }
+                                                    }} className="hidden" />
+                                                </label>
+                                                {isEdit && formData.attachment_file && (
+                                                    <a href={formData.attachment_file} target="_blank" rel="noreferrer" className="w-12 h-12 bg-white text-blue-600 rounded-2xl flex items-center justify-center border border-blue-100 shadow-sm hover:bg-blue-50 transition">
+                                                        <span className="material-icons">visibility</span>
+                                                    </a>
+                                                )}
+                                            </div>
+                                            <input
+                                                type="text"
+                                                name="attachment_file_title"
+                                                value={formData.attachment_file_title}
+                                                onChange={handleChange}
+                                                placeholder="Judul Berkas (misal: Daftar Menu)"
+                                                className="w-full px-4 py-2.5 bg-white border border-blue-100 rounded-xl text-xs focus:ring-2 focus:ring-blue-500 transition shadow-sm"
+                                            />
+                                        </div>
+                                    </div>
+                                <div className="space-y-1.5">
+                                        <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Tautan Eksternal Pendukung (Link)</label>
+                                        <div className="flex flex-col gap-2">
+                                            <input
+                                                type="url"
+                                                name="attachment_link"
+                                                value={formData.attachment_link}
+                                                onChange={handleChange}
+                                                placeholder="https://..."
+                                                className="w-full px-5 py-3.5 bg-white border border-blue-100 rounded-2xl text-sm focus:ring-2 focus:ring-blue-500 transition shadow-sm"
+                                            />
+                                            <input
+                                                type="text"
+                                                name="attachment_link_title"
+                                                value={formData.attachment_link_title}
+                                                onChange={handleChange}
+                                                placeholder="Judul Link (misal: Lokasi Gmaps)"
+                                                className="w-full px-4 py-2.5 bg-white border border-blue-100 rounded-xl text-xs focus:ring-2 focus:ring-blue-500 transition shadow-sm"
+                                            />
+                                        </div>
+                                    </div>
+                            </div>
+                        </div>
+
+                        {/* Seksi 6: Visibilitas Event */}
+                        <div className="space-y-4 pt-4">
+                            <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                                <span className="w-6 h-6 bg-green-100 text-green-700 rounded-lg flex items-center justify-center text-xs">6</span>
+                                Visibilitas Event
+                            </h3>
+                            <div className="p-6 bg-blue-50/50 rounded-[2.5rem] border border-blue-100 space-y-6">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div className="space-y-1.5 md:col-span-2">
+                                        <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Visibilitas Event *</label>
+                                        <select
+                                            name="visibility"
+                                            value={formData.visibility}
+                                            onChange={handleChange}
+                                            className="w-full px-5 py-3.5 bg-white border border-blue-100 rounded-2xl text-sm focus:ring-2 focus:ring-blue-500 transition shadow-sm"
+                                        >
+                                            <option value="public">Umum (Tampil di Beranda & Daftar)</option>
+                                            <option value="private">Privat (Hanya lewat link langsung)</option>
+                                        </select>
+                                        <p className="text-[10px] text-blue-800/60 ml-1 italic font-medium">Link event tetap bisa diakses meskipun diset Privat.</p>
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Kapan Event Tampil di Publik? (Visibility Countdown)</label>
+                                        <input
+                                            type="datetime-local"
+                                            name="visible_at"
+                                            value={formData.visible_at}
+                                            onChange={handleChange}
+                                            className="w-full px-5 py-3.5 bg-white border border-blue-100 rounded-2xl text-sm focus:ring-2 focus:ring-blue-500 transition shadow-sm"
+                                        />
+                                        <p className="text-[10px] text-blue-800/60 ml-1 italic font-medium">Kosongkan jika ingin langsung tampil.</p>
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Kapan Pendaftaran Dibuka? (Registration Countdown)</label>
+                                        <input
+                                            type="datetime-local"
+                                            name="registration_start_at"
+                                            value={formData.registration_start_at}
+                                            onChange={handleChange}
+                                            className="w-full px-5 py-3.5 bg-white border border-blue-100 rounded-2xl text-sm focus:ring-2 focus:ring-blue-500 transition shadow-sm"
+                                        />
+                                        <p className="text-[10px] text-blue-800/60 ml-1 italic font-medium">Kosongkan jika ingin langsung dibuka.</p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
 
-                        {/* PHASE: SYARAT, NARASUMBER, SESI */}
-                        <div className="space-y-6 pt-4">
+                        {/* Seksi 7: Detail Acara Tambahan */}
+                        <div className="space-y-4 pt-4">
                             <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                                <span className="w-6 h-6 bg-green-100 text-green-700 rounded-lg flex items-center justify-center text-xs">6</span>
-                                Kapasitas & Detail Acara
+                                <span className="w-6 h-6 bg-green-100 text-green-700 rounded-lg flex items-center justify-center text-xs">7</span>
+                                Detail Acara Tambahan
                             </h3>
-
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border border-gray-100 p-4 rounded-3xl bg-gray-50/50">
                                 <div className="space-y-1.5">
                                     <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Syarat & Ketentuan (DO)</label>
@@ -1558,102 +1555,7 @@ const EventSubmissionPage = () => {
                             </div>
                         </div>
 
-
-
-                        {/* PHASE 7: DOKUMENTASI (POST-EVENT) */}
-                        <div className="space-y-4 pt-4">
-                            <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                                <span className="w-6 h-6 bg-purple-100 text-purple-700 rounded-lg flex items-center justify-center text-xs">7</span>
-                                Dokumentasi (Pasca-Event)
-                            </h3>
-
-                            <div className="space-y-4">
-                                {isEdit && (
-                                    <div className="space-y-1.5">
-                                        <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Link Download Dokumentasi</label>
-                                        <input
-                                            type="url"
-                                            name="documentation_link"
-                                            value={formData.documentation_link}
-                                            onChange={handleChange}
-                                            placeholder="https://drive.google.com/..."
-                                            className="w-full px-5 py-3.5 bg-gray-50 border-none rounded-2xl text-sm focus:ring-2 focus:ring-green-500 transition"
-                                        />
-                                        <p className="text-[10px] text-gray-400 ml-1 italic">Link ini hanya akan tampil bagi peserta yang sudah login dan terdaftar.</p>
-                                    </div>
-                                )}
-
-                                <div className="space-y-2 mb-6">
-                                    <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Bingkai Dokumentasi Ukuran 4:5 Transparan (PNG) Opsional</label>
-                                    <div className="flex gap-4 items-end">
-                                        <div className="w-24 h-24 bg-gray-50 border-2 border-dashed border-gray-200 rounded-2xl flex items-center justify-center shrink-0">
-                                            {files.documentation_frame_1_1 || formData.documentation_frame_1_1 ? (
-                                                <img src={files.documentation_frame_1_1 instanceof File ? URL.createObjectURL(files.documentation_frame_1_1) : formData.documentation_frame_1_1} className="w-full h-full object-contain p-2" alt="frame preview" />
-                                            ) : <span className="material-icons text-gray-300 text-3xl">filter_frames</span>}
-                                        </div>
-                                        <div className="flex-1">
-                                            <input type="file" accept="image/png" id="frame-upload" className="hidden" onChange={e => setFiles(p => ({ ...p, documentation_frame_1_1: e.target.files[0] }))} />
-                                            <label htmlFor="frame-upload" className="text-xs bg-purple-50 text-purple-700 px-4 py-2 rounded-xl font-bold cursor-pointer inline-block border border-purple-100">Pilih File Bingkai</label>
-                                            <p className="text-[10px] text-gray-400 mt-2 leading-relaxed">Pilih PNG transparan rasio 4:5. Bingkai ini akan otomatis ditempel ketika admin upload foto dokumentasi.</p>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {isEdit && (
-                                    <div className="space-y-2">
-                                        <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Foto Dokumentasi (Max 3x3 Grid)</label>
-                                        <div className="grid grid-cols-3 gap-3">
-                                            {/* Existing Images */}
-                                            {existingDocImages.map((img) => (
-                                                <div key={img.id} className="relative aspect-[4/5] rounded-xl overflow-hidden border border-gray-100 shadow-sm group">
-                                                    <img
-                                                        src={img.image}
-                                                        className="w-full h-full object-cover cursor-pointer"
-                                                        alt="Doc"
-                                                        onClick={() => openPreview(img.image)}
-                                                    />
-                                                    <button
-                                                        type="button"
-                                                        onClick={(e) => { e.stopPropagation(); removeDocImage(null, true, img.id); }}
-                                                        className="absolute top-1 right-1 w-6 h-6 bg-red-600/80 text-white rounded-full opacity-0 group-hover:opacity-100 transition flex items-center justify-center shadow-lg"
-                                                    >
-                                                        <span className="material-icons text-xs">delete</span>
-                                                    </button>
-                                                </div>
-                                            ))}
-
-                                            {/* New Uploads */}
-                                            {files.documentation_images.map((img, idx) => (
-                                                <div key={idx} className="relative aspect-[4/5] rounded-xl overflow-hidden border border-green-100 shadow-sm group">
-                                                    <img
-                                                        src={URL.createObjectURL(img)}
-                                                        className="w-full h-full object-cover cursor-pointer"
-                                                        alt="New Doc"
-                                                        onClick={() => openPreview(img)}
-                                                    />
-                                                    <button
-                                                        type="button"
-                                                        onClick={(e) => { e.stopPropagation(); removeDocImage(idx, false); }}
-                                                        className="absolute top-1 right-1 bg-red-500/80 text-white rounded-full w-6 h-6 shadow-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition"
-                                                    >
-                                                        <span className="material-icons text-xs">close</span>
-                                                    </button>
-                                                </div>
-                                            ))}
-
-                                            <label className="aspect-[4/5] rounded-xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center cursor-pointer hover:border-green-500 hover:bg-green-50 text-gray-400 hover:text-green-600 transition-all">
-                                                <span className="material-icons text-2xl">add_a_photo</span>
-                                                <span className="text-[10px] font-bold mt-1 uppercase tracking-tighter">Tambah</span>
-                                                <input type="file" accept="image/*" className="hidden" onChange={handleDocImageUpload} multiple />
-                                            </label>
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* Supporting Gallery Images (Formerly Doc) */}
-                            </div>
-                        </div>
-                        {/* PHASE 7: FORM PENDAFTARAN */}
+                        {/* Seksi 8: Formulir Pendaftaran Khusus */}
                         <div className="space-y-4 pt-4">
                             <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
                                 <span className="w-6 h-6 bg-green-100 text-green-700 rounded-lg flex items-center justify-center text-xs">8</span>
@@ -1790,24 +1692,100 @@ const EventSubmissionPage = () => {
                             </div>
                         </div>
 
-                        <button
-                            type="submit"
-                            disabled={loading}
-                            className={`w-full py-5 bg-green-700 text-white rounded-3xl text-sm font-bold shadow-xl shadow-green-100 flex items-center justify-center gap-3 active:scale-[0.98] transition-all ${loading ? 'opacity-70 cursor-not-allowed' : 'hover:bg-green-800'}`}
-                        >
-                            {loading ? (
-                                <>
-                                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                                    MENGIRIM PENGAJUAN...
-                                </>
-                            ) : (
-                                <>
-                                    <span className="material-icons text-sm">send</span>
-                                    {isEdit ? 'SIMPAN PERUBAHAN' : 'AJUKAN EVENT SEKARANG'}
-                                </>
-                            )}
-                        </button>
-                    </form>
+                        {isEdit && (
+                            <div className="space-y-4 pt-4 animate-fade-in">
+                                <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                                    <span className="w-6 h-6 bg-purple-100 text-purple-700 rounded-lg flex items-center justify-center text-xs">9</span>
+                                    Dokumentasi (Pasca-Event)
+                                </h3>
+                                <div className="space-y-4">
+                                {isEdit && (
+                                    <div className="space-y-1.5">
+                                        <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Link Download Dokumentasi</label>
+                                        <input
+                                            type="url"
+                                            name="documentation_link"
+                                            value={formData.documentation_link}
+                                            onChange={handleChange}
+                                            placeholder="https://drive.google.com/..."
+                                            className="w-full px-5 py-3.5 bg-gray-50 border-none rounded-2xl text-sm focus:ring-2 focus:ring-green-500 transition"
+                                        />
+                                        <p className="text-[10px] text-gray-400 ml-1 italic">Link ini hanya akan tampil bagi peserta yang sudah login dan terdaftar.</p>
+                                    </div>
+                                )}
+
+                                <div className="space-y-2 mb-6">
+                                    <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Bingkai Dokumentasi Ukuran 4:5 Transparan (PNG) Opsional</label>
+                                    <div className="flex gap-4 items-end">
+                                        <div className="w-24 h-24 bg-gray-50 border-2 border-dashed border-gray-200 rounded-2xl flex items-center justify-center shrink-0">
+                                            {files.documentation_frame_1_1 || formData.documentation_frame_1_1 ? (
+                                                <img src={files.documentation_frame_1_1 instanceof File ? URL.createObjectURL(files.documentation_frame_1_1) : formData.documentation_frame_1_1} className="w-full h-full object-contain p-2" alt="frame preview" />
+                                            ) : <span className="material-icons text-gray-300 text-3xl">filter_frames</span>}
+                                        </div>
+                                        <div className="flex-1">
+                                            <input type="file" accept="image/png" id="frame-upload" className="hidden" onChange={e => setFiles(p => ({ ...p, documentation_frame_1_1: e.target.files[0] }))} />
+                                            <label htmlFor="frame-upload" className="text-xs bg-purple-50 text-purple-700 px-4 py-2 rounded-xl font-bold cursor-pointer inline-block border border-purple-100">Pilih File Bingkai</label>
+                                            <p className="text-[10px] text-gray-400 mt-2 leading-relaxed">Pilih PNG transparan rasio 4:5. Bingkai ini akan otomatis ditempel ketika admin upload foto dokumentasi.</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {isEdit && (
+                                    <div className="space-y-2">
+                                        <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Foto Dokumentasi (Max 3x3 Grid)</label>
+                                        <div className="grid grid-cols-3 gap-3">
+                                            {/* Existing Images */}
+                                            {existingDocImages.map((img) => (
+                                                <div key={img.id} className="relative aspect-[4/5] rounded-xl overflow-hidden border border-gray-100 shadow-sm group">
+                                                    <img
+                                                        src={img.image}
+                                                        className="w-full h-full object-cover cursor-pointer"
+                                                        alt="Doc"
+                                                        onClick={() => openPreview(img.image)}
+                                                    />
+                                                    <button
+                                                        type="button"
+                                                        onClick={(e) => { e.stopPropagation(); removeDocImage(null, true, img.id); }}
+                                                        className="absolute top-1 right-1 w-6 h-6 bg-red-600/80 text-white rounded-full opacity-0 group-hover:opacity-100 transition flex items-center justify-center shadow-lg"
+                                                    >
+                                                        <span className="material-icons text-xs">delete</span>
+                                                    </button>
+                                                </div>
+                                            ))}
+
+                                            {/* New Uploads */}
+                                            {files.documentation_images.map((img, idx) => (
+                                                <div key={idx} className="relative aspect-[4/5] rounded-xl overflow-hidden border border-green-100 shadow-sm group">
+                                                    <img
+                                                        src={URL.createObjectURL(img)}
+                                                        className="w-full h-full object-cover cursor-pointer"
+                                                        alt="New Doc"
+                                                        onClick={() => openPreview(img)}
+                                                    />
+                                                    <button
+                                                        type="button"
+                                                        onClick={(e) => { e.stopPropagation(); removeDocImage(idx, false); }}
+                                                        className="absolute top-1 right-1 bg-red-500/80 text-white rounded-full w-6 h-6 shadow-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition"
+                                                    >
+                                                        <span className="material-icons text-xs">close</span>
+                                                    </button>
+                                                </div>
+                                            ))}
+
+                                            <label className="aspect-[4/5] rounded-xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center cursor-pointer hover:border-green-500 hover:bg-green-50 text-gray-400 hover:text-green-600 transition-all">
+                                                <span className="material-icons text-2xl">add_a_photo</span>
+                                                <span className="text-[10px] font-bold mt-1 uppercase tracking-tighter">Tambah</span>
+                                                <input type="file" accept="image/*" className="hidden" onChange={handleDocImageUpload} multiple />
+                                            </label>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Supporting Gallery Images (Formerly Doc) */}
+                            </div>
+                            </div>
+                        )}
+</form>
                 </div>
             </div>
             {cropper.active && (
