@@ -140,6 +140,7 @@ const EventDetailPage = () => {
     useEffect(() => {
         if (!showRegisterModal) {
             setHasAutoFilled(false);
+            setError(null);
             return;
         }
 
@@ -906,6 +907,44 @@ const EventDetailPage = () => {
                                     </div>
                                 </div>
 
+                                {/* Speakers Section */}
+                                {event.speakers && event.speakers.length > 0 && (
+                                    <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-100">
+                                        <h2 className="text-2xl font-extrabold text-gray-900 mb-8 flex items-center gap-3">
+                                            <span className="w-2 h-8 bg-blue-600 rounded-full"></span>
+                                            Narasumber
+                                        </h2>
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                            {event.speakers.map(spk => {
+                                                const SpeakerContent = (
+                                                    <div className="flex items-center gap-4 bg-gray-50 border border-gray-100 p-4 rounded-3xl group hover:border-blue-200 transition h-full">
+                                                        <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-700 text-white rounded-full flex items-center justify-center font-bold text-2xl shadow-lg shrink-0 aspect-square overflow-hidden">{spk.name.charAt(0)}</div>
+                                                        <div className="min-w-0">
+                                                            <div className="flex items-center gap-1">
+                                                                <p className={`font-extrabold text-gray-900 text-base truncate ${spk.link ? 'group-hover:text-blue-700 transition-colors' : ''}`}>
+                                                                    {spk.name}
+                                                                </p>
+                                                                {spk.link && <span className="material-icons text-blue-400 text-sm opacity-0 group-hover:opacity-100 transition-opacity">open_in_new</span>}
+                                                            </div>
+                                                            {spk.role && <p className="text-xs text-blue-600 font-bold uppercase tracking-wider mt-1 truncate">{spk.role}</p>}
+                                                        </div>
+                                                    </div>
+                                                );
+
+                                                return spk.link ? (
+                                                    <a key={spk.id} href={spk.link} target="_blank" rel="noopener noreferrer" className="block focus:outline-none">
+                                                        {SpeakerContent}
+                                                    </a>
+                                                ) : (
+                                                    <div key={spk.id}>
+                                                        {SpeakerContent}
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                )}
+
                                 {/* Description Card */}
                                 <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-100 min-h-[400px]">
                                     <h2 className="text-2xl font-extrabold text-gray-900 mb-6 flex items-center gap-3">
@@ -958,44 +997,6 @@ const EventDetailPage = () => {
                                                     </div>
                                                 </a>
                                             )}
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* Speakers Section */}
-                                {event.speakers && event.speakers.length > 0 && (
-                                    <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-100">
-                                        <h2 className="text-2xl font-extrabold text-gray-900 mb-8 flex items-center gap-3">
-                                            <span className="w-2 h-8 bg-blue-600 rounded-full"></span>
-                                            Narasumber
-                                        </h2>
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                            {event.speakers.map(spk => {
-                                                const SpeakerContent = (
-                                                    <div className="flex items-center gap-4 bg-gray-50 border border-gray-100 p-4 rounded-3xl group hover:border-blue-200 transition h-full">
-                                                        <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-700 text-white rounded-full flex items-center justify-center font-bold text-2xl shadow-lg shrink-0 aspect-square overflow-hidden">{spk.name.charAt(0)}</div>
-                                                        <div className="min-w-0">
-                                                            <div className="flex items-center gap-1">
-                                                                <p className={`font-extrabold text-gray-900 text-base truncate ${spk.link ? 'group-hover:text-blue-700 transition-colors' : ''}`}>
-                                                                    {spk.name}
-                                                                </p>
-                                                                {spk.link && <span className="material-icons text-blue-400 text-sm opacity-0 group-hover:opacity-100 transition-opacity">open_in_new</span>}
-                                                            </div>
-                                                            {spk.role && <p className="text-xs text-blue-600 font-bold uppercase tracking-wider mt-1 truncate">{spk.role}</p>}
-                                                        </div>
-                                                    </div>
-                                                );
-
-                                                return spk.link ? (
-                                                    <a key={spk.id} href={spk.link} target="_blank" rel="noopener noreferrer" className="block focus:outline-none">
-                                                        {SpeakerContent}
-                                                    </a>
-                                                ) : (
-                                                    <div key={spk.id}>
-                                                        {SpeakerContent}
-                                                    </div>
-                                                );
-                                            })}
                                         </div>
                                     </div>
                                 )}
@@ -1558,492 +1559,504 @@ const EventDetailPage = () => {
                                     <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Belum punya akun? <Link to="/register" className="text-green-600 underline">Daftar</Link></p>
                                 </div>
                             ) : (
-                                <>
-                                    {error && (
-                                        <div className="mb-6 bg-red-50 text-red-600 p-4 rounded-2xl text-xs font-bold border border-red-100 flex items-center gap-3">
-                                            <span className="material-icons text-lg">error_outline</span>
-                                            {error}
+                                <form onSubmit={handleSubmit} className="space-y-8">
+                                    {/* HTM / Payment Section */}
+                                    {event.price_type !== 'free' && isUserFreeByLabel() && (
+                                        <div className="p-6 bg-blue-600 rounded-[2.5rem] border border-blue-500 shadow-xl shadow-blue-200/50 animate-fade-in">
+                                            <div className="flex items-center gap-4">
+                                                <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center shrink-0">
+                                                    <span className="material-icons text-white">card_membership</span>
+                                                </div>
+                                                <div>
+                                                    <h4 className="text-white font-black text-sm uppercase tracking-wider">Gratis Spesial!</h4>
+                                                    <p className="text-blue-100 text-[11px] font-medium leading-relaxed">
+                                                        Karena Anda memiliki label <span className="bg-white/20 px-1.5 py-0.5 rounded-lg text-white font-bold">{matchedLabelNames()}</span>, Anda dapat mengikuti event ini secara <span className="text-white font-black">GRATIS</span>.
+                                                    </p>
+                                                </div>
+                                            </div>
                                         </div>
                                     )}
 
-                                    <form onSubmit={handleSubmit} className="space-y-8">
-                                        {/* HTM / Payment Section */}
-                                        {event.price_type !== 'free' && isUserFreeByLabel() && (
-                                            <div className="p-6 bg-blue-600 rounded-[2.5rem] border border-blue-500 shadow-xl shadow-blue-200/50 animate-fade-in">
-                                                <div className="flex items-center gap-4">
-                                                    <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center shrink-0">
-                                                        <span className="material-icons text-white">card_membership</span>
+                                    {event.form_fields?.length > 0 && (
+                                        <div className="space-y-6">
+                                            <h3 className="text-sm font-bold text-gray-900 border-l-4 border-green-600 pl-4 py-1">Data Pendaftaran</h3>
+                                            {event.form_fields.map((field) => (
+                                                <div key={field.id} className="space-y-2">
+                                                    <div className="flex justify-between items-center px-1">
+                                                        <label className="text-[11px] font-bold text-gray-700 uppercase tracking-wider">
+                                                            {field.label} {field.required && <span className="text-red-500">*</span>}
+                                                        </label>
+                                                        <span className="text-[9px] font-bold text-gray-300 uppercase">{field.field_type}</span>
                                                     </div>
-                                                    <div>
-                                                        <h4 className="text-white font-black text-sm uppercase tracking-wider">Gratis Spesial!</h4>
-                                                        <p className="text-blue-100 text-[11px] font-medium leading-relaxed">
-                                                            Karena Anda memiliki label <span className="bg-white/20 px-1.5 py-0.5 rounded-lg text-white font-bold">{matchedLabelNames()}</span>, Anda dapat mengikuti event ini secara <span className="text-white font-black">GRATIS</span>.
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        )}
 
-                                        {event.form_fields?.length > 0 && (
-                                            <div className="space-y-6">
-                                                <h3 className="text-sm font-bold text-gray-900 border-l-4 border-green-600 pl-4 py-1">Data Pendaftaran</h3>
-                                                {event.form_fields.map((field) => (
-                                                    <div key={field.id} className="space-y-2">
-                                                        <div className="flex justify-between items-center px-1">
-                                                            <label className="text-[11px] font-bold text-gray-700 uppercase tracking-wider">
-                                                                {field.label} {field.required && <span className="text-red-500">*</span>}
-                                                            </label>
-                                                            <span className="text-[9px] font-bold text-gray-300 uppercase">{field.field_type}</span>
-                                                        </div>
+                                                    {field.field_type === 'text' && (
+                                                        <input
+                                                            required={field.required}
+                                                            type="text"
+                                                            value={responses[field.id] || ''}
+                                                            onChange={(e) => handleResponseChange(field.id, e.target.value)}
+                                                            className="w-full px-5 py-3.5 bg-gray-50 border border-transparent rounded-2xl text-sm outline-none focus:bg-white focus:border-green-500 focus:ring-4 focus:ring-green-500/10 transition shadow-inner"
+                                                        />
+                                                    )}
 
-                                                        {field.field_type === 'text' && (
-                                                            <input
+                                                    {field.field_type === 'textarea' && (
+                                                        <textarea
+                                                            required={field.required}
+                                                            rows="3"
+                                                            value={responses[field.id] || ''}
+                                                            onChange={(e) => handleResponseChange(field.id, e.target.value)}
+                                                            className="w-full px-5 py-3.5 bg-gray-50 border border-transparent rounded-2xl text-sm outline-none focus:bg-white focus:border-green-500 focus:ring-4 focus:ring-green-500/10 transition shadow-inner resize-none custom-scrollbar"
+                                                        ></textarea>
+                                                    )}
+
+                                                    {field.field_type === 'number' && (
+                                                        <input
+                                                            required={field.required}
+                                                            type="number"
+                                                            value={responses[field.id] || ''}
+                                                            onChange={(e) => handleResponseChange(field.id, e.target.value)}
+                                                            className="w-full px-5 py-3.5 bg-gray-50 border border-transparent rounded-2xl text-sm outline-none focus:bg-white focus:border-green-500 focus:ring-4 focus:ring-green-500/10 transition shadow-inner"
+                                                        />
+                                                    )}
+
+                                                    {field.field_type === 'email' && (
+                                                        <input
+                                                            required={field.required}
+                                                            type="email"
+                                                            value={responses[field.id] || ''}
+                                                            onChange={(e) => handleResponseChange(field.id, e.target.value)}
+                                                            className="w-full px-5 py-3.5 bg-gray-50 border border-transparent rounded-2xl text-sm outline-none focus:bg-white focus:border-green-500 focus:ring-4 focus:ring-green-500/10 transition shadow-inner"
+                                                        />
+                                                    )}
+
+                                                    {field.field_type === 'phone' && (
+                                                        <input
+                                                            required={field.required}
+                                                            type="tel"
+                                                            value={responses[field.id] || ''}
+                                                            onChange={(e) => handleResponseChange(field.id, e.target.value)}
+                                                            className="w-full px-5 py-3.5 bg-gray-50 border border-transparent rounded-2xl text-sm outline-none focus:bg-white focus:border-green-500 focus:ring-4 focus:ring-green-500/10 transition shadow-inner"
+                                                        />
+                                                    )}
+
+                                                    {field.field_type === 'date' && (
+                                                        <input
+                                                            required={field.required}
+                                                            type="date"
+                                                            value={responses[field.id] || ''}
+                                                            onChange={(e) => handleResponseChange(field.id, e.target.value)}
+                                                            className="w-full px-5 py-3.5 bg-gray-50 border border-transparent rounded-2xl text-sm outline-none focus:bg-white focus:border-green-500 focus:ring-4 focus:ring-green-500/10 transition shadow-inner"
+                                                        />
+                                                    )}
+
+                                                    {(field.field_type === 'select' || field.field_type === 'radio') && (
+                                                        <div className="relative">
+                                                            <select
                                                                 required={field.required}
-                                                                type="text"
                                                                 value={responses[field.id] || ''}
                                                                 onChange={(e) => handleResponseChange(field.id, e.target.value)}
-                                                                className="w-full px-5 py-3.5 bg-gray-50 border border-transparent rounded-2xl text-sm outline-none focus:bg-white focus:border-green-500 focus:ring-4 focus:ring-green-500/10 transition shadow-inner"
-                                                            />
-                                                        )}
-
-                                                        {field.field_type === 'textarea' && (
-                                                            <textarea
-                                                                required={field.required}
-                                                                rows="3"
-                                                                value={responses[field.id] || ''}
-                                                                onChange={(e) => handleResponseChange(field.id, e.target.value)}
-                                                                className="w-full px-5 py-3.5 bg-gray-50 border border-transparent rounded-2xl text-sm outline-none focus:bg-white focus:border-green-500 focus:ring-4 focus:ring-green-500/10 transition shadow-inner resize-none custom-scrollbar"
-                                                            ></textarea>
-                                                        )}
-
-                                                        {field.field_type === 'number' && (
-                                                            <input
-                                                                required={field.required}
-                                                                type="number"
-                                                                value={responses[field.id] || ''}
-                                                                onChange={(e) => handleResponseChange(field.id, e.target.value)}
-                                                                className="w-full px-5 py-3.5 bg-gray-50 border border-transparent rounded-2xl text-sm outline-none focus:bg-white focus:border-green-500 focus:ring-4 focus:ring-green-500/10 transition shadow-inner"
-                                                            />
-                                                        )}
-
-                                                        {field.field_type === 'email' && (
-                                                            <input
-                                                                required={field.required}
-                                                                type="email"
-                                                                value={responses[field.id] || ''}
-                                                                onChange={(e) => handleResponseChange(field.id, e.target.value)}
-                                                                className="w-full px-5 py-3.5 bg-gray-50 border border-transparent rounded-2xl text-sm outline-none focus:bg-white focus:border-green-500 focus:ring-4 focus:ring-green-500/10 transition shadow-inner"
-                                                            />
-                                                        )}
-
-                                                        {field.field_type === 'phone' && (
-                                                            <input
-                                                                required={field.required}
-                                                                type="tel"
-                                                                value={responses[field.id] || ''}
-                                                                onChange={(e) => handleResponseChange(field.id, e.target.value)}
-                                                                className="w-full px-5 py-3.5 bg-gray-50 border border-transparent rounded-2xl text-sm outline-none focus:bg-white focus:border-green-500 focus:ring-4 focus:ring-green-500/10 transition shadow-inner"
-                                                            />
-                                                        )}
-
-                                                        {field.field_type === 'date' && (
-                                                            <input
-                                                                required={field.required}
-                                                                type="date"
-                                                                value={responses[field.id] || ''}
-                                                                onChange={(e) => handleResponseChange(field.id, e.target.value)}
-                                                                className="w-full px-5 py-3.5 bg-gray-50 border border-transparent rounded-2xl text-sm outline-none focus:bg-white focus:border-green-500 focus:ring-4 focus:ring-green-500/10 transition shadow-inner"
-                                                            />
-                                                        )}
-
-                                                        {(field.field_type === 'select' || field.field_type === 'radio') && (
-                                                            <div className="relative">
-                                                                <select
-                                                                    required={field.required}
-                                                                    value={responses[field.id] || ''}
-                                                                    onChange={(e) => handleResponseChange(field.id, e.target.value)}
-                                                                    className="w-full px-5 py-3.5 bg-gray-50 border border-transparent rounded-2xl text-sm outline-none focus:bg-white focus:border-green-500 focus:ring-4 focus:ring-green-500/10 transition shadow-inner appearance-none pr-10"
-                                                                >
-                                                                    <option value="">Pilih Opsi</option>
-                                                                    {(() => {
-                                                                        let opts = field.options || [];
-                                                                        if (typeof opts === 'string') {
-                                                                            try { opts = JSON.parse(opts); } catch (e) { opts = []; }
-                                                                        }
-                                                                        return Array.isArray(opts) ? opts.map(opt => {
-                                                                            const isObj = typeof opt === 'object';
-                                                                            const label = isObj ? opt.label : opt;
-                                                                            const price = isObj && opt.price ? ` (+ Rp ${formatCurrency(opt.price)})` : '';
-                                                                            return <option key={label} value={label}>{label}{price}</option>
-                                                                        }) : null;
-                                                                    })()}
-                                                                </select>
-                                                                <span className="material-icons absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">expand_more</span>
-                                                            </div>
-                                                        )}
-
-                                                        {field.field_type === 'checkbox' && (
-                                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
+                                                                className="w-full px-5 py-3.5 bg-gray-50 border border-transparent rounded-2xl text-sm outline-none focus:bg-white focus:border-green-500 focus:ring-4 focus:ring-green-500/10 transition shadow-inner appearance-none pr-10"
+                                                            >
+                                                                <option value="">Pilih Opsi</option>
                                                                 {(() => {
                                                                     let opts = field.options || [];
                                                                     if (typeof opts === 'string') {
                                                                         try { opts = JSON.parse(opts); } catch (e) { opts = []; }
                                                                     }
-                                                                    return Array.isArray(opts) ? opts.map((opt, i) => {
+                                                                    return Array.isArray(opts) ? opts.map(opt => {
                                                                         const isObj = typeof opt === 'object';
                                                                         const label = isObj ? opt.label : opt;
                                                                         const price = isObj && opt.price ? ` (+ Rp ${formatCurrency(opt.price)})` : '';
-                                                                        return (
-                                                                            <label key={label} className={`flex items-center gap-3 px-4 py-3 rounded-2xl border cursor-pointer transition ${(responses[field.id] || []).includes(label) ? 'bg-green-50 border-green-200 text-green-700' : 'bg-white border-gray-100 text-gray-500 hover:border-gray-200'}`}>
-                                                                                <input
-                                                                                    type="checkbox"
-                                                                                    onChange={(e) => handleCheckboxChange(field.id, label, e.target.checked)}
-                                                                                    className="w-4 h-4 text-green-600 rounded"
-                                                                                />
-                                                                                <span className="text-xs font-bold truncate">
-                                                                                    {label}{price}
-                                                                                </span>
-                                                                            </label>
-                                                                        )
+                                                                        return <option key={label} value={label}>{label}{price}</option>
                                                                     }) : null;
                                                                 })()}
-                                                            </div>
-                                                        )}
-
-                                                        {field.field_type === 'file' && (
-                                                            <div className="flex items-center justify-center w-full">
-                                                                <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-100 border-dashed rounded-3xl cursor-pointer bg-gray-50 hover:bg-white hover:border-green-300 transition-all">
-                                                                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                                                                        <span className="material-icons text-gray-400 mb-2">cloud_upload</span>
-                                                                        <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Click to upload file</p>
-                                                                        {files[field.id] && <p className="mt-1 text-xs text-green-600 font-bold max-w-[200px] truncate">{files[field.id].name}</p>}
-                                                                    </div>
-                                                                    <input
-                                                                        required={field.required}
-                                                                        type="file"
-                                                                        onChange={(e) => handleFileChange(field.id, e.target.files[0])}
-                                                                        className="hidden"
-                                                                    />
-                                                                </label>
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        )}
-
-                                        {event.price_type !== 'free' && !isUserFreeByLabel() && (
-                                            <div className="p-6 bg-gray-50 rounded-[2rem] border border-gray-200 space-y-6">
-                                                {event.teams && event.teams.length > 0 && (
-                                                    <div className="space-y-4">
-                                                        <h3 className="text-sm font-bold text-gray-900 flex items-center gap-2">
-                                                            <span className="material-icons text-purple-600">groups</span>
-                                                            Pilih Tim / Kelompok <span className="text-red-500">*</span>
-                                                        </h3>
-                                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                                            {event.teams.map((tm, idx) => {
-                                                                const isFull = tm.registered_count >= tm.capacity;
-                                                                const isSelected = selectedTeam?.id === tm.id;
-                                                                return (
-                                                                    <div
-                                                                        key={idx}
-                                                                        onClick={() => !isFull && setSelectedTeam(tm)}
-                                                                        className={`p-4 rounded-2xl border-2 transition relative ${isFull ? 'bg-gray-100 border-gray-200 opacity-60 cursor-not-allowed' : isSelected ? 'bg-purple-50 border-purple-500 cursor-pointer shadow-md' : 'bg-white border-gray-200 cursor-pointer hover:border-purple-300'}`}
-                                                                    >
-                                                                        {isSelected && <div className="absolute top-2 right-2 w-5 h-5 bg-purple-500 rounded-full flex items-center justify-center"><span className="material-icons text-white text-[10px]">check</span></div>}
-                                                                        <p className="font-extrabold text-sm text-gray-900">{tm.name}</p>
-                                                                        <div className="flex justify-between items-center mt-2">
-                                                                            <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Sisa {Math.max(0, tm.capacity - tm.registered_count)} Slot</p>
-                                                                            {Number(tm.price_modifier) !== 0 && (
-                                                                                <p className={`text-xs font-black ${Number(tm.price_modifier) > 0 ? 'text-red-500' : 'text-green-600'}`}>
-                                                                                    {Number(tm.price_modifier) > 0 ? '+' : '-'} Rp {formatCurrency(Math.abs(tm.price_modifier))}
-                                                                                </p>
-                                                                            )}
-                                                                        </div>
-                                                                        {isFull && <div className="mt-2 text-center text-[9px] text-red-500 font-bold uppercase tracking-widest bg-red-50 py-1 rounded-md">Penuh</div>}
-                                                                    </div>
-                                                                )
-                                                            })}
+                                                            </select>
+                                                            <span className="material-icons absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">expand_more</span>
                                                         </div>
-                                                        {!selectedTeam && (
-                                                            <p className="text-[10px] text-red-500 font-bold uppercase tracking-wider flex items-center gap-1 ml-1">
-                                                                <span className="material-icons text-xs">warning</span>
-                                                                Wajib memilih salah satu tim untuk mendaftar
-                                                            </p>
-                                                        )}
-                                                    </div>
-                                                )}
+                                                    )}
 
-                                                {/* Show GRATIS badge when total is 0 */}
-                                                {getCalculatedTotal() <= 0 ? (
-                                                    <div className="flex flex-col items-center gap-3 py-6 bg-gradient-to-br from-green-50 to-emerald-50 rounded-3xl border border-green-200">
-                                                        <div className="w-14 h-14 bg-green-100 rounded-full flex items-center justify-center">
-                                                            <span className="material-icons text-green-600 text-2xl">celebration</span>
+                                                    {field.field_type === 'checkbox' && (
+                                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
+                                                            {(() => {
+                                                                let opts = field.options || [];
+                                                                if (typeof opts === 'string') {
+                                                                    try { opts = JSON.parse(opts); } catch (e) { opts = []; }
+                                                                }
+                                                                return Array.isArray(opts) ? opts.map((opt, i) => {
+                                                                    const isObj = typeof opt === 'object';
+                                                                    const label = isObj ? opt.label : opt;
+                                                                    const price = isObj && opt.price ? ` (+ Rp ${formatCurrency(opt.price)})` : '';
+                                                                    return (
+                                                                        <label key={label} className={`flex items-center gap-3 px-4 py-3 rounded-2xl border cursor-pointer transition ${(responses[field.id] || []).includes(label) ? 'bg-green-50 border-green-200 text-green-700' : 'bg-white border-gray-100 text-gray-500 hover:border-gray-200'}`}>
+                                                                            <input
+                                                                                type="checkbox"
+                                                                                onChange={(e) => handleCheckboxChange(field.id, label, e.target.checked)}
+                                                                                className="w-4 h-4 text-green-600 rounded"
+                                                                            />
+                                                                            <span className="text-xs font-bold truncate">
+                                                                                {label}{price}
+                                                                            </span>
+                                                                        </label>
+                                                                    )
+                                                                }) : null;
+                                                            })()}
                                                         </div>
-                                                        <div className="text-center">
-                                                            <p className="text-lg font-black text-green-700 uppercase tracking-widest">GRATIS</p>
-                                                            <p className="text-xs text-green-600 font-medium mt-1">Tidak ada biaya pendaftaran untuk tim ini</p>
-                                                        </div>
-                                                    </div>
-                                                ) : (
-                                                    <>
-                                                        <div className="flex items-center justify-between">
-                                                            <h3 className="text-sm font-bold text-gray-900 flex items-center gap-2">
-                                                                <span className="material-icons text-green-600">payments</span>
-                                                                Metode Pembayaran
-                                                            </h3>
-                                                            <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-[10px] font-black uppercase">{event.price_type}</span>
-                                                        </div>
+                                                    )}
 
-                                                        {/* Price Variations Selection */}
-                                                        {event.price_variations && event.price_variations.length > 0 && (
-                                                            <div className="space-y-3">
-                                                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Pilih Paket / Variasi HTM</label>
-                                                                <div className="grid grid-cols-1 gap-3">
-                                                                    {event.price_variations.map((v, idx) => (
-                                                                        <button
-                                                                            key={idx}
-                                                                            type="button"
-                                                                            onClick={() => setSelectedPriceVariation(v)}
-                                                                            className={`p-4 rounded-2xl border-2 text-left transition-all relative overflow-hidden group ${selectedPriceVariation?.id === v.id ? 'border-green-600 bg-green-50 shadow-md' : 'border-gray-100 bg-white hover:border-green-200'}`}
-                                                                        >
-                                                                            <div className="flex justify-between items-start mb-2 relative z-10">
-                                                                                <h4 className={`text-xs font-black uppercase tracking-wider ${selectedPriceVariation?.id === v.id ? 'text-green-700' : 'text-gray-900'}`}>{v.title}</h4>
-                                                                                <span className={`text-sm font-black ${selectedPriceVariation?.id === v.id ? 'text-green-600' : 'text-gray-400'}`}>Rp {formatCurrency(v.price)}</span>
-                                                                            </div>
-                                                                            {v.benefits && (
-                                                                                <div className="space-y-1 relative z-10">
-                                                                                    {v.benefits.split('\n').map((b, i) => (
-                                                                                        <div key={i} className="flex items-center gap-2 text-[10px] text-gray-500 font-medium">
-                                                                                            <span className="material-icons text-[10px] text-green-500">check_circle</span>
-                                                                                            {b}
-                                                                                        </div>
-                                                                                    ))}
-                                                                                </div>
-                                                                            )}
-                                                                            {selectedPriceVariation?.id === v.id && (
-                                                                                <div className="absolute top-0 right-0 w-12 h-12 bg-green-600/10 rounded-bl-[2rem] flex items-center justify-center">
-                                                                                    <span className="material-icons text-green-600 text-sm">check</span>
-                                                                                </div>
-                                                                            )}
-                                                                        </button>
-                                                                    ))}
+                                                    {field.field_type === 'file' && (
+                                                        <div className="flex items-center justify-center w-full">
+                                                            <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-100 border-dashed rounded-3xl cursor-pointer bg-gray-50 hover:bg-white hover:border-green-300 transition-all">
+                                                                <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                                                                    <span className="material-icons text-gray-400 mb-2">cloud_upload</span>
+                                                                    <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Click to upload file</p>
+                                                                    {files[field.id] && <p className="mt-1 text-xs text-green-600 font-bold max-w-[200px] truncate">{files[field.id].name}</p>}
                                                                 </div>
-                                                            </div>
-                                                        )}
-
-                                                        {event.allow_ots_payment && (
-                                                            <div className="grid grid-cols-2 gap-3">
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => setPaymentMethod('transfer')}
-                                                                    className={`flex flex-col items-center justify-center p-4 rounded-2xl border-2 transition-all ${paymentMethod === 'transfer' ? 'border-green-600 bg-green-50 shadow-md' : 'border-gray-100 bg-white text-gray-400'}`}
-                                                                >
-                                                                    <span className="material-icons text-xl mb-1">account_balance_wallet</span>
-                                                                    <span className="text-[10px] font-bold uppercase tracking-widest">Transfer / QRIS</span>
-                                                                </button>
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => setPaymentMethod('ots')}
-                                                                    className={`flex flex-col items-center justify-center p-4 rounded-2xl border-2 transition-all ${paymentMethod === 'ots' ? 'border-green-600 bg-green-50 shadow-md' : 'border-gray-100 bg-white text-gray-400'}`}
-                                                                >
-                                                                    <span className="material-icons text-xl mb-1">payments</span>
-                                                                    <span className="text-[10px] font-bold uppercase tracking-widest">Bayar di Tempat</span>
-                                                                </button>
-                                                            </div>
-                                                        )}
-
-                                                        {paymentMethod === 'transfer' ? (
-                                                            <div className="flex flex-col sm:flex-row items-center gap-6 bg-white p-4 rounded-2xl border border-gray-100 animate-fade-in">
-                                                                <div className="w-32 h-32 bg-gray-100 rounded-xl overflow-hidden shrink-0 border border-gray-200">
-                                                                    <img src="/images/qris-bae2.png" alt="QRIS BAE" className="w-full h-full object-contain" />
-                                                                </div>
-                                                                <div className="text-center sm:text-left">
-                                                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Pindai QRIS BAE</p>
-                                                                    <p className="text-lg font-black text-gray-900 mt-1">Bae Community</p>
-                                                                    <p className="text-xs text-gray-500 mt-2 leading-relaxed">Silakan bayar melalui QRIS di atas dan unggah bukti transfernya di bawah ini.</p>
-                                                                    <a
-                                                                        href="/images/qris-bae2.png"
-                                                                        download="QRIS-BAE.png"
-                                                                        className="mt-3 inline-flex items-center gap-2 text-[10px] font-bold text-green-700 hover:text-green-800 transition bg-green-50 px-3 py-1.5 rounded-lg border border-green-100"
-                                                                    >
-                                                                        <span className="material-icons text-sm">download</span>
-                                                                        UNDUH QRIS
-                                                                    </a>
-                                                                </div>
-                                                            </div>
-                                                        ) : (
-                                                            <div className="p-6 bg-blue-50 border border-blue-100 rounded-3xl flex items-start gap-4 animate-fade-in">
-                                                                <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center shrink-0">
-                                                                    <span className="material-icons">info</span>
-                                                                </div>
-                                                                <div>
-                                                                    <p className="text-[10px] font-bold text-blue-800 uppercase tracking-widest mb-1">Pembayaran OTS (On The Spot)</p>
-                                                                    <p className="text-xs text-blue-700 leading-relaxed font-medium">Anda dapat melakukan pendaftaran sekarang dan melakukan pembayaran secara tunai di lokasi acara (Meja Registrasi). Sampai jumpa di lokasi!</p>
-                                                                </div>
-                                                            </div>
-                                                        )}
-
-                                                        {/* Price Inputs based on price_type */}
-                                                        <div className="space-y-4">
-                                                            {(event.price_type === 'fixed' || event.price_type === 'hybrid_1') && (
-                                                                <div className="flex items-center justify-between bg-white px-5 py-4 rounded-2xl border border-gray-100">
-                                                                    <span className="text-xs font-bold text-gray-500 uppercase">HTM {event.price_type === 'hybrid_1' ? 'Minimal' : ''}</span>
-                                                                    <span className="text-lg font-black text-green-700">Rp {formatCurrency(selectedPriceVariation ? selectedPriceVariation.price : event.price_fixed)}</span>
-                                                                </div>
-                                                            )}
-
-                                                            {(event.price_type === 'voluntary' || event.price_type === 'hybrid_1' || event.price_type === 'hybrid_2') && (
-                                                                <div className="space-y-2">
-                                                                    <label className="text-[10px] font-bold text-gray-600 uppercase ml-1">
-                                                                        {event.price_type === 'hybrid_1' ? 'Tambah Infaq (Opsional)' :
-                                                                            event.price_type === 'hybrid_2' ? 'Tambahan Infaq (Min. Rp 0)' :
-                                                                                'Tambahan Infaq / Sukarela *'}
-                                                                    </label>
-                                                                    <CurrencyInput
-                                                                        value={paymentAmount}
-                                                                        onChange={(e) => setPaymentAmount(e.target.value)}
-                                                                        required={event.price_type === 'voluntary'}
-                                                                    />
-                                                                </div>
-                                                            )}
-                                                        </div>
-
-
-                                                        {/* Voucher Input */}
-                                                        <div className="space-y-2">
-                                                            <label className="text-[10px] font-bold text-gray-600 uppercase ml-1">Kode Voucher (Opsional)</label>
-                                                            <div className="flex gap-2">
                                                                 <input
-                                                                    type="text"
-                                                                    value={voucherCode}
-                                                                    onChange={(e) => setVoucherCode(e.target.value.toUpperCase())}
-                                                                    placeholder="Masukkan kode promo"
-                                                                    className="flex-1 bg-white border-2 border-gray-100 rounded-xl px-4 py-3 text-sm font-bold text-gray-900 focus:border-green-500 focus:ring-0 transition-colors uppercase"
-                                                                    disabled={appliedVoucher || voucherLoading}
+                                                                    required={field.required}
+                                                                    type="file"
+                                                                    onChange={(e) => handleFileChange(field.id, e.target.files[0])}
+                                                                    className="hidden"
                                                                 />
-                                                                {appliedVoucher ? (
-                                                                    <button
-                                                                        type="button"
-                                                                        onClick={() => { setAppliedVoucher(null); setVoucherCode(''); }}
-                                                                        className="px-4 py-2 bg-red-50 text-red-600 rounded-xl text-sm font-bold hover:bg-red-100 transition"
-                                                                    >
-                                                                        Batal
-                                                                    </button>
-                                                                ) : (
-                                                                    <button
-                                                                        type="button"
-                                                                        onClick={handleApplyVoucher}
-                                                                        disabled={!voucherCode.trim() || voucherLoading}
-                                                                        className="px-4 py-2 bg-green-600 text-white rounded-xl text-sm font-bold hover:bg-green-700 disabled:opacity-50 transition"
-                                                                    >
-                                                                        {voucherLoading ? 'Cek...' : 'Gunakan'}
-                                                                    </button>
-                                                                )}
-                                                            </div>
-                                                            {voucherError && <p className="text-xs text-red-500 font-bold ml-1">{voucherError}</p>}
-                                                            {voucherSuccess && <p className="text-xs text-green-600 font-bold ml-1">{voucherSuccess}</p>}
+                                                            </label>
                                                         </div>
+                                                    )}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
 
-                                                        <div className="flex flex-col gap-2 bg-green-50 px-5 py-4 rounded-2xl border border-green-100">
-                                                            {appliedVoucher && (
-                                                                <div className="flex items-center justify-between border-b border-green-200 pb-2 mb-1">
-                                                                    <span className="text-xs font-bold text-green-700 uppercase">Diskon Voucher ({appliedVoucher.code})</span>
-                                                                    <span className="text-sm font-black text-red-500">
-                                                                        - Rp {(() => {
-                                                                            let fixed = Number(event?.price_fixed) || 0;
-                                                                            if (selectedPriceVariation) fixed = Number(selectedPriceVariation.price);
-
-                                                                            let extraFormPrice = 0;
-                                                                            if (event?.form_fields) {
-                                                                                event.form_fields.forEach(f => {
-                                                                                    if (['select', 'radio', 'checkbox'].includes(f.field_type) && f.options && responses[f.id]) {
-                                                                                        let opts = [];
-                                                                                        if (Array.isArray(f.options)) opts = f.options;
-                                                                                        else if (typeof f.options === 'string') { try { opts = JSON.parse(f.options); } catch (e) { opts = []; } }
-
-                                                                                        if (f.field_type === 'checkbox') {
-                                                                                            const selected = responses[f.id] || [];
-                                                                                            selected.forEach(s => {
-                                                                                                const match = opts.find(o => (typeof o === 'object' ? o.label : o) === s);
-                                                                                                if (match && typeof match === 'object' && match.price) extraFormPrice += Number(match.price);
-                                                                                            });
-                                                                                        } else {
-                                                                                            const match = opts.find(o => (typeof o === 'object' ? o.label : o) === responses[f.id]);
-                                                                                            if (match && typeof match === 'object' && match.price) extraFormPrice += Number(match.price);
-                                                                                        }
-                                                                                    }
-                                                                                });
-                                                                            }
-
-                                                                            const extra = Number(paymentAmount) || 0;
-                                                                            let baseTotal = 0;
-                                                                            if (event?.price_type === 'fixed') baseTotal = fixed + extraFormPrice;
-                                                                            else if (event?.price_type === 'hybrid_1') baseTotal = fixed + extraFormPrice + extra;
-                                                                            else baseTotal = extra + extraFormPrice;
-
-                                                                            if (appliedVoucher.discount_type === 'percentage') {
-                                                                                return formatCurrency(baseTotal * (Number(appliedVoucher.discount_value) / 100));
-                                                                            }
-                                                                            return formatCurrency(Number(appliedVoucher.discount_value));
-                                                                        })()}
-                                                                    </span>
+                                    {event.price_type !== 'free' && !isUserFreeByLabel() && (
+                                        <div className="p-6 bg-gray-50 rounded-[2rem] border border-gray-200 space-y-6">
+                                            {event.teams && event.teams.length > 0 && (
+                                                <div className="space-y-4">
+                                                    <h3 className="text-sm font-bold text-gray-900 flex items-center gap-2">
+                                                        <span className="material-icons text-purple-600">groups</span>
+                                                        Pilih Tim / Kelompok <span className="text-red-500">*</span>
+                                                    </h3>
+                                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                                        {event.teams.map((tm, idx) => {
+                                                            const isFull = tm.registered_count >= tm.capacity;
+                                                            const isSelected = selectedTeam?.id === tm.id;
+                                                            return (
+                                                                <div
+                                                                    key={idx}
+                                                                    onClick={() => !isFull && setSelectedTeam(tm)}
+                                                                    className={`p-4 rounded-2xl border-2 transition relative ${isFull ? 'bg-gray-100 border-gray-200 opacity-60 cursor-not-allowed' : isSelected ? 'bg-purple-50 border-purple-500 cursor-pointer shadow-md' : 'bg-white border-gray-200 cursor-pointer hover:border-purple-300'}`}
+                                                                >
+                                                                    {isSelected && <div className="absolute top-2 right-2 w-5 h-5 bg-purple-500 rounded-full flex items-center justify-center"><span className="material-icons text-white text-[10px]">check</span></div>}
+                                                                    <p className="font-extrabold text-sm text-gray-900">{tm.name}</p>
+                                                                    <div className="flex justify-between items-center mt-2">
+                                                                        <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Sisa {Math.max(0, tm.capacity - tm.registered_count)} Slot</p>
+                                                                        {Number(tm.price_modifier) !== 0 && (
+                                                                            <p className={`text-xs font-black ${Number(tm.price_modifier) > 0 ? 'text-red-500' : 'text-green-600'}`}>
+                                                                                {Number(tm.price_modifier) > 0 ? '+' : '-'} Rp {formatCurrency(Math.abs(tm.price_modifier))}
+                                                                            </p>
+                                                                        )}
+                                                                    </div>
+                                                                    {isFull && <div className="mt-2 text-center text-[9px] text-red-500 font-bold uppercase tracking-widest bg-red-50 py-1 rounded-md">Penuh</div>}
                                                                 </div>
+                                                            )
+                                                        })}
+                                                    </div>
+                                                    {!selectedTeam && (
+                                                        <p className="text-[10px] text-red-500 font-bold uppercase tracking-wider flex items-center gap-1 ml-1">
+                                                            <span className="material-icons text-xs">warning</span>
+                                                            Wajib memilih salah satu tim untuk mendaftar
+                                                        </p>
+                                                    )}
+                                                </div>
+                                            )}
+
+                                            {/* Show GRATIS badge when total is 0 */}
+                                            {getCalculatedTotal() <= 0 ? (
+                                                <div className="flex flex-col items-center gap-3 py-6 bg-gradient-to-br from-green-50 to-emerald-50 rounded-3xl border border-green-200">
+                                                    <div className="w-14 h-14 bg-green-100 rounded-full flex items-center justify-center">
+                                                        <span className="material-icons text-green-600 text-2xl">celebration</span>
+                                                    </div>
+                                                    <div className="text-center">
+                                                        <p className="text-lg font-black text-green-700 uppercase tracking-widest">GRATIS</p>
+                                                        <p className="text-xs text-green-600 font-medium mt-1">Tidak ada biaya pendaftaran untuk tim ini</p>
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <>
+                                                    <div className="flex items-center justify-between">
+                                                        <h3 className="text-sm font-bold text-gray-900 flex items-center gap-2">
+                                                            <span className="material-icons text-green-600">payments</span>
+                                                            Metode Pembayaran
+                                                        </h3>
+                                                        <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-[10px] font-black uppercase">{event.price_type}</span>
+                                                    </div>
+
+                                                    {/* Price Variations Selection */}
+                                                    {event.price_variations && event.price_variations.length > 0 && (
+                                                        <div className="space-y-3">
+                                                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Pilih Paket / Variasi HTM</label>
+                                                            <div className="grid grid-cols-1 gap-3">
+                                                                {event.price_variations.map((v, idx) => (
+                                                                    <button
+                                                                        key={idx}
+                                                                        type="button"
+                                                                        onClick={() => setSelectedPriceVariation(v)}
+                                                                        className={`p-4 rounded-2xl border-2 text-left transition-all relative overflow-hidden group ${selectedPriceVariation?.id === v.id ? 'border-green-600 bg-green-50 shadow-md' : 'border-gray-100 bg-white hover:border-green-200'}`}
+                                                                    >
+                                                                        <div className="flex justify-between items-start mb-2 relative z-10">
+                                                                            <h4 className={`text-xs font-black uppercase tracking-wider ${selectedPriceVariation?.id === v.id ? 'text-green-700' : 'text-gray-900'}`}>{v.title}</h4>
+                                                                            <span className={`text-sm font-black ${selectedPriceVariation?.id === v.id ? 'text-green-600' : 'text-gray-400'}`}>Rp {formatCurrency(v.price)}</span>
+                                                                        </div>
+                                                                        {v.benefits && (
+                                                                            <div className="space-y-1 relative z-10">
+                                                                                {v.benefits.split('\n').map((b, i) => (
+                                                                                    <div key={i} className="flex items-center gap-2 text-[10px] text-gray-500 font-medium">
+                                                                                        <span className="material-icons text-[10px] text-green-500">check_circle</span>
+                                                                                        {b}
+                                                                                    </div>
+                                                                                ))}
+                                                                            </div>
+                                                                        )}
+                                                                        {selectedPriceVariation?.id === v.id && (
+                                                                            <div className="absolute top-0 right-0 w-12 h-12 bg-green-600/10 rounded-bl-[2rem] flex items-center justify-center">
+                                                                                <span className="material-icons text-green-600 text-sm">check</span>
+                                                                            </div>
+                                                                        )}
+                                                                    </button>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    )}
+
+                                                    {event.allow_ots_payment && (
+                                                        <div className="grid grid-cols-2 gap-3">
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => setPaymentMethod('transfer')}
+                                                                className={`flex flex-col items-center justify-center p-4 rounded-2xl border-2 transition-all ${paymentMethod === 'transfer' ? 'border-green-600 bg-green-50 shadow-md' : 'border-gray-100 bg-white text-gray-400'}`}
+                                                            >
+                                                                <span className="material-icons text-xl mb-1">account_balance_wallet</span>
+                                                                <span className="text-[10px] font-bold uppercase tracking-widest">Transfer / QRIS</span>
+                                                            </button>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => setPaymentMethod('ots')}
+                                                                className={`flex flex-col items-center justify-center p-4 rounded-2xl border-2 transition-all ${paymentMethod === 'ots' ? 'border-green-600 bg-green-50 shadow-md' : 'border-gray-100 bg-white text-gray-400'}`}
+                                                            >
+                                                                <span className="material-icons text-xl mb-1">payments</span>
+                                                                <span className="text-[10px] font-bold uppercase tracking-widest">Bayar di Tempat</span>
+                                                            </button>
+                                                        </div>
+                                                    )}
+
+                                                    {paymentMethod === 'transfer' ? (
+                                                        <div className="flex flex-col sm:flex-row items-center gap-6 bg-white p-4 rounded-2xl border border-gray-100 animate-fade-in">
+                                                            <div className="w-32 h-32 bg-gray-100 rounded-xl overflow-hidden shrink-0 border border-gray-200">
+                                                                <img src="/images/qris-bae2.png" alt="QRIS BAE" className="w-full h-full object-contain" />
+                                                            </div>
+                                                            <div className="text-center sm:text-left">
+                                                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Pindai QRIS BAE</p>
+                                                                <p className="text-lg font-black text-gray-900 mt-1">Bae Community</p>
+                                                                <p className="text-xs text-gray-500 mt-2 leading-relaxed">Silakan bayar melalui QRIS di atas dan unggah bukti transfernya di bawah ini.</p>
+                                                                <a
+                                                                    href="/images/qris-bae2.png"
+                                                                    download="QRIS-BAE.png"
+                                                                    className="mt-3 inline-flex items-center gap-2 text-[10px] font-bold text-green-700 hover:text-green-800 transition bg-green-50 px-3 py-1.5 rounded-lg border border-green-100"
+                                                                >
+                                                                    <span className="material-icons text-sm">download</span>
+                                                                    UNDUH QRIS
+                                                                </a>
+                                                            </div>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="p-6 bg-blue-50 border border-blue-100 rounded-3xl flex items-start gap-4 animate-fade-in">
+                                                            <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center shrink-0">
+                                                                <span className="material-icons">info</span>
+                                                            </div>
+                                                            <div>
+                                                                <p className="text-[10px] font-bold text-blue-800 uppercase tracking-widest mb-1">Pembayaran OTS (On The Spot)</p>
+                                                                <p className="text-xs text-blue-700 leading-relaxed font-medium">Anda dapat melakukan pendaftaran sekarang dan melakukan pembayaran secara tunai di lokasi acara (Meja Registrasi). Sampai jumpa di lokasi!</p>
+                                                            </div>
+                                                        </div>
+                                                    )}
+
+                                                    {/* Price Inputs based on price_type */}
+                                                    <div className="space-y-4">
+                                                        {(event.price_type === 'fixed' || event.price_type === 'hybrid_1') && (
+                                                            <div className="flex items-center justify-between bg-white px-5 py-4 rounded-2xl border border-gray-100">
+                                                                <span className="text-xs font-bold text-gray-500 uppercase">HTM {event.price_type === 'hybrid_1' ? 'Minimal' : ''}</span>
+                                                                <span className="text-lg font-black text-green-700">Rp {formatCurrency(selectedPriceVariation ? selectedPriceVariation.price : event.price_fixed)}</span>
+                                                            </div>
+                                                        )}
+
+                                                        {(event.price_type === 'voluntary' || event.price_type === 'hybrid_1' || event.price_type === 'hybrid_2') && (
+                                                            <div className="space-y-2">
+                                                                <label className="text-[10px] font-bold text-gray-600 uppercase ml-1">
+                                                                    {event.price_type === 'hybrid_1' ? 'Tambah Infaq (Opsional)' :
+                                                                        event.price_type === 'hybrid_2' ? 'Tambahan Infaq (Min. Rp 0)' :
+                                                                            'Tambahan Infaq / Sukarela *'}
+                                                                </label>
+                                                                <CurrencyInput
+                                                                    value={paymentAmount}
+                                                                    onChange={(e) => setPaymentAmount(e.target.value)}
+                                                                    required={event.price_type === 'voluntary'}
+                                                                />
+                                                            </div>
+                                                        )}
+                                                    </div>
+
+
+                                                    {/* Voucher Input */}
+                                                    <div className="space-y-2">
+                                                        <label className="text-[10px] font-bold text-gray-600 uppercase ml-1">Kode Voucher (Opsional)</label>
+                                                        <div className="flex gap-2">
+                                                            <input
+                                                                type="text"
+                                                                value={voucherCode}
+                                                                onChange={(e) => setVoucherCode(e.target.value.toUpperCase())}
+                                                                placeholder="Masukkan kode promo"
+                                                                className="flex-1 bg-white border-2 border-gray-100 rounded-xl px-4 py-3 text-sm font-bold text-gray-900 focus:border-green-500 focus:ring-0 transition-colors uppercase"
+                                                                disabled={appliedVoucher || voucherLoading}
+                                                            />
+                                                            {appliedVoucher ? (
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => { setAppliedVoucher(null); setVoucherCode(''); }}
+                                                                    className="px-4 py-2 bg-red-50 text-red-600 rounded-xl text-sm font-bold hover:bg-red-100 transition"
+                                                                >
+                                                                    Batal
+                                                                </button>
+                                                            ) : (
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={handleApplyVoucher}
+                                                                    disabled={!voucherCode.trim() || voucherLoading}
+                                                                    className="px-4 py-2 bg-green-600 text-white rounded-xl text-sm font-bold hover:bg-green-700 disabled:opacity-50 transition"
+                                                                >
+                                                                    {voucherLoading ? 'Cek...' : 'Gunakan'}
+                                                                </button>
                                                             )}
-                                                            <div className="flex items-center justify-between">
-                                                                <span className="text-xs font-bold text-green-800 uppercase">Total Dibayar</span>
-                                                                <span className="text-xl font-black text-green-700">
-                                                                    Rp {formatCurrency(getCalculatedTotal())}
+                                                        </div>
+                                                        {voucherError && <p className="text-xs text-red-500 font-bold ml-1">{voucherError}</p>}
+                                                        {voucherSuccess && <p className="text-xs text-green-600 font-bold ml-1">{voucherSuccess}</p>}
+                                                    </div>
+
+                                                    <div className="flex flex-col gap-2 bg-green-50 px-5 py-4 rounded-2xl border border-green-100">
+                                                        {appliedVoucher && (
+                                                            <div className="flex items-center justify-between border-b border-green-200 pb-2 mb-1">
+                                                                <span className="text-xs font-bold text-green-700 uppercase">Diskon Voucher ({appliedVoucher.code})</span>
+                                                                <span className="text-sm font-black text-red-500">
+                                                                    - Rp {(() => {
+                                                                        let fixed = Number(event?.price_fixed) || 0;
+                                                                        if (selectedPriceVariation) fixed = Number(selectedPriceVariation.price);
+
+                                                                        let extraFormPrice = 0;
+                                                                        if (event?.form_fields) {
+                                                                            event.form_fields.forEach(f => {
+                                                                                if (['select', 'radio', 'checkbox'].includes(f.field_type) && f.options && responses[f.id]) {
+                                                                                    let opts = [];
+                                                                                    if (Array.isArray(f.options)) opts = f.options;
+                                                                                    else if (typeof f.options === 'string') { try { opts = JSON.parse(f.options); } catch (e) { opts = []; } }
+
+                                                                                    if (f.field_type === 'checkbox') {
+                                                                                        const selected = responses[f.id] || [];
+                                                                                        selected.forEach(s => {
+                                                                                            const match = opts.find(o => (typeof o === 'object' ? o.label : o) === s);
+                                                                                            if (match && typeof match === 'object' && match.price) extraFormPrice += Number(match.price);
+                                                                                        });
+                                                                                    } else {
+                                                                                        const match = opts.find(o => (typeof o === 'object' ? o.label : o) === responses[f.id]);
+                                                                                        if (match && typeof match === 'object' && match.price) extraFormPrice += Number(match.price);
+                                                                                    }
+                                                                                }
+                                                                            });
+                                                                        }
+
+                                                                        const extra = Number(paymentAmount) || 0;
+                                                                        let baseTotal = 0;
+                                                                        if (event?.price_type === 'fixed') baseTotal = fixed + extraFormPrice;
+                                                                        else if (event?.price_type === 'hybrid_1') baseTotal = fixed + extraFormPrice + extra;
+                                                                        else baseTotal = extra + extraFormPrice;
+
+                                                                        if (appliedVoucher.discount_type === 'percentage') {
+                                                                            return formatCurrency(baseTotal * (Number(appliedVoucher.discount_value) / 100));
+                                                                        }
+                                                                        return formatCurrency(Number(appliedVoucher.discount_value));
+                                                                    })()}
                                                                 </span>
                                                             </div>
-                                                        </div>
-
-                                                        {paymentMethod === 'transfer' && (
-                                                            <div className="space-y-2">
-                                                                <label className="text-[10px] font-bold text-gray-600 uppercase ml-1">Upload Bukti Transfer *</label>
-                                                                <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-200 border-dashed rounded-3xl cursor-pointer bg-white hover:bg-gray-50 hover:border-green-300 transition-all">
-                                                                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                                                                        <span className={`material-icons mb-2 ${paymentProof ? 'text-green-500' : 'text-gray-400'}`}>
-                                                                            {paymentProof ? 'check_circle' : 'receipt_long'}
-                                                                        </span>
-                                                                        <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">
-                                                                            {paymentProof ? 'Bukti Terpilih' : 'Klik untuk upload bukti'}
-                                                                        </p>
-                                                                        {paymentProof && <p className="mt-1 text-xs text-green-600 font-bold">{paymentProof.name}</p>}
-                                                                    </div>
-                                                                    <input
-                                                                        type="file"
-                                                                        required={paymentMethod === 'transfer' && getCalculatedTotal() > 0}
-                                                                        accept="image/*"
-                                                                        onChange={(e) => {
-                                                                            const file = e.target.files[0];
-                                                                            if (file && validateFileSize(file)) {
-                                                                                setPaymentProof(file);
-                                                                            }
-                                                                        }}
-                                                                        className="hidden"
-                                                                    />
-                                                                </label>
-                                                            </div>
                                                         )}
-                                                    </>
-                                                )}
-                                            </div>
-                                        )}
-                                        <div className="pt-4 border-t border-gray-100 flex flex-col gap-4">
-                                            <button
-                                                type="submit"
-                                                disabled={submitting}
-                                                className={`w-full py-5 bg-green-600 text-white rounded-[2rem] text-sm font-extrabold uppercase tracking-widest shadow-2xl shadow-green-100 transition active:scale-[0.98] ${submitting ? 'opacity-70 cursor-not-allowed' : 'hover:bg-green-700'}`}
-                                            >
-                                                {submitting ? 'SEDANG MENGIRIM...' : 'KIRIM PENDAFTARAN'}
-                                            </button>
-                                            <p className="text-center text-[10px] text-gray-400 font-bold uppercase tracking-[0.2em] px-8">Pendaftaran akan ditinjau oleh tim BAE. Mohon persiapkan bukti transfer jika event berbayar.</p>
+                                                        <div className="flex items-center justify-between">
+                                                            <span className="text-xs font-bold text-green-800 uppercase">Total Dibayar</span>
+                                                            <span className="text-xl font-black text-green-700">
+                                                                Rp {formatCurrency(getCalculatedTotal())}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+
+                                                    {paymentMethod === 'transfer' && (
+                                                        <div className="space-y-2">
+                                                            <label className="text-[10px] font-bold text-gray-600 uppercase ml-1">Upload Bukti Transfer *</label>
+                                                            <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-200 border-dashed rounded-3xl cursor-pointer bg-white hover:bg-gray-50 hover:border-green-300 transition-all">
+                                                                <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                                                                    <span className={`material-icons mb-2 ${paymentProof ? 'text-green-500' : 'text-gray-400'}`}>
+                                                                        {paymentProof ? 'check_circle' : 'receipt_long'}
+                                                                    </span>
+                                                                    <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">
+                                                                        {paymentProof ? 'Bukti Terpilih' : 'Klik untuk upload bukti'}
+                                                                    </p>
+                                                                    {paymentProof && <p className="mt-1 text-xs text-green-600 font-bold">{paymentProof.name}</p>}
+                                                                </div>
+                                                                <input
+                                                                    type="file"
+                                                                    required={paymentMethod === 'transfer' && getCalculatedTotal() > 0}
+                                                                    accept="image/*"
+                                                                    onChange={(e) => {
+                                                                        const file = e.target.files[0];
+                                                                        if (file && validateFileSize(file)) {
+                                                                            setPaymentProof(file);
+                                                                        }
+                                                                    }}
+                                                                    className="hidden"
+                                                                />
+                                                            </label>
+                                                        </div>
+                                                    )}
+                                                </>
+                                            )}
                                         </div>
-                                    </form>
-                                </>
+                                    )}
+                                    <div className="pt-4 border-t border-gray-100 flex flex-col gap-4">
+                                        <button
+                                            type="submit"
+                                            disabled={submitting}
+                                            className={`w-full py-5 bg-green-600 text-white rounded-[2rem] text-sm font-extrabold uppercase tracking-widest shadow-2xl shadow-green-100 transition active:scale-[0.98] ${submitting ? 'opacity-70 cursor-not-allowed' : 'hover:bg-green-700'}`}
+                                        >
+                                            {submitting ? 'SEDANG MENGIRIM...' : 'KIRIM PENDAFTARAN'}
+                                        </button>
+                                        <p className="text-center text-[10px] text-gray-400 font-bold uppercase tracking-[0.2em] px-8">Pendaftaran akan ditinjau oleh tim BAE. Mohon persiapkan bukti transfer jika event berbayar.</p>
+                                    </div>
+                                </form>
                             )}
                         </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Error Popup Modal */}
+            {error && event && (
+                <div className="fixed inset-0 z-[250] flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fade-in">
+                    <div className="max-w-md w-full bg-white p-8 rounded-[2.5rem] shadow-2xl border border-gray-100 animate-scale-up text-center space-y-6">
+                        <div className="w-16 h-16 bg-red-50 text-red-600 rounded-full flex items-center justify-center mx-auto shadow-inner">
+                            <span className="material-icons text-3xl">error_outline</span>
+                        </div>
+                        <div className="space-y-2">
+                            <h3 className="text-xl font-extrabold text-gray-900">Pendaftaran Gagal</h3>
+                            <p className="text-gray-500 text-xs leading-relaxed font-semibold px-4">{error}</p>
+                        </div>
+                        <button
+                            onClick={() => setError(null)}
+                            className="w-full py-4 bg-red-600 hover:bg-red-700 text-white rounded-2xl text-xs font-extrabold uppercase tracking-widest transition shadow-lg shadow-red-100"
+                        >
+                            Tutup
+                        </button>
                     </div>
                 </div>
             )}
