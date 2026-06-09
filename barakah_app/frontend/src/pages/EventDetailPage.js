@@ -1452,6 +1452,14 @@ const EventDetailPage = () => {
                                 <div className="w-full bg-white/5 text-gray-500 py-4 rounded-2xl text-[10px] font-extrabold uppercase tracking-[0.2em] relative z-10 border border-white/10 text-center">
                                     EVENT SELESAI
                                 </div>
+                            ) : registrationTimeLeft?.total > 0 ? (
+                                <div className="w-full bg-amber-50 text-amber-700 py-4 rounded-2xl font-extrabold text-xs uppercase tracking-wider flex flex-col items-center justify-center gap-1 border border-amber-100 shadow-sm relative z-10">
+                                    <div className="flex items-center gap-2">
+                                        <span className="material-icons text-lg animate-spin-slow">history</span>
+                                        Daftar Dibuka Dalam:
+                                    </div>
+                                    <span className="text-base font-black tracking-widest">{formatCountdown(registrationTimeLeft)}</span>
+                                </div>
                             ) : (event.capacity > 0 && (event.registration_count || 0) >= event.capacity) ? (
                                 <div className="w-full bg-red-500/10 text-red-500 py-4 rounded-2xl text-[10px] font-extrabold uppercase tracking-[0.2em] relative z-10 border border-red-500/20 text-center">
                                     KUOTA PENUH
