@@ -6,6 +6,43 @@ import requests
 
 logger = logging.getLogger(__name__)
 
+def compress_image(image_file, max_size=(1024, 1024), quality=80):
+    """Resizes and compresses the image to JPEG to reduce payload size and standardize format."""
+    try:
+        from PIL import Image
+        import io
+        
+        # Reset file pointer
+        if hasattr(image_file, 'seek'):
+            image_file.seek(0)
+            
+        img = Image.open(image_file)
+        
+        # Convert to RGB (JPEG does not support RGBA)
+        if img.mode in ('RGBA', 'LA') or (img.mode == 'P' and 'transparency' in img.info):
+            background = Image.new("RGB", img.size, (255, 255, 255))
+            mask = img.split()[3] if img.mode == 'RGBA' else None
+            background.paste(img, mask=mask)
+            img = background
+        elif img.mode != 'RGB':
+            img = img.convert('RGB')
+            
+        img.thumbnail(max_size, Image.Resampling.LANCZOS)
+        
+        output = io.BytesIO()
+        img.save(output, format='JPEG', quality=quality)
+        output.seek(0)
+        return output, "image/jpeg"
+    except Exception as e:
+        logger.error(f"Failed to compress image: {e}")
+        if hasattr(image_file, 'seek'):
+            image_file.seek(0)
+        
+        mime_type = "image/jpeg"
+        if hasattr(image_file, 'content_type'):
+            mime_type = image_file.content_type
+        return image_file, mime_type
+
 def encode_image(image_file):
     """Encodes an image to base64 string safely."""
     if hasattr(image_file, 'read'):
@@ -22,16 +59,16 @@ def extract_payment_data(image_file):
         logger.warning("AI Settings not configured or disabled.")
         return {'_error': 'Sistem AI belum dikonfigurasi atau tidak aktif di pengaturan admin.', '_method': 'error'}
         
-    base64_image = encode_image(image_file)
+    # Standardize format and compress image to reduce payload size
+    compressed_file, mime_type = compress_image(image_file)
     
-    # Reset file pointer
+    # Encode compressed image
+    base64_image = base64.b64encode(compressed_file.read()).decode('utf-8')
+    
+    # Reset file pointer of original image
     if hasattr(image_file, 'seek'):
         image_file.seek(0)
         
-    mime_type = "image/jpeg"
-    if hasattr(image_file, 'content_type'):
-        mime_type = image_file.content_type
-
     prompt = """
 Tolong baca data dari bukti transfer ini dan kembalikan dalam format JSON.
 Field:
@@ -80,7 +117,11 @@ Aturan Khusus:
         
         if response.status_code != 200:
             logger.error(f"AI API Error (Payment Receipt): {response.text}")
-            return {'_error': f"AI menolak request (HTTP {response.status_code}). Silakan coba sesaat lagi.", '_method': 'error'}
+            try:
+                err_detail = response.json().get('error', {}).get('message', response.text)
+            except:
+                err_detail = response.text
+            return {'_error': f"AI menolak request (HTTP {response.status_code}): {err_detail}", '_method': 'error'}
             
         result = response.json()
         ai_reply = result['choices'][0]['message']['content'].strip()
