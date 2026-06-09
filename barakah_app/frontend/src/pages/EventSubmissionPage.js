@@ -1785,6 +1785,24 @@ const EventSubmissionPage = () => {
                             </div>
                             </div>
                         )}
+
+                        <button
+                            type="submit"
+                            disabled={loading}
+                            className={`w-full py-5 bg-green-700 text-white rounded-3xl text-sm font-bold shadow-xl shadow-green-100 flex items-center justify-center gap-3 active:scale-[0.98] transition-all ${loading ? 'opacity-70 cursor-not-allowed' : 'hover:bg-green-800'}`}
+                        >
+                            {loading ? (
+                                <>
+                                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                                    MENGIRIM PENGAJUAN...
+                                </>
+                            ) : (
+                                <>
+                                    <span className="material-icons text-sm">send</span>
+                                    {isEdit ? 'SIMPAN PERUBAHAN' : 'AJUKAN EVENT SEKARANG'}
+                                </>
+                            )}
+                        </button>
 </form>
                 </div>
             </div>
