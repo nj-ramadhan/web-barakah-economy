@@ -35,14 +35,14 @@ def extract_payment_data(image_file):
     prompt = """
 Tolong baca data dari bukti transfer ini dan kembalikan dalam format JSON.
 Field:
-- "recipient_name": Nama penerima (harus BAE Community / Barakah Economy Community / Deny Setiawan)
+- "recipient_name": Nama penerima (harus BAE Community / Barakah Economy Community)
 - "amount": Nominal angka murni (tanpa titik pemisah ribuan). Penting: ABAIKAN nilai desimal atau dua angka nol di belakang koma jika ada (contoh: Rp50.000,00 menjadi "50000").
 - "bank_name": Nama bank
 - "date": Tanggal
 
 Aturan Khusus:
 1. Kembalikan JSON murni tanpa markdown.
-2. Jika tidak terbaca, gunakan null atau string kosong.
+2. Jika tidak terbaca atau gambar bukan merupakan bukti transfer bank / QRIS yang valid, isi semua field dengan null.
 3. Untuk "amount", pastikan benar-benar membuang ,00 di belakang koma.
 """
 

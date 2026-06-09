@@ -214,3 +214,169 @@ class OnlineEventVisibilityTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["location_url"], "https://zoom.us/j/123456789")
 
+
+from unittest.mock import patch
+from django.core.files.uploadedfile import SimpleUploadedFile
+
+class EventRegistrationOCRTests(APITestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="testuser_ocr",
+            email="testuser_ocr@example.com",
+            password="testpassword123",
+            phone="08123456789"
+        )
+        self.client.force_authenticate(user=self.user)
+        
+        self.creator = User.objects.create_user(
+            username="eventcreator_ocr",
+            email="creator_ocr@example.com",
+            password="creatorpassword123"
+        )
+        
+        self.paid_event = Event.objects.create(
+            title="Paid Event OCR",
+            description="A paid event for OCR testing",
+            start_date=timezone.now() + timezone.timedelta(days=1),
+            location="Bandung",
+            organizer_name="BAE Community",
+            status="approved",
+            price_type="fixed",
+            price_fixed=Decimal("50000.00"),
+            created_by=self.creator,
+            visibility="public"
+        )
+        self.register_url = reverse("events-register", kwargs={"slug": self.paid_event.slug})
+        
+        # Create a dummy image file for upload
+        self.dummy_proof = SimpleUploadedFile(
+            name="proof.jpg",
+            content=b"dummy_image_content",
+            content_type="image/jpeg"
+        )
+
+    @patch('events.views.extract_payment_data')
+    def test_ocr_general_error_blocks_registration(self, mock_extract):
+        """
+        If OCR returns a general error (e.g. invalid receipt, AI fails to parse),
+        it should block registration and return 400.
+        """
+        mock_extract.return_value = {
+            '_error': 'Gagal membaca bukti transfer: JSONDecodeError',
+            '_method': 'error'
+        }
+        
+        data = {
+            "responses": "{}",
+            "payment_method": "transfer",
+            "payment_amount": 50000,
+            "payment_proof": self.dummy_proof
+        }
+        
+        response = self.client.post(self.register_url, data, format="multipart")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("error", response.data)
+        self.assertIn("Bukti transfer tidak valid", response.data["error"])
+
+    @patch('events.views.extract_payment_data')
+    def test_ocr_disabled_settings_bypasses_ocr(self, mock_extract):
+        """
+        If OCR returns an error stating that AI settings are disabled or not configured,
+        registration should succeed (bypassing OCR validation).
+        """
+        mock_extract.return_value = {
+            '_error': 'Sistem AI belum dikonfigurasi atau tidak aktif di pengaturan admin.',
+            '_method': 'error'
+        }
+        
+        data = {
+            "responses": "{}",
+            "payment_method": "transfer",
+            "payment_amount": 50000,
+            "payment_proof": self.dummy_proof
+        }
+        
+        response = self.client.post(self.register_url, data, format="multipart")
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertIn("unique_code", response.data)
+        
+        reg = EventRegistration.objects.get(event=self.paid_event, user=self.user)
+        self.assertFalse(reg.ocr_verified)
+
+    @patch('events.views.extract_payment_data')
+    def test_ocr_invalid_recipient_name_blocks_registration(self, mock_extract):
+        """
+        If recipient name is not BAE Community or Barakah Economy Community,
+        registration should be blocked.
+        """
+        mock_extract.return_value = {
+            'recipient_name': 'Random Person Name',
+            'amount': '50000',
+            'bank_name': 'Bank Mandiri',
+            'date': '2026-06-09'
+        }
+        
+        data = {
+            "responses": "{}",
+            "payment_method": "transfer",
+            "payment_amount": 50000,
+            "payment_proof": self.dummy_proof
+        }
+        
+        response = self.client.post(self.register_url, data, format="multipart")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("error", response.data)
+        self.assertIn("Penerima di bukti transfer", response.data["error"])
+
+    @patch('events.views.extract_payment_data')
+    def test_ocr_invalid_amount_blocks_registration(self, mock_extract):
+        """
+        If transfer amount doesn't match total required, registration should be blocked.
+        """
+        mock_extract.return_value = {
+            'recipient_name': 'Bae Community',
+            'amount': '40000', # expected is 50000
+            'bank_name': 'Bank Mandiri',
+            'date': '2026-06-09'
+        }
+        
+        data = {
+            "responses": "{}",
+            "payment_method": "transfer",
+            "payment_amount": 50000,
+            "payment_proof": self.dummy_proof
+        }
+        
+        response = self.client.post(self.register_url, data, format="multipart")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("error", response.data)
+        self.assertIn("Nominal di bukti transfer", response.data["error"])
+
+    @patch('events.views.extract_payment_data')
+    def test_ocr_valid_receipt_succeeds(self, mock_extract):
+        """
+        If OCR successfully validates correct recipient and amount,
+        registration should succeed.
+        """
+        mock_extract.return_value = {
+            'recipient_name': 'Barakah Economy Community',
+            'amount': '50000',
+            'bank_name': 'Bank Mandiri',
+            'date': '2026-06-09'
+        }
+        
+        data = {
+            "responses": "{}",
+            "payment_method": "transfer",
+            "payment_amount": 50000,
+            "payment_proof": self.dummy_proof
+        }
+        
+        response = self.client.post(self.register_url, data, format="multipart")
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertIn("unique_code", response.data)
+        
+        reg = EventRegistration.objects.get(event=self.paid_event, user=self.user)
+        self.assertTrue(reg.ocr_verified)
+
+

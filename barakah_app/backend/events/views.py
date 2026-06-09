@@ -527,13 +527,21 @@ class EventViewSet(viewsets.ModelViewSet):
             # Call OCR Service
             ocr_result = extract_payment_data(payment_proof)
             
-            if '_error' not in ocr_result:
+            if '_error' in ocr_result:
+                err_msg = ocr_result.get('_error', '')
+                if "Sistem AI belum dikonfigurasi" in err_msg:
+                    logger.warning(f"Bypassing OCR validation because AI settings are disabled: {err_msg}")
+                else:
+                    return Response({
+                        "error": f"Bukti transfer tidak valid atau tidak terbaca. Harap pastikan Anda mengunggah foto bukti transfer bank/QRIS yang valid dan jelas. (Detail: {err_msg})"
+                    }, status=status.HTTP_400_BAD_REQUEST)
+            else:
                 ocr_data = ocr_result
                 extracted_name = str(ocr_result.get('recipient_name', '')).lower()
                 extracted_amount = ocr_result.get('amount')
                 
                 # Validation logic
-                valid_names = ['bae community', 'barakah economy community', 'deny setiawan']
+                valid_names = ['bae community', 'barakah economy community']
                 is_name_valid = any(vn in extracted_name for vn in valid_names)
                 
                 # Amount validation
@@ -549,7 +557,7 @@ class EventViewSet(viewsets.ModelViewSet):
                 
                 if not is_name_valid:
                     return Response({
-                        "error": f"Penerima di bukti transfer ('{ocr_result.get('recipient_name') or 'Tidak terdeteksi'}') tidak sesuai. Bukti transfer harus ditujukan ke 'BAE Community' atau pengurus BAE."
+                        "error": f"Penerima di bukti transfer ('{ocr_result.get('recipient_name') or 'Tidak terdeteksi'}') tidak sesuai. Bukti transfer harus ditujukan ke 'Barakah Economy Community' atau 'Bae Community'."
                     }, status=status.HTTP_400_BAD_REQUEST)
                 
                 if not is_amount_valid:

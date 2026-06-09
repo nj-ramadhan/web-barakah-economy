@@ -214,7 +214,7 @@ const EventDetailPage = () => {
 
     const isUserFreeByLabel = () => {
         if (!userProfile || !event?.free_for_labels) return false;
-        
+
         const userLabels = userProfile.labels || [];
         const freeLabels = event.free_for_labels || [];
 
@@ -228,7 +228,7 @@ const EventDetailPage = () => {
         // Fallback: Check by Name (ProfileSerializer returns strings)
         const userLabelNames = userLabels.map(l => typeof l === 'string' ? l.toLowerCase() : (l.name || '').toLowerCase());
         const freeLabelNames = freeLabels.map(l => (l.name || '').toLowerCase());
-        
+
         return userLabelNames.some(name => freeLabelNames.includes(name));
     };
 
@@ -236,10 +236,10 @@ const EventDetailPage = () => {
         if (!userProfile || !event?.free_for_labels) return "";
         const userLabels = userProfile.labels || [];
         const freeLabels = event.free_for_labels || [];
-        
+
         const userLabelNames = userLabels.map(l => typeof l === 'string' ? l.toLowerCase() : (l.name || '').toLowerCase());
         const matched = freeLabels.filter(l => userLabelNames.includes((l.name || '').toLowerCase()));
-        
+
         return matched.map(l => l.name).join(', ');
     };
 
@@ -251,7 +251,7 @@ const EventDetailPage = () => {
         if (event?.form_fields) {
             event.form_fields.forEach(f => {
                 if (['select', 'radio', 'checkbox'].includes(f.field_type) && f.options && responses[f.id]) {
-                    const opts = Array.isArray(f.options) ? f.options : (() => { try { return JSON.parse(f.options); } catch(e) { return []; } })();
+                    const opts = Array.isArray(f.options) ? f.options : (() => { try { return JSON.parse(f.options); } catch (e) { return []; } })();
                     if (f.field_type === 'checkbox') {
                         (responses[f.id] || []).forEach(s => {
                             const match = opts.find(o => (typeof o === 'object' ? o.label : o) === s);
@@ -331,7 +331,7 @@ const EventDetailPage = () => {
 
         data.append('responses', JSON.stringify(responses));
         data.append('payment_method', paymentMethod);
-        
+
         Object.keys(files).forEach(fieldId => {
             if (files[fieldId]) data.append(fieldId, files[fieldId]);
         });
@@ -514,7 +514,7 @@ const EventDetailPage = () => {
     // Check meeting visibility access rules on frontend
     const loggedInUser = JSON.parse(localStorage.getItem('user'));
     const isOnlineEvent = event?.is_online || event?.location?.toLowerCase() === 'online' || event?.location_url?.includes('zoom.us') || event?.location_url?.includes('meet.google.com') || event?.location_url?.includes('meet.jit.si');
-    
+
     let showMeetingLink = false;
     if (event?.location_url) {
         if (isOnlineEvent) {
@@ -523,18 +523,18 @@ const EventDetailPage = () => {
                 const isCreator = event.created_by === loggedInUser.id || event.created_by_details?.id === loggedInUser.id;
                 const isAdminOrStaff = ['admin', 'staff', 'superadmin', 'organizer'].includes(loggedInUser.role?.toLowerCase());
                 const isCommittee = event.committees?.some(c => c.id === loggedInUser.id) || event.committees_details?.some(c => c.id === loggedInUser.id);
-                
+
                 if (isCreator || isAdminOrStaff || isCommittee) {
                     showMeetingLink = true;
                 } else {
                     // Participant must be registered & status is approved
                     const isRegisteredApproved = event.user_registration && event.user_registration.status === 'approved';
-                    
+
                     if (isRegisteredApproved) {
                         const now = new Date();
                         const startTime = new Date(event.start_date);
                         const endTime = event.end_date ? new Date(event.end_date) : null;
-                        
+
                         if (endTime) {
                             if (now >= startTime && now <= endTime) {
                                 showMeetingLink = true;
@@ -617,7 +617,7 @@ const EventDetailPage = () => {
                 </script>
             </Helmet>
             <Header />
-            
+
             {/* Visibility Lock Overlay */}
             {visibilityTimeLeft?.total > 0 && (
                 <div className="fixed inset-0 z-[300] bg-white/95 backdrop-blur-xl flex flex-col items-center justify-center p-8 text-center animate-fade-in">
@@ -629,7 +629,7 @@ const EventDetailPage = () => {
                             <h2 className="text-3xl font-black text-gray-900 leading-tight">Event Masih Terkunci</h2>
                             <p className="text-gray-500 font-medium">Sabar ya! Event ini akan segera dibuka untuk publik dalam waktu:</p>
                         </div>
-                        
+
                         <div className="grid grid-cols-4 gap-4">
                             {[
                                 { label: 'Hari', value: visibilityTimeLeft.days },
@@ -689,7 +689,7 @@ const EventDetailPage = () => {
                                 />
                             </SwiperSlide>
                         ))}
-                        
+
                         {/* Fallback if no images at all */}
                         {![event.header_image, event.thumbnail, ...(event.gallery_images || []), ...(event.documentation_images || [])].some(i => i) && (
                             <SwiperSlide>
@@ -717,11 +717,11 @@ const EventDetailPage = () => {
                         )}
                         <span className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-[10px] font-bold uppercase tracking-widest">{event.status}</span>
                     </div>
-                    
+
                     <h1 className="text-xl sm:text-3xl font-extrabold text-gray-900 leading-tight mb-6">{event.title}</h1>
-                    
+
                     <div className="flex flex-wrap items-center gap-3">
-                        <button 
+                        <button
                             onClick={handleToggleLike}
                             disabled={liking}
                             className={`flex items-center gap-2 px-5 py-3 rounded-2xl transition-all active:scale-95 shadow-md ${isLiked ? 'bg-red-600 text-white shadow-red-900/20' : 'bg-gray-50 hover:bg-gray-100 text-gray-700 border border-gray-200'}`}
@@ -738,30 +738,30 @@ const EventDetailPage = () => {
                             ...(event.gallery_images?.map(img => img.image) || []),
                             ...(event.documentation_images?.map(img => img.image) || [])
                         ].filter(img => img))).length > 0 && (
-                            <button
-                                onClick={() => {
-                                    const carouselImages = Array.from(new Set([
-                                        event.thumbnail,
-                                        event.header_image,
-                                        ...(event.gallery_images?.map(img => img.image) || []),
-                                        ...(event.documentation_images?.map(img => img.image) || [])
-                                    ].filter(img => img)));
-                                    const currentImg = carouselImages[activeImageIndex];
-                                    if (currentImg) window.open(getMediaUrl(currentImg), '_blank');
-                                }}
-                                className="flex items-center gap-2 px-5 py-3 rounded-2xl bg-gray-50 hover:bg-gray-100 text-gray-700 border border-gray-200 transition-all active:scale-95 shadow-md"
-                            >
-                                <span className="material-icons text-sm sm:text-base text-gray-500">zoom_out_map</span>
-                                <span className="text-xs font-black uppercase tracking-widest font-bold">Lihat Ukuran Penuh</span>
-                            </button>
-                        )}
+                                <button
+                                    onClick={() => {
+                                        const carouselImages = Array.from(new Set([
+                                            event.thumbnail,
+                                            event.header_image,
+                                            ...(event.gallery_images?.map(img => img.image) || []),
+                                            ...(event.documentation_images?.map(img => img.image) || [])
+                                        ].filter(img => img)));
+                                        const currentImg = carouselImages[activeImageIndex];
+                                        if (currentImg) window.open(getMediaUrl(currentImg), '_blank');
+                                    }}
+                                    className="flex items-center gap-2 px-5 py-3 rounded-2xl bg-gray-50 hover:bg-gray-100 text-gray-700 border border-gray-200 transition-all active:scale-95 shadow-md"
+                                >
+                                    <span className="material-icons text-sm sm:text-base text-gray-500">zoom_out_map</span>
+                                    <span className="text-xs font-black uppercase tracking-widest font-bold">Lihat Ukuran Penuh</span>
+                                </button>
+                            )}
                     </div>
                 </div>
 
                 {/* Mobile Info & Actions */}
                 <div className="sm:hidden p-6 bg-white border-b border-gray-100 shadow-sm relative z-10">
                     {/* Event info moved to hero overlay, removed redundant title here */}
-                    
+
                     {event.capacity > 0 && (
                         <div className="mb-6 p-4 bg-blue-50 rounded-2xl border border-blue-100 flex items-center justify-between">
 
@@ -775,7 +775,7 @@ const EventDetailPage = () => {
                                 </div>
                             </div>
                             <div className="h-2 w-24 bg-blue-200 rounded-full overflow-hidden">
-                                <div 
+                                <div
                                     className="h-full bg-blue-600 rounded-full"
                                     style={{ width: `${Math.min(100, ((event.registration_count || 0) / event.capacity) * 100)}%` }}
                                 ></div>
@@ -1120,7 +1120,7 @@ const EventDetailPage = () => {
                                                                 <div key={p.id} className="bg-white px-5 py-4 rounded-2xl border border-gray-100 flex items-center gap-4 hover:shadow-lg transition-all duration-300 group relative overflow-hidden">
                                                                     <div className="absolute left-0 top-0 bottom-0 w-1 bg-blue-500 opacity-20"></div>
                                                                     <div className="min-w-0">
-                                                                        <p 
+                                                                        <p
                                                                             className={`font-extrabold text-gray-900 break-words text-sm sm:text-base ${p.user_id ? 'cursor-pointer hover:text-green-700 hover:underline' : ''}`}
                                                                             onClick={() => {
                                                                                 if (p.user_id) {
@@ -1144,7 +1144,7 @@ const EventDetailPage = () => {
                                                 }
 
                                                 const grouped = {};
-                                                
+
                                                 // Pre-populate with defined event teams if they exist
                                                 if (event.teams && event.teams.length > 0) {
                                                     event.teams.forEach(tm => {
@@ -1195,7 +1195,7 @@ const EventDetailPage = () => {
                                                                             <div className={`absolute left-0 top-0 bottom-0 w-1 ${color.bullet} opacity-20`}></div>
 
                                                                             <div className="min-w-0">
-                                                                                <p 
+                                                                                <p
                                                                                     className={`font-extrabold ${color.text} break-words text-sm sm:text-base ${p.user_id ? 'cursor-pointer hover:underline' : ''}`}
                                                                                     onClick={() => {
                                                                                         if (p.user_id) {
@@ -1404,12 +1404,12 @@ const EventDetailPage = () => {
                         {event.capacity > 0 && (
                             <div className="bg-white p-8 rounded-[2.5rem] shadow-xl border border-gray-100 overflow-hidden relative group">
                                 <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/5 rounded-full -mr-8 -mt-8 transition-transform group-hover:scale-110"></div>
-                                
+
                                 <div className="flex items-center justify-between mb-6">
                                     <div>
                                         <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-1">Status Kuota</h3>
                                         <p className="text-2xl font-black text-gray-900">
-                                            {event.capacity - (event.registration_count || 0)} 
+                                            {event.capacity - (event.registration_count || 0)}
                                             <span className="text-xs font-bold text-gray-400 uppercase tracking-widest ml-2">Slot Tersisa</span>
                                         </p>
                                     </div>
@@ -1424,12 +1424,12 @@ const EventDetailPage = () => {
                                         <span className="text-gray-400">{event.capacity} Total</span>
                                     </div>
                                     <div className="w-full h-3 bg-gray-100 rounded-full overflow-hidden p-0.5 border border-gray-50">
-                                        <div 
+                                        <div
                                             className="h-full bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full transition-all duration-1000 ease-out"
                                             style={{ width: `${Math.min(100, ((event.registration_count || 0) / event.capacity) * 100)}%` }}
                                         ></div>
                                     </div>
-                                    { (event.capacity - (event.registration_count || 0) <= 10 && event.capacity - (event.registration_count || 0) > 0) && (
+                                    {(event.capacity - (event.registration_count || 0) <= 10 && event.capacity - (event.registration_count || 0) > 0) && (
                                         <p className="text-[10px] text-amber-600 font-bold italic animate-pulse">
                                             ⚠️ Sisa sedikit lagi, buruan daftar!
                                         </p>
@@ -1681,7 +1681,7 @@ const EventDetailPage = () => {
                                                                 <span className="material-icons absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">expand_more</span>
                                                             </div>
                                                         )}
-                                                        
+
                                                         {field.field_type === 'checkbox' && (
                                                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
                                                                 {(() => {
@@ -1745,7 +1745,7 @@ const EventDetailPage = () => {
                                                                 const isFull = tm.registered_count >= tm.capacity;
                                                                 const isSelected = selectedTeam?.id === tm.id;
                                                                 return (
-                                                                    <div 
+                                                                    <div
                                                                         key={idx}
                                                                         onClick={() => !isFull && setSelectedTeam(tm)}
                                                                         className={`p-4 rounded-2xl border-2 transition relative ${isFull ? 'bg-gray-100 border-gray-200 opacity-60 cursor-not-allowed' : isSelected ? 'bg-purple-50 border-purple-500 cursor-pointer shadow-md' : 'bg-white border-gray-200 cursor-pointer hover:border-purple-300'}`}
@@ -1855,36 +1855,36 @@ const EventDetailPage = () => {
 
                                                         {paymentMethod === 'transfer' ? (
                                                             <div className="flex flex-col sm:flex-row items-center gap-6 bg-white p-4 rounded-2xl border border-gray-100 animate-fade-in">
-                                                            <div className="w-32 h-32 bg-gray-100 rounded-xl overflow-hidden shrink-0 border border-gray-200">
-                                                                <img src="/images/qris-bae2.png" alt="QRIS BAE" className="w-full h-full object-contain" />
+                                                                <div className="w-32 h-32 bg-gray-100 rounded-xl overflow-hidden shrink-0 border border-gray-200">
+                                                                    <img src="/images/qris-bae2.png" alt="QRIS BAE" className="w-full h-full object-contain" />
+                                                                </div>
+                                                                <div className="text-center sm:text-left">
+                                                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Pindai QRIS BAE</p>
+                                                                    <p className="text-lg font-black text-gray-900 mt-1">Bae Community</p>
+                                                                    <p className="text-xs text-gray-500 mt-2 leading-relaxed">Silakan bayar melalui QRIS di atas dan unggah bukti transfernya di bawah ini.</p>
+                                                                    <a
+                                                                        href="/images/qris-bae2.png"
+                                                                        download="QRIS-BAE.png"
+                                                                        className="mt-3 inline-flex items-center gap-2 text-[10px] font-bold text-green-700 hover:text-green-800 transition bg-green-50 px-3 py-1.5 rounded-lg border border-green-100"
+                                                                    >
+                                                                        <span className="material-icons text-sm">download</span>
+                                                                        UNDUH QRIS
+                                                                    </a>
+                                                                </div>
                                                             </div>
-                                                            <div className="text-center sm:text-left">
-                                                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Pindai QRIS BAE</p>
-                                                                <p className="text-lg font-black text-gray-900 mt-1">Barakah App Economy</p>
-                                                                <p className="text-xs text-gray-500 mt-2 leading-relaxed">Silakan bayar melalui QRIS di atas dan unggah bukti transfernya di bawah ini.</p>
-                                                                <a
-                                                                    href="/images/qris-bae2.png"
-                                                                    download="QRIS-BAE.png"
-                                                                    className="mt-3 inline-flex items-center gap-2 text-[10px] font-bold text-green-700 hover:text-green-800 transition bg-green-50 px-3 py-1.5 rounded-lg border border-green-100"
-                                                                >
-                                                                    <span className="material-icons text-sm">download</span>
-                                                                    UNDUH QRIS
-                                                                 </a>
-                                                             </div>
-                                                         </div>
-                                                     ) : (
-                                                         <div className="p-6 bg-blue-50 border border-blue-100 rounded-3xl flex items-start gap-4 animate-fade-in">
-                                                            <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center shrink-0">
-                                                                <span className="material-icons">info</span>
+                                                        ) : (
+                                                            <div className="p-6 bg-blue-50 border border-blue-100 rounded-3xl flex items-start gap-4 animate-fade-in">
+                                                                <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center shrink-0">
+                                                                    <span className="material-icons">info</span>
+                                                                </div>
+                                                                <div>
+                                                                    <p className="text-[10px] font-bold text-blue-800 uppercase tracking-widest mb-1">Pembayaran OTS (On The Spot)</p>
+                                                                    <p className="text-xs text-blue-700 leading-relaxed font-medium">Anda dapat melakukan pendaftaran sekarang dan melakukan pembayaran secara tunai di lokasi acara (Meja Registrasi). Sampai jumpa di lokasi!</p>
+                                                                </div>
                                                             </div>
-                                                            <div>
-                                                                <p className="text-[10px] font-bold text-blue-800 uppercase tracking-widest mb-1">Pembayaran OTS (On The Spot)</p>
-                                                                <p className="text-xs text-blue-700 leading-relaxed font-medium">Anda dapat melakukan pendaftaran sekarang dan melakukan pembayaran secara tunai di lokasi acara (Meja Registrasi). Sampai jumpa di lokasi!</p>
-                                                            </div>
-                                                         </div>
-                                                     )}
+                                                        )}
 
-                                                         {/* Price Inputs based on price_type */}
+                                                        {/* Price Inputs based on price_type */}
                                                         <div className="space-y-4">
                                                             {(event.price_type === 'fixed' || event.price_type === 'hybrid_1') && (
                                                                 <div className="flex items-center justify-between bg-white px-5 py-4 rounded-2xl border border-gray-100">
@@ -1909,7 +1909,7 @@ const EventDetailPage = () => {
                                                             )}
                                                         </div>
 
-                                                        
+
                                                         {/* Voucher Input */}
                                                         <div className="space-y-2">
                                                             <label className="text-[10px] font-bold text-gray-600 uppercase ml-1">Kode Voucher (Opsional)</label>
@@ -1953,15 +1953,15 @@ const EventDetailPage = () => {
                                                                         - Rp {(() => {
                                                                             let fixed = Number(event?.price_fixed) || 0;
                                                                             if (selectedPriceVariation) fixed = Number(selectedPriceVariation.price);
-                                                                            
+
                                                                             let extraFormPrice = 0;
                                                                             if (event?.form_fields) {
                                                                                 event.form_fields.forEach(f => {
                                                                                     if (['select', 'radio', 'checkbox'].includes(f.field_type) && f.options && responses[f.id]) {
                                                                                         let opts = [];
                                                                                         if (Array.isArray(f.options)) opts = f.options;
-                                                                                        else if (typeof f.options === 'string') { try { opts = JSON.parse(f.options); } catch(e) { opts = []; } }
-                                                                                        
+                                                                                        else if (typeof f.options === 'string') { try { opts = JSON.parse(f.options); } catch (e) { opts = []; } }
+
                                                                                         if (f.field_type === 'checkbox') {
                                                                                             const selected = responses[f.id] || [];
                                                                                             selected.forEach(s => {
@@ -1975,13 +1975,13 @@ const EventDetailPage = () => {
                                                                                     }
                                                                                 });
                                                                             }
-                                                                            
+
                                                                             const extra = Number(paymentAmount) || 0;
                                                                             let baseTotal = 0;
                                                                             if (event?.price_type === 'fixed') baseTotal = fixed + extraFormPrice;
                                                                             else if (event?.price_type === 'hybrid_1') baseTotal = fixed + extraFormPrice + extra;
                                                                             else baseTotal = extra + extraFormPrice;
-                                                                            
+
                                                                             if (appliedVoucher.discount_type === 'percentage') {
                                                                                 return formatCurrency(baseTotal * (Number(appliedVoucher.discount_value) / 100));
                                                                             }
@@ -2084,10 +2084,10 @@ const EventDetailPage = () => {
             )}
 
             <NavigationButton />
-            <UserProfileModal 
-                userId={selectedUserId} 
-                isOpen={isProfileModalOpen} 
-                onClose={() => setIsProfileModalOpen(false)} 
+            <UserProfileModal
+                userId={selectedUserId}
+                isOpen={isProfileModalOpen}
+                onClose={() => setIsProfileModalOpen(false)}
             />
         </div>
     );
