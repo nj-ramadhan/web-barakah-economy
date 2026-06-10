@@ -24,6 +24,11 @@ const StreamingPage = () => {
     const [hlsRetrying, setHlsRetrying] = useState(false); // Stream sedang mempersiapkan HLS
     const [viewerCount, setViewerCount] = useState(1);
     
+    // Video aspect ratio scaling & fullscreen states
+    const [videoScale, setVideoScale] = useState('contain'); // 'contain' | 'cover' | 'fill'
+    const [showScaleMenu, setShowScaleMenu] = useState(false);
+    const [isFullscreen, setIsFullscreen] = useState(false);
+    
     const user = JSON.parse(localStorage.getItem('user'));
     const isLoggedIn = !!user;
 
@@ -32,6 +37,7 @@ const StreamingPage = () => {
     const hlsInstanceRef = useRef(null);
     const currentHlsUrlRef = useRef(null);
     const currentLatencyModeRef = useRef(null);
+    const wrapperRef = useRef(null);
 
     // 1. Fetch Streaming Settings (Is Live, Title, Description, HLS URL)
     const fetchSettings = async () => {
@@ -231,6 +237,42 @@ const StreamingPage = () => {
         }
     }, []);
 
+    // Sync custom fullscreen state with browser events
+    useEffect(() => {
+        const handleFSChange = () => {
+            const isFS = !!(document.fullscreenElement || document.webkitFullscreenElement);
+            setIsFullscreen(isFS);
+        };
+        document.addEventListener('fullscreenchange', handleFSChange);
+        document.addEventListener('webkitfullscreenchange', handleFSChange);
+        return () => {
+            document.removeEventListener('fullscreenchange', handleFSChange);
+            document.removeEventListener('webkitfullscreenchange', handleFSChange);
+        };
+    }, []);
+
+    const toggleFullscreen = () => {
+        const wrapper = wrapperRef.current;
+        if (!wrapper) return;
+
+        if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+            if (wrapper.requestFullscreen) {
+                wrapper.requestFullscreen();
+            } else if (wrapper.webkitRequestFullscreen) {
+                wrapper.webkitRequestFullscreen();
+            } else if (videoRef.current && videoRef.current.webkitEnterFullscreen) {
+                // Fallback for older iOS Safari
+                videoRef.current.webkitEnterFullscreen();
+            }
+        } else {
+            if (document.exitFullscreen) {
+                document.exitFullscreen();
+            } else if (document.webkitExitFullscreen) {
+                document.webkitExitFullscreen();
+            }
+        }
+    };
+
     // 5. Send Comment Handler
     const handleSendComment = async (e) => {
         e.preventDefault();
@@ -300,29 +342,90 @@ const StreamingPage = () => {
                 {/* ── LEFT PANEL: VIDEO PLAYER ── */}
                 <div className="flex-1 flex flex-col space-y-4">
                     {/* Video wrapper */}
-                    <div className={`relative bg-slate-900 rounded-3xl overflow-hidden shadow-2xl border border-slate-800/80 group transition-all duration-300 ${
-                        settings?.is_hp_streaming_active && settings?.orientation === 'portrait'
-                            ? 'aspect-[9/16] max-w-[400px] w-full mx-auto'
-                            : 'aspect-video w-full'
-                    }`}>
+                    <div
+                        ref={wrapperRef}
+                        className={`relative bg-slate-900 overflow-hidden shadow-2xl transition-all duration-300 ${
+                            isFullscreen 
+                                ? 'fixed inset-0 w-screen h-screen z-[9999] bg-black rounded-none border-none flex items-center justify-center' 
+                                : `rounded-3xl border border-slate-800/80 ${
+                                    settings?.is_hp_streaming_active && settings?.orientation === 'portrait'
+                                        ? 'aspect-[9/16] max-w-[400px] w-full mx-auto'
+                                        : 'aspect-video w-full'
+                                  }`
+                        }`}
+                    >
                         {settings?.is_live ? (
                             <>
                                 <video
                                     ref={videoRef}
                                     controls
-                                    className="w-full h-full object-cover"
+                                    className={`w-full h-full transition-all duration-200 ${
+                                        videoScale === 'cover' 
+                                            ? 'object-cover' 
+                                            : videoScale === 'fill' 
+                                                ? 'object-fill' 
+                                                : 'object-contain'
+                                    }`}
                                     playsInline
                                 />
+                                {/* Aspect Ratio & Fullscreen Controls Overlay */}
+                                <div className="absolute top-4 right-4 flex items-center gap-2 z-50">
+                                    {/* Aspect Ratio Selector */}
+                                    <div className="relative">
+                                        <button
+                                            onClick={() => setShowScaleMenu(!showScaleMenu)}
+                                            className="w-9 h-9 bg-black/60 backdrop-blur-md text-white rounded-full flex items-center justify-center border border-white/10 shadow-lg hover:bg-black/80 transition active:scale-95"
+                                            title="Pilihan Ukuran Layar"
+                                        >
+                                            <span className="material-icons text-lg">aspect_ratio</span>
+                                        </button>
+                                        
+                                        {showScaleMenu && (
+                                            <div className="absolute right-0 top-11 bg-black/90 backdrop-blur-md rounded-2xl p-2 border border-white/15 flex flex-col gap-1 z-[60] min-w-[140px] shadow-2xl animate-fade-in">
+                                                <button
+                                                    onClick={() => { setVideoScale('contain'); setShowScaleMenu(false); }}
+                                                    className={`text-left px-3 py-2 rounded-xl text-xs font-bold transition ${videoScale === 'contain' ? 'bg-indigo-600 text-white' : 'text-slate-300 hover:bg-white/10'}`}
+                                                >
+                                                    Original
+                                                </button>
+                                                <button
+                                                    onClick={() => { setVideoScale('cover'); setShowScaleMenu(false); }}
+                                                    className={`text-left px-3 py-2 rounded-xl text-xs font-bold transition ${videoScale === 'cover' ? 'bg-indigo-600 text-white' : 'text-slate-300 hover:bg-white/10'}`}
+                                                >
+                                                    Potong (Zoom)
+                                                </button>
+                                                <button
+                                                    onClick={() => { setVideoScale('fill'); setShowScaleMenu(false); }}
+                                                    className={`text-left px-3 py-2 rounded-xl text-xs font-bold transition ${videoScale === 'fill' ? 'bg-indigo-600 text-white' : 'text-slate-300 hover:bg-white/10'}`}
+                                                >
+                                                    Regang (Stretch)
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Fullscreen Toggle */}
+                                    <button
+                                        onClick={toggleFullscreen}
+                                        className="w-9 h-9 bg-black/60 backdrop-blur-md text-white rounded-full flex items-center justify-center border border-white/10 shadow-lg hover:bg-black/80 transition active:scale-95"
+                                        title={isFullscreen ? "Keluar Layar Penuh" : "Layar Penuh"}
+                                    >
+                                        <span className="material-icons text-lg">
+                                            {isFullscreen ? 'fullscreen_exit' : 'fullscreen'}
+                                        </span>
+                                    </button>
+                                </div>
+
                                 {/* HLS Preparing overlay — shown while MediaMTX generates first segments */}
                                 {hlsRetrying && (
-                                    <div className="absolute inset-0 bg-slate-900/85 backdrop-blur-sm flex flex-col items-center justify-center text-center p-6">
+                                    <div className="absolute inset-0 bg-slate-900/85 backdrop-blur-sm flex flex-col items-center justify-center text-center p-6 z-20">
                                         <div className="w-16 h-16 border-4 border-red-500/30 border-t-red-500 rounded-full animate-spin mb-4"></div>
                                         <p className="text-white font-black text-base">Stream Sedang Mempersiapkan...</p>
                                         <p className="text-slate-400 text-xs mt-2 max-w-xs">Segmen video sedang dibuat. Silakan tunggu 5–15 detik hingga pemutaran dimulai otomatis.</p>
                                     </div>
                                 )}
                                 {isPlayerError && (
-                                    <div className="absolute inset-0 bg-slate-900/90 flex flex-col items-center justify-center text-center p-6">
+                                    <div className="absolute inset-0 bg-slate-900/90 flex flex-col items-center justify-center text-center p-6 z-20">
                                         <span className="material-icons text-red-500 text-5xl animate-bounce mb-3">error_outline</span>
                                         <h3 className="font-bold text-lg">Format Streaming Tidak Didukung</h3>
                                         <p className="text-sm text-gray-400 mt-1 max-w-md">Browser Anda tidak mendukung pemutaran video HLS. Coba buka menggunakan Google Chrome atau Safari.</p>
@@ -341,7 +444,7 @@ const StreamingPage = () => {
                         
                         {/* Live & Viewers Badge indicator */}
                         {settings?.is_live && (
-                            <div className="absolute top-4 left-4 flex items-center gap-2">
+                            <div className="absolute top-4 left-4 flex items-center gap-2 z-30">
                                 <div className="flex items-center gap-1.5 bg-red-600 text-white text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full shadow-lg shadow-red-600/30">
                                     <span className="w-1.5 h-1.5 bg-white rounded-full animate-ping"></span>
                                     LIVE
