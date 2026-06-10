@@ -30,6 +30,8 @@ const StreamingPage = () => {
     const videoRef = useRef(null);
     const chatContainerRef = useRef(null);
     const hlsInstanceRef = useRef(null);
+    const currentHlsUrlRef = useRef(null);
+    const currentLatencyModeRef = useRef(null);
 
     // 1. Fetch Streaming Settings (Is Live, Title, Description, HLS URL)
     const fetchSettings = async () => {
@@ -49,7 +51,8 @@ const StreamingPage = () => {
             const sortedComments = (res.data.results || res.data).sort(
                 (a, b) => new Date(a.created_at) - new Date(b.created_at)
             );
-            setComments(sortedComments);
+            // Limit comments to last 50 to maintain fast rendering performance
+            setComments(sortedComments.slice(-50));
         } catch (err) {
             console.error('Gagal mengambil komentar:', err);
         }
@@ -125,6 +128,18 @@ const StreamingPage = () => {
 
         const hlsUrl = settings.hls_url.startsWith('http') ? settings.hls_url : `${API}${settings.hls_url}`;
         const video = videoRef.current;
+
+        // OPTIMIZATION: Prevent re-initializing the same stream when settings poll every 10 seconds.
+        if (
+            currentHlsUrlRef.current === hlsUrl &&
+            currentLatencyModeRef.current === settings.latency_mode
+        ) {
+            return;
+        }
+
+        currentHlsUrlRef.current = hlsUrl;
+        currentLatencyModeRef.current = settings.latency_mode;
+
         setIsPlayerError(false);
         setHlsRetrying(false);
 
@@ -134,22 +149,23 @@ const StreamingPage = () => {
             hlsInstanceRef.current = null;
         }
 
-        // Check if Hls.js is supported in browser
-        if (window.Hls) {
+        // Check if Hls.js is supported in browser (and verify Media Source Extensions support)
+        if (window.Hls && window.Hls.isSupported()) {
             const isHpStream = settings.is_hp_streaming_active;
             const isLowLatency = settings.latency_mode === 'low';
             const hls = new window.Hls({
                 enableWorker: true,
                 lowLatencyMode: isLowLatency,
                 backBufferLength: 90,
-                maxBufferLength: isLowLatency ? 3 : 30,
-                maxMaxBufferLength: isLowLatency ? 5 : 60,
-                liveSyncDuration: isLowLatency ? 1.5 : 8,
-                liveMaxLatencyDuration: isLowLatency ? 3 : 15,
+                // Slightly larger buffers for stability in low latency mode
+                maxBufferLength: isLowLatency ? 6 : 30,
+                maxMaxBufferLength: isLowLatency ? 12 : 60,
+                liveSyncDuration: isLowLatency ? 3 : 8,
+                liveMaxLatencyDuration: isLowLatency ? 6 : 15,
                 // More aggressive retry for HP streams (HLS takes time to generate first segments)
-                manifestLoadingMaxRetry: isHpStream ? 10 : 3,
+                manifestLoadingMaxRetry: isHpStream ? 15 : 5,
                 manifestLoadingRetryDelay: isHpStream ? 2000 : 1000,
-                levelLoadingMaxRetry: isHpStream ? 10 : 3,
+                levelLoadingMaxRetry: isHpStream ? 15 : 5,
                 levelLoadingRetryDelay: isHpStream ? 2000 : 1000,
             });
             hlsInstanceRef.current = hls;
@@ -190,7 +206,7 @@ const StreamingPage = () => {
                 }
             });
         } 
-        // Native HLS support (Safari)
+        // Native HLS support (Safari / iOS web views)
         else if (video.canPlayType('application/vnd.apple.mpegurl')) {
             video.src = hlsUrl;
             video.addEventListener('loadedmetadata', () => {

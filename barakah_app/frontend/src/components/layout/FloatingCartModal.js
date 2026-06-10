@@ -1,6 +1,57 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
+
+const isAllowedPage = (pathname) => {
+    // Exact home
+    if (pathname === '/') return true;
+    
+    // E-commerce paths
+    if (
+        pathname.startsWith('/sinergy') ||
+        pathname.startsWith('/produk/') ||
+        pathname === '/incaran' ||
+        pathname === '/keranjang' ||
+        pathname === '/riwayat-belanja' ||
+        pathname === '/bayar-belanja' ||
+        pathname === '/konfirmasi-pembayaran-belanja'
+    ) return true;
+
+    // Digital products paths
+    if (
+        pathname.startsWith('/digital-products') ||
+        pathname.startsWith('/digital-produk/') ||
+        pathname.startsWith('/digital_produk/')
+    ) return true;
+
+    // Predefined non-store paths to exclude
+    const predefinedNonStorePaths = [
+        '/login', '/register', '/lupa-password', '/reset-password',
+        '/profile', '/charity', '/kampanye', '/bayar-donasi', '/riwayat-donasi',
+        '/konfirmasi-pembayaran-donasi', '/articles', '/academy', '/kelas',
+        '/ikut-kelas', '/konfirmasi-pembayaran-kelas', '/pembayaran-berhasil',
+        '/pembayaran-gagal', '/pembayaran-tertunda', '/about', '/hubungi-kami',
+        '/streaming', '/kegiatan', '/meetings', '/event', '/events', '/chat',
+        '/forum', '/dashboard', '/live-meet-test', '/widget', '/bae-run'
+    ];
+
+    const isPredefinedNonStore = predefinedNonStorePaths.some(p => 
+        pathname === p || pathname.startsWith(p + '/')
+    );
+
+    // If it's not a predefined non-store path, check if it's a single-level username path (e.g. /johndoe)
+    if (!isPredefinedNonStore) {
+        const parts = pathname.split('/').filter(Boolean);
+        if (parts.length === 1) {
+            return true; // Seller profile page (/:username)
+        }
+        if (parts.length === 2 && (parts[0] === 'digital-produk' || parts[0] === 'digital_produk')) {
+            return true; // digital product product page
+        }
+    }
+
+    return false;
+};
 
 const FloatingCartModal = () => {
     const [isOpen, setIsOpen] = useState(false);
@@ -8,6 +59,21 @@ const FloatingCartModal = () => {
     const [cartItems, setCartItems] = useState([]);
     const [wishlistItems, setWishlistItems] = useState([]);
     const navigate = useNavigate();
+    const location = useLocation();
+
+    // Custom Drag States & Refs
+    const [position, setPosition] = useState({ x: 0, y: 0 });
+    const [isVisible, setIsVisible] = useState(true);
+    const bubbleRef = useRef(null);
+    const dragRef = useRef({
+        isDragging: false,
+        startX: 0,
+        startY: 0,
+        startOffsetX: 0,
+        startOffsetY: 0,
+        hasMoved: false,
+        initialRect: null
+    });
 
     const fetchItems = async () => {
         const user = JSON.parse(localStorage.getItem('user'));
@@ -68,6 +134,15 @@ const FloatingCartModal = () => {
     };
 
     useEffect(() => {
+        // Reset coordinate and visibility when navigating to another page
+        setIsVisible(true);
+        setPosition({ x: 0, y: 0 });
+        if (bubbleRef.current) {
+            bubbleRef.current.style.transform = 'translate3d(0px, 0px, 0px)';
+        }
+    }, [location.pathname]);
+
+    useEffect(() => {
         fetchItems();
         // Add listener for custom event to trigger animation and refetch
         const handleCartUpdate = () => {
@@ -87,21 +162,152 @@ const FloatingCartModal = () => {
 
     const totalQty = cartItems.reduce((acc, item) => acc + item.quantity, 0);
 
+    const handlePointerDown = (e) => {
+        if (e.button !== 0 && e.button !== undefined) return;
+        const bubble = bubbleRef.current;
+        if (!bubble) return;
+
+        const rect = bubble.getBoundingClientRect();
+        dragRef.current = {
+            isDragging: true,
+            startX: e.clientX,
+            startY: e.clientY,
+            startOffsetX: position.x,
+            startOffsetY: position.y,
+            hasMoved: false,
+            initialRect: {
+                left: rect.left - position.x,
+                top: rect.top - position.y,
+                width: rect.width,
+                height: rect.height
+            }
+        };
+
+        try {
+            bubble.setPointerCapture(e.pointerId);
+        } catch (err) {
+            console.error(err);
+        }
+        bubble.style.transition = 'none';
+    };
+
+    const handlePointerMove = (e) => {
+        if (!dragRef.current.isDragging) return;
+
+        const dx = e.clientX - dragRef.current.startX;
+        const dy = e.clientY - dragRef.current.startY;
+
+        if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
+            dragRef.current.hasMoved = true;
+        }
+
+        const newX = dragRef.current.startOffsetX + dx;
+        const newY = dragRef.current.startOffsetY + dy;
+
+        let clampedX = newX;
+        let clampedY = newY;
+
+        if (dragRef.current.initialRect) {
+            const { left, top, width, height } = dragRef.current.initialRect;
+            const minX = -left;
+            const maxX = window.innerWidth - width - left;
+            const minY = -top;
+            const maxY = window.innerHeight - height - top;
+            clampedX = Math.max(minX, Math.min(maxX, newX));
+            clampedY = Math.max(minY, Math.min(maxY, newY));
+        }
+
+        const bubble = bubbleRef.current;
+        if (bubble) {
+            bubble.style.transform = `translate3d(${clampedX}px, ${clampedY}px, 0)`;
+        }
+    };
+
+    const handlePointerUp = (e) => {
+        if (!dragRef.current.isDragging) return;
+        dragRef.current.isDragging = false;
+
+        try {
+            e.currentTarget.releasePointerCapture(e.pointerId);
+        } catch (err) {
+            console.error(err);
+        }
+
+        const dx = e.clientX - dragRef.current.startX;
+        const dy = e.clientY - dragRef.current.startY;
+        const newX = dragRef.current.startOffsetX + dx;
+        const newY = dragRef.current.startOffsetY + dy;
+
+        let clampedX = newX;
+        let clampedY = newY;
+
+        if (dragRef.current.initialRect) {
+            const { left, top, width, height } = dragRef.current.initialRect;
+            const minX = -left;
+            const maxX = window.innerWidth - width - left;
+            const minY = -top;
+            const maxY = window.innerHeight - height - top;
+            clampedX = Math.max(minX, Math.min(maxX, newX));
+            clampedY = Math.max(minY, Math.min(maxY, newY));
+        }
+
+        setPosition({ x: clampedX, y: clampedY });
+
+        const bubble = bubbleRef.current;
+        if (bubble) {
+            bubble.style.transition = 'transform 0.15s ease-out';
+            bubble.style.transform = `translate3d(${clampedX}px, ${clampedY}px, 0)`;
+        }
+
+        if (!dragRef.current.hasMoved) {
+            toggleCart();
+        }
+    };
+
+    const handleDismiss = (e) => {
+        e.stopPropagation();
+        setIsVisible(false);
+    };
+
+    if (!isVisible || !isAllowedPage(location.pathname)) {
+        return null;
+    }
+
     return (
         <>
             {/* The Floating Bubble */}
-            <button
+            <div
+                ref={bubbleRef}
                 id="cart-floating-bubble"
-                onClick={toggleCart}
-                className="fixed bottom-32 right-4 w-14 h-14 bg-gradient-to-br from-green-500 to-green-700 text-white rounded-full shadow-[0_8px_30px_rgb(0,0,0,0.12)] flex items-center justify-center z-[1000] hover:scale-105 transition-transform"
+                onPointerDown={handlePointerDown}
+                onPointerMove={handlePointerMove}
+                onPointerUp={handlePointerUp}
+                onPointerCancel={handlePointerUp}
+                style={{
+                    transform: `translate3d(${position.x}px, ${position.y}px, 0)`,
+                    touchAction: 'none'
+                }}
+                className="fixed bottom-32 right-4 w-14 h-14 bg-gradient-to-br from-green-500 to-green-700 text-white rounded-full shadow-[0_8px_30px_rgb(0,0,0,0.12)] flex items-center justify-center z-[1000] cursor-pointer select-none transition-transform hover:scale-105 active:scale-95"
             >
-                <span className="material-icons text-2xl">shopping_cart</span>
+                {/* Close Button */}
+                <button
+                    type="button"
+                    onPointerDown={(e) => e.stopPropagation()}
+                    onPointerUp={(e) => e.stopPropagation()}
+                    onClick={handleDismiss}
+                    className="absolute -top-1.5 -left-1.5 w-6 h-6 bg-white hover:bg-red-50 text-gray-500 hover:text-red-600 rounded-full flex items-center justify-center border border-gray-200 shadow-md z-[1001] transition-all hover:scale-110 active:scale-90"
+                    title="Hilangkan keranjang"
+                >
+                    <span className="material-icons text-[14px] font-bold">close</span>
+                </button>
+
+                <span className="material-icons text-2xl pointer-events-none">shopping_cart</span>
                 {totalQty > 0 && (
-                    <div className="absolute -top-1 -right-1 w-6 h-6 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-white animate-pulse">
+                    <div className="absolute -top-1 -right-1 w-6 h-6 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-white animate-pulse pointer-events-none">
                         {totalQty}
                     </div>
                 )}
-            </button>
+            </div>
 
             {/* The Modal */}
             {isOpen && (
