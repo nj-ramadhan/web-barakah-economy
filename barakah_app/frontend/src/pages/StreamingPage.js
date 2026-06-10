@@ -161,14 +161,7 @@ const StreamingPage = () => {
             hlsInstanceRef.current = null;
         }
 
-        // CRITICAL: Clear native src and reset decoder state to prevent clash with Hls.js MSE
-        video.src = '';
-        video.removeAttribute('src');
-        try {
-            video.load();
-        } catch (e) {
-            console.warn("video.load() warning:", e);
-        }
+
 
         // Check if Hls.js is supported in browser (and verify Media Source Extensions support)
         if (isHlsSupported) {
@@ -227,12 +220,11 @@ const StreamingPage = () => {
                 }
             });
         } 
-        // Native HLS support (Safari / iOS web views)
         else if (video.canPlayType('application/vnd.apple.mpegurl')) {
             video.src = hlsUrl;
-            video.addEventListener('loadedmetadata', () => {
+            video.onloadedmetadata = () => {
                 video.play().catch(err => console.log("Safari auto-play blocked."));
-            });
+            };
         } else {
             setIsPlayerError(true);
         }
