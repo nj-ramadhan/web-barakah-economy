@@ -359,7 +359,7 @@ class EventViewSet(viewsets.ModelViewSet):
                 "error": "Event ini belum tersedia."
             }, status=status.HTTP_403_FORBIDDEN)
 
-        # Check if registration is open
+        # Check if registration is open strictly to support ticket war scenarios
         if event.registration_start_at and now < event.registration_start_at:
             time_str = timezone.localtime(event.registration_start_at).strftime('%d %b %Y %H:%M')
             return Response({

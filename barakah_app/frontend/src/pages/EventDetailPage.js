@@ -42,6 +42,7 @@ const EventDetailPage = () => {
     const [registeredCode, setRegisteredCode] = useState(null); // kode unik QR setelah daftar
     const [registrationTimeLeft, setRegistrationTimeLeft] = useState(null);
     const [visibilityTimeLeft, setVisibilityTimeLeft] = useState(null);
+    const [clockOffset, setClockOffset] = useState(0);
     const [selectedUserId, setSelectedUserId] = useState(null);
     const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
     const [userProfile, setUserProfile] = useState(null);
@@ -58,7 +59,8 @@ const EventDetailPage = () => {
 
     const calculateTimeLeft = (targetDate) => {
         if (!targetDate) return { total: 0 };
-        const difference = +new Date(targetDate) - +new Date();
+        const adjustedNow = new Date(Date.now() + clockOffset);
+        const difference = +new Date(targetDate) - +adjustedNow;
         if (difference > 0) {
             return {
                 days: Math.floor(difference / (1000 * 60 * 60 * 24)),
@@ -85,10 +87,22 @@ const EventDetailPage = () => {
     useEffect(() => {
         const timer = setInterval(() => {
             if (event?.registration_start_at) {
-                setRegistrationTimeLeft(calculateTimeLeft(event.registration_start_at));
+                const timeLeft = calculateTimeLeft(event.registration_start_at);
+                setRegistrationTimeLeft(prev => {
+                    if (!prev || prev.total !== timeLeft.total) {
+                        return timeLeft;
+                    }
+                    return prev;
+                });
             }
             if (event?.visible_at) {
-                setVisibilityTimeLeft(calculateTimeLeft(event.visible_at));
+                const timeLeft = calculateTimeLeft(event.visible_at);
+                setVisibilityTimeLeft(prev => {
+                    if (!prev || prev.total !== timeLeft.total) {
+                        return timeLeft;
+                    }
+                    return prev;
+                });
             }
         }, 1000);
 
@@ -96,7 +110,7 @@ const EventDetailPage = () => {
         setVisibilityTimeLeft(calculateTimeLeft(event?.visible_at));
 
         return () => clearInterval(timer);
-    }, [event]);
+    }, [event, clockOffset]);
 
 
     const fetchDetail = useCallback(async () => {
@@ -105,6 +119,11 @@ const EventDetailPage = () => {
             setEvent(res.data);
             setIsLiked(res.data.is_liked);
             setLikesCount(res.data.likes_count);
+            if (res.data.server_time) {
+                const serverTime = new Date(res.data.server_time);
+                const clientTime = new Date();
+                setClockOffset(serverTime - clientTime);
+            }
         } catch (err) {
             console.error(err);
             setError('Event tidak ditemukan.');

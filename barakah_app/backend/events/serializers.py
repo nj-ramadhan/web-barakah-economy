@@ -142,6 +142,11 @@ class EventSerializer(serializers.ModelSerializer):
     certificate = serializers.SerializerMethodField()
     bib_template = serializers.SerializerMethodField()
     special_qr = serializers.SerializerMethodField()
+    server_time = serializers.SerializerMethodField()
+
+    def get_server_time(self, obj):
+        from django.utils import timezone
+        return timezone.now()
 
     def get_bib_template(self, obj):
         try:
