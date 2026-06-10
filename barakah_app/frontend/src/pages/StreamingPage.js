@@ -38,6 +38,7 @@ const StreamingPage = () => {
     const currentHlsUrlRef = useRef(null);
     const currentLatencyModeRef = useRef(null);
     const wrapperRef = useRef(null);
+    const playerTypeRef = useRef(null); // 'hls' | 'native' | null
 
     // 1. Fetch Streaming Settings (Is Live, Title, Description, HLS URL)
     const fetchSettings = async () => {
@@ -135,16 +136,21 @@ const StreamingPage = () => {
         const hlsUrl = settings.hls_url.startsWith('http') ? settings.hls_url : `${API}${settings.hls_url}`;
         const video = videoRef.current;
 
+        const isHlsSupported = window.Hls && window.Hls.isSupported();
+        const targetType = isHlsSupported ? 'hls' : 'native';
+
         // OPTIMIZATION: Prevent re-initializing the same stream when settings poll every 10 seconds.
         if (
             currentHlsUrlRef.current === hlsUrl &&
-            currentLatencyModeRef.current === settings.latency_mode
+            currentLatencyModeRef.current === settings.latency_mode &&
+            playerTypeRef.current === targetType
         ) {
             return;
         }
 
         currentHlsUrlRef.current = hlsUrl;
         currentLatencyModeRef.current = settings.latency_mode;
+        playerTypeRef.current = targetType;
 
         setIsPlayerError(false);
         setHlsRetrying(false);
@@ -156,7 +162,7 @@ const StreamingPage = () => {
         }
 
         // Check if Hls.js is supported in browser (and verify Media Source Extensions support)
-        if (window.Hls && window.Hls.isSupported()) {
+        if (isHlsSupported) {
             const isHpStream = settings.is_hp_streaming_active;
             const isLowLatency = settings.latency_mode === 'low';
             const hls = new window.Hls({
@@ -359,7 +365,7 @@ const StreamingPage = () => {
                                 <video
                                     ref={videoRef}
                                     controls
-                                    className={`w-full h-full transition-all duration-200 ${
+                                    className={`w-full h-full ${
                                         videoScale === 'cover' 
                                             ? 'object-cover' 
                                             : videoScale === 'fill' 
