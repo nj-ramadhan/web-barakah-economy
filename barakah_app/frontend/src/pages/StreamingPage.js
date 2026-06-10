@@ -161,6 +161,15 @@ const StreamingPage = () => {
             hlsInstanceRef.current = null;
         }
 
+        // CRITICAL: Clear native src and reset decoder state to prevent clash with Hls.js MSE
+        video.src = '';
+        video.removeAttribute('src');
+        try {
+            video.load();
+        } catch (e) {
+            console.warn("video.load() warning:", e);
+        }
+
         // Check if Hls.js is supported in browser (and verify Media Source Extensions support)
         if (isHlsSupported) {
             const isHpStream = settings.is_hp_streaming_active;

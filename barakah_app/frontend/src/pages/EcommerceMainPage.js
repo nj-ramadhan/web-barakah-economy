@@ -6,7 +6,6 @@ import { Helmet } from 'react-helmet';
 import HeaderHome from '../components/layout/HeaderHome'; // Import the Header component
 import NavigationButton from '../components/layout/Navigation'; // Import the Navigation component
 import { formatCurrency } from '../utils/formatters';
-import FloatingCartModal from '../components/layout/FloatingCartModal';
 import UserProfileModal from '../components/modals/UserProfileModal';
 import { getMediaUrl } from '../utils/mediaUtils';
 
@@ -407,7 +406,6 @@ const EcommerceMainPage = () => {
 
       {/* Bottom Navigation */}
       <NavigationButton />
-      <FloatingCartModal />
       <UserProfileModal 
         userId={selectedUserId} 
         isOpen={isProfileModalOpen} 

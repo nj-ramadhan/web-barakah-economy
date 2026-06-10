@@ -10,7 +10,6 @@ import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Pagination, Scrollbar, Autoplay } from 'swiper/modules';
 import ShareButton from '../components/campaigns/ShareButton';
 import { getDigitalProducts, getPopularSellers } from '../services/digitalProductApi';
-import FloatingCartModal from '../components/layout/FloatingCartModal';
 import { getMediaUrl } from '../utils/mediaUtils';
 import { forumApi } from '../services/forumApi';
 
@@ -2146,7 +2145,6 @@ const Home = () => {
 
       {/* Bottom Navigation */}
       <NavigationButton />
-      <FloatingCartModal />
     </div>
   );
 };

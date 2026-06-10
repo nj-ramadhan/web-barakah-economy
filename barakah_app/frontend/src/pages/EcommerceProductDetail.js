@@ -6,7 +6,6 @@ import { Helmet } from 'react-helmet';
 import Header from '../components/layout/Header';
 import NavigationButton from '../components/layout/Navigation';
 import { formatCurrency } from '../utils/formatters';
-import FloatingCartModal from '../components/layout/FloatingCartModal';
 import UserProfileModal from '../components/modals/UserProfileModal';
 import { getMediaUrl } from '../utils/mediaUtils';
 import { toggleLikeProduct } from '../services/productApi';
@@ -556,7 +555,6 @@ const EcommerceProductDetail = () => {
       </div>
 
       <NavigationButton />
-      <FloatingCartModal />
       <UserProfileModal 
         userId={selectedUserId} 
         isOpen={isProfileModalOpen} 
