@@ -35,6 +35,7 @@ const EventDetailPage = () => {
     const [paymentAmount, setPaymentAmount] = useState('');
     const [paymentProof, setPaymentProof] = useState(null);
     const [paymentMethod, setPaymentMethod] = useState('transfer');
+    const [noInfaq, setNoInfaq] = useState(false);
     const [isRegistered, setIsRegistered] = useState(false);
     const [activeTab, setActiveTab] = useState('about');
     const [showRegisterModal, setShowRegisterModal] = useState(false);
@@ -160,6 +161,9 @@ const EventDetailPage = () => {
         if (!showRegisterModal) {
             setHasAutoFilled(false);
             setError(null);
+            setNoInfaq(false);
+            setPaymentAmount('');
+            setPaymentProof(null);
             return;
         }
 
@@ -265,7 +269,7 @@ const EventDetailPage = () => {
 
     // Centralized total price calculation helper
     const getCalculatedTotal = () => {
-        if (event?.price_type === 'free' || isUserFreeByLabel()) return 0;
+        if (event?.price_type === 'free' || isUserFreeByLabel() || noInfaq) return 0;
         const fixedPrice = selectedPriceVariation ? Number(selectedPriceVariation.price) : Number(event?.price_fixed || 0);
         let extraFields = 0;
         if (event?.form_fields) {
@@ -368,7 +372,7 @@ const EventDetailPage = () => {
             data.append('voucher_code', appliedVoucher.code);
         }
 
-        if (isUserFreeByLabel()) {
+        if (isUserFreeByLabel() || noInfaq) {
             data.append('payment_amount', 0);
             data.append('payment_method', 'transfer');
         } else {
@@ -1807,13 +1811,51 @@ const EventDetailPage = () => {
                                                 </div>
                                             ) : (
                                                 <>
-                                                    <div className="flex items-center justify-between">
-                                                        <h3 className="text-sm font-bold text-gray-900 flex items-center gap-2">
-                                                            <span className="material-icons text-green-600">payments</span>
-                                                            Metode Pembayaran
-                                                        </h3>
-                                                        <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-[10px] font-black uppercase">{event.price_type}</span>
-                                                    </div>
+                                                    {/* Toggle for Voluntary Free Pendaftaran */}
+                                                    {(event.price_type === 'voluntary' || event.price_type === 'hybrid_1' || event.price_type === 'hybrid_2') && (
+                                                        <div className="flex items-center gap-3 p-4 bg-white rounded-2xl border border-gray-100 shadow-sm mb-4">
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    const newValue = !noInfaq;
+                                                                    setNoInfaq(newValue);
+                                                                    if (newValue) {
+                                                                        setPaymentAmount('0');
+                                                                        setPaymentProof(null);
+                                                                    } else {
+                                                                        setPaymentAmount('');
+                                                                    }
+                                                                }}
+                                                                className={`w-12 h-6 rounded-full transition-colors relative shrink-0 ${noInfaq ? 'bg-green-500' : 'bg-gray-300'}`}
+                                                            >
+                                                                <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${noInfaq ? 'left-7' : 'left-1'}`}></div>
+                                                            </button>
+                                                            <div>
+                                                                <p className="text-xs font-bold text-gray-900">Daftar gratis tanpa infaq</p>
+                                                                <p className="text-[10px] text-gray-400 font-medium">Aktifkan jika tidak ingin memberikan kontribusi/infaq</p>
+                                                            </div>
+                                                        </div>
+                                                    )}
+
+                                                    {noInfaq ? (
+                                                        <div className="flex flex-col items-center gap-3 py-6 bg-gradient-to-br from-green-50 to-emerald-50 rounded-3xl border border-green-200 animate-fade-in w-full">
+                                                            <div className="w-14 h-14 bg-green-100 rounded-full flex items-center justify-center">
+                                                                <span className="material-icons text-green-600 text-2xl">celebration</span>
+                                                            </div>
+                                                            <div className="text-center">
+                                                                <p className="text-lg font-black text-green-700 uppercase tracking-widest">GRATIS</p>
+                                                                <p className="text-xs text-green-600 font-medium mt-1">Anda mendaftar secara GRATIS tanpa tambahan infaq</p>
+                                                            </div>
+                                                        </div>
+                                                    ) : (
+                                                        <>
+                                                            <div className="flex items-center justify-between">
+                                                                <h3 className="text-sm font-bold text-gray-900 flex items-center gap-2">
+                                                                    <span className="material-icons text-green-600">payments</span>
+                                                                    Metode Pembayaran
+                                                                </h3>
+                                                                <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-[10px] font-black uppercase">{event.price_type}</span>
+                                                            </div>
 
                                                     {/* Price Variations Selection */}
                                                     {event.price_variations && event.price_variations.length > 0 && (
@@ -2045,6 +2087,8 @@ const EventDetailPage = () => {
                                                                 />
                                                             </label>
                                                         </div>
+                                                    )}
+                                                        </>
                                                     )}
                                                 </>
                                             )}
