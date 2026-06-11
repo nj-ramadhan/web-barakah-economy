@@ -1787,7 +1787,7 @@ const EventDetailPage = () => {
                                                     </div>
                                                     {!selectedTeam && (
                                                         <p className="text-[10px] text-red-500 font-bold uppercase tracking-wider flex items-center gap-1 ml-1">
-                                                            <span className="material-icons text-xs">warning</span>
+                                                    <span className="material-icons text-xs">warning</span>
                                                             Wajib memilih salah satu tim untuk mendaftar
                                                         </p>
                                                     )}
@@ -1795,7 +1795,7 @@ const EventDetailPage = () => {
                                             )}
 
                                             {/* Show GRATIS badge when total is 0 */}
-                                            {getCalculatedTotal() <= 0 ? (
+                                            {getCalculatedTotal() <= 0 && event.price_type !== 'voluntary' && event.price_type !== 'hybrid_1' && event.price_type !== 'hybrid_2' ? (
                                                 <div className="flex flex-col items-center gap-3 py-6 bg-gradient-to-br from-green-50 to-emerald-50 rounded-3xl border border-green-200">
                                                     <div className="w-14 h-14 bg-green-100 rounded-full flex items-center justify-center">
                                                         <span className="material-icons text-green-600 text-2xl">celebration</span>

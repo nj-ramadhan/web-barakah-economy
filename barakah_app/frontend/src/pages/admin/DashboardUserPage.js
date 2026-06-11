@@ -5,6 +5,7 @@ import { Helmet } from 'react-helmet';
 import axios from 'axios';
 import Header from '../../components/layout/Header';
 import NavigationButton from '../../components/layout/Navigation';
+import { getMediaUrl } from '../../utils/mediaUtils';
 
 const API = process.env.REACT_APP_API_BASE_URL;
 const getAuth = () => {
@@ -67,6 +68,7 @@ const DashboardUserPage = () => {
     const [importFile, setImportFile] = useState(null);
     const [importing, setImporting] = useState(false);
     const [importResult, setImportResult] = useState(null);
+    const [hoveredPhoto, setHoveredPhoto] = useState(null);
 
     const fetchMeta = useCallback(async () => {
         try {
@@ -397,6 +399,7 @@ const DashboardUserPage = () => {
                         <tr>
                             <th className="px-3 py-4 w-10"><div className="w-4 h-4 bg-gray-200 rounded"></div></th>
                             <th className="px-3 py-4"><div className="h-4 bg-gray-200 rounded w-10"></div></th>
+                            <th className="px-3 py-4"><div className="h-4 bg-gray-200 rounded w-12"></div></th>
                             <th className="px-3 py-4"><div className="h-4 bg-gray-200 rounded w-16"></div></th>
                             <th className="px-3 py-4"><div className="h-4 bg-gray-200 rounded w-20"></div></th>
                             <th className="px-3 py-4"><div className="h-4 bg-gray-200 rounded w-24"></div></th>
@@ -421,6 +424,7 @@ const DashboardUserPage = () => {
                             <tr key={i}>
                                 <td className="px-3 py-4"><div className="w-4 h-4 bg-gray-100 rounded"></div></td>
                                 <td className="px-3 py-4"><div className="h-4 bg-gray-100 rounded w-10"></div></td>
+                                <td className="px-3 py-4"><div className="w-10 h-10 bg-gray-100 rounded-xl animate-pulse"></div></td>
                                 <td className="px-3 py-4"><div className="h-4 bg-gray-100 rounded w-14"></div></td>
                                 <td className="px-3 py-4"><div className="h-4 bg-gray-100 rounded w-20"></div></td>
                                 <td className="px-3 py-4"><div className="h-4 bg-gray-100 rounded w-24"></div></td>
@@ -567,6 +571,7 @@ const DashboardUserPage = () => {
                                     <tr>
                                         <th className="px-3 py-4"><input type="checkbox" checked={selectedUserIds.length === users.length && users.length > 0} onChange={toggleSelectAll} className="w-4 h-4 text-green-600 rounded" /></th>
                                         <SH label="ID" field="id" {...{ sortField, sortDir, handleSort, getSortIcon }} />
+                                        <th className="px-3 py-4 text-gray-600 font-bold uppercase tracking-wider text-[11px] min-w-[60px]">Foto</th>
                                         <SH label="IDM" field="profile__id_m" {...{ sortField, sortDir, handleSort, getSortIcon }} />
                                         <SH label="User" field="username" {...{ sortField, sortDir, handleSort, getSortIcon }} />
                                         <SH label="Nama" field="profile__name_full" {...{ sortField, sortDir, handleSort, getSortIcon }} />
@@ -599,6 +604,44 @@ const DashboardUserPage = () => {
                                         >
                                             <td className="px-3 py-3"><input type="checkbox" checked={selectedUserIds.includes(u.id)} onChange={() => toggleSelectUser(u.id)} className="w-4 h-4 text-green-600 rounded" /></td>
                                             <td className="px-3 py-3 text-xs font-black text-gray-400">#{u.id}</td>
+                                            <td className="px-3 py-3">
+                                                {(() => {
+                                                    const avatarUrl = u.profile?.picture ? getMediaUrl(u.profile.picture) : u.profile?.google_picture_url;
+                                                    const displayName = u.profile?.name_full || u.username;
+                                                    const initial = displayName.charAt(0).toUpperCase();
+                                                    return avatarUrl ? (
+                                                        <div 
+                                                            className="relative group/avatar cursor-zoom-in w-10 h-10 rounded-xl overflow-hidden bg-gray-50 border border-gray-100 shadow-sm transition-all duration-300 hover:scale-105 active:scale-95 flex items-center justify-center"
+                                                            onMouseEnter={(e) => {
+                                                                const rect = e.currentTarget.getBoundingClientRect();
+                                                                const spaceRight = window.innerWidth - rect.right;
+                                                                const x = spaceRight > 220 ? rect.right + 12 : rect.left - 212;
+                                                                setHoveredPhoto({
+                                                                    url: avatarUrl,
+                                                                    name: displayName,
+                                                                    x: x,
+                                                                    y: Math.max(10, rect.top - 60)
+                                                                });
+                                                            }}
+                                                            onMouseLeave={() => setHoveredPhoto(null)}
+                                                            onClick={() => { setSelectedUser(u); setShowDetailModal(true); }}
+                                                        >
+                                                            <img
+                                                                src={avatarUrl}
+                                                                alt={u.username}
+                                                                className="w-full h-full object-cover"
+                                                            />
+                                                        </div>
+                                                    ) : (
+                                                        <div 
+                                                            className="w-10 h-10 rounded-xl bg-green-50 border border-green-100 flex items-center justify-center text-green-700 font-bold text-xs select-none"
+                                                            title={displayName}
+                                                        >
+                                                            {initial}
+                                                        </div>
+                                                    );
+                                                })()}
+                                            </td>
                                             <td className="px-3 py-3">
                                                 <input type="text" defaultValue={u.profile?.id_m || ''} onBlur={(e) => { if (e.target.value !== (u.profile?.id_m || '')) handleInlineEdit(u.id, 'id_m', e.target.value); }} className="w-20 font-mono text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-lg border border-blue-100 text-center outline-none focus:ring-2 focus:ring-blue-400" placeholder="-" />
                                             </td>
@@ -760,10 +803,21 @@ const DashboardUserPage = () => {
                             <button onClick={() => setShowDetailModal(false)} className="absolute top-4 right-4 w-10 h-10 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center text-white transition backdrop-blur-md">
                                 <span className="material-icons">close</span>
                             </button>
-                            <div className="absolute -bottom-12 left-8 w-24 h-24 bg-white rounded-3xl p-1 shadow-lg border-4 border-white">
-                                <div className="w-full h-full bg-green-50 rounded-2xl flex items-center justify-center">
-                                    <span className="material-icons text-5xl text-green-700">person</span>
-                                </div>
+                            <div className="absolute -bottom-12 left-8 w-24 h-24 bg-white rounded-3xl p-1 shadow-lg border-4 border-white overflow-hidden">
+                                {(() => {
+                                    const avatarUrl = selectedUser.profile?.picture ? getMediaUrl(selectedUser.profile.picture) : selectedUser.profile?.google_picture_url;
+                                    return avatarUrl ? (
+                                        <img
+                                            src={avatarUrl}
+                                            alt={selectedUser.username}
+                                            className="w-full h-full object-cover rounded-2xl animate-in fade-in duration-300"
+                                        />
+                                    ) : (
+                                        <div className="w-full h-full bg-green-50 rounded-2xl flex items-center justify-center">
+                                            <span className="material-icons text-5xl text-green-700">person</span>
+                                        </div>
+                                    );
+                                })()}
                             </div>
                         </div>
                         <div className="px-8 pt-16 pb-8">
@@ -1286,6 +1340,31 @@ const DashboardUserPage = () => {
             )}
 
             <NavigationButton />
+
+            {/* Floating Photo Preview Card */}
+            {hoveredPhoto && (
+                <div 
+                    className="fixed z-[9999] pointer-events-none bg-white/90 p-2 rounded-2xl shadow-2xl border border-gray-100/50 backdrop-blur-md transition-all duration-200 animate-in fade-in zoom-in-95"
+                    style={{ 
+                        left: `${hoveredPhoto.x}px`, 
+                        top: `${hoveredPhoto.y}px`,
+                        transform: 'translateY(-10%)'
+                    }}
+                >
+                    <div className="relative w-48 h-48 rounded-xl overflow-hidden bg-gray-50 border border-gray-100/50">
+                        <img 
+                            src={hoveredPhoto.url} 
+                            alt="Preview" 
+                            className="w-full h-full object-cover animate-in fade-in duration-300"
+                        />
+                    </div>
+                    {hoveredPhoto.name && (
+                        <div className="mt-2 text-center">
+                            <p className="text-[11px] font-bold text-gray-900 truncate max-w-[192px]">{hoveredPhoto.name}</p>
+                        </div>
+                    )}
+                </div>
+            )}
         </div>
     );
 };
