@@ -17,6 +17,7 @@ debug.log
 media/
 static/
 *.txt
+!requirements.txt
 *.pem
 check_regs.py
 diagnostic_*.py
