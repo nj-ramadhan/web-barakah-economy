@@ -594,7 +594,7 @@ class EventViewSet(viewsets.ModelViewSet):
             ocr_data=ocr_data,
             ocr_verified=ocr_verified,
             status='approved', # Force auto-approve
-            payment_status='verified' if (is_free_by_label or expected_amount <= 0) else 'pending',
+            payment_status='verified' if (is_free_by_label or expected_amount <= 0 or ocr_verified) else 'pending',
             applied_voucher=applied_voucher,
             discount_amount=discount_amount
         )

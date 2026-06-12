@@ -1857,6 +1857,19 @@ const EventDetailPage = () => {
                                                                 <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-[10px] font-black uppercase">{event.price_type}</span>
                                                             </div>
 
+                                                            {/* Charity Collaboration Information */}
+                                                            {event.collab_charity && event.charity_title && (
+                                                                <div className="p-4 bg-emerald-50 border border-emerald-100 rounded-2xl flex items-start gap-3 mt-4 mb-2">
+                                                                    <span className="material-icons text-emerald-600 text-lg animate-pulse">volunteer_activism</span>
+                                                                    <div className="text-left">
+                                                                        <p className="text-[10px] font-bold text-emerald-800 uppercase tracking-widest">Kolaborasi Charity</p>
+                                                                        <p className="text-xs text-emerald-700 leading-relaxed font-semibold mt-0.5">
+                                                                            Pembayaran tiket Anda untuk event ini akan disalurkan ke program charity: <b>{event.charity_title}</b>.
+                                                                        </p>
+                                                                    </div>
+                                                                </div>
+                                                            )}
+
                                                     {/* Price Variations Selection */}
                                                     {event.price_variations && event.price_variations.length > 0 && (
                                                         <div className="space-y-3">

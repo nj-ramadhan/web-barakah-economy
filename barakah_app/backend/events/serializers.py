@@ -143,6 +143,10 @@ class EventSerializer(serializers.ModelSerializer):
     bib_template = serializers.SerializerMethodField()
     special_qr = serializers.SerializerMethodField()
     server_time = serializers.SerializerMethodField()
+    charity_title = serializers.SerializerMethodField()
+
+    def get_charity_title(self, obj):
+        return obj.charity.title if obj.charity else None
 
     def get_server_time(self, obj):
         from django.utils import timezone
