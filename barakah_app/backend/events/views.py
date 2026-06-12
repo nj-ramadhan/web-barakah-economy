@@ -531,25 +531,29 @@ class EventViewSet(viewsets.ModelViewSet):
                 err_msg = ocr_result.get('_error', '')
                 if "Sistem AI belum dikonfigurasi" in err_msg:
                     logger.warning(f"Bypassing OCR validation because AI settings are disabled: {err_msg}")
+                    ocr_data = ocr_result
                 else:
                     from .payment_ocr_service import extract_payment_data_via_ocr
                     logger.info(f"AI vision verification failed ({err_msg}). Trying traditional OCR fallback.")
                     ocr_result = extract_payment_data_via_ocr(payment_proof, expected_amount)
                     if '_error' in ocr_result:
                         return Response({
-                            "error": f"Bukti transfer tidak valid atau tidak terbaca. Harap pastikan Anda mengunggah foto bukti transfer bank/QRIS yang valid dan jelas. (Detail: {ocr_result.get('_error')})"
+                            "error": f"Bukti transfer tidak valid atau tidak terbaca. Harap pastikan Anda mengunggah foto bukti transfer bank/QRIS yang valid dan jelas. (Detail: {ocr_result.get('_error')})",
+                            "ocr_data": ocr_result
                         }, status=status.HTTP_400_BAD_REQUEST)
                     
                     ocr_data = ocr_result
-                    extracted_name = str(ocr_result.get('recipient_name', '')).lower()
-                    extracted_amount = ocr_result.get('amount')
             else:
                 ocr_data = ocr_result
-                extracted_name = str(ocr_result.get('recipient_name', '')).lower()
-                extracted_amount = ocr_result.get('amount')
+            
+            # Run validation logic unless bypassed
+            is_bypassed = ocr_data and '_error' in ocr_data and "Sistem AI belum dikonfigurasi" in ocr_data.get('_error', '')
+            if not is_bypassed:
+                extracted_name = str(ocr_data.get('recipient_name', '') or '').lower()
+                extracted_amount = ocr_data.get('amount')
                 
-                # Validation logic
-                valid_names = ['bae community', 'barakah economy community']
+                # Validation logic: recipient must be Bae Community / Barakah Economy Community / Deny Setiawan
+                valid_names = ['bae community', 'barakah economy community', 'deny setiawan']
                 is_name_valid = any(vn in extracted_name for vn in valid_names)
                 
                 # Amount validation
@@ -565,12 +569,14 @@ class EventViewSet(viewsets.ModelViewSet):
                 
                 if not is_name_valid:
                     return Response({
-                        "error": f"Penerima di bukti transfer ('{ocr_result.get('recipient_name') or 'Tidak terdeteksi'}') tidak sesuai. Bukti transfer harus ditujukan ke 'Barakah Economy Community' atau 'Bae Community'."
+                        "error": f"Penerima di bukti transfer ('{ocr_data.get('recipient_name') or 'Tidak terdeteksi'}') tidak sesuai. Bukti transfer harus ditujukan ke 'Barakah Economy Community', 'Bae Community', atau 'Deny Setiawan'.",
+                        "ocr_data": ocr_data
                     }, status=status.HTTP_400_BAD_REQUEST)
                 
                 if not is_amount_valid:
                     return Response({
-                        "error": f"Nominal di bukti transfer (Rp {extracted_amount_float:,.0f}) tidak sesuai dengan 'Total yang Harus Ditransfer' (Rp {expected_amount_float:,.0f}). Harap periksa nominal transfer Anda."
+                        "error": f"Nominal di bukti transfer (Rp {extracted_amount_float:,.0f}) tidak sesuai dengan 'Total yang Harus Ditransfer' (Rp {expected_amount_float:,.0f}). Harap periksa nominal transfer Anda.",
+                        "ocr_data": ocr_data
                     }, status=status.HTTP_400_BAD_REQUEST)
                 
                 ocr_verified = True

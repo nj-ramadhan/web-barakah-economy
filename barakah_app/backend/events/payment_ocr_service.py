@@ -168,9 +168,9 @@ def extract_payment_data_via_ocr(image_file, expected_amount):
     # 2. Try ocr.space if pytesseract didn't return text
     if not ocr_text.strip():
         try:
-            if hasattr(image_file, 'seek'):
-                image_file.seek(0)
-                
+            # Compress and convert to JPEG to ensure it fits size limits and is standard
+            compressed_file, mime_type = compress_image(image_file)
+            
             payload = {
                 'apikey': 'helloworld',
                 'language': 'ind',
@@ -178,12 +178,9 @@ def extract_payment_data_via_ocr(image_file, expected_amount):
             }
             
             files = {
-                'file': (image_file.name, image_file.read(), 'image/jpeg')
+                'file': ('receipt.jpg', compressed_file.read(), 'image/jpeg')
             }
             
-            if hasattr(image_file, 'seek'):
-                image_file.seek(0)
-                
             response = requests.post(
                 'https://api.ocr.space/parse/image',
                 files=files,
@@ -199,11 +196,15 @@ def extract_payment_data_via_ocr(image_file, expected_amount):
                         ocr_text = parsed_results[0].get('ParsedText', '')
                         logger.info("OCR.space API extraction succeeded.")
                 else:
+                    err_msg = result.get('ErrorMessage', 'Unknown error')
                     logger.error(f"OCR.space API processed with error: {result}")
+                    return {'_error': f"OCR.space processing error: {err_msg}", '_method': 'error'}
             else:
                 logger.error(f"OCR.space API HTTP error: {response.status_code}")
+                return {'_error': f"OCR.space HTTP error {response.status_code}", '_method': 'error'}
         except Exception as e:
             logger.error(f"OCR.space API call exception: {e}")
+            return {'_error': f"OCR.space connection error: {str(e)}", '_method': 'error'}
             
     # Reset image file pointer
     if hasattr(image_file, 'seek'):
