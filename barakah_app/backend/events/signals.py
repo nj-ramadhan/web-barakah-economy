@@ -36,7 +36,12 @@ def create_activity_documentation(sender, instance, created, **kwargs):
                 # Copy header image if it exists
                 if instance.header_image:
                     try:
-                        # We need to open and read the file to copy it
+                        # Reset file pointer and read the image safely
+                        try:
+                            instance.header_image.open()
+                        except Exception:
+                            pass
+                        instance.header_image.seek(0)
                         image_name = instance.header_image.name.split('/')[-1]
                         activity.header_image.save(
                             image_name,

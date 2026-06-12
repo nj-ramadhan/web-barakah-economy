@@ -274,8 +274,9 @@ const DashboardActivitiesPage = () => {
                 show={cropper.show}
                 image={cropper.image}
                 onClose={() => setCropper({ show: false, image: null })}
-                onCropComplete={(croppedFile) => {
-                    setFormData({ ...formData, header_image: croppedFile });
+                onCropComplete={(croppedBlob) => {
+                    const file = new File([croppedBlob], 'activity_header.jpg', { type: 'image/jpeg' });
+                    setFormData({ ...formData, header_image: file });
                     setCropper({ show: false, image: null });
                 }}
                 aspect={16/9}
