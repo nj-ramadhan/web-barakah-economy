@@ -855,6 +855,16 @@ const DashboardPage = () => {
                                     title: 'Persetujuan Charity',
                                     desc: 'Verifikasi pengajuan program charity dari user (Admin)',
                                     badge: managementStats.campaign_approval
+                                },
+                                {
+                                    id: 'donations_charity',
+                                    access: hasAccess('charity'),
+                                    to: '/dashboard/admin/donations',
+                                    icon: 'payments',
+                                    color: 'emerald',
+                                    title: 'Donatur Charity',
+                                    desc: 'Kelola dan verifikasi donasi masuk (Admin)',
+                                    badge: managementStats.pending_donations
                                 }
                             ]
                         },
