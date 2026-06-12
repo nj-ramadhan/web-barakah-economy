@@ -173,7 +173,7 @@ def extract_payment_data_via_ocr(image_file, expected_amount):
             
             payload = {
                 'apikey': 'helloworld',
-                'language': 'ind',
+                'language': 'eng',
                 'isOverlayRequired': False,
             }
             
