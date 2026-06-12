@@ -56,6 +56,36 @@ class Event(models.Model):
     price_type = models.CharField(max_length=20, choices=PRICE_TYPE_CHOICES, default='free')
     price_fixed = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     
+    # Charity Collaboration Settings
+    collab_charity = models.BooleanField(default=False, help_text="Aktifkan kolaborasi dengan program charity")
+    charity = models.ForeignKey(
+        'campaigns.Campaign',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='collab_events',
+        help_text="Program charity yang dipilih untuk kolaborasi"
+    )
+    charity_split_mode = models.BooleanField(default=False, help_text="Bagi hasil pembayaran antara charity dan operasional")
+    charity_split_type = models.CharField(
+        max_length=10,
+        choices=[('percent', 'Persentase'), ('nominal', 'Nominal')],
+        default='percent',
+        help_text="Tipe pembagian hasil (persen atau nominal)"
+    )
+    charity_charity_value = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=0,
+        help_text="Nilai pembagian untuk program charity (dalam % atau nominal Rp)"
+    )
+    charity_operational_value = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=0,
+        help_text="Nilai pembagian untuk operasional penyelenggara (dalam % atau nominal Rp)"
+    )
+    
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='created_events')
     rejection_reason = models.TextField(blank=True, null=True)
     view_count = models.PositiveIntegerField(default=0)
@@ -368,7 +398,93 @@ class EventRegistration(models.Model):
             else:
                 self.bib_number = 1
                 
+        is_new = self.pk is None
+        old_payment_status = None
+        if not is_new:
+            try:
+                old_payment_status = EventRegistration.objects.get(pk=self.pk).payment_status
+            except EventRegistration.DoesNotExist:
+                pass
+
         super().save(*args, **kwargs)
+
+        # Trigger charity donation creation when payment_status is verified
+        if self.payment_status == 'verified' and (is_new or old_payment_status != 'verified'):
+            self.create_charity_donation()
+
+    def create_charity_donation(self):
+        """
+        Creates a donation record when event registration payment is verified,
+        if charity collaboration is enabled for this event.
+        """
+        event = self.event
+        if not event.collab_charity or not event.charity:
+            return
+            
+        if self.payment_amount <= 0:
+            return
+            
+        import decimal
+        donation_amount = decimal.Decimal('0')
+        if not event.charity_split_mode:
+            donation_amount = self.payment_amount
+        else:
+            if event.charity_split_type == 'percent':
+                pct = event.charity_charity_value / decimal.Decimal('100.0')
+                donation_amount = self.payment_amount * pct
+            elif event.charity_split_type == 'nominal':
+                donation_amount = min(event.charity_charity_value, self.payment_amount)
+                
+        if donation_amount <= 0:
+            return
+            
+        from donations.models import Donation
+        existing_donation = Donation.objects.filter(event_registration=self).first()
+        if existing_donation:
+            existing_donation.amount = donation_amount
+            existing_donation.payment_status = 'verified'
+            existing_donation.save()
+        else:
+            donor_name = self.guest_name
+            if not donor_name and self.user:
+                donor_name = self.user.profile.name_full if (hasattr(self.user, 'profile') and self.user.profile.name_full) else self.user.username
+            if not donor_name:
+                donor_name = "Anonim"
+                
+            donor_email = self.guest_email or (self.user.email if self.user else "")
+            if not donor_email and isinstance(self.responses, dict):
+                for val in self.responses.values():
+                    if isinstance(val, str) and '@' in val:
+                        donor_email = val
+                        break
+                        
+            donor_phone = ""
+            if self.user and self.user.phone:
+                donor_phone = self.user.phone
+            if not donor_phone and isinstance(self.responses, dict):
+                for val in self.responses.values():
+                    if isinstance(val, str) and val.isdigit() and len(val) >= 9:
+                        donor_phone = val
+                        break
+            if not donor_phone:
+                donor_phone = "-"
+                
+            # Truncate fields to model limits
+            donor_name = donor_name[:100]
+            donor_phone = donor_phone[:15]
+            
+            Donation.objects.create(
+                campaign=event.charity,
+                donor=self.user,
+                amount=donation_amount,
+                donor_name=donor_name,
+                donor_phone=donor_phone,
+                donor_email=donor_email,
+                payment_method='lainnya',
+                payment_status='verified',
+                event_registration=self,
+                message=f"Kolaborasi Event: {event.title}"
+            )
 
 class EventRegistrationFile(models.Model):
     registration = models.ForeignKey(EventRegistration, on_delete=models.CASCADE, related_name='uploaded_files')

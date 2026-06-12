@@ -44,6 +44,13 @@ class Donation(models.Model):
     account_name = models.CharField(max_length=100, blank=True, null=True)
     transfer_date = models.DateField(blank=True, null=True)
     proof_file = models.FileField(upload_to=proof_file_path, blank=True, null=True)
+    event_registration = models.ForeignKey(
+        'events.EventRegistration',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='charity_donations'
+    )
     
     # WhatsApp confirmation tracking
     whatsapp_sent = models.BooleanField(default=False)

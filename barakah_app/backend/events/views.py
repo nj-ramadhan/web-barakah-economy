@@ -532,9 +532,17 @@ class EventViewSet(viewsets.ModelViewSet):
                 if "Sistem AI belum dikonfigurasi" in err_msg:
                     logger.warning(f"Bypassing OCR validation because AI settings are disabled: {err_msg}")
                 else:
-                    return Response({
-                        "error": f"Bukti transfer tidak valid atau tidak terbaca. Harap pastikan Anda mengunggah foto bukti transfer bank/QRIS yang valid dan jelas. (Detail: {err_msg})"
-                    }, status=status.HTTP_400_BAD_REQUEST)
+                    from .payment_ocr_service import extract_payment_data_via_ocr
+                    logger.info(f"AI vision verification failed ({err_msg}). Trying traditional OCR fallback.")
+                    ocr_result = extract_payment_data_via_ocr(payment_proof, expected_amount)
+                    if '_error' in ocr_result:
+                        return Response({
+                            "error": f"Bukti transfer tidak valid atau tidak terbaca. Harap pastikan Anda mengunggah foto bukti transfer bank/QRIS yang valid dan jelas. (Detail: {ocr_result.get('_error')})"
+                        }, status=status.HTTP_400_BAD_REQUEST)
+                    
+                    ocr_data = ocr_result
+                    extracted_name = str(ocr_result.get('recipient_name', '')).lower()
+                    extracted_amount = ocr_result.get('amount')
             else:
                 ocr_data = ocr_result
                 extracted_name = str(ocr_result.get('recipient_name', '')).lower()

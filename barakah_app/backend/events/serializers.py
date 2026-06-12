@@ -289,6 +289,12 @@ class EventSerializer(serializers.ModelSerializer):
         for field in datetime_fields:
             if field in data and (data[field] == '' or data[field] == 'null'):
                 data[field] = None
+
+        # Clean charity collaboration fields
+        for field in ['charity', 'charity_charity_value', 'charity_operational_value']:
+            if field in data and (data[field] == '' or data[field] == 'null'):
+                data[field] = None if field == 'charity' else 0
+
         return data
 
     def to_internal_value(self, data):

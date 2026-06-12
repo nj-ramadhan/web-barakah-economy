@@ -379,4 +379,125 @@ class EventRegistrationOCRTests(APITestCase):
         reg = EventRegistration.objects.get(event=self.paid_event, user=self.user)
         self.assertTrue(reg.ocr_verified)
 
+from campaigns.models import Campaign
+from donations.models import Donation
+
+class EventCharityCollaborationTests(APITestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="donor_user",
+            email="donor@example.com",
+            password="testpassword123",
+            phone="08123456789"
+        )
+        self.client.force_authenticate(user=self.user)
+        
+        self.creator = User.objects.create_user(
+            username="event_organizer",
+            email="organizer@example.com",
+            password="organizerpassword123"
+        )
+        
+        # Create a campaign
+        self.campaign = Campaign.objects.create(
+            title="Charity Campaign Test",
+            description="Campaign description",
+            category="donasi",
+            target_amount=Decimal("1000000.00"),
+            current_amount=Decimal("0.00"),
+            created_by=self.creator,
+            approval_status="approved"
+        )
+        
+        # Create paid event with charity collaboration (100% split)
+        self.event_full_charity = Event.objects.create(
+            title="Full Charity Event",
+            description="All proceeds go to charity",
+            start_date=timezone.now() + timezone.timedelta(days=1),
+            location="Online",
+            organizer_name="BAE Community",
+            status="approved",
+            price_type="fixed",
+            price_fixed=Decimal("50000.00"),
+            created_by=self.creator,
+            visibility="public",
+            collab_charity=True,
+            charity=self.campaign,
+            charity_split_mode=False
+        )
+        
+        # Create paid event with charity split mode (70% charity, 30% operational)
+        self.event_split_charity = Event.objects.create(
+            title="Split Charity Event",
+            description="70% charity, 30% operational",
+            start_date=timezone.now() + timezone.timedelta(days=1),
+            location="Online",
+            organizer_name="BAE Community",
+            status="approved",
+            price_type="fixed",
+            price_fixed=Decimal("100000.00"),
+            created_by=self.creator,
+            visibility="public",
+            collab_charity=True,
+            charity=self.campaign,
+            charity_split_mode=True,
+            charity_split_type="percent",
+            charity_charity_value=Decimal("70.00"),
+            charity_operational_value=Decimal("30.00")
+        )
+
+    def test_registration_creates_donation_when_payment_verified(self):
+        """
+        When a registration is saved with verified payment status,
+        it should automatically trigger a Donation entry.
+        """
+        # Create registration with pending status
+        reg = EventRegistration.objects.create(
+            event=self.event_full_charity,
+            user=self.user,
+            payment_method="transfer",
+            payment_amount=Decimal("50000.00"),
+            payment_status="pending"
+        )
+        
+        # No donation should be created yet
+        self.assertEqual(Donation.objects.filter(event_registration=reg).count(), 0)
+        
+        # Update payment_status to verified
+        reg.payment_status = "verified"
+        reg.save()
+        
+        # Donation should be created with exact amount (100% of event price)
+        donations = Donation.objects.filter(event_registration=reg)
+        self.assertEqual(donations.count(), 1)
+        donation = donations.first()
+        self.assertEqual(donation.amount, Decimal("50000.00"))
+        self.assertEqual(donation.payment_status, "verified")
+        self.assertEqual(donation.campaign, self.campaign)
+        self.assertEqual(donation.donor, self.user)
+        
+        # Campaign current amount should be updated automatically
+        self.campaign.refresh_from_db()
+        self.assertEqual(self.campaign.current_amount, Decimal("50000.00"))
+
+    def test_registration_creates_split_donation_when_payment_verified(self):
+        """
+        When split mode is enabled, the triggered donation should only be the charity share.
+        """
+        reg = EventRegistration.objects.create(
+            event=self.event_split_charity,
+            user=self.user,
+            payment_method="transfer",
+            payment_amount=Decimal("100000.00"),
+            payment_status="verified" # verified immediately on creation
+        )
+        
+        # Donation should be created with 70% of 100,000 = 70,000
+        donations = Donation.objects.filter(event_registration=reg)
+        self.assertEqual(donations.count(), 1)
+        donation = donations.first()
+        self.assertEqual(donation.amount, Decimal("70000.00"))
+        self.assertEqual(donation.payment_status, "verified")
+        self.assertEqual(donation.campaign, self.campaign)
+
 

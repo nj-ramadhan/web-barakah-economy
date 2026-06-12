@@ -7,6 +7,7 @@ import ImageCropperModal from '../components/common/ImageCropper';
 import { compressImage } from '../components/common/canvasUtils';
 import { createEvent, getEventDetail, updateEvent, getUserLabels, deleteDocumentationImage, deleteGalleryImage } from '../services/eventApi';
 import CKEditorComponent from '../components/common/CKEditor';
+import { getCampaigns } from '../services/campaigns';
 import CurrencyInput from '../components/common/CurrencyInput';
 
 const EventSubmissionPage = () => {
@@ -53,9 +54,16 @@ const EventSubmissionPage = () => {
         documentation_frame_1_1: null,
         attachment_file: null,
         bib_template_image: null,
-        _bib_preview: null
+        _bib_preview: null,
+        collab_charity: false,
+        charity: '',
+        charity_split_mode: false,
+        charity_split_type: 'percent',
+        charity_charity_value: 0,
+        charity_operational_value: 0
     });
     const [availableLabels, setAvailableLabels] = useState([]);
+    const [campaigns, setCampaigns] = useState([]);
     const [speakers, setSpeakers] = useState([]);
     const [sessions, setSessions] = useState([]);
     const [vouchers, setVouchers] = useState([]);
@@ -75,6 +83,10 @@ const EventSubmissionPage = () => {
 
     useEffect(() => {
         getUserLabels().then(res => setAvailableLabels(res.data)).catch(err => console.error("Error fetching labels:", err));
+        getCampaigns().then(res => {
+            const list = Array.isArray(res) ? res : (res.results || []);
+            setCampaigns(list);
+        }).catch(err => console.error("Error fetching campaigns:", err));
     }, []);
 
     useEffect(() => {
@@ -138,6 +150,12 @@ const EventSubmissionPage = () => {
                         has_special_qr: d.has_special_qr || false,
                         price_variations: d.price_variations || [],
                         teams: d.teams || [],
+                        collab_charity: d.collab_charity || false,
+                        charity: d.charity || '',
+                        charity_split_mode: d.charity_split_mode || false,
+                        charity_split_type: d.charity_split_type || 'percent',
+                        charity_charity_value: d.charity_charity_value || 0,
+                        charity_operational_value: d.charity_operational_value || 0
                     });
 
                     if (d.speakers && d.speakers.length > 0) setSpeakers(d.speakers);
@@ -1151,6 +1169,149 @@ const EventSubmissionPage = () => {
                                                 <span className="text-xs font-bold text-gray-600">{formData.allow_ots_payment ? 'Ya, Aktifkan OTS' : 'Hanya Transfer/QRIS'}</span>
                                             </div>
                                             <p className="text-[10px] text-gray-400 ml-1 italic">Jika aktif, pendaftar bisa memilih bayar di lokasi dan melewati upload bukti transfer di awal.</p>
+                                        </div>
+
+                                        {/* Charity Collaboration Section */}
+                                        <div className="space-y-4 md:col-span-2 p-6 bg-emerald-50/50 rounded-[2rem] border border-emerald-100 mt-2">
+                                            <div className="flex items-center justify-between">
+                                                <div>
+                                                    <p className="text-sm font-black text-emerald-900">Kolaborasi Charity</p>
+                                                    <p className="text-[10px] text-emerald-600 font-bold uppercase tracking-wider">Salurkan dana pembayaran langsung ke program charity/kampanye</p>
+                                                </div>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setFormData(prev => ({ 
+                                                        ...prev, 
+                                                        collab_charity: !prev.collab_charity,
+                                                        charity: !prev.collab_charity ? prev.charity : '',
+                                                        charity_split_mode: !prev.collab_charity ? prev.charity_split_mode : false
+                                                    }))}
+                                                    className={`w-12 h-6 rounded-full transition-colors relative ${formData.collab_charity ? 'bg-emerald-600' : 'bg-gray-300'}`}
+                                                >
+                                                    <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${formData.collab_charity ? 'left-7' : 'left-1'}`}></div>
+                                                </button>
+                                            </div>
+
+                                            {formData.collab_charity && (
+                                                <div className="space-y-4 pt-2 animate-fade-in">
+                                                    <div className="space-y-1.5">
+                                                        <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Pilih Program Charity / Kampanye *</label>
+                                                        <select
+                                                            required={formData.collab_charity}
+                                                            name="charity"
+                                                            value={formData.charity}
+                                                            onChange={handleChange}
+                                                            className="w-full px-5 py-3.5 bg-white border border-gray-200 rounded-2xl text-sm focus:ring-2 focus:ring-emerald-500 transition font-medium text-gray-800"
+                                                        >
+                                                            <option value="">-- Pilih Kampanye --</option>
+                                                            {campaigns.map(c => (
+                                                                <option key={c.id} value={c.id}>{c.title}</option>
+                                                            ))}
+                                                        </select>
+                                                    </div>
+
+                                                    <div className="space-y-1.5 flex flex-col justify-center border-t border-emerald-100 pt-3">
+                                                        <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1 mb-2">Bagi Hasil dengan Operasional Penyelenggara?</label>
+                                                        <div className="flex items-center gap-3">
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => setFormData(prev => ({ ...prev, charity_split_mode: !prev.charity_split_mode }))}
+                                                                className={`w-12 h-6 rounded-full transition-colors relative ${formData.charity_split_mode ? 'bg-emerald-600' : 'bg-gray-300'}`}
+                                                            >
+                                                                <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${formData.charity_split_mode ? 'left-7' : 'left-1'}`}></div>
+                                                            </button>
+                                                            <span className="text-xs font-bold text-gray-600">{formData.charity_split_mode ? 'Ya, Bagi Hasil' : 'Tidak (100% Dana Masuk Charity)'}</span>
+                                                        </div>
+                                                    </div>
+
+                                                    {formData.charity_split_mode && (
+                                                        <div className="bg-white p-5 rounded-2xl border border-emerald-100 space-y-4 shadow-sm animate-fade-in">
+                                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                                                <div className="space-y-1.5 col-span-2">
+                                                                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Tipe Pembagian</label>
+                                                                    <select
+                                                                        name="charity_split_type"
+                                                                        value={formData.charity_split_type}
+                                                                        onChange={handleChange}
+                                                                        className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2 text-sm focus:ring-emerald-500 focus:border-emerald-500 font-bold"
+                                                                    >
+                                                                        <option value="percent">Persentase (%)</option>
+                                                                        <option value="nominal">Nominal Tetap (Rp)</option>
+                                                                    </select>
+                                                                </div>
+
+                                                                {formData.charity_split_type === 'percent' ? (
+                                                                    <>
+                                                                        <div className="space-y-1.5">
+                                                                            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Bagian Charity (%)</label>
+                                                                            <input
+                                                                                type="number"
+                                                                                min="0"
+                                                                                max="100"
+                                                                                name="charity_charity_value"
+                                                                                value={formData.charity_charity_value}
+                                                                                onChange={(e) => {
+                                                                                    const val = Math.min(100, Math.max(0, parseFloat(e.target.value) || 0));
+                                                                                    setFormData(prev => ({
+                                                                                        ...prev,
+                                                                                        charity_charity_value: val,
+                                                                                        charity_operational_value: 100 - val
+                                                                                    }));
+                                                                                }}
+                                                                                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2 text-sm focus:ring-emerald-500 focus:border-emerald-500 font-bold"
+                                                                            />
+                                                                        </div>
+                                                                        <div className="space-y-1.5">
+                                                                            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Bagian Operasional (%)</label>
+                                                                            <input
+                                                                                type="number"
+                                                                                min="0"
+                                                                                max="100"
+                                                                                name="charity_operational_value"
+                                                                                value={formData.charity_operational_value}
+                                                                                onChange={(e) => {
+                                                                                    const val = Math.min(100, Math.max(0, parseFloat(e.target.value) || 0));
+                                                                                    setFormData(prev => ({
+                                                                                        ...prev,
+                                                                                        charity_operational_value: val,
+                                                                                        charity_charity_value: 100 - val
+                                                                                    }));
+                                                                                }}
+                                                                                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2 text-sm focus:ring-emerald-500 focus:border-emerald-500 font-bold"
+                                                                            />
+                                                                        </div>
+                                                                    </>
+                                                                ) : (
+                                                                    <>
+                                                                        <div className="space-y-1.5">
+                                                                            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Bagian Charity (Nominal Rp)</label>
+                                                                            <CurrencyInput
+                                                                                value={formData.charity_charity_value}
+                                                                                onChange={(e) => setFormData(prev => ({
+                                                                                    ...prev,
+                                                                                    charity_charity_value: parseFloat(e.target.value) || 0
+                                                                                }))}
+                                                                                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2 text-sm focus:ring-emerald-500 focus:border-emerald-500 font-bold"
+                                                                            />
+                                                                        </div>
+                                                                        <div className="space-y-1.5">
+                                                                            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Bagian Operasional (Nominal Rp)</label>
+                                                                            <CurrencyInput
+                                                                                value={formData.charity_operational_value}
+                                                                                onChange={(e) => setFormData(prev => ({
+                                                                                    ...prev,
+                                                                                    charity_operational_value: parseFloat(e.target.value) || 0
+                                                                                }))}
+                                                                                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2 text-sm focus:ring-emerald-500 focus:border-emerald-500 font-bold"
+                                                                            />
+                                                                        </div>
+                                                                    </>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )}
                                         </div>
                                     </>
                                 )}

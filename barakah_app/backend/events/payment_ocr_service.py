@@ -144,3 +144,105 @@ Aturan Khusus:
     except Exception as e:
         logger.error(f"Error during Payment Receipt AI: {e}")
         return {'_error': f"Gagal membaca bukti transfer: {str(e)}", '_method': 'error'}
+
+def extract_payment_data_via_ocr(image_file, expected_amount):
+    """Fallback OCR method using local pytesseract or OCR.space API when AI Vision is down/fails."""
+    import re
+    
+    ocr_text = ""
+    
+    # 1. Try local pytesseract first (if installed and configured)
+    try:
+        import pytesseract
+        from PIL import Image
+        
+        if hasattr(image_file, 'seek'):
+            image_file.seek(0)
+            
+        img = Image.open(image_file)
+        ocr_text = pytesseract.image_to_string(img, lang='ind')
+        logger.info("Local pytesseract OCR extraction succeeded.")
+    except Exception as e:
+        logger.warning(f"Local pytesseract failed or not installed, trying ocr.space: {e}")
+        
+    # 2. Try ocr.space if pytesseract didn't return text
+    if not ocr_text.strip():
+        try:
+            if hasattr(image_file, 'seek'):
+                image_file.seek(0)
+                
+            payload = {
+                'apikey': 'helloworld',
+                'language': 'ind',
+                'isOverlayRequired': False,
+            }
+            
+            files = {
+                'file': (image_file.name, image_file.read(), 'image/jpeg')
+            }
+            
+            if hasattr(image_file, 'seek'):
+                image_file.seek(0)
+                
+            response = requests.post(
+                'https://api.ocr.space/parse/image',
+                files=files,
+                data=payload,
+                timeout=20
+            )
+            
+            if response.status_code == 200:
+                result = response.json()
+                if not result.get('IsErroredOnProcessing', False):
+                    parsed_results = result.get('ParsedResults', [])
+                    if parsed_results:
+                        ocr_text = parsed_results[0].get('ParsedText', '')
+                        logger.info("OCR.space API extraction succeeded.")
+                else:
+                    logger.error(f"OCR.space API processed with error: {result}")
+            else:
+                logger.error(f"OCR.space API HTTP error: {response.status_code}")
+        except Exception as e:
+            logger.error(f"OCR.space API call exception: {e}")
+            
+    # Reset image file pointer
+    if hasattr(image_file, 'seek'):
+        image_file.seek(0)
+        
+    if not ocr_text.strip():
+        return {'_error': 'Gagal melakukan OCR. Bukti pembayaran tidak dapat diekstraksi.', '_method': 'error'}
+        
+    # Parse the text according to validation rules
+    text_lower = ocr_text.lower()
+    
+    recipient_name = None
+    if "barakah economy" in text_lower or "bae community" in text_lower or "deny setiawan" in text_lower:
+        recipient_name = "Barakah Economy Community"
+    else:
+        recipient_name = "Tidak terdeteksi"
+        
+    amount = None
+    try:
+        expected_amount_int = int(float(expected_amount))
+        expected_amount_str = str(expected_amount_int)
+        scrubbed_text = re.sub(r'(?i)rp|[\.,\s]', '', ocr_text)
+        
+        formatted_dots = f"{expected_amount_int:,}".replace(",", ".")
+        formatted_commas = f"{expected_amount_int:,}"
+        
+        if (expected_amount_str in ocr_text or 
+            formatted_dots in ocr_text or 
+            formatted_commas in ocr_text or 
+            expected_amount_str in scrubbed_text):
+            amount = expected_amount_int
+    except Exception as e:
+        logger.error(f"Error parsing amount in OCR fallback: {e}")
+        
+    return {
+        'recipient_name': recipient_name,
+        'amount': amount,
+        'bank_name': 'Detected via OCR Fallback',
+        'date': None,
+        '_method': 'ocr_fallback',
+        '_raw_text': ocr_text
+    }
