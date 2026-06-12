@@ -29,6 +29,8 @@ class DonationSerializer(serializers.ModelSerializer):
         try:
             if obj.proof_file:
                 return request.build_absolute_uri(obj.proof_file.url)
+            elif obj.event_registration and obj.event_registration.payment_proof:
+                return request.build_absolute_uri(obj.event_registration.payment_proof.url)
         except:
             return None
     

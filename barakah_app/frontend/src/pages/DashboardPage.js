@@ -620,25 +620,6 @@ const DashboardPage = () => {
                                     badge: managementStats.withdrawals
                                 },
                                 {
-                                    id: 'donations',
-                                    access: hasAccess('charity'),
-                                    to: '/dashboard/admin/donations',
-                                    icon: 'payments',
-                                    color: 'emerald',
-                                    title: 'Donatur Charity',
-                                    desc: 'Kelola dan verifikasi donasi masuk (Admin)',
-                                    badge: managementStats.pending_donations
-                                },
-                                {
-                                    id: 'charity_realization',
-                                    access: hasAccess('charity'),
-                                    to: '/dashboard/admin/charity',
-                                    icon: 'volunteer_activism',
-                                    color: 'red',
-                                    title: 'Realisasi Charity',
-                                    desc: 'Kelola realisasi program charity (Admin)'
-                                },
-                                {
                                     id: 'transactions',
                                     access: hasAccess('transactions'),
                                     to: '/dashboard/admin/transactions',
@@ -865,6 +846,15 @@ const DashboardPage = () => {
                                     title: 'Donatur Charity',
                                     desc: 'Kelola dan verifikasi donasi masuk (Admin)',
                                     badge: managementStats.pending_donations
+                                },
+                                {
+                                    id: 'charity_realization',
+                                    access: hasAccess('charity'),
+                                    to: '/dashboard/admin/charity',
+                                    icon: 'volunteer_activism',
+                                    color: 'red',
+                                    title: 'Realisasi Charity',
+                                    desc: 'Kelola realisasi program charity (Admin)'
                                 }
                             ]
                         },

@@ -1,6 +1,7 @@
 from django.urls import reverse
 from rest_framework.test import APITestCase
 from rest_framework import status
+from django.utils import timezone
 from accounts.models import User
 from campaigns.models import Campaign
 from donations.models import Donation
@@ -117,3 +118,62 @@ class AdminDonationManagementTests(APITestCase):
         response = self.client.delete(self.detail_url)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
         self.assertTrue(Donation.objects.filter(id=self.existing_donation.id).exists())
+
+    def test_donation_uses_event_registration_proof_url(self):
+        """If donation has no proof_file but is linked to event registration, it uses event registration proof url."""
+        from events.models import Event, EventRegistration
+        from django.core.files.uploadedfile import SimpleUploadedFile
+
+        # Create event
+        event = Event.objects.create(
+            title="Event Collab Proof Test",
+            description="Event Description",
+            start_date=timezone.now() + timezone.timedelta(days=1),
+            location="Online",
+            organizer_name="BAE Community",
+            status="approved",
+            price_type="fixed",
+            price_fixed=Decimal("50000.00"),
+            created_by=self.admin_user,
+            visibility="public"
+        )
+
+        dummy_image = SimpleUploadedFile(
+            name="payment.png",
+            content=b"image_content",
+            content_type="image/png"
+        )
+
+        # Create event registration with a payment proof
+        registration = EventRegistration.objects.create(
+            event=event,
+            user=self.regular_user,
+            payment_method="transfer",
+            payment_amount=Decimal("50000.00"),
+            payment_status="verified",
+            payment_proof=dummy_image
+        )
+
+        # Create a donation linked to this registration
+        collab_donation = Donation.objects.create(
+            campaign=self.campaign,
+            amount=Decimal("50000.00"),
+            donor_name="Event Registerer",
+            donor_phone="08123456781",
+            payment_method="bsi",
+            payment_status="verified",
+            event_registration=registration
+        )
+
+        self.client.force_authenticate(user=self.admin_user)
+        response = self.client.get(self.list_url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        # Find our collab_donation in response
+        results = response.data.get("results") if isinstance(response.data, dict) else response.data
+        collab_data = next(d for d in results if d["id"] == collab_donation.id)
+
+        # Verify it has proof_file_url pointing to the event registration proof
+        self.assertIsNotNone(collab_data["proof_file_url"])
+        self.assertTrue("events/payments/payment" in collab_data["proof_file_url"] or "payment.png" in collab_data["proof_file_url"])
+
