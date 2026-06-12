@@ -1,6 +1,6 @@
 # donations/views.py
 from rest_framework_simplejwt.authentication import JWTAuthentication
-from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.permissions import IsAuthenticated, AllowAny, BasePermission
 from rest_framework.decorators import action
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -200,8 +200,12 @@ class CreateDonationView(APIView):
                 'error': str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+class IsAdmin(BasePermission):
+    def has_permission(self, request, view):
+        return request.user.is_authenticated and (request.user.role == 'admin' or request.user.username == 'admin')
+
 class AdminDonationViewSet(viewsets.ModelViewSet):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAdmin]
     serializer_class = DonationSerializer
     queryset = Donation.objects.all().order_by('-created_at')
 
@@ -230,6 +234,10 @@ class AdminDonationViewSet(viewsets.ModelViewSet):
             )
             
         return queryset
+
+    def perform_create(self, serializer):
+        # Admin manual inputs are auto-verified
+        serializer.save(payment_status='verified')
 
     @action(detail=True, methods=['post'])
     def verify(self, request, pk=None):

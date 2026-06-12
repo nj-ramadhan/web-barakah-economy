@@ -1,10 +1,14 @@
 # donations/serializers.py
 from rest_framework import serializers
 from .models import Donation
+from campaigns.models import Campaign
 from campaigns.serializers import CampaignSerializer
 
 class DonationSerializer(serializers.ModelSerializer):
     campaign = CampaignSerializer(read_only=True)
+    campaign_id = serializers.PrimaryKeyRelatedField(
+        queryset=Campaign.objects.all(), source='campaign', write_only=True, required=True
+    )
     campaign_title = serializers.CharField(source='campaign.title', read_only=True)
     campaign_slug = serializers.CharField(source='campaign.slug', read_only=True)
     proof_file_url = serializers.SerializerMethodField()
@@ -12,7 +16,7 @@ class DonationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Donation
         fields = [
-            'id', 'campaign', 'campaign_title', 'campaign_slug', 'amount', 
+            'id', 'campaign', 'campaign_id', 'campaign_title', 'campaign_slug', 'amount', 
             'donor_name', 'donor_phone', 'donor_email', 'is_anonymous', 
             'message', 'payment_method', 'payment_status', 'source_bank',
             'source_account', 'account_name', 'transfer_date', 'proof_file_url',
