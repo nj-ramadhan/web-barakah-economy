@@ -421,19 +421,24 @@ class EventRegistration(models.Model):
         if not event.collab_charity or not event.charity:
             return
             
-        if self.payment_amount <= 0:
+        import decimal
+        try:
+            payment_amt = decimal.Decimal(str(self.payment_amount or 0))
+        except:
+            payment_amt = decimal.Decimal('0')
+
+        if payment_amt <= 0:
             return
             
-        import decimal
         donation_amount = decimal.Decimal('0')
         if not event.charity_split_mode:
-            donation_amount = self.payment_amount
+            donation_amount = payment_amt
         else:
             if event.charity_split_type == 'percent':
                 pct = event.charity_charity_value / decimal.Decimal('100.0')
-                donation_amount = self.payment_amount * pct
+                donation_amount = payment_amt * pct
             elif event.charity_split_type == 'nominal':
-                donation_amount = min(event.charity_charity_value, self.payment_amount)
+                donation_amount = min(event.charity_charity_value, payment_amt)
                 
         if donation_amount <= 0:
             return

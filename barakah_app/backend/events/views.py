@@ -391,7 +391,11 @@ class EventViewSet(viewsets.ModelViewSet):
         # 2. Payment Handling
         payment_method = request.data.get('payment_method', 'transfer')
         payment_proof = request.FILES.get('payment_proof')
-        payment_amount = request.data.get('payment_amount', 0)
+        import decimal
+        try:
+            payment_amount = decimal.Decimal(str(request.data.get('payment_amount', 0) or 0))
+        except:
+            payment_amount = decimal.Decimal('0')
         price_variation_id = request.data.get('price_variation')
         
         # Validate Price Variation if provided
