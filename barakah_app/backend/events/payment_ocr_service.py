@@ -72,7 +72,7 @@ def extract_payment_data(image_file):
     prompt = """
 Tolong baca data dari bukti transfer ini dan kembalikan dalam format JSON.
 Field:
-- "recipient_name": Nama penerima (harus BAE Community / Barakah Economy Community)
+- "recipient_name": Nama penerima (biasanya BAE Community, Barakah Economy Community, atau Deny Setiawan)
 - "amount": Nominal angka murni (tanpa titik pemisah ribuan). Penting: ABAIKAN nilai desimal atau dua angka nol di belakang koma jika ada (contoh: Rp50.000,00 menjadi "50000").
 - "bank_name": Nama bank
 - "date": Tanggal
