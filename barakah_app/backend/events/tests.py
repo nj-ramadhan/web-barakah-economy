@@ -406,6 +406,32 @@ class EventRegistrationOCRTests(APITestCase):
         self.assertEqual(result['recipient_name'], 'Barakah Economy Community')
         self.assertEqual(result['_method'], 'ocr_fallback')
 
+    @patch('requests.post')
+    def test_ocr_fallback_exact_match_prevents_partial_match(self, mock_post):
+        """
+        Verify that traditional OCR fallback fails to match if the receipt amount (e.g. 20000)
+        is larger than the expected amount (e.g. 2000), preventing substring matching bugs.
+        """
+        from .payment_ocr_service import extract_payment_data_via_ocr
+        from unittest.mock import MagicMock
+        
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            "IsErroredOnProcessing": False,
+            "ParsedResults": [
+                {
+                    "ParsedText": "Total Transaksi\nRp20.000\nTujuan\nBAE Community\n"
+                }
+            ]
+        }
+        mock_post.return_value = mock_response
+        
+        # Expected is 2000, but receipt has 20000. It should fail to parse the amount (amount remains None)
+        result = extract_payment_data_via_ocr(self.dummy_proof, 2000)
+        
+        self.assertIsNone(result['amount'])
+
 
 from campaigns.models import Campaign
 from donations.models import Donation

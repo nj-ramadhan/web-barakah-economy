@@ -225,20 +225,39 @@ def extract_payment_data_via_ocr(image_file, expected_amount):
     amount = None
     try:
         expected_amount_int = int(float(expected_amount))
-        expected_amount_str = str(expected_amount_int)
         
         # Normalize letters 'O' and 'o' to digit '0' in a copy of ocr_text for numerical comparison.
         # This fixes OCR issues where zeros are misread as 'O' or 'o' (e.g. Rp20.OOO or Rp20.ooo).
         normalized_ocr_text = ocr_text.replace('O', '0').replace('o', '0')
-        scrubbed_text = re.sub(r'(?i)rp|[\.,\s]', '', normalized_ocr_text)
         
-        formatted_dots = f"{expected_amount_int:,}".replace(",", ".")
-        formatted_commas = f"{expected_amount_int:,}"
+        # Extract all numeric sequences starting with a digit (handles dots and commas)
+        candidate_strs = re.findall(r'\d[\d\.,]*', normalized_ocr_text)
         
-        if (expected_amount_str in normalized_ocr_text or 
-            formatted_dots in normalized_ocr_text or 
-            formatted_commas in normalized_ocr_text or 
-            expected_amount_str in scrubbed_text):
+        parsed_amounts = []
+        for s in candidate_strs:
+            # Clean up trailing punctuation
+            s_clean = s.strip('.,')
+            if not s_clean:
+                continue
+                
+            # Parse the clean string to a number
+            last_dot = s_clean.rfind('.')
+            last_comma = s_clean.rfind(',')
+            last_sep = max(last_dot, last_comma)
+            
+            if last_sep != -1:
+                suffix = s_clean[last_sep+1:]
+                # If followed by 1 or 2 digits, it's a decimal fraction (cents), so we discard the decimals
+                if suffix.isdigit() and len(suffix) in (1, 2):
+                    s_clean = s_clean[:last_sep]
+            
+            # Remove all non-digit characters to get the pure integer value
+            digits_only = re.sub(r'\D', '', s_clean)
+            if digits_only:
+                parsed_amounts.append(int(digits_only))
+        
+        # Check if the expected amount is found among the parsed amounts
+        if expected_amount_int in parsed_amounts:
             amount = expected_amount_int
     except Exception as e:
         logger.error(f"Error parsing amount in OCR fallback: {e}")
