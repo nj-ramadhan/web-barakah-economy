@@ -379,6 +379,34 @@ class EventRegistrationOCRTests(APITestCase):
         reg = EventRegistration.objects.get(event=self.paid_event, user=self.user)
         self.assertTrue(reg.ocr_verified)
 
+    @patch('requests.post')
+    def test_ocr_fallback_normalizes_o_and_O(self, mock_post):
+        """
+        Verify that traditional OCR fallback successfully parses amounts
+        even when zeros are misidentified as 'O' or 'o' (e.g. Rp20.OOO or Rp20.ooo).
+        """
+        from .payment_ocr_service import extract_payment_data_via_ocr
+        from unittest.mock import MagicMock
+        
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            "IsErroredOnProcessing": False,
+            "ParsedResults": [
+                {
+                    "ParsedText": "Total Transaksi\nRp20.OOO\nTujuan\nBAE Community\nNominal Pembayaran Rp20.ooo\nBiaya Admin Rpo\n"
+                }
+            ]
+        }
+        mock_post.return_value = mock_response
+        
+        result = extract_payment_data_via_ocr(self.dummy_proof, 20000)
+        
+        self.assertEqual(result['amount'], 20000)
+        self.assertEqual(result['recipient_name'], 'Barakah Economy Community')
+        self.assertEqual(result['_method'], 'ocr_fallback')
+
+
 from campaigns.models import Campaign
 from donations.models import Donation
 

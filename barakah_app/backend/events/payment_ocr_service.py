@@ -226,14 +226,18 @@ def extract_payment_data_via_ocr(image_file, expected_amount):
     try:
         expected_amount_int = int(float(expected_amount))
         expected_amount_str = str(expected_amount_int)
-        scrubbed_text = re.sub(r'(?i)rp|[\.,\s]', '', ocr_text)
+        
+        # Normalize letters 'O' and 'o' to digit '0' in a copy of ocr_text for numerical comparison.
+        # This fixes OCR issues where zeros are misread as 'O' or 'o' (e.g. Rp20.OOO or Rp20.ooo).
+        normalized_ocr_text = ocr_text.replace('O', '0').replace('o', '0')
+        scrubbed_text = re.sub(r'(?i)rp|[\.,\s]', '', normalized_ocr_text)
         
         formatted_dots = f"{expected_amount_int:,}".replace(",", ".")
         formatted_commas = f"{expected_amount_int:,}"
         
-        if (expected_amount_str in ocr_text or 
-            formatted_dots in ocr_text or 
-            formatted_commas in ocr_text or 
+        if (expected_amount_str in normalized_ocr_text or 
+            formatted_dots in normalized_ocr_text or 
+            formatted_commas in normalized_ocr_text or 
             expected_amount_str in scrubbed_text):
             amount = expected_amount_int
     except Exception as e:
