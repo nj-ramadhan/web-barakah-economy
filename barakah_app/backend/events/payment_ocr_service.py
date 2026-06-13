@@ -72,7 +72,7 @@ def extract_payment_data(image_file):
     prompt = """
 Tolong baca data dari bukti transfer ini dan kembalikan dalam format JSON.
 Field:
-- "recipient_name": Nama penerima (biasanya BAE Community, Barakah Economy Community, atau Deny Setiawan)
+- "recipient_name": Nama penerima (biasanya BAE Community, Barakah Economy Community)
 - "amount": Nominal angka murni (tanpa titik pemisah ribuan). Penting: ABAIKAN nilai desimal atau dua angka nol di belakang koma jika ada (contoh: Rp50.000,00 menjadi "50000").
 - "bank_name": Nama bank
 - "date": Tanggal
@@ -217,7 +217,7 @@ def extract_payment_data_via_ocr(image_file, expected_amount):
     text_lower = ocr_text.lower()
     
     recipient_name = None
-    if "barakah economy" in text_lower or "bae community" in text_lower or "deny setiawan" in text_lower:
+    if "barakah economy" in text_lower or "bae community" in text_lower:
         recipient_name = "Barakah Economy Community"
     else:
         recipient_name = "Tidak terdeteksi"

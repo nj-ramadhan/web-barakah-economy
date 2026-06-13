@@ -108,7 +108,6 @@ const EcommercePaymentConfirmation = () => {
       console.log("OCR Result:", text);
 
       const isBaeCommunityPresent = lowerText.includes('bae community') || lowerText.includes('barakah economy');
-      const isDenySetiawanPresent = lowerText.includes('deny setiawan');
 
       const numericTotal = Math.floor(Number(amount));
       const totalStr = String(numericTotal);
@@ -120,8 +119,8 @@ const EcommercePaymentConfirmation = () => {
         text.includes(totalFormatted) ||
         scrubbedText.includes(totalStr);
 
-      if (!isBaeCommunityPresent && !isDenySetiawanPresent) {
-        setOcrError('Validasi Gagal: Struk tidak mencantumkan nama "BAE Community", "Barakah Economy Community" atau "DENY SETIAWAN". Pastikan Anda transfer ke rekening yang benar.');
+      if (!isBaeCommunityPresent) {
+        setOcrError('Validasi Gagal: Struk tidak mencantumkan nama "BAE Community", "Barakah Economy Community". Pastikan Anda transfer ke rekening yang benar.');
         setUploading(false);
         setOcrLoading(false);
         return;
@@ -326,8 +325,8 @@ const EcommercePaymentConfirmation = () => {
             type="submit"
             disabled={uploading || !selectedFile}
             className={`w-full py-5 rounded-[24px] font-black text-base tracking-widest shadow-2xl transition-all flex items-center justify-center gap-3 ${uploading
-                ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                : 'bg-gradient-to-r from-emerald-600 to-teal-700 text-white shadow-emerald-100 hover:shadow-emerald-200 hover:-translate-y-1'
+              ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+              : 'bg-gradient-to-r from-emerald-600 to-teal-700 text-white shadow-emerald-100 hover:shadow-emerald-200 hover:-translate-y-1'
               }`}
           >
             {uploading ? (

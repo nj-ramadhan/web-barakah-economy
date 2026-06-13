@@ -556,8 +556,8 @@ class EventViewSet(viewsets.ModelViewSet):
                 extracted_name = str(ocr_data.get('recipient_name', '') or '').lower()
                 extracted_amount = ocr_data.get('amount')
                 
-                # Validation logic: recipient must be Bae Community / Barakah Economy Community / Deny Setiawan
-                valid_names = ['bae community', 'barakah economy community', 'deny setiawan']
+                # Validation logic: recipient must be Bae Community / Barakah Economy Community
+                valid_names = ['bae community', 'barakah economy community']
                 is_name_valid = any(vn in extracted_name for vn in valid_names)
                 
                 # Amount validation
@@ -573,7 +573,7 @@ class EventViewSet(viewsets.ModelViewSet):
                 
                 if not is_name_valid:
                     return Response({
-                        "error": f"Penerima di bukti transfer ('{ocr_data.get('recipient_name') or 'Tidak terdeteksi'}') tidak sesuai. Bukti transfer harus ditujukan ke 'Barakah Economy Community', 'Bae Community', atau 'Deny Setiawan'.",
+                        "error": f"Penerima di bukti transfer ('{ocr_data.get('recipient_name') or 'Tidak terdeteksi'}') tidak sesuai. Bukti transfer harus ditujukan ke 'Barakah Economy Community' atau 'Bae Community'.",
                         "ocr_data": ocr_data
                     }, status=status.HTTP_400_BAD_REQUEST)
                 

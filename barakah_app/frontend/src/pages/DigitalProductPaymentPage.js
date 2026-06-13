@@ -82,7 +82,6 @@ const DigitalProductPaymentPage = () => {
             console.log("Hasil OCR:", text);
 
             const isBaeCommunityPresent = lowerText.includes('bae community') || lowerText.includes('barakah economy');
-            const isDenySetiawanPresent = lowerText.includes('deny setiawan');
 
             const numericTotal = Math.floor(Number(order.amount));
             const totalStr = String(numericTotal);
@@ -95,8 +94,8 @@ const DigitalProductPaymentPage = () => {
                 text.includes(totalFormatted) ||
                 scrubbedOCR.includes(totalStr);
 
-            if (!isBaeCommunityPresent && !isDenySetiawanPresent) {
-                setOcrError('Validasi Gagal: Struk tidak mencantumkan nama "BAE Community", "Barakah Economy Community" atau "DENY SETIAWAN". Pastikan Anda transfer ke rekening yang benar.');
+            if (!isBaeCommunityPresent) {
+                setOcrError('Validasi Gagal: Struk tidak mencantumkan nama "BAE Community" atau "Barakah Economy Community". Pastikan Anda transfer ke rekening yang benar.');
                 setUploading(false);
                 setOcrLoading(false);
                 return;
@@ -224,7 +223,7 @@ const DigitalProductPaymentPage = () => {
                     {/* BSI */}
                     <div className="bg-white rounded-lg p-4 border border-gray-200 mb-4">
                         <div className="flex items-center gap-2 mb-2">
-                            <img src="/images/bsi-logo.png" alt="BSI" className="h-4" onError={(e) => e.target.style.display='none'} />
+                            <img src="/images/bsi-logo.png" alt="BSI" className="h-4" onError={(e) => e.target.style.display = 'none'} />
                             <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">TRANSFER BANK BSI</p>
                         </div>
                         <div className="flex justify-between items-center bg-emerald-50 p-3 rounded-lg border border-emerald-100">
