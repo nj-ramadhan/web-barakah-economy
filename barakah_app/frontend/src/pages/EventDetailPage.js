@@ -1994,14 +1994,14 @@ const EventDetailPage = () => {
                                                                 value={voucherCode}
                                                                 onChange={(e) => setVoucherCode(e.target.value.toUpperCase())}
                                                                 placeholder="Masukkan kode promo"
-                                                                className="flex-1 bg-white border-2 border-gray-100 rounded-xl px-4 py-3 text-sm font-bold text-gray-900 focus:border-green-500 focus:ring-0 transition-colors uppercase"
+                                                                className="flex-1 min-w-0 bg-white border-2 border-gray-100 rounded-xl px-4 py-3 text-sm font-bold text-gray-900 focus:border-green-500 focus:ring-0 transition-colors uppercase"
                                                                 disabled={appliedVoucher || voucherLoading}
                                                             />
                                                             {appliedVoucher ? (
                                                                 <button
                                                                     type="button"
                                                                     onClick={() => { setAppliedVoucher(null); setVoucherCode(''); }}
-                                                                    className="px-4 py-2 bg-red-50 text-red-600 rounded-xl text-sm font-bold hover:bg-red-100 transition"
+                                                                    className="shrink-0 px-4 py-3 bg-red-50 text-red-600 rounded-xl text-sm font-bold hover:bg-red-100 transition"
                                                                 >
                                                                     Batal
                                                                 </button>
@@ -2010,7 +2010,7 @@ const EventDetailPage = () => {
                                                                     type="button"
                                                                     onClick={handleApplyVoucher}
                                                                     disabled={!voucherCode.trim() || voucherLoading}
-                                                                    className="px-4 py-2 bg-green-600 text-white rounded-xl text-sm font-bold hover:bg-green-700 disabled:opacity-50 transition"
+                                                                    className="shrink-0 px-4 py-3 bg-green-600 text-white rounded-xl text-sm font-bold hover:bg-green-700 disabled:opacity-50 transition"
                                                                 >
                                                                     {voucherLoading ? 'Cek...' : 'Gunakan'}
                                                                 </button>

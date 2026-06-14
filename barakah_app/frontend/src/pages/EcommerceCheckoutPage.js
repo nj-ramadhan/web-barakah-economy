@@ -389,8 +389,8 @@ const EcommerceCheckoutPage = () => {
           <div className="bg-blue-50 p-4 rounded-2xl border border-blue-100">
             <label className="block text-xs font-bold text-blue-800 mb-2">Kode Voucher Toko</label>
             <div className="flex gap-2">
-              <input type="text" value={voucherCode} onChange={e => setVoucherCode(e.target.value)} placeholder="Mis: PROMO2025" className="flex-1 text-sm bg-white border-none rounded-xl p-3 outline-none uppercase" />
-              <button type="button" onClick={handleApplyVoucher} className="bg-blue-600 text-white font-bold text-xs px-4 rounded-xl hover:bg-blue-700">TERAPKAN</button>
+              <input type="text" value={voucherCode} onChange={e => setVoucherCode(e.target.value)} placeholder="Mis: PROMO2025" className="flex-1 min-w-0 text-sm bg-white border-none rounded-xl p-3 outline-none uppercase" />
+              <button type="button" onClick={handleApplyVoucher} className="shrink-0 bg-blue-600 text-white font-bold text-xs px-4 rounded-xl hover:bg-blue-700">TERAPKAN</button>
             </div>
             {voucherStatus && <p className={`text-[10px] mt-2 font-bold ${voucherDiscount > 0 ? 'text-emerald-600' : 'text-red-500'}`}>{voucherStatus}</p>}
           </div>
