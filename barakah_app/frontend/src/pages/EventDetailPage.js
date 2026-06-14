@@ -1349,7 +1349,7 @@ const EventDetailPage = () => {
                                     )}
                                 </div>
                             </div>
-                        ) : (
+                        ) : activeTab === 'documentation' ? (
                             <div className="animate-fade-in space-y-6">
                                 <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-100 min-h-[500px]">
                                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
