@@ -195,6 +195,13 @@ const EventDetailPage = () => {
                 const clientTime = new Date();
                 setClockOffset(serverTime - clientTime);
             }
+            // Direct to testimonies tab if event is completed, user is approved, and hasn't filled out a testimony
+            if (res.data.status === 'completed' && 
+                res.data.user_registration && 
+                res.data.user_registration.status === 'approved' && 
+                !res.data.user_has_testimony) {
+                setActiveTab('testimonies');
+            }
         } catch (err) {
             console.error(err);
             setError('Event tidak ditemukan.');
