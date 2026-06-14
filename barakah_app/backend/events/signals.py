@@ -33,23 +33,24 @@ def create_activity_documentation(sender, instance, created, **kwargs):
                     event=instance
                 )
                 
-                # Copy header image if it exists
-                if instance.header_image:
+                # Copy image (prefer header_image, fallback to thumbnail)
+                event_image = instance.header_image if instance.header_image else instance.thumbnail
+                if event_image:
                     try:
                         # Reset file pointer and read the image safely
                         try:
-                            instance.header_image.open()
+                            event_image.open()
                         except Exception:
                             pass
-                        instance.header_image.seek(0)
-                        image_name = instance.header_image.name.split('/')[-1]
+                        event_image.seek(0)
+                        image_name = event_image.name.split('/')[-1]
                         activity.header_image.save(
                             image_name,
-                            ContentFile(instance.header_image.read()),
+                            ContentFile(event_image.read()),
                             save=True
                         )
                     except Exception as img_err:
-                        logger.error(f"Failed to copy header image for activity from event {instance.id}: {img_err}")
+                        logger.error(f"Failed to copy event image for activity from event {instance.id}: {img_err}")
                 
                 logger.info(f"Automatically created Activity documentation for Event: {instance.title}")
             
