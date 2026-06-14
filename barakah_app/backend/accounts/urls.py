@@ -4,7 +4,7 @@ from rest_framework_simplejwt.views import TokenRefreshView
 from .views import (
     RegisterView, LoginView, LogoutView, GoogleLoginView,
     PasswordResetRequestView, PasswordResetConfirmView,
-    ChangePasswordView, AcceptAgreementView,
+    ChangePasswordView, AcceptAgreementView, UserAgreementView,
     UserViewSet, RoleViewSet, UserLabelViewSet,
     LingkupTugasViewSet, BidangTugasViewSet
 )
@@ -20,6 +20,7 @@ urlpatterns = [
     path('register/', RegisterView.as_view(), name='register'),
     path('login/', LoginView.as_view(), name='login'),
     path('accept-agreement/', AcceptAgreementView.as_view(), name='accept_agreement'),
+    path('user-agreement/', UserAgreementView.as_view(), name='user_agreement'),
     path('logout/', LogoutView.as_view(), name='logout'),
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('google-login/', GoogleLoginView.as_view(), name='google-login'),

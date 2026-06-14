@@ -120,6 +120,7 @@ import DashboardMeetingsPage from './pages/DashboardMeetingsPage';
 import MeetingSubmissionPage from './pages/MeetingSubmissionPage';
 import MeetingManagementPage from './pages/MeetingManagementPage';
 import DashboardHeroBannersPage from './pages/admin/DashboardHeroBannersPage';
+import DashboardUserAgreementPage from './pages/admin/DashboardUserAgreementPage';
 import CalendarWidgetPage from './pages/widget/CalendarWidgetPage';
 
 import FloatingCartModal from './components/layout/FloatingCartModal';
@@ -434,6 +435,7 @@ const LayoutWrapper = ({ isDesktop }) => {
         <Route path="/dashboard/admin/announcements" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardAnnouncementsPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/admin/hero-banners" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardHeroBannersPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/admin/business-partners" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardAdminBusinessPage /></ResponsiveLayout></PrivateRoute>} />
+        <Route path="/dashboard/admin/user-agreement" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardUserAgreementPage /></ResponsiveLayout></PrivateRoute>} />
 
         <Route path="/live-meet-test" element={<ResponsiveLayout isDesktop={isDesktop}><AdminJitsiMeetPage /></ResponsiveLayout>} />
 

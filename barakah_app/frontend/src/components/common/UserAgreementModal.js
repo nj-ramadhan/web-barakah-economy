@@ -1,11 +1,32 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import authService from '../../services/auth';
 
 const UserAgreementModal = ({ onAccept }) => {
     const [hasRead, setHasRead] = useState(false);
     const [checked, setChecked] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [agreementData, setAgreementData] = useState({
+        title: 'Lembar Kesepakatan & Ketentuan Data',
+        subtitle: 'Komitmen Keamanan & Privasi Barakah Economy Community',
+        content: '<p>Memuat ketentuan...</p>'
+    });
     const scrollContainerRef = useRef(null);
+
+    useEffect(() => {
+        const fetchContent = async () => {
+            try {
+                const API = process.env.REACT_APP_API_BASE_URL || 'https://api.barakah.cloud';
+                const res = await fetch(`${API}/api/auth/user-agreement/`);
+                const data = await res.json();
+                if (data && data.content) {
+                    setAgreementData(data);
+                }
+            } catch (err) {
+                console.error('Failed to load user agreement:', err);
+            }
+        };
+        fetchContent();
+    }, []);
 
     const handleScroll = () => {
         const container = scrollContainerRef.current;
@@ -41,8 +62,8 @@ const UserAgreementModal = ({ onAccept }) => {
                     <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-3 shadow-inner">
                         <span className="material-icons text-2xl">shield</span>
                     </div>
-                    <h2 className="text-lg sm:text-xl font-black uppercase tracking-wider">Lembar Kesepakatan & Ketentuan Data</h2>
-                    <p className="text-white/80 text-xs mt-1">Komitmen Keamanan & Privasi Barakah Economy Community</p>
+                    <h2 className="text-lg sm:text-xl font-black uppercase tracking-wider">{agreementData.title}</h2>
+                    <p className="text-white/80 text-xs mt-1">{agreementData.subtitle}</p>
                 </div>
 
                 <div className="p-6 flex flex-col overflow-hidden">
@@ -54,47 +75,8 @@ const UserAgreementModal = ({ onAccept }) => {
                         onScroll={handleScroll}
                         className="flex-1 overflow-y-auto bg-gray-50 border border-gray-200/80 rounded-2xl p-4 sm:p-5 mb-5 text-[11px] sm:text-xs text-gray-600 leading-relaxed font-sans space-y-4"
                         style={{ maxHeight: '300px' }}
-                    >
-                        <p className="font-bold text-gray-900">
-                            Selamat datang di Barakah Economy Community (BAE). Sebelum Anda melanjutkan untuk menggunakan platform kami, mohon untuk membaca dan memahami Ketentuan Penggunaan dan Kebijakan Perlindungan Data pribadi Anda di bawah ini secara saksama.
-                        </p>
-
-                        <div className="space-y-3">
-                            <div>
-                                <p className="font-extrabold text-gray-900">1. Keamanan dan Perlindungan Data</p>
-                                <p>Kami menggunakan enkripsi standar industri dan protokol perlindungan data tingkat tinggi untuk menjaga semua informasi yang masuk ke dalam sistem web ini. Data Anda disimpan di server yang aman dan dilindungi dari upaya akses tanpa izin.</p>
-                            </div>
-
-                            <div>
-                                <p className="font-extrabold text-gray-900">2. Kerahasiaan Informasi Anggota</p>
-                                <p>Informasi pribadi Anda (termasuk Nama Lengkap, Alamat Email, Nomor WhatsApp/HP, Domisili, dan data pendukung lainnya) bersifat rahasia. Kami tidak akan pernah menjual, menyewakan, atau menyebarluaskan data Anda kepada pihak ketiga untuk tujuan komersial atau periklanan eksternal.</p>
-                            </div>
-
-                            <div>
-                                <p className="font-extrabold text-gray-900">3. Tujuan Penggunaan Data</p>
-                                <p>Data pribadi Anda akan digunakan secara terbatas untuk:</p>
-                                <ul className="list-disc pl-5 mt-1 space-y-1">
-                                    <li>Verifikasi keanggotaan dan profil akun Anda di platform Barakah Economy.</li>
-                                    <li>Pengiriman tiket masuk, nomor BIB peserta, kuitansi pembayaran infaq/pendaftaran, dan sertifikat event.</li>
-                                    <li>Komunikasi resmi dan notifikasi penting via Email atau WhatsApp Blast terkait kegiatan komunitas.</li>
-                                </ul>
-                            </div>
-
-                            <div>
-                                <p className="font-extrabold text-gray-900">4. Hak Pengguna Atas Data Pribadi</p>
-                                <p>Setiap anggota memiliki hak penuh untuk mengakses, memperbarui, membatasi penggunaan, atau mengajukan permohonan penghapusan permanen atas data pribadi yang tersimpan di database kami dengan menghubungi Layanan Admin Barakah Economy.</p>
-                            </div>
-
-                            <div>
-                                <p className="font-extrabold text-gray-900">5. Kepatuhan Regulasi (Hukum)</p>
-                                <p>Pengolahan data pribadi ini tunduk pada Undang-Undang Perlindungan Data Pribadi (UU PDP) yang berlaku di Republik Indonesia serta aturan tata kelola internal Barakah Economy Community yang transparan dan akuntabel.</p>
-                            </div>
-                        </div>
-
-                        <p className="font-bold text-gray-800 pt-2 border-t border-gray-200">
-                            Dengan mencentang kotak persetujuan dan mengklik tombol setuju di bawah ini, Anda menyatakan telah membaca, memahami, dan menyetujui seluruh ketentuan privasi data di atas tanpa paksaan dari pihak mana pun.
-                        </p>
-                    </div>
+                        dangerouslySetInnerHTML={{ __html: agreementData.content }}
+                    />
 
                     {/* Checkbox and Submit Form */}
                     <form onSubmit={handleSubmit} className="space-y-4 shrink-0">

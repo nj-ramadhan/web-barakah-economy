@@ -221,3 +221,17 @@ class User(AbstractUser):
             profile.info_source and 
             profile.referred_by
         )
+
+
+class UserAgreement(models.Model):
+    title = models.CharField(max_length=255, default="Lembar Kesepakatan & Ketentuan Data")
+    subtitle = models.CharField(max_length=255, default="Komitmen Keamanan & Privasi Barakah Economy Community")
+    content = models.TextField(default="")
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "User Agreement"
+        verbose_name_plural = "User Agreement"
+
+    def __str__(self):
+        return self.title

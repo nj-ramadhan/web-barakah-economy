@@ -923,6 +923,15 @@ const DashboardPage = () => {
                                     color: 'purple',
                                     title: 'Pengaturan Konsultasi',
                                     desc: 'Atur kategori dan pakar konsultasi (Admin)'
+                                },
+                                {
+                                    id: 'user_agreement_config',
+                                    access: isAdmin,
+                                    to: '/dashboard/admin/user-agreement',
+                                    icon: 'gavel',
+                                    color: 'slate',
+                                    title: 'Syarat & Ketentuan',
+                                    desc: 'Atur naskah Lembar Kesepakatan & Ketentuan Data (Admin)'
                                 }
                             ]
                         }

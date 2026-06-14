@@ -1,7 +1,7 @@
 # accounts/admin.py
 from django.contrib import admin
 from django import forms
-from .models import User, Role, UserLabel, LingkupTugas, BidangTugas
+from .models import User, Role, UserLabel, LingkupTugas, BidangTugas, UserAgreement
 
 # Define all available menu keys from the frontend (DashboardPage.js)
 MENU_CHOICES = [
@@ -74,3 +74,4 @@ class UserAdmin(admin.ModelAdmin):
 admin.site.register(UserLabel)
 admin.site.register(LingkupTugas)
 admin.site.register(BidangTugas)
+admin.site.register(UserAgreement)

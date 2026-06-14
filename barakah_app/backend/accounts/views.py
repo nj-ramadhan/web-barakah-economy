@@ -9,7 +9,7 @@ from .serializers import (
     UserAdminSerializer, RoleSerializer, UserLabelSerializer,
     LingkupTugasSerializer, BidangTugasSerializer
 )
-from .models import Role, UserLabel, LingkupTugas, BidangTugas
+from .models import Role, UserLabel, LingkupTugas, BidangTugas, UserAgreement
 from rest_framework.decorators import action
 from barakah_app.utils import send_email
 from django.db import transaction
@@ -912,4 +912,70 @@ class UserViewSet(viewsets.ModelViewSet):
         return response
 
 
+class UserAgreementView(APIView):
+    def get_permissions(self):
+        if self.request.method == 'GET':
+            return [permissions.AllowAny()]
+        return [permissions.IsAuthenticated(), permissions.IsAdminUser()]
 
+    def get(self, request):
+        agreement, created = UserAgreement.objects.get_or_create(
+            id=1,
+            defaults={
+                'title': "Lembar Kesepakatan & Ketentuan Data",
+                'subtitle': "Komitmen Keamanan & Privasi Barakah Economy Community",
+                'content': """<p class="font-bold text-gray-900">
+Selamat datang di Barakah Economy Community (BAE). Sebelum Anda melanjutkan untuk menggunakan platform kami, mohon untuk membaca dan memahami Ketentuan Penggunaan dan Kebijakan Perlindungan Data pribadi Anda di bawah ini secara saksama.
+</p>
+<div class="space-y-3">
+<div>
+    <p class="font-extrabold text-gray-900">1. Keamanan dan Perlindungan Data</p>
+    <p>Kami menggunakan enkripsi standar industri dan protokol perlindungan data tingkat tinggi untuk menjaga semua informasi yang masuk ke dalam sistem web ini. Data Anda disimpan di server yang aman dan dilindungi dari upaya akses tanpa izin.</p>
+</div>
+<div>
+    <p class="font-extrabold text-gray-900">2. Kerahasiaan Informasi Anggota</p>
+    <p>Informasi pribadi Anda (termasuk Nama Lengkap, Alamat Email, Nomor WhatsApp/HP, Domisili, dan data pendukung lainnya) bersifat rahasia. Kami tidak akan pernah menjual, menyewakan, atau menyebarluaskan data Anda kepada pihak ketiga untuk tujuan komersial atau periklanan eksternal.</p>
+</div>
+<div>
+    <p class="font-extrabold text-gray-900">3. Tujuan Penggunaan Data</p>
+    <p>Data pribadi Anda akan digunakan secara terbatas untuk:</p>
+    <ul class="list-disc pl-5 mt-1 space-y-1">
+        <li>Verifikasi keanggotaan dan profil akun Anda di platform Barakah Economy.</li>
+        <li>Pengiriman tiket masuk, nomor BIB peserta, kuitansi pembayaran infaq/pendaftaran, dan sertifikat event.</li>
+        <li>Komunikasi resmi dan notifikasi penting via Email atau WhatsApp Blast terkait kegiatan komunitas.</li>
+    </ul>
+</div>
+<div>
+    <p class="font-extrabold text-gray-900">4. Hak Pengguna Atas Data Pribadi</p>
+    <p>Setiap anggota memiliki hak penuh untuk mengakses, memperbarui, membatasi penggunaan, atau mengajukan permohonan penghapusan permanen atas data pribadi yang tersimpan di database kami dengan menghubungi Layanan Admin Barakah Economy.</p>
+</div>
+<div>
+    <p class="font-extrabold text-gray-900">5. Kepatuhan Regulasi (Hukum)</p>
+    <p>Pengolahan data pribadi ini tunduk pada Undang-Undang Perlindungan Data Pribadi (UU PDP) yang berlaku di Republik Indonesia serta aturan tata kelola internal Barakah Economy Community yang transparan dan akuntabel.</p>
+</div>
+</div>
+<p class="font-bold text-gray-800 pt-2 border-t border-gray-200">
+Dengan mencentang kotak persetujuan dan mengklik tombol setuju di bawah ini, Anda menyatakan telah membaca, memahami, dan menyetujui seluruh ketentuan privasi data di atas tanpa paksaan dari pihak mana pun.
+</p>"""
+            }
+        )
+        return Response({
+            'title': agreement.title,
+            'subtitle': agreement.subtitle,
+            'content': agreement.content,
+            'updated_at': agreement.updated_at
+        })
+
+    def post(self, request):
+        agreement, created = UserAgreement.objects.get_or_create(id=1)
+        agreement.title = request.data.get('title', agreement.title)
+        agreement.subtitle = request.data.get('subtitle', agreement.subtitle)
+        agreement.content = request.data.get('content', agreement.content)
+        agreement.save()
+        return Response({
+            'status': 'success',
+            'title': agreement.title,
+            'subtitle': agreement.subtitle,
+            'content': agreement.content,
+            'updated_at': agreement.updated_at
+        })
