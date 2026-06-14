@@ -192,9 +192,17 @@ const EventLandingPage = () => {
                                         )}
                                         {/* Bottom Gradient Overlay */}
                                         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-3 md:p-4 pt-12 md:pt-16">
-                                            {ev.category && (
-                                                <span className="inline-block text-[8px] bg-white/20 backdrop-blur-sm text-white px-2 py-0.5 rounded-full mb-1.5 font-bold uppercase tracking-wider">{ev.category}</span>
-                                            )}
+                                            <div className="flex flex-wrap items-center gap-1.5 mb-1.5">
+                                                {ev.category && (
+                                                    <span className="inline-block text-[8px] bg-white/20 backdrop-blur-sm text-white px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">{ev.category}</span>
+                                                )}
+                                                {ev.testimonies_count > 0 && (
+                                                    <span className="inline-flex items-center gap-0.5 text-[8px] bg-amber-500/90 text-white px-2 py-0.5 rounded-full font-black tracking-wide shadow-sm">
+                                                        <span className="material-icons text-[9px]">star</span>
+                                                        {ev.average_rating ? Number(ev.average_rating).toFixed(1) : '0.0'}
+                                                    </span>
+                                                )}
+                                            </div>
                                             <h3 className="text-white font-bold text-xs md:text-sm leading-tight line-clamp-2 mb-0.5">{ev.title}</h3>
                                             <div className="flex items-center gap-1 text-white/60 text-[10px]">
                                                 <span className="material-icons text-[12px]">location_on</span>

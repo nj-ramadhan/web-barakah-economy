@@ -2,7 +2,8 @@ from django.contrib import admin
 from .models import (
     Event, EventFormField, EventRegistration, 
     EventSpeaker, EventSession, EventAttendance,
-    EventRegistrationFile, EventDocumentationImage, EventCertificate
+    EventRegistrationFile, EventDocumentationImage, EventCertificate,
+    EventTestimony
 )
 
 class EventFormFieldInline(admin.TabularInline):
@@ -58,3 +59,10 @@ class EventAttendanceAdmin(admin.ModelAdmin):
 admin.site.register(EventRegistrationFile)
 admin.site.register(EventDocumentationImage)
 admin.site.register(EventCertificate)
+
+@admin.register(EventTestimony)
+class EventTestimonyAdmin(admin.ModelAdmin):
+    list_display = ('event', 'user', 'rating', 'created_at')
+    list_filter = ('rating', 'created_at', 'event')
+    search_fields = ('user__username', 'event__title', 'comment')
+

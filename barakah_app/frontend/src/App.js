@@ -124,6 +124,7 @@ import CalendarWidgetPage from './pages/widget/CalendarWidgetPage';
 
 import FloatingCartModal from './components/layout/FloatingCartModal';
 import ProfileNotice from './components/common/ProfileNotice';
+import UserAgreementModal from './components/common/UserAgreementModal';
 
 import { ResponsiveLayout, MobileContainer } from './components/layout/ResponsiveLayout';
 import ScrollToTop from './components/layout/ScrollToTop';
@@ -237,6 +238,18 @@ const LayoutWrapper = ({ isDesktop }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem('user'));
+  
+  const [agreementUser, setAgreementUser] = React.useState(null);
+
+  React.useEffect(() => {
+    const parsedUser = JSON.parse(localStorage.getItem('user'));
+    setAgreementUser(parsedUser);
+  }, [location.pathname]);
+
+  const handleAgreementAccepted = () => {
+    const updated = JSON.parse(localStorage.getItem('user'));
+    setAgreementUser(updated);
+  };
 
   React.useEffect(() => {
     // Force redirect to profile edit if profile is incomplete
@@ -256,9 +269,16 @@ const LayoutWrapper = ({ isDesktop }) => {
     }
   }, [location.pathname, location.search]);
 
+  const publicPaths = ['/login', '/register', '/lupa-password', '/reset-password'];
+  const showAgreementModal = agreementUser && 
+                             agreementUser.user_agreement_accepted === false && 
+                             !publicPaths.includes(location.pathname) &&
+                             !location.pathname.startsWith('/widget');
+
   return (
     <div className="w-full">
       <ProfileNotice />
+      {showAgreementModal && <UserAgreementModal onAccept={handleAgreementAccepted} />}
       <Routes>
         <Route path="/" element={isDesktop ? <DesktopLandingPage /> : <MobileContainer><Home /></MobileContainer>} />
 

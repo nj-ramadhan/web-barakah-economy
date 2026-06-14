@@ -3,7 +3,7 @@ import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
 import Header from '../../components/layout/Header';
 import NavigationButton from '../../components/layout/Navigation';
-import { getEvents, updateEvent, deleteEvent } from '../../services/eventApi';
+import { getEvents, updateEvent, deleteEvent, completeEvent } from '../../services/eventApi';
 import { getMediaUrl } from '../../utils/mediaUtils';
 
 const API = process.env.REACT_APP_API_BASE_URL;
@@ -35,6 +35,13 @@ const DashboardEventPage = () => {
     const [showApproveModal, setShowApproveModal] = useState(false);
     const [approvingEvent, setApprovingEvent] = useState(null);
     const [visibilityToggle, setVisibilityToggle] = useState('public');
+
+    // Event Completion Modal States
+    const [showCompleteModal, setShowCompleteModal] = useState(false);
+    const [completingEvent, setCompletingEvent] = useState(null);
+    const [blastUseDefault, setBlastUseDefault] = useState(true);
+    const [customBlastMessage, setCustomBlastMessage] = useState('');
+    const [completingLoading, setCompletingLoading] = useState(false);
 
     const fetchEvents = useCallback(async (page = 1) => {
         setLoading(true);
@@ -88,6 +95,24 @@ const DashboardEventPage = () => {
             setApprovingEvent(null);
             fetchEvents(currentPage);
         } catch (err) { alert('Gagal menyetujui event'); }
+    };
+
+    const handleCompleteSubmit = async (e) => {
+        e.preventDefault();
+        if (!completingEvent || completingLoading) return;
+        setCompletingLoading(true);
+        try {
+            await completeEvent(completingEvent.slug, customBlastMessage, blastUseDefault);
+            setShowCompleteModal(false);
+            setCompletingEvent(null);
+            fetchEvents(currentPage);
+            alert('Event berhasil diselesaikan dan pesan WhatsApp blast telah dikirim!');
+        } catch (err) {
+            console.error(err);
+            alert(err.response?.data?.error || 'Gagal menyelesaikan event.');
+        } finally {
+            setCompletingLoading(false);
+        }
     };
 
     const handleDelete = async (slug) => {
@@ -287,6 +312,21 @@ const DashboardEventPage = () => {
                                                     </>
                                                 )}
                                                 
+                                                {['approved', 'ongoing', 'internal'].includes(ev.status) && (
+                                                    <button 
+                                                        onClick={() => {
+                                                            setCompletingEvent(ev);
+                                                            setBlastUseDefault(true);
+                                                            setCustomBlastMessage('');
+                                                            setShowCompleteModal(true);
+                                                        }}
+                                                        className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center hover:bg-emerald-600 hover:text-white transition"
+                                                        title="Selesaikan Event"
+                                                    >
+                                                        <span className="material-icons text-sm">done_all</span>
+                                                    </button>
+                                                )}
+                                                
                                                 <button 
                                                     onClick={() => navigate(`/event/edit/${ev.slug}`)}
                                                     className="w-8 h-8 rounded-lg bg-gray-50 text-gray-600 flex items-center justify-center hover:bg-green-700 hover:text-white transition"
@@ -408,6 +448,133 @@ const DashboardEventPage = () => {
                                 </button>
                             </div>
                         </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Event Completion Modal */}
+            {showCompleteModal && (
+                <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-gray-950/65 backdrop-blur-md animate-in fade-in duration-300">
+                    <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden border border-gray-100 flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200">
+                        {/* Header Banner */}
+                        <div className="bg-gradient-to-r from-emerald-600 to-green-600 p-6 text-white text-center shrink-0">
+                            <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-3 shadow-inner">
+                                <span className="material-icons text-2xl">verified</span>
+                            </div>
+                            <h2 className="text-lg sm:text-xl font-black uppercase tracking-wider">Selesaikan Event & Blast WA</h2>
+                            <p className="text-white/80 text-xs mt-1">Selesaikan event dan kirimkan notifikasi otomatis ke semua peserta</p>
+                        </div>
+
+                        <form onSubmit={handleCompleteSubmit} className="p-6 flex flex-col overflow-hidden">
+                            <div className="flex-1 overflow-y-auto space-y-5 pr-1" style={{ maxHeight: '50vh' }}>
+                                <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 text-xs text-emerald-800 leading-relaxed">
+                                    <p className="font-bold mb-1">Pemberitahuan Sistem:</p>
+                                    Tindakan ini akan mengubah status event menjadi <strong>SELESAI</strong> secara permanen. Sistem akan mengirimkan pesan WhatsApp blast 1x ke seluruh peserta yang pendaftarannya telah disetujui. Peserta juga dapat memberikan testimoni bintang 1-5 dan ulasan.
+                                </div>
+
+                                <div className="space-y-3">
+                                    <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Pilih Template Pesan Blast</p>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <label className={`flex items-center gap-3 p-3 rounded-2xl border-2 transition cursor-pointer ${blastUseDefault ? 'bg-emerald-50/50 border-emerald-500' : 'bg-white border-gray-200'}`}>
+                                            <input 
+                                                type="radio" 
+                                                name="blast_type" 
+                                                checked={blastUseDefault}
+                                                onChange={() => setBlastUseDefault(true)}
+                                                className="hidden"
+                                            />
+                                            <span className={`material-icons text-sm ${blastUseDefault ? 'text-emerald-600' : 'text-gray-300'}`}>
+                                                {blastUseDefault ? 'radio_button_checked' : 'radio_button_unchecked'}
+                                            </span>
+                                            <span className="text-xs font-bold text-gray-700">Pesan Default</span>
+                                        </label>
+
+                                        <label className={`flex items-center gap-3 p-3 rounded-2xl border-2 transition cursor-pointer ${!blastUseDefault ? 'bg-emerald-50/50 border-emerald-500' : 'bg-white border-gray-200'}`}>
+                                            <input 
+                                                type="radio" 
+                                                name="blast_type" 
+                                                checked={!blastUseDefault}
+                                                onChange={() => setBlastUseDefault(false)}
+                                                className="hidden"
+                                            />
+                                            <span className={`material-icons text-sm ${!blastUseDefault ? 'text-emerald-600' : 'text-gray-300'}`}>
+                                                {!blastUseDefault ? 'radio_button_checked' : 'radio_button_unchecked'}
+                                            </span>
+                                            <span className="text-xs font-bold text-gray-700">Tulis Pesan Sendiri</span>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                {blastUseDefault ? (
+                                    <div className="bg-gray-50 border border-gray-200 rounded-2xl p-4">
+                                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Pratinjau Pesan Default</p>
+                                        <pre className="text-xs text-gray-600 whitespace-pre-wrap font-mono leading-relaxed bg-white border border-gray-100 rounded-xl p-3">
+                                            {`Halo {name},\n\nTerima kasih telah berpartisipasi dalam event *{event}*.\n\nEvent ini telah selesai dilaksanakan. Kami sangat menghargai kehadiran dan partisipasi Anda.\n\nSilakan berikan testimoni Anda (bintang dan komentar) melalui link berikut:\n🔗 {event_link}\n\nTerima kasih!\nBarakah Economy`}
+                                        </pre>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-3">
+                                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider">
+                                            Isi Pesan WhatsApp Blast
+                                        </label>
+                                        <textarea
+                                            required
+                                            rows="6"
+                                            placeholder="Tulis pesan blast Anda di sini..."
+                                            value={customBlastMessage}
+                                            onChange={(e) => setCustomBlastMessage(e.target.value)}
+                                            className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-2xl text-xs outline-none focus:ring-2 focus:ring-emerald-500 transition font-mono"
+                                        />
+                                        
+                                        {/* Guidelines */}
+                                        <div className="bg-amber-50/50 border border-amber-200 rounded-2xl p-4">
+                                            <p className="text-[10px] font-bold text-amber-800 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                                                <span className="material-icons text-sm">info</span>
+                                                Panduan Variabel (Placeholder):
+                                            </p>
+                                            <ul className="text-[10px] text-amber-700 space-y-1 font-medium list-disc pl-4">
+                                                <li> gunakan <code className="bg-white px-1 py-0.5 rounded font-mono font-bold text-amber-800">{`{name}`}</code> untuk menyisipkan nama lengkap peserta.</li>
+                                                <li> gunakan <code className="bg-white px-1 py-0.5 rounded font-mono font-bold text-amber-800">{`{event}`}</code> untuk menyisipkan nama/judul event ini.</li>
+                                                <li> gunakan <code className="bg-white px-1 py-0.5 rounded font-mono font-bold text-amber-800">{`{event_link}`}</code> untuk menyisipkan link menuju detail event untuk mengisi testimoni.</li>
+                                                <li> gunakan <code className="bg-white px-1 py-0.5 rounded font-mono font-bold text-amber-800">{`{time}`}</code> untuk menyisipkan waktu pelaksanaan event.</li>
+                                                <li> gunakan <code className="bg-white px-1 py-0.5 rounded font-mono font-bold text-amber-800">{`{location}`}</code> untuk menyisipkan lokasi event.</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="flex gap-3 mt-6 shrink-0 pt-4 border-t border-gray-100">
+                                <button 
+                                    type="button"
+                                    disabled={completingLoading}
+                                    onClick={() => setShowCompleteModal(false)}
+                                    className="flex-1 px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-2xl text-xs font-black transition disabled:opacity-50"
+                                >
+                                    BATAL
+                                </button>
+                                <button 
+                                    type="submit"
+                                    disabled={completingLoading || (!blastUseDefault && !customBlastMessage.trim())}
+                                    className="flex-1 px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl text-xs font-black transition shadow-lg shadow-emerald-100 disabled:opacity-50 flex items-center justify-center gap-2"
+                                >
+                                    {completingLoading ? (
+                                        <span className="flex items-center gap-1">
+                                            <svg className="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                                            </svg>
+                                            Memproses...
+                                        </span>
+                                    ) : (
+                                        <>
+                                            <span className="material-icons text-sm">done_all</span>
+                                            SELESAIKAN EVENT
+                                        </>
+                                    )}
+                                </button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             )}

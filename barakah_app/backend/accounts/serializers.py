@@ -150,6 +150,7 @@ class UserAdminSerializer(serializers.ModelSerializer):
         model = User
         fields = (
             'id', 'username', 'email', 'phone', 'role', 'is_verified_member',
+            'user_agreement_accepted',
             'position',
             'profile', 'date_joined',
             'custom_roles', 'custom_role_ids',
@@ -275,6 +276,7 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         data['email'] = self.user.email
         data['role'] = self.user.role
         data['is_profile_complete'] = self.user.is_profile_complete
+        data['user_agreement_accepted'] = self.user.user_agreement_accepted
         return data
 
     @classmethod
@@ -284,4 +286,5 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         token['username'] = user.username
         token['email'] = user.email
         token['role'] = user.role
+        token['user_agreement_accepted'] = user.user_agreement_accepted
         return token

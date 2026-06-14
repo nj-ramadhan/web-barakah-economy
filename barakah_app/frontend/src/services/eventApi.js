@@ -325,3 +325,23 @@ export const toggleLikeEvent = (slug) => {
         headers: getAuthHeaders()
     });
 };
+
+export const getEventTestimonies = (slug) => {
+    return axios.get(`${API_BASE_URL}/api/events/${slug}/testimonies/`);
+};
+
+export const submitEventTestimony = (slug, rating, comment) => {
+    return axios.post(`${API_BASE_URL}/api/events/${slug}/submit_testimony/`, { rating, comment }, {
+        headers: getAuthHeaders()
+    });
+};
+
+export const completeEvent = (slug, blastMessage, useDefault) => {
+    return axios.post(`${API_BASE_URL}/api/events/${slug}/complete_event/`, {
+        blast_message: blastMessage,
+        use_default: useDefault
+    }, {
+        headers: getAuthHeaders()
+    });
+};
+

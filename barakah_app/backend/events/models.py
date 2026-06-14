@@ -113,6 +113,9 @@ class Event(models.Model):
     free_for_labels = models.ManyToManyField('accounts.UserLabel', blank=True, related_name='free_events', help_text="Label user yang digratiskan pendaftarannya.")
     has_special_qr = models.BooleanField(default=False, help_text="Apakah event ini menggunakan desain QR khusus?")
     
+    blast_completed_message = models.TextField(blank=True, null=True, help_text="Template pesan WhatsApp blast saat event selesai.")
+    has_blasted_completed = models.BooleanField(default=False, help_text="Tandai jika blasting WhatsApp saat event selesai sudah dikirim.")
+    
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -620,3 +623,17 @@ class EventVoucher(models.Model):
         
     def __str__(self):
         return f"{self.code} - {self.event.title}"
+
+class EventTestimony(models.Model):
+    event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name='testimonies')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='event_testimonies')
+    rating = models.PositiveSmallIntegerField(default=5)  # 1 to 5 stars
+    comment = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('event', 'user')
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"Testimony by {self.user.username} for {self.event.title} ({self.rating} stars)"

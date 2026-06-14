@@ -2,7 +2,8 @@ from rest_framework import serializers
 from .models import (
     Event, EventFormField, EventRegistration, EventRegistrationFile, 
     EventDocumentationImage, EventGalleryImage, EventCertificate, 
-    EventBib, EventSpecialQR, EventPriceVariation, EventVoucher, EventTeam
+    EventBib, EventSpecialQR, EventPriceVariation, EventVoucher, EventTeam,
+    EventTestimony
 )
 from accounts.serializers import UserAdminSerializer, UserLabelSerializer, UserSimpleSerializer
 from accounts.models import UserLabel
@@ -144,6 +145,9 @@ class EventSerializer(serializers.ModelSerializer):
     special_qr = serializers.SerializerMethodField()
     server_time = serializers.SerializerMethodField()
     charity_title = serializers.SerializerMethodField()
+    average_rating = serializers.SerializerMethodField()
+    testimonies_count = serializers.SerializerMethodField()
+    user_has_testimony = serializers.SerializerMethodField()
 
     def get_charity_title(self, obj):
         return obj.charity.title if obj.charity else None
@@ -235,6 +239,28 @@ class EventSerializer(serializers.ModelSerializer):
         except Exception:
             pass
         return None
+
+    def get_average_rating(self, obj):
+        try:
+            testimonies = obj.testimonies.all()
+            if not testimonies.exists():
+                return 5.0
+            total = sum(t.rating for t in testimonies)
+            return round(total / testimonies.count(), 1)
+        except Exception:
+            return 5.0
+
+    def get_testimonies_count(self, obj):
+        try:
+            return obj.testimonies.count()
+        except Exception:
+            return 0
+
+    def get_user_has_testimony(self, obj):
+        request = self.context.get('request')
+        if not request or not request.user or not request.user.is_authenticated:
+            return False
+        return obj.testimonies.filter(user=request.user).exists()
     
     def validate_form_fields(self, value):
         if not value or len(value) == 0:
@@ -555,6 +581,14 @@ class EventSerializer(serializers.ModelSerializer):
                     logger.error(f"Failed to update EventBib: {str(bib_err)}")
         
         return instance
+
+class EventTestimonySerializer(serializers.ModelSerializer):
+    user_details = UserSimpleSerializer(source='user', read_only=True)
+
+    class Meta:
+        model = EventTestimony
+        fields = ['id', 'event', 'user', 'user_details', 'rating', 'comment', 'created_at']
+        read_only_fields = ['id', 'user', 'created_at']
 
 class EventRegistrationFileSerializer(serializers.ModelSerializer):
     class Meta:

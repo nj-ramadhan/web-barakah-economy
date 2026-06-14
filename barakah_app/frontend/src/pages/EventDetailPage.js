@@ -4,7 +4,7 @@ import { Helmet } from 'react-helmet';
 import { QRCodeSVG } from 'qrcode.react';
 import Header from '../components/layout/Header';
 import NavigationButton from '../components/layout/Navigation';
-import { getEventDetail, registerForEvent, getEventParticipants, downloadCertificate, downloadBib, toggleLikeEvent, validateEventVoucher } from '../services/eventApi';
+import { getEventDetail, registerForEvent, getEventParticipants, downloadCertificate, downloadBib, toggleLikeEvent, validateEventVoucher, getEventTestimonies, submitEventTestimony } from '../services/eventApi';
 import authService from '../services/auth';
 import Footer from '../components/layout/Footer';
 import CurrencyInput from '../components/common/CurrencyInput';
@@ -57,6 +57,76 @@ const EventDetailPage = () => {
     const [voucherLoading, setVoucherLoading] = useState(false);
     const [voucherError, setVoucherError] = useState('');
     const [activeImageIndex, setActiveImageIndex] = useState(0);
+
+    // Testimonies States
+    const [testimonies, setTestimonies] = useState([]);
+    const [loadingTestimonies, setLoadingTestimonies] = useState(false);
+    const [userRating, setUserRating] = useState(5);
+    const [userComment, setUserComment] = useState('');
+    const [submittingTestimony, setSubmittingTestimony] = useState(false);
+
+    const StarRatingSelector = ({ rating, onChange }) => {
+        return (
+            <div className="flex gap-2.5">
+                {[1, 2, 3, 4, 5].map((val) => (
+                    <button
+                        key={val}
+                        type="button"
+                        onClick={() => onChange(val)}
+                        className="transition duration-150 transform hover:scale-125 focus:outline-none"
+                    >
+                        <span className={`material-icons text-3xl sm:text-4xl ${val <= rating ? 'text-amber-400' : 'text-gray-200'}`}>
+                            star
+                        </span>
+                    </button>
+                ))}
+            </div>
+        );
+    };
+
+    const StarDisplay = ({ rating }) => {
+        return (
+            <div className="flex gap-0.5">
+                {[1, 2, 3, 4, 5].map((val) => (
+                    <span key={val} className={`material-icons text-base sm:text-lg ${val <= rating ? 'text-amber-400' : 'text-gray-200'}`}>
+                        star
+                    </span>
+                ))}
+            </div>
+        );
+    };
+
+    const fetchTestimonies = useCallback(async () => {
+        setLoadingTestimonies(true);
+        try {
+            const res = await getEventTestimonies(slug);
+            setTestimonies(res.data);
+        } catch (err) {
+            console.error('Failed to fetch testimonies:', err);
+        } finally {
+            setLoadingTestimonies(false);
+        }
+    }, [slug]);
+
+    const handleSubmitTestimony = async (e) => {
+        e.preventDefault();
+        if (submittingTestimony) return;
+        setSubmittingTestimony(true);
+        try {
+            await submitEventTestimony(slug, userRating, userComment);
+            setUserComment('');
+            setUserRating(5);
+            // Refresh detail and testimonies list
+            await fetchDetail();
+            await fetchTestimonies();
+            alert('Testimoni Anda berhasil dikirim! Terima kasih atas ulasan Anda.');
+        } catch (err) {
+            console.error(err);
+            alert(err.response?.data?.error || 'Gagal mengirim testimoni.');
+        } finally {
+            setSubmittingTestimony(false);
+        }
+    };
 
     const calculateTimeLeft = (targetDate) => {
         if (!targetDate) return { total: 0 };
@@ -152,8 +222,10 @@ const EventDetailPage = () => {
     useEffect(() => {
         if (activeTab === 'participants') {
             fetchParticipants();
+        } else if (activeTab === 'testimonies') {
+            fetchTestimonies();
         }
-    }, [activeTab, fetchParticipants]);
+    }, [activeTab, fetchParticipants, fetchTestimonies]);
 
     const [hasAutoFilled, setHasAutoFilled] = useState(false);
 
@@ -742,7 +814,20 @@ const EventDetailPage = () => {
                         <span className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-[10px] font-bold uppercase tracking-widest">{event.status}</span>
                     </div>
 
-                    <h1 className="text-xl sm:text-3xl font-extrabold text-gray-900 leading-tight mb-6">{event.title}</h1>
+                    <h1 className="text-xl sm:text-3xl font-extrabold text-gray-900 leading-tight mb-2">{event.title}</h1>
+                    
+                    {/* Event Rating Summary */}
+                    <div className="flex items-center gap-2 mb-6">
+                        <div className="flex items-center text-amber-500 bg-amber-50 px-3 py-1.5 rounded-xl border border-amber-100 shadow-sm gap-1">
+                            <span className="material-icons text-sm sm:text-base">star</span>
+                            <span className="text-xs sm:text-sm font-extrabold">
+                                {event.average_rating ? Number(event.average_rating).toFixed(1) : '0.0'}
+                            </span>
+                        </div>
+                        <span className="text-xs text-gray-400 font-extrabold uppercase tracking-wider">
+                            ({event.testimonies_count || 0} Testimoni)
+                        </span>
+                    </div>
 
                     <div className="flex flex-wrap items-center gap-3">
                         <button
@@ -888,6 +973,18 @@ const EventDetailPage = () => {
                             >
                                 <span className="material-icons text-sm sm:text-lg">collections</span>
                                 <span className="text-center">Dokumen</span>
+                            </button>
+                            <button
+                                onClick={() => setActiveTab('testimonies')}
+                                className={`flex-1 py-3 sm:py-4 px-1 sm:px-6 rounded-xl sm:rounded-[2rem] text-[10px] sm:text-sm font-bold transition flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 ${activeTab === 'testimonies' ? 'bg-gray-900 text-white shadow-lg' : 'bg-transparent text-gray-500 hover:bg-gray-50'}`}
+                            >
+                                <span className="material-icons text-sm sm:text-lg">star</span>
+                                <span className="text-center">Testimoni</span>
+                                {event.testimonies_count > 0 && (
+                                    <span className={`px-1.5 py-0.5 rounded-full text-[8px] sm:text-[10px] ${activeTab === 'testimonies' ? 'bg-white/20' : 'bg-gray-100'}`}>
+                                        {event.testimonies_count}
+                                    </span>
+                                )}
                             </button>
                         </div>
 
@@ -1388,6 +1485,113 @@ const EventDetailPage = () => {
                                                     />
                                                     <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
                                                         <span className="material-icons text-white">zoom_in</span>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="animate-fade-in space-y-6">
+                                <div className="bg-white p-6 sm:p-8 rounded-[2.5rem] shadow-sm border border-gray-100 min-h-[500px] space-y-8">
+                                    <h2 className="text-2xl font-extrabold text-gray-900 flex items-center gap-3 border-b border-gray-50 pb-4">
+                                        <span className="w-2 h-8 bg-amber-500 rounded-full"></span>
+                                        Testimoni & Ulasan Peserta
+                                    </h2>
+
+                                    {/* Overall Rating Score Card */}
+                                    <div className="bg-gradient-to-br from-amber-50/50 to-orange-50/50 border border-amber-100 rounded-3xl p-6 flex flex-col sm:flex-row items-center gap-6">
+                                        <div className="text-center sm:border-r sm:border-amber-200/50 sm:pr-8 shrink-0">
+                                            <p className="text-5xl font-black text-amber-600 mb-1">
+                                                {event.average_rating ? Number(event.average_rating).toFixed(1) : '0.0'}
+                                            </p>
+                                            <div className="flex justify-center mb-1">
+                                                <StarDisplay rating={Math.round(event.average_rating || 0)} />
+                                            </div>
+                                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                                                {event.testimonies_count || 0} Testimoni
+                                            </p>
+                                        </div>
+                                        <div className="text-xs text-gray-600 leading-relaxed font-semibold">
+                                            <p className="font-bold text-gray-800 text-sm mb-1">Ulasan Komunitas</p>
+                                            Testimoni ini diisi oleh para peserta yang telah mengikuti event secara langsung. Ulasan bersifat transparan dan permanen untuk menjaga reputasi kualitas dari program-program Barakah Economy Community.
+                                        </div>
+                                    </div>
+
+                                    {/* Testimony Form (if eligible) */}
+                                    {event.status === 'completed' && event.user_registration && event.user_registration.status === 'approved' && !event.user_has_testimony && (
+                                        <form onSubmit={handleSubmitTestimony} className="bg-white border-2 border-dashed border-amber-200 rounded-3xl p-6 space-y-5 animate-in slide-in-from-top duration-300">
+                                            <div className="flex items-center gap-2">
+                                                <span className="material-icons text-amber-500">rate_review</span>
+                                                <h3 className="font-black text-gray-800 text-sm sm:text-base uppercase tracking-wider">Berikan Testimoni Anda</h3>
+                                            </div>
+                                            <p className="text-xs text-gray-500">Silakan berikan penilaian bintang dan komentar/saran Anda untuk event ini. Ulasan Anda hanya dapat dikirimkan 1 kali saja.</p>
+                                            
+                                            <div className="space-y-2">
+                                                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-wider">Penilaian Anda (Bintang)</label>
+                                                <StarRatingSelector rating={userRating} onChange={setUserRating} />
+                                            </div>
+
+                                            <div className="space-y-2">
+                                                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-wider">Komentar & Ulasan *</label>
+                                                <textarea
+                                                    required
+                                                    rows="3"
+                                                    value={userComment}
+                                                    onChange={(e) => setUserComment(e.target.value)}
+                                                    placeholder="Tuliskan ulasan, kesan, pesan atau masukan konstrukif Anda di sini..."
+                                                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-2xl text-xs sm:text-sm outline-none focus:ring-2 focus:ring-amber-500 transition"
+                                                />
+                                            </div>
+
+                                            <button
+                                                type="submit"
+                                                disabled={submittingTestimony || !userComment.trim()}
+                                                className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 disabled:from-gray-300 disabled:to-gray-300 text-white py-3.5 rounded-2xl font-black text-xs sm:text-sm uppercase tracking-widest transition shadow-lg shadow-amber-100 disabled:shadow-none flex items-center justify-center gap-2"
+                                            >
+                                                {submittingTestimony ? 'Mengirim...' : 'Kirim Testimoni'}
+                                            </button>
+                                        </form>
+                                    )}
+
+                                    {/* Testimonies List */}
+                                    {loadingTestimonies ? (
+                                        <div className="flex flex-col items-center justify-center py-12 gap-4">
+                                            <div className="w-10 h-10 border-4 border-amber-500 border-t-transparent rounded-full animate-spin"></div>
+                                            <p className="text-gray-500 font-bold text-xs">Memuat ulasan peserta...</p>
+                                        </div>
+                                    ) : testimonies.length === 0 ? (
+                                        <div className="text-center py-16 border border-dashed border-gray-200 rounded-3xl">
+                                            <span className="material-icons text-6xl text-gray-200 mb-3">rate_review</span>
+                                            <p className="text-sm font-bold text-gray-500 mb-1">Belum Ada Testimoni</p>
+                                            <p className="text-xs text-gray-400 max-w-xs mx-auto">Event ini belum memiliki ulasan dari peserta.</p>
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-4">
+                                            {testimonies.map((testi) => (
+                                                <div key={testi.id} className="bg-gray-50 border border-gray-200/60 rounded-3xl p-5 flex items-start gap-4">
+                                                    <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 text-white flex items-center justify-center font-bold text-lg shrink-0 shadow-md">
+                                                        {testi.user_details?.full_name?.charAt(0) || testi.user_details?.username?.charAt(0) || 'U'}
+                                                    </div>
+                                                    <div className="flex-1 min-w-0">
+                                                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 mb-2">
+                                                            <div>
+                                                                <p className="font-extrabold text-sm text-gray-900 leading-tight">
+                                                                    {testi.user_details?.full_name || testi.user_details?.username}
+                                                                </p>
+                                                                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mt-0.5">Peserta Terverifikasi</p>
+                                                            </div>
+                                                            <div className="flex flex-col sm:items-end gap-1">
+                                                                <StarDisplay rating={testi.rating} />
+                                                                <p className="text-[9px] text-gray-400 font-bold">
+                                                                    {new Date(testi.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                        <p className="text-xs sm:text-sm text-gray-600 leading-relaxed break-words whitespace-pre-wrap font-medium">
+                                                            {testi.comment}
+                                                        </p>
                                                     </div>
                                                 </div>
                                             ))}

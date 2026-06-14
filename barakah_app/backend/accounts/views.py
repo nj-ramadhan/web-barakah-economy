@@ -53,6 +53,7 @@ class CustomTokenObtainPairView(TokenObtainPairView):
             response.data['picture'] = None
 
         response.data['is_profile_complete'] = user.is_profile_complete
+        response.data['user_agreement_accepted'] = user.user_agreement_accepted
 
         return response
     
@@ -63,6 +64,18 @@ class RegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
     serializer_class = UserRegistrationSerializer
     permission_classes = [permissions.AllowAny]
+
+class AcceptAgreementView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        user = request.user
+        user.user_agreement_accepted = True
+        user.save(update_fields=['user_agreement_accepted'])
+        return Response({
+            'status': 'success',
+            'user_agreement_accepted': True
+        })
 
 class LogoutView(APIView):
     def post(self, request):
@@ -169,7 +182,8 @@ class GoogleLoginView(APIView):
                 'accessible_menus': user.get_all_accessible_menus(),
                 'picture': picture_url,
                 'is_new_user': created,
-                'is_profile_complete': user.is_profile_complete
+                'is_profile_complete': user.is_profile_complete,
+                'user_agreement_accepted': user.user_agreement_accepted
             }, status=status.HTTP_200_OK)
         except ValueError as e:
             logger.error(f"Google Token verification failed: {e}")

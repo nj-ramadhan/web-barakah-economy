@@ -63,6 +63,7 @@ const googleLogin = (token) => {
         is_verified_member: response.data.is_verified_member,
         accessible_menus: response.data.accessible_menus,
         is_profile_complete: response.data.is_profile_complete,
+        user_agreement_accepted: response.data.user_agreement_accepted,
       }));
     }
     return response.data;
@@ -97,10 +98,26 @@ const login = (username, password) => {
         role: response.data.role,
         picture: response.data.picture,
         is_profile_complete: response.data.is_profile_complete,
+        user_agreement_accepted: response.data.user_agreement_accepted,
       }));
     }
     return response.data;
   });
+};
+
+const acceptAgreement = async () => {
+  try {
+    const response = await api.post('/auth/accept-agreement/');
+    const user = JSON.parse(localStorage.getItem('user'));
+    if (user) {
+      user.user_agreement_accepted = true;
+      localStorage.setItem('user', JSON.stringify(user));
+    }
+    return response.data;
+  } catch (error) {
+    console.error('Failed to accept agreement:', error);
+    throw error;
+  }
 };
 
 const logout = () => {
@@ -134,6 +151,7 @@ const authService = {
   logout,
   getProfile,
   updateProfile,
+  acceptAgreement,
 };
 
 export default authService;

@@ -7,8 +7,8 @@ from django.conf import settings
 from django.db.models import Q
 from django.http import HttpResponse
 import csv
-from .models import Event, EventFormField, EventRegistration, EventRegistrationFile, EventSession
-from .serializers import EventSerializer, EventRegistrationSerializer
+from .models import Event, EventFormField, EventRegistration, EventRegistrationFile, EventSession, EventTestimony
+from .serializers import EventSerializer, EventRegistrationSerializer, EventTestimonySerializer
 from .simple_serializers import EventSimpleSerializer
 from django_filters.rest_framework import DjangoFilterBackend
 from barakah_app.utils import send_status_update_email
@@ -73,11 +73,20 @@ class EventViewSet(viewsets.ModelViewSet):
         for event in expired_events:
             event.status = 'completed'
             event.save() # This triggers the documentation signal
+            
+            # Auto-blast WhatsApp if not already blasted
+            if not event.has_blasted_completed:
+                try:
+                    self._send_completed_blast(event)
+                    event.has_blasted_completed = True
+                    event.save(update_fields=['has_blasted_completed'])
+                except Exception as e:
+                    logger.error(f"Failed to auto-blast completed event {event.id}: {e}")
 
     def get_permissions(self):
         try:
             # Public actions
-            if self.action in ['list', 'retrieve', 'landing', 'register', 'participants']:
+            if self.action in ['list', 'retrieve', 'landing', 'register', 'participants', 'testimonies']:
                 return [permissions.AllowAny()]
             
             # All other actions require authentication
@@ -1424,6 +1433,154 @@ class EventViewSet(viewsets.ModelViewSet):
             "message": f"Blast global selesai dikirim ke {result['success']} nomor unik.",
             "details": result
         })
+
+    @action(detail=True, methods=['get'], permission_classes=[permissions.AllowAny])
+    def testimonies(self, request, slug=None):
+        """Retrieve testimonies for this event."""
+        event = self.get_object()
+        testimonies = event.testimonies.all().order_by('-created_at')
+        serializer = EventTestimonySerializer(testimonies, many=True)
+        return Response(serializer.data)
+
+    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
+    def submit_testimony(self, request, slug=None):
+        """Submit user testimony for a completed event."""
+        event = self.get_object()
+        user = request.user
+        
+        # 1. Check if event is completed
+        if event.status != 'completed':
+            return Response({"error": "Event belum selesai. Anda hanya dapat mengisi testimoni setelah event dinyatakan selesai oleh admin."}, status=status.HTTP_400_BAD_REQUEST)
+            
+        # 2. Check if user is registered (approved)
+        is_registered = event.registrations.filter(user=user, status='approved').exists()
+        if not is_registered:
+            return Response({"error": "Anda tidak terdaftar sebagai peserta di event ini."}, status=status.HTTP_403_FORBIDDEN)
+            
+        # 3. Check rating value (1-5)
+        rating = request.data.get('rating', 5)
+        try:
+            rating = int(rating)
+            if rating < 1 or rating > 5:
+                raise ValueError()
+        except:
+            return Response({"error": "Rating harus berupa angka antara 1 sampai 5."}, status=status.HTTP_400_BAD_REQUEST)
+            
+        comment = request.data.get('comment', '')
+        
+        # 4. Create or update testimony
+        testimony, created = EventTestimony.objects.update_or_create(
+            event=event,
+            user=user,
+            defaults={
+                'rating': rating,
+                'comment': comment
+            }
+        )
+        
+        return Response({
+            "message": "Testimoni berhasil disimpan.",
+            "testimony": EventTestimonySerializer(testimony).data
+        }, status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
+
+    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
+    def complete_event(self, request, slug=None):
+        """
+        Manually complete an event (Admin / Event Creator only).
+        Updates status to 'completed' and blasts WA to registered users.
+        """
+        event = self.get_object()
+        user = request.user
+        
+        # Check permissions: Staff, Superuser, or Event Creator
+        if not (user.is_staff or user.is_superuser or event.created_by == user):
+            return Response({"error": "Anda tidak memiliki izin untuk menyelesaikan event ini."}, status=status.HTTP_403_FORBIDDEN)
+            
+        blast_message = request.data.get('blast_message', '').strip()
+        use_default = request.data.get('use_default', True)
+        
+        # Transition event status
+        event.status = 'completed'
+        
+        if not use_default and blast_message:
+            event.blast_completed_message = blast_message
+            event.save(update_fields=['status', 'blast_completed_message'])
+        else:
+            event.save(update_fields=['status'])
+            
+        # Trigger blast (forced resend from admin action)
+        blast_res = self._send_completed_blast(event, custom_message=blast_message if not use_default else None)
+        
+        # Mark as blasted
+        event.has_blasted_completed = True
+        event.save(update_fields=['has_blasted_completed'])
+        
+        return Response({
+            "message": "Event berhasil diselesaikan.",
+            "blast_result": blast_res
+        })
+
+    def _send_completed_blast(self, event, custom_message=None):
+        """Helper to send WhatsApp blast to all approved registrations when event is completed."""
+        registrations = event.registrations.filter(status='approved').select_related('user', 'user__profile').prefetch_related('event__form_fields')
+        
+        if not registrations.exists():
+            return {"total": 0, "success": 0, "failed": 0, "message": "Tidak ada peserta terdaftar."}
+            
+        phone_list = []
+        placeholder_data = []
+        seen_phones = set()
+        
+        local_start = timezone.localtime(event.start_date)
+        event_time_str = local_start.strftime('%d %b %Y %H:%M')
+        if event.end_date:
+            local_end = timezone.localtime(event.end_date)
+            if local_start.date() == local_end.date():
+                event_time_str += f" - {local_end.strftime('%H:%M')}"
+            else:
+                event_time_str += f" - {local_end.strftime('%d %b %Y %H:%M')}"
+                
+        event_link = f"{settings.FRONTEND_URL}/event/{event.slug}"
+        
+        for reg in registrations:
+            _, phone, detected_name = self._detect_contact_info_standalone(reg)
+            if phone:
+                raw_digits = ''.join(filter(str.isdigit, str(phone)))
+                if not raw_digits: continue
+                
+                if raw_digits.startswith('620'): core_number = raw_digits[3:]
+                elif raw_digits.startswith('62'): core_number = raw_digits[2:]
+                elif raw_digits.startswith('0'): core_number = raw_digits[1:]
+                else: core_number = raw_digits
+                
+                formatted_phone = self._format_phone_number(phone)
+                if formatted_phone and core_number not in seen_phones:
+                    seen_phones.add(core_number)
+                    phone_list.append(formatted_phone)
+                    placeholder_data.append({
+                        'name': detected_name,
+                        'event': event.title,
+                        'event_link': event_link,
+                        'time': event_time_str,
+                        'location': event.location
+                    })
+                    
+        if not phone_list:
+            return {"total": 0, "success": 0, "failed": 0, "message": "Tidak ada nomor WhatsApp yang valid."}
+            
+        message_template = custom_message or event.blast_completed_message
+        if not message_template:
+            message_template = (
+                "Halo {name},\n\n"
+                "Terima kasih telah berpartisipasi dalam event *{event}*.\n\n"
+                "Event ini telah selesai dilaksanakan. Kami sangat menghargai kehadiran dan partisipasi Anda.\n\n"
+                "Silakan berikan testimoni Anda (bintang dan komentar) melalui link berikut:\n"
+                "🔗 {event_link}\n\n"
+                "Terima kasih!\nBarakah Economy"
+            )
+            
+        result = whatsapp_service.blast_messages(phone_list, message_template, placeholder_data)
+        return result
 
     def _update_user_phone_if_missing(self, registration):
         """Update user profile phone if registration response contains a phone and user profile phone is empty."""
