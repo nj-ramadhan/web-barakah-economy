@@ -67,6 +67,8 @@ const LoginPage = () => {
                 email: response.email,
                 role: response.role,
                 picture: picture,
+                is_profile_complete: response.is_profile_complete,
+                user_agreement_accepted: response.user_agreement_accepted,
             };
             localStorage.setItem('user', JSON.stringify(userProfile));
             setIsLoggedIn(true);
@@ -101,6 +103,8 @@ const LoginPage = () => {
                 email: response.email,
                 role: response.role,
                 picture: picture,
+                is_profile_complete: response.is_profile_complete,
+                user_agreement_accepted: response.user_agreement_accepted,
             };
             localStorage.setItem('user', JSON.stringify(userProfile));
             setIsLoggedIn(true);

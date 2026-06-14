@@ -271,7 +271,7 @@ const LayoutWrapper = ({ isDesktop }) => {
 
   const publicPaths = ['/login', '/register', '/lupa-password', '/reset-password'];
   const showAgreementModal = agreementUser && 
-                             agreementUser.user_agreement_accepted === false && 
+                             !agreementUser.user_agreement_accepted && 
                              !publicPaths.includes(location.pathname) &&
                              !location.pathname.startsWith('/widget');
 
