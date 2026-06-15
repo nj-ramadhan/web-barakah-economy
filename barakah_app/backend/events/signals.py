@@ -34,7 +34,7 @@ def create_activity_documentation(sender, instance, created, **kwargs):
                 )
                 
                 # Copy image (prefer header_image, fallback to thumbnail)
-                event_image = instance.header_image if instance.header_image else instance.thumbnail
+                event_image = instance.header_image if (instance.header_image and instance.header_image.name) else instance.thumbnail
                 if event_image:
                     try:
                         # Reset file pointer and read the image safely
