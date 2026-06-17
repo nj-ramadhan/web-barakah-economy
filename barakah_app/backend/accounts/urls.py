@@ -4,7 +4,7 @@ from rest_framework_simplejwt.views import TokenRefreshView
 from .views import (
     RegisterView, LoginView, LogoutView, GoogleLoginView,
     PasswordResetRequestView, PasswordResetConfirmView,
-    ChangePasswordView, AcceptAgreementView, UserAgreementView,
+    ChangePasswordView, SendTempPasswordWAView, AcceptAgreementView, UserAgreementView,
     UserViewSet, RoleViewSet, UserLabelViewSet,
     LingkupTugasViewSet, BidangTugasViewSet
 )
@@ -27,5 +27,6 @@ urlpatterns = [
     path('password-reset/', PasswordResetRequestView.as_view(), name='password_reset'),
     path('password-reset-confirm/', PasswordResetConfirmView.as_view(), name='password_reset_confirm'),
     path('change-password/', ChangePasswordView.as_view(), name='change_password'),
+    path('send-temp-password-wa/', SendTempPasswordWAView.as_view(), name='send_temp_password_wa'),
     path('', include(router.urls)),
 ]

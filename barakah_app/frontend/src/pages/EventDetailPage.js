@@ -1956,8 +1956,12 @@ const EventDetailPage = () => {
                                                                 <input
                                                                     required={field.required}
                                                                     type="file"
-                                                                    onChange={(e) => handleFileChange(field.id, e.target.files[0])}
-                                                                    className="hidden"
+                                                                    onChange={(e) => {
+                                                                        if (e.target.files && e.target.files.length > 0) {
+                                                                            handleFileChange(field.id, e.target.files[0]);
+                                                                        }
+                                                                    }}
+                                                                    className="absolute inset-0 w-0 h-0 opacity-0 pointer-events-none"
                                                                 />
                                                             </label>
                                                         </div>
@@ -2302,12 +2306,14 @@ const EventDetailPage = () => {
                                                                     required={paymentMethod === 'transfer' && getCalculatedTotal() > 0}
                                                                     accept="image/*"
                                                                     onChange={(e) => {
-                                                                        const file = e.target.files[0];
-                                                                        if (file && validateFileSize(file)) {
-                                                                            setPaymentProof(file);
+                                                                        if (e.target.files && e.target.files.length > 0) {
+                                                                            const file = e.target.files[0];
+                                                                            if (file && validateFileSize(file)) {
+                                                                                setPaymentProof(file);
+                                                                            }
                                                                         }
                                                                     }}
-                                                                    className="hidden"
+                                                                    className="absolute inset-0 w-0 h-0 opacity-0 pointer-events-none"
                                                                 />
                                                             </label>
                                                         </div>

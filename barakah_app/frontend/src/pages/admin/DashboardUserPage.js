@@ -303,7 +303,10 @@ const DashboardUserPage = () => {
         try {
             // Mode buat user baru
             if (!editingUser) {
-                if (!editFormData.password) { alert('Password wajib diisi untuk user baru.'); return; }
+                if (!editFormData.name_full) { alert('Nama Lengkap wajib diisi.'); return; }
+                if (!editFormData.email) { alert('Email wajib diisi.'); return; }
+                if (!editFormData.phone) { alert('No. Telepon / WA wajib diisi.'); return; }
+                if (!editFormData.password) { alert('Password wajib diisi.'); return; }
                 const payload = {
                     username: editFormData.username, email: editFormData.email,
                     phone: editFormData.phone, password: editFormData.password,
@@ -992,13 +995,13 @@ const DashboardUserPage = () => {
                                 {/* Jika tambah user baru, hanya tampilkan field dasar */}
                                 {!editingUser ? (
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <FI label="Nama Lengkap" value={editFormData.name_full} onChange={v => setEditFormData(f => ({ ...f, name_full: v }))} />
-                                        <FI label="Nama Panggilan" value={editFormData.nickname} onChange={v => setEditFormData(f => ({ ...f, nickname: v }))} />
-                                        <FI label="IDM (ID Member)" value={editFormData.id_m} onChange={v => setEditFormData(f => ({ ...f, id_m: v }))} />
-                                        <FI label="Username" value={editFormData.username} onChange={v => setEditFormData(f => ({ ...f, username: v }))} />
-                                        <FI label="Email (Opsional)" value={editFormData.email} onChange={v => setEditFormData(f => ({ ...f, email: v }))} />
-                                        <FI label="No. Telepon (Opsional)" value={editFormData.phone} onChange={v => setEditFormData(f => ({ ...f, phone: v }))} />
-                                        <FI label="Password (Opsional)" value={editFormData.password} onChange={v => setEditFormData(f => ({ ...f, password: v }))} type="password" />
+                                        <FI label="Nama Lengkap *" value={editFormData.name_full} onChange={v => setEditFormData(f => ({ ...f, name_full: v }))} />
+                                        <FI label="Nama Panggilan (Opsional)" value={editFormData.nickname} onChange={v => setEditFormData(f => ({ ...f, nickname: v }))} />
+                                        <FI label="IDM (ID Member) (Opsional)" value={editFormData.id_m} onChange={v => setEditFormData(f => ({ ...f, id_m: v }))} />
+                                        <FI label="Username (Opsional, otomatis dibuat jika kosong)" value={editFormData.username} onChange={v => setEditFormData(f => ({ ...f, username: v }))} />
+                                        <FI label="Email *" value={editFormData.email} onChange={v => setEditFormData(f => ({ ...f, email: v }))} />
+                                        <FI label="No. Telepon / WA *" value={editFormData.phone} onChange={v => setEditFormData(f => ({ ...f, phone: v }))} />
+                                        <FI label="Password *" value={editFormData.password} onChange={v => setEditFormData(f => ({ ...f, password: v }))} type="password" />
                                         <FS label="Role" value={editFormData.role} onChange={v => setEditFormData(f => ({ ...f, role: v }))} options={[['user', 'User'], ['admin', 'Admin'], ['seller', 'Seller'], ['staff', 'Staff']]} />
                                         <div className="flex items-center gap-2 col-span-2">
                                             <input type="checkbox" id="is_v_new" checked={editFormData.is_verified_member} onChange={e => setEditFormData(f => ({ ...f, is_verified_member: e.target.checked }))} className="w-4 h-4 text-blue-600 rounded" />

@@ -124,23 +124,26 @@ const EventManualRegistrationModal = ({ isOpen, onClose, event, registrations = 
             return;
         }
 
-        setLoading(true);
-        setError(null);
-        try {
-            if (selectedUserIds.length > 1) {
-                await bulkManualRegister(event.slug, { user_ids: selectedUserIds });
-            } else {
-                const user = allUsers.find(u => u.id === selectedUserIds[0]);
-                const directData = {
+        if (selectedUserIds.length === 1) {
+            const user = allUsers.find(u => u.id === selectedUserIds[0]);
+            if (user) {
+                setFormData(prev => ({
+                    ...prev,
                     user_id: user.id,
                     name: user.profile?.name_full || user.username,
                     email: user.email || '',
-                    phone: user.phone || '',
-                    responses: {}
-                };
-                await manualRegisterParticipant(event.slug, directData);
+                    phone: user.phone || ''
+                }));
             }
-            
+            setIsUserListOpen(false);
+            setSelectedUserIds([]);
+            return;
+        }
+
+        setLoading(true);
+        setError(null);
+        try {
+            await bulkManualRegister(event.slug, { user_ids: selectedUserIds });
             onSuccess();
             onClose();
             setFormData({ name: '', email: '', phone: '', user_id: null, responses: {} });
@@ -267,6 +270,32 @@ const EventManualRegistrationModal = ({ isOpen, onClose, event, registrations = 
                                 <h3 className="text-[11px] font-black text-gray-400 uppercase tracking-[0.2em] flex items-center gap-3">
                                     <span className="w-6 h-px bg-gray-100"></span> Informasi Identitas <span className="flex-1 h-px bg-gray-100"></span>
                                 </h3>
+
+                                {formData.user_id && (
+                                    <div className="bg-blue-50 border border-blue-100 p-4 rounded-2xl flex items-center justify-between text-xs font-bold text-blue-700 animate-in zoom-in-95">
+                                        <div className="flex items-center gap-2">
+                                            <span className="material-icons text-sm">link</span>
+                                            <span>
+                                                Terhubung dengan akun: {formData.name}
+                                            </span>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setFormData(prev => ({
+                                                    ...prev,
+                                                    user_id: null,
+                                                    name: '',
+                                                    email: '',
+                                                    phone: ''
+                                                }));
+                                            }}
+                                            className="px-3 py-1.5 bg-white border border-blue-200 rounded-xl hover:bg-red-50 hover:border-red-200 hover:text-red-600 transition text-[10px] uppercase tracking-wider font-black"
+                                        >
+                                            Putuskan Hubungan
+                                        </button>
+                                    </div>
+                                )}
 
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Nama Lengkap *</label>

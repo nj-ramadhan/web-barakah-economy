@@ -32,7 +32,7 @@ class BusinessProfileSerializer(serializers.ModelSerializer):
         return super().to_internal_value(mutable_data)
 
 class ProfileSerializer(serializers.ModelSerializer):
-    username = serializers.CharField(source='user.username', read_only=True)
+    username = serializers.CharField(source='user.username', required=False)
     email = serializers.EmailField(source='user.email', read_only=True)
     phone = serializers.CharField(source='user.phone', required=False, allow_blank=True)
     position = serializers.CharField(source='user.position', read_only=True)
@@ -41,6 +41,7 @@ class ProfileSerializer(serializers.ModelSerializer):
     accessible_menus = serializers.SerializerMethodField(read_only=True)
     is_profile_complete = serializers.SerializerMethodField(read_only=True)
     info_source_display = serializers.CharField(source='get_info_source_display', read_only=True)
+    has_usable_password = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Profile
@@ -56,18 +57,41 @@ class ProfileSerializer(serializers.ModelSerializer):
     def get_is_profile_complete(self, obj):
         return obj.user.is_profile_complete
 
+    def get_has_usable_password(self, obj):
+        return obj.user.has_usable_password()
+
     def update(self, instance, validated_data):
-        # Extract phone from user source if present in validated_data
+        # Extract phone & username from user source if present in validated_data
         user_data = validated_data.pop('user', {})
         phone = user_data.get('phone')
+        username = user_data.get('username')
         
-        # Also check if 'phone' was passed directly (depending on how DRF parses 'source')
+        # Also check direct fields (depending on how DRF parses 'source')
         if not phone and 'phone' in validated_data:
             phone = validated_data.pop('phone')
+        if not username and 'username' in validated_data:
+            username = validated_data.pop('username')
 
         if phone is not None:
             instance.user.phone = phone
-            instance.user.save()
+            instance.user.save(update_fields=['phone'])
+
+        if username is not None and username != instance.user.username:
+            if instance.username_change_count >= 1:
+                raise serializers.ValidationError({'username': 'Anda hanya dapat mengubah username sebanyak 1 kali.'})
+            
+            # Check unique username
+            from django.contrib.auth import get_user_model
+            User = get_user_model()
+            if User.objects.filter(username=username).exclude(id=instance.user.id).exists():
+                raise serializers.ValidationError({'username': 'Username ini sudah digunakan oleh pengguna lain.'})
+
+            instance.user.username = username
+            instance.user.save(update_fields=['username'])
+            instance.username_change_count += 1
+            # We will manually save this field below, or let super().update save it as part of model fields.
+            # But let's save it here just in case, since we popped it out or to keep count accurate.
+            instance.save(update_fields=['username_change_count'])
             
         return super().update(instance, validated_data)
 

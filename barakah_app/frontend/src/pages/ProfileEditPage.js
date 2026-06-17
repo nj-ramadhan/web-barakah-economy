@@ -59,6 +59,8 @@ const ProfileEditPage = () => {
     shop_supported_couriers: 'jne,pos,tiki,jnt',
     info_source: '',
     referred_by: '',
+    is_google_user: false,
+    username_change_count: 0,
   });
 
 
@@ -507,6 +509,7 @@ const ProfileEditPage = () => {
           if (currentUser) {
             if (updatedProfile.picture) currentUser.picture = updatedProfile.picture;
             currentUser.is_profile_complete = updatedProfile.is_profile_complete;
+            if (updatedProfile.username) currentUser.username = updatedProfile.username;
             localStorage.setItem('user', JSON.stringify(currentUser));
           }
         }
@@ -595,6 +598,29 @@ const ProfileEditPage = () => {
             </div>
             <div>
               <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
+                Username
+              </label>
+              <input
+                type="text"
+                name="username"
+                placeholder="Username Anda"
+                value={profile.username || ''}
+                onChange={handleChange}
+                disabled={profile.username_change_count >= 1}
+                className={`w-full p-3 border border-gray-200 bg-gray-50 rounded-xl text-sm outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-60 disabled:cursor-not-allowed`}
+              />
+              {profile.username_change_count === 0 ? (
+                <p className="text-[10px] text-emerald-600 font-bold mt-1">
+                  Anda dapat mengubah username sebanyak 1x saja.
+                </p>
+              ) : (
+                <p className="text-[10px] text-gray-400 font-bold mt-1">
+                  Anda sudah menggunakan kesempatan 1x mengubah username.
+                </p>
+              )}
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
                 Nama Panggilan <span className="text-red-500">*wajib</span>
               </label>
               <input type="text" name="nickname" placeholder="Nama Panggilan / Nickname" value={profile.nickname || ''} onChange={handleChange} className={inputCls('nickname')} />
@@ -632,7 +658,7 @@ const ProfileEditPage = () => {
               <label className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg text-sm font-bold cursor-pointer transition shadow-sm whitespace-nowrap self-stretch sm:self-auto text-center flex items-center justify-center gap-2">
                 <span className="material-icons text-sm">photo_camera</span>
                 {ktpScanning ? 'Memproses...' : 'Scan KTP'}
-                <input type="file" accept="image/*" capture="environment" onChange={handleKtpScan} className="hidden" disabled={ktpScanning} />
+                <input type="file" accept="image/*" onChange={handleKtpScan} className="absolute inset-0 w-0 h-0 opacity-0 pointer-events-none" disabled={ktpScanning} />
               </label>
             </div>
             {/* End File Upload KTP */}

@@ -195,6 +195,8 @@ class Profile(models.Model):
     # Referral & Info Source
     info_source = models.CharField(max_length=50, choices=INFO_SOURCE_CHOICES, blank=True, null=True)
     referred_by = models.CharField(max_length=100, blank=True, null=True, help_text="Nama orang yang mengajak")
+    is_google_user = models.BooleanField(default=False)
+    username_change_count = models.IntegerField(default=0)
     
     # Shop fields for digital product sellers
     shop_thumbnail = models.ImageField(upload_to='shop_thumbnails/', blank=True, null=True)

@@ -848,11 +848,7 @@ class EventViewSet(viewsets.ModelViewSet):
         # Get IDs of users already registered
         registered_ids = EventRegistration.objects.filter(event=event, user__isnull=False).values_list('user_id', flat=True)
         
-        users = User.objects.exclude(id__in=registered_ids).filter(
-            email__isnull=False,
-            phone__isnull=False,
-            profile__name_full__isnull=False
-        ).exclude(email='').exclude(phone='').exclude(profile__name_full='')
+        users = User.objects.exclude(id__in=registered_ids)
         
         if search:
             # If search contains @ or looks like a phone, do more specific filtering

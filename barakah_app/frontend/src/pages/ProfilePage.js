@@ -726,6 +726,7 @@ const ProfilePage = () => {
         username: '',
         email: '',
         phone: '',
+        has_usable_password: true,
     });
 
     const [activeTab, setActiveTab] = useState('general');
@@ -735,6 +736,9 @@ const ProfilePage = () => {
     const [changePwForm, setChangePwForm] = useState({ old_password: '', new_password: '', confirm_password: '' });
     const [changePwLoading, setChangePwLoading] = useState(false);
     const [changePwError, setChangePwError] = useState('');
+    const [sendTempPwLoading, setSendTempPwLoading] = useState(false);
+    const [sendTempPwMessage, setSendTempPwMessage] = useState('');
+    const [sendTempPwError, setSendTempPwError] = useState('');
 
     useEffect(() => {
         const fetchProfile = async () => {
@@ -792,6 +796,25 @@ const ProfilePage = () => {
             setChangePwError(err.response?.data?.error || 'Gagal mengubah password.');
         } finally {
             setChangePwLoading(false);
+        }
+    };
+    
+    const handleSendTempPasswordWA = async () => {
+        setSendTempPwLoading(true);
+        setSendTempPwMessage('');
+        setSendTempPwError('');
+        try {
+            const user = JSON.parse(localStorage.getItem('user'));
+            const res = await axios.post(
+                `${process.env.REACT_APP_API_BASE_URL}/api/auth/send-temp-password-wa/`,
+                {},
+                { headers: { Authorization: `Bearer ${user.access}` } }
+            );
+            setSendTempPwMessage(res.data.message || 'Password sementara berhasil dikirim ke nomor WhatsApp Anda.');
+        } catch (err) {
+            setSendTempPwError(err.response?.data?.error || 'Gagal mengirim password sementara.');
+        } finally {
+            setSendTempPwLoading(false);
         }
     };
 
@@ -1233,6 +1256,33 @@ const ProfilePage = () => {
                                     <p className="text-sm text-red-600">{changePwError}</p>
                                 </div>
                             )}
+                            {profile.has_usable_password === false && (
+                                <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+                                    <p className="text-xs text-amber-800 leading-relaxed font-semibold">
+                                        Karena Anda masuk menggunakan Google, Anda belum memiliki kata sandi lokal. 
+                                        Silakan dapatkan kata sandi sementara terlebih dahulu melalui WhatsApp untuk digunakan sebagai Kata Sandi Lama.
+                                    </p>
+                                    <button
+                                        type="button"
+                                        disabled={sendTempPwLoading}
+                                        onClick={handleSendTempPasswordWA}
+                                        className="mt-3 w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 rounded-xl transition text-xs disabled:opacity-60 flex items-center justify-center gap-2"
+                                    >
+                                        {sendTempPwLoading ? (
+                                            <svg className="animate-spin h-3 w-3" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+                                        ) : (
+                                            <span className="material-icons text-xs">whatsapp</span>
+                                        )}
+                                        Kirim Kata Sandi Sementara ke WA
+                                    </button>
+                                    {sendTempPwMessage && (
+                                        <p className="text-xs text-emerald-600 font-bold mt-2">{sendTempPwMessage}</p>
+                                    )}
+                                    {sendTempPwError && (
+                                        <p className="text-xs text-red-600 font-bold mt-2">{sendTempPwError}</p>
+                                    )}
+                                </div>
+                            )}
                             <div>
                                 <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Password Lama</label>
                                 <input
@@ -1272,7 +1322,13 @@ const ProfilePage = () => {
                             <div className="flex gap-3 pt-2">
                                 <button
                                     type="button"
-                                    onClick={() => { setShowChangePwModal(false); setChangePwError(''); setChangePwForm({ old_password: '', new_password: '', confirm_password: '' }); }}
+                                    onClick={() => {
+                                        setShowChangePwModal(false);
+                                        setChangePwError('');
+                                        setSendTempPwMessage('');
+                                        setSendTempPwError('');
+                                        setChangePwForm({ old_password: '', new_password: '', confirm_password: '' });
+                                    }}
                                     className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-600 font-bold py-3 rounded-xl transition text-sm"
                                 >
                                     Batal

@@ -150,19 +150,19 @@ class GoogleLoginView(APIView):
             )
             logger.info(f"User created: {created}, User: {user}")
 
-            # Jika user baru, auto-isi data profil dari Google dan beri label Simpatisan
-            if created:
-                try:
-                    from profiles.models import Profile
-                    profile, _ = Profile.objects.get_or_create(user=user)
-                    if name and not profile.name_full:
-                        profile.name_full = name
-                    # Simpan URL foto Google sebagai google_picture_url (tidak download file)
-                    if google_picture and not profile.picture:
-                        profile.google_picture_url = google_picture
-                    profile.save()
-                except Exception as pe:
-                    logger.warning(f"Failed to auto-fill profile on Google login: {pe}")
+            # Auto-isi data profil dari Google dan tandai sebagai Google user
+            try:
+                from profiles.models import Profile
+                profile, _ = Profile.objects.get_or_create(user=user)
+                profile.is_google_user = True
+                if name and not profile.name_full:
+                    profile.name_full = name
+                # Simpan URL foto Google sebagai google_picture_url (tidak download file)
+                if google_picture and not profile.picture:
+                    profile.google_picture_url = google_picture
+                profile.save()
+            except Exception as pe:
+                logger.warning(f"Failed to auto-fill/update profile on Google login: {pe}")
 
                 # Beri label Simpatisan otomatis (sama seperti register biasa)
                 try:
@@ -277,6 +277,52 @@ class ChangePasswordView(APIView):
         request.user.save()
         return Response({'message': 'Password berhasil diubah.'}, status=status.HTTP_200_OK)
 
+class SendTempPasswordWAView(APIView):
+    """Endpoint untuk mengirim password sementara ke nomor WhatsApp user."""
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        user = request.user
+        
+        # Cari nomor telepon/WA.
+        phone = user.phone
+        if not phone:
+            return Response({'error': 'Nomor WhatsApp belum terdaftar di akun Anda. Silakan isi nomor HP/WhatsApp di edit profil terlebih dahulu.'}, status=status.HTTP_400_BAD_REQUEST)
+            
+        # Generate password sementara 8 karakter
+        chars = string.ascii_uppercase + string.digits
+        temp_password = ''.join(random.choices(chars, k=8))
+        user.set_password(temp_password)
+        user.save()
+        
+        # Kirim pesan WA
+        from .whatsapp_service import send_message
+        message = (
+            f"Halo {user.username},\n\n"
+            f"Berikut adalah password sementara Anda: *{temp_password}*\n\n"
+            f"Gunakan password ini sebagai 'Password Lama' pada formulir ganti password untuk mengatur password baru Anda."
+        )
+        
+        # Normalisasi nomor telepon
+        raw_digits = ''.join(filter(str.isdigit, str(phone)))
+        if raw_digits:
+            if raw_digits.startswith('0'):
+                formatted_phone = "+62" + raw_digits[1:]
+            elif raw_digits.startswith('8'):
+                formatted_phone = "+62" + raw_digits
+            elif not phone.startswith('+'):
+                formatted_phone = "+" + raw_digits
+            else:
+                formatted_phone = phone
+        else:
+            formatted_phone = phone
+
+        res = send_message(formatted_phone, message)
+        if res.get('success'):
+            return Response({'message': 'Password sementara berhasil dikirim ke nomor WhatsApp Anda.'}, status=status.HTTP_200_OK)
+        else:
+            return Response({'error': f"Gagal mengirim WhatsApp: {res.get('message', 'Unknown error')}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 class IsAdminBarakah(permissions.BasePermission):
     """Custom permission to allow staff OR users with role 'admin'."""
     def has_permission(self, request, view):
@@ -338,7 +384,21 @@ class UserViewSet(viewsets.ModelViewSet):
         id_m = request.data.get('id_m', '')
 
         if not username:
-            return Response({'error': 'Username wajib diisi.'}, status=status.HTTP_400_BAD_REQUEST)
+            base_username = ""
+            if email:
+                base = email.split('@')[0]
+                base_username = ''.join(c for c in base.lower() if c.isalnum() or c in '._-')
+            elif name_full:
+                base_username = ''.join(c for c in name_full.lower() if c.isalnum())
+            
+            if not base_username:
+                base_username = "user"
+            
+            username = base_username
+            counter = 1
+            while User.objects.filter(username=username).exists():
+                username = f"{base_username}{counter}"
+                counter += 1
 
         # Jika password tidak diisi (manual entry), buat random agar tidak kosong
         if not password:
