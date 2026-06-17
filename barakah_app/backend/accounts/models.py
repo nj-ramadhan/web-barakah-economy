@@ -77,7 +77,7 @@ class User(AbstractUser):
     )
 
     email = models.EmailField(unique=True, null=True, blank=True)
-    phone = models.CharField(max_length=15, blank=True, null=True)
+    phone = models.CharField(max_length=20, blank=True, null=True)
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='user')
     is_verified_member = models.BooleanField(default=False)
     user_agreement_accepted = models.BooleanField(default=False, help_text="Tandai jika user telah menyetujui user agreement")

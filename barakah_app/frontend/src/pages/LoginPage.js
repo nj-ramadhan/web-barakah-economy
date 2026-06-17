@@ -67,6 +67,8 @@ const LoginPage = () => {
                 email: response.email,
                 role: response.role,
                 picture: picture,
+                is_verified_member: response.is_verified_member,
+                accessible_menus: response.accessible_menus,
                 is_profile_complete: response.is_profile_complete,
                 user_agreement_accepted: response.user_agreement_accepted,
             };
@@ -87,11 +89,15 @@ const LoginPage = () => {
 
     const handleGoogleLogin = async (credentialResponse) => {
         try {
+            if (!credentialResponse?.credential) {
+                alert('Gagal mendapatkan token dari Google. Silakan coba lagi.');
+                return;
+            }
             const response = await authService.googleLogin(credentialResponse.credential);
-            let picture = null;
+            let picture = response.picture || null;
             try {
                 const profileData = await authService.getProfile(response.id);
-                picture = profileData.picture || null;
+                picture = profileData.picture || picture;
             } catch (e) {
                 console.error("Failed to fetch profile picture during google login", e);
             }
@@ -103,6 +109,8 @@ const LoginPage = () => {
                 email: response.email,
                 role: response.role,
                 picture: picture,
+                is_verified_member: response.is_verified_member,
+                accessible_menus: response.accessible_menus,
                 is_profile_complete: response.is_profile_complete,
                 user_agreement_accepted: response.user_agreement_accepted,
             };
@@ -116,8 +124,9 @@ const LoginPage = () => {
                 navigate(nextPath);
             }
         } catch (error) {
-            alert('Gagal Login dengan akun google, coba cara lain');
-            console.log(error.message);
+            const errMsg = error?.response?.data?.error || error?.message || 'Gagal Login dengan akun Google';
+            alert(`Gagal Login dengan Google: ${errMsg}`);
+            console.error('Google login error:', error?.response?.data || error);
         }
     };
 

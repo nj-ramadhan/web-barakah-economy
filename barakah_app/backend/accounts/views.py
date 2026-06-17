@@ -106,22 +106,31 @@ class LogoutView(APIView):
 
 
 class GoogleLoginView(APIView):
+    permission_classes = [permissions.AllowAny]
+
     def post(self, request):
         token = request.data.get('token')
-        logger.info(f"Received token: {token}")
 
         if not token:
             return Response({'error': 'Token is required'}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            logger.info(f"Using GOOGLE_CLIENT_ID: '{settings.GOOGLE_CLIENT_ID}'")
-            id_info = id_token.verify_oauth2_token(token, requests.Request(), settings.GOOGLE_CLIENT_ID)
-            logger.info(f"Decoded token: {id_info}")
+            # Verify Google ID token with clock skew tolerance (handles slight time differences)
+            id_info = id_token.verify_oauth2_token(
+                token,
+                requests.Request(),
+                settings.GOOGLE_CLIENT_ID,
+                clock_skew_in_seconds=10
+            )
 
             email = id_info.get('email')
             name = id_info.get('name', '')
             google_picture = id_info.get('picture', '')
-            logger.info(f"name: {name}")
+
+            # Validate email BEFORE attempting get_or_create
+            if not email:
+                return Response({'error': 'Email not found in token'}, status=status.HTTP_400_BAD_REQUEST)
+
             # Generate username yang unik jika sudah ada
             base_username = str(name).replace(" ", "_").lower() if name else email.split('@')[0]
             username = base_username
@@ -130,9 +139,7 @@ class GoogleLoginView(APIView):
                 username = f"{base_username}_{counter}"
                 counter += 1
 
-            logger.info(f"email: {email}, username: {username}")
-            if not email:
-                return Response({'error': 'Email not found in token'}, status=status.HTTP_400_BAD_REQUEST)
+            logger.info(f"Google login attempt: email={email}, username={username}")
 
             user, created = User.objects.get_or_create(
                 email=email,
@@ -143,12 +150,12 @@ class GoogleLoginView(APIView):
             )
             logger.info(f"User created: {created}, User: {user}")
 
-            # Jika user baru, auto-isi data profil dari Google
-            if created and name:
+            # Jika user baru, auto-isi data profil dari Google dan beri label Simpatisan
+            if created:
                 try:
                     from profiles.models import Profile
                     profile, _ = Profile.objects.get_or_create(user=user)
-                    if not profile.name_full:
+                    if name and not profile.name_full:
                         profile.name_full = name
                     # Simpan URL foto Google sebagai google_picture_url (tidak download file)
                     if google_picture and not profile.picture:
@@ -156,6 +163,14 @@ class GoogleLoginView(APIView):
                     profile.save()
                 except Exception as pe:
                     logger.warning(f"Failed to auto-fill profile on Google login: {pe}")
+
+                # Beri label Simpatisan otomatis (sama seperti register biasa)
+                try:
+                    from .models import UserLabel
+                    label_simpatisan, _ = UserLabel.objects.get_or_create(name='Simpatisan')
+                    user.labels.add(label_simpatisan)
+                except Exception as le:
+                    logger.warning(f"Failed to add Simpatisan label: {le}")
 
             refresh = RefreshToken.for_user(user)
             access = str(refresh.access_token)
@@ -187,7 +202,7 @@ class GoogleLoginView(APIView):
             }, status=status.HTTP_200_OK)
         except ValueError as e:
             logger.error(f"Google Token verification failed: {e}")
-            return Response({'error': f'Invalid token: {str(e)}'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': f'Token Google tidak valid: {str(e)}'}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             import traceback
             logger.error(f"Critical error during Google login: {str(e)}")

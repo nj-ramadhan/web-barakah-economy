@@ -64,17 +64,40 @@ const RegisterPage = () => {
 
     const handleGoogleRegister = async (credentialResponse) => {
         try {
+            if (!credentialResponse?.credential) {
+                setError('Gagal mendapatkan token dari Google. Silakan coba lagi.');
+                return;
+            }
             const response = await authService.googleLogin(credentialResponse.credential);
+            
+            // Save user data to localStorage (required for authenticated navigation)
+            const userProfile = {
+                access: response.access,
+                refresh: response.refresh,
+                id: response.id,
+                username: response.username,
+                email: response.email,
+                role: response.role,
+                picture: response.picture || null,
+                is_verified_member: response.is_verified_member,
+                accessible_menus: response.accessible_menus,
+                is_profile_complete: response.is_profile_complete,
+                user_agreement_accepted: response.user_agreement_accepted,
+            };
+            localStorage.setItem('user', JSON.stringify(userProfile));
+
             // is_profile_complete check is important for automated redirect
             if (response.is_profile_complete === false || response.is_new_user) {
                 sessionStorage.setItem('just_registered', 'true');
                 navigate('/profile/edit?complete=1');
             } else {
-                const dest = nextPath || '/dashboard';
+                const dest = nextPath || '/';
                 navigate(dest);
             }
         } catch (error) {
-            setError('Gagal mendaftar dengan Google. Coba cara lain.');
+            const errMsg = error?.response?.data?.error || error?.message || 'Gagal mendaftar dengan Google';
+            setError(`Gagal mendaftar dengan Google: ${errMsg}`);
+            console.error('Google register error:', error?.response?.data || error);
         }
     };
 

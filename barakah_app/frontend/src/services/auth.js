@@ -51,24 +51,10 @@ const googleLogin = (token) => {
   return axiosInstance.post('google-login/', {
     token,
   }).then((response) => {
-    if (response.data.access) {
-      localStorage.setItem('user', JSON.stringify({
-        access: response.data.access,
-        refresh: response.data.refresh,
-        id: response.data.id,
-        username: response.data.username,
-        email: response.data.email,
-        role: response.data.role,
-        picture: response.data.picture,
-        is_verified_member: response.data.is_verified_member,
-        accessible_menus: response.data.accessible_menus,
-        is_profile_complete: response.data.is_profile_complete,
-        user_agreement_accepted: response.data.user_agreement_accepted,
-      }));
-    }
+    // Return data only — let the caller (LoginPage/RegisterPage) handle localStorage
     return response.data;
   }).catch((error) => {
-    console.error('Google login error:', error);
+    console.error('Google login error:', error?.response?.data || error.message);
     throw error;
   });
 };
@@ -88,19 +74,7 @@ const login = (username, password) => {
     username,
     password,
   }).then((response) => {
-    if (response.data.access) {
-      localStorage.setItem('user', JSON.stringify({
-        access: response.data.access,
-        refresh: response.data.refresh,
-        id: response.data.id,
-        username: response.data.username,
-        email: response.data.email,
-        role: response.data.role,
-        picture: response.data.picture,
-        is_profile_complete: response.data.is_profile_complete,
-        user_agreement_accepted: response.data.user_agreement_accepted,
-      }));
-    }
+    // Return data only — let the caller (LoginPage) handle localStorage
     return response.data;
   });
 };

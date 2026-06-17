@@ -214,7 +214,7 @@ class UserAdminSerializer(serializers.ModelSerializer):
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, validators=[validate_password])
-    phone = serializers.CharField(max_length=15, required=False, allow_blank=True)
+    phone = serializers.CharField(max_length=20, required=False, allow_blank=True)
     name_full = serializers.CharField(max_length=100, required=False, allow_blank=True)
     is_verified_member = serializers.BooleanField(default=False)
 
