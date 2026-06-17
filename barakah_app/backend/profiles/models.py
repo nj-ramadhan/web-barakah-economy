@@ -15,6 +15,17 @@ class Profile(models.Model):
         ('j', 'Janda'),
     ]
 
+    AGAMA_CHOICES = [
+        ('islam', 'Islam'),
+        ('kristen', 'Kristen'),
+        ('katolik', 'Katolik'),
+        ('hindu', 'Hindu'),
+        ('buddha', 'Buddha'),
+        ('konghucu', 'Konghucu'),
+        ('kepercayaan', 'Kepercayaan YME / Lainnya'),
+    ]
+
+
     SEGMENT_CHOICES = [
         ('mahasiswa', 'Mahasiswa'),
         ('pelajar', 'Pelajar'),
@@ -149,6 +160,7 @@ class Profile(models.Model):
     name_full = models.CharField(max_length=100, blank=True, null=True)
     nickname = models.CharField(max_length=50, blank=True, null=True)
     gender = models.CharField(max_length=1, choices=GENDER_CHOICES, blank=True, null=True)
+    agama = models.CharField(max_length=100, blank=True, null=True)
     birth_place = models.CharField(max_length=100, blank=True, null=True)
     birth_date = models.DateField(blank=True, null=True)
     registration_date = models.DateField(blank=True, null=True)

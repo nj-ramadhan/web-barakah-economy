@@ -42,7 +42,7 @@ const ProfileEditPage = () => {
   const isCompleteMode = new URLSearchParams(location.search).get('complete') === '1';
   const [missingFields, setMissingFields] = useState([]);
   const [profile, setProfile] = useState({
-    name_full: '', nickname: '', nik: '', gender: '', birth_date: '', birth_place: '',
+    name_full: '', nickname: '', nik: '', gender: '', agama: '', birth_date: '', birth_place: '',
     marital_status: '', segment: '', study_level: '', study_campus: '',
     study_faculty: '', study_department: '', study_program: '',
     study_semester: '', study_start_year: '', study_finish_year: '',
@@ -84,6 +84,8 @@ const ProfileEditPage = () => {
   const [showKtpBanner, setShowKtpBanner] = useState(true);
 
   const [loading, setLoading] = useState(true);
+  const [agamaDropdown, setAgamaDropdown] = useState('');
+  const [customAgama, setCustomAgama] = useState('');
 
   // Unified fetch for Profile & Completeness check
   useEffect(() => {
@@ -94,6 +96,14 @@ const ProfileEditPage = () => {
         if (user && user.id) {
           const profileData = await authService.getProfile(user.id);
           setProfile(profileData);
+          
+          const agamaVal = profileData.agama || '';
+          if (['', 'islam', 'kristen', 'katolik', 'hindu', 'buddha', 'konghucu'].includes(agamaVal)) {
+            setAgamaDropdown(agamaVal);
+          } else {
+            setAgamaDropdown('kepercayaan');
+            setCustomAgama(agamaVal);
+          }
 
           if (isCompleteMode && user.access) {
             try {
@@ -389,13 +399,22 @@ const ProfileEditPage = () => {
         setKtpResult({ success: false, message: data._error });
       } else {
         // Auto-fill profile fields
-        const fillable = ['nik', 'name_full', 'nickname', 'gender', 'birth_place', 'birth_date', 'marital_status', 'address', 'address_province'];
+        const fillable = ['nik', 'name_full', 'nickname', 'gender', 'birth_place', 'birth_date', 'marital_status', 'address', 'address_province', 'agama'];
         let filled = 0;
         setProfile(prev => {
           const updated = { ...prev, ktp_image: file, is_verified_member: data.is_verified_member || prev.is_verified_member };
           fillable.forEach(field => {
             if (data[field] && (!prev[field] || prev[field] === '')) {
               updated[field] = data[field];
+              if (field === 'agama') {
+                const agamaVal = data[field];
+                if (['', 'islam', 'kristen', 'katolik', 'hindu', 'buddha', 'konghucu'].includes(agamaVal)) {
+                  setAgamaDropdown(agamaVal);
+                } else {
+                  setAgamaDropdown('kepercayaan');
+                  setCustomAgama(agamaVal);
+                }
+              }
               filled++;
             }
           });
@@ -414,8 +433,8 @@ const ProfileEditPage = () => {
     e.preventDefault();
 
     // Mandatory fields check
-    if (!profile.name_full || !profile.nickname || !profile.phone || !profile.info_source || !profile.referred_by) {
-      alert('Nama Lengkap, Nama Panggilan, HP, Sumber Info, dan Nama Pengajak wajib diisi.');
+    if (!profile.name_full || !profile.nickname || !profile.phone || !profile.info_source || !profile.referred_by || !profile.agama) {
+      alert('Nama Lengkap, Nama Panggilan, HP, Agama, Sumber Info, dan Nama Pengajak wajib diisi.');
       setActiveTab('general');
       return;
     }
@@ -502,7 +521,7 @@ const ProfileEditPage = () => {
   };
 
   const FIELD_LABELS = {
-    name_full: 'Nama Lengkap', nickname: 'Nama Panggilan', gender: 'Jenis Kelamin', birth_place: 'Tempat Lahir',
+    name_full: 'Nama Lengkap', nickname: 'Nama Panggilan', gender: 'Jenis Kelamin', agama: 'Agama', birth_place: 'Tempat Lahir',
     birth_date: 'Tanggal Lahir', address: 'Alamat', address_province: 'Provinsi',
     address_city_name: 'Kota/Kabupaten', address_subdistrict_name: 'Kecamatan',
     address_village_name: 'Kelurahan/Desa',
@@ -588,8 +607,11 @@ const ProfileEditPage = () => {
                 <span className="material-icons">badge</span>
               </div>
               <div className="flex-1">
-                <h4 className="text-sm font-bold text-gray-900">Scan KTP Otomatis</h4>
-                <p className="text-xs text-gray-600 mt-0.5">Isi data lebih cepat dengan mengunggah foto KTP Anda.</p>
+                <h4 className="text-sm font-bold text-gray-900 flex items-center gap-1.5">
+                  Scan KTP Otomatis
+                  <span className="text-[9px] bg-gray-200/70 text-gray-500 font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">opsional</span>
+                </h4>
+                <p className="text-xs text-gray-600 mt-0.5">Isi data lebih cepat secara otomatis dengan mengunggah foto KTP Anda (tidak wajib).</p>
 
                 {ktpResult && (
                   <div className={`mt-2 p-2 rounded-lg text-xs font-medium ${ktpResult.success ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
@@ -621,6 +643,55 @@ const ProfileEditPage = () => {
                 <option value="p">Perempuan</option>
               </select>
             </div>
+            <div>
+              <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
+                Agama {isFieldMissing('agama') && <span className="text-red-500">*wajib</span>}
+              </label>
+              <select 
+                name="agamaDropdown" 
+                value={agamaDropdown} 
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setAgamaDropdown(val);
+                  if (val !== 'kepercayaan') {
+                    setProfile(prev => ({ ...prev, agama: val }));
+                    setCustomAgama('');
+                  } else {
+                    setProfile(prev => ({ ...prev, agama: customAgama }));
+                  }
+                }} 
+                className={inputCls('agama')}
+              >
+                <option value="">Pilih Agama</option>
+                <option value="islam">Islam</option>
+                <option value="kristen">Kristen</option>
+                <option value="katolik">Katolik</option>
+                <option value="hindu">Hindu</option>
+                <option value="buddha">Buddha</option>
+                <option value="konghucu">Konghucu</option>
+                <option value="kepercayaan">Kepercayaan YME / Lainnya</option>
+              </select>
+            </div>
+
+            {agamaDropdown === 'kepercayaan' && (
+              <div className="animate-in fade-in slide-in-from-top-1 duration-200">
+                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
+                  Nama Aliran Kepercayaan / Lainnya <span className="text-red-500">*wajib</span>
+                </label>
+                <input 
+                  type="text" 
+                  name="customAgama" 
+                  placeholder="Contoh: Sunda Wiwitan, Parmalim, Kaharingan, dll." 
+                  value={customAgama} 
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setCustomAgama(val);
+                    setProfile(prev => ({ ...prev, agama: val }));
+                  }} 
+                  className={inputCls('agama')} 
+                />
+              </div>
+            )}
             <div>
               <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
                 Tempat Lahir {isFieldMissing('birth_place') && <span className="text-red-500">*wajib</span>}

@@ -41,6 +41,7 @@ Struktur Field Wajib:
 - "birth_place": (String, Tempat Lahir menggunakan Title Case, nama kota/kabupaten saja)
 - "birth_date": (String, Tanggal Lahir HANYA dengan format "YYYY-MM-DD", misal "1999-12-05")
 - "gender": (String, "l" jika Laki-Laki, "p" jika Perempuan / Wanita)
+- "agama": (String, Agama/Kepercayaan yang tercantum di KTP. Petakan nilainya ke salah satu dari string lowercase berikut: "islam", "kristen", "katolik", "hindu", "buddha", "konghucu", atau "kepercayaan" jika lainnya/aliran kepercayaan)
 - "address": (String, Jalan / Alamat lengkap dengan Title Case)
 - "address_province": (String, Nama Provinsi sesuaikan dengan slug ini: misal "jawa_barat", "dki_jakarta", "jawa_tengah", "jawa_timur", "banten", "bali", "sumatera_selatan", "sumatera_utara", "nusa_tenggara_barat", dll. Format harus *snake_case*)
 - "marital_status": (String, Gunakan kode ini: "bn" jika Belum Kawin, "n" jika Kawin/Sudah Nikah, "d" jika Cerai Hidup, "j" jika Cerai Mati)

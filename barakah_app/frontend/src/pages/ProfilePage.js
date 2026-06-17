@@ -30,6 +30,16 @@ const GENDER_CHOICES = {
     'p': 'Perempuan',
 };
 
+const AGAMA_CHOICES = {
+    'islam': 'Islam',
+    'kristen': 'Kristen',
+    'katolik': 'Katolik',
+    'hindu': 'Hindu',
+    'buddha': 'Buddha',
+    'konghucu': 'Konghucu',
+    'kepercayaan': 'Kepercayaan YME / Lainnya',
+};
+
 const MARITAL_CHOICES = {
     'bn': 'Belum Nikah',
     'n': 'Nikah',
@@ -802,6 +812,14 @@ const ProfilePage = () => {
                             <label className="block text-gray-700 font-medium mb-1">Jenis Kelamin</label>
                             <p className="w-full p-2 border rounded-lg bg-gray-100">
                                 {GENDER_CHOICES[profile.gender] || '-'}
+                            </p>
+                        </div>
+
+                        {/* Agama */}
+                        <div className="w-full">
+                            <label className="block text-gray-700 font-medium mb-1">Agama</label>
+                            <p className="w-full p-2 border rounded-lg bg-gray-100">
+                                {AGAMA_CHOICES[profile.agama] || '-'}
                             </p>
                         </div>
 

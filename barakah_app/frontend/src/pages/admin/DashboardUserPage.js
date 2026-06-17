@@ -21,6 +21,17 @@ const JOB_CHOICES = [['mahasiswa', 'Mahasiswa'], ['asn', 'ASN'], ['karyawan_swas
 const WORK_FIELD_CHOICES = [['pendidikan', 'Pendidikan'], ['kesehatan', 'Kesehatan'], ['ekobis', 'Ekonomi Bisnis'], ['agrotek', 'Agrotek'], ['herbal', 'Herbal-Farmasi'], ['it', 'IT'], ['manufaktur', 'Manufaktur'], ['energi', 'Energi-Mineral'], ['sains', 'Sains'], ['teknologi', 'Teknologi'], ['polhuk', 'Politik-Hukum'], ['humaniora', 'Humaniora'], ['media', 'Media-Literasi'], ['sejarah', 'Sejarah']];
 const PROVINCE_CHOICES = [['aceh', 'Aceh'], ['sumatera_utara', 'Sumatera Utara'], ['sumatera_barat', 'Sumatera Barat'], ['riau', 'Riau'], ['jambi', 'Jambi'], ['sumatera_selatan', 'Sumatera Selatan'], ['bengkulu', 'Bengkulu'], ['lampung', 'Lampung'], ['kepulauan_bangka_belitung', 'Kep. Bangka Belitung'], ['kepulauan_riau', 'Kepulauan Riau'], ['dki_jakarta', 'DKI Jakarta'], ['jawa_barat', 'Jawa Barat'], ['jawa_tengah', 'Jawa Tengah'], ['di_yogyakarta', 'DI Yogyakarta'], ['jawa_timur', 'Jawa Timur'], ['banten', 'Banten'], ['bali', 'Bali'], ['nusa_tenggara_barat', 'NTB'], ['nusa_tenggara_timur', 'NTT'], ['kalimantan_barat', 'Kalimantan Barat'], ['kalimantan_tengah', 'Kalimantan Tengah'], ['kalimantan_selatan', 'Kalimantan Selatan'], ['kalimantan_timur', 'Kalimantan Timur'], ['kalimantan_utara', 'Kalimantan Utara'], ['sulawesi_utara', 'Sulawesi Utara'], ['sulawesi_tengah', 'Sulawesi Tengah'], ['sulawesi_selatan', 'Sulawesi Selatan'], ['sulawesi_tenggara', 'Sulawesi Tenggara'], ['gorontalo', 'Gorontalo'], ['sulawesi_barat', 'Sulawesi Barat'], ['maluku', 'Maluku'], ['maluku_utara', 'Maluku Utara'], ['papua', 'Papua'], ['papua_barat', 'Papua Barat']];
 
+const AGAMA_MAP = {
+    'islam': 'Islam',
+    'kristen': 'Kristen',
+    'katolik': 'Katolik',
+    'hindu': 'Hindu',
+    'buddha': 'Buddha',
+    'konghucu': 'Konghucu',
+    'kepercayaan': 'Kepercayaan'
+};
+const AGAMA_CHOICES = [['islam', 'Islam'], ['kristen', 'Kristen'], ['katolik', 'Katolik'], ['hindu', 'Hindu'], ['buddha', 'Buddha'], ['konghucu', 'Konghucu'], ['kepercayaan', 'Kepercayaan']];
+
 const DashboardUserPage = () => {
     const navigate = useNavigate();
     const [users, setUsers] = useState([]);
@@ -38,6 +49,7 @@ const DashboardUserPage = () => {
     const [filterBidang, setFilterBidang] = useState('');
     const [filterDateFrom, setFilterDateFrom] = useState('');
     const [filterDateTo, setFilterDateTo] = useState('');
+    const [filterAgama, setFilterAgama] = useState('');
     const [sortField, setSortField] = useState('');
     const [sortDir, setSortDir] = useState('');
     const [selectedUser, setSelectedUser] = useState(null);
@@ -45,6 +57,8 @@ const DashboardUserPage = () => {
     const [editingUser, setEditingUser] = useState(null);
     const [showEditModal, setShowEditModal] = useState(false);
     const [editFormData, setEditFormData] = useState({});
+    const [editAgamaDropdown, setEditAgamaDropdown] = useState('');
+    const [editCustomAgama, setEditCustomAgama] = useState('');
     const [selectedUserIds, setSelectedUserIds] = useState([]);
     const [showBlastModal, setShowBlastModal] = useState(false);
     const [blastMessage, setBlastMessage] = useState('');
@@ -109,6 +123,7 @@ const DashboardUserPage = () => {
             if (filterBidang) params.bidang_tugas = filterBidang;
             if (filterDateFrom) params.date_from = filterDateFrom;
             if (filterDateTo) params.date_to = filterDateTo;
+            if (filterAgama) params.agama = filterAgama;
             if (sortField && sortDir) params.ordering = sortDir === 'desc' ? `-${sortField}` : sortField;
             if (pageSize && pageSize !== 'all') params.page_size = pageSize;
             if (pageSize === 'all') params.page_size = 10000;
@@ -128,7 +143,7 @@ const DashboardUserPage = () => {
             alert('Gagal mengambil data user: ' + (err.response?.data?.detail || err.message));
         }
         setLoading(false);
-    }, [debouncedSearch, pageSize, filterRole, filterCustomRole, filterLabel, filterLingkup, filterBidang, filterDateFrom, filterDateTo, sortField, sortDir]);
+    }, [debouncedSearch, pageSize, filterRole, filterCustomRole, filterLabel, filterLingkup, filterBidang, filterDateFrom, filterDateTo, sortField, sortDir, filterAgama]);
 
     useEffect(() => {
         const user = JSON.parse(localStorage.getItem('user'));
@@ -217,7 +232,7 @@ const DashboardUserPage = () => {
                 if (u.id === userId) {
                     if (['role', 'phone', 'username', 'email', 'is_verified_member'].includes(field)) {
                         return { ...u, [field]: value };
-                    } else if (['name_full', 'id_m', 'address_province', 'nickname'].includes(field)) {
+                    } else if (['name_full', 'id_m', 'address_province', 'nickname', 'agama', 'info_source', 'referred_by'].includes(field)) {
                         return { ...u, profile: { ...u.profile, [field]: value } };
                     } else if (field === 'custom_role_ids') {
                         return { ...u, custom_roles: allRoles.filter(r => value.includes(r.id)) };
@@ -238,6 +253,8 @@ const DashboardUserPage = () => {
 
     const openAddModal = () => {
         setEditingUser(null);
+        setEditAgamaDropdown('');
+        setEditCustomAgama('');
         setEditFormData({
             username: '', email: '', phone: '', password: '',
             role: 'user', is_verified_member: false,
@@ -249,6 +266,14 @@ const DashboardUserPage = () => {
     const openEditModal = (user) => {
         setEditingUser(user);
         const p = user.profile || {};
+        const agamaVal = p.agama || '';
+        if (['', 'islam', 'kristen', 'katolik', 'hindu', 'buddha', 'konghucu'].includes(agamaVal)) {
+            setEditAgamaDropdown(agamaVal);
+            setEditCustomAgama('');
+        } else {
+            setEditAgamaDropdown('kepercayaan');
+            setEditCustomAgama(agamaVal);
+        }
         setEditFormData({
             username: user.username, email: user.email, phone: user.phone || '',
             role: user.role, is_verified_member: user.is_verified_member,
@@ -257,7 +282,7 @@ const DashboardUserPage = () => {
             lingkup_tugas_ids: (user.lingkup_tugas || []).map(l => l.id),
             bidang_tugas_ids: (user.bidang_tugas || []).map(b => b.id),
             profile: {
-                name_full: p.name_full || '', nickname: p.nickname || '', nik: p.nik || '', gender: p.gender || '', birth_place: p.birth_place || '',
+                name_full: p.name_full || '', nickname: p.nickname || '', nik: p.nik || '', gender: p.gender || '', agama: p.agama || '', birth_place: p.birth_place || '',
                 birth_date: p.birth_date || '', registration_date: p.registration_date || '',
                 marital_status: p.marital_status || '', segment: p.segment || '',
                 study_level: p.study_level || '', study_campus: p.study_campus || '',
@@ -522,6 +547,11 @@ const DashboardUserPage = () => {
                             <option value="user">User</option><option value="admin">Admin</option>
                             <option value="seller">Seller</option><option value="staff">Staff</option>
                         </select>
+                        <select value={filterAgama} onChange={e => { setFilterAgama(e.target.value); setCurrentPage(1); }}
+                            className="bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none">
+                            <option value="">Semua Agama</option>
+                            {AGAMA_CHOICES.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+                        </select>
                         <select value={filterCustomRole} onChange={e => { setFilterCustomRole(e.target.value); setCurrentPage(1); }}
                             className="bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none">
                             <option value="">Semua Custom Role</option>
@@ -576,6 +606,7 @@ const DashboardUserPage = () => {
                                         <SH label="User" field="username" {...{ sortField, sortDir, handleSort, getSortIcon }} />
                                         <SH label="Nama" field="profile__name_full" {...{ sortField, sortDir, handleSort, getSortIcon }} />
                                         <SH label="Panggilan" field="profile__nickname" {...{ sortField, sortDir, handleSort, getSortIcon }} />
+                                        <SH label="Agama" field="profile__agama" {...{ sortField, sortDir, handleSort, getSortIcon }} />
                                         <th className="px-3 py-4 text-gray-600 font-bold uppercase tracking-wider text-[11px] min-w-[120px]">Info dari</th>
                                         <th className="px-3 py-4 text-gray-600 font-bold uppercase tracking-wider text-[11px] min-w-[120px]">Subject</th>
                                         <th className="px-3 py-4 text-gray-600 font-bold uppercase tracking-wider text-[11px] min-w-[120px]">Kontak</th>
@@ -658,6 +689,16 @@ const DashboardUserPage = () => {
                                             </td>
                                             <td className="px-3 py-3">
                                                 <input type="text" defaultValue={u.profile?.nickname || ''} onBlur={(e) => { if (e.target.value !== (u.profile?.nickname || '')) handleInlineEdit(u.id, 'nickname', e.target.value); }} className="w-full min-w-[80px] bg-transparent border border-transparent hover:border-gray-200 focus:border-green-500 focus:bg-white rounded px-1 py-0.5 text-gray-900 font-bold text-[11px] leading-tight outline-none" placeholder="-" />
+                                            </td>
+                                            <td className="px-3 py-3">
+                                                <select 
+                                                    value={u.profile?.agama || ''} 
+                                                    onChange={(e) => { if (e.target.value !== (u.profile?.agama || '')) handleInlineEdit(u.id, 'agama', e.target.value); }} 
+                                                    className="w-full min-w-[100px] bg-transparent border border-transparent hover:border-gray-200 focus:border-green-500 focus:bg-white rounded px-1 py-0.5 text-[10px] text-gray-700 outline-none cursor-pointer font-bold uppercase"
+                                                >
+                                                    <option value="">- Pilih -</option>
+                                                    {AGAMA_CHOICES.map(([v, l]) => <option key={v} value={v}>{l.toUpperCase()}</option>)}
+                                                </select>
                                             </td>
                                             <td className="px-3 py-3">
                                                 <select 
@@ -846,6 +887,7 @@ const DashboardUserPage = () => {
                                     <DI icon="alternate_email" label="Email" value={selectedUser.email} />
                                     <DI icon="phone" label="No. Telepon" value={selectedUser.phone} />
                                     <DI icon="wc" label="Jenis Kelamin" value={selectedUser.profile?.gender === 'l' ? 'Laki-laki' : selectedUser.profile?.gender === 'p' ? 'Perempuan' : '-'} />
+                                    <DI icon="self_improvement" label="Agama" value={AGAMA_MAP[selectedUser.profile?.agama] || selectedUser.profile?.agama || '-'} />
                                     <DI icon="cake" label="TTL" value={`${selectedUser.profile?.birth_place || '-'}, ${selectedUser.profile?.birth_date || '-'}`} />
                                     <DI icon="favorite" label="Status" value={selectedUser.profile?.marital_status || '-'} />
                                     <DI icon="category" label="Segmen" value={selectedUser.profile?.segment || '-'} />
@@ -1035,6 +1077,32 @@ const DashboardUserPage = () => {
                                             <FI label="Nama Panggilan" value={editFormData.profile?.nickname} onChange={v => setP('nickname', v)} />
                                             <FI label="NIK (No. KTP)" value={editFormData.profile?.nik} onChange={v => setP('nik', v)} />
                                             <FS label="Jenis Kelamin" value={editFormData.profile?.gender} onChange={v => setP('gender', v)} options={GENDER_CHOICES} />
+                                            <FS 
+                                                 label="Agama" 
+                                                 value={editAgamaDropdown} 
+                                                 onChange={v => {
+                                                     setEditAgamaDropdown(v);
+                                                     if (v !== 'kepercayaan') {
+                                                         setP('agama', v);
+                                                         setEditCustomAgama('');
+                                                     } else {
+                                                         setP('agama', editCustomAgama);
+                                                     }
+                                                 }} 
+                                                 options={AGAMA_CHOICES} 
+                                             />
+                                             {editAgamaDropdown === 'kepercayaan' && (
+                                                 <div className="animate-in fade-in slide-in-from-top-1 duration-200">
+                                                     <FI 
+                                                         label="Aliran Kepercayaan / Lainnya" 
+                                                         value={editCustomAgama} 
+                                                         onChange={v => {
+                                                             setEditCustomAgama(v);
+                                                             setP('agama', v);
+                                                         }} 
+                                                     />
+                                                 </div>
+                                             )}
                                             <FI label="Tempat Lahir" value={editFormData.profile?.birth_place} onChange={v => setP('birth_place', v)} />
                                             <FI label="Tanggal Lahir" value={editFormData.profile?.birth_date} onChange={v => setP('birth_date', v)} type="date" />
                                             <FI label="Tgl Registrasi" value={editFormData.profile?.registration_date} onChange={v => setP('registration_date', v)} type="date" />

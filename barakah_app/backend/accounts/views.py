@@ -379,13 +379,19 @@ class UserViewSet(viewsets.ModelViewSet):
                 Q(profile__name_full__icontains=search) |
                 Q(profile__nickname__icontains=search) |
                 Q(profile__id_m__icontains=search) |
-                Q(profile__address__icontains=search)
+                Q(profile__address__icontains=search) |
+                Q(profile__agama__icontains=search)
             )
 
         # Filter by role
         role_filter = self.request.query_params.get('role', '')
         if role_filter:
             qs = qs.filter(role=role_filter)
+
+        # Filter by religion (agama)
+        agama_filter = self.request.query_params.get('agama', '')
+        if agama_filter:
+            qs = qs.filter(profile__agama=agama_filter)
 
         # Filter by custom role
         custom_role_filter = self.request.query_params.get('custom_role', '')
@@ -426,7 +432,8 @@ class UserViewSet(viewsets.ModelViewSet):
         ordering = self.request.query_params.get('ordering', '-date_joined')
         allowed_orderings = [
             'username', '-username', 'email', '-email', 'role', '-role',
-            'date_joined', '-date_joined', 'profile__name_full', '-profile__name_full'
+            'date_joined', '-date_joined', 'profile__name_full', '-profile__name_full',
+            'profile__agama', '-profile__agama'
         ]
         if ordering in allowed_orderings:
             qs = qs.order_by(ordering)
@@ -454,7 +461,7 @@ class UserViewSet(viewsets.ModelViewSet):
             writer = csv.writer(response, delimiter=';')
             headers = [
                 'ID', 'IDM', 'Username', 'Full Name', 'Nickname', 'Info dari', 'Subject', 'Email', 'Phone', 'Role', 'Verified Member', 'Date Joined',
-                'Gender', 'Birth Place', 'Birth Date', 'Registration Date',
+                'Gender', 'Agama', 'Birth Place', 'Birth Date', 'Registration Date',
                 'Marital Status', 'Segment', 'Study Level', 'Study Campus', 'Study Faculty',
                 'Study Department', 'Study Program', 'Semester', 'Start Year', 'Finish Year',
                 'Address', 'Job', 'Work Field', 'Work Institution', 'Work Position', 'Salary', 'Province',
@@ -489,6 +496,7 @@ class UserViewSet(viewsets.ModelViewSet):
 
                     row.extend([
                         profile.gender or '',
+                        profile.get_agama_display() or '',
                         profile.birth_place or '',
                         profile.birth_date or '',
                         profile.registration_date or '',
@@ -511,7 +519,7 @@ class UserViewSet(viewsets.ModelViewSet):
                         profile.address_province or '',
                     ])
                 else:
-                    row.extend([''] * 21)
+                    row.extend([''] * 22)
                 
                 # Add custom roles, labels, lingkup tugas, bidang tugas
                 row.append(' | '.join([r.name for r in user.custom_roles.all()]))
@@ -636,6 +644,7 @@ class UserViewSet(viewsets.ModelViewSet):
                     
                     # Advanced profile fields
                     if row.get('Gender'): profile.gender = row.get('Gender')
+                    if row.get('Agama'): profile.agama = row.get('Agama').strip().lower()
                     if row.get('Birth Place'): profile.birth_place = row.get('Birth Place')
                     if row.get('Birth Date'): profile.birth_date = row.get('Birth Date')
                     if row.get('Marital Status'): profile.marital_status = row.get('Marital Status')
@@ -835,7 +844,7 @@ class UserViewSet(viewsets.ModelViewSet):
         writer = csv.writer(response, delimiter=';')
         headers = [
             'ID', 'Username', 'Email', 'Phone', 'Role', 'Verified Member',
-            'Full Name', 'Nickname', 'IDM', 'Gender', 'Birth Place', 'Birth Date', 'Marital Status',
+            'Full Name', 'Nickname', 'IDM', 'Gender', 'Agama', 'Birth Place', 'Birth Date', 'Marital Status',
             'Segment', 'Study Level', 'Study Campus', 'Address', 'Job', 'Work Field',
             'Work Institution', 'Work Position', 'Province'
         ]
@@ -856,6 +865,7 @@ class UserViewSet(viewsets.ModelViewSet):
                 profile.nickname if profile else '',
                 profile.id_m if profile else '',
                 profile.gender if profile else '',
+                profile.agama if profile else '',
                 profile.birth_place if profile else '',
                 profile.birth_date if profile else '',
                 profile.marital_status if profile else '',
