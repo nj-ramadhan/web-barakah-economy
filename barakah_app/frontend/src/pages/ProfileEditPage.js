@@ -433,8 +433,13 @@ const ProfileEditPage = () => {
     e.preventDefault();
 
     // Mandatory fields check
-    if (!profile.name_full || !profile.nickname || !profile.phone || !profile.info_source || !profile.referred_by || !profile.agama) {
-      alert('Nama Lengkap, Nama Panggilan, HP, Agama, Sumber Info, dan Nama Pengajak wajib diisi.');
+    if (
+      !profile.name_full || !profile.nickname || !profile.phone || 
+      !profile.info_source || !profile.referred_by || !profile.agama ||
+      !profile.gender || !profile.birth_place || !profile.birth_date ||
+      !profile.marital_status || !profile.segment
+    ) {
+      alert('Nama Lengkap, Nama Panggilan, HP, Agama, Sumber Info, Nama Pengajak, Jenis Kelamin, Tempat Lahir, Tanggal Lahir, Status Pernikahan, dan Segmen wajib diisi.');
       setActiveTab('general');
       return;
     }
@@ -532,7 +537,12 @@ const ProfileEditPage = () => {
   const isFieldMissing = (field) => missingFields.includes(field);
 
   const inputCls = (field) => {
-    const isMandatoryMissing = (field === 'name_full' || field === 'nickname' || field === 'phone') && !profile[field];
+    const mandatoryFields = [
+      'name_full', 'nickname', 'phone', 'gender', 'agama', 
+      'birth_place', 'birth_date', 'marital_status', 'segment',
+      'info_source', 'referred_by'
+    ];
+    const isMandatoryMissing = mandatoryFields.includes(field) && (!profile[field] || profile[field] === '');
     return `w-full p-3 border rounded-xl text-sm transition outline-none focus:ring-2 ${(isFieldMissing(field) || isMandatoryMissing)
       ? 'border-red-500 bg-red-50 focus:ring-red-400'
       : 'border-gray-200 bg-gray-50 focus:ring-green-500'
@@ -591,13 +601,13 @@ const ProfileEditPage = () => {
             </div>
             <div>
               <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
-                Nama Lengkap {isFieldMissing('name_full') && <span className="text-red-500">*wajib</span>}
+                Nama Lengkap <span className="text-red-500">*wajib</span>
               </label>
               <input type="text" name="name_full" placeholder="Nama Lengkap sesuai KTP" value={profile.name_full || ''} onChange={handleChange} className={inputCls('name_full')} />
             </div>
             <div>
               <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
-                HP / WhatsApp {isFieldMissing('phone') && <span className="text-red-500">*wajib</span>}
+                HP / WhatsApp <span className="text-red-500">*wajib</span>
               </label>
               <input type="text" name="phone" placeholder="Contoh: 081234567890" value={profile.phone || ''} onChange={handleChange} className={inputCls('phone')} />
             </div>
@@ -635,7 +645,7 @@ const ProfileEditPage = () => {
             </div>
             <div>
               <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
-                Jenis Kelamin {isFieldMissing('gender') && <span className="text-red-500">*wajib</span>}
+                Jenis Kelamin <span className="text-red-500">*wajib</span>
               </label>
               <select name="gender" value={profile.gender || ''} onChange={handleChange} className={inputCls('gender')}>
                 <option value="">Pilih Jenis Kelamin</option>
@@ -645,7 +655,7 @@ const ProfileEditPage = () => {
             </div>
             <div>
               <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
-                Agama {isFieldMissing('agama') && <span className="text-red-500">*wajib</span>}
+                Agama <span className="text-red-500">*wajib</span>
               </label>
               <select 
                 name="agamaDropdown" 
@@ -694,18 +704,20 @@ const ProfileEditPage = () => {
             )}
             <div>
               <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
-                Tempat Lahir {isFieldMissing('birth_place') && <span className="text-red-500">*wajib</span>}
+                Tempat Lahir <span className="text-red-500">*wajib</span>
               </label>
               <input type="text" name="birth_place" placeholder="Tempat Lahir" value={profile.birth_place || ''} onChange={handleChange} className={inputCls('birth_place')} />
             </div>
             <div>
               <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
-                Tanggal Lahir {isFieldMissing('birth_date') && <span className="text-red-500">*wajib</span>}
+                Tanggal Lahir <span className="text-red-500">*wajib</span>
               </label>
               <input type="date" name="birth_date" value={profile.birth_date || ''} onChange={handleChange} className={inputCls('birth_date')} />
             </div>
             <div>
-              <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Status Pernikahan</label>
+              <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
+                Status Pernikahan <span className="text-red-500">*wajib</span>
+              </label>
               <select name="marital_status" value={profile.marital_status || ''} onChange={handleChange} className={inputCls('marital_status')}>
                 <option value="">Pilih</option>
                 <option value="bn">Belum Nikah</option><option value="n">Nikah</option>
@@ -713,7 +725,9 @@ const ProfileEditPage = () => {
               </select>
             </div>
             <div>
-              <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Segment</label>
+              <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
+                Segment <span className="text-red-500">*wajib</span>
+              </label>
               <select name="segment" value={profile.segment || ''} onChange={handleChange} className={inputCls('segment')}>
                 <option value="">Pilih</option>
                 <option value="mahasiswa">Mahasiswa</option><option value="pelajar">Pelajar</option>

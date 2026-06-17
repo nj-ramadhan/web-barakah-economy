@@ -1113,6 +1113,7 @@ const ProfilePage = () => {
                                             <ProfileInfoItem label="Nama Lengkap" value={profile.name_full} icon="badge" />
                                             <ProfileInfoItem label="NIK / No. KTP" value={profile.nik} icon="fingerprint" />
                                             <ProfileInfoItem label="Jenis Kelamin" value={GENDER_CHOICES[profile.gender]} icon="wc" />
+                                            <ProfileInfoItem label="Agama" value={AGAMA_CHOICES[profile.agama] || profile.agama} icon="self_improvement" />
                                             <ProfileInfoItem label="Tgl Lahir" value={formatDate(profile.birth_date)} icon="calendar_today" />
                                             <ProfileInfoItem label="Tempat Lahir" value={profile.birth_place} icon="map" />
                                             <ProfileInfoItem label="Status Pernikahan" value={MARITAL_CHOICES[profile.marital_status]} icon="favorite" />
