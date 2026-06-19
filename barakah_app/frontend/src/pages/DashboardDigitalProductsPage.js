@@ -168,7 +168,7 @@ const DashboardDigitalProductsPage = () => {
         try {
             const user = JSON.parse(localStorage.getItem('user'));
             const baseUrl = process.env.REACT_APP_API_BASE_URL || window.location.origin;
-            const res = await axios.get(`${baseUrl}/api/digital-products/${product.slug}/buyers/`, {
+            const res = await axios.get(`${baseUrl}/api/digital-products/products/${product.slug}/buyers/`, {
                 headers: { Authorization: `Bearer ${user.access}` }
             });
             setSelectedProductBuyers(res.data);
