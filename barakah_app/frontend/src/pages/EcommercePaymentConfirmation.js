@@ -118,6 +118,17 @@ const EcommercePaymentConfirmation = () => {
       const lowerText = text.toLowerCase();
       console.log("OCR Result:", text);
 
+      const numericTotal = Math.floor(Number(amount));
+      const totalStr = String(numericTotal);
+      const totalFormatted = new Intl.NumberFormat('id-ID').format(numericTotal);
+
+      const scrubbedOCR = lowerText.replace(/rp/g, '').replace(/\./g, '').replace(/,/g, '').replace(/\s+/g, '');
+
+      const isAmountPresent =
+          text.includes(totalStr) ||
+          text.includes(totalFormatted) ||
+          scrubbedOCR.includes(totalStr);
+
       let isRecipientValid = false;
       let expectedRecipientName = 'BAE Community / Barakah Economy';
       if (isDirect && firstProduct.own_bank_holder) {
