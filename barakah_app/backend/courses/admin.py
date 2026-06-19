@@ -11,15 +11,15 @@ class CourseAdminForm(forms.ModelForm):
         fields = '__all__'
 
 class CourseAdmin(admin.ModelAdmin):
-    list_display = ('title', 'category', 'is_featured', 'is_active', 'price')
-    list_filter = ('category', 'is_featured', 'is_active')
-    search_fields = ('title', 'description')
+    list_display = ('title', 'category', 'is_featured', 'is_active', 'price', 'own_bank_status', 'own_bank_name')
+    list_filter = ('category', 'is_featured', 'is_active', 'own_bank_status')
+    search_fields = ('title', 'description', 'own_bank_holder', 'own_bank_account')
     date_hierarchy = 'created_at' 
     form = CourseAdminForm  
 
 class CourseMaterialAdminForm(forms.ModelForm):
     description = forms.CharField(widget=CKEditorUploadingWidget(), required=False)  # Use CKEditorWidget
-
+ 
     class Meta:
         model = CourseMaterial
         fields = '__all__'
@@ -36,9 +36,9 @@ class CourseEnrollmentAdminForm(forms.ModelForm):
         fields = '__all__'
 
 class CourseEnrollmentAdmin(admin.ModelAdmin):
-    list_display = ('id', 'course', 'user', 'payment_status', 'enrolled_at')
-    list_filter = ('payment_status', 'course')
-    search_fields = ('user__username', 'course__title')
+    list_display = ('id', 'course', 'user', 'payment_status', 'paid_to_seller_directly', 'enrolled_at')
+    list_filter = ('payment_status', 'course', 'paid_to_seller_directly')
+    search_fields = ('user__username', 'course__title', 'seller_bank_holder', 'seller_bank_account')
     date_hierarchy = 'enrolled_at' 
     form = CourseEnrollmentAdminForm 
 

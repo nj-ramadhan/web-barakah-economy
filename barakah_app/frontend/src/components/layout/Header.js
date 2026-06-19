@@ -52,6 +52,14 @@ const Header = () => {
                   const user = JSON.parse(userStr);
                   if (user.picture) {
                     return <img src={user.picture} alt="Profile" className="w-full h-full object-cover" />;
+                  } else {
+                    const name = user.name_full || user.username || '?';
+                    const initial = name.charAt(0).toUpperCase();
+                    return (
+                      <div className="w-full h-full bg-green-600 text-white flex items-center justify-center font-bold text-sm animate-fade-in">
+                        {initial}
+                      </div>
+                    );
                   }
                 } catch (e) {}
                 return <span className="material-icons text-xl">account_circle</span>;

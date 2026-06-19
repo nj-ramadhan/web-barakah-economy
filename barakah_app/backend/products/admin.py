@@ -11,9 +11,9 @@ class ProductAdminForm(forms.ModelForm):
         fields = '__all__'
 
 class ProductAdmin(admin.ModelAdmin):
-    list_display = ('title', 'category', 'is_featured', 'is_active', 'price')
-    list_filter = ('category', 'is_featured', 'is_active')
-    search_fields = ('title', 'description')
+    list_display = ('title', 'category', 'is_featured', 'is_active', 'price', 'own_bank_status', 'own_bank_name')
+    list_filter = ('category', 'is_featured', 'is_active', 'own_bank_status')
+    search_fields = ('title', 'description', 'own_bank_holder', 'own_bank_account')
     date_hierarchy = 'created_at'  # Add a date filter for the deadline    
     form = ProductAdminForm    
 

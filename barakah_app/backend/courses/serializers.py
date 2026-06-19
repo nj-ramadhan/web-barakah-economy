@@ -70,7 +70,9 @@ class CourseEnrollmentSerializer(serializers.ModelSerializer):
             'id', 'user', 'course', 'course_title', 'course_slug', 'course_thumbnail',
             'buyer_name', 'buyer_email', 'buyer_phone',
             'proof_file', 'enrolled_at', 'payment_status', 
-            'student_count', 'material_count'
+            'student_count', 'material_count',
+            'paid_to_seller_directly', 'seller_bank_name', 'seller_bank_account',
+            'seller_bank_holder', 'seller_qris_image'
         ]
         # Temporarily excluded potentially missing fields: 'instructor', 'order_number'
 
@@ -101,7 +103,8 @@ class CourseSerializer(serializers.ModelSerializer):
             'thumbnail', 'price', 'discount', 'is_active', 'is_featured', 'category',
             'duration', 'has_certificate', 'certificate_info', 'view_count', 'created_at', 
             'materials', 'student_count', 'material_count', 'students', 'certificate_design',
-            'likes_count', 'is_liked'
+            'likes_count', 'is_liked',
+            'own_bank_name', 'own_bank_account', 'own_bank_holder', 'own_qris_image', 'own_bank_status'
         ]
         read_only_fields = ['instructor']
 

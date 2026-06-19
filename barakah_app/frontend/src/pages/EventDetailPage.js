@@ -1482,11 +1482,11 @@ const EventDetailPage = () => {
                                             {event.documentation_images.map((img) => (
                                                 <div
                                                     key={img.id}
-                                                    onClick={() => setSelectedImage(img.image)}
+                                                    onClick={() => setSelectedImage(getMediaUrl(img.image))}
                                                     className="aspect-[4/5] bg-gray-100 rounded-xl overflow-hidden cursor-pointer hover:opacity-90 transition relative group"
                                                 >
                                                     <img
-                                                        src={img.image}
+                                                        src={getMediaUrl(img.image)}
                                                         alt="Documentation"
                                                         className="w-full h-full object-cover"
                                                     />

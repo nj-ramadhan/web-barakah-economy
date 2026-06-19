@@ -47,6 +47,20 @@ class Course(models.Model):
     certificate_info = models.TextField(blank=True, null=True, help_text="Instructions for students regarding the certificate (e.g., 'Sent in 1x24 hours')")
     view_count = models.PositiveIntegerField(default=0)
     likes = models.ManyToManyField(User, related_name='liked_courses', blank=True)
+    own_bank_name = models.CharField(max_length=100, blank=True, null=True)
+    own_bank_account = models.CharField(max_length=100, blank=True, null=True)
+    own_bank_holder = models.CharField(max_length=150, blank=True, null=True)
+    own_qris_image = models.ImageField(upload_to='seller_qris/', blank=True, null=True)
+    own_bank_status = models.CharField(
+        max_length=20, 
+        choices=[
+            ('none', 'Tidak Menggunakan'), 
+            ('pending', 'Menunggu Persetujuan'), 
+            ('approved', 'Disetujui'), 
+            ('rejected', 'Ditolak')
+        ], 
+        default='none'
+    )
     created_at = models.DateTimeField(auto_now_add=True)
 
     def save(self, *args, **kwargs):
@@ -77,6 +91,11 @@ class CourseEnrollment(models.Model):
     buyer_phone = models.CharField(max_length=20, blank=True, default='')
     amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     proof_file = models.FileField(upload_to=proof_file_path, null=True, blank=True)
+    paid_to_seller_directly = models.BooleanField(default=False)
+    seller_bank_name = models.CharField(max_length=100, blank=True, null=True)
+    seller_bank_account = models.CharField(max_length=100, blank=True, null=True)
+    seller_bank_holder = models.CharField(max_length=150, blank=True, null=True)
+    seller_qris_image = models.ImageField(upload_to='seller_qris_orders/', blank=True, null=True)
     enrolled_at = models.DateTimeField(auto_now_add=True)
     payment_status = models.CharField(max_length=20, choices=PAYMENT_STATUS_CHOICES, default='pending')
 

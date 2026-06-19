@@ -44,6 +44,16 @@ const DashboardEcourseFormPage = () => {
     const [thumbnail, setThumbnail] = useState(null);
     const [thumbnailPreview, setThumbnailPreview] = useState(null);
 
+    // Custom bank account state
+    const [ownBankStatus, setOwnBankStatus] = useState('none');
+    const [ownBankName, setOwnBankName] = useState('');
+    const [ownBankAccount, setOwnBankAccount] = useState('');
+    const [ownBankHolder, setOwnBankHolder] = useState('');
+    const [ownQrisImage, setOwnQrisImage] = useState(null);
+    const [ownQrisImagePreview, setOwnQrisImagePreview] = useState(null);
+    const [useOwnBank, setUseOwnBank] = useState(false);
+    const [origDetails, setOrigDetails] = useState({});
+
     // Cropper state
     const [showCropper, setShowCropper] = useState(false);
     const [tempImage, setTempImage] = useState(null);
@@ -64,6 +74,21 @@ const DashboardEcourseFormPage = () => {
                     setHasCertificate(data.has_certificate || false);
                     setCertificateInfo(data.certificate_info || '');
                     setThumbnailPreview(getMediaUrl(data.thumbnail));
+
+                    const detailsObj = {
+                        own_bank_status: data.own_bank_status || 'none',
+                        own_bank_name: data.own_bank_name || '',
+                        own_bank_account: data.own_bank_account || '',
+                        own_bank_holder: data.own_bank_holder || '',
+                        own_qris_image: data.own_qris_image || null
+                    };
+                    setOrigDetails(detailsObj);
+                    setOwnBankStatus(detailsObj.own_bank_status);
+                    setOwnBankName(detailsObj.own_bank_name);
+                    setOwnBankAccount(detailsObj.own_bank_account);
+                    setOwnBankHolder(detailsObj.own_bank_holder);
+                    setOwnQrisImagePreview(getMediaUrl(detailsObj.own_qris_image));
+                    setUseOwnBank(detailsObj.own_bank_status !== 'none');
                 } catch (err) {
                     console.error(err);
                     alert('Gagal mengambil data kursus');
@@ -120,6 +145,35 @@ const DashboardEcourseFormPage = () => {
         formData.append('is_featured', isFeatured ? 'true' : 'false');
         formData.append('has_certificate', hasCertificate ? 'true' : 'false');
         formData.append('certificate_info', certificateInfo || '');
+
+        let targetStatus = ownBankStatus;
+        if (!useOwnBank) {
+            targetStatus = 'none';
+        } else if (ownBankStatus === 'none' || ownBankStatus === 'rejected') {
+            targetStatus = 'pending';
+        } else {
+            if (
+                ownBankName !== (origDetails.own_bank_name || '') ||
+                ownBankAccount !== (origDetails.own_bank_account || '') ||
+                ownBankHolder !== (origDetails.own_bank_holder || '') ||
+                ownQrisImage !== null
+            ) {
+                targetStatus = 'pending';
+            }
+        }
+        formData.append('own_bank_status', targetStatus);
+        if (useOwnBank) {
+            formData.append('own_bank_name', ownBankName);
+            formData.append('own_bank_account', ownBankAccount);
+            formData.append('own_bank_holder', ownBankHolder);
+            if (ownQrisImage) {
+                formData.append('own_qris_image', ownQrisImage);
+            }
+        } else {
+            formData.append('own_bank_name', '');
+            formData.append('own_bank_account', '');
+            formData.append('own_bank_holder', '');
+        }
 
         if (thumbnail) {
             formData.append('thumbnail', thumbnail, 'thumbnail.jpg');
@@ -320,6 +374,116 @@ const DashboardEcourseFormPage = () => {
                                     placeholder="Contoh: Sertifikat akan dikirim via Email dalam 1x24 jam setelah pengisian form detail."
                                 />
                                 <p className="text-[10px] text-gray-400 mt-1 italic">Catatan ini akan muncul saat siswa selesai menonton semua materi.</p>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Rekening Sendiri Section */}
+                    <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm">
+                        <div className="bg-gray-50 p-4 border-b border-gray-100 flex items-center justify-between cursor-pointer" onClick={() => setUseOwnBank(!useOwnBank)}>
+                            <div className="flex items-center gap-3">
+                                <span className="material-icons text-green-700">account_balance</span>
+                                <div>
+                                    <p className="text-sm font-bold text-gray-800">Gunakan Rekening Sendiri</p>
+                                    <p className="text-[10px] text-gray-500">Salurkan pembayaran customer langsung ke rekening Anda</p>
+                                </div>
+                            </div>
+                            <div className="flex items-center">
+                                <input
+                                    type="checkbox"
+                                    checked={useOwnBank}
+                                    onChange={() => setUseOwnBank(!useOwnBank)}
+                                    onClick={(e) => e.stopPropagation()}
+                                    className="w-5 h-5 rounded text-green-700 focus:ring-green-500"
+                                />
+                            </div>
+                        </div>
+
+                        {useOwnBank && (
+                            <div className="p-4 space-y-4 animate-slide-up">
+                                {ownBankStatus !== 'none' && (
+                                    <div className={`p-3 rounded-xl flex items-center gap-3 text-xs font-semibold ${
+                                        ownBankStatus === 'approved' ? 'bg-green-50 text-green-700 border border-green-100' :
+                                        ownBankStatus === 'pending' ? 'bg-amber-50 text-amber-700 border border-amber-100' :
+                                        'bg-red-50 text-red-700 border border-red-100'
+                                    }`}>
+                                        <span className="material-icons text-lg">
+                                            {ownBankStatus === 'approved' ? 'check_circle' :
+                                             ownBankStatus === 'pending' ? 'pending' : 'cancel'}
+                                        </span>
+                                        <div>
+                                            <span className="font-extrabold uppercase">Status Pengajuan: </span>
+                                            {ownBankStatus === 'approved' && 'Disetujui. Customer akan membayar langsung ke rekening Anda.'}
+                                            {ownBankStatus === 'pending' && 'Menunggu Persetujuan Admin. Sementara menunggu, pembayaran tetap menggunakan QRIS BAE.'}
+                                            {ownBankStatus === 'rejected' && 'Ditolak. Pembayaran kembali menggunakan QRIS BAE.'}
+                                        </div>
+                                    </div>
+                                )}
+
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Nama Bank / QRIS *</label>
+                                        <input
+                                            type="text"
+                                            value={ownBankName}
+                                            onChange={(e) => setOwnBankName(e.target.value)}
+                                            className="w-full px-4 py-3 bg-gray-50 border-none rounded-xl text-sm font-semibold focus:ring-2 focus:ring-green-500"
+                                            placeholder="Contoh: BSI, BCA, Mandiri"
+                                            required={useOwnBank}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Nomor Rekening *</label>
+                                        <input
+                                            type="text"
+                                            value={ownBankAccount}
+                                            onChange={(e) => setOwnBankAccount(e.target.value)}
+                                            className="w-full px-4 py-3 bg-gray-50 border-none rounded-xl text-sm font-semibold focus:ring-2 focus:ring-green-500"
+                                            placeholder="Masukkan nomor rekening"
+                                            required={useOwnBank}
+                                        />
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Nama Pemilik Rekening *</label>
+                                    <input
+                                        type="text"
+                                        value={ownBankHolder}
+                                        onChange={(e) => setOwnBankHolder(e.target.value)}
+                                        className="w-full px-4 py-3 bg-gray-50 border-none rounded-xl text-sm font-semibold focus:ring-2 focus:ring-green-500"
+                                        placeholder="Nama lengkap sesuai buku tabungan"
+                                        required={useOwnBank}
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">QRIS Code Penjual (Opsional)</label>
+                                    <div className="flex items-center gap-4">
+                                        {ownQrisImagePreview && (
+                                            <div className="w-20 h-20 rounded-xl overflow-hidden border border-gray-200 flex-shrink-0">
+                                                <img src={ownQrisImagePreview} alt="QRIS Preview" className="w-full h-full object-cover" />
+                                            </div>
+                                        )}
+                                        <label className="flex-1 border-2 border-dashed border-gray-200 rounded-xl px-4 py-6 flex flex-col items-center justify-center cursor-pointer hover:border-green-400 hover:bg-green-50/10 transition">
+                                            <span className="material-icons text-gray-400 text-2xl mb-1">qr_code_scanner</span>
+                                            <span className="text-xs font-bold text-gray-500">Upload QRIS Penjual</span>
+                                            <input
+                                                type="file"
+                                                accept="image/*"
+                                                onChange={(e) => {
+                                                    const file = e.target.files[0];
+                                                    if (file) {
+                                                        setOwnQrisImage(file);
+                                                        setOwnQrisImagePreview(URL.createObjectURL(file));
+                                                    }
+                                                }}
+                                                className="hidden"
+                                            />
+                                        </label>
+                                    </div>
+                                    <p className="mt-1 text-[10px] text-gray-400 italic">Membantu mempercepat proses pembayaran via e-wallet.</p>
+                                </div>
                             </div>
                         )}
                     </div>

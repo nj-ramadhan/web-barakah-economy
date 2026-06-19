@@ -2402,15 +2402,13 @@ class EventViewSet(viewsets.ModelViewSet):
             session_name = session.title if session else "Umum"
             attended_at = EventAttendance.objects.get(registration=registration, session=session).attended_at
             attended_time = timezone.localtime(attended_at).strftime("%d %b %Y %H:%M")
+            from .serializers import EventRegistrationSerializer
+            reg_data = EventRegistrationSerializer(registration, context={'request': request}).data
+            reg_data['name'] = registration.user.profile.name_full if registration.user and hasattr(registration.user, 'profile') else (registration.guest_name or 'Tamu')
             return Response({
                 'status': 'already_attended',
                 'message': f'Peserta sudah tercatat hadir untuk {session_name} pada {attended_time}.',
-                'registration': {
-                    'id': registration.id,
-                    'name': registration.user.profile.name_full if registration.user and hasattr(registration.user, 'profile') else (registration.guest_name or 'Tamu'),
-                    'unique_code': registration.unique_code,
-                    'is_attended': True,
-                }
+                'registration': reg_data
             }, status=status.HTTP_200_OK)
         
         # Record attendance
@@ -2434,17 +2432,13 @@ class EventViewSet(viewsets.ModelViewSet):
             name = registration.guest_name or 'Tamu'
             
         session_label = session.title if session else "Acara"
+        from .serializers import EventRegistrationSerializer
+        reg_data = EventRegistrationSerializer(registration, context={'request': request}).data
+        reg_data['name'] = name
         return Response({
             'status': 'success',
             'message': f'Hadir! {name} berhasil dicatat untuk {session_label}.',
-            'registration': {
-                'id': registration.id,
-                'name': name,
-                'unique_code': registration.unique_code,
-                'payment_method': registration.payment_method,
-                'is_attended': registration.is_attended,
-                'attended_at': registration.attended_at,
-            }
+            'registration': reg_data
         }, status=status.HTTP_200_OK)
 
     @action(detail=True, methods=['get'], permission_classes=[permissions.AllowAny])

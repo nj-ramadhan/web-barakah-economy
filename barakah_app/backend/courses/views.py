@@ -716,6 +716,7 @@ class CourseEnrollmentViewSet(viewsets.ModelViewSet):
             return Response(CourseEnrollmentSerializer(existing_paid).data, status=status.HTTP_200_OK)
 
         # Create new enrollment (order)
+        paid_directly = course.own_bank_status == 'approved'
         enrollment = CourseEnrollment.objects.create(
             user=request.user,
             course=course,
@@ -724,7 +725,12 @@ class CourseEnrollmentViewSet(viewsets.ModelViewSet):
             buyer_email=request.data.get('buyer_email', request.user.email),
             buyer_phone=request.data.get('buyer_phone', getattr(request.user, 'phone', '')),
             amount=course.price,
-            payment_status='paid' if course.price == 0 else 'pending'
+            payment_status='paid' if course.price == 0 else 'pending',
+            paid_to_seller_directly=paid_directly,
+            seller_bank_name=course.own_bank_name if paid_directly else None,
+            seller_bank_account=course.own_bank_account if paid_directly else None,
+            seller_bank_holder=course.own_bank_holder if paid_directly else None,
+            seller_qris_image=course.own_qris_image if paid_directly else None
         )
         
         return Response(CourseEnrollmentSerializer(enrollment).data, status=status.HTTP_201_CREATED)

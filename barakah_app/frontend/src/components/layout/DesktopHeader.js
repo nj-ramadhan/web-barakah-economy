@@ -124,8 +124,8 @@ const DesktopHeader = () => {
                             {user.picture ? (
                                 <img src={user.picture} alt="Profile" className="w-8 h-8 rounded-full object-cover border-2 border-white dark:border-gray-700 shadow-sm" />
                             ) : (
-                                <div className="w-8 h-8 rounded-full bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-400 flex items-center justify-center">
-                                    <span className="material-icons text-xl">person</span>
+                                <div className="w-8 h-8 rounded-full bg-green-600 text-white flex items-center justify-center font-bold text-sm border-2 border-white dark:border-gray-700 shadow-sm animate-fade-in">
+                                    {(user.name_full || user.username || '?').charAt(0).toUpperCase()}
                                 </div>
                             )}
                             <span className="text-sm max-w-[100px] truncate">{user.username || 'Admin'}</span>

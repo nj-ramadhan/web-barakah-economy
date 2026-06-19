@@ -42,23 +42,34 @@ const EcommercePaymentConfirmation = () => {
     shippingCost,
     courier,
     voucherCode,
-    voucherDiscount
+    voucherDiscount,
+    cartItems = []
   } = location.state;
 
   const formattedAmount = new Intl.NumberFormat('id-ID').format(amount);
 
+  const getMediaUrl = (url) => {
+    if (!url) return null;
+    if (url.startsWith('http')) return url;
+    return `${process.env.REACT_APP_API_BASE_URL || ''}${url}`;
+  };
+
+  const firstProduct = cartItems[0]?.product;
+  const isDirect = firstProduct && firstProduct.own_bank_status === 'approved';
+
   const bankAccounts = {
     bsi: {
-      name: 'bsi',
-      number: '2220606662',
-      fullName: 'Bank Syariah Indonesia',
-      owner: 'Barakah Economy Community'
+      name: isDirect && firstProduct.own_bank_name ? firstProduct.own_bank_name.toLowerCase() : 'bsi',
+      number: isDirect ? firstProduct.own_bank_account : '2220606662',
+      fullName: isDirect ? firstProduct.own_bank_name : 'Bank Syariah Indonesia',
+      owner: isDirect ? firstProduct.own_bank_holder : 'Barakah Economy Community'
     },
     qris: {
       name: 'qris',
-      number: 'QRIS BAE COMMUNITY',
+      number: isDirect ? `QRIS ${firstProduct.own_bank_holder}` : 'QRIS BAE COMMUNITY',
       fullName: 'QRIS',
-      owner: 'BAE COMMUNITY',
+      owner: isDirect ? firstProduct.own_bank_holder : 'BAE COMMUNITY',
+      logo: isDirect && firstProduct.own_qris_image ? getMediaUrl(firstProduct.own_qris_image) : '/images/qris-bae2.png',
       isQRIS: true
     }
   };
@@ -107,20 +118,17 @@ const EcommercePaymentConfirmation = () => {
       const lowerText = text.toLowerCase();
       console.log("OCR Result:", text);
 
-      const isBaeCommunityPresent = lowerText.includes('bae community') || lowerText.includes('barakah economy');
+      let isRecipientValid = false;
+      let expectedRecipientName = 'BAE Community / Barakah Economy';
+      if (isDirect && firstProduct.own_bank_holder) {
+        expectedRecipientName = firstProduct.own_bank_holder;
+        isRecipientValid = lowerText.includes(firstProduct.own_bank_holder.toLowerCase());
+      } else {
+        isRecipientValid = lowerText.includes('bae community') || lowerText.includes('barakah economy');
+      }
 
-      const numericTotal = Math.floor(Number(amount));
-      const totalStr = String(numericTotal);
-      const totalFormatted = numericTotal.toLocaleString('id-ID');
-      const scrubbedText = lowerText.replace(/rp/g, '').replace(/\./g, '').replace(/,/g, '').replace(/\s+/g, '');
-
-      const isAmountPresent =
-        text.includes(totalStr) ||
-        text.includes(totalFormatted) ||
-        scrubbedText.includes(totalStr);
-
-      if (!isBaeCommunityPresent) {
-        setOcrError('Validasi Gagal: Struk tidak mencantumkan nama "BAE Community", "Barakah Economy Community". Pastikan Anda transfer ke rekening yang benar.');
+      if (!isRecipientValid) {
+        setOcrError(`Validasi Gagal: Struk tidak mencantumkan nama "${expectedRecipientName}". Pastikan Anda transfer ke rekening yang benar.`);
         setUploading(false);
         setOcrLoading(false);
         return;
@@ -240,7 +248,12 @@ const EcommercePaymentConfirmation = () => {
         <div className="bg-white rounded-[32px] shadow-xl shadow-gray-200/50 p-6 mb-6 border border-gray-50">
           <div className="flex items-center gap-4 mb-6">
             <div className="w-16 h-16 bg-gray-50 rounded-2xl flex items-center justify-center p-2 border border-gray-100">
-              <img src={`/images/${bank}-logo.png`} alt={bank} className="max-w-full" />
+              {isDirect && bank !== 'qris' ? (
+                <span className="material-icons text-3xl text-emerald-600">account_balance</span>
+              ) : (
+                <img src={`/images/${bank}-logo.png`} alt={bank} className="max-w-full" onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'block'; }} />
+              )}
+              <span className="material-icons text-3xl text-emerald-600 hidden">account_balance</span>
             </div>
             <div>
               <p className="text-[10px] text-emerald-600 font-black uppercase tracking-[0.2em]">{selectedBankInfo.fullName}</p>
@@ -274,8 +287,8 @@ const EcommercePaymentConfirmation = () => {
         {/* QRIS if selected */}
         {selectedBankInfo.isQRIS && (
           <div className="bg-white rounded-[32px] p-6 mb-8 border-2 border-dashed border-emerald-100 flex flex-col items-center">
-            <img src="/images/qris-bae2.png" alt="QRIS" className="w-full max-w-[240px] mb-4" />
-            <a href="/images/qris-bae2.png" download className="text-emerald-600 font-black text-xs uppercase tracking-widest hover:underline">Unduh QRIS</a>
+            <img src={selectedBankInfo.logo || "/images/qris-bae2.png"} alt="QRIS" className="w-full max-w-[240px] mb-4" />
+            <a href={selectedBankInfo.logo || "/images/qris-bae2.png"} download className="text-emerald-600 font-black text-xs uppercase tracking-widest hover:underline">Unduh QRIS</a>
           </div>
         )}
 

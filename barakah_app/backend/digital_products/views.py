@@ -364,6 +364,15 @@ class DigitalOrderViewSet(viewsets.ModelViewSet):
             if order.digital_product and order.digital_product.user:
                 order.product_owner = order.digital_product.user
                 
+                # Check custom bank status
+                product = order.digital_product
+                if product.own_bank_status == 'approved':
+                    order.paid_to_seller_directly = True
+                    order.seller_bank_name = product.own_bank_name
+                    order.seller_bank_account = product.own_bank_account
+                    order.seller_bank_holder = product.own_bank_holder
+                    order.seller_qris_image = product.own_qris_image
+                
             # Auto-verify if amount is 0 (Free product)
             if order.amount == 0:
                 order.payment_status = 'verified'
@@ -481,18 +490,21 @@ class WithdrawalViewSet(viewsets.ModelViewSet):
         try:
             total_sales = DigitalOrder.objects.filter(
                 product_owner=request.user,
-                payment_status='verified'
+                payment_status='verified',
+                paid_to_seller_directly=False
             ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
             
             # Add Course sales (using the new persistent instructor field)
             total_course_sales = CourseEnrollment.objects.filter(
                 instructor=request.user,
-                payment_status__in=['verified', 'paid']
+                payment_status__in=['verified', 'paid'],
+                paid_to_seller_directly=False
             ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
             
             total_sinergy_completed = Order.objects.filter(
                 seller=request.user,
-                status__in=['Selesai', 'selesai', 'SELESAI', 'Delivered', 'delivered', 'DELIVERED']
+                status__in=['Selesai', 'selesai', 'SELESAI', 'Delivered', 'delivered', 'DELIVERED'],
+                paid_to_seller_directly=False
             ).aggregate(
                 total=Sum(F('total_price') - F('voucher_nominal'), output_field=DecimalField())
             )['total'] or Decimal('0')
@@ -545,41 +557,82 @@ class WithdrawalViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'])
     def balance(self, request):
         try:
-            total_digital_sales = DigitalOrder.objects.filter(
+            # --- Available (Withdrawable) Sales ---
+            total_digital_sales_available = DigitalOrder.objects.filter(
                 product_owner=request.user,
-                payment_status='verified'
+                payment_status='verified',
+                paid_to_seller_directly=False
             ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
             
-            total_course_sales = CourseEnrollment.objects.filter(
+            total_course_sales_available = CourseEnrollment.objects.filter(
                 instructor=request.user,
-                payment_status__in=['verified', 'paid']
+                payment_status__in=['verified', 'paid'],
+                paid_to_seller_directly=False
             ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
             
-            # Completed Sinergy Sales (Available to withdraw)
-            total_sinergy_completed = Order.objects.filter(
+            total_sinergy_completed_available = Order.objects.filter(
                 seller=request.user,
-                status__in=['Selesai', 'selesai', 'SELESAI', 'Delivered', 'delivered', 'DELIVERED']
+                status__in=['Selesai', 'selesai', 'SELESAI', 'Delivered', 'delivered', 'DELIVERED'],
+                paid_to_seller_directly=False
             ).aggregate(
                 total=Sum(F('total_price') - F('voucher_nominal'), output_field=DecimalField())
             )['total'] or Decimal('0')
 
-            # Pending Sinergy Sales (Paid but not yet completed)
-            total_sinergy_pending = Order.objects.filter(
+            total_sales_available = total_digital_sales_available + total_course_sales_available + Decimal(total_sinergy_completed_available)
+
+            # --- Direct (Non-Withdrawable) Sales ---
+            total_digital_sales_direct = DigitalOrder.objects.filter(
+                product_owner=request.user,
+                payment_status='verified',
+                paid_to_seller_directly=True
+            ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
+            
+            total_course_sales_direct = CourseEnrollment.objects.filter(
+                instructor=request.user,
+                payment_status__in=['verified', 'paid'],
+                paid_to_seller_directly=True
+            ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
+            
+            total_sinergy_completed_direct = Order.objects.filter(
                 seller=request.user,
-                status__in=['Paid', 'paid', 'PAID', 'Proses', 'proses', 'PROSES', 'Dikirim', 'dikirim', 'DIKIRIM', 'Shipped', 'shipped', 'SHIPPED']
+                status__in=['Selesai', 'selesai', 'SELESAI', 'Delivered', 'delivered', 'DELIVERED'],
+                paid_to_seller_directly=True
             ).aggregate(
                 total=Sum(F('total_price') - F('voucher_nominal'), output_field=DecimalField())
             )['total'] or Decimal('0')
 
-            total_sales_available = total_digital_sales + total_course_sales + Decimal(total_sinergy_completed)
-            total_sales_all = total_sales_available + Decimal(total_sinergy_pending)
+            total_sales_direct = total_digital_sales_direct + total_course_sales_direct + Decimal(total_sinergy_completed_direct)
+
+            # --- Sinergy Pending (separate BAE vs Direct) ---
+            total_sinergy_pending_available = Order.objects.filter(
+                seller=request.user,
+                status__in=['Paid', 'paid', 'PAID', 'Proses', 'proses', 'PROSES', 'Dikirim', 'dikirim', 'DIKIRIM', 'Shipped', 'shipped', 'SHIPPED'],
+                paid_to_seller_directly=False
+            ).aggregate(
+                total=Sum(F('total_price') - F('voucher_nominal'), output_field=DecimalField())
+            )['total'] or Decimal('0')
+
+            total_sinergy_pending_direct = Order.objects.filter(
+                seller=request.user,
+                status__in=['Paid', 'paid', 'PAID', 'Proses', 'proses', 'PROSES', 'Dikirim', 'dikirim', 'DIKIRIM', 'Shipped', 'shipped', 'SHIPPED'],
+                paid_to_seller_directly=True
+            ).aggregate(
+                total=Sum(F('total_price') - F('voucher_nominal'), output_field=DecimalField())
+            )['total'] or Decimal('0')
+
+            total_sales_all = total_sales_available + total_sales_direct + Decimal(total_sinergy_pending_available) + Decimal(total_sinergy_pending_direct)
         except Exception:
             total_sales_available = Decimal('0')
+            total_sales_direct = Decimal('0')
             total_sales_all = Decimal('0')
-            total_digital_sales = Decimal('0')
-            total_course_sales = Decimal('0')
-            total_sinergy_completed = Decimal('0')
-            total_sinergy_pending = Decimal('0')
+            total_digital_sales_available = Decimal('0')
+            total_digital_sales_direct = Decimal('0')
+            total_course_sales_available = Decimal('0')
+            total_course_sales_direct = Decimal('0')
+            total_sinergy_completed_available = Decimal('0')
+            total_sinergy_completed_direct = Decimal('0')
+            total_sinergy_pending_available = Decimal('0')
+            total_sinergy_pending_direct = Decimal('0')
 
         try:
             total_withdrawn = WithdrawalRequest.objects.filter(
@@ -591,13 +644,14 @@ class WithdrawalViewSet(viewsets.ModelViewSet):
 
         return Response({
             'total_sales': total_sales_all,
-            'total_digital_sales': total_digital_sales,
-            'total_course_sales': total_course_sales,
-            'total_sinergy_sales': total_sinergy_completed,
-            'total_sinergy_pending': total_sinergy_pending,
+            'total_digital_sales': total_digital_sales_available + total_digital_sales_direct,
+            'total_course_sales': total_course_sales_available + total_course_sales_direct,
+            'total_sinergy_sales': total_sinergy_completed_available + total_sinergy_completed_direct,
+            'total_sinergy_pending': total_sinergy_pending_available + total_sinergy_pending_direct,
             'total_withdrawn': total_withdrawn,
             'available_balance': total_sales_available - total_withdrawn,
-            'pending_balance': total_sinergy_pending
+            'direct_sales_balance': total_sales_direct,
+            'pending_balance': total_sinergy_pending_available + total_sinergy_pending_direct
         })
 
     @action(detail=False, methods=['get'], url_path='admin-list', permission_classes=[permissions.IsAdminUser])

@@ -58,6 +58,20 @@ class DigitalProduct(models.Model):
     is_active = models.BooleanField(default=True)
     view_count = models.PositiveIntegerField(default=0)
     likes = models.ManyToManyField(User, related_name='liked_digital_products', blank=True)
+    own_bank_name = models.CharField(max_length=100, blank=True, null=True)
+    own_bank_account = models.CharField(max_length=100, blank=True, null=True)
+    own_bank_holder = models.CharField(max_length=150, blank=True, null=True)
+    own_qris_image = models.ImageField(upload_to='seller_qris/', blank=True, null=True)
+    own_bank_status = models.CharField(
+        max_length=20, 
+        choices=[
+            ('none', 'Tidak Menggunakan'), 
+            ('pending', 'Menunggu Persetujuan'), 
+            ('approved', 'Disetujui'), 
+            ('rejected', 'Ditolak')
+        ], 
+        default='none'
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -89,6 +103,11 @@ class DigitalOrder(models.Model):
     buyer_phone = models.CharField(max_length=20)
     amount = models.DecimalField(max_digits=12, decimal_places=2)
     payment_proof = models.FileField(upload_to=digital_order_proof_path, blank=True, null=True)
+    paid_to_seller_directly = models.BooleanField(default=False)
+    seller_bank_name = models.CharField(max_length=100, blank=True, null=True)
+    seller_bank_account = models.CharField(max_length=100, blank=True, null=True)
+    seller_bank_holder = models.CharField(max_length=150, blank=True, null=True)
+    seller_qris_image = models.ImageField(upload_to='seller_qris_orders/', blank=True, null=True)
     payment_status = models.CharField(max_length=20, choices=PAYMENT_STATUS_CHOICES, default='pending')
     ocr_verified = models.BooleanField(default=False)
     email_sent = models.BooleanField(default=False)

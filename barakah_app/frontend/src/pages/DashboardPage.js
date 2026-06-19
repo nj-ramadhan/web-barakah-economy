@@ -337,10 +337,14 @@ const DashboardPage = () => {
                         <span className="material-icons text-sm">history</span>
                     </button>
                     
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                         <div>
-                            <p className="text-[10px] uppercase font-black opacity-70 tracking-widest mb-1">Saldo Tersedia</p>
-                            <h2 className="text-3xl font-black">{formatIDR(balanceData.available_balance)}</h2>
+                            <p className="text-[10px] uppercase font-black opacity-70 tracking-widest mb-1">Saldo Tersedia (Tarik BAE)</p>
+                            <h2 className="text-2xl font-black">{formatIDR(balanceData.available_balance)}</h2>
+                        </div>
+                        <div>
+                            <p className="text-[10px] uppercase font-black opacity-70 tracking-widest mb-1">Saldo Bayar Langsung (Non-Penarikan)</p>
+                            <h2 className="text-2xl font-black text-amber-300">{formatIDR(balanceData.direct_sales_balance || 0)}</h2>
                         </div>
                         <div className="md:text-right">
                             <p className="text-[10px] uppercase font-black opacity-70 tracking-widest mb-1">Saldo Tertahan (Pending)</p>
@@ -353,7 +357,7 @@ const DashboardPage = () => {
                             onClick={() => setShowWithdrawModal(true)}
                             className="bg-white text-green-800 px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest shadow-lg hover:bg-green-50 transition-all active:scale-95"
                         >
-                            Tarik Saldo
+                            Tarik Saldo BAE
                         </button>
                         
                         <div className="flex-1 min-w-[200px]">

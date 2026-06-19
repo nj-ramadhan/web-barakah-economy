@@ -23,6 +23,33 @@ const DashboardSinergySellersPage = () => {
     const [galleryFiles, setGalleryFiles] = useState([]);
     const [galleryPreviews, setGalleryPreviews] = useState([]);
 
+    // Custom bank account state
+    const [ownBankStatus, setOwnBankStatus] = useState('none');
+    const [ownBankName, setOwnBankName] = useState('');
+    const [ownBankAccount, setOwnBankAccount] = useState('');
+    const [ownBankHolder, setOwnBankHolder] = useState('');
+    const [ownQrisImage, setOwnQrisImage] = useState(null);
+    const [ownQrisImagePreview, setOwnQrisImagePreview] = useState(null);
+    const [useOwnBank, setUseOwnBank] = useState(false);
+    const [origDetails, setOrigDetails] = useState({});
+
+    const getMediaUrl = (url) => {
+        if (!url) return null;
+        if (url.startsWith('http')) return url;
+        return `${process.env.REACT_APP_API_BASE_URL || ''}${url}`;
+    };
+
+    const resetBankStates = () => {
+        setOwnBankStatus('none');
+        setOwnBankName('');
+        setOwnBankAccount('');
+        setOwnBankHolder('');
+        setOwnQrisImage(null);
+        setOwnQrisImagePreview(null);
+        setUseOwnBank(false);
+        setOrigDetails({});
+    };
+
 
     const fetchDashboardData = async () => {
         const user = JSON.parse(localStorage.getItem('user'));
@@ -62,6 +89,22 @@ const DashboardSinergySellersPage = () => {
         setIsCodAvailable(product.is_cod_available || false);
         setManualStock(product.stock || 0);
         setManualPrice(product.price || 0);
+
+        const detailsObj = {
+            own_bank_status: product.own_bank_status || 'none',
+            own_bank_name: product.own_bank_name || '',
+            own_bank_account: product.own_bank_account || '',
+            own_bank_holder: product.own_bank_holder || '',
+            own_qris_image: product.own_qris_image || null
+        };
+        setOrigDetails(detailsObj);
+        setOwnBankStatus(detailsObj.own_bank_status);
+        setOwnBankName(detailsObj.own_bank_name);
+        setOwnBankAccount(detailsObj.own_bank_account);
+        setOwnBankHolder(detailsObj.own_bank_holder);
+        setOwnQrisImagePreview(getMediaUrl(detailsObj.own_qris_image));
+        setUseOwnBank(detailsObj.own_bank_status !== 'none');
+
         setActiveTab('edit');
     };
 
@@ -131,6 +174,35 @@ const DashboardSinergySellersPage = () => {
             formData.append('supported_couriers', selectedCouriers.join(','));
             formData.append('is_cod_available', isCodAvailable);
             formData.append('purchase_instructions', e.target.purchase_instructions.value);
+
+            let targetStatus = ownBankStatus;
+            if (!useOwnBank) {
+                targetStatus = 'none';
+            } else if (ownBankStatus === 'none' || ownBankStatus === 'rejected') {
+                targetStatus = 'pending';
+            } else {
+                if (
+                    ownBankName !== (origDetails.own_bank_name || '') ||
+                    ownBankAccount !== (origDetails.own_bank_account || '') ||
+                    ownBankHolder !== (origDetails.own_bank_holder || '') ||
+                    ownQrisImage !== null
+                ) {
+                    targetStatus = 'pending';
+                }
+            }
+            formData.append('own_bank_status', targetStatus);
+            if (useOwnBank) {
+                formData.append('own_bank_name', ownBankName);
+                formData.append('own_bank_account', ownBankAccount);
+                formData.append('own_bank_holder', ownBankHolder);
+                if (ownQrisImage) {
+                    formData.append('own_qris_image', ownQrisImage);
+                }
+            } else {
+                formData.append('own_bank_name', '');
+                formData.append('own_bank_account', '');
+                formData.append('own_bank_holder', '');
+            }
             
             if (thumbnailFile) {
                 formData.append('thumbnail', thumbnailFile);
@@ -235,6 +307,7 @@ const DashboardSinergySellersPage = () => {
                         setThumbnailPreview(null);
                         setGalleryFiles([]);
                         setGalleryPreviews([]);
+                        resetBankStates();
                     }} className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 shadow-sm transition-all shadow-emerald-200">
                         <span className="material-icons text-sm">add</span> Tambah Produk
                     </button>
@@ -545,6 +618,115 @@ const DashboardSinergySellersPage = () => {
                         ))}
                     </div>
                     <p className="text-[10px] text-gray-500 mt-3 pt-2 border-t border-emerald-200/50">Harga varian adalah <b>Harga Total</b> yang akan dibayar pembeli (menggantikan harga produk utama).</p>
+                </div>
+
+                {/* Rekening Sendiri Section */}
+                <div className="bg-white rounded-3xl border border-gray-200 overflow-hidden shadow-sm">
+                    <div className="bg-gray-50 p-4 border-b border-gray-100 flex items-center justify-between cursor-pointer" onClick={() => setUseOwnBank(!useOwnBank)}>
+                        <div className="flex items-center gap-3">
+                            <span className="material-icons text-emerald-700">account_balance</span>
+                            <div>
+                                <p className="text-sm font-bold text-gray-800">Gunakan Rekening Sendiri</p>
+                                <p className="text-[10px] text-gray-500">Salurkan pembayaran customer langsung ke rekening Anda</p>
+                            </div>
+                        </div>
+                        <div className="flex items-center">
+                            <input
+                                type="checkbox"
+                                checked={useOwnBank}
+                                onChange={() => setUseOwnBank(!useOwnBank)}
+                                onClick={(e) => e.stopPropagation()}
+                                className="w-5 h-5 rounded text-emerald-600 focus:ring-emerald-500"
+                            />
+                        </div>
+                    </div>
+
+                    {useOwnBank && (
+                        <div className="p-4 space-y-4 animate-slide-up">
+                            {ownBankStatus !== 'none' && (
+                                <div className={`p-3 rounded-xl flex items-center gap-3 text-xs font-semibold ${
+                                    ownBankStatus === 'approved' ? 'bg-green-50 text-green-700 border border-green-100' :
+                                    ownBankStatus === 'pending' ? 'bg-amber-50 text-amber-700 border border-amber-100' :
+                                    'bg-red-50 text-red-700 border border-red-100'
+                                }`}>
+                                    <span className="material-icons text-lg">
+                                        {ownBankStatus === 'approved' ? 'check_circle' :
+                                         ownBankStatus === 'pending' ? 'pending' : 'cancel'}
+                                    </span>
+                                    <div>
+                                        <span className="font-extrabold uppercase">Status Pengajuan: </span>
+                                        {ownBankStatus === 'approved' && 'Disetujui. Customer akan membayar langsung ke rekening Anda.'}
+                                        {ownBankStatus === 'pending' && 'Menunggu Persetujuan Admin (Sementara menunggu, pembayaran tetap menggunakan QRIS BAE).'}
+                                        {ownBankStatus === 'rejected' && 'Ditolak (Pembayaran kembali menggunakan QRIS BAE).'}
+                                    </div>
+                                </div>
+                            )}
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Nama Bank / QRIS *</label>
+                                    <input
+                                        type="text"
+                                        value={ownBankName}
+                                        onChange={(e) => setOwnBankName(e.target.value)}
+                                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none transition font-semibold"
+                                        placeholder="Contoh: BSI, BCA"
+                                        required={useOwnBank}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Nomor Rekening *</label>
+                                    <input
+                                        type="text"
+                                        value={ownBankAccount}
+                                        onChange={(e) => setOwnBankAccount(e.target.value)}
+                                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none transition font-semibold"
+                                        placeholder="Masukkan nomor rekening"
+                                        required={useOwnBank}
+                                    />
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Nama Pemilik Rekening *</label>
+                                <input
+                                    type="text"
+                                    value={ownBankHolder}
+                                    onChange={(e) => setOwnBankHolder(e.target.value)}
+                                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none transition font-semibold"
+                                    placeholder="Nama di buku tabungan"
+                                    required={useOwnBank}
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">QRIS Code Penjual (Opsional)</label>
+                                <div className="flex items-center gap-4">
+                                    {ownQrisImagePreview && (
+                                        <div className="w-20 h-20 rounded-xl overflow-hidden border border-gray-200 flex-shrink-0">
+                                            <img src={ownQrisImagePreview} alt="QRIS Preview" className="w-full h-full object-cover" />
+                                        </div>
+                                    )}
+                                    <label className="flex-1 border-2 border-dashed border-gray-200 rounded-xl px-4 py-6 flex flex-col items-center justify-center cursor-pointer hover:border-emerald-400 hover:bg-emerald-50/10 transition">
+                                        <span className="material-icons text-gray-400 text-2xl mb-1">qr_code_scanner</span>
+                                        <span className="text-xs font-bold text-gray-500">Upload QRIS Penjual</span>
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            onChange={(e) => {
+                                                const file = e.target.files[0];
+                                                if (file) {
+                                                    setOwnQrisImage(file);
+                                                    setOwnQrisImagePreview(URL.createObjectURL(file));
+                                                }
+                                            }}
+                                            className="hidden"
+                                        />
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 <div className="pt-4 border-t border-gray-100 flex gap-3">

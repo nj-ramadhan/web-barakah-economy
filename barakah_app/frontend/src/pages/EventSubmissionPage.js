@@ -60,7 +60,8 @@ const EventSubmissionPage = () => {
         charity_split_mode: false,
         charity_split_type: 'percent',
         charity_charity_value: 0,
-        charity_operational_value: 0
+        charity_operational_value: 0,
+        auto_post_to_activity: true
     });
     const [availableLabels, setAvailableLabels] = useState([]);
     const [campaigns, setCampaigns] = useState([]);
@@ -155,7 +156,8 @@ const EventSubmissionPage = () => {
                         charity_split_mode: d.charity_split_mode || false,
                         charity_split_type: d.charity_split_type || 'percent',
                         charity_charity_value: d.charity_charity_value || 0,
-                        charity_operational_value: d.charity_operational_value || 0
+                        charity_operational_value: d.charity_operational_value || 0,
+                        auto_post_to_activity: d.auto_post_to_activity !== undefined ? d.auto_post_to_activity : true
                     });
 
                     if (d.speakers && d.speakers.length > 0) setSpeakers(d.speakers);
@@ -1657,6 +1659,20 @@ const EventSubmissionPage = () => {
                                             className="w-full px-5 py-3.5 bg-white border border-blue-100 rounded-2xl text-sm focus:ring-2 focus:ring-blue-500 transition shadow-sm"
                                         />
                                         <p className="text-[10px] text-blue-800/60 ml-1 italic font-medium">Kosongkan jika ingin langsung dibuka.</p>
+                                    </div>
+                                    <div className="space-y-1.5 md:col-span-2 border-t border-blue-100/50 pt-4 flex flex-col justify-center">
+                                        <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1 mb-2">Posting Otomatis ke Kegiatan?</label>
+                                        <div className="flex items-center gap-3">
+                                            <button
+                                                type="button"
+                                                onClick={() => setFormData(prev => ({ ...prev, auto_post_to_activity: !prev.auto_post_to_activity }))}
+                                                className={`w-12 h-6 rounded-full transition-colors relative ${formData.auto_post_to_activity ? 'bg-green-600' : 'bg-gray-300'}`}
+                                            >
+                                                <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${formData.auto_post_to_activity ? 'left-7' : 'left-1'}`}></div>
+                                            </button>
+                                            <span className="text-xs font-bold text-gray-600">{formData.auto_post_to_activity ? 'Ya, Otomatis Posting ke Halaman Kegiatan Saat Event Selesai' : 'Tidak, Jangan Posting Otomatis'}</span>
+                                        </div>
+                                        <p className="text-[10px] text-blue-800/60 ml-1 italic font-medium mt-1">Jika aktif, setelah event ditandai sebagai Selesai (Completed), dokumentasi event akan otomatis diunggah sebagai konten di halaman Kegiatan.</p>
                                     </div>
                                 </div>
                             </div>

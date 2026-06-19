@@ -55,11 +55,8 @@ const EventManualRegistrationModal = ({ isOpen, onClose, event, registrations = 
     const fetchUsers = async (query = '', pageNum = 1, size = 10) => {
         setIsFetchingUsers(true);
         try {
-            // Updated to handle pagination parameters
-            const res = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/events/${event.slug}/available-users/`, {
-                params: { search: query, page: pageNum, page_size: size },
-                headers: { Authorization: `Bearer ${JSON.parse(localStorage.getItem('user'))?.access}` }
-            });
+            // Updated to handle pagination parameters using the eventApi helper
+            const res = await getAvailableUsers(event.slug, query, pageNum, size);
             
             if (res.data.results) {
                 setAllUsers(res.data.results);

@@ -125,14 +125,27 @@ const NavigationButton = () => {
               to={isLoggedIn ? "/profile" : `/login?next=${encodeURIComponent(location.pathname + location.search)}`}
               className={`col-span-3 flex flex-col items-center justify-center transition-colors ${isActive('/profile') || isActive('/login') ? 'text-green-600 dark:text-green-400' : 'text-gray-500 dark:text-gray-400'}`}
             >
-              {isLoggedIn && JSON.parse(localStorage.getItem('user'))?.picture ? (
-                <div className="w-7 h-7 rounded-full overflow-hidden border-2 border-transparent bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
-                  <img src={JSON.parse(localStorage.getItem('user')).picture} alt="Profile" className="w-full h-full object-cover" />
-                </div>
+              {isLoggedIn ? (
+                (() => {
+                  const user = JSON.parse(localStorage.getItem('user') || '{}');
+                  if (user.picture) {
+                    return (
+                      <div className="w-7 h-7 rounded-full overflow-hidden border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                        <img src={user.picture} alt="Profile" className="w-full h-full object-cover" />
+                      </div>
+                    );
+                  } else {
+                    const name = user.name_full || user.username || '?';
+                    const initial = name.charAt(0).toUpperCase();
+                    return (
+                      <div className="w-7 h-7 rounded-full overflow-hidden bg-green-600 text-white flex items-center justify-center font-bold text-xs animate-fade-in">
+                        {initial}
+                      </div>
+                    );
+                  }
+                })()
               ) : (
-                <span className="material-icons text-2xl">
-                  {isLoggedIn ? 'account_circle' : 'login'}
-                </span>
+                <span className="material-icons text-2xl">login</span>
               )}
               <span className="text-[11px] font-medium mt-0.5">
                 {isLoggedIn ? t('nav.profile', 'Profile') : t('nav.login', 'Log in')}

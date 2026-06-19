@@ -79,6 +79,20 @@ class Product(models.Model):
     is_active = models.BooleanField(default=True)
     views_count = models.PositiveIntegerField(default=0)
     likes = models.ManyToManyField('accounts.User', related_name='liked_products', blank=True)
+    own_bank_name = models.CharField(max_length=100, blank=True, null=True)
+    own_bank_account = models.CharField(max_length=100, blank=True, null=True)
+    own_bank_holder = models.CharField(max_length=150, blank=True, null=True)
+    own_qris_image = models.ImageField(upload_to='seller_qris/', blank=True, null=True)
+    own_bank_status = models.CharField(
+        max_length=20, 
+        choices=[
+            ('none', 'Tidak Menggunakan'), 
+            ('pending', 'Menunggu Persetujuan'), 
+            ('approved', 'Disetujui'), 
+            ('rejected', 'Ditolak')
+        ], 
+        default='none'
+    )
     created_at = models.DateTimeField(auto_now_add=True)
 
     def sync_variations(self):

@@ -93,8 +93,21 @@ const EcommerceCheckoutPage = () => {
     checkProfile();
   }, [navigate, cartItems]);
 
+  const getMediaUrl = (url) => {
+    if (!url) return null;
+    if (url.startsWith('http')) return url;
+    return `${process.env.REACT_APP_API_BASE_URL || ''}${url}`;
+  };
+
+  const firstProduct = cartItems[0]?.product;
+  const isDirect = firstProduct && firstProduct.own_bank_status === 'approved';
+
   const banks = [
-    { id: 'qris', name: 'QRIS BAE Community', logo: '/images/qris-bae2.png' }
+    { 
+      id: 'qris', 
+      name: isDirect ? `Transfer Rekening / QRIS (${firstProduct.own_bank_holder})` : 'QRIS BAE Community', 
+      logo: isDirect && firstProduct.own_qris_image ? getMediaUrl(firstProduct.own_qris_image) : '/images/qris-bae2.png'
+    }
   ];
 
   const checkOngkir = async (selectedCourier) => {

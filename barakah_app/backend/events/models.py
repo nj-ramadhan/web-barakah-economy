@@ -115,6 +115,7 @@ class Event(models.Model):
     
     blast_completed_message = models.TextField(blank=True, null=True, help_text="Template pesan WhatsApp blast saat event selesai.")
     has_blasted_completed = models.BooleanField(default=False, help_text="Tandai jika blasting WhatsApp saat event selesai sudah dikirim.")
+    auto_post_to_activity = models.BooleanField(default=True, help_text="Otomatis posting ke kegiatan saat event selesai")
     
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -448,9 +449,12 @@ class EventRegistration(models.Model):
             
         from donations.models import Donation
         existing_donation = Donation.objects.filter(event_registration=self).first()
+        from django.utils import timezone
         if existing_donation:
             existing_donation.amount = donation_amount
             existing_donation.payment_status = 'verified'
+            if not existing_donation.transfer_date:
+                existing_donation.transfer_date = self.created_at.date() if self.created_at else timezone.now().date()
             existing_donation.save()
         else:
             donor_name = self.guest_name
@@ -491,7 +495,8 @@ class EventRegistration(models.Model):
                 payment_method='lainnya',
                 payment_status='verified',
                 event_registration=self,
-                message=f"Kolaborasi Event: {event.title}"
+                message=f"Kolaborasi Event: {event.title}",
+                transfer_date=self.created_at.date() if self.created_at else timezone.now().date()
             )
 
 class EventRegistrationFile(models.Model):

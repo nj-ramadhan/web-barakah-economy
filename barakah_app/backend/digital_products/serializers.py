@@ -15,6 +15,7 @@ class DigitalProductSerializer(serializers.ModelSerializer):
             'category', 'visibility', 'thumbnail', 'price', 'digital_link',
             'is_active', 'view_count', 'created_at', 'updated_at',
             'likes_count', 'is_liked',
+            'own_bank_name', 'own_bank_account', 'own_bank_holder', 'own_qris_image', 'own_bank_status'
         ]
         read_only_fields = ['id', 'slug', 'user', 'created_at', 'updated_at']
 
@@ -40,7 +41,8 @@ class DigitalProductPublicSerializer(serializers.ModelSerializer):
             'id', 'user', 'seller_name', 'title', 'slug', 'description',
             'category', 'visibility', 'thumbnail', 'price',
             'is_active', 'view_count', 'created_at',
-            'likes_count', 'is_liked'
+            'likes_count', 'is_liked',
+            'own_bank_name', 'own_bank_account', 'own_bank_holder', 'own_qris_image', 'own_bank_status'
         ]
 
     def get_likes_count(self, obj):
@@ -63,6 +65,7 @@ class DigitalOrderSerializer(serializers.ModelSerializer):
             'product_owner', 'buyer', 'buyer_name', 'buyer_email', 'buyer_phone',
             'amount', 'payment_proof', 'payment_status',
             'ocr_verified', 'email_sent', 'created_at',
+            'paid_to_seller_directly', 'seller_bank_name', 'seller_bank_account', 'seller_bank_holder', 'seller_qris_image'
         ]
         read_only_fields = [
             'id', 'order_number', 'payment_status',

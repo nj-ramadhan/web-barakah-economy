@@ -4,9 +4,9 @@ from .models import Order
 
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
-    list_display = ('user', 'order_number', 'total_price', 'status', 'created_at')
-    list_filter = ('user', 'status')
-    search_fields = ('user', )
+    list_display = ('user', 'order_number', 'total_price', 'status', 'paid_to_seller_directly', 'created_at')
+    list_filter = ('user', 'status', 'paid_to_seller_directly')
+    search_fields = ('user__username', 'order_number', 'seller_bank_holder', 'seller_bank_account')
     date_hierarchy = 'created_at'  # Add a date filter for the deadline
 
     # Define a custom admin action

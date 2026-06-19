@@ -19,6 +19,12 @@ const DigitalProductPaymentPage = () => {
     const [ocrError, setOcrError] = useState('');
     const [ocrLoading, setOcrLoading] = useState(false);
 
+    const getMediaUrl = (url) => {
+        if (!url) return null;
+        if (url.startsWith('http')) return url;
+        return `${process.env.REACT_APP_API_BASE_URL || ''}${url}`;
+    };
+
     React.useEffect(() => {
         const fetchOrder = async () => {
             try {
@@ -81,8 +87,6 @@ const DigitalProductPaymentPage = () => {
             const lowerText = text.toLowerCase();
             console.log("Hasil OCR:", text);
 
-            const isBaeCommunityPresent = lowerText.includes('bae community') || lowerText.includes('barakah economy');
-
             const numericTotal = Math.floor(Number(order.amount));
             const totalStr = String(numericTotal);
             const totalFormatted = new Intl.NumberFormat('id-ID').format(numericTotal);
@@ -94,8 +98,17 @@ const DigitalProductPaymentPage = () => {
                 text.includes(totalFormatted) ||
                 scrubbedOCR.includes(totalStr);
 
-            if (!isBaeCommunityPresent) {
-                setOcrError('Validasi Gagal: Struk tidak mencantumkan nama "BAE Community" atau "Barakah Economy Community". Pastikan Anda transfer ke rekening yang benar.');
+            let isRecipientValid = false;
+            let expectedRecipientName = 'BAE Community / Barakah Economy';
+            if (order.paid_to_seller_directly && order.seller_bank_holder) {
+                expectedRecipientName = order.seller_bank_holder;
+                isRecipientValid = lowerText.includes(order.seller_bank_holder.toLowerCase());
+            } else {
+                isRecipientValid = lowerText.includes('bae community') || lowerText.includes('barakah economy');
+            }
+
+            if (!isRecipientValid) {
+                setOcrError(`Validasi Gagal: Struk tidak mencantumkan nama "${expectedRecipientName}". Pastikan Anda transfer ke rekening yang benar.`);
                 setUploading(false);
                 setOcrLoading(false);
                 return;
@@ -186,63 +199,71 @@ const DigitalProductPaymentPage = () => {
                     )}
 
                     {/* QRIS */}
-                    <div className="bg-white rounded-lg p-4 text-center border border-gray-200 mb-4">
-                        <p className="text-xs font-bold text-gray-400 mb-2 uppercase tracking-wider">QRIS BAE COMMUNITY</p>
-                        <img
-                            id="qris-image"
-                            src="/images/qris-bae2.png"
-                            alt="QRIS Code"
-                            className="w-48 h-48 mx-auto object-contain"
-                            onError={(e) => {
-                                e.target.style.display = 'none';
-                                e.target.nextSibling.style.display = 'flex';
-                            }}
-                        />
-                        <div className="hidden w-48 h-48 mx-auto bg-gray-100 rounded-lg items-center justify-center text-gray-400 text-sm">
-                            QRIS Code
-                        </div>
+                    {order && (
+                        <div className="bg-white rounded-lg p-4 text-center border border-gray-200 mb-4">
+                            <p className="text-xs font-bold text-gray-400 mb-2 uppercase tracking-wider">
+                                {order.paid_to_seller_directly ? `QRIS ${order.seller_bank_holder}` : "QRIS BAE COMMUNITY"}
+                            </p>
+                            <img
+                                id="qris-image"
+                                src={order.paid_to_seller_directly && order.seller_qris_image ? getMediaUrl(order.seller_qris_image) : "/images/qris-bae2.png"}
+                                alt="QRIS Code"
+                                className="w-48 h-48 mx-auto object-contain"
+                                onError={(e) => {
+                                    e.target.style.display = 'none';
+                                    e.target.nextSibling.style.display = 'flex';
+                                }}
+                            />
+                            <div className="hidden w-48 h-48 mx-auto bg-gray-100 rounded-lg items-center justify-center text-gray-400 text-sm">
+                                QRIS Code
+                            </div>
 
-                        <button
-                            onClick={() => {
-                                const link = document.createElement('a');
-                                link.href = '/images/qris-bae2.png';
-                                link.download = `QRIS-BAE-${orderNumber}.png`;
-                                document.body.appendChild(link);
-                                link.click();
-                                document.body.removeChild(link);
-                            }}
-                            className="mt-4 flex items-center justify-center gap-2 mx-auto px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-xs font-bold hover:bg-gray-200 transition border border-gray-200"
-                        >
-                            <span className="material-icons text-sm">download</span>
-                            UNDUH QR
-                        </button>
-                    </div>
+                            <button
+                                onClick={() => {
+                                    const link = document.createElement('a');
+                                    link.href = order.paid_to_seller_directly && order.seller_qris_image ? getMediaUrl(order.seller_qris_image) : '/images/qris-bae2.png';
+                                    link.download = `QRIS-${orderNumber}.png`;
+                                    document.body.appendChild(link);
+                                    link.click();
+                                    document.body.removeChild(link);
+                                }}
+                                className="mt-4 flex items-center justify-center gap-2 mx-auto px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-xs font-bold hover:bg-gray-200 transition border border-gray-200"
+                            >
+                                <span className="material-icons text-sm">download</span>
+                                UNDUH QR
+                            </button>
+                        </div>
+                    )}
 
                     <div className="border-t border-gray-200 my-4"></div>
 
                     {/* BSI */}
-                    <div className="bg-white rounded-lg p-4 border border-gray-200 mb-4">
-                        <div className="flex items-center gap-2 mb-2">
-                            <img src="/images/bsi-logo.png" alt="BSI" className="h-4" onError={(e) => e.target.style.display = 'none'} />
-                            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">TRANSFER BANK BSI</p>
-                        </div>
-                        <div className="flex justify-between items-center bg-emerald-50 p-3 rounded-lg border border-emerald-100">
-                            <div>
-                                <p className="text-xs text-emerald-600">No. Rekening BSI</p>
-                                <p className="font-bold text-emerald-900">2220606662</p>
-                                <p className="text-xs text-emerald-700">an. Barakah Economy Community</p>
+                    {order && (
+                        <div className="bg-white rounded-lg p-4 border border-gray-200 mb-4">
+                            <div className="flex items-center gap-2 mb-2">
+                                {!order.paid_to_seller_directly && <img src="/images/bsi-logo.png" alt="BSI" className="h-4" onError={(e) => e.target.style.display = 'none'} />}
+                                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+                                    TRANSFER BANK {order.paid_to_seller_directly ? order.seller_bank_name : "BSI"}
+                                </p>
                             </div>
-                            <button
-                                onClick={() => {
-                                    navigator.clipboard.writeText('2220606662');
-                                    alert('No. Rekening berhasil disalin!');
-                                }}
-                                className="bg-emerald-600 text-white text-[10px] px-3 py-1 rounded-full font-bold shadow-sm"
-                            >
-                                SALIN
-                            </button>
+                            <div className="flex justify-between items-center bg-emerald-50 p-3 rounded-lg border border-emerald-100">
+                                <div>
+                                    <p className="text-xs text-emerald-600">No. Rekening {order.paid_to_seller_directly ? order.seller_bank_name : "BSI"}</p>
+                                    <p className="font-bold text-emerald-900">{order.paid_to_seller_directly ? order.seller_bank_account : "2220606662"}</p>
+                                    <p className="text-xs text-emerald-700">an. {order.paid_to_seller_directly ? order.seller_bank_holder : "Barakah Economy Community"}</p>
+                                </div>
+                                <button
+                                    onClick={() => {
+                                        navigator.clipboard.writeText(order.paid_to_seller_directly ? order.seller_bank_account : '2220606662');
+                                        alert('No. Rekening berhasil disalin!');
+                                    }}
+                                    className="bg-emerald-600 text-white text-[10px] px-3 py-1 rounded-full font-bold shadow-sm"
+                                >
+                                    SALIN
+                                </button>
+                            </div>
                         </div>
-                    </div>
+                    )}
                 </div>
 
                 {ocrError && (

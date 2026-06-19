@@ -7,6 +7,7 @@ import { Html5Qrcode } from 'html5-qrcode';
 import Header from '../components/layout/Header';
 import NavigationButton from '../components/layout/Navigation';
 import WarningModal from '../components/popup/WarningModal';
+import { getMediaUrl } from '../utils/mediaUtils';
 
 const API = process.env.REACT_APP_API_BASE_URL;
 
@@ -22,12 +23,22 @@ const EventScanPage = () => {
     const [recentScans, setRecentScans] = useState([]);
     const [selectedSession, setSelectedSession] = useState('');
     const [forbidden, setForbidden] = useState(false);
+    const [selectedPhotoFieldId, setSelectedPhotoFieldId] = useState('');
+    const [zoomedPhoto, setZoomedPhoto] = useState(null);
     const inputRef = useRef(null);
     const scannerRef = useRef(null); // To store Html5Qrcode instance
 
     const getAuth = () => {
         const user = JSON.parse(localStorage.getItem('user'));
         return { headers: { Authorization: `Bearer ${user?.access}` } };
+    };
+
+    const getVerificationPhoto = (registration) => {
+        if (!registration || !selectedPhotoFieldId || !registration.uploaded_files) return null;
+        const fileObj = registration.uploaded_files.find(
+            f => f.field.toString() === selectedPhotoFieldId.toString()
+        );
+        return fileObj?.file ? getMediaUrl(fileObj.file) : null;
     };
 
     const fetchEvent = useCallback(async () => {
@@ -65,6 +76,16 @@ const EventScanPage = () => {
             inputRef.current.focus();
         }
     }, [loading]);
+
+    // Set default selected photo field if there are any file fields in form_fields
+    useEffect(() => {
+        if (event?.form_fields) {
+            const photoFields = event.form_fields.filter(f => f.field_type === 'file');
+            if (photoFields.length > 0) {
+                setSelectedPhotoFieldId(photoFields[0].id.toString());
+            }
+        }
+    }, [event]);
 
 
     const handleScan = useCallback(async (code = manualCode) => {
@@ -220,6 +241,8 @@ const EventScanPage = () => {
         </div>
     );
 
+    const photoFields = event?.form_fields?.filter(f => f.field_type === 'file') || [];
+
     const resultColor = {
         success: 'from-green-500 to-emerald-500',
         already_attended: 'from-yellow-500 to-orange-400',
@@ -287,6 +310,30 @@ const EventScanPage = () => {
                                 </button>
                             ))}
                         </div>
+                    </div>
+                )}
+
+                {/* Dropdown Verifikasi Foto */}
+                {photoFields.length > 0 && (
+                    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 mb-4">
+                        <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 px-1 flex items-center gap-1.5">
+                            <span className="material-icons text-sm text-purple-600">portrait</span>
+                            Kolom Foto Verifikasi Peserta
+                        </label>
+                        <select
+                            value={selectedPhotoFieldId}
+                            onChange={e => setSelectedPhotoFieldId(e.target.value)}
+                            className="w-full bg-gray-50 border-2 border-purple-500/10 focus:border-purple-500 rounded-xl px-4 py-3 text-xs font-black text-purple-700 outline-none transition-all cursor-pointer"
+                        >
+                            {photoFields.map(f => (
+                                <option key={f.id} value={f.id.toString()}>
+                                    {f.label}
+                                </option>
+                            ))}
+                        </select>
+                        <p className="text-[9px] text-gray-400 italic mt-1.5 px-1 font-bold uppercase tracking-[0.05em] leading-normal opacity-70">
+                            * Pilih kolom pendaftaran yang berisi upload foto untuk memverifikasi kesesuaian identitas peserta scan.
+                        </p>
                     </div>
                 )}
 
@@ -375,12 +422,12 @@ const EventScanPage = () => {
                         scanResult.status === 'already_attended' ? 'bg-orange-50 border-orange-200' : 'bg-red-50 border-red-200'
                     }`}>
                         <div className="p-4">
-                            <div className="flex items-center gap-3">
-                                <span className={`material-icons text-2xl ${
+                            <div className="flex items-start gap-4">
+                                <span className={`material-icons text-2xl shrink-0 mt-0.5 ${
                                     scanResult.status === 'success' ? 'text-emerald-600' :
                                     scanResult.status === 'already_attended' ? 'text-orange-600' : 'text-red-600'
                                 }`}>{resultIcon[scanResult.status] || 'info'}</span>
-                                <div className="flex-1">
+                                <div className="flex-1 min-w-0">
                                     <p className={`font-black text-xs uppercase tracking-widest ${
                                         scanResult.status === 'success' ? 'text-emerald-800' :
                                         scanResult.status === 'already_attended' ? 'text-orange-800' : 'text-red-800'
@@ -409,6 +456,17 @@ const EventScanPage = () => {
                                          )}
                                     </p>
                                 </div>
+                                {getVerificationPhoto(scanResult.registration) && (
+                                    <div className="shrink-0">
+                                        <img
+                                            src={getVerificationPhoto(scanResult.registration)}
+                                            alt="Foto Pendaftaran"
+                                            className="w-16 h-20 object-cover rounded-xl border border-gray-200 shadow-sm cursor-zoom-in hover:scale-105 transition-all"
+                                            onClick={() => setZoomedPhoto(getVerificationPhoto(scanResult.registration))}
+                                            title="Klik untuk perbesar"
+                                        />
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -425,27 +483,51 @@ const EventScanPage = () => {
                             <span className="text-[10px] font-bold text-white bg-purple-500 px-2 rounded-full">{recentScans.length}</span>
                         </div>
                         <div className="divide-y divide-gray-50 max-h-48 overflow-y-auto">
-                            {recentScans.map((scan, i) => (
-                                <div key={i} className="flex items-center gap-3 px-3 py-2 transition hover:bg-gray-50">
-                                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
-                                        scan.scanStatus === 'success' ? 'bg-emerald-100' : 
-                                        scan.scanStatus === 'already_attended' ? 'bg-orange-100' : 'bg-red-100'
-                                    }`}>
-                                        <span className={`material-icons text-[14px] ${
-                                            scan.scanStatus === 'success' ? 'text-emerald-600' : 
-                                            scan.scanStatus === 'already_attended' ? 'text-orange-600' : 'text-red-600'
-                                        }`}>
-                                            {scan.scanStatus === 'success' ? 'check' : 
-                                             scan.scanStatus === 'already_attended' ? 'priority_high' : 'close'}
-                                        </span>
+                            {recentScans.map((scan, i) => {
+                                const scanPhoto = getVerificationPhoto(scan);
+                                return (
+                                    <div key={i} className="flex items-center gap-3 px-3 py-2 transition hover:bg-gray-50">
+                                        {scanPhoto ? (
+                                            <div className="relative shrink-0">
+                                                <img 
+                                                    src={scanPhoto} 
+                                                    alt="" 
+                                                    className="w-8 h-8 rounded-lg object-cover border border-gray-100 cursor-zoom-in hover:scale-105 transition-all"
+                                                    onClick={() => setZoomedPhoto(scanPhoto)}
+                                                    title="Klik untuk perbesar"
+                                                />
+                                                <div className={`absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full border-2 border-white flex items-center justify-center ${
+                                                    scan.scanStatus === 'success' ? 'bg-emerald-500' : 
+                                                    scan.scanStatus === 'already_attended' ? 'bg-orange-500' : 'bg-red-500'
+                                                }`}>
+                                                    <span className="material-icons text-white text-[8px] font-black">
+                                                        {scan.scanStatus === 'success' ? 'check' : 
+                                                         scan.scanStatus === 'already_attended' ? 'priority_high' : 'close'}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
+                                                scan.scanStatus === 'success' ? 'bg-emerald-100' : 
+                                                scan.scanStatus === 'already_attended' ? 'bg-orange-100' : 'bg-red-100'
+                                            }`}>
+                                                <span className={`material-icons text-[14px] ${
+                                                    scan.scanStatus === 'success' ? 'text-emerald-600' : 
+                                                    scan.scanStatus === 'already_attended' ? 'text-orange-600' : 'text-red-600'
+                                                }`}>
+                                                    {scan.scanStatus === 'success' ? 'check' : 
+                                                     scan.scanStatus === 'already_attended' ? 'priority_high' : 'close'}
+                                                </span>
+                                            </div>
+                                        )}
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-xs font-bold text-gray-700 truncate capitalize">{scan.name || 'Hamba Allah'}</p>
+                                            <p className="text-[9px] text-gray-400 font-mono tracking-tighter">{scan.unique_code}</p>
+                                        </div>
+                                        <span className="text-[8px] font-bold text-gray-400 shrink-0 bg-gray-100 px-1.5 py-0.5 rounded-full">{scan.time}</span>
                                     </div>
-                                    <div className="flex-1 min-w-0">
-                                        <p className="text-xs font-bold text-gray-700 truncate capitalize">{scan.name || 'Hamba Allah'}</p>
-                                        <p className="text-[9px] text-gray-400 font-mono tracking-tighter">{scan.unique_code}</p>
-                                    </div>
-                                    <span className="text-[8px] font-bold text-gray-400 shrink-0 bg-gray-100 px-1.5 py-0.5 rounded-full">{scan.time}</span>
-                                </div>
-                            ))}
+                                );
+                            })}
                         </div>
                     </div>
                 )}
@@ -460,6 +542,40 @@ const EventScanPage = () => {
                     </Link>
                 </div>
             </div>
+
+            {/* ============ PHOTO ZOOM LIGHTBOX MODAL ============ */}
+            {zoomedPhoto && (
+                <div 
+                    className="fixed inset-0 bg-black/80 backdrop-blur-md z-[200] flex items-center justify-center p-4 cursor-zoom-out animate-fade-in"
+                    onClick={() => setZoomedPhoto(null)}
+                >
+                    <div className="relative max-w-3xl max-h-[85vh] overflow-hidden rounded-3xl bg-white p-2 shadow-2xl animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
+                        <img 
+                            src={zoomedPhoto} 
+                            alt="Verification Photo" 
+                            className="max-w-full max-h-[75vh] object-contain rounded-2xl"
+                        />
+                        <div className="absolute top-4 right-4 flex gap-2">
+                            <a 
+                                href={zoomedPhoto} 
+                                download 
+                                target="_blank" 
+                                rel="noreferrer" 
+                                className="w-10 h-10 bg-black/50 hover:bg-black/75 rounded-full flex items-center justify-center text-white transition flex items-center justify-center"
+                                title="Download Foto"
+                            >
+                                <span className="material-icons text-sm">download</span>
+                            </a>
+                            <button 
+                                onClick={() => setZoomedPhoto(null)} 
+                                className="w-10 h-10 bg-black/50 hover:bg-black/75 rounded-full flex items-center justify-center text-white transition flex items-center justify-center"
+                            >
+                                <span className="material-icons text-sm">close</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

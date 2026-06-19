@@ -189,12 +189,18 @@ const SellerProfilePage = () => {
                     </div>
 
                     <div className="absolute -bottom-12 left-1/2 -translate-x-1/2 flex flex-col items-center z-20">
-                        <div className="w-24 h-24 rounded-full border-4 border-white overflow-hidden bg-white shadow-lg">
-                            <img
-                                src={getMediaUrl(profile.picture) || '/placeholder-profile.png'}
-                                alt={username}
-                                className="w-full h-full object-cover"
-                            />
+                        <div className="w-24 h-24 rounded-full border-4 border-white overflow-hidden bg-white shadow-lg flex items-center justify-center">
+                            {profile.picture ? (
+                                <img
+                                    src={getMediaUrl(profile.picture)}
+                                    alt={username}
+                                    className="w-full h-full object-cover animate-fade-in"
+                                />
+                            ) : (
+                                <div className="w-full h-full bg-green-600 text-white flex items-center justify-center font-bold text-3xl select-none animate-fade-in">
+                                    {(profile.name_full || username || '?').charAt(0).toUpperCase()}
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>

@@ -206,7 +206,31 @@ const EcoursePaymentConfirmation = () => {
 
   if (!course) return <div>Loading...</div>;
 
-  const selectedBankInfo = bankAccounts[selectedBank];
+  const getMediaUrl = (url) => {
+    if (!url) return null;
+    if (url.startsWith('http')) return url;
+    return `${process.env.REACT_APP_API_BASE_URL || ''}${url}`;
+  };
+
+  const customBankInfo = course && course.own_bank_status === 'approved' ? {
+    bsi: {
+      name: course.own_bank_name ? course.own_bank_name.toLowerCase() : 'rekening',
+      number: course.own_bank_account,
+      fullName: course.own_bank_name,
+      logo: '/images/bsi-logo.png',
+      owner: course.own_bank_holder,
+    },
+    qris: {
+      name: 'qris',
+      number: `QRIS ${course.own_bank_holder}`,
+      fullName: 'QRIS',
+      logo: course.own_qris_image ? getMediaUrl(course.own_qris_image) : '/images/qris-bae2.png',
+      owner: course.own_bank_holder,
+      isQRIS: true,
+    }
+  } : bankAccounts;
+
+  const selectedBankInfo = customBankInfo[selectedBank];
 
   return (
     <div className="body">
@@ -233,8 +257,17 @@ const EcoursePaymentConfirmation = () => {
             onChange={handleBankChange}
             className="w-full p-3 rounded-lg border border-gray-300 focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none"
           >
-            <option value="bsi">Bank Syariah Indonesia (BSI)</option>
-            <option value="qris">QRIS</option>
+            {course && course.own_bank_status === 'approved' ? (
+              <>
+                <option value="bsi">Transfer Bank ({course.own_bank_name})</option>
+                <option value="qris">QRIS Penjual</option>
+              </>
+            ) : (
+              <>
+                <option value="bsi">Bank Syariah Indonesia (BSI)</option>
+                <option value="qris">QRIS</option>
+              </>
+            )}
           </select>
         </div>
 
@@ -268,8 +301,8 @@ const EcoursePaymentConfirmation = () => {
             {selectedBankInfo.isQRIS && (
               <div className="w-full flex justify-center p-4 bg-gray-50 rounded-lg">
                 <img
-                  src="/images/qris-bae2.png"
-                  alt="QRIS BAE"
+                  src={selectedBankInfo.logo}
+                  alt="QRIS"
                   className="max-w-xs w-full shadow-sm rounded-lg"
                 />
               </div>

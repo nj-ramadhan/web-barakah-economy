@@ -56,12 +56,26 @@ const UserProfileModal = ({ userId, isOpen, onClose }) => {
         ) : profile ? (
           <div className="user-profile-modal-content">
             <div className="user-profile-modal-header">
-              <div className="user-profile-modal-avatar">
-                <img
-                  src={profile.picture || profile.google_picture_url || '/media/profile_images/pas_foto_standard.png'}
-                  alt={profile.nickname || profile.username}
-                  onError={(e) => { e.target.src = '/media/profile_images/pas_foto_standard.png'; }}
-                />
+              <div className="user-profile-modal-avatar flex items-center justify-center bg-green-600 text-white font-bold text-3xl">
+                {profile.picture || profile.google_picture_url ? (
+                  <img
+                    src={profile.picture || profile.google_picture_url}
+                    alt={profile.nickname || profile.username}
+                    onError={(e) => {
+                      e.target.style.display = 'none';
+                      const container = e.target.parentElement;
+                      if (container) {
+                        const initial = (profile.nickname || profile.name_full || profile.username || '?').charAt(0).toUpperCase();
+                        container.innerHTML = `<span style="font-size: 2.25rem; font-weight: 800;">${initial}</span>`;
+                      }
+                    }}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <span>
+                    {(profile.nickname || profile.name_full || profile.username || '?').charAt(0).toUpperCase()}
+                  </span>
+                )}
               </div>
               <div className="user-profile-modal-titles">
                 <h2 className="text-xl font-black text-gray-900">{profile.nickname || profile.name_full || profile.username}</h2>

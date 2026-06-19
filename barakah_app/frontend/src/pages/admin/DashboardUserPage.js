@@ -54,6 +54,7 @@ const DashboardUserPage = () => {
     const [sortDir, setSortDir] = useState('');
     const [selectedUser, setSelectedUser] = useState(null);
     const [showDetailModal, setShowDetailModal] = useState(false);
+    const [zoomedPhoto, setZoomedPhoto] = useState(null);
     const [editingUser, setEditingUser] = useState(null);
     const [showEditModal, setShowEditModal] = useState(false);
     const [editFormData, setEditFormData] = useState({});
@@ -850,15 +851,19 @@ const DashboardUserPage = () => {
                             <div className="absolute -bottom-12 left-8 w-24 h-24 bg-white rounded-3xl p-1 shadow-lg border-4 border-white overflow-hidden">
                                 {(() => {
                                     const avatarUrl = selectedUser.profile?.picture ? getMediaUrl(selectedUser.profile.picture) : selectedUser.profile?.google_picture_url;
+                                    const displayName = selectedUser.profile?.name_full || selectedUser.username;
+                                    const initial = displayName.charAt(0).toUpperCase();
                                     return avatarUrl ? (
                                         <img
                                             src={avatarUrl}
                                             alt={selectedUser.username}
-                                            className="w-full h-full object-cover rounded-2xl animate-in fade-in duration-300"
+                                            className="w-full h-full object-cover rounded-2xl animate-in fade-in duration-300 cursor-pointer hover:scale-105 active:scale-95 transition-all"
+                                            onClick={() => setZoomedPhoto(avatarUrl)}
+                                            title="Klik untuk perbesar"
                                         />
                                     ) : (
-                                        <div className="w-full h-full bg-green-50 rounded-2xl flex items-center justify-center">
-                                            <span className="material-icons text-5xl text-green-700">person</span>
+                                        <div className="w-full h-full bg-green-100 rounded-2xl flex items-center justify-center text-green-800 font-bold text-3xl select-none">
+                                            {initial}
                                         </div>
                                     );
                                 })()}
@@ -977,6 +982,40 @@ const DashboardUserPage = () => {
                         </div>
                         <div className="px-8 py-4 bg-gray-50 rounded-b-3xl border-t flex justify-end">
                             <button onClick={() => setShowDetailModal(false)} className="bg-white border border-gray-200 text-gray-600 px-6 py-2.5 rounded-xl text-sm font-bold shadow-sm hover:bg-gray-100 transition">Tutup</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* ============ PHOTO ZOOM LIGHTBOX MODAL ============ */}
+            {zoomedPhoto && (
+                <div 
+                    className="fixed inset-0 bg-black/80 backdrop-blur-md z-[200] flex items-center justify-center p-4 cursor-zoom-out animate-fade-in"
+                    onClick={() => setZoomedPhoto(null)}
+                >
+                    <div className="relative max-w-3xl max-h-[85vh] overflow-hidden rounded-3xl bg-white p-2 shadow-2xl animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
+                        <img 
+                            src={zoomedPhoto} 
+                            alt="Full Profile Photo" 
+                            className="max-w-full max-h-[75vh] object-contain rounded-2xl"
+                        />
+                        <div className="absolute top-4 right-4 flex gap-2">
+                            <a 
+                                href={zoomedPhoto} 
+                                download 
+                                target="_blank" 
+                                rel="noreferrer" 
+                                className="w-10 h-10 bg-black/50 hover:bg-black/75 rounded-full flex items-center justify-center text-white transition flex items-center justify-center"
+                                title="Download Foto"
+                            >
+                                <span className="material-icons text-sm">download</span>
+                            </a>
+                            <button 
+                                onClick={() => setZoomedPhoto(null)} 
+                                className="w-10 h-10 bg-black/50 hover:bg-black/75 rounded-full flex items-center justify-center text-white transition flex items-center justify-center"
+                            >
+                                <span className="material-icons text-sm">close</span>
+                            </button>
                         </div>
                     </div>
                 </div>

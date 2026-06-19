@@ -11,7 +11,7 @@ def create_activity_documentation(sender, instance, created, **kwargs):
     """
     Automatically create an Activity documentation when an Event is marked as 'completed'.
     """
-    if instance.status == 'completed':
+    if instance.status == 'completed' and getattr(instance, 'auto_post_to_activity', True):
         from site_content.models import Activity
         
         # Check if Activity already exists for this event
@@ -42,8 +42,8 @@ def create_activity_documentation(sender, instance, created, **kwargs):
                             event_image.open()
                         except Exception:
                             pass
-                        event_image.seek(0)
-                        image_name = event_image.name.split('/')[-1]
+                        import os
+                        image_name = os.path.basename(event_image.name.replace('\\', '/'))
                         activity.header_image.save(
                             image_name,
                             ContentFile(event_image.read()),

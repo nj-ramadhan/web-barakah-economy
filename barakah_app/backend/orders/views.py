@@ -81,6 +81,11 @@ class CreateOrderView(APIView):
                     from accounts.models import User
                     seller_user = User.objects.filter(is_superuser=True).first()
 
+                # Check if seller uses their own bank details for physical products
+                first_item = items[0]
+                product = first_item.product
+                paid_directly = product.own_bank_status == 'approved'
+
                 # Create Order
                 order = Order.objects.create(
                     user=user,
@@ -94,7 +99,12 @@ class CreateOrderView(APIView):
                     status='paid' if payment_proof else 'pending',
                     payment_method=payment_method,
                     payment_proof=payment_proof,
-                    buyer_note=buyer_note
+                    buyer_note=buyer_note,
+                    paid_to_seller_directly=paid_directly,
+                    seller_bank_name=product.own_bank_name if paid_directly else None,
+                    seller_bank_account=product.own_bank_account if paid_directly else None,
+                    seller_bank_holder=product.own_bank_holder if paid_directly else None,
+                    seller_qris_image=product.own_qris_image if paid_directly else None
                 )
                 
                 total_price = Decimal('0')

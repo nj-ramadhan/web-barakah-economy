@@ -5,17 +5,17 @@ from .models import DigitalProduct, DigitalOrder, EmailSettings, WithdrawalReque
 
 @admin.register(DigitalProduct)
 class DigitalProductAdmin(admin.ModelAdmin):
-    list_display = ['title', 'user', 'category', 'price', 'visibility', 'is_active', 'created_at']
-    list_filter = ['visibility', 'category', 'is_active', 'created_at']
-    search_fields = ['title', 'description', 'user__username']
+    list_display = ['title', 'user', 'category', 'price', 'visibility', 'is_active', 'own_bank_status', 'own_bank_name', 'created_at']
+    list_filter = ['visibility', 'category', 'is_active', 'own_bank_status', 'created_at']
+    search_fields = ['title', 'description', 'user__username', 'own_bank_holder', 'own_bank_account']
     prepopulated_fields = {'slug': ('title',)}
 
 
 @admin.register(DigitalOrder)
 class DigitalOrderAdmin(admin.ModelAdmin):
-    list_display = ['order_number', 'buyer_name', 'product_owner', 'digital_product', 'amount', 'payment_status', 'email_sent', 'created_at']
-    list_filter = ['payment_status', 'email_sent', 'created_at']
-    search_fields = ['order_number', 'buyer_name', 'buyer_email', 'product_owner__username']
+    list_display = ['order_number', 'buyer_name', 'product_owner', 'digital_product', 'amount', 'payment_status', 'paid_to_seller_directly', 'email_sent', 'created_at']
+    list_filter = ['payment_status', 'paid_to_seller_directly', 'email_sent', 'created_at']
+    search_fields = ['order_number', 'buyer_name', 'buyer_email', 'product_owner__username', 'seller_bank_holder', 'seller_bank_account']
 
 
 @admin.register(EmailSettings)
