@@ -3,6 +3,7 @@ from django.db import models
 from django.db.models import Sum
 from accounts.models import User
 from campaigns.models import Campaign
+from django.utils import timezone
 import uuid
 import os
 
@@ -56,7 +57,7 @@ class Donation(models.Model):
     whatsapp_sent = models.BooleanField(default=False)
     whatsapp_sent_at = models.DateTimeField(blank=True, null=True)
     
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)
 
     def save(self, *args, **kwargs):

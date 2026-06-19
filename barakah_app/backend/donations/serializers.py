@@ -22,7 +22,7 @@ class DonationSerializer(serializers.ModelSerializer):
             'source_account', 'account_name', 'transfer_date', 'proof_file_url',
             'created_at', 'updated_at'
         ]
-        read_only_fields = ['id', 'campaign_title', 'campaign_slug', 'proof_file_url', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'campaign_title', 'campaign_slug', 'proof_file_url', 'updated_at']
     
     def get_proof_file_url(self, obj):
         request = self.context.get('request')

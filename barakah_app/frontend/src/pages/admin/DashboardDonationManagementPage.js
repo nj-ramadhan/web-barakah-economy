@@ -34,6 +34,83 @@ const DashboardDonationManagementPage = () => {
         message: ''
     });
 
+    // Edit donation state
+    const [showEditModal, setShowEditModal] = useState(false);
+    const [submittingEdit, setSubmittingEdit] = useState(false);
+    const [editingDonation, setEditingDonation] = useState({
+        id: '',
+        campaign_id: '',
+        donor_name: '',
+        donor_phone: '',
+        donor_email: '',
+        amount: '',
+        payment_method: 'cash',
+        is_anonymous: false,
+        message: '',
+        created_at: '',
+        transfer_date: '',
+        payment_status: 'pending'
+    });
+
+    const formatDateTimeLocal = (dateString) => {
+        if (!dateString) return '';
+        const date = new Date(dateString);
+        const pad = (n) => n < 10 ? '0' + n : n;
+        return date.getFullYear() + '-' +
+            pad(date.getMonth() + 1) + '-' +
+            pad(date.getDate()) + 'T' +
+            pad(date.getHours()) + ':' +
+            pad(date.getMinutes());
+    };
+
+    const handleOpenEditModal = (donation) => {
+        setEditingDonation({
+            id: donation.id,
+            campaign_id: donation.campaign?.id || donation.campaign || '',
+            donor_name: donation.donor_name || '',
+            donor_phone: donation.donor_phone || '',
+            donor_email: donation.donor_email || '',
+            amount: donation.amount ? Math.round(donation.amount).toString() : '',
+            payment_method: donation.payment_method || 'cash',
+            is_anonymous: donation.is_anonymous || false,
+            message: donation.message || '',
+            created_at: formatDateTimeLocal(donation.created_at),
+            transfer_date: donation.transfer_date || '',
+            payment_status: donation.payment_status || 'pending'
+        });
+        setShowEditModal(true);
+    };
+
+    const handleEditSubmit = async (e) => {
+        e.preventDefault();
+        setSubmittingEdit(true);
+        const user = JSON.parse(localStorage.getItem('user'));
+        
+        const payload = {
+            ...editingDonation,
+            transfer_date: editingDonation.transfer_date || null,
+            donor_email: editingDonation.donor_email || null,
+        };
+
+        try {
+            await axios.patch(`${process.env.REACT_APP_API_BASE_URL}/api/donations/admin-management/${editingDonation.id}/`, payload, {
+                headers: { 
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${user.access}` 
+                }
+            });
+            alert('Data donasi berhasil diperbarui!');
+            setShowEditModal(false);
+            fetchDonations();
+        } catch (err) {
+            console.error(err);
+            const errMsg = err.response?.data?.error || 'Gagal memperbarui data donasi.';
+            alert(errMsg);
+        } finally {
+            setSubmittingEdit(false);
+        }
+    };
+
     const fetchCampaigns = useCallback(async () => {
         try {
             const res = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/campaigns/`);
@@ -343,13 +420,22 @@ const DashboardDonationManagementPage = () => {
                                                     </button>
                                                 </div>
                                             )}
-                                            <button 
-                                                onClick={() => handleDelete(d.id)}
-                                                className="w-full bg-red-50 text-red-600 px-3 py-1.5 rounded-xl text-[10px] font-bold hover:bg-red-100 border border-red-100 transition flex items-center justify-center gap-1"
-                                            >
-                                                <span className="material-icons text-[12px]">delete</span>
-                                                Hapus
-                                            </button>
+                                            <div className="flex gap-2 w-full">
+                                                <button 
+                                                    onClick={() => handleOpenEditModal(d)}
+                                                    className="flex-1 bg-blue-50 text-blue-600 px-2 py-1.5 rounded-xl text-[10px] font-bold hover:bg-blue-100 border border-blue-100 transition flex items-center justify-center gap-1"
+                                                >
+                                                    <span className="material-icons text-[12px]">edit</span>
+                                                    Edit
+                                                </button>
+                                                <button 
+                                                    onClick={() => handleDelete(d.id)}
+                                                    className="flex-1 bg-red-50 text-red-600 px-2 py-1.5 rounded-xl text-[10px] font-bold hover:bg-red-100 border border-red-100 transition flex items-center justify-center gap-1"
+                                                >
+                                                    <span className="material-icons text-[12px]">delete</span>
+                                                    Hapus
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -507,6 +593,200 @@ const DashboardDonationManagementPage = () => {
                                 className="w-full py-4 bg-green-600 hover:bg-green-700 text-white rounded-2xl text-xs font-extrabold uppercase tracking-widest shadow-lg shadow-green-100 transition active:scale-[0.98]"
                             >
                                 {submittingAdd ? 'Menyimpan...' : 'Simpan Donasi'}
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Edit Donation Modal */}
+            {showEditModal && (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[999] flex items-center justify-center p-4 overflow-y-auto animate-fade-in">
+                    <div className="bg-white w-full max-w-md rounded-3xl p-6 shadow-2xl relative my-auto animate-scale-up border border-gray-100 max-h-[90vh] flex flex-col">
+                        <div className="flex justify-between items-start mb-4 flex-shrink-0">
+                            <div>
+                                <h3 className="text-lg font-black text-gray-900 leading-tight">Edit Data Donasi</h3>
+                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">Ubah rincian data donasi donatur</p>
+                            </div>
+                            <button 
+                                onClick={() => setShowEditModal(false)}
+                                className="w-8 h-8 flex items-center justify-center bg-gray-50 text-gray-400 hover:bg-gray-100 rounded-full transition shadow-inner"
+                            >
+                                <span className="material-icons text-sm">close</span>
+                            </button>
+                        </div>
+
+                        <form onSubmit={handleEditSubmit} className="space-y-4 overflow-y-auto pr-1 flex-1 pb-4">
+                            <div>
+                                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-1.5 ml-1">Program Charity *</label>
+                                <div className="relative">
+                                    <select
+                                        required
+                                        value={editingDonation.campaign_id}
+                                        onChange={(e) => setEditingDonation(prev => ({ ...prev, campaign_id: e.target.value }))}
+                                        className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl text-sm outline-none focus:bg-white focus:border-green-500 transition shadow-inner appearance-none pr-10"
+                                    >
+                                        <option value="">Pilih Program Charity</option>
+                                        {campaigns.map(c => (
+                                            <option key={c.id} value={c.id}>{c.title}</option>
+                                        ))}
+                                    </select>
+                                    <span className="material-icons absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">expand_more</span>
+                                </div>
+                            </div>
+
+                            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-gray-100 mb-2">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center border border-gray-100 text-gray-500 shadow-sm">
+                                        <span className="material-icons text-lg">visibility_off</span>
+                                    </div>
+                                    <div>
+                                        <p className="text-xs font-black text-gray-900 leading-tight">Donatur Anonim</p>
+                                        <p className="text-[9px] text-gray-400 font-bold uppercase tracking-wider">Tampilkan sebagai Hamba Allah</p>
+                                    </div>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setEditingDonation(prev => {
+                                            const nextAnonymous = !prev.is_anonymous;
+                                            return {
+                                                ...prev,
+                                                is_anonymous: nextAnonymous,
+                                                donor_name: nextAnonymous ? 'Hamba Allah' : ''
+                                            };
+                                        });
+                                    }}
+                                    className={`w-12 h-6 rounded-full transition-colors relative shrink-0 ${editingDonation.is_anonymous ? 'bg-green-600' : 'bg-gray-300'}`}
+                                >
+                                    <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${editingDonation.is_anonymous ? 'left-7' : 'left-1'}`}></div>
+                                </button>
+                            </div>
+
+                            <div>
+                                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-1.5 ml-1">Nama Donatur *</label>
+                                <input
+                                    type="text"
+                                    required
+                                    disabled={editingDonation.is_anonymous}
+                                    value={editingDonation.donor_name}
+                                    onChange={(e) => setEditingDonation(prev => ({ ...prev, donor_name: e.target.value }))}
+                                    className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl text-sm outline-none focus:bg-white focus:border-green-500 transition shadow-inner disabled:opacity-60 disabled:cursor-not-allowed"
+                                    placeholder="Masukkan nama donatur..."
+                                />
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-1.5 ml-1">No. WhatsApp</label>
+                                    <input
+                                        type="tel"
+                                        value={editingDonation.donor_phone}
+                                        onChange={(e) => setEditingDonation(prev => ({ ...prev, donor_phone: e.target.value }))}
+                                        className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl text-sm outline-none focus:bg-white focus:border-green-500 transition shadow-inner"
+                                        placeholder="0812..."
+                                    />
+                                </div>
+                                <div>
+                                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-1.5 ml-1">Email</label>
+                                    <input
+                                        type="email"
+                                        value={editingDonation.donor_email}
+                                        onChange={(e) => setEditingDonation(prev => ({ ...prev, donor_email: e.target.value }))}
+                                        className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl text-sm outline-none focus:bg-white focus:border-green-500 transition shadow-inner"
+                                        placeholder="donatur@mail.com"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-1.5 ml-1">Nominal Donasi (Rp) *</label>
+                                    <input
+                                        type="number"
+                                        required
+                                        min="1"
+                                        value={editingDonation.amount}
+                                        onChange={(e) => setEditingDonation(prev => ({ ...prev, amount: e.target.value }))}
+                                        className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl text-sm outline-none focus:bg-white focus:border-green-500 transition shadow-inner"
+                                        placeholder="Masukkan nominal..."
+                                    />
+                                </div>
+                                <div>
+                                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-1.5 ml-1">Status Pembayaran *</label>
+                                    <div className="relative">
+                                        <select
+                                            required
+                                            value={editingDonation.payment_status}
+                                            onChange={(e) => setEditingDonation(prev => ({ ...prev, payment_status: e.target.value }))}
+                                            className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl text-sm outline-none focus:bg-white focus:border-green-500 transition shadow-inner appearance-none pr-10"
+                                        >
+                                            <option value="pending">Pending</option>
+                                            <option value="verified">Verified</option>
+                                            <option value="rejected">Rejected</option>
+                                        </select>
+                                        <span className="material-icons absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">expand_more</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-1.5 ml-1">Metode Pembayaran *</label>
+                                    <div className="relative">
+                                        <select
+                                            required
+                                            value={editingDonation.payment_method}
+                                            onChange={(e) => setEditingDonation(prev => ({ ...prev, payment_method: e.target.value }))}
+                                            className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl text-sm outline-none focus:bg-white focus:border-green-500 transition shadow-inner appearance-none pr-10"
+                                        >
+                                            <option value="cash">Cash / Tunai</option>
+                                            <option value="bsi">Bank Syariah Indonesia (BSI)</option>
+                                            <option value="bjb">Bank BJB Syariah</option>
+                                            <option value="lainnya">Lainnya</option>
+                                        </select>
+                                        <span className="material-icons absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">expand_more</span>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-1.5 ml-1">Tanggal Transfer</label>
+                                    <input
+                                        type="date"
+                                        value={editingDonation.transfer_date}
+                                        onChange={(e) => setEditingDonation(prev => ({ ...prev, transfer_date: e.target.value }))}
+                                        className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl text-sm outline-none focus:bg-white focus:border-green-500 transition shadow-inner"
+                                    />
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-1.5 ml-1">Tanggal Donasi (Dibuat) *</label>
+                                <input
+                                    type="datetime-local"
+                                    required
+                                    value={editingDonation.created_at}
+                                    onChange={(e) => setEditingDonation(prev => ({ ...prev, created_at: e.target.value }))}
+                                    className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl text-sm outline-none focus:bg-white focus:border-green-500 transition shadow-inner"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-1.5 ml-1">Pesan / Doa (Opsional)</label>
+                                <textarea
+                                    value={editingDonation.message}
+                                    onChange={(e) => setEditingDonation(prev => ({ ...prev, message: e.target.value }))}
+                                    className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl text-sm outline-none focus:bg-white focus:border-green-500 transition shadow-inner resize-none"
+                                    rows="2"
+                                    placeholder="Tulis pesan atau doa..."
+                                />
+                            </div>
+
+                            <button
+                                type="submit"
+                                disabled={submittingEdit}
+                                className="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl text-xs font-extrabold uppercase tracking-widest shadow-lg shadow-blue-100 transition active:scale-[0.98] mt-2 flex-shrink-0"
+                            >
+                                {submittingEdit ? 'Menyimpan...' : 'Simpan Perubahan'}
                             </button>
                         </form>
                     </div>

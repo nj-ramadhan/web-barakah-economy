@@ -433,14 +433,14 @@ const DashboardDigitalProductsPage = () => {
                                         <p className="text-[10px] text-gray-500">Salurkan pembayaran customer langsung ke rekening Anda</p>
                                     </div>
                                 </div>
-                                <div className="flex items-center">
-                                    <input
-                                        type="checkbox"
-                                        checked={useOwnBank}
-                                        onChange={() => setUseOwnBank(!useOwnBank)}
-                                        onClick={(e) => e.stopPropagation()}
-                                        className="w-4 h-4 rounded text-green-700 focus:ring-green-500"
-                                    />
+                                <div className="flex items-center" onClick={(e) => e.stopPropagation()}>
+                                    <button
+                                        type="button"
+                                        onClick={() => setUseOwnBank(!useOwnBank)}
+                                        className={`w-12 h-6 rounded-full transition-all relative ${useOwnBank ? 'bg-green-600' : 'bg-gray-300'}`}
+                                    >
+                                        <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow-sm transition-all ${useOwnBank ? 'left-7' : 'left-1'}`}></div>
+                                    </button>
                                 </div>
                             </div>
 
