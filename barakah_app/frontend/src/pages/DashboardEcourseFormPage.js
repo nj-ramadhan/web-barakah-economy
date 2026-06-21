@@ -379,6 +379,7 @@ const DashboardEcourseFormPage = () => {
                     </div>
 
                     {/* Rekening Sendiri Section */}
+                    {/* 
                     <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm">
                         <div className="bg-gray-50 p-4 border-b border-gray-100 flex items-center justify-between cursor-pointer" onClick={() => setUseOwnBank(!useOwnBank)}>
                             <div className="flex items-center gap-3">
@@ -487,6 +488,7 @@ const DashboardEcourseFormPage = () => {
                             </div>
                         )}
                     </div>
+                    */}
 
                     <div className="pt-4">
                         <button

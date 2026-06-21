@@ -621,6 +621,7 @@ const DashboardSinergySellersPage = () => {
                 </div>
 
                 {/* Rekening Sendiri Section */}
+                {/* 
                 <div className="bg-white rounded-3xl border border-gray-200 overflow-hidden shadow-sm">
                     <div className="bg-gray-50 p-4 border-b border-gray-100 flex items-center justify-between cursor-pointer" onClick={() => setUseOwnBank(!useOwnBank)}>
                         <div className="flex items-center gap-3">
@@ -728,6 +729,7 @@ const DashboardSinergySellersPage = () => {
                         </div>
                     )}
                 </div>
+                */}
 
                 <div className="pt-4 border-t border-gray-100 flex gap-3">
                     <button type="button" onClick={() => setActiveTab('list')} className="flex-1 py-4 text-sm font-bold text-gray-500 bg-gray-100 hover:bg-gray-200 rounded-xl transition">Batal</button>

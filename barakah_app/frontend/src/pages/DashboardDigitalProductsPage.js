@@ -424,13 +424,14 @@ const DashboardDigitalProductsPage = () => {
                         </div>
 
                         {/* Rekening Sendiri Section */}
+                        {/* 
                         <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
                             <div className="bg-gray-50 p-3 border-b border-gray-100 flex items-center justify-between cursor-pointer" onClick={() => setUseOwnBank(!useOwnBank)}>
                                 <div className="flex items-center gap-2">
                                     <span className="material-icons text-green-700 text-lg">account_balance</span>
                                     <div>
                                         <p className="text-xs font-bold text-gray-800">Gunakan Rekening Sendiri</p>
-                                        <p className="text-[10px] text-gray-500">Salurkan pembayaran customer langsung ke rekening Anda</p>
+                                        <p className="text-[10px] text-gray-500">Salurkan pembayaran customer langsung to rekening Anda</p>
                                     </div>
                                 </div>
                                 <div className="flex items-center" onClick={(e) => e.stopPropagation()}>
@@ -531,6 +532,7 @@ const DashboardDigitalProductsPage = () => {
                                 </div>
                             )}
                         </div>
+                        */}
 
                         <button
                             type="submit"
