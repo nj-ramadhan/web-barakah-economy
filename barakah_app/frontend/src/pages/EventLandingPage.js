@@ -82,6 +82,86 @@ const EventLandingPage = () => {
         );
     }
 
+    const activeEvents = filteredEvents.filter(ev => !getEventStatus(ev.start_date, ev.end_date).isFinished);
+    const finishedEvents = filteredEvents.filter(ev => getEventStatus(ev.start_date, ev.end_date).isFinished);
+
+    const renderEventCard = (ev) => {
+        const status = getEventStatus(ev.start_date, ev.end_date);
+        return (
+            <Link
+                key={ev.id}
+                to={`/event/${ev.slug}`}
+                className="block group animate-in fade-in slide-in-from-bottom-3 duration-300"
+            >
+                <div className="relative aspect-[4/5] rounded-2xl overflow-hidden shadow-md border border-gray-100 group-hover:shadow-xl transition">
+                    <img
+                        src={getMediaUrl(ev.thumbnail || ev.header_image)}
+                        alt={ev.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        onError={(e) => { e.target.src = '/placeholder-image.jpg'; }}
+                    />
+                    {/* Finished Overlay */}
+                    {status.isFinished && (
+                        <div className="absolute inset-0 bg-gray-900/60 flex items-center justify-center">
+                            <span className="text-white font-bold text-sm uppercase tracking-widest border-2 border-white/50 px-3 py-1 rounded rotate-[-10deg]">Selesai</span>
+                        </div>
+                    )}
+                    {/* Date Badge */}
+                    <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-2.5 py-1 rounded-lg shadow-sm">
+                        <p className="text-[10px] font-bold text-green-700">
+                            {new Date(ev.start_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
+                        </p>
+                    </div>
+                    {/* Status Badge */}
+                    {!status.isFinished && (
+                        <div className="absolute top-3 right-3">
+                            <span className={`${status.color} text-white text-[9px] font-bold px-2.5 py-1 rounded-lg uppercase tracking-wider`}>
+                                {status.label}
+                            </span>
+                        </div>
+                    )}
+                    {/* Certificate Badge */}
+                    {ev.has_certificate && (
+                        <div className="absolute top-3 right-3 mt-7">
+                            <div className="bg-amber-500/90 backdrop-blur-sm p-1.5 rounded-full shadow-lg border border-amber-400">
+                                <span className="material-icons text-[12px] text-white block">verified</span>
+                            </div>
+                        </div>
+                    )}
+                    {/* Bottom Gradient Overlay */}
+                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-3 md:p-4 pt-12 md:pt-16">
+                        <div className="flex flex-wrap items-center gap-1.5 mb-1.5">
+                            {ev.category && (
+                                <span className="inline-block text-[8px] bg-white/20 backdrop-blur-sm text-white px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">{ev.category}</span>
+                            )}
+                            {ev.testimonies_count > 0 && (
+                                <span className="inline-flex items-center gap-0.5 text-[8px] bg-amber-500/90 text-white px-2 py-0.5 rounded-full font-black tracking-wide shadow-sm">
+                                    <span className="material-icons text-[9px]">star</span>
+                                    {ev.average_rating ? Number(ev.average_rating).toFixed(1) : '0.0'}
+                                </span>
+                            )}
+                        </div>
+                        <h3 className="text-white font-bold text-xs md:text-sm leading-tight line-clamp-2 mb-0.5">{ev.title}</h3>
+                        <div className="flex items-center gap-1 text-white/60 text-[10px]">
+                            <span className="material-icons text-[12px]">location_on</span>
+                            <span className="line-clamp-1">{ev.location || 'Online'}</span>
+                        </div>
+                        <div className="flex items-center gap-2 mt-1">
+                            <div className="flex items-center gap-1 text-white/60 text-[10px]">
+                                <span className="material-icons text-[12px]">visibility</span>
+                                <span>{ev.view_count || 0}</span>
+                            </div>
+                            <div className="flex items-center gap-1 text-white/60 text-[10px]">
+                                <span className="material-icons text-[12px] text-red-400">favorite</span>
+                                <span>{ev.likes_count || 0}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </Link>
+        );
+    };
+
     return (
         <div className="body">
             <Helmet>
@@ -146,83 +226,40 @@ const EventLandingPage = () => {
                         <p className="text-sm mt-1">Coba cari dengan kata kunci lain atau silakan kembali nanti untuk melihat update terbaru</p>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-                        {filteredEvents.map((ev) => {
-                            const status = getEventStatus(ev.start_date, ev.end_date);
-                            return (
-                                <Link
-                                    key={ev.id}
-                                    to={`/event/${ev.slug}`}
-                                    className="block group"
-                                >
-                                    <div className="relative aspect-[4/5] rounded-2xl overflow-hidden shadow-md border border-gray-100 group-hover:shadow-xl transition">
-                                        <img
-                                            src={getMediaUrl(ev.thumbnail || ev.header_image)}
-                                            alt={ev.title}
-                                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                                            onError={(e) => { e.target.src = '/placeholder-image.jpg'; }}
-                                        />
-                                        {/* Finished Overlay */}
-                                        {status.isFinished && (
-                                            <div className="absolute inset-0 bg-gray-900/60 flex items-center justify-center">
-                                                <span className="text-white font-bold text-sm uppercase tracking-widest border-2 border-white/50 px-3 py-1 rounded rotate-[-10deg]">Selesai</span>
-                                            </div>
-                                        )}
-                                        {/* Date Badge */}
-                                        <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-2.5 py-1 rounded-lg shadow-sm">
-                                            <p className="text-[10px] font-bold text-green-700">
-                                                {new Date(ev.start_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
-                                            </p>
-                                        </div>
-                                        {/* Status Badge */}
-                                        {!status.isFinished && (
-                                            <div className="absolute top-3 right-3">
-                                                <span className={`${status.color} text-white text-[9px] font-bold px-2.5 py-1 rounded-lg uppercase tracking-wider`}>
-                                                    {status.label}
-                                                </span>
-                                            </div>
-                                        )}
-                                        {/* Certificate Badge */}
-                                        {ev.has_certificate && (
-                                            <div className="absolute top-3 right-3 mt-7">
-                                                <div className="bg-amber-500/90 backdrop-blur-sm p-1.5 rounded-full shadow-lg border border-amber-400">
-                                                    <span className="material-icons text-[12px] text-white block">verified</span>
-                                                </div>
-                                            </div>
-                                        )}
-                                        {/* Bottom Gradient Overlay */}
-                                        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-3 md:p-4 pt-12 md:pt-16">
-                                            <div className="flex flex-wrap items-center gap-1.5 mb-1.5">
-                                                {ev.category && (
-                                                    <span className="inline-block text-[8px] bg-white/20 backdrop-blur-sm text-white px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">{ev.category}</span>
-                                                )}
-                                                {ev.testimonies_count > 0 && (
-                                                    <span className="inline-flex items-center gap-0.5 text-[8px] bg-amber-500/90 text-white px-2 py-0.5 rounded-full font-black tracking-wide shadow-sm">
-                                                        <span className="material-icons text-[9px]">star</span>
-                                                        {ev.average_rating ? Number(ev.average_rating).toFixed(1) : '0.0'}
-                                                    </span>
-                                                )}
-                                            </div>
-                                            <h3 className="text-white font-bold text-xs md:text-sm leading-tight line-clamp-2 mb-0.5">{ev.title}</h3>
-                                            <div className="flex items-center gap-1 text-white/60 text-[10px]">
-                                                <span className="material-icons text-[12px]">location_on</span>
-                                                <span className="line-clamp-1">{ev.location || 'Online'}</span>
-                                            </div>
-                                            <div className="flex items-center gap-2 mt-1">
-                                                <div className="flex items-center gap-1 text-white/60 text-[10px]">
-                                                    <span className="material-icons text-[12px]">visibility</span>
-                                                    <span>{ev.view_count || 0}</span>
-                                                </div>
-                                                <div className="flex items-center gap-1 text-white/60 text-[10px]">
-                                                    <span className="material-icons text-[12px] text-red-400">favorite</span>
-                                                    <span>{ev.likes_count || 0}</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </Link>
-                            );
-                        })}
+                    <div className="space-y-12">
+                        {/* Active Events Section */}
+                        <div className="space-y-6">
+                            <div className="flex items-center gap-3 border-b border-gray-100 pb-3">
+                                <span className="material-icons text-green-600 text-xl">event</span>
+                                <h2 className="text-lg font-black text-gray-900 tracking-tight uppercase">Event Mendatang & Berlangsung</h2>
+                                <span className="bg-green-100 text-green-800 text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider">{activeEvents.length} Event</span>
+                            </div>
+                            {activeEvents.length === 0 ? (
+                                <div className="py-12 bg-gray-50/50 rounded-3xl border border-dashed border-gray-200 text-center text-gray-400">
+                                    <span className="material-icons text-4xl mb-2 opacity-30">event_busy</span>
+                                    <p className="text-sm font-bold">Tidak ada event aktif yang tersedia</p>
+                                    <p className="text-xs mt-0.5 text-gray-400/80">Silakan cek dokumentasi event selesai di bawah.</p>
+                                </div>
+                            ) : (
+                                <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+                                    {activeEvents.map(renderEventCard)}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Finished Events Section */}
+                        {finishedEvents.length > 0 && (
+                            <div className="space-y-6">
+                                <div className="flex items-center gap-3 border-b border-gray-100 pb-3">
+                                    <span className="material-icons text-gray-400 text-xl">check_circle</span>
+                                    <h2 className="text-lg font-black text-gray-800 tracking-tight uppercase">Event Selesai</h2>
+                                    <span className="bg-gray-100 text-gray-600 text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider">{finishedEvents.length} Event</span>
+                                </div>
+                                <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6 opacity-85 hover:opacity-100 transition-opacity duration-300">
+                                    {finishedEvents.map(renderEventCard)}
+                                </div>
+                            </div>
+                        )}
                     </div>
                 )}
             </div>
