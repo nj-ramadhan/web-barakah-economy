@@ -769,6 +769,15 @@ const EventDetailPage = () => {
             <div className="relative w-full max-w-6xl mx-auto sm:px-4">
                 {/* Image Container with Carousel - Portrait 4:5 */}
                 <div className="relative aspect-[4/5] w-full max-w-xl sm:max-w-2xl mx-auto overflow-hidden bg-gray-900 rounded-3xl shadow-2xl border border-white/10">
+                    {/* Live Badge Overlay on Detail Poster */}
+                    {event.active_stream && event.active_stream.is_live && (
+                        <div className="absolute top-4 left-4 animate-pulse z-30">
+                            <span className="bg-red-600 text-white text-[10px] font-black px-3 py-1.5 rounded-full uppercase tracking-widest shadow-lg flex items-center gap-1.5 border border-white/10">
+                                <span className="w-2 h-2 bg-white rounded-full"></span>
+                                LIVE
+                            </span>
+                        </div>
+                    )}
                     <Swiper
                         modules={[Navigation, Pagination, Autoplay, EffectFade]}
                         effect="fade"
@@ -932,6 +941,15 @@ const EventDetailPage = () => {
                     )}
 
                     <div className="flex flex-col gap-3">
+                        {event.active_stream && event.active_stream.is_live && event.active_stream.has_access && (
+                            <button
+                                onClick={() => setShowStreamModal(true)}
+                                className="w-full bg-red-600 hover:bg-red-700 text-white py-4 rounded-xl font-extrabold text-xs uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg shadow-red-900/20 animate-pulse transition-all active:scale-[0.97]"
+                            >
+                                <span className="material-icons text-sm">play_circle_filled</span>
+                                Tonton Live Sekarang
+                            </button>
+                        )}
                         {event.user_registration ? (
                             <div className="w-full bg-green-50 text-green-700 py-3.5 rounded-xl font-bold text-xs uppercase tracking-widest flex items-center gap-3 justify-center border border-green-100">
                                 <span className="material-icons text-lg">check_circle</span>
@@ -1710,39 +1728,52 @@ const EventDetailPage = () => {
                             <div className="absolute top-0 right-0 w-32 h-32 bg-green-500/10 rounded-full -mr-16 -mt-16 blur-2xl group-hover:bg-green-500/20 transition-all duration-700"></div>
                             <h3 className="text-lg font-bold mb-4 relative z-10">Ingin Mengikuti?</h3>
                             <p className="text-gray-400 text-xs leading-relaxed mb-6 relative z-10">Segera daftarkan diri Anda sebelum kuota penuh atau waktu pendaftaran berakhir.</p>
-                            {event.user_registration ? (
-                                <div className="w-full bg-white/10 text-white py-4 rounded-2xl text-[10px] font-extrabold uppercase tracking-[0.2em] relative z-10 border border-white/20 text-center">
-                                    SUDAH DAFTAR
-                                </div>
-                            ) : isCompleted ? (
-                                <div className="w-full bg-white/5 text-gray-500 py-4 rounded-2xl text-[10px] font-extrabold uppercase tracking-[0.2em] relative z-10 border border-white/10 text-center">
-                                    EVENT SELESAI
-                                </div>
-                            ) : registrationTimeLeft?.total > 0 ? (
-                                <div className="w-full bg-amber-50 text-amber-700 py-4 rounded-2xl font-extrabold text-xs uppercase tracking-wider flex flex-col items-center justify-center gap-1 border border-amber-100 shadow-sm relative z-10">
-                                    <div className="flex items-center gap-2">
-                                        <span className="material-icons text-lg animate-spin-slow">history</span>
-                                        Daftar Dibuka Dalam:
+                            
+                            <div className="space-y-3 relative z-10">
+                                {event.active_stream && event.active_stream.is_live && event.active_stream.has_access && (
+                                    <button
+                                        onClick={() => setShowStreamModal(true)}
+                                        className="w-full bg-red-600 hover:bg-red-700 text-white py-4 rounded-2xl text-xs font-extrabold uppercase tracking-widest transition shadow-xl shadow-red-900/30 flex items-center justify-center gap-2 animate-pulse"
+                                    >
+                                        <span className="material-icons text-sm">play_circle_filled</span>
+                                        Tonton Live Sekarang
+                                    </button>
+                                )}
+
+                                {event.user_registration ? (
+                                    <div className="w-full bg-white/10 text-white py-4 rounded-2xl text-[10px] font-extrabold uppercase tracking-[0.2em] border border-white/20 text-center">
+                                        SUDAH DAFTAR
                                     </div>
-                                    <span className="text-base font-black tracking-widest">{formatCountdown(registrationTimeLeft)}</span>
-                                </div>
-                            ) : (event.capacity > 0 && (event.registration_count || 0) >= event.capacity) ? (
-                                <div className="w-full bg-red-500/10 text-red-500 py-4 rounded-2xl text-[10px] font-extrabold uppercase tracking-[0.2em] relative z-10 border border-red-500/20 text-center">
-                                    KUOTA PENUH
-                                </div>
-                            ) : (
-                                <button
-                                    onClick={() => setShowRegisterModal(true)}
-                                    className="w-full bg-green-600 hover:bg-green-700 text-white py-4 rounded-2xl text-xs font-extrabold uppercase tracking-widest transition shadow-xl relative z-10 flex flex-col items-center justify-center gap-1"
-                                >
-                                    <span>Daftar Sekarang</span>
-                                    {event.capacity > 0 && (
-                                        <span className="text-[9px] text-white opacity-80 normal-case font-bold tracking-normal italic">
-                                            Tersisa {event.capacity - (event.registration_count || 0)} Slot Lagi
-                                        </span>
-                                    )}
-                                </button>
-                            )}
+                                ) : isCompleted ? (
+                                    <div className="w-full bg-white/5 text-gray-500 py-4 rounded-2xl text-[10px] font-extrabold uppercase tracking-[0.2em] border border-white/10 text-center">
+                                        EVENT SELESAI
+                                    </div>
+                                ) : registrationTimeLeft?.total > 0 ? (
+                                    <div className="w-full bg-amber-50 text-amber-700 py-4 rounded-2xl font-extrabold text-xs uppercase tracking-wider flex flex-col items-center justify-center gap-1 border border-amber-100 shadow-sm">
+                                        <div className="flex items-center gap-2">
+                                            <span className="material-icons text-lg animate-spin-slow">history</span>
+                                            Daftar Dibuka Dalam:
+                                        </div>
+                                        <span className="text-base font-black tracking-widest">{formatCountdown(registrationTimeLeft)}</span>
+                                    </div>
+                                ) : (event.capacity > 0 && (event.registration_count || 0) >= event.capacity) ? (
+                                    <div className="w-full bg-red-500/10 text-red-500 py-4 rounded-2xl text-[10px] font-extrabold uppercase tracking-[0.2em] border border-red-500/20 text-center">
+                                        KUOTA PENUH
+                                    </div>
+                                ) : (
+                                    <button
+                                        onClick={() => setShowRegisterModal(true)}
+                                        className="w-full bg-green-600 hover:bg-green-700 text-white py-4 rounded-2xl text-xs font-extrabold uppercase tracking-widest transition shadow-xl flex flex-col items-center justify-center gap-1"
+                                    >
+                                        <span>Daftar Sekarang</span>
+                                        {event.capacity > 0 && (
+                                            <span className="text-[9px] text-white opacity-80 normal-case font-bold tracking-normal italic">
+                                                Tersisa {event.capacity - (event.registration_count || 0)} Slot Lagi
+                                            </span>
+                                        )}
+                                    </button>
+                                )}
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -2794,24 +2825,30 @@ const EventStreamingPlayerModal = ({ stream, onClose }) => {
 
                         {/* Input form */}
                         {isLoggedIn ? (
-                            <form onSubmit={handleSendComment} className="flex gap-1.5 items-center">
-                                <input
-                                    type="text"
-                                    placeholder="Tulis komentar..."
-                                    value={newComment}
-                                    onChange={(e) => setNewComment(e.target.value)}
-                                    className="flex-1 bg-zinc-900 border border-zinc-800 text-white rounded-xl px-3 py-2 text-[10px] outline-none focus:border-zinc-700 transition"
-                                    maxLength={200}
-                                    disabled={isSending}
-                                />
-                                <button
-                                    type="submit"
-                                    disabled={isSending || !newComment.trim()}
-                                    className="w-7 h-7 bg-red-600 hover:bg-red-700 text-white rounded-full flex items-center justify-center transition disabled:opacity-50"
-                                >
-                                    <span className="material-icons text-xs">send</span>
-                                </button>
-                            </form>
+                            (!stream.require_registration || stream.has_access) ? (
+                                <form onSubmit={handleSendComment} className="flex gap-1.5 items-center">
+                                    <input
+                                        type="text"
+                                        placeholder="Tulis komentar..."
+                                        value={newComment}
+                                        onChange={(e) => setNewComment(e.target.value)}
+                                        className="flex-1 bg-zinc-900 border border-zinc-800 text-white rounded-xl px-3 py-2 text-[10px] outline-none focus:border-zinc-700 transition"
+                                        maxLength={200}
+                                        disabled={isSending}
+                                    />
+                                    <button
+                                        type="submit"
+                                        disabled={isSending || !newComment.trim()}
+                                        className="w-7 h-7 bg-red-600 hover:bg-red-700 text-white rounded-full flex items-center justify-center transition disabled:opacity-50"
+                                    >
+                                        <span className="material-icons text-xs">send</span>
+                                    </button>
+                                </form>
+                            ) : (
+                                <div className="text-center py-2.5 bg-zinc-900/60 rounded-xl border border-zinc-800">
+                                    <p className="text-[8px] text-zinc-500">Hanya peserta terdaftar yang disetujui yang dapat mengirim komentar.</p>
+                                </div>
+                            )
                         ) : (
                             <div className="text-center py-2 bg-zinc-900/60 rounded-xl border border-zinc-800">
                                 <p className="text-[8px] text-zinc-500">Silakan login untuk mengirim komentar.</p>

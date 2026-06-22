@@ -278,6 +278,31 @@ class StreamingChatViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         stream_key = self.request.data.get('stream_key', 'barakah_stream_key')
+        
+        # Check if registration is required for this stream
+        try:
+            from rest_framework.exceptions import ValidationError
+            
+            stream = StreamingSettings.objects.filter(stream_key=stream_key).first()
+            if stream and stream.require_registration and stream.event:
+                user = self.request.user
+                event = stream.event
+                
+                # Check permissions: staff, superuser, event creator, committee, or approved participant
+                is_allowed = (
+                    user.is_staff or 
+                    user.is_superuser or 
+                    event.created_by == user or 
+                    event.committees.filter(id=user.id).exists() or
+                    EventRegistration.objects.filter(event=event, user=user, status='approved').exists()
+                )
+                if not is_allowed:
+                    raise ValidationError("Hanya peserta terdaftar yang disetujui yang dapat mengirim komentar.")
+        except Exception as e:
+            if isinstance(e, ValidationError):
+                raise e
+            print(f"Error checking registration for streaming chat: {e}")
+
         serializer.save(user=self.request.user, stream_key=stream_key)
 
 
