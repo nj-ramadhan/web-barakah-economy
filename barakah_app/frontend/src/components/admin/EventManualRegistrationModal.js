@@ -30,6 +30,7 @@ const EventManualRegistrationModal = ({ isOpen, onClose, event, registrations = 
     const [paginationInfo, setPaginationInfo] = useState({ next: null, previous: null, count: 0 });
     
     const searchTimeoutRef = useRef(null);
+    const prevSearchRef = useRef(userSearch);
 
     // Filtered fields to avoid duplicates for manual entry
     const getFilteredFields = () => {
@@ -87,9 +88,19 @@ const EventManualRegistrationModal = ({ isOpen, onClose, event, registrations = 
 
         if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
         
+        // Show loading state immediately when user types or changes pages
+        setIsFetchingUsers(true);
+
+        const searchChanged = prevSearchRef.current !== userSearch;
+        prevSearchRef.current = userSearch;
+
+        // Skip debounce delay (0ms) if only pagination/pageSize changes.
+        // Use debounce delay (600ms) only when user typing search query changes.
+        const delay = (searchChanged && userSearch) ? 600 : 0;
+
         searchTimeoutRef.current = setTimeout(() => {
             fetchUsers(userSearch, page, pageSize);
-        }, userSearch ? 600 : 0);
+        }, delay);
 
         return () => { if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current); };
     }, [isUserListOpen, userSearch, page, pageSize]);
