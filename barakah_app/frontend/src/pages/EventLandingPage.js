@@ -112,13 +112,22 @@ const EventLandingPage = () => {
                             {new Date(ev.start_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
                         </p>
                     </div>
-                    {/* Status Badge */}
-                    {!status.isFinished && (
-                        <div className="absolute top-3 right-3">
-                            <span className={`${status.color} text-white text-[9px] font-bold px-2.5 py-1 rounded-lg uppercase tracking-wider`}>
-                                {status.label}
+                    {/* Status Badge or Live Badge */}
+                    {ev.active_stream && ev.active_stream.is_live ? (
+                        <div className="absolute top-3 right-3 animate-pulse">
+                            <span className="bg-red-600 text-white text-[9px] font-black px-2.5 py-1 rounded-lg uppercase tracking-widest shadow-md flex items-center gap-1">
+                                <span className="w-1.5 h-1.5 bg-white rounded-full"></span>
+                                LIVE
                             </span>
                         </div>
+                    ) : (
+                        !status.isFinished && (
+                            <div className="absolute top-3 right-3">
+                                <span className={`${status.color} text-white text-[9px] font-bold px-2.5 py-1 rounded-lg uppercase tracking-wider`}>
+                                    {status.label}
+                                </span>
+                            </div>
+                        )
                     )}
                     {/* Certificate Badge */}
                     {ev.has_certificate && (

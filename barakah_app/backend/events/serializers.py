@@ -148,6 +148,7 @@ class EventSerializer(serializers.ModelSerializer):
     average_rating = serializers.SerializerMethodField()
     testimonies_count = serializers.SerializerMethodField()
     user_has_testimony = serializers.SerializerMethodField()
+    active_stream = serializers.SerializerMethodField()
 
     def get_charity_title(self, obj):
         return obj.charity.title if obj.charity else None
@@ -261,6 +262,50 @@ class EventSerializer(serializers.ModelSerializer):
         if not request or not request.user or not request.user.is_authenticated:
             return False
         return obj.testimonies.filter(user=request.user).exists()
+
+    def get_active_stream(self, obj):
+        try:
+            from streaming.models import StreamingSettings
+            stream = StreamingSettings.objects.filter(event=obj, is_live=True).first()
+            if not stream:
+                return None
+
+            request = self.context.get('request')
+            has_access = True
+            
+            if stream.require_registration:
+                has_access = False
+                if request and request.user and request.user.is_authenticated:
+                    user = request.user
+                    if (user.is_staff or 
+                        user.is_superuser or 
+                        obj.created_by == user or 
+                        obj.committees.filter(id=user.id).exists()):
+                        has_access = True
+                    else:
+                        from events.models import EventRegistration
+                        has_access = EventRegistration.objects.filter(
+                            event=obj,
+                            user=user,
+                            status='approved'
+                        ).exists()
+
+            result = {
+                "id": stream.id,
+                "title": stream.title,
+                "is_live": stream.is_live,
+                "require_registration": stream.require_registration,
+                "has_access": has_access,
+            }
+            if has_access:
+                result["hls_url"] = stream.hls_url
+                result["stream_key"] = stream.stream_key
+            else:
+                result["hls_url"] = None
+                result["stream_key"] = None
+            return result
+        except Exception:
+            return None
     
     def validate_form_fields(self, value):
         if not value or len(value) == 0:

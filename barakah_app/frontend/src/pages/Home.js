@@ -969,6 +969,15 @@ const Home = () => {
                           {new Date(event.start_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
                         </p>
                       </div>
+                      {/* Live Badge */}
+                      {event.active_stream && event.active_stream.is_live && (
+                        <div className="absolute top-2 right-2 animate-pulse z-10">
+                          <span className="bg-red-600 text-white text-[9px] font-black px-2.5 py-1 rounded-lg uppercase tracking-widest shadow-md flex items-center gap-1">
+                            <span className="w-1.5 h-1.5 bg-white rounded-full"></span>
+                            LIVE
+                          </span>
+                        </div>
+                      )}
                       {/* Bottom Gradient Overlay with Title & Description */}
                       <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-3 pt-10">
                         <h3 className="text-white font-bold text-sm leading-tight line-clamp-1 mb-0.5">{event.title}</h3>

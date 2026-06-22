@@ -1,13 +1,21 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from .models import StreamingSettings, StreamingRecording, StreamingChat, StreamingLike
+from events.models import Event
 
 User = get_user_model()
 
 class StreamingSettingsSerializer(serializers.ModelSerializer):
+    event_id = serializers.PrimaryKeyRelatedField(
+        queryset=Event.objects.all(),
+        source='event',
+        required=False,
+        allow_null=True
+    )
+
     class Meta:
         model = StreamingSettings
-        fields = ('id', 'is_live', 'title', 'description', 'stream_key', 'latency_mode', 'save_recording', 'thumbnail', 'updated_at', 'orientation')
+        fields = ('id', 'is_live', 'title', 'description', 'stream_key', 'latency_mode', 'save_recording', 'thumbnail', 'updated_at', 'orientation', 'event_id', 'require_registration')
         read_only_fields = ('id', 'stream_key', 'updated_at')
 
 class StreamingRecordingSerializer(serializers.ModelSerializer):
@@ -39,5 +47,5 @@ class StreamingChatSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = StreamingChat
-        fields = ('id', 'user', 'message', 'created_at')
+        fields = ('id', 'user', 'message', 'created_at', 'stream_key')
         read_only_fields = ('id', 'created_at')

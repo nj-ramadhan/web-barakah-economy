@@ -12,12 +12,13 @@ from rest_framework.decorators import action
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from .models import StreamingSettings, StreamingRecording, StreamingChat, StreamingLike
+from .models import StreamingSettings, StreamingRecording, StreamingChat, StreamingLike, StreamingViewer, EventStreamNotification
 from .serializers import (
     StreamingSettingsSerializer, 
     StreamingRecordingSerializer, 
     StreamingChatSerializer
 )
+from events.models import Event, EventRegistration
 
 class IsAdminUserOrReadOnly(permissions.BasePermission):
     """
@@ -55,32 +56,66 @@ class StreamingSettingsView(APIView):
     permission_classes = [permissions.AllowAny]
     parser_classes = [MultiPartParser, FormParser, JSONParser]
 
-    def get_object(self):
-        obj, created = StreamingSettings.objects.get_or_create(id=1)
-        if created or not obj.stream_key or obj.stream_key == "barakah_stream_key":
-            # Generate a secure unique stream key on first creation
-            obj.stream_key = f"bae_{uuid.uuid4().hex[:12]}"
-            obj.save()
-        return obj
+    def get_object(self, event_id=None):
+        if event_id:
+            event_obj = get_object_or_404(Event, id=event_id)
+            obj, created = StreamingSettings.objects.get_or_create(event=event_obj)
+            if created or not obj.stream_key or obj.stream_key == "barakah_stream_key":
+                obj.stream_key = f"bae_ev_{event_obj.id}_{uuid.uuid4().hex[:8]}"
+                obj.save()
+            return obj
+        else:
+            obj, created = StreamingSettings.objects.get_or_create(id=1, defaults={'event': None})
+            if created or not obj.stream_key or obj.stream_key == "barakah_stream_key":
+                obj.stream_key = f"bae_{uuid.uuid4().hex[:12]}"
+                obj.save()
+            return obj
 
     def get(self, request):
-        settings_obj = self.get_object()
+        event_id = request.query_params.get('event_id')
+        settings_obj = self.get_object(event_id)
         user = request.user
         
+        # Check registration requirement
+        registration_required = settings_obj.require_registration
+        is_registered = False
+        is_admin = user and user.is_authenticated and user.role == 'admin'
+        
+        if registration_required and not is_admin:
+            if not user or not user.is_authenticated:
+                return Response({
+                    'id': settings_obj.id,
+                    'is_live': settings_obj.is_live,
+                    'title': settings_obj.title,
+                    'require_registration': True,
+                    'is_registered': False,
+                    'detail': 'Anda harus login dan mendaftar untuk menonton siaran ini.'
+                }, status=status.HTTP_200_OK)
+            
+            is_registered = EventRegistration.objects.filter(
+                event=settings_obj.event, 
+                user=user, 
+                status='approved'
+            ).exists()
+            
+            if not is_registered:
+                return Response({
+                    'id': settings_obj.id,
+                    'is_live': settings_obj.is_live,
+                    'title': settings_obj.title,
+                    'require_registration': True,
+                    'is_registered': False,
+                    'detail': 'Anda harus mendaftar event ini untuk menonton siaran langsung.'
+                }, status=status.HTTP_200_OK)
+
         # Check if the HLS playlist file exists on VPS to detect if OBS is active
         hls_file_path = os.path.join(settings.MEDIA_ROOT, 'live', f"{settings_obj.stream_key}.m3u8")
         is_obs_active = os.path.exists(hls_file_path)
         
-        # Cleanup inactive viewers and count total active sessions
+        # Cleanup inactive viewers and count total active sessions for this specific stream key
         cutoff = timezone.now() - timedelta(seconds=20)
-        StreamingViewer.objects.filter(last_seen__lt=cutoff).delete()
-        viewer_count = StreamingViewer.objects.count()
-        
-        # Admin gets stream_key, normal users do NOT (for streaming security)
-        # Note: public needs to know the stream_key to fetch the HLS playlist,
-        # but we only share the HLS URL when is_live is True.
-        # So we include it if they are admin or if stream is live.
-        is_admin = user and user.is_authenticated and user.role == 'admin'
+        StreamingViewer.objects.filter(stream_key=settings_obj.stream_key, last_seen__lt=cutoff).delete()
+        viewer_count = StreamingViewer.objects.filter(stream_key=settings_obj.stream_key).count()
         
         whip_url, _ = get_whip_urls(request, settings_obj)
         data = {
@@ -97,6 +132,8 @@ class StreamingSettingsView(APIView):
             'is_hp_streaming_active': settings_obj.is_hp_streaming_active,
             'whip_hls_url': settings_obj.whip_hls_url,
             'orientation': settings_obj.orientation,
+            'require_registration': registration_required,
+            'is_registered': True,
         }
         
         if is_admin or settings_obj.is_live:
@@ -117,14 +154,33 @@ class StreamingSettingsView(APIView):
         if not request.user or not request.user.is_authenticated or request.user.role != 'admin':
             return Response({"detail": "Hanya admin yang dapat mengubah pengaturan streaming."}, status=status.HTTP_403_FORBIDDEN)
             
-        settings_obj = self.get_object()
+        event_id = request.query_params.get('event_id')
+        settings_obj = self.get_object(event_id)
         
         # Reset chat and likes when a new stream starts (toggled from offline/False to live/True)
         is_live_before = settings_obj.is_live
         is_live_now = request.data.get('is_live', is_live_before)
         if not is_live_before and is_live_now:
-            StreamingChat.objects.all().delete()
-            StreamingLike.objects.all().delete()
+            StreamingChat.objects.filter(stream_key=settings_obj.stream_key).delete()
+            StreamingLike.objects.filter(stream_key=settings_obj.stream_key).delete()
+            
+            # Send notifications to users registered for this event
+            if settings_obj.event:
+                user_ids = EventRegistration.objects.filter(
+                    event=settings_obj.event,
+                    status='approved',
+                    user__isnull=False
+                ).values_list('user_id', flat=True).distinct()
+                
+                notifications = [
+                    EventStreamNotification(
+                        recipient_id=user_id,
+                        event=settings_obj.event,
+                        stream_settings=settings_obj
+                    )
+                    for user_id in user_ids
+                ]
+                EventStreamNotification.objects.bulk_create(notifications)
             
         # Clean up or sync recording when stream ends (toggled from live/True to offline/False)
         if is_live_before and not is_live_now:
@@ -133,7 +189,8 @@ class StreamingSettingsView(APIView):
             if os.path.exists(recordings_dir):
                 files = os.listdir(recordings_dir)
                 for file in files:
-                    if file.endswith('_recorded.flv') or file.endswith('.mp4'):
+                    # Match if the file corresponds to this stream_key
+                    if file.startswith(settings_obj.stream_key) and (file.endswith('_recorded.flv') or file.endswith('.mp4')):
                         if not StreamingRecording.objects.filter(file_name=file).exists():
                             if not should_save:
                                 # DISCARD: physically delete the unsynced recording file to save disk space
@@ -143,14 +200,14 @@ class StreamingSettingsView(APIView):
                                     pass
                             else:
                                 # SAVE: automatically register the unsynced recording in the database
-                                title = "Rekaman Live Streaming"
+                                title = f"Rekaman: {settings_obj.title}"
                                 try:
                                     parts = file.split('_')
                                     for p in parts:
                                         if p.isdigit() and len(p) >= 9:
                                             epoch = int(p)
                                             dt = datetime.fromtimestamp(epoch)
-                                            title = f"Streaming {dt.strftime('%d %b %Y - %H:%M')}"
+                                            title = f"Streaming {dt.strftime('%d %b %Y - %H:%M')} ({settings_obj.title})"
                                             break
                                 except:
                                     pass
@@ -179,14 +236,18 @@ class StreamingSettingsView(APIView):
         if not request.user or not request.user.is_authenticated or request.user.role != 'admin':
             return Response({"detail": "Hanya admin yang dapat meregenerasi stream key."}, status=status.HTTP_403_FORBIDDEN)
             
-        settings_obj = self.get_object()
+        event_id = request.query_params.get('event_id')
+        settings_obj = self.get_object(event_id)
         
         # If HP stream was active, force-stop it when key is regenerated
         if settings_obj.is_hp_streaming_active:
             settings_obj.is_hp_streaming_active = False
             settings_obj.whip_hls_url = ""
         
-        settings_obj.stream_key = f"bae_{uuid.uuid4().hex[:12]}"
+        if event_id:
+            settings_obj.stream_key = f"bae_ev_{event_id}_{uuid.uuid4().hex[:8]}"
+        else:
+            settings_obj.stream_key = f"bae_{uuid.uuid4().hex[:12]}"
         settings_obj.save()
         whip_url, _ = get_whip_urls(request, settings_obj)
         return Response({
@@ -208,8 +269,16 @@ class StreamingChatViewSet(viewsets.ModelViewSet):
             return [permissions.AllowAny()]
         return [permissions.IsAuthenticated()]
 
+    def get_queryset(self):
+        qs = super().get_queryset()
+        stream_key = self.request.query_params.get('stream_key')
+        if stream_key:
+            qs = qs.filter(stream_key=stream_key)
+        return qs
+
     def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
+        stream_key = self.request.data.get('stream_key', 'barakah_stream_key')
+        serializer.save(user=self.request.user, stream_key=stream_key)
 
 
 # --- 3. LIKES VIEW ---
@@ -220,10 +289,11 @@ class StreamingLikeView(APIView):
         return [permissions.IsAuthenticated()]
 
     def get(self, request):
-        total_likes = StreamingLike.objects.count()
+        stream_key = request.query_params.get('stream_key', 'barakah_stream_key')
+        total_likes = StreamingLike.objects.filter(stream_key=stream_key).count()
         user_has_liked = False
         if request.user and request.user.is_authenticated:
-            user_has_liked = StreamingLike.objects.filter(user=request.user).exists()
+            user_has_liked = StreamingLike.objects.filter(stream_key=stream_key, user=request.user).exists()
             
         return Response({
             "total_likes": total_likes,
@@ -231,17 +301,18 @@ class StreamingLikeView(APIView):
         })
 
     def post(self, request):
+        stream_key = request.data.get('stream_key', 'barakah_stream_key')
         user = request.user
-        like_filter = StreamingLike.objects.filter(user=user)
+        like_filter = StreamingLike.objects.filter(stream_key=stream_key, user=user)
         
         if like_filter.exists():
             like_filter.delete()
             liked = False
         else:
-            StreamingLike.objects.create(user=user)
+            StreamingLike.objects.create(user=user, stream_key=stream_key)
             liked = True
             
-        total_likes = StreamingLike.objects.count()
+        total_likes = StreamingLike.objects.filter(stream_key=stream_key).count()
         return Response({
             "status": "success",
             "liked": liked,
@@ -357,7 +428,6 @@ def seo_streaming_detail(request):
     
     return get_seo_response(request, metadata)
 
-from .models import StreamingViewer
 
 # --- 6. LIVE VIEWERS COUNTER ---
 class StreamingViewersView(APIView):
@@ -367,33 +437,36 @@ class StreamingViewersView(APIView):
         """
         GET /api/streaming/viewers/ returns the total number of active viewers.
         """
+        stream_key = request.query_params.get('stream_key', 'barakah_stream_key')
         # Cleanup viewers inactive for more than 20 seconds
         cutoff = timezone.now() - timedelta(seconds=20)
-        StreamingViewer.objects.filter(last_seen__lt=cutoff).delete()
+        StreamingViewer.objects.filter(stream_key=stream_key, last_seen__lt=cutoff).delete()
         
-        total_viewers = StreamingViewer.objects.count()
+        total_viewers = StreamingViewer.objects.filter(stream_key=stream_key).count()
         return Response({"total_viewers": total_viewers})
 
     def post(self, request):
         """
         POST /api/streaming/viewers/ registers/updates a viewer's heartbeat.
-        Expects {"session_key": "some-unique-browser-uuid"}
+        Expects {"session_key": "some-unique-browser-uuid", "stream_key": "xxx"}
         """
         session_key = request.data.get('session_key')
+        stream_key = request.data.get('stream_key', 'barakah_stream_key')
         if not session_key:
             return Response({"detail": "session_key wajib disertakan."}, status=status.HTTP_400_BAD_REQUEST)
             
         # Update or create the active viewer session
         StreamingViewer.objects.update_or_create(
             session_key=session_key,
+            stream_key=stream_key,
             defaults={'last_seen': timezone.now()}
         )
         
         # Cleanup viewers inactive for more than 20 seconds
         cutoff = timezone.now() - timedelta(seconds=20)
-        StreamingViewer.objects.filter(last_seen__lt=cutoff).delete()
+        StreamingViewer.objects.filter(stream_key=stream_key, last_seen__lt=cutoff).delete()
         
-        total_viewers = StreamingViewer.objects.count()
+        total_viewers = StreamingViewer.objects.filter(stream_key=stream_key).count()
         return Response({"total_viewers": total_viewers})
 
 
@@ -428,7 +501,9 @@ class StreamingWhipStatusView(APIView):
         GET /api/streaming/whip-status/
         Returns current HP stream status + MediaMTX connectivity check.
         """
-        settings_obj, _ = StreamingSettings.objects.get_or_create(id=1)
+        event_id = request.query_params.get('event_id')
+        settings_view = StreamingSettingsView()
+        settings_obj = settings_view.get_object(event_id)
         
         # Cross-check with MediaMTX if possible
         mtx_active = self._check_mediamtx_stream(settings_obj.stream_key)
@@ -455,10 +530,12 @@ class StreamingWhipStatusView(APIView):
         """
         POST /api/streaming/whip-status/
         Called by frontend to register that HP stream started or stopped.
-        Body: {"action": "start", "orientation": "landscape"/"portrait"} or {"action": "stop"}
+        Body: {"action": "start", "orientation": "landscape"/"portrait", "event_id": "..."} or {"action": "stop", "event_id": "..."}
         """
         action_type = request.data.get('action')
-        settings_obj, _ = StreamingSettings.objects.get_or_create(id=1)
+        event_id = request.data.get('event_id')
+        settings_view = StreamingSettingsView()
+        settings_obj = settings_view.get_object(event_id)
         
         if action_type == 'start':
             orientation = request.data.get('orientation', 'landscape')
@@ -473,8 +550,26 @@ class StreamingWhipStatusView(APIView):
             # Auto-set is_live to True when HP stream starts
             if not settings_obj.is_live:
                 settings_obj.is_live = True
-                StreamingChat.objects.all().delete()
-                StreamingLike.objects.all().delete()
+                StreamingChat.objects.filter(stream_key=settings_obj.stream_key).delete()
+                StreamingLike.objects.filter(stream_key=settings_obj.stream_key).delete()
+                
+                # Send notifications to users registered for this event
+                if settings_obj.event:
+                    user_ids = EventRegistration.objects.filter(
+                        event=settings_obj.event,
+                        status='approved',
+                        user__isnull=False
+                    ).values_list('user_id', flat=True).distinct()
+                    
+                    notifications = [
+                        EventStreamNotification(
+                            recipient_id=user_id,
+                            event=settings_obj.event,
+                            stream_settings=settings_obj
+                        )
+                        for user_id in user_ids
+                    ]
+                    EventStreamNotification.objects.bulk_create(notifications)
             settings_obj.save()
             return Response({
                 "status": "started",
@@ -494,7 +589,7 @@ class StreamingWhipStatusView(APIView):
             })
         
         return Response(
-            {"detail": "action harus 'start' atau 'stop'."},
+            {"detail": "action harus 'start' or 'stop'."},
             status=status.HTTP_400_BAD_REQUEST
         )
 
@@ -530,3 +625,33 @@ class StreamingExtendSessionView(APIView):
                 {"detail": f"Token tidak valid atau sudah kedaluwarsa: {str(e)}"},
                 status=status.HTTP_401_UNAUTHORIZED
             )
+
+
+# --- 9. EVENT STREAM NOTIFICATION VIEW ---
+class EventStreamNotificationView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        """
+        GET /api/streaming/notifications/
+        Returns unread live stream notifications for the current user.
+        """
+        notifications = EventStreamNotification.objects.filter(recipient=request.user, is_read=False)
+        data = [{
+            'id': n.id,
+            'event_title': n.event.title,
+            'event_slug': n.event.slug,
+            'stream_title': n.stream_settings.title,
+            'created_at': n.created_at
+        } for n in notifications]
+        return Response(data)
+
+    def post(self, request, pk=None):
+        """
+        POST /api/streaming/notifications/<pk>/mark-read/
+        Marks a specific notification as read.
+        """
+        notif = get_object_or_404(EventStreamNotification, id=pk, recipient=request.user)
+        notif.is_read = True
+        notif.save(update_fields=['is_read'])
+        return Response({'status': 'success'})

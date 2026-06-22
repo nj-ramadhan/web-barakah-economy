@@ -8,6 +8,7 @@ from .views import (
     StreamingViewersView,
     StreamingWhipStatusView,
     StreamingExtendSessionView,
+    EventStreamNotificationView,
 )
 
 router = DefaultRouter()
@@ -22,5 +23,7 @@ urlpatterns = [
     path('whip-status/', StreamingWhipStatusView.as_view(), name='streaming-whip-status'),
     # Anti-logout session extender for admin during live
     path('extend-session/', StreamingExtendSessionView.as_view(), name='streaming-extend-session'),
+    path('notifications/', EventStreamNotificationView.as_view(), name='streaming-notifications'),
+    path('notifications/<int:pk>/mark-read/', EventStreamNotificationView.as_view(), name='streaming-notification-mark-read'),
     path('', include(router.urls)),
 ]

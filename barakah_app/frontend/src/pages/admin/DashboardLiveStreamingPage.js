@@ -213,6 +213,9 @@ const DashboardLiveStreamingPage = () => {
     const [loadingRec, setLoadingRec] = useState(false);
     const [savingStream, setSavingStream] = useState(false);
     const [loadingSettings, setLoadingSettings] = useState(true);
+    const [events, setEvents] = useState([]);
+    const [selectedEventId, setSelectedEventId] = useState('');
+    const [requireRegistration, setRequireRegistration] = useState(false);
 
     // HP Live tab state
     const [activeTab, setActiveTab] = useState('obs'); // 'obs' | 'hp'
@@ -254,13 +257,16 @@ const DashboardLiveStreamingPage = () => {
         // eslint-disable-next-line
     }, [facingMode, isPublishing]);
 
-    const fetchStreamSettings = useCallback(async (isInitial = false) => {
+    const fetchStreamSettings = useCallback(async (isInitial = false, eventId = selectedEventId) => {
         try {
-            const res = await axios.get(`${API}/api/streaming/settings/`, getAuth());
+            const url = eventId
+                ? `${API}/api/streaming/settings/?event_id=${eventId}`
+                : `${API}/api/streaming/settings/`;
+            const res = await axios.get(url, getAuth());
             setStreamSettings(res.data);
             
-            // Only overwrite inputs on initial load to prevent wiping out what admin is typing!
-            if (isInitial) {
+            // Only overwrite inputs on initial load or event switch to prevent wiping out what admin is typing!
+            if (isInitial || eventId !== undefined) {
                 setStreamTitle(res.data.title || '');
                 setStreamDesc(res.data.description || '');
                 setIsStreamLive(res.data.is_live || false);
@@ -268,13 +274,14 @@ const DashboardLiveStreamingPage = () => {
                 setSaveRecording(res.data.save_recording !== false);
                 setThumbnailPreview(res.data.thumbnail ? `${API}${res.data.thumbnail}` : '');
                 setHpOrientation(res.data.orientation || 'landscape');
+                setRequireRegistration(res.data.require_registration || false);
             }
         } catch (err) {
             console.error('Gagal mengambil settings streaming:', err);
         } finally {
             setLoadingSettings(false);
         }
-    }, []);
+    }, [selectedEventId]);
 
     const fetchRecordings = useCallback(async () => {
         setLoadingRec(true);
@@ -291,16 +298,27 @@ const DashboardLiveStreamingPage = () => {
     useEffect(() => {
         const user = JSON.parse(localStorage.getItem('user'));
         if (!user || user.role !== 'admin') { navigate('/dashboard'); return; }
-        fetchStreamSettings(true);
+        
+        // Fetch events
+        axios.get(`${API}/api/events/`, getAuth())
+            .then(res => {
+                const eventList = res.data.results || res.data || [];
+                setEvents(eventList);
+            })
+            .catch(err => console.error('Gagal mengambil daftar event:', err));
+    }, [navigate]);
+
+    useEffect(() => {
+        fetchStreamSettings(true, selectedEventId);
         fetchRecordings();
 
         // Poll streaming settings (for active OBS status checks) every 10 seconds
         const pollInterval = setInterval(() => {
-            fetchStreamSettings(false);
+            fetchStreamSettings(false, selectedEventId);
         }, 10000);
 
         return () => clearInterval(pollInterval);
-    }, [navigate, fetchStreamSettings, fetchRecordings]);
+    }, [selectedEventId, fetchStreamSettings, fetchRecordings]);
 
     const handleSaveStreamSettings = async (e) => {
         e.preventDefault();
@@ -312,6 +330,7 @@ const DashboardLiveStreamingPage = () => {
             formData.append('is_live', isStreamLive);
             formData.append('latency_mode', latencyMode);
             formData.append('save_recording', saveRecording);
+            formData.append('require_registration', requireRegistration);
             if (thumbnailFile) {
                 formData.append('thumbnail', thumbnailFile);
             }
@@ -324,8 +343,12 @@ const DashboardLiveStreamingPage = () => {
                 }
             };
 
+            const url = selectedEventId 
+                ? `${API}/api/streaming/settings/?event_id=${selectedEventId}`
+                : `${API}/api/streaming/settings/`;
+
             const res = await axios.patch(
-                `${API}/api/streaming/settings/`,
+                url,
                 formData,
                 config
             );
@@ -346,10 +369,13 @@ const DashboardLiveStreamingPage = () => {
     const handleRegenerateStreamKey = async () => {
         if (!window.confirm('Apakah Anda yakin ingin meregenerasi stream key? Key lama di OBS Anda tidak akan berfungsi lagi. Jika ada live via HP, siaran tersebut juga akan terputus.')) return;
         try {
-            const res = await axios.post(`${API}/api/streaming/settings/`, {}, getAuth());
+            const url = selectedEventId 
+                ? `${API}/api/streaming/settings/?event_id=${selectedEventId}`
+                : `${API}/api/streaming/settings/`;
+            const res = await axios.post(url, {}, getAuth());
             alert(res.data.message);
             setStreamSettings(prev => ({ ...prev, stream_key: res.data.stream_key, whip_url: res.data.whip_url }));
-            fetchStreamSettings();
+            fetchStreamSettings(false, selectedEventId);
         } catch (err) {
             console.error('Gagal meregenerasi stream key:', err);
             alert('Gagal meregenerasi stream key.');
@@ -390,8 +416,12 @@ const DashboardLiveStreamingPage = () => {
         try {
             const success = await startStream(streamSettings.whip_url, hpOrientation, hpQuality);
             if (success) {
-                await axios.post(`${API}/api/streaming/whip-status/`, { action: 'start', orientation: hpOrientation }, getAuth());
-                fetchStreamSettings(false);
+                const body = { action: 'start', orientation: hpOrientation };
+                if (selectedEventId) {
+                    body.event_id = selectedEventId;
+                }
+                await axios.post(`${API}/api/streaming/whip-status/`, body, getAuth());
+                fetchStreamSettings(false, selectedEventId);
             }
         } finally {
             setHpLiveLoading(false);
@@ -404,8 +434,12 @@ const DashboardLiveStreamingPage = () => {
         try {
             await stopStream(streamSettings?.whip_url || '');
             // Notify backend that HP stream has stopped
-            await axios.post(`${API}/api/streaming/whip-status/`, { action: 'stop' }, getAuth());
-            fetchStreamSettings(false);
+            const body = { action: 'stop' };
+            if (selectedEventId) {
+                body.event_id = selectedEventId;
+            }
+            await axios.post(`${API}/api/streaming/whip-status/`, body, getAuth());
+            fetchStreamSettings(false, selectedEventId);
         } finally {
             setHpLiveLoading(false);
         }
@@ -494,8 +528,28 @@ const DashboardLiveStreamingPage = () => {
                         
                         {/* LEFT FORM: Streaming Control */}
                         <div className="lg:col-span-5 flex flex-col gap-5">
+                            
+                             {/* ── Event Selector Box ── */}
+                             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-3">
+                                 <label className="text-[10px] font-black uppercase tracking-wider text-gray-500 block">Kaitkan Streaming dengan Event</label>
+                                 <select
+                                     value={selectedEventId}
+                                     onChange={(e) => setSelectedEventId(e.target.value)}
+                                     className="w-full text-xs border border-gray-200 rounded-xl px-3.5 py-2.5 bg-white outline-none focus:ring-2 focus:ring-indigo-400 transition font-medium"
+                                 >
+                                     <option value="">Umum (Tidak Terkait Event / Siaran Utama)</option>
+                                     {events.map(ev => (
+                                         <option key={ev.id} value={ev.id}>
+                                             {ev.title} {ev.is_online ? '(Online)' : ''}
+                                         </option>
+                                     ))}
+                                 </select>
+                                 <p className="text-[9px] text-gray-400 leading-normal">
+                                     Admin dapat menyiarkan live stream ke event tertentu secara serempak. Tiap event memiliki Stream Key dan chat terisolasi.
+                                 </p>
+                             </div>
 
-                            {/* ── Tab Switcher ── */}
+                             {/* ── Tab Switcher ── */}
                             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-1.5 flex gap-1">
                                 <button
                                     onClick={() => setActiveTab('hp')}
@@ -659,7 +713,7 @@ const DashboardLiveStreamingPage = () => {
                                                         Server mendeteksi siaran HP aktif dari sesi lain. Jika siaran sudah berhenti, klik "Hentikan Paksa" di bawah.
                                                     </p>
                                                     <button
-                                                        onClick={() => axios.post(`${API}/api/streaming/whip-status/`, { action: 'stop' }, getAuth()).then(() => fetchStreamSettings(false))}
+                                                        onClick={() => axios.post(`${API}/api/streaming/whip-status/`, { action: 'stop', event_id: selectedEventId }, getAuth()).then(() => fetchStreamSettings(false, selectedEventId))}
                                                         className="mt-2 text-[9px] font-black text-red-600 hover:underline"
                                                     >
                                                         Hentikan Paksa →
@@ -806,6 +860,25 @@ const DashboardLiveStreamingPage = () => {
                                                 <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
                                             </label>
                                         </div>
+
+                                        {/* Toggle Require Registration */}
+                                        {selectedEventId && (
+                                            <div className="flex items-center justify-between p-3.5 bg-gray-50 rounded-2xl border border-gray-100">
+                                                <div>
+                                                    <p className="text-xs font-black text-gray-800">Batasi Hanya Peserta Terdaftar</p>
+                                                    <p className="text-[10px] text-gray-400 mt-0.5">Hanya user terdaftar & approved yang bisa menonton</p>
+                                                </div>
+                                                <label className="relative inline-flex items-center cursor-pointer">
+                                                    <input 
+                                                        type="checkbox" 
+                                                        checked={requireRegistration} 
+                                                        onChange={(e) => setRequireRegistration(e.target.checked)} 
+                                                        className="sr-only peer" 
+                                                    />
+                                                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                                                </label>
+                                            </div>
+                                        )}
 
                                         {/* Title input */}
                                         <div className="space-y-1">

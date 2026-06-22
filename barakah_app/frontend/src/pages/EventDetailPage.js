@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import axios from 'axios';
 import { Helmet } from 'react-helmet';
 import { QRCodeSVG } from 'qrcode.react';
 import Header from '../components/layout/Header';
@@ -57,6 +58,7 @@ const EventDetailPage = () => {
     const [voucherLoading, setVoucherLoading] = useState(false);
     const [voucherError, setVoucherError] = useState('');
     const [activeImageIndex, setActiveImageIndex] = useState(0);
+    const [showStreamModal, setShowStreamModal] = useState(false);
 
     // Testimonies States
     const [testimonies, setTestimonies] = useState([]);
@@ -808,6 +810,36 @@ const EventDetailPage = () => {
 
                 {/* Event Info Card - Clean and Uncovering the Image */}
                 <div className="bg-white p-6 sm:p-8 rounded-[2.5rem] shadow-xl border border-gray-100 mt-6 max-w-xl sm:max-w-2xl mx-auto relative z-20">
+                    {/* Live Stream Banner */}
+                    {event.active_stream && event.active_stream.is_live && (
+                        <div className="mb-6 bg-red-50 border-2 border-red-500 rounded-3xl p-5 shadow-lg shadow-red-200">
+                            <div className="flex items-center justify-between gap-3 flex-wrap">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-3.5 h-3.5 bg-red-600 rounded-full animate-ping flex-shrink-0"></div>
+                                    <div className="w-3.5 h-3.5 bg-red-600 rounded-full flex-shrink-0 -ml-7 z-10"></div>
+                                    <div>
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-red-500">🔴 LIVE STREAMING SEDANG BERLANGSUNG</p>
+                                        <p className="font-extrabold text-sm text-red-950 mt-0.5">{event.active_stream.title || 'Siaran Langsung'}</p>
+                                    </div>
+                                </div>
+                                {event.active_stream.has_access ? (
+                                    <button
+                                        onClick={() => setShowStreamModal(true)}
+                                        className="bg-red-600 hover:bg-red-700 text-white font-extrabold text-xs uppercase tracking-wider px-5 py-3 rounded-2xl shadow-md transition-all duration-300 transform hover:scale-105 active:scale-95 flex items-center gap-1.5"
+                                    >
+                                        <span className="material-icons text-sm">play_circle_filled</span>
+                                        Tonton Sekarang
+                                    </button>
+                                ) : (
+                                    <div className="text-[10px] text-red-800 font-bold bg-red-100 border border-red-200 px-4 py-3 rounded-2xl leading-normal max-w-xs">
+                                        <p className="font-extrabold mb-0.5">🔒 Siaran Terkunci</p>
+                                        <p className="font-medium text-red-700/80">Hanya untuk peserta terdaftar. Silakan daftar event di bawah agar dapat menonton siaran live.</p>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
                     <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mb-4">
                         <span className="px-3 py-1 bg-green-600 rounded-full text-[10px] font-bold uppercase tracking-widest text-white shadow-lg shadow-green-900/10">
                             {event.category || 'Event'}
@@ -2403,6 +2435,391 @@ const EventDetailPage = () => {
                 isOpen={isProfileModalOpen}
                 onClose={() => setIsProfileModalOpen(false)}
             />
+
+            {showStreamModal && event.active_stream && (
+                <EventStreamingPlayerModal
+                    stream={event.active_stream}
+                    onClose={() => setShowStreamModal(false)}
+                />
+            )}
+        </div>
+    );
+};
+
+// ─── Component: Lag-free Live Streaming Player inside Modal ─────────────────────
+const EventStreamingPlayerModal = ({ stream, onClose }) => {
+    const [comments, setComments] = useState([]);
+    const [newComment, setNewComment] = useState('');
+    const [likes, setLikes] = useState({ total_likes: 0, has_liked: false });
+    const [isSending, setIsSending] = useState(false);
+    const [isPlayerError, setIsPlayerError] = useState(false);
+    const [hlsRetrying, setHlsRetrying] = useState(false);
+    const [viewerCount, setViewerCount] = useState(1);
+    const [videoScale, setVideoScale] = useState('contain');
+    const [showScaleMenu, setShowScaleMenu] = useState(false);
+    const [isFullscreen, setIsFullscreen] = useState(false);
+
+    const currentUser = JSON.parse(localStorage.getItem('user'));
+    const isLoggedIn = !!currentUser;
+
+    const videoRef = useRef(null);
+    const chatContainerRef = useRef(null);
+    const hlsInstanceRef = useRef(null);
+    const currentHlsUrlRef = useRef(null);
+    const wrapperRef = useRef(null);
+
+    const API_BASE = process.env.REACT_APP_API_BASE_URL;
+
+    // Helper to get auth headers
+    const getHeaders = useCallback(() => {
+        return currentUser?.access ? { headers: { Authorization: `Bearer ${currentUser.access}` } } : {};
+    }, [currentUser?.access]);
+
+    const fetchComments = useCallback(async () => {
+        try {
+            const res = await axios.get(`${API_BASE}/api/streaming/comments/?stream_key=${stream.stream_key}`);
+            const sorted = (res.data.results || res.data).sort(
+                (a, b) => new Date(a.created_at) - new Date(b.created_at)
+            );
+            setComments(sorted.slice(-50));
+        } catch (err) {
+            console.error('Gagal mengambil komentar stream:', err);
+        }
+    }, [stream.stream_key, API_BASE]);
+
+    const fetchLikes = useCallback(async () => {
+        try {
+            const res = await axios.get(`${API_BASE}/api/streaming/likes/?stream_key=${stream.stream_key}`, getHeaders());
+            setLikes(res.data);
+        } catch (err) {
+            console.error('Gagal mengambil likes stream:', err);
+        }
+    }, [stream.stream_key, API_BASE, getHeaders]);
+
+    // Polling and heartbeat
+    useEffect(() => {
+        fetchComments();
+        fetchLikes();
+
+        let sessionKey = sessionStorage.getItem('bae_streaming_session_key');
+        if (!sessionKey) {
+            sessionKey = 'viewer_' + Math.random().toString(36).substr(2, 9) + '_' + Date.now();
+            sessionStorage.setItem('bae_streaming_session_key', sessionKey);
+        }
+
+        const sendHeartbeat = async () => {
+            try {
+                const key = sessionStorage.getItem('bae_streaming_session_key');
+                if (!key) return;
+                const res = await axios.post(`${API_BASE}/api/streaming/viewers/`, { 
+                    session_key: key, 
+                    stream_key: stream.stream_key 
+                });
+                setViewerCount(res.data.total_viewers || 1);
+            } catch (err) {
+                console.error('Gagal mengirim heartbeat stream:', err);
+            }
+        };
+
+        sendHeartbeat();
+
+        const chatInterval = setInterval(fetchComments, 3000);
+        const heartbeatInterval = setInterval(sendHeartbeat, 10000);
+
+        return () => {
+            clearInterval(chatInterval);
+            clearInterval(heartbeatInterval);
+        };
+    }, [stream.stream_key, fetchComments, fetchLikes, API_BASE]);
+
+    // Scroll chat to bottom
+    useEffect(() => {
+        if (chatContainerRef.current) {
+            chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+        }
+    }, [comments]);
+
+    // Player initialization
+    useEffect(() => {
+        if (!stream.hls_url || !videoRef.current) return;
+
+        const hlsUrl = stream.hls_url.startsWith('http') ? stream.hls_url : `${API_BASE}${stream.hls_url}`;
+        const video = videoRef.current;
+
+        const isHlsSupported = window.Hls && window.Hls.isSupported();
+
+        if (currentHlsUrlRef.current === hlsUrl) return;
+        currentHlsUrlRef.current = hlsUrl;
+
+        setIsPlayerError(false);
+        setHlsRetrying(false);
+
+        if (hlsInstanceRef.current) {
+            hlsInstanceRef.current.destroy();
+            hlsInstanceRef.current = null;
+        }
+
+        if (isHlsSupported) {
+            const hls = new window.Hls({
+                enableWorker: true,
+                lowLatencyMode: true,
+                backBufferLength: 90,
+                maxBufferLength: 6,
+                maxMaxBufferLength: 12,
+                liveSyncDuration: 3,
+                liveMaxLatencyDuration: 6,
+                manifestLoadingMaxRetry: 10,
+                manifestLoadingRetryDelay: 1000,
+                levelLoadingMaxRetry: 10,
+                levelLoadingRetryDelay: 1000,
+            });
+            hlsInstanceRef.current = hls;
+            hls.loadSource(hlsUrl);
+            hls.attachMedia(video);
+
+            hls.on(window.Hls.Events.MANIFEST_PARSED, () => {
+                video.play().catch(() => {});
+            });
+
+            hls.on(window.Hls.Events.ERROR, (event, data) => {
+                if (data.fatal) {
+                    switch (data.type) {
+                        case window.Hls.ErrorTypes.NETWORK_ERROR:
+                            hls.startLoad();
+                            break;
+                        case window.Hls.ErrorTypes.MEDIA_ERROR:
+                            hls.recoverMediaError();
+                            break;
+                        default:
+                            setIsPlayerError(true);
+                            hls.destroy();
+                            break;
+                    }
+                }
+            });
+        } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+            video.src = hlsUrl;
+            video.onloadedmetadata = () => {
+                video.play().catch(() => {});
+            };
+        } else {
+            setIsPlayerError(true);
+        }
+
+        return () => {
+            if (hlsInstanceRef.current) {
+                hlsInstanceRef.current.destroy();
+                hlsInstanceRef.current = null;
+            }
+        };
+    }, [stream.hls_url, API_BASE]);
+
+    // Fullscreen toggle
+    const toggleFullscreen = () => {
+        if (!wrapperRef.current) return;
+        if (!document.fullscreenElement) {
+            wrapperRef.current.requestFullscreen().catch(() => {});
+            setIsFullscreen(true);
+        } else {
+            document.exitFullscreen().catch(() => {});
+            setIsFullscreen(false);
+        }
+    };
+
+    useEffect(() => {
+        const handleFS = () => {
+            setIsFullscreen(!!document.fullscreenElement);
+        };
+        document.addEventListener('fullscreenchange', handleFS);
+        return () => document.removeEventListener('fullscreenchange', handleFS);
+    }, []);
+
+    const handleSendComment = async (e) => {
+        e.preventDefault();
+        if (!newComment.trim() || isSending) return;
+        setIsSending(true);
+        try {
+            await axios.post(`${API_BASE}/api/streaming/comments/`, {
+                stream_key: stream.stream_key,
+                comment: newComment
+            }, getHeaders());
+            setNewComment('');
+            fetchComments();
+        } catch (err) {
+            console.error('Gagal mengirim komentar:', err);
+        } finally {
+            setIsSending(false);
+        }
+    };
+
+    const handleToggleLike = async () => {
+        if (!isLoggedIn) {
+            alert('Silakan login terlebih dahulu untuk memberikan dukungan like.');
+            return;
+        }
+        try {
+            const res = await axios.post(`${API_BASE}/api/streaming/likes/`, {
+                stream_key: stream.stream_key
+            }, getHeaders());
+            setLikes({
+                total_likes: res.data.total_likes,
+                has_liked: res.data.liked
+            });
+        } catch (err) {
+            console.error('Gagal mengirim like:', err);
+        }
+    };
+
+    return (
+        <div className="fixed inset-0 z-[200] bg-black/90 backdrop-blur-md flex items-center justify-center p-0 sm:p-4 animate-fade-in overflow-hidden">
+            <div 
+                ref={wrapperRef}
+                className="w-full h-full sm:h-[85vh] max-w-6xl bg-zinc-950 sm:rounded-3xl border border-zinc-800 shadow-2xl flex flex-col md:flex-row relative overflow-hidden"
+            >
+                {/* Top overlay controls for the whole modal player (always visible over video on mobile, top bar on desktop) */}
+                <div className="absolute top-4 left-4 flex items-center gap-2 z-50">
+                    <div className="bg-red-600 text-white text-[9px] font-black tracking-widest px-2.5 py-1 rounded-full uppercase flex items-center gap-1 shadow-md animate-pulse">
+                        <span className="w-1.5 h-1.5 bg-white rounded-full"></span>
+                        LIVE
+                    </div>
+                    <div className="bg-black/60 backdrop-blur text-white text-[9px] font-black tracking-widest px-2.5 py-1 rounded-full flex items-center gap-1 border border-white/10 shadow-md">
+                        <span className="material-icons text-[10px]">visibility</span>
+                        {viewerCount}
+                    </div>
+                </div>
+
+                <div className="absolute top-4 right-4 flex items-center gap-2 z-50">
+                    {/* Scale Menu */}
+                    <div className="relative">
+                        <button
+                            onClick={() => setShowScaleMenu(!showScaleMenu)}
+                            className="w-9 h-9 bg-black/60 hover:bg-black/80 backdrop-blur text-white rounded-full flex items-center justify-center transition border border-white/10 shadow-md"
+                            title="Skala Aspek"
+                        >
+                            <span className="material-icons text-sm">aspect_ratio</span>
+                        </button>
+                        {showScaleMenu && (
+                            <div className="absolute top-11 right-0 bg-zinc-950 border border-zinc-800 rounded-xl p-1 shadow-2xl flex flex-col gap-0.5 z-[60] min-w-[100px]">
+                                {['contain', 'cover', 'fill'].map(mode => (
+                                    <button
+                                        key={mode}
+                                        onClick={() => { setVideoScale(mode); setShowScaleMenu(false); }}
+                                        className={`text-[9px] font-bold text-left px-2.5 py-1.5 rounded-lg uppercase tracking-wider transition ${videoScale === mode ? 'bg-zinc-800 text-white' : 'text-zinc-400 hover:bg-zinc-800/50 hover:text-white'}`}
+                                    >
+                                        {mode === 'contain' ? 'Fit' : mode === 'cover' ? 'Stretch' : 'Fill'}
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Fullscreen Button */}
+                    <button
+                        onClick={toggleFullscreen}
+                        className="w-9 h-9 bg-black/60 hover:bg-black/80 backdrop-blur text-white rounded-full flex items-center justify-center transition border border-white/10 shadow-md"
+                        title="Fullscreen"
+                    >
+                        <span className="material-icons text-sm">{isFullscreen ? 'fullscreen_exit' : 'fullscreen'}</span>
+                    </button>
+
+                    {/* Close Button */}
+                    <button 
+                        onClick={onClose}
+                        className="w-9 h-9 bg-black/60 hover:bg-red-600 hover:text-white backdrop-blur text-white/90 rounded-full flex items-center justify-center transition border border-white/10 shadow-md animate-fade-in"
+                        title="Tutup"
+                    >
+                        <span className="material-icons text-sm">close</span>
+                    </button>
+                </div>
+
+                {/* Left side: Video Player */}
+                <div className="w-full aspect-video max-h-[45vh] md:max-h-none md:aspect-auto md:flex-1 bg-black flex flex-col relative justify-center shrink-0 md:shrink">
+                    {isPlayerError ? (
+                        <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-6 text-white bg-zinc-900/50">
+                            <span className="material-icons text-5xl text-zinc-500 mb-3">error_outline</span>
+                            <h4 className="font-extrabold text-sm uppercase tracking-wider text-zinc-300">Siaran Terputus / Tidak Tersedia</h4>
+                            <p className="text-[10px] text-zinc-500 mt-1 max-w-xs">Silakan coba beberapa saat lagi atau hubungi panitia penyelenggara.</p>
+                        </div>
+                    ) : (
+                        <video
+                            ref={videoRef}
+                            playsInline
+                            controls
+                            className="w-full h-full max-h-full"
+                            style={{ objectFit: videoScale }}
+                        />
+                    )}
+                </div>
+
+                {/* Right side: Chat & Details Panel */}
+                <div className="w-full md:w-80 flex-1 md:flex-initial md:h-full bg-zinc-950 flex flex-col border-t md:border-t-0 md:border-l border-zinc-800 relative min-h-0">
+                    {/* Header */}
+                    <div className="p-3.5 border-b border-zinc-900 shrink-0">
+                        <h3 className="text-xs font-black text-white truncate">{stream.title || 'Live Stream Event'}</h3>
+                        <p className="text-[9px] text-zinc-500 mt-0.5 truncate">Terisolasi per event siaran</p>
+                    </div>
+
+                    {/* Chat Area */}
+                    <div 
+                        ref={chatContainerRef}
+                        className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar"
+                    >
+                        {comments.length === 0 ? (
+                            <div className="h-full flex items-center justify-center text-center text-zinc-600">
+                                <p className="text-[10px] italic">Belum ada komentar. Tulis sesuatu di bawah!</p>
+                            </div>
+                        ) : (
+                            comments.map(c => (
+                                <div key={c.id} className="text-[10px] leading-relaxed break-words bg-zinc-900/30 p-2 rounded-xl border border-zinc-900/60">
+                                    <span className="font-extrabold text-zinc-300 block">{c.user_details?.full_name || c.user_details?.username || 'User'}</span>
+                                    <span className="text-zinc-400 font-medium">{c.comment}</span>
+                                </div>
+                            ))
+                        )}
+                    </div>
+
+                    {/* Likes & Chat Box Input */}
+                    <div className="p-3 bg-zinc-900/40 border-t border-zinc-900 shrink-0 space-y-2">
+                        {/* Likes bar */}
+                        <div className="flex items-center justify-between">
+                            <span className="text-[9px] text-zinc-500 font-bold uppercase tracking-widest">{likes.total_likes} Likes</span>
+                            <button
+                                onClick={handleToggleLike}
+                                className={`flex items-center gap-1 px-3 py-1 rounded-full border text-[9px] font-black uppercase tracking-wider transition ${likes.has_liked ? 'bg-red-500/20 border-red-500/40 text-red-400' : 'bg-zinc-800 border-zinc-700 text-zinc-400 hover:text-white'}`}
+                            >
+                                <span className="material-icons text-[10px]">{likes.has_liked ? 'favorite' : 'favorite_border'}</span>
+                                {likes.has_liked ? 'Liked' : 'Like'}
+                            </button>
+                        </div>
+
+                        {/* Input form */}
+                        {isLoggedIn ? (
+                            <form onSubmit={handleSendComment} className="flex gap-1.5 items-center">
+                                <input
+                                    type="text"
+                                    placeholder="Tulis komentar..."
+                                    value={newComment}
+                                    onChange={(e) => setNewComment(e.target.value)}
+                                    className="flex-1 bg-zinc-900 border border-zinc-800 text-white rounded-xl px-3 py-2 text-[10px] outline-none focus:border-zinc-700 transition"
+                                    maxLength={200}
+                                    disabled={isSending}
+                                />
+                                <button
+                                    type="submit"
+                                    disabled={isSending || !newComment.trim()}
+                                    className="w-7 h-7 bg-red-600 hover:bg-red-700 text-white rounded-full flex items-center justify-center transition disabled:opacity-50"
+                                >
+                                    <span className="material-icons text-xs">send</span>
+                                </button>
+                            </form>
+                        ) : (
+                            <div className="text-center py-2 bg-zinc-900/60 rounded-xl border border-zinc-800">
+                                <p className="text-[8px] text-zinc-500">Silakan login untuk mengirim komentar.</p>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </div>
         </div>
     );
 };

@@ -132,6 +132,7 @@ import ScrollToTop from './components/layout/ScrollToTop';
 import NotificationService from './services/NotificationService';
 import { getSessions } from './services/chatApi';
 import { forumApi } from './services/forumApi';
+import axios from 'axios';
 
 const NotificationHandler = () => {
   const location = useLocation();
@@ -198,6 +199,29 @@ const NotificationHandler = () => {
           });
         } catch (fe) {
           console.error('Failed to poll forum mentions:', fe);
+        }
+
+        // Check live stream notifications
+        try {
+          const streamNotifsRes = await axios.get(
+            `${process.env.REACT_APP_API_BASE_URL}/api/streaming/notifications/`,
+            { headers: { Authorization: `Bearer ${currentUser?.access}` } }
+          );
+          const streamNotifs = streamNotifsRes.data;
+          for (const notif of streamNotifs) {
+            NotificationService.showNotification(`🔴 Live Stream Dimulai!`, {
+              body: `Live stream '${notif.stream_title}' untuk event '${notif.event_title}' sedang berlangsung.`,
+              url: `/event/${notif.event_slug}`
+            });
+            // Mark notification as read
+            await axios.post(
+              `${process.env.REACT_APP_API_BASE_URL}/api/streaming/notifications/${notif.id}/mark-read/`,
+              {},
+              { headers: { Authorization: `Bearer ${currentUser?.access}` } }
+            );
+          }
+        } catch (se) {
+          console.error('Failed to poll stream notifications:', se);
         }
 
       } catch (err) {
