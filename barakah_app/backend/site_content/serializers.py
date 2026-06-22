@@ -59,6 +59,18 @@ class ActivitySerializer(serializers.ModelSerializer):
             return obj.likes.filter(id=request.user.id).exists()
         return False
 
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        if not representation.get('header_image'):
+            image_url = instance.get_image_url
+            if image_url:
+                request = self.context.get('request')
+                if request:
+                    representation['header_image'] = request.build_absolute_uri(image_url)
+                else:
+                    representation['header_image'] = image_url
+        return representation
+
 class HeroBannerSerializer(serializers.ModelSerializer):
     class Meta:
         model = HeroBanner

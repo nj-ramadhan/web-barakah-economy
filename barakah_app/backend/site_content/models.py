@@ -76,6 +76,16 @@ class Activity(models.Model):
         help_text="The event this documentation refers to"
     )
 
+    @property
+    def get_image_url(self):
+        if self.header_image and self.header_image.name:
+            return self.header_image.url
+        if self.event:
+            event_image = self.event.header_image if (self.event.header_image and self.event.header_image.name) else self.event.thumbnail
+            if event_image and event_image.name:
+                return event_image.url
+        return None
+
     class Meta:
         ordering = ['-date', '-created_at']
 

@@ -33,24 +33,7 @@ def create_activity_documentation(sender, instance, created, **kwargs):
                     event=instance
                 )
                 
-                # Copy image (prefer header_image, fallback to thumbnail)
-                event_image = instance.header_image if (instance.header_image and instance.header_image.name) else instance.thumbnail
-                if event_image:
-                    try:
-                        # Reset file pointer and read the image safely
-                        try:
-                            event_image.open()
-                        except Exception:
-                            pass
-                        import os
-                        image_name = os.path.basename(event_image.name.replace('\\', '/'))
-                        activity.header_image.save(
-                            image_name,
-                            ContentFile(event_image.read()),
-                            save=True
-                        )
-                    except Exception as img_err:
-                        logger.error(f"Failed to copy event image for activity from event {instance.id}: {img_err}")
+                # Image copying code is removed/commented out here to use the dynamic fallback instead.
                 
                 logger.info(f"Automatically created Activity documentation for Event: {instance.title}")
             

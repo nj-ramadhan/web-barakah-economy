@@ -12,8 +12,8 @@
     <meta property="og:url" content="{{ request.build_absolute_uri }}">
     <meta property="og:title" content="{{ activity.title }}">
     <meta property="og:description" content="{{ activity.content|striptags|truncatewords:20 }}">
-    {% if activity.header_image %}
-    <meta property="og:image" content="https://{{ request.get_host }}{{ activity.header_image.url }}">
+    {% if activity.get_image_url %}
+    <meta property="og:image" content="https://{{ request.get_host }}{{ activity.get_image_url }}">
     <meta property="og:image:type" content="image/jpeg">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
@@ -24,8 +24,8 @@
     <meta property="twitter:url" content="{{ request.build_absolute_uri }}">
     <meta property="twitter:title" content="{{ activity.title }}">
     <meta property="twitter:description" content="{{ activity.content|striptags|truncatewords:20 }}">
-    {% if activity.header_image %}
-    <meta property="twitter:image" content="https://{{ request.get_host }}{{ activity.header_image.url }}">
+    {% if activity.get_image_url %}
+    <meta property="twitter:image" content="https://{{ request.get_host }}{{ activity.get_image_url }}">
     {% endif %}
 
     <style>

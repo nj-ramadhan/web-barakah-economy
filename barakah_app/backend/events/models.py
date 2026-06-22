@@ -143,9 +143,25 @@ class Event(models.Model):
                 slug = f"{base_slug}-{uuid.uuid4().hex[:4]}"
             self.slug = slug
         
+        # Sync header_image and header_image_full on update if they match the old thumbnails
+        if self.pk:
+            try:
+                orig = Event.objects.get(pk=self.pk)
+                if self.thumbnail != orig.thumbnail:
+                    if not self.header_image or self.header_image == orig.thumbnail:
+                        self.header_image = self.thumbnail
+                if self.thumbnail_full != orig.thumbnail_full:
+                    if not self.header_image_full or self.header_image_full == orig.thumbnail_full:
+                        self.header_image_full = self.thumbnail_full
+            except Event.DoesNotExist:
+                pass
+        
         # If header_image is empty but thumbnail is present, use thumbnail
         if not self.header_image and self.thumbnail:
             self.header_image = self.thumbnail
+            
+        if not self.header_image_full and self.thumbnail_full:
+            self.header_image_full = self.thumbnail_full
             
         super().save(*args, **kwargs)
 
