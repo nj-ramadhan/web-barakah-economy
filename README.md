@@ -1,6 +1,12 @@
 # Super App for Barakah Economy Society
-A step-by-step guide to build a crowdfunding website using Django and React, based on the layout shown in the reference images.
-Building a Crowdfunding Platform with Django and React
+
+This repository contains the complete ecosystem for the **Barakah Economy Society**, featuring:
+1. **Web App (`barakah_app`)**: A web-based platform with modules for Crowdfunding, E-learning, and E-commerce built using Django REST Framework and React.
+2. **Mobile App (`bae_run`)**: A React Native tracking mobile application with integrated real-time GPS tracking and map tracing for outdoor activities (running, walking, cycling) sync'd with the backend activity logger.
+
+---
+
+# Building a Crowdfunding Platform with Django and React
 
 
 # Step 1: Project Setup 
@@ -1221,182 +1227,43 @@ http://ypmn-peduli.org
 http://barakah-economy.com
 
 Ensure both websites are working correctly.
-```
-sdi-web-django-react-sa-bae
-├─ barakah_app
-│  ├─ backend
-│  │  ├─ accounts
-│  │  │  ├─ admin.py
-│  │  │  ├─ apps.py
-│  │  │  ├─ migrations
-│  │  │  │  ├─ 0001_initial.py
-│  │  │  │  └─ __init__.py
-│  │  │  ├─ models.py
-│  │  │  ├─ tests.py
-│  │  │  ├─ views.py
-│  │  │  └─ __init__.py
-│  │  ├─ barakah_app
-│  │  │  ├─ asgi.py
-│  │  │  ├─ settings.py
-│  │  │  ├─ urls.py
-│  │  │  ├─ wsgi.py
-│  │  │  └─ __init__.py
-│  │  ├─ campaigns
-│  │  │  ├─ admin.py
-│  │  │  ├─ apps.py
-│  │  │  ├─ migrations
-│  │  │  │  ├─ 0001_initial.py
-│  │  │  │  ├─ 0002_alter_campaign_description_alter_update_description.py
-│  │  │  │  └─ __init__.py
-│  │  │  ├─ models.py
-│  │  │  ├─ serializers.py
-│  │  │  ├─ tests.py
-│  │  │  ├─ views.py
-│  │  │  └─ __init__.py
-│  │  ├─ courses
-│  │  │  ├─ admin.py
-│  │  │  ├─ apps.py
-│  │  │  ├─ migrations
-│  │  │  │  ├─ 0001_initial.py
-│  │  │  │  ├─ 0002_course_duration_alter_course_category.py
-│  │  │  │  └─ __init__.py
-│  │  │  ├─ models.py
-│  │  │  ├─ serializers.py
-│  │  │  ├─ tests.py
-│  │  │  ├─ views.py
-│  │  │  └─ __init__.py
-│  │  ├─ donations
-│  │  │  ├─ admin.py
-│  │  │  ├─ apps.py
-│  │  │  ├─ migrations
-│  │  │  │  ├─ 0001_initial.py
-│  │  │  │  ├─ 0002_alter_donation_payment_method.py
-│  │  │  │  └─ __init__.py
-│  │  │  ├─ models.py
-│  │  │  ├─ serializers.py
-│  │  │  ├─ signals.py
-│  │  │  ├─ tests.py
-│  │  │  ├─ urls.py
-│  │  │  ├─ views.py
-│  │  │  └─ __init__.py
-│  │  ├─ manage.py
-│  │  ├─ payments
-│  │  │  ├─ admin.py
-│  │  │  ├─ apps.py
-│  │  │  ├─ migrations
-│  │  │  │  └─ __init__.py
-│  │  │  ├─ models.py
-│  │  │  ├─ tests.py
-│  │  │  ├─ urls.py
-│  │  │  ├─ views.py
-│  │  │  └─ __init__.py
-│  │  ├─ products
-│  │  │  ├─ admin.py
-│  │  │  ├─ apps.py
-│  │  │  ├─ migrations
-│  │  │  │  ├─ 0001_initial.py
-│  │  │  │  ├─ 0002_product_stock_product_unit_alter_product_category.py
-│  │  │  │  └─ __init__.py
-│  │  │  ├─ models.py
-│  │  │  ├─ serializers.py
-│  │  │  ├─ tests.py
-│  │  │  ├─ views.py
-│  │  │  └─ __init__.py
-│  │  ├─ requirements.txt
-│  │  └─ transactions
-│  │     ├─ admin.py
-│  │     ├─ apps.py
-│  │     ├─ migrations
-│  │     │  └─ __init__.py
-│  │     ├─ models.py
-│  │     ├─ tests.py
-│  │     ├─ views.py
-│  │     └─ __init__.py
-│  └─ frontend
-│     ├─ package-lock.json
-│     ├─ package.json
-│     ├─ postcss.config.js
-│     ├─ public
-│     │  ├─ favicon.ico
-│     │  ├─ images
-│     │  │  ├─ bjb-logo.png
-│     │  │  ├─ bsi-logo.png
-│     │  │  ├─ drawing.svg
-│     │  │  ├─ favicon.ico
-│     │  │  ├─ gopay-logo.png
-│     │  │  ├─ logo.png
-│     │  │  ├─ logo192.png
-│     │  │  ├─ logo512.png
-│     │  │  ├─ poster-open-volunteer.jpg
-│     │  │  └─ poster.jpg
-│     │  ├─ index.html
-│     │  ├─ logo.png
-│     │  ├─ logo192.png
-│     │  ├─ logo512.png
-│     │  ├─ manifest.json
-│     │  └─ robots.txt
-│     ├─ README.md
-│     ├─ src
-│     │  ├─ App.css
-│     │  ├─ App.js
-│     │  ├─ App.test.js
-│     │  ├─ components
-│     │  │  ├─ campaigns
-│     │  │  │  ├─ CampaignCard.js
-│     │  │  │  ├─ CampaignDetails.js
-│     │  │  │  ├─ CampaignGrid.js
-│     │  │  │  └─ CampaignSlider.js
-│     │  │  ├─ donations
-│     │  │  │  ├─ DonationForm.js
-│     │  │  │  ├─ DonationPresets.js
-│     │  │  │  └─ PaymentMethod.js
-│     │  │  └─ layout
-│     │  │     ├─ Footer.js
-│     │  │     ├─ Header.js
-│     │  │     ├─ HeaderHome.js
-│     │  │     └─ Navigation.js
-│     │  ├─ index.css
-│     │  ├─ index.js
-│     │  ├─ logo.svg
-│     │  ├─ pages
-│     │  │  ├─ AboutUs.js
-│     │  │  ├─ admin
-│     │  │  │  ├─ CampaignList.js
-│     │  │  │  └─ NewCampaign.js
-│     │  │  ├─ CampaignDetail.js
-│     │  │  ├─ CampaignPage.js
-│     │  │  ├─ CheckoutPage.js
-│     │  │  ├─ ContactUs.js
-│     │  │  ├─ CourseDetail.js
-│     │  │  ├─ DonationPage.js
-│     │  │  ├─ EcommercePage.js
-│     │  │  ├─ EcoursePage.js
-│     │  │  ├─ Home.js
-│     │  │  ├─ JoinCoursePage.js
-│     │  │  ├─ LoginPage.js
-│     │  │  ├─ PaymentConfirmation.js
-│     │  │  ├─ PaymentFailedPage.js
-│     │  │  ├─ PaymentSuccessPage.js
-│     │  │  ├─ ProductDetail.js
-│     │  │  └─ RegisterPage.js
-│     │  ├─ reportWebVitals.js
-│     │  ├─ services
-│     │  │  ├─ api.js
-│     │  │  ├─ auth.js
-│     │  │  ├─ campaigns.js
-│     │  │  └─ donations.js
-│     │  ├─ setupTests.js
-│     │  ├─ styles
-│     │  │  ├─ Body.css
-│     │  │  ├─ Footer.css
-│     │  │  ├─ Header.css
-│     │  │  └─ Navigation.css
-│     │  └─ utils
-│     │     ├─ formatters.js
-│     │     └─ validators.js
-│     └─ tailwind.config.js
-├─ LICENSE
-├─ README.md
-└─ sdi-web-django-react-sa-bae.code-workspace
 
+```
+web-barakah-economy
+├── LICENSE
+├── README.md
+├── deploy.sh
+├── fix_db.py
+├── web-barakah-economy.code-workspace
+├── bae_run (React Native Mobile Application)
+│   ├── App.tsx             # Main Native entrypoint & screen routing
+│   ├── index.js            # Metro entry register
+│   ├── package.json        # Dependencies (react-native-maps, geolocation, etc.)
+│   ├── tsconfig.json       # TypeScript config
+│   ├── android/            # Native Android project files
+│   ├── ios/                # Native iOS project files
+│   └── src/
+│       ├── api/
+│       │   └── client.js   # Axios instance with auth tokens
+│       └── screens/
+│           ├── LoginScreen.js    # Login screen
+│           └── TrackingScreen.js # Maps & high-accuracy GPS tracking
+└── barakah_app (Web Application)
+    ├── backend (Django REST Framework)
+    │   ├── accounts/       # User profiles & authentication
+    │   ├── campaigns/      # Crowdfunding campaigns
+    │   ├── donations/      # Donation records & processing
+    │   ├── courses/        # Educational courses
+    │   ├── products/       # Store products
+    │   ├── tracking/       # GPS tracking activities log endpoint
+    │   ├── transactions/   # Payment logs & ledgers
+    │   ├── manage.py       # Django manager
+    │   └── requirements.txt
+    └── frontend (ReactJS Web App)
+        ├── package.json
+        ├── tailwind.config.js
+        └── src/
+            ├── components/ # Shared UI elements
+            ├── pages/      # Route pages (Home, Ecourse, Ecommerce, etc.)
+            └── services/   # API connectors
 ```

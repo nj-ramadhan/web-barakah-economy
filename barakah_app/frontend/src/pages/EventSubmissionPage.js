@@ -432,11 +432,108 @@ const EventSubmissionPage = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        // Final validation for form fields
+        const scrollToField = (selector, errorMsg) => {
+            setError(errorMsg);
+            setLoading(false);
+            setTimeout(() => {
+                const el = document.querySelector(selector);
+                if (el) {
+                    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    if (selector === '#event-description-container') {
+                        const editable = el.querySelector('.ck-editor__editable');
+                        if (editable) {
+                            editable.focus();
+                            return;
+                        }
+                    }
+                    if (el.focus) {
+                        el.focus();
+                    }
+                }
+            }, 100);
+        };
+
+        // Custom validation check in order of elements in the DOM:
+        if (!formData.title) {
+            scrollToField('#event-title', 'Judul Event wajib diisi.');
+            return;
+        }
+        if (!formData.short_description) {
+            scrollToField('#event-short-description', 'Ringkasan Singkat wajib diisi.');
+            return;
+        }
+        if (!formData.description || formData.description.replace(/<[^>]*>/g, '').trim() === '') {
+            scrollToField('#event-description-container', 'Deskripsi Lengkap wajib diisi.');
+            return;
+        }
+        if (!formData.organizer_name) {
+            scrollToField('#event-organizer-name', 'Nama Penyelenggara wajib diisi.');
+            return;
+        }
+        if (!formData.organizer_contact) {
+            scrollToField('#event-organizer-contact', 'Kontak Penyelenggara wajib diisi.');
+            return;
+        }
+        if (!formData.start_date) {
+            scrollToField('#event-start-date', 'Waktu Mulai wajib diisi.');
+            return;
+        }
+        if (!formData.is_online && !formData.location) {
+            scrollToField('#event-location', 'Lokasi / Venue wajib diisi.');
+            return;
+        }
+        if (formData.is_online && !formData.location_url) {
+            scrollToField('#event-location-url', 'Link Meeting (Zoom/GMeet/dsb) wajib diisi.');
+            return;
+        }
+        if (['fixed', 'hybrid_1', 'hybrid_2'].includes(formData.price_type) && formData.price_variations.length === 0 && (!formData.price_fixed || Number(formData.price_fixed) <= 0)) {
+            scrollToField('#event-price-fixed', 'Nominal Fix / Minimal (IDR) wajib diisi.');
+            return;
+        }
+        if (['fixed', 'hybrid_1', 'hybrid_2'].includes(formData.price_type) && formData.price_variations.length > 0) {
+            for (let i = 0; i < formData.price_variations.length; i++) {
+                const v = formData.price_variations[i];
+                if (!v.title) {
+                    scrollToField(`#price-var-title-${i}`, `Nama Paket pada Variasi Harga ke-${i + 1} wajib diisi.`);
+                    return;
+                }
+                if (!v.price || Number(v.price) <= 0) {
+                    scrollToField(`#price-var-price-${i}`, `Harga pada Variasi Harga ke-${i + 1} wajib diisi.`);
+                    return;
+                }
+            }
+        }
+        if (formData.teams && formData.teams.length > 0) {
+            for (let i = 0; i < formData.teams.length; i++) {
+                const t = formData.teams[i];
+                if (!t.name) {
+                    scrollToField(`#team-name-${i}`, `Nama Tim pada Manajemen Tim ke-${i + 1} wajib diisi.`);
+                    return;
+                }
+                if (!t.capacity || Number(t.capacity) <= 0) {
+                    scrollToField(`#team-capacity-${i}`, `Kapasitas Peserta pada Manajemen Tim ke-${i + 1} wajib diisi.`);
+                    return;
+                }
+            }
+        }
+        if (formData.collab_charity && !formData.charity) {
+            scrollToField('#event-charity', 'Program Charity / Kampanye wajib dipilih.');
+            return;
+        }
+        if (!(files.thumbnail || formData.thumbnail)) {
+            scrollToField('#thumb-upload-container', 'Gambar Poster / Thumbnail wajib diunggah.');
+            return;
+        }
         if (formFields.length === 0) {
             setError('Minimal harus ada 1 field pendaftaran (misal: Nama, No HP, dll).');
             window.scrollTo({ top: 0, behavior: 'smooth' });
             return;
+        }
+        for (let i = 0; i < formFields.length; i++) {
+            if (!formFields[i].label) {
+                scrollToField(`#form-field-label-${i}`, `Pertanyaan / Label pada Formulir Pendaftaran Khusus ke-${i + 1} wajib diisi.`);
+                return;
+            }
         }
 
         setLoading(true);
@@ -593,7 +690,7 @@ const EventSubmissionPage = () => {
                         <p className="text-green-100 text-sm mt-1 relative z-10">{isEdit ? 'Perbarui informasi event Anda' : 'Bagikan kegiatan Anda kepada komunitas BAE'}</p>
                     </div>
 
-                    <form onSubmit={handleSubmit} className="p-8 space-y-6">
+                    <form onSubmit={handleSubmit} noValidate className="p-8 space-y-6">
                         {error && (
                             <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[1000] w-[90%] max-w-xl animate-bounce-in">
                                 <div className="bg-red-600 text-white p-5 rounded-[2rem] shadow-2xl shadow-red-900/40 flex items-start gap-4 border border-red-500/50 backdrop-blur-md">
@@ -624,11 +721,12 @@ const EventSubmissionPage = () => {
 
                             <div className="grid grid-cols-1 gap-4">
                                 <div className="space-y-1.5">
-                                    <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Judul Event *</label>
+                                    <label className={`text-xs font-bold uppercase tracking-wider ml-1 transition-colors ${!formData.title ? 'text-red-500' : 'text-gray-400'}`}>Judul Event *</label>
                                     <input
                                         required
                                         type="text"
                                         name="title"
+                                        id="event-title"
                                         value={formData.title}
                                         onChange={handleChange}
                                         placeholder="Contoh: Webinar Bisnis Syariah 2024"
@@ -636,10 +734,11 @@ const EventSubmissionPage = () => {
                                     />
                                 </div>
                                 <div className="space-y-1.5">
-                                    <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Ringkasan Singkat *</label>
+                                    <label className={`text-xs font-bold uppercase tracking-wider ml-1 transition-colors ${!formData.short_description ? 'text-red-500' : 'text-gray-400'}`}>Ringkasan Singkat *</label>
                                     <textarea
                                         required
                                         name="short_description"
+                                        id="event-short-description"
                                         value={formData.short_description}
                                         onChange={handleChange}
                                         rows="2"
@@ -648,8 +747,8 @@ const EventSubmissionPage = () => {
                                     ></textarea>
                                 </div>
                                 <div className="space-y-1.5">
-                                    <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Deskripsi Lengkap *</label>
-                                    <div className="rounded-2xl overflow-hidden border border-gray-100">
+                                    <label className={`text-xs font-bold uppercase tracking-wider ml-1 transition-colors ${(!formData.description || formData.description.replace(/<[^>]*>/g, '').trim() === '') ? 'text-red-500' : 'text-gray-400'}`}>Deskripsi Lengkap *</label>
+                                    <div id="event-description-container" className="rounded-2xl overflow-hidden border border-gray-100">
                                         <CKEditorComponent
                                             content={formData.description}
                                             onChange={handleDescriptionChange}
@@ -662,6 +761,7 @@ const EventSubmissionPage = () => {
                                         <input
                                             type="text"
                                             name="category"
+                                            id="event-category"
                                             value={formData.category}
                                             onChange={handleChange}
                                             placeholder="Contoh: Pelatihan, Seminar, Webinar..."
@@ -669,11 +769,12 @@ const EventSubmissionPage = () => {
                                         />
                                     </div>
                                     <div className="space-y-1.5">
-                                    <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Nama Penyelenggara *</label>
+                                    <label className={`text-xs font-bold uppercase tracking-wider ml-1 transition-colors ${!formData.organizer_name ? 'text-red-500' : 'text-gray-400'}`}>Nama Penyelenggara *</label>
                                     <input
                                         required
                                         type="text"
                                         name="organizer_name"
+                                        id="event-organizer-name"
                                         value={formData.organizer_name}
                                         onChange={handleChange}
                                         placeholder="Contoh: BAE Regional Bandung"
@@ -681,11 +782,12 @@ const EventSubmissionPage = () => {
                                     />
                                 </div>
                                     <div className="space-y-1.5">
-                                    <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Kontak (WhatsApp/Email) *</label>
+                                    <label className={`text-xs font-bold uppercase tracking-wider ml-1 transition-colors ${!formData.organizer_contact ? 'text-red-500' : 'text-gray-400'}`}>Kontak (WhatsApp/Email) *</label>
                                     <input
                                         required
                                         type="text"
                                         name="organizer_contact"
+                                        id="event-organizer-contact"
                                         value={formData.organizer_contact}
                                         onChange={handleChange}
                                         placeholder="08123xxx / email@test.com"
@@ -704,11 +806,12 @@ const EventSubmissionPage = () => {
                             </h3>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-1.5">
-                                    <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Waktu Mulai *</label>
+                                    <label className={`text-xs font-bold uppercase tracking-wider ml-1 transition-colors ${!formData.start_date ? 'text-red-500' : 'text-gray-400'}`}>Waktu Mulai *</label>
                                     <input
                                         required
                                         type="datetime-local"
                                         name="start_date"
+                                        id="event-start-date"
                                         value={formData.start_date}
                                         onChange={handleChange}
                                         className="w-full px-5 py-3.5 bg-gray-50 border-none rounded-2xl text-sm focus:ring-2 focus:ring-green-500 transition"
@@ -719,6 +822,7 @@ const EventSubmissionPage = () => {
                                     <input
                                         type="datetime-local"
                                         name="end_date"
+                                        id="event-end-date"
                                         value={formData.end_date}
                                         onChange={handleChange}
                                         className="w-full px-5 py-3.5 bg-gray-50 border-none rounded-2xl text-sm focus:ring-2 focus:ring-green-500 transition"
@@ -745,11 +849,12 @@ const EventSubmissionPage = () => {
                                     </div>
                                 </div>
                                 <div className="space-y-1.5 md:col-span-2">
-                                    <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Lokasi / Venue *</label>
+                                    <label className={`text-xs font-bold uppercase tracking-wider ml-1 transition-colors ${(!formData.is_online && !formData.location) ? 'text-red-500' : 'text-gray-400'}`}>Lokasi / Venue *</label>
                                     <input
                                         required
                                         type="text"
                                         name="location"
+                                        id="event-location"
                                         value={formData.location}
                                         onChange={handleChange}
                                         disabled={formData.is_online}
@@ -758,13 +863,14 @@ const EventSubmissionPage = () => {
                                     />
                                 </div>
                                 <div className="space-y-1.5 md:col-span-2">
-                                    <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">
+                                    <label className={`text-xs font-bold uppercase tracking-wider ml-1 transition-colors ${(formData.is_online && !formData.location_url) ? 'text-red-500' : 'text-gray-400'}`}>
                                         {formData.is_online ? 'Link Meeting (Zoom/GMeet/dsb) *' : 'URL Lokasi (Maps/Link Zoom)'}
                                     </label>
                                     <input
                                         required={formData.is_online}
                                         type="url"
                                         name="location_url"
+                                        id="event-location-url"
                                         value={formData.location_url}
                                         onChange={handleChange}
                                         placeholder={formData.is_online ? "https://zoom.us/j/... atau https://meet.google.com/..." : "https://maps.google.com/..."}
@@ -785,6 +891,7 @@ const EventSubmissionPage = () => {
                                     <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Jenis Biaya *</label>
                                     <select
                                         name="price_type"
+                                        id="event-price-type"
                                         value={formData.price_type}
                                         onChange={handleChange}
                                         className="w-full px-5 py-3.5 bg-gray-50 border-none rounded-2xl text-sm focus:ring-2 focus:ring-green-500 transition"
@@ -798,9 +905,10 @@ const EventSubmissionPage = () => {
                                 </div>
                                 {['fixed', 'hybrid_1', 'hybrid_2'].includes(formData.price_type) && formData.price_variations.length === 0 && (
                                     <div className="space-y-1.5 md:col-span-2 animate-fade-in">
-                                        <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Nominal Fix / Minimal (IDR) *</label>
+                                        <label className={`text-xs font-bold uppercase tracking-wider ml-1 transition-colors ${(!formData.price_fixed || Number(formData.price_fixed) <= 0) ? 'text-red-500' : 'text-gray-400'}`}>Nominal Fix / Minimal (IDR) *</label>
                                         <CurrencyInput
                                             name="price_fixed"
+                                            id="event-price-fixed"
                                             value={formData.price_fixed}
                                             onChange={handleChange}
                                             placeholder="Contoh: 20,000"
@@ -878,9 +986,10 @@ const EventSubmissionPage = () => {
                                                         
                                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                                             <div className="space-y-1.5">
-                                                                <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Nama Paket *</label>
+                                                                <label className={`text-[9px] font-black uppercase tracking-widest ml-1 transition-colors ${!varItem.title ? 'text-red-500' : 'text-gray-400'}`}>Nama Paket *</label>
                                                                 <input
                                                                     type="text"
+                                                                    id={`price-var-title-${idx}`}
                                                                     value={varItem.title}
                                                                     onChange={(e) => updatePriceVariation(idx, { title: e.target.value })}
                                                                     placeholder="Misal: Paket Early Bird"
@@ -888,8 +997,9 @@ const EventSubmissionPage = () => {
                                                                 />
                                                             </div>
                                                             <div className="space-y-1.5">
-                                                                <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Harga (Rp) *</label>
+                                                                <label className={`text-[9px] font-black uppercase tracking-widest ml-1 transition-colors ${(!varItem.price || Number(varItem.price) <= 0) ? 'text-red-500' : 'text-gray-400'}`}>Harga (Rp) *</label>
                                                                 <CurrencyInput
+                                                                    id={`price-var-price-${idx}`}
                                                                     value={varItem.price}
                                                                     onChange={(e) => updatePriceVariation(idx, { price: e.target.value })}
                                                                     className="w-full px-4 py-2.5 bg-gray-50 border-none rounded-xl text-xs focus:ring-2 focus:ring-green-500 transition"
@@ -944,9 +1054,10 @@ const EventSubmissionPage = () => {
                                                         
                                                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                                                             <div className="space-y-1.5">
-                                                                <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Nama Tim *</label>
+                                                                <label className={`text-[9px] font-black uppercase tracking-widest ml-1 transition-colors ${!tm.name ? 'text-red-500' : 'text-gray-400'}`}>Nama Tim *</label>
                                                                 <input
                                                                     type="text"
+                                                                    id={`team-name-${idx}`}
                                                                     value={tm.name}
                                                                     onChange={(e) => updateTeam(idx, { name: e.target.value })}
                                                                     placeholder="Misal: Team Alpha"
@@ -954,9 +1065,10 @@ const EventSubmissionPage = () => {
                                                                 />
                                                             </div>
                                                             <div className="space-y-1.5">
-                                                                <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Kapasitas Peserta *</label>
+                                                                <label className={`text-[9px] font-black uppercase tracking-widest ml-1 transition-colors ${(!tm.capacity || Number(tm.capacity) <= 0) ? 'text-red-500' : 'text-gray-400'}`}>Kapasitas Peserta *</label>
                                                                 <input
                                                                     type="number"
+                                                                    id={`team-capacity-${idx}`}
                                                                     min="1"
                                                                     value={tm.capacity}
                                                                     onChange={(e) => updateTeam(idx, { capacity: parseInt(e.target.value) || 0 })}
@@ -1197,10 +1309,11 @@ const EventSubmissionPage = () => {
                                             {formData.collab_charity && (
                                                 <div className="space-y-4 pt-2 animate-fade-in">
                                                     <div className="space-y-1.5">
-                                                        <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Pilih Program Charity / Kampanye *</label>
+                                                        <label className={`text-xs font-bold uppercase tracking-wider ml-1 transition-colors ${(formData.collab_charity && !formData.charity) ? 'text-red-500' : 'text-gray-400'}`}>Pilih Program Charity / Kampanye *</label>
                                                         <select
                                                             required={formData.collab_charity}
                                                             name="charity"
+                                                            id="event-charity"
                                                             value={formData.charity}
                                                             onChange={handleChange}
                                                             className="w-full px-5 py-3.5 bg-white border border-gray-200 rounded-2xl text-sm focus:ring-2 focus:ring-emerald-500 transition font-medium text-gray-800"
@@ -1485,10 +1598,10 @@ const EventSubmissionPage = () => {
                             </h3>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-1.5 md:col-span-2">
-                                    <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Gambar Poster / Thumbnail (16:9) *</label>
-                                    <div className="flex flex-col gap-3">
+                                    <label className={`text-xs font-bold uppercase tracking-wider ml-1 transition-colors ${!(files.thumbnail || formData.thumbnail) ? 'text-red-500' : 'text-gray-400'}`}>Gambar Poster / Thumbnail (16:9) *</label>
+                                    <div id="thumb-upload-container" className="flex flex-col gap-3">
                                         <div
-                                            className={`w-full aspect-video bg-gray-100 rounded-2xl overflow-hidden border border-gray-200 ${files.thumbnail ? 'cursor-pointer' : ''}`}
+                                            className={`w-full aspect-video bg-gray-100 rounded-2xl overflow-hidden border border-gray-200 ${(files.thumbnail || formData.thumbnail) ? 'cursor-pointer' : ''}`}
                                             onClick={() => (files.thumbnail || formData.thumbnail) && openPreview(files.thumbnail || formData.thumbnail, 'thumbnail')}
                                             title={files.thumbnail ? 'Klik untuk lihat detail' : ''}
                                         >
@@ -1757,9 +1870,10 @@ const EventSubmissionPage = () => {
 
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                             <div className="space-y-1">
-                                                <label className="text-[10px] font-bold text-gray-400 uppercase">Pertanyaan / Label *</label>
+                                                <label className={`text-[10px] font-bold uppercase transition-colors ${!field.label ? 'text-red-500' : 'text-gray-400'}`}>Pertanyaan / Label *</label>
                                                 <input
                                                     type="text"
+                                                    id={`form-field-label-${index}`}
                                                     placeholder="Contoh: Ukuran Kaos"
                                                     value={field.label}
                                                     onChange={(e) => updateFormField(index, { label: e.target.value })}
