@@ -19,6 +19,12 @@ class StreamingSettings(models.Model):
     event = models.ForeignKey('events.Event', on_delete=models.CASCADE, null=True, blank=True, related_name='streams')
     require_registration = models.BooleanField(default=False)
 
+    @property
+    def hls_url(self):
+        if self.is_hp_streaming_active:
+            return self.whip_hls_url
+        return f"/media/live/{self.stream_key}.m3u8"
+
     class Meta:
         verbose_name = "Streaming Settings"
         verbose_name_plural = "Streaming Settings"
