@@ -2813,7 +2813,7 @@ const EventStreamingPlayerModal = ({ stream, onClose }) => {
                     {/* Chat Area */}
                     <div 
                         ref={chatContainerRef}
-                        className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar"
+                        className="flex-1 overflow-y-auto p-4 space-y-3.5 custom-scrollbar"
                     >
                         {comments.length === 0 ? (
                             <div className="h-full flex items-center justify-center text-center text-zinc-600">
@@ -2821,9 +2821,25 @@ const EventStreamingPlayerModal = ({ stream, onClose }) => {
                             </div>
                         ) : (
                             comments.map(c => (
-                                <div key={c.id} className="text-[10px] leading-relaxed break-words bg-zinc-900/30 p-2 rounded-xl border border-zinc-900/60">
-                                    <span className="font-extrabold text-zinc-300 block">{c.user_details?.full_name || c.user_details?.username || 'User'}</span>
-                                    <span className="text-zinc-400 font-medium">{c.comment}</span>
+                                <div key={c.id} className="flex gap-2.5 items-start group">
+                                    <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-indigo-500/20 to-purple-600/30 border border-indigo-500/30 flex items-center justify-center flex-shrink-0 text-[10px] font-black text-indigo-300">
+                                        {(c.user?.full_name || c.user?.username || 'U')[0].toUpperCase()}
+                                    </div>
+                                    <div className="min-w-0 flex-1">
+                                        <div className="flex items-baseline gap-1.5">
+                                            <span className="font-black text-xs text-indigo-200 truncate max-w-[120px]">
+                                                {c.user?.full_name || c.user?.username || 'User'}
+                                            </span>
+                                            {c.created_at && (
+                                                <span className="text-[8px] text-zinc-500">
+                                                    {new Date(c.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                </span>
+                                            )}
+                                        </div>
+                                        <p className="text-xs text-zinc-300 leading-relaxed mt-0.5 break-words">
+                                            {c.message}
+                                        </p>
+                                    </div>
                                 </div>
                             ))
                         )}
