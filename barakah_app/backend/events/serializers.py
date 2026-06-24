@@ -296,6 +296,8 @@ class EventSerializer(serializers.ModelSerializer):
                 "is_live": stream.is_live,
                 "require_registration": stream.require_registration,
                 "has_access": has_access,
+                "latency_mode": stream.latency_mode,
+                "is_hp_streaming_active": stream.is_hp_streaming_active,
             }
             if has_access:
                 result["hls_url"] = stream.hls_url

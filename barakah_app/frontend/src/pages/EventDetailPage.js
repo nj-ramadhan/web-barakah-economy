@@ -226,6 +226,10 @@ const EventDetailPage = () => {
 
     useEffect(() => {
         fetchDetail();
+
+        // Poll event details every 10 seconds to keep live stream status and capacity updated in real-time
+        const interval = setInterval(fetchDetail, 10000);
+        return () => clearInterval(interval);
     }, [fetchDetail]);
 
     useEffect(() => {
@@ -2489,6 +2493,7 @@ const EventStreamingPlayerModal = ({ stream, onClose }) => {
     const [videoScale, setVideoScale] = useState('contain');
     const [showScaleMenu, setShowScaleMenu] = useState(false);
     const [isFullscreen, setIsFullscreen] = useState(false);
+    const [hlsLoaded, setHlsLoaded] = useState(!!window.Hls);
 
     const currentUser = JSON.parse(localStorage.getItem('user'));
     const isLoggedIn = !!currentUser;
@@ -2499,7 +2504,20 @@ const EventStreamingPlayerModal = ({ stream, onClose }) => {
     const currentHlsUrlRef = useRef(null);
     const wrapperRef = useRef(null);
 
-    const API_BASE = process.env.REACT_APP_API_BASE_URL;
+    const API_BASE = process.env.REACT_APP_API_BASE_URL || 'https://api.barakah.cloud';
+
+    // Load Hls.js script from CDN dynamically if not available on window
+    useEffect(() => {
+        if (!window.Hls) {
+            const script = document.createElement('script');
+            script.src = 'https://cdn.jsdelivr.net/npm/hls.js@latest';
+            script.async = true;
+            document.body.appendChild(script);
+            script.onload = () => {
+                setHlsLoaded(true);
+            };
+        }
+    }, []);
 
     // Helper to get auth headers
     const getHeaders = useCallback(() => {
@@ -2572,7 +2590,7 @@ const EventStreamingPlayerModal = ({ stream, onClose }) => {
 
     // Player initialization
     useEffect(() => {
-        if (!stream.hls_url || !videoRef.current) return;
+        if (!stream.hls_url || !videoRef.current || !hlsLoaded) return;
 
         const hlsUrl = stream.hls_url.startsWith('http') ? stream.hls_url : `${API_BASE}${stream.hls_url}`;
         const video = videoRef.current;
@@ -2591,18 +2609,20 @@ const EventStreamingPlayerModal = ({ stream, onClose }) => {
         }
 
         if (isHlsSupported) {
+            const isHpStream = stream.is_hp_streaming_active;
+            const isLowLatency = stream.latency_mode === 'low';
             const hls = new window.Hls({
                 enableWorker: true,
-                lowLatencyMode: true,
+                lowLatencyMode: isLowLatency,
                 backBufferLength: 90,
-                maxBufferLength: 6,
-                maxMaxBufferLength: 12,
-                liveSyncDuration: 3,
-                liveMaxLatencyDuration: 6,
-                manifestLoadingMaxRetry: 10,
-                manifestLoadingRetryDelay: 1000,
-                levelLoadingMaxRetry: 10,
-                levelLoadingRetryDelay: 1000,
+                maxBufferLength: isLowLatency ? 6 : 30,
+                maxMaxBufferLength: isLowLatency ? 12 : 60,
+                liveSyncDuration: isLowLatency ? 3 : 8,
+                liveMaxLatencyDuration: isLowLatency ? 6 : 15,
+                manifestLoadingMaxRetry: isHpStream ? 15 : 5,
+                manifestLoadingRetryDelay: isHpStream ? 2000 : 1000,
+                levelLoadingMaxRetry: isHpStream ? 15 : 5,
+                levelLoadingRetryDelay: isHpStream ? 2000 : 1000,
             });
             hlsInstanceRef.current = hls;
             hls.loadSource(hlsUrl);
@@ -2643,7 +2663,7 @@ const EventStreamingPlayerModal = ({ stream, onClose }) => {
                 hlsInstanceRef.current = null;
             }
         };
-    }, [stream.hls_url, API_BASE]);
+    }, [stream.hls_url, API_BASE, hlsLoaded, stream.is_hp_streaming_active, stream.latency_mode]);
 
     // Fullscreen toggle
     const toggleFullscreen = () => {
@@ -2672,7 +2692,7 @@ const EventStreamingPlayerModal = ({ stream, onClose }) => {
         try {
             await axios.post(`${API_BASE}/api/streaming/comments/`, {
                 stream_key: stream.stream_key,
-                comment: newComment
+                message: newComment
             }, getHeaders());
             setNewComment('');
             fetchComments();
