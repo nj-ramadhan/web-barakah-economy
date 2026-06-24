@@ -1,8 +1,9 @@
 import React from 'react';
 import DesktopLayout from './DesktopLayout';
+import Footer from './Footer';
 import GeneralFeedbackBubble from '../chat/GeneralFeedbackBubble';
 
-const MobileContainer = ({ children }) => {
+const MobileContainer = ({ children, hideFooter = false }) => {
     const path = window.location.pathname;
     const isLandingPage = path === '/' || path.startsWith('/products') || path.startsWith('/campaigns');
     const isSpecialPage = path.startsWith('/chat') || path.startsWith('/dashboard') || path.startsWith('/admin') || path.startsWith('/profile');
@@ -10,9 +11,12 @@ const MobileContainer = ({ children }) => {
     const shouldShow = isLandingPage && !isSpecialPage;
 
     return (
-        <div className="w-full max-w-md bg-white dark:bg-gray-950 min-h-screen relative shadow-lg mx-auto transition-colors duration-300">
-            {children}
+        <div className="w-full max-w-md bg-white dark:bg-gray-950 min-h-screen relative shadow-lg mx-auto transition-colors duration-300 flex flex-col">
+            <div className="flex-1">
+                {children}
+            </div>
             {shouldShow && <GeneralFeedbackBubble />}
+            {!hideFooter && <Footer />}
         </div>
     );
 };
@@ -32,7 +36,7 @@ const ResponsiveLayout = ({ isDesktop, children, hideFooter = false }) => {
             </DesktopLayout>
         );
     }
-    return <MobileContainer>{children}</MobileContainer>;
+    return <MobileContainer hideFooter={hideFooter}>{children}</MobileContainer>;
 };
 
 export { ResponsiveLayout, MobileContainer };

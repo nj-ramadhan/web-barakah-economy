@@ -17,6 +17,10 @@ const DashboardAboutUsPage = () => {
         vision: '',
         mission: '',
         legal_description: '',
+        office_address: '',
+        contact_email: '',
+        contact_phone: '',
+        whatsapp_number: '',
         hero_image: null,
         organization_structure_image: null
     });
@@ -39,6 +43,10 @@ const DashboardAboutUsPage = () => {
                     vision: data.vision || '',
                     mission: data.mission || '',
                     legal_description: data.legal_description || '',
+                    office_address: data.office_address || '',
+                    contact_email: data.contact_email || '',
+                    contact_phone: data.contact_phone || '',
+                    whatsapp_number: data.whatsapp_number || '',
                     hero_image: null,
                     organization_structure_image: null
                 });
@@ -105,6 +113,10 @@ const DashboardAboutUsPage = () => {
         fd.append('vision', formData.vision);
         fd.append('mission', formData.mission);
         fd.append('legal_description', formData.legal_description);
+        fd.append('office_address', formData.office_address || '');
+        fd.append('contact_email', formData.contact_email || '');
+        fd.append('contact_phone', formData.contact_phone || '');
+        fd.append('whatsapp_number', formData.whatsapp_number || '');
         if (formData.hero_image) {
             if (formData.hero_image instanceof File) {
                 fd.append('hero_image', formData.hero_image);
@@ -245,6 +257,49 @@ const DashboardAboutUsPage = () => {
                                         className="w-full p-4 bg-gray-50 border-2 border-transparent rounded-2xl text-sm focus:border-green-500 focus:bg-white transition-all outline-none"
                                         value={formData.mission}
                                         onChange={e => setFormData({ ...formData, mission: e.target.value })}
+                                    />
+                                </div>
+                            </div>
+                            
+                            <div className="grid md:grid-cols-2 gap-8 pt-8 border-t border-gray-100">
+                                <div className="space-y-3 col-span-2">
+                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1">Alamat Kantor</label>
+                                    <textarea
+                                        rows="3"
+                                        className="w-full p-4 bg-gray-50 border-2 border-transparent rounded-2xl text-sm focus:border-green-500 focus:bg-white transition-all outline-none"
+                                        value={formData.office_address}
+                                        onChange={e => setFormData({ ...formData, office_address: e.target.value })}
+                                        placeholder="Alamat lengkap kantor..."
+                                    />
+                                </div>
+                                <div className="space-y-3">
+                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1">Email Kontak</label>
+                                    <input
+                                        type="email"
+                                        className="w-full p-4 bg-gray-50 border-2 border-transparent rounded-2xl text-sm focus:border-green-500 focus:bg-white transition-all outline-none"
+                                        value={formData.contact_email}
+                                        onChange={e => setFormData({ ...formData, contact_email: e.target.value })}
+                                        placeholder="email@barakah-economy.com"
+                                    />
+                                </div>
+                                <div className="space-y-3">
+                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1">Nomor Telepon Kontak</label>
+                                    <input
+                                        type="text"
+                                        className="w-full p-4 bg-gray-50 border-2 border-transparent rounded-2xl text-sm focus:border-green-500 focus:bg-white transition-all outline-none"
+                                        value={formData.contact_phone}
+                                        onChange={e => setFormData({ ...formData, contact_phone: e.target.value })}
+                                        placeholder="Nomor telepon..."
+                                    />
+                                </div>
+                                <div className="space-y-3 col-span-2">
+                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1">Nomor WhatsApp (format angka saja, contoh: 6285643848251)</label>
+                                    <input
+                                        type="text"
+                                        className="w-full p-4 bg-gray-50 border-2 border-transparent rounded-2xl text-sm focus:border-green-500 focus:bg-white transition-all outline-none"
+                                        value={formData.whatsapp_number}
+                                        onChange={e => setFormData({ ...formData, whatsapp_number: e.target.value })}
+                                        placeholder="628..."
                                     />
                                 </div>
                             </div>

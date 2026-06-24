@@ -29,6 +29,10 @@ class AboutUs(models.Model):
     vision = models.TextField(blank=True, null=True)
     mission = models.TextField(blank=True, null=True)
     legal_description = models.TextField(blank=True, null=True)
+    office_address = models.TextField(blank=True, null=True)
+    contact_email = models.EmailField(blank=True, null=True)
+    contact_phone = models.CharField(max_length=50, blank=True, null=True)
+    whatsapp_number = models.CharField(max_length=50, blank=True, null=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
