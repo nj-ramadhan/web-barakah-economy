@@ -1233,7 +1233,7 @@ class EventViewSet(viewsets.ModelViewSet):
                 formatted_bib = str(registration.bib_number or 0).zfill(len(str(fmt)))
                 bib_email_info = f"🔢 *NOMOR PESERTA (BIB):* {formatted_bib}\n"
 
-            subject = f"Konfirmasi Pendaftaran Event: {registration.event.title}"
+            subject = f"[E-Tiket] Konfirmasi Pendaftaran - {registration.event.title}"
             email_body = (
                 f"Halo! Terima kasih telah mendaftar di event: *{registration.event.title}*.\n\n"
                 f"✅ Pendaftaran Anda diterima!\n\n"
@@ -1253,69 +1253,72 @@ class EventViewSet(viewsets.ModelViewSet):
                 f"Salam,\nBarakah Economy"
             )
             
-            try:
-                email_msg = EmailMessage(
-                    subject,
-                    email_body,
-                    settings.DEFAULT_FROM_EMAIL,
-                    [email]
-                )
-                
-                # Attach QR Image if exists
-                qr_content = None
-                qr_mime = "image/png"
-                
-                if registration.event.has_special_qr and registration.qr_image:
-                    try:
-                        registration.qr_image.seek(0)
-                        qr_content = registration.qr_image.read()
+            # Prepare attachments list of tuples for send_email
+            email_attachments = []
+            
+            # Attach QR Image if exists
+            qr_content = None
+            qr_mime = "image/png"
+            
+            if registration.event.has_special_qr and registration.qr_image:
+                try:
+                    registration.qr_image.seek(0)
+                    qr_content = registration.qr_image.read()
+                    if registration.qr_image.name.lower().endswith('.jpg') or registration.qr_image.name.lower().endswith('.jpeg'):
+                        qr_mime = "image/jpeg"
+                except Exception:
+                    pass
+            
+            if not qr_content and registration.qr_image:
+                try:
+                    with registration.qr_image.open('rb') as qr_file:
+                        qr_content = qr_file.read()
                         if registration.qr_image.name.lower().endswith('.jpg') or registration.qr_image.name.lower().endswith('.jpeg'):
                             qr_mime = "image/jpeg"
-                    except Exception:
-                        pass
-                
-                if not qr_content and registration.qr_image:
-                    try:
-                        with registration.qr_image.open('rb') as qr_file:
-                            qr_content = qr_file.read()
-                            if registration.qr_image.name.lower().endswith('.jpg') or registration.qr_image.name.lower().endswith('.jpeg'):
-                                qr_mime = "image/jpeg"
-                    except Exception:
-                        pass
-                
-                # Generate fallback QR if still empty
-                if not qr_content and unique_code:
-                    try:
-                        import qrcode
-                        from io import BytesIO
-                        qr = qrcode.QRCode(version=1, box_size=10, border=4)
-                        qr.add_data(unique_code)
-                        qr.make(fit=True)
-                        img = qr.make_image(fill_color="black", back_color="white")
-                        buffer = BytesIO()
-                        img.save(buffer, format="PNG")
-                        qr_content = buffer.getvalue()
-                        qr_mime = "image/png"
-                    except Exception:
-                        pass
-                
-                if qr_content:
-                    ext = "jpg" if qr_mime == "image/jpeg" else "png"
-                    email_msg.attach(f"tiket_{unique_code}.{ext}", qr_content, qr_mime)
-                
-                # Attach BIB if exists/enabled
-                if registration.event.has_bib:
-                    try:
-                        bib_buffer = self._generate_bib_image(registration)
-                        if bib_buffer:
-                            bib_buffer.seek(0)
-                            fmt = getattr(registration.event.bib_template, 'number_format', '001') if hasattr(registration.event, 'bib_template') else '001'
-                            formatted_bib = str(registration.bib_number or 0).zfill(len(str(fmt)))
-                            email_msg.attach(f"BIB_{formatted_bib}.jpg", bib_buffer.read(), 'image/jpeg')
-                    except Exception as bib_err:
-                        logging.getLogger(__name__).error(f"Error attaching BIB to email: {bib_err}")
-                
-                email_msg.send(fail_silently=True)
+                except Exception:
+                    pass
+            
+            # Generate fallback QR if still empty
+            if not qr_content and unique_code:
+                try:
+                    import qrcode
+                    from io import BytesIO
+                    qr = qrcode.QRCode(version=1, box_size=10, border=4)
+                    qr.add_data(unique_code)
+                    qr.make(fit=True)
+                    img = qr.make_image(fill_color="black", back_color="white")
+                    buffer = BytesIO()
+                    img.save(buffer, format="PNG")
+                    qr_content = buffer.getvalue()
+                    qr_mime = "image/png"
+                except Exception:
+                    pass
+            
+            if qr_content:
+                ext = "jpg" if qr_mime == "image/jpeg" else "png"
+                email_attachments.append((f"tiket_{unique_code}.{ext}", qr_content, qr_mime))
+            
+            # Attach BIB if exists/enabled
+            if registration.event.has_bib:
+                try:
+                    bib_buffer = self._generate_bib_image(registration)
+                    if bib_buffer:
+                        bib_buffer.seek(0)
+                        fmt = getattr(registration.event.bib_template, 'number_format', '001') if hasattr(registration.event, 'bib_template') else '001'
+                        formatted_bib = str(registration.bib_number or 0).zfill(len(str(fmt)))
+                        email_attachments.append((f"BIB_{formatted_bib}.jpg", bib_buffer.read(), 'image/jpeg'))
+                except Exception as bib_err:
+                    logging.getLogger(__name__).error(f"Error attaching BIB to email: {bib_err}")
+            
+            from barakah_app.utils import send_email
+            try:
+                send_email(
+                    subject=subject,
+                    message=email_body,
+                    recipient_list=[email],
+                    attachments=email_attachments,
+                    fail_silently=True
+                )
             except Exception as e:
                 import logging
                 logging.getLogger(__name__).error(f"Gagal mengirim email QR: {e}")
