@@ -1421,7 +1421,7 @@ const EventDetailPage = () => {
 
                                         {/* Link Download - Private */}
                                         <div className="flex flex-wrap gap-3 shrink-0">
-                                            {event.certificate && event.certificate.is_active && (
+                                            {event.has_certificate && event.certificate && event.certificate.is_active && (
                                                 <>
                                                     {event.user_registration && event.user_registration.status === 'approved' ? (
                                                         <button
