@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Header from '../../components/layout/Header';
 import NavigationButton from '../../components/layout/Navigation';
-import { getGlobalRegistrations, getEvents, globalBlastWhatsapp } from '../../services/eventApi';
+import { getGlobalRegistrations, getEvents, globalBlastWhatsapp, globalBlastEmail } from '../../services/eventApi';
 import { Helmet } from 'react-helmet';
 
 const DashboardEventRecapPage = () => {
@@ -19,6 +19,14 @@ const DashboardEventRecapPage = () => {
     const [isBlasting, setIsBlasting] = useState(false);
     const [blastResult, setBlastResult] = useState(null);
     const [selectedTemplate, setSelectedTemplate] = useState('custom');
+
+    // Blast Email Modal State
+    const [showEmailBlastModal, setShowEmailBlastModal] = useState(false);
+    const [emailBlastSubject, setEmailBlastSubject] = useState('');
+    const [emailBlastMessage, setEmailBlastMessage] = useState('Halo {name},\n\nTerima kasih telah berpartisipasi dalam event kami.');
+    const [emailBlastAttachments, setEmailBlastAttachments] = useState([]);
+    const [isBlastingEmail, setIsBlastingEmail] = useState(false);
+    const [emailBlastResult, setEmailBlastResult] = useState(null);
 
     const WA_TEMPLATES = [
         { id: 'custom', label: 'Custom', message: '' },
@@ -125,6 +133,36 @@ const DashboardEventRecapPage = () => {
         }
     };
 
+    const handleEmailAttachmentChange = (e) => {
+        const files = Array.from(e.target.files);
+        setEmailBlastAttachments(prev => [...prev, ...files]);
+    };
+
+    const handleRemoveEmailAttachment = (index) => {
+        setEmailBlastAttachments(prev => prev.filter((_, i) => i !== index));
+    };
+
+    const handleEmailBlast = async () => {
+        if (selectedIds.length === 0) return alert('Pilih peserta terlebih dahulu');
+        if (!emailBlastSubject.trim() || !emailBlastMessage.trim()) return alert('Subjek dan Pesan tidak boleh kosong');
+
+        setIsBlastingEmail(true);
+        setEmailBlastResult(null);
+        try {
+            const res = await globalBlastEmail(emailBlastSubject, emailBlastMessage, selectedIds, emailBlastAttachments);
+            setEmailBlastResult(res.data.details);
+            alert(`Blast email berhasil dikirim ke ${res.data.details.success} alamat email.`);
+            setShowEmailBlastModal(false);
+            setEmailBlastSubject('');
+            setEmailBlastMessage('');
+            setEmailBlastAttachments([]);
+        } catch (err) {
+            alert('Gagal mengirim blast email: ' + (err.response?.data?.error || err.message));
+        } finally {
+            setIsBlastingEmail(false);
+        }
+    };
+
     const filteredRegistrations = registrations.filter(r => {
         const matchesEvent = filterEvent === '' || r.event_id === parseInt(filterEvent);
         const matchesSearch = r.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -165,6 +203,18 @@ const DashboardEventRecapPage = () => {
                         >
                             <span className="material-icons text-sm">chat</span>
                             BLAST WA ({selectedIds.length})
+                        </button>
+                        <button 
+                            onClick={() => { setEmailBlastResult(null); setShowEmailBlastModal(true); }}
+                            disabled={selectedIds.length === 0}
+                            className={`px-5 py-2.5 rounded-xl text-xs font-black shadow-lg transition flex items-center gap-2 ${
+                                selectedIds.length > 0 
+                                ? 'bg-amber-500 text-white hover:bg-amber-600 shadow-amber-100' 
+                                : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                            }`}
+                        >
+                            <span className="material-icons text-sm">mail</span>
+                            BLAST EMAIL ({selectedIds.length})
                         </button>
                     </div>
                 </div>
@@ -376,6 +426,112 @@ const DashboardEventRecapPage = () => {
                             >
                                 <span className="material-icons">{isBlasting ? 'hourglass_top' : 'send'}</span>
                                 {isBlasting ? 'MENGIRIM BLAST...' : 'KIRIM SEKARANG'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* EMAIL BLAST MODAL */}
+            {showEmailBlastModal && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => !isBlastingEmail && setShowEmailBlastModal(false)}></div>
+                    <div className="relative bg-white w-full max-w-xl rounded-[2.5rem] p-8 shadow-2xl animate-in zoom-in-95 duration-300 max-h-[90vh] overflow-y-auto">
+                        <div className="flex justify-between items-center mb-6">
+                            <div>
+                                <h3 className="text-xl font-black text-gray-900 tracking-tight flex items-center gap-2">
+                                    <span className="material-icons text-amber-500">mail</span>
+                                    BLAST EMAIL
+                                </h3>
+                                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Kirim Email ke {selectedIds.length} Peserta</p>
+                            </div>
+                            <button onClick={() => setShowEmailBlastModal(false)} className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 hover:bg-gray-200 transition">
+                                <span className="material-icons">close</span>
+                            </button>
+                        </div>
+
+                        <div className="space-y-5">
+                            <div>
+                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block ml-1">Subjek Email</label>
+                                <input 
+                                    type="text" 
+                                    placeholder="Masukkan subjek email..." 
+                                    className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl text-sm focus:ring-2 focus:ring-amber-500 transition font-semibold text-gray-800"
+                                    value={emailBlastSubject}
+                                    onChange={e => setEmailBlastSubject(e.target.value)}
+                                />
+                            </div>
+
+                            <div>
+                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block ml-1">Isi Email</label>
+                                <textarea 
+                                    className="w-full p-5 bg-gray-50 border-none rounded-[1.5rem] text-sm focus:ring-2 focus:ring-amber-500 transition resize-none"
+                                    rows="6"
+                                    value={emailBlastMessage}
+                                    onChange={e => setEmailBlastMessage(e.target.value)}
+                                    placeholder="Tulis email..."
+                                ></textarea>
+                                <div className="flex flex-wrap gap-2 mt-2">
+                                    <button onClick={() => setEmailBlastMessage(p => p + ' {name}')} className="text-[9px] font-black text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg hover:bg-emerald-100 transition">+{'{name}'}</button>
+                                    <button onClick={() => setEmailBlastMessage(p => p + ' {event}')} className="text-[9px] font-black text-blue-700 bg-blue-50 px-2.5 py-1 rounded-lg hover:bg-blue-100 transition">+{'{event}'}</button>
+                                    <button onClick={() => setEmailBlastMessage(p => p + ' {event_link}')} className="text-[9px] font-black text-purple-700 bg-purple-50 px-2.5 py-1 rounded-lg hover:bg-purple-100 transition">+{'{event_link}'}</button>
+                                    <button onClick={() => setEmailBlastMessage(p => p + ' {location_link}')} className="text-[9px] font-black text-orange-700 bg-orange-50 px-2.5 py-1 rounded-lg hover:bg-orange-100 transition">+{'{location_link}'}</button>
+                                    <button onClick={() => setEmailBlastMessage(p => p + ' {time}')} className="text-[9px] font-black text-indigo-700 bg-indigo-50 px-2.5 py-1 rounded-lg hover:bg-indigo-100 transition">+{'{time}'}</button>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block ml-1">Lampiran File (Opsional)</label>
+                                <div className="space-y-3">
+                                    <input 
+                                        type="file" 
+                                        multiple
+                                        id="email-blast-attachments" 
+                                        className="hidden" 
+                                        onChange={handleEmailAttachmentChange}
+                                    />
+                                    <label 
+                                        htmlFor="email-blast-attachments" 
+                                        className="flex items-center justify-center gap-3 w-full p-4 border-2 border-dashed border-gray-200 rounded-2xl cursor-pointer hover:bg-gray-50 hover:border-amber-300 transition group"
+                                    >
+                                        <span className="material-icons text-gray-400 group-hover:text-amber-500 transition">attach_file</span>
+                                        <span className="text-xs font-bold text-gray-500 group-hover:text-amber-700 transition">
+                                            Tambah File Lampiran...
+                                        </span>
+                                    </label>
+
+                                    {emailBlastAttachments.length > 0 && (
+                                        <div className="bg-gray-50 p-3 rounded-2xl border border-gray-100 space-y-1.5 max-h-32 overflow-y-auto">
+                                            {emailBlastAttachments.map((file, idx) => (
+                                                <div key={idx} className="flex justify-between items-center text-xs font-medium text-gray-600 bg-white px-3 py-1.5 rounded-xl border border-gray-50">
+                                                    <span className="truncate max-w-[280px]">{file.name}</span>
+                                                    <button onClick={() => handleRemoveEmailAttachment(idx)} className="text-gray-400 hover:text-red-500 transition">
+                                                        <span className="material-icons text-sm">delete</span>
+                                                    </button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            {emailBlastResult && (
+                                <div className={`p-4 rounded-2xl border text-center ${emailBlastResult.failed > 0 ? 'bg-amber-50 border-amber-200' : 'bg-emerald-50 border-emerald-200'}`}>
+                                    <p className="text-xs font-black uppercase tracking-tight">
+                                        Hasil: {emailBlastResult.success} Sukses, {emailBlastResult.failed} Gagal
+                                    </p>
+                                </div>
+                            )}
+
+                            <button 
+                                onClick={handleEmailBlast}
+                                disabled={isBlastingEmail || !emailBlastSubject.trim() || !emailBlastMessage.trim()}
+                                className={`w-full py-4 rounded-2xl font-black text-sm uppercase tracking-widest shadow-xl transition-all active:scale-95 flex items-center justify-center gap-3 ${
+                                    isBlastingEmail ? 'bg-gray-200 text-gray-400' : 'bg-amber-500 text-white hover:bg-amber-600 shadow-amber-100'
+                                }`}
+                            >
+                                <span className="material-icons">{isBlastingEmail ? 'hourglass_top' : 'send'}</span>
+                                {isBlastingEmail ? 'MENGIRIM EMAIL BLAST...' : 'KIRIM EMAIL BLAST'}
                             </button>
                         </div>
                     </div>

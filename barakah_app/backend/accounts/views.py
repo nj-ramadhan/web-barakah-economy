@@ -790,6 +790,82 @@ class UserViewSet(viewsets.ModelViewSet):
             "details": result
         })
 
+    @action(detail=False, methods=['post'])
+    def blast_email(self, request):
+        """Send Email message blast to selected users."""
+        user_ids = request.data.get('user_ids', [])
+        subject = request.data.get('subject')
+        message_template = request.data.get('message', '')
+        attachments = request.FILES.getlist('attachments')
+        
+        if isinstance(user_ids, str):
+            import json
+            try:
+                user_ids = json.loads(user_ids)
+            except Exception:
+                user_ids = [int(x.strip()) for x in user_ids.split(',') if x.strip().isdigit()]
+
+        if not user_ids or not subject or not message_template:
+            return Response(
+                {'error': 'user_ids, subject, dan message wajib diisi'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        users = User.objects.filter(id__in=user_ids, email__isnull=False).exclude(email='')
+        
+        email_list = []
+        placeholder_data_list = []
+        seen_emails = set()
+        
+        for u in users:
+            email = u.email.strip().lower()
+            if email not in seen_emails:
+                seen_emails.add(email)
+                email_list.append(email)
+                profile = getattr(u, 'profile', None)
+                placeholder_data_list.append({
+                    'name': profile.name_full if profile and profile.name_full else u.username,
+                    'username': u.username,
+                    'email': email,
+                    'phone': u.phone or '',
+                })
+
+        if not email_list:
+            return Response(
+                {'error': 'Tidak ada user dengan alamat email yang valid'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        success_count = 0
+        failed_count = 0
+        from barakah_app.utils import send_email
+        
+        for p in placeholder_data_list:
+            personalized_msg = message_template
+            for k, v in p.items():
+                personalized_msg = personalized_msg.replace(f"{{{k}}}", str(v))
+            
+            ok = send_email(
+                subject=subject,
+                message=personalized_msg,
+                recipient_list=[p['email']],
+                attachments=attachments,
+                fail_silently=True
+            )
+            if ok:
+                success_count += 1
+            else:
+                failed_count += 1
+
+        return Response({
+            "message": f"Blast email selesai dikirim ke {success_count} alamat email.",
+            "details": {
+                "success": success_count,
+                "failed": failed_count,
+                "total": len(email_list)
+            }
+        })
+
     @action(detail=False, methods=['get'])
     def roles_list(self, request):
         """Get all available roles for filter dropdown."""

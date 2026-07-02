@@ -144,6 +144,40 @@ export const blastEventWhatsapp = (slug, message, registrationIds = null, imageB
     });
 };
 
+export const blastEventEmail = (slug, subject, message, registrationIds = null, attachments = []) => {
+    const formData = new FormData();
+    formData.append('subject', subject);
+    formData.append('message', message);
+    if (registrationIds) {
+        formData.append('registration_ids', JSON.stringify(registrationIds));
+    }
+    attachments.forEach(file => {
+        formData.append('attachments', file);
+    });
+    return axios.post(`${API_BASE_URL}/api/events/${slug}/blast_email/`, formData, {
+        headers: {
+            ...getAuthHeaders(),
+            'Content-Type': 'multipart/form-data'
+        }
+    });
+};
+
+export const globalBlastEmail = (subject, message, registrationIds, attachments = []) => {
+    const formData = new FormData();
+    formData.append('subject', subject);
+    formData.append('message', message);
+    formData.append('registration_ids', JSON.stringify(registrationIds));
+    attachments.forEach(file => {
+        formData.append('attachments', file);
+    });
+    return axios.post(`${API_BASE_URL}/api/events/global_blast_email/`, formData, {
+        headers: {
+            ...getAuthHeaders(),
+            'Content-Type': 'multipart/form-data'
+        }
+    });
+};
+
 export const bulkResendNotifications = (slug, registrationIds) => {
     return axios.post(`${API_BASE_URL}/api/events/${slug}/bulk_resend_notifications/`, { 
         registration_ids: registrationIds 

@@ -1199,19 +1199,58 @@ class EventViewSet(viewsets.ModelViewSet):
                 except Exception as e:
                     logging.getLogger(__name__).error(f"Error in automatic BIB sending: {e}")
 
+        # Send Email
+        if email:
+            unique_code = registration.unique_code or '-'
+            event_url = f"{settings.FRONTEND_URL}/event/{registration.event.slug}"
+
+            # Prepare sessions string for email
+            sessions_email_str = ""
+            if sessions.exists():
+                sessions_email_str = "\n\n*Rangkaian Acara:*"
+                for ses in sessions:
+                    s_start = timezone.localtime(ses.start_time).strftime('%H:%M') if ses.start_time else ""
+                    s_end = timezone.localtime(ses.end_time).strftime('%H:%M') if ses.end_time else ""
+                    time_range = f" ({s_start} - {s_end})" if s_start else ""
+                    sessions_email_str += f"\n- {ses.title}{time_range}"
+
+            ots_email_info = ""
+            if (registration.event.price_type != 'free' and 
+                registration.event.allow_ots_payment and 
+                registration.payment_method == 'ots'):
+                
+                price = registration.event.price_fixed
+                if price > 0:
+                    ots_email_info = (
+                        f"💰 *PEMBAYARAN DI TEMPAT (OTS):*\n"
+                        f"Harga Tiket: *Rp {int(price):,}*\n"
+                        f"Mohon siapkan uang tunai untuk pembayaran saat tiba di lokasi event.\n\n"
+                    )
+
+            bib_email_info = ""
+            if registration.event.has_bib:
+                fmt = getattr(registration.event.bib_template, 'number_format', '001') if hasattr(registration.event, 'bib_template') else '001'
+                formatted_bib = str(registration.bib_number or 0).zfill(len(str(fmt)))
+                bib_email_info = f"🔢 *NOMOR PESERTA (BIB):* {formatted_bib}\n"
+
             subject = f"Konfirmasi Pendaftaran Event: {registration.event.title}"
             email_body = (
-                f"Assalamu'alaikum,\n\n"
-                f"Terima kasih telah mendaftar di event '{registration.event.title}'.\n"
-                f"Pendaftaran Anda telah berhasil dikonfirmasi secara otomatis.\n\n"
-                f"🎫 KODE TIKET ANDA: {registration.unique_code or '-'}\n\n"
-                f"Detail Event:\n"
-                f"- Judul: {registration.event.title}\n"
-                f"- Lokasi: {registration.event.location}\n"
-                f"- Waktu: {time_str}\n\n"
-                f"🔗 Link Lokasi: {'Bisa diakses di web saat event dimulai' if getattr(registration.event, 'is_online', False) else (registration.event.location_url or '-')}\n\n"
-                f"QR Code tiket Anda terlampir pada email ini.\n"
-                f"Terima kasih,\nTim Barakah Economy"
+                f"Halo! Terima kasih telah mendaftar di event: *{registration.event.title}*.\n\n"
+                f"✅ Pendaftaran Anda diterima!\n\n"
+                f"🎫 *KODE TIKET ANDA:*\n"
+                f"━━━━━━━━━━━━━━━━\n"
+                f"*{unique_code}*\n"
+                f"━━━━━━━━━━━━━━━━\n\n"
+                f"{ots_email_info}"
+                f"{bib_email_info}"
+                f"📌 Simpan kode ini sebagai tiket masuk event. Kode ini akan di-scan saat Anda hadir.\n"
+                f"🔗 *Link Event:* {event_url}\n"
+                f"📷 QR Code tiket terlampir pada email ini.\n\n"
+                f"📅 Waktu: {time_str}\n"
+                f"📍 Lokasi: {registration.event.location}\n"
+                f"🔗 Link Lokasi: {'Bisa diakses di web saat event dimulai' if getattr(registration.event, 'is_online', False) else (registration.event.location_url or '-')}"
+                f"{sessions_email_str}\n\n"
+                f"Salam,\nBarakah Economy"
             )
             
             try:
@@ -1223,10 +1262,58 @@ class EventViewSet(viewsets.ModelViewSet):
                 )
                 
                 # Attach QR Image if exists
-                if registration.qr_image:
-                    # Seek to beginning if it was read elsewhere
-                    registration.qr_image.seek(0)
-                    email_msg.attach(f"tiket_{registration.unique_code}.png", registration.qr_image.read(), 'image/png')
+                qr_content = None
+                qr_mime = "image/png"
+                
+                if registration.event.has_special_qr and registration.qr_image:
+                    try:
+                        registration.qr_image.seek(0)
+                        qr_content = registration.qr_image.read()
+                        if registration.qr_image.name.lower().endswith('.jpg') or registration.qr_image.name.lower().endswith('.jpeg'):
+                            qr_mime = "image/jpeg"
+                    except Exception:
+                        pass
+                
+                if not qr_content and registration.qr_image:
+                    try:
+                        with registration.qr_image.open('rb') as qr_file:
+                            qr_content = qr_file.read()
+                            if registration.qr_image.name.lower().endswith('.jpg') or registration.qr_image.name.lower().endswith('.jpeg'):
+                                qr_mime = "image/jpeg"
+                    except Exception:
+                        pass
+                
+                # Generate fallback QR if still empty
+                if not qr_content and unique_code:
+                    try:
+                        import qrcode
+                        from io import BytesIO
+                        qr = qrcode.QRCode(version=1, box_size=10, border=4)
+                        qr.add_data(unique_code)
+                        qr.make(fit=True)
+                        img = qr.make_image(fill_color="black", back_color="white")
+                        buffer = BytesIO()
+                        img.save(buffer, format="PNG")
+                        qr_content = buffer.getvalue()
+                        qr_mime = "image/png"
+                    except Exception:
+                        pass
+                
+                if qr_content:
+                    ext = "jpg" if qr_mime == "image/jpeg" else "png"
+                    email_msg.attach(f"tiket_{unique_code}.{ext}", qr_content, qr_mime)
+                
+                # Attach BIB if exists/enabled
+                if registration.event.has_bib:
+                    try:
+                        bib_buffer = self._generate_bib_image(registration)
+                        if bib_buffer:
+                            bib_buffer.seek(0)
+                            fmt = getattr(registration.event.bib_template, 'number_format', '001') if hasattr(registration.event, 'bib_template') else '001'
+                            formatted_bib = str(registration.bib_number or 0).zfill(len(str(fmt)))
+                            email_msg.attach(f"BIB_{formatted_bib}.jpg", bib_buffer.read(), 'image/jpeg')
+                    except Exception as bib_err:
+                        logging.getLogger(__name__).error(f"Error attaching BIB to email: {bib_err}")
                 
                 email_msg.send(fail_silently=True)
             except Exception as e:
@@ -1331,6 +1418,111 @@ class EventViewSet(viewsets.ModelViewSet):
             "details": result
         })
 
+    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
+    def blast_email(self, request, slug=None):
+        """Blast email to participants of a specific event."""
+        event = self.get_object()
+        
+        if not (request.user.is_staff or event.created_by == request.user):
+            return Response({"error": "Hanya admin atau penyelenggara yang bisa mengirim blast."}, status=status.HTTP_403_FORBIDDEN)
+            
+        subject = request.data.get('subject')
+        message_template = request.data.get('message')
+        attachments = request.FILES.getlist('attachments')
+        
+        if not subject:
+            return Response({"error": "Subjek email tidak boleh kosong."}, status=status.HTTP_400_BAD_REQUEST)
+        if not message_template:
+            return Response({"error": "Isi pesan tidak boleh kosong."}, status=status.HTTP_400_BAD_REQUEST)
+            
+        registration_ids = request.data.get('registration_ids')
+        if isinstance(registration_ids, str):
+            import json
+            try:
+                registration_ids = json.loads(registration_ids)
+            except Exception:
+                registration_ids = [int(x.strip()) for x in registration_ids.split(',') if x.strip().isdigit()]
+                
+        if registration_ids:
+            registrations = EventRegistration.objects.filter(id__in=registration_ids, event=event).select_related('user', 'user__profile').prefetch_related('event__form_fields')
+        else:
+            registrations = EventRegistration.objects.filter(event=event, status='approved').select_related('user', 'user__profile').prefetch_related('event__form_fields')
+            
+        email_list = []
+        placeholder_data = []
+        seen_emails = set()
+        
+        # Build sessions string for placeholder
+        session_list = []
+        for s in event.sessions.all().order_by('order', 'start_time'):
+            time_str_session = f"({s.start_time.strftime('%H:%M')} - {s.end_time.strftime('%H:%M')})" if s.start_time and s.end_time else ""
+            session_list.append(f"- {s.title} {time_str_session}")
+        sessions_str = "\n".join(session_list) if session_list else "-"
+
+        # Build event time string
+        local_start = timezone.localtime(event.start_date)
+        event_time_str = local_start.strftime('%d %b %Y %H:%M')
+        if event.end_date:
+            local_end = timezone.localtime(event.end_date)
+            if local_start.date() == local_end.date():
+                event_time_str += f" - {local_end.strftime('%H:%M')}"
+            else:
+                event_time_str += f" - {local_end.strftime('%d %b %Y %H:%M')}"
+        
+        event_link = f"{settings.FRONTEND_URL}/event/{event.slug}"
+
+        for reg in registrations:
+            email, _, detected_name = self._detect_contact_info_standalone(reg)
+            if email:
+                email = email.strip().lower()
+                if email not in seen_emails:
+                    seen_emails.add(email)
+                    email_list.append(email)
+                    placeholder_data.append({
+                        'email': email,
+                        'name': detected_name,
+                        'event': event.title,
+                        'sessions': sessions_str,
+                        'event_link': event_link,
+                        'location_link': 'Bisa diakses di web saat event dimulai' if getattr(event, 'is_online', False) else (event.location_url or '-'),
+                        'time': event_time_str
+                    })
+                    
+        if not email_list:
+            return Response({
+                "error": "Tidak ada alamat email peserta yang terdeteksi."
+            }, status=status.HTTP_400_BAD_REQUEST)
+            
+        success_count = 0
+        failed_count = 0
+        from barakah_app.utils import send_email
+        
+        for p in placeholder_data:
+            personalized_msg = message_template
+            for k, v in p.items():
+                personalized_msg = personalized_msg.replace(f"{{{k}}}", str(v))
+            
+            ok = send_email(
+                subject=subject,
+                message=personalized_msg,
+                recipient_list=[p['email']],
+                attachments=attachments,
+                fail_silently=True
+            )
+            if ok:
+                success_count += 1
+            else:
+                failed_count += 1
+                
+        return Response({
+            "message": f"Blast email selesai dikirim ke {success_count} peserta.",
+            "details": {
+                "success": success_count,
+                "failed": failed_count,
+                "total": len(email_list)
+            }
+        })
+
     @action(detail=False, methods=['get'], permission_classes=[permissions.IsAuthenticated])
     def global_registrations(self, request):
         """Get all registrations across all events for CRM recap."""
@@ -1428,6 +1620,106 @@ class EventViewSet(viewsets.ModelViewSet):
         return Response({
             "message": f"Blast global selesai dikirim ke {result['success']} nomor unik.",
             "details": result
+        })
+
+    @action(detail=False, methods=['post'], permission_classes=[permissions.IsAuthenticated])
+    def global_blast_email(self, request):
+        """Blast email to selected participants from the global recap list."""
+        if not (request.user.is_staff or request.user.is_superuser):
+            return Response({"error": "Unauthorized"}, status=status.HTTP_403_FORBIDDEN)
+            
+        subject = request.data.get('subject')
+        custom_message = request.data.get('message')
+        attachments = request.FILES.getlist('attachments')
+        registration_ids = request.data.get('registration_ids')
+        
+        if isinstance(registration_ids, str):
+            import json
+            try:
+                registration_ids = json.loads(registration_ids)
+            except Exception:
+                registration_ids = [int(x.strip()) for x in registration_ids.split(',') if x.strip().isdigit()]
+        
+        if not subject or not custom_message or not registration_ids:
+            return Response({"error": "Subjek, Pesan, dan Peserta wajib diisi/dipilih."}, status=status.HTTP_400_BAD_REQUEST)
+            
+        registrations = EventRegistration.objects.filter(id__in=registration_ids).select_related('event', 'user', 'user__profile').prefetch_related('event__form_fields')
+        
+        email_list = []
+        placeholder_data = []
+        seen_emails = set()
+        
+        for reg in registrations:
+            email, _, name = self._detect_contact_info_standalone(reg)
+            if email:
+                email = email.strip().lower()
+                if email not in seen_emails:
+                    seen_emails.add(email)
+                    
+                    event = reg.event
+                    # Build sessions string for placeholder
+                    session_list = []
+                    for s in event.sessions.all().order_by('order', 'start_time'):
+                        time_str_session = f"({s.start_time.strftime('%H:%M')} - {s.end_time.strftime('%H:%M')})" if s.start_time and s.end_time else ""
+                        session_list.append(f"- {s.title} {time_str_session}")
+                    sessions_str = "\n".join(session_list) if session_list else "-"
+
+                    # Build event time string
+                    local_start = timezone.localtime(event.start_date)
+                    event_time_str = local_start.strftime('%d %b %Y %H:%M')
+                    if event.end_date:
+                        local_end = timezone.localtime(event.end_date)
+                        if local_start.date() == local_end.date():
+                            event_time_str += f" - {local_end.strftime('%H:%M')}"
+                        else:
+                            event_time_str += f" - {local_end.strftime('%d %b %Y %H:%M')}"
+                    
+                    event_link = f"{settings.FRONTEND_URL}/event/{event.slug}"
+
+                    email_list.append(email)
+                    placeholder_data.append({
+                        'email': email,
+                        'name': name,
+                        'event': event.title,
+                        'sessions': sessions_str,
+                        'event_link': event_link,
+                        'location_link': 'Bisa diakses di web saat event dimulai' if getattr(event, 'is_online', False) else (event.location_url or '-'),
+                        'time': event_time_str
+                    })
+                    
+        if not email_list:
+            return Response({
+                "error": "Tidak ada alamat email peserta yang terdeteksi."
+            }, status=status.HTTP_400_BAD_REQUEST)
+            
+        success_count = 0
+        failed_count = 0
+        from barakah_app.utils import send_email
+        
+        for p in placeholder_data:
+            personalized_msg = custom_message
+            for k, v in p.items():
+                personalized_msg = personalized_msg.replace(f"{{{k}}}", str(v))
+            
+            ok = send_email(
+                subject=subject,
+                message=personalized_msg,
+                recipient_list=[p['email']],
+                attachments=attachments,
+                fail_silently=True
+            )
+            if ok:
+                success_count += 1
+            else:
+                failed_count += 1
+                
+        return Response({
+            "message": f"Blast email selesai dikirim ke {success_count} peserta.",
+            "details": {
+                "success": success_count,
+                "failed": failed_count,
+                "total": len(email_list)
+            }
         })
 
     @action(detail=True, methods=['get'], permission_classes=[permissions.AllowAny])

@@ -3,7 +3,7 @@ from django.conf import settings
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 
-def send_email(subject, message, recipient_list, from_email=None, fail_silently=False):
+def send_email(subject, message, recipient_list, from_email=None, fail_silently=False, attachments=None):
     """
     Generic utility to send email using database settings if available,
     falling back to settings.py configuration.
@@ -33,6 +33,12 @@ def send_email(subject, message, recipient_list, from_email=None, fail_silently=
                 to=recipient_list,
                 connection=backend,
             )
+            if attachments:
+                for attachment in attachments:
+                    if hasattr(attachment, 'read'):
+                        email.attach(attachment.name, attachment.read(), attachment.content_type)
+                    elif isinstance(attachment, tuple) and len(attachment) >= 2:
+                        email.attach(*attachment)
             email.send(fail_silently=fail_silently)
             return True
     except Exception as e:
@@ -41,15 +47,22 @@ def send_email(subject, message, recipient_list, from_email=None, fail_silently=
         logger = logging.getLogger('barakah_app')
         logger.error(f"Error sending email via custom backend: {e}")
         
-    # Fallback to standard Django send_mail
+    # Fallback to standard Django EmailMessage to support attachments
     try:
-        send_mail(
-            subject,
-            message,
-            from_email or settings.DEFAULT_FROM_EMAIL,
-            recipient_list,
-            fail_silently=fail_silently,
+        from django.core.mail import EmailMessage
+        email = EmailMessage(
+            subject=subject,
+            body=message,
+            from_email=from_email or settings.DEFAULT_FROM_EMAIL,
+            to=recipient_list,
         )
+        if attachments:
+            for attachment in attachments:
+                if hasattr(attachment, 'read'):
+                    email.attach(attachment.name, attachment.read(), attachment.content_type)
+                elif isinstance(attachment, tuple) and len(attachment) >= 2:
+                    email.attach(*attachment)
+        email.send(fail_silently=fail_silently)
         return True
     except Exception as e:
         import logging

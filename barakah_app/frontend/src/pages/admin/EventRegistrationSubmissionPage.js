@@ -4,7 +4,7 @@ import { Helmet } from 'react-helmet';
 import Header from '../../components/layout/Header';
 import NavigationButton from '../../components/layout/Navigation';
 import WarningModal from '../../components/popup/WarningModal';
-import { getEventRegistrations, getEventDetail, exportRegistrationsCsv, blastEventWhatsapp, bulkDeleteRegistrations, importParticipantsCsv, bulkResendNotifications, markEventSessionFinished, updateEventRegistration, toggleOrderCompleted } from '../../services/eventApi';
+import { getEventRegistrations, getEventDetail, exportRegistrationsCsv, blastEventWhatsapp, blastEventEmail, bulkDeleteRegistrations, importParticipantsCsv, bulkResendNotifications, markEventSessionFinished, updateEventRegistration, toggleOrderCompleted } from '../../services/eventApi';
 import EventManualRegistrationModal from '../../components/admin/EventManualRegistrationModal';
 import EventRegistrationEditModal from '../../components/admin/EventRegistrationEditModal';
 import CertificateEditor from '../../components/events/CertificateEditor';
@@ -32,6 +32,13 @@ const EventRegistrationSubmissionPage = () => {
     const [isBlasting, setIsBlasting] = useState(false);
     const [blastResult, setBlastResult] = useState(null);
     const [selectedTemplate, setSelectedTemplate] = useState('custom');
+
+    const [showEmailBlastModal, setShowEmailBlastModal] = useState(false);
+    const [emailBlastSubject, setEmailBlastSubject] = useState('');
+    const [emailBlastMessage, setEmailBlastMessage] = useState('Halo {name},\n\nMengingatkan untuk event {event} yang akan dilaksanakan pada {time}. Sampai jumpa di lokasi: {location_link} !');
+    const [emailBlastAttachments, setEmailBlastAttachments] = useState([]);
+    const [isBlastingEmail, setIsBlastingEmail] = useState(false);
+    const [emailBlastResult, setEmailBlastResult] = useState(null);
 
     const WA_TEMPLATES = [
         { id: 'custom', label: 'Custom', message: '' },
@@ -330,6 +337,42 @@ const EventRegistrationSubmissionPage = () => {
             setIsBlasting(false);
         }
     };
+
+    const handleEmailAttachmentChange = (e) => {
+        const files = Array.from(e.target.files);
+        setEmailBlastAttachments(prev => [...prev, ...files]);
+    };
+
+    const handleRemoveEmailAttachment = (index) => {
+        setEmailBlastAttachments(prev => prev.filter((_, i) => i !== index));
+    };
+
+    const handleEmailBlast = async () => {
+        if (!emailBlastSubject.trim() || !emailBlastMessage.trim() || isBlastingEmail) return;
+
+        if (!window.confirm('Kirim email blast ke peserta?')) return;
+
+        setIsBlastingEmail(true);
+        try {
+            const res = await blastEventEmail(
+                slug,
+                emailBlastSubject,
+                emailBlastMessage,
+                selectedIds.length > 0 ? selectedIds : null,
+                emailBlastAttachments
+            );
+            alert(`Berhasil! ${res.data.message}`);
+            setShowEmailBlastModal(false);
+            setEmailBlastSubject('');
+            setEmailBlastMessage('');
+            setEmailBlastAttachments([]);
+        } catch (err) {
+            console.error(err);
+            alert('Gagal mengirim blast email: ' + (err.response?.data?.error || err.message));
+        } finally {
+            setIsBlastingEmail(false);
+        }
+    };
     
     const handleResendNotifications = async () => {
         if (selectedIds.length === 0 || isResending) return;
@@ -501,6 +544,13 @@ const EventRegistrationSubmissionPage = () => {
                         >
                             <span className="material-icons text-sm">send</span>
                             Blast WA
+                        </button>
+                        <button
+                            onClick={() => setShowEmailBlastModal(true)}
+                            className="bg-amber-500 text-white px-5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 hover:bg-amber-600 transition shadow-lg shadow-amber-100"
+                        >
+                            <span className="material-icons text-sm">mail</span>
+                            Blast Email
                         </button>
                         {selectedIds.length > 0 && (
                             <button
@@ -1212,6 +1262,125 @@ const EventRegistrationSubmissionPage = () => {
                 </div>
             )}
 
+            {/* Email Blast Modal */}
+            {showEmailBlastModal && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-gray-900/40 backdrop-blur-md animate-in fade-in duration-300">
+                    <div className="bg-white rounded-[2.5rem] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.2)] w-full max-w-lg overflow-hidden transform animate-in zoom-in-95 duration-300 border border-white">
+                        <div className="p-8 border-b border-gray-50 flex items-center justify-between bg-gradient-to-br from-white to-gray-50/50">
+                            <div className="flex items-center gap-3">
+                                <div className="w-12 h-12 bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center shadow-inner">
+                                    <span className="material-icons text-2xl">mail</span>
+                                </div>
+                                <div>
+                                    <h3 className="font-black text-gray-900 uppercase tracking-tight">Blast Email</h3>
+                                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-0.5">Broadcast Message</p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => setShowEmailBlastModal(false)}
+                                className="w-10 h-10 flex items-center justify-center text-gray-400 hover:text-gray-900 hover:bg-gray-100 rounded-full transition-all"
+                            >
+                                <span className="material-icons">close</span>
+                            </button>
+                        </div>
+                        <div className="p-8 space-y-5 max-h-[70vh] overflow-y-auto">
+                            <div className="p-4 bg-indigo-50/50 border border-indigo-100 rounded-2xl flex items-start gap-3">
+                                <span className="material-icons text-indigo-500 text-lg">info</span>
+                                <p className="text-[11px] text-indigo-900 font-medium leading-relaxed">
+                                    {selectedIds.length > 0 ? (
+                                        <>Mengirim email ke <span className="font-black text-indigo-700">{selectedIds.length}</span> peserta yang Anda pilih di tabel.</>
+                                    ) : (
+                                        <>Email akan dikirim ke <span className="font-black text-indigo-700">SELURUH</span> peserta dengan status Approved.</>
+                                    )}
+                                </p>
+                            </div>
+
+                            <div>
+                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block ml-1">Subjek Email</label>
+                                <input
+                                    type="text"
+                                    className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl text-sm focus:ring-4 focus:ring-amber-500/10 focus:border-amber-500/30 outline-none transition-all shadow-inner font-semibold text-gray-800"
+                                    placeholder="Masukkan subjek email..."
+                                    value={emailBlastSubject}
+                                    onChange={(e) => setEmailBlastSubject(e.target.value)}
+                                />
+                            </div>
+
+                            <div>
+                                <div className="flex justify-between items-center mb-2 px-1">
+                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Isi Email</label>
+                                    <div className="flex flex-wrap gap-1.5 justify-end">
+                                        <button onClick={() => setEmailBlastMessage(prev => prev + ' {name}')} className="text-[9px] font-bold text-emerald-700 bg-emerald-50 px-2 py-1 rounded-lg hover:bg-emerald-100 transition">+{'{name}'}</button>
+                                        <button onClick={() => setEmailBlastMessage(prev => prev + ' {event}')} className="text-[9px] font-bold text-blue-700 bg-blue-50 px-2 py-1 rounded-lg hover:bg-blue-100 transition">+{'{event}'}</button>
+                                        <button onClick={() => setEmailBlastMessage(prev => prev + ' {event_link}')} className="text-[9px] font-bold text-purple-700 bg-purple-50 px-2 py-1 rounded-lg hover:bg-purple-100 transition">+{'{event_link}'}</button>
+                                        <button onClick={() => setEmailBlastMessage(prev => prev + ' {location_link}')} className="text-[9px] font-bold text-orange-700 bg-orange-50 px-2 py-1 rounded-lg hover:bg-orange-100 transition">+{'{location_link}'}</button>
+                                        <button onClick={() => setEmailBlastMessage(prev => prev + ' {time}')} className="text-[9px] font-bold text-indigo-700 bg-indigo-50 px-2 py-1 rounded-lg hover:bg-indigo-100 transition">+{'{time}'}</button>
+                                    </div>
+                                </div>
+                                <textarea
+                                    className="w-full h-36 p-5 bg-gray-50 border border-gray-100 rounded-3xl text-sm focus:ring-4 focus:ring-amber-500/10 focus:border-amber-500/30 outline-none transition-all resize-none shadow-inner"
+                                    value={emailBlastMessage}
+                                    onChange={(e) => setEmailBlastMessage(e.target.value)}
+                                    placeholder="Tulis isi email..."
+                                />
+                            </div>
+
+                            <div>
+                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block ml-1">Lampiran File (Opsional)</label>
+                                <div className="space-y-3">
+                                    <input 
+                                        type="file" 
+                                        multiple
+                                        id="email-blast-attachments" 
+                                        className="hidden" 
+                                        onChange={handleEmailAttachmentChange}
+                                    />
+                                    <label 
+                                        htmlFor="email-blast-attachments" 
+                                        className="flex items-center justify-center gap-2 w-full p-4 border-2 border-dashed border-gray-200 rounded-2xl cursor-pointer hover:bg-gray-50 hover:border-amber-300 transition group"
+                                    >
+                                        <span className="material-icons text-gray-400 group-hover:text-amber-500 text-lg transition">attach_file</span>
+                                        <span className="text-[11px] font-bold text-gray-500 group-hover:text-amber-700 transition">
+                                            Tambah File Lampiran...
+                                        </span>
+                                    </label>
+
+                                    {emailBlastAttachments.length > 0 && (
+                                        <div className="bg-gray-50 p-3 rounded-2xl border border-gray-100 space-y-1.5 max-h-32 overflow-y-auto">
+                                            {emailBlastAttachments.map((file, idx) => (
+                                                <div key={idx} className="flex justify-between items-center text-xs font-medium text-gray-600 bg-white px-3 py-1.5 rounded-xl border border-gray-50">
+                                                    <span className="truncate max-w-[200px]">{file.name}</span>
+                                                    <button onClick={() => handleRemoveEmailAttachment(idx)} className="text-gray-400 hover:text-red-500 transition">
+                                                        <span className="material-icons text-sm">delete</span>
+                                                    </button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            <button
+                                onClick={handleEmailBlast}
+                                disabled={isBlastingEmail || !emailBlastSubject.trim() || !emailBlastMessage.trim()}
+                                className="group relative w-full bg-gradient-to-br from-amber-500 to-orange-700 text-white font-black py-5 rounded-[1.5rem] shadow-2xl shadow-amber-900/20 hover:shadow-amber-900/30 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50 overflow-hidden"
+                            >
+                                <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                                <div className="flex items-center justify-center gap-3 relative z-10">
+                                    {isBlastingEmail ? (
+                                        <>
+                                            <span className="material-icons animate-spin text-sm">sync</span>
+                                            <span className="tracking-widest text-[11px] uppercase">Sedang Mengirim...</span>
+                                        </>
+                                    ) : (
+                                        <span className="tracking-widest text-[11px] uppercase">Kirim Blast Email Sekarang</span>
+                                    )}
+                                </div>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
             {/* Committee Modal */}
             {showCommitteeModal && (
                 <EventCommitteeModal 
