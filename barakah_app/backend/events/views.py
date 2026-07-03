@@ -1739,9 +1739,10 @@ class EventViewSet(viewsets.ModelViewSet):
         event = self.get_object()
         user = request.user
         
-        # 1. Check if event is completed
-        if event.status != 'completed':
-            return Response({"error": "Event belum selesai. Anda hanya dapat mengisi testimoni setelah event dinyatakan selesai oleh admin."}, status=status.HTTP_400_BAD_REQUEST)
+        # 1. Check if event has started
+        from django.utils import timezone
+        if event.status != 'completed' and timezone.now() < event.start_date:
+            return Response({"error": "Event belum dimulai. Anda baru dapat mengisi testimoni setelah event dimulai."}, status=status.HTTP_400_BAD_REQUEST)
             
         # 2. Check if user is registered (approved)
         is_registered = event.registrations.filter(user=user, status='approved').exists()

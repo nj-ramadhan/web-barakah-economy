@@ -192,13 +192,16 @@ const EventDetailPage = () => {
             setEvent(res.data);
             setIsLiked(res.data.is_liked);
             setLikesCount(res.data.likes_count);
+            let localOffset = 0;
             if (res.data.server_time) {
                 const serverTime = new Date(res.data.server_time);
                 const clientTime = new Date();
-                setClockOffset(serverTime - clientTime);
+                localOffset = serverTime - clientTime;
+                setClockOffset(localOffset);
             }
-            // Direct to testimonies tab if event is completed, user is approved, and hasn't filled out a testimony
-            if (res.data.status === 'completed' && 
+            // Direct to testimonies tab if event is completed or has started, user is approved, and hasn't filled out a testimony
+            const hasStarted = res.data.start_date && new Date(res.data.start_date) <= new Date(Date.now() + localOffset);
+            if ((res.data.status === 'completed' || hasStarted) && 
                 res.data.user_registration && 
                 res.data.user_registration.status === 'approved' && 
                 !res.data.user_has_testimony) {
@@ -1581,7 +1584,7 @@ const EventDetailPage = () => {
                                     </div>
 
                                     {/* Testimony Form (if eligible) */}
-                                    {event.status === 'completed' && event.user_registration && event.user_registration.status === 'approved' && !event.user_has_testimony && (
+                                    {((event.status === 'completed') || (event.start_date && new Date(event.start_date) <= new Date(Date.now() + clockOffset))) && event.user_registration && event.user_registration.status === 'approved' && !event.user_has_testimony && (
                                         <form onSubmit={handleSubmitTestimony} className="bg-white border-2 border-dashed border-amber-200 rounded-3xl p-6 space-y-5 animate-in slide-in-from-top duration-300">
                                             <div className="flex items-center gap-2">
                                                 <span className="material-icons text-amber-500">rate_review</span>
