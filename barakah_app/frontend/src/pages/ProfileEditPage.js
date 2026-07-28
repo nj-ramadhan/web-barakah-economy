@@ -331,10 +331,16 @@ const ProfileEditPage = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setProfile((prev) => ({
-      ...prev,
-      [name]: name === 'work_salary' ? formatIDR(value.replace(/[^0-9]/g, '')) : value,
-    }));
+    setProfile((prev) => {
+      const updated = {
+        ...prev,
+        [name]: name === 'work_salary' ? formatIDR(value.replace(/[^0-9]/g, '')) : value,
+      };
+      if (name === 'info_source' && value !== 'teman') {
+        updated.referred_by = '';
+      }
+      return updated;
+    });
   };
 
   const handleFileChange = (e) => {
@@ -435,13 +441,14 @@ const ProfileEditPage = () => {
     e.preventDefault();
 
     // Mandatory fields check
+    const isReferredByRequired = profile.info_source === 'teman';
     if (
       !profile.name_full || !profile.nickname || !profile.phone || 
-      !profile.info_source || !profile.referred_by || !profile.agama ||
+      !profile.info_source || (isReferredByRequired && !profile.referred_by) || !profile.agama ||
       !profile.gender || !profile.birth_place || !profile.birth_date ||
       !profile.marital_status || !profile.segment
     ) {
-      alert('Nama Lengkap, Nama Panggilan, HP, Agama, Sumber Info, Nama Pengajak, Jenis Kelamin, Tempat Lahir, Tanggal Lahir, Status Pernikahan, dan Segmen wajib diisi.');
+      alert(`Nama Lengkap, Nama Panggilan, HP, Agama, Sumber Info, ${isReferredByRequired ? 'Nama Pengajak, ' : ''}Jenis Kelamin, Tempat Lahir, Tanggal Lahir, Status Pernikahan, dan Segmen wajib diisi.`);
       setActiveTab('general');
       return;
     }
@@ -543,8 +550,11 @@ const ProfileEditPage = () => {
     const mandatoryFields = [
       'name_full', 'nickname', 'phone', 'gender', 'agama', 
       'birth_place', 'birth_date', 'marital_status', 'segment',
-      'info_source', 'referred_by'
+      'info_source'
     ];
+    if (profile.info_source === 'teman') {
+      mandatoryFields.push('referred_by');
+    }
     const isMandatoryMissing = mandatoryFields.includes(field) && (!profile[field] || profile[field] === '');
     return `w-full p-3 border rounded-xl text-sm transition outline-none focus:ring-2 ${(isFieldMissing(field) || isMandatoryMissing)
       ? 'border-red-500 bg-red-50 focus:ring-red-400'
@@ -580,20 +590,22 @@ const ProfileEditPage = () => {
                     <option value="lainnya">Lainnya</option>
                   </select>
                 </div>
-                <div>
-                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
-                    Siapa yang mengajak? <span className="text-red-500">*wajib</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="referred_by"
-                    placeholder="Nama orang yang merekomendasikan"
-                    value={profile.referred_by || ''}
-                    onChange={handleChange}
-                    className={inputCls('referred_by')}
-                  />
-                  <p className="text-[9px] text-gray-400 mt-1 italic">Tulis nama teman/rekan/keluarga yang mengajak, jika tidak ada tulis 'Tidak Ada'</p>
-                </div>
+                {profile.info_source === 'teman' && (
+                  <div>
+                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
+                      Siapa yang mengajak? <span className="text-red-500">*wajib</span>
+                    </label>
+                    <input
+                      type="text"
+                      name="referred_by"
+                      placeholder="Nama orang yang merekomendasikan"
+                      value={profile.referred_by || ''}
+                      onChange={handleChange}
+                      className={inputCls('referred_by')}
+                    />
+                    <p className="text-[9px] text-gray-400 mt-1 italic">Tulis nama teman/rekan/keluarga yang mengajak</p>
+                  </div>
+                )}
               </div>
             </div>
             <div>

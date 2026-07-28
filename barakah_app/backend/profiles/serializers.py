@@ -57,12 +57,18 @@ class ProfileSerializer(serializers.ModelSerializer):
     def get_is_profile_complete(self, obj):
         # Avoid Django relationship caching issues by checking fields directly on `obj` (Profile)
         # and `obj.user` (User) which are fresh in this serialization cycle.
+        is_referred_by_complete = True
+        if obj.info_source == 'teman':
+            is_referred_by_complete = bool(obj.referred_by)
+            
         return bool(
             obj.user.phone and 
             obj.name_full and 
             obj.info_source and 
-            obj.referred_by and 
-            obj.agama
+            is_referred_by_complete and 
+            obj.agama and
+            obj.marital_status and
+            obj.segment
         )
 
     def get_has_usable_password(self, obj):

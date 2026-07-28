@@ -237,6 +237,8 @@ class Profile(models.Model):
                 
             missing = []
             for field in required_fields:
+                if field == 'referred_by' and getattr(self, 'info_source', None) != 'teman':
+                    continue
                 val = getattr(self, field, None)
                 if not val or (isinstance(val, str) and not val.strip()):
                     missing.append(field)

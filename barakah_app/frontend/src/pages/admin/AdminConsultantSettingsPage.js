@@ -529,73 +529,1294 @@ const AdminConsultantSettingsPage = () => {
                                             onChange={(e) => setAiSettings({ ...aiSettings, model_name: e.target.value })}
                                             className="w-full bg-gray-50/80 border-2 border-transparent focus:border-indigo-500 focus:bg-white rounded-2xl px-5 py-3.5 text-sm transition-all appearance-none cursor-pointer"
                                         >
+                                            <optgroup label="Anthropic">
+                                                <option value="claude-fable-5">Claude Fable 5</option>
+                                                <option value="claude-haiku-4-5">Claude Haiku 4.5</option>
+                                                <option value="claude-opus-4-7">Claude Opus 4.7</option>
+                                                <option value="claude-opus-4-8">Claude Opus 4.8</option>
+                                                <option value="claude-sonnet-4-6">Claude Sonnet 4.6</option>
+                                                <option value="claude-sonnet-5">Claude Sonnet 5</option>
+                                            </optgroup>
+                                            <optgroup label="DeepSeek">
+                                                <option value="deepseek-v4-flash">DeepSeek V4 Flash</option>
+                                                <option value="deepseek-v4-pro">DeepSeek V4 Pro</option>
+                                            </optgroup>
+                                            <optgroup label="Google (Gemini)">
+                                                <option value="gemini/gemini-3-flash-preview">Gemini 3 Flash Preview</option>
+                                                <option value="gemini/gemini-3.1-flash-lite">Gemini 3.1 Flash Lite</option>
+                                                <option value="gemini/gemini-3.1-pro-preview">Gemini 3.1 Pro Preview</option>
+                                                <option value="gemini/gemini-3.5-flash">Gemini 3.5 Flash</option>
+                                                <option value="gemini/gemini-embedding-001">Gemini Embedding 001</option>
+                                            </optgroup>
+                                            <optgroup label="Z.ai (GLM)">
+                                                <option value="glm-5">GLM-5</option>
+                                                <option value="glm-5-turbo">GLM-5 Turbo</option>
+                                                <option value="glm-5.1">GLM-5.1</option>
+                                                <option value="glm-5.2">GLM-5.2</option>
+                                                <option value="glm-5v-turbo">GLM-5V Turbo</option>
+                                            </optgroup>
                                             <optgroup label="OpenAI">
-                                                <option value="gpt-5.2">GPT-5.2 Pro</option>
-                                                <option value="gpt-5.2-codex">GPT-5.2 Codex</option>
-                                                <option value="gpt-5.1">GPT-5.1</option>
-                                                <option value="gpt-5.1-codex">GPT-5.1 Codex</option>
-                                                <option value="gpt-5">GPT-5</option>
-                                                <option value="gpt-5-mini">GPT-5 Mini</option>
-                                                <option value="gpt-5-nano">GPT-5 Nano</option>
                                                 <option value="gpt-4.1">GPT-4.1</option>
                                                 <option value="gpt-4.1-mini">GPT-4.1 Mini</option>
                                                 <option value="gpt-4.1-nano">GPT-4.1 Nano</option>
                                                 <option value="gpt-4o">GPT-4o</option>
                                                 <option value="gpt-4o-mini">GPT-4o Mini</option>
-                                                <option value="gpt-4-turbo">GPT-4 Turbo</option>
-                                                <option value="o1-mini">o1-mini</option>
-                                                <option value="o1-preview">o1-preview</option>
-                                                <option value="gpt-image-1">GPT Image-1</option>
-                                                <option value="whisper-1">Whisper-1 (Audio)</option>
-                                                <option value="text-embedding-3-large">Embedding-3 Large</option>
-                                                <option value="text-embedding-3-small">Embedding-3 Small</option>
+                                                <option value="gpt-5">GPT-5</option>
+                                                <option value="gpt-5-mini">GPT-5 Mini</option>
+                                                <option value="gpt-5-nano">GPT-5 Nano</option>
+                                                <option value="gpt-5.4">GPT-5.4</option>
+                                                <option value="gpt-5.4-mini">GPT-5.4 Mini</option>
+                                                <option value="gpt-5.4-nano">GPT-5.4 Nano</option>
+                                                <option value="text-embedding-3-large">Text Embedding 3 Large</option>
+                                                <option value="text-embedding-3-small">Text Embedding 3 Small</option>
                                             </optgroup>
-                                            <optgroup label="Google (Gemini)">
-                                                <option value="gemini/gemini-3-pro-preview">Gemini 3 Pro Preview</option>
-                                                <option value="gemini/gemini-3-flash-preview">Gemini 3 Flash Preview</option>
-                                                <option value="gemini/gemini-3-flash">Gemini 3 Flash</option>
-                                                <option value="gemini/gemini-2.5-pro">Gemini 2.5 Pro</option>
-                                                <option value="gemini/gemini-2.5-flash">Gemini 2.5 Flash</option>
-                                                <option value="gemini/gemini-2.5-flash-lite">Gemini 2.5 Flash Lite</option>
-                                                <option value="gemini/gemini-2.0-flash">Gemini 2.0 Flash</option>
-                                                <option value="gemini/gemini-2.0-flash-lite">Gemini 2.0 Flash Lite</option>
-                                                <option value="gemini/gemini-1.5-pro">Gemini 1.5 Pro</option>
-                                                <option value="gemini/gemini-1.5-flash">Gemini 1.5 Flash</option>
+                                            <optgroup label="Tencent">
+                                                <option value="hy3">Hy3</option>
                                             </optgroup>
-                                            <optgroup label="Anthropic">
-                                                <option value="claude-4.5-haiku">Claude 4.5 Haiku</option>
-                                                <option value="claude-3.5-sonnet">Claude 3.5 Sonnet</option>
-                                                <option value="claude-3-opus">Claude 3 Opus</option>
-                                                <option value="claude-3-haiku">Claude 3 Haiku</option>
+                                            <optgroup label="Moonshot">
+                                                <option value="kimi-k2.6">Kimi K2.6</option>
+                                                <option value="kimi-k2.7">Kimi K2.7</option>
+                                                <option value="kimi-k3">Kimi K3</option>
                                             </optgroup>
-                                            <optgroup label="DeepSeek / BytePlus">
-                                                <option value="deepseek-r1">DeepSeek R1 (BytePlus)</option>
-                                                <option value="deepseek-v3.2">DeepSeek V3.2 (BytePlus)</option>
-                                                <option value="deepseek-chat">DeepSeek V3 (Direct)</option>
-                                                <option value="deepseek-reasoner">DeepSeek R1 (Direct)</option>
+                                            <optgroup label="Mimo">
+                                                <option value="mimo-v2.5">Mimo V2.5</option>
+                                                <option value="mimo-v2.5-pro">Mimo V2.5 Pro</option>
                                             </optgroup>
-                                            <optgroup label="BytePlus (Kimi / Seed / GLM)">
-                                                <option value="kimi-k2">Kimi K2</option>
-                                                <option value="kimi-k2.5-260127">Kimi K2.5</option>
-                                                <option value="kimi-k2-thinking">Kimi K2 Thinking</option>
-                                                <option value="glm-4.7">GLM-4.7</option>
-                                                <option value="seed-2.0-mini">Seed 2.0 Mini</option>
-                                                <option value="seed-2.0-mini-free">Seed 2.0 Mini Free</option>
-                                                <option value="seed-2.0-lite-free">Seed 2.0 Lite Free</option>
-                                                <option value="seed-1.8">Seed 1.8</option>
+                                            <optgroup label="MiniMax">
+                                                <option value="MiniMax-M2.7-highspeed">MiniMax M2.7 Highspeed</option>
+                                                <option value="MiniMax-M3">MiniMax M3</option>
                                             </optgroup>
-                                            <optgroup label="Z.ai (GLM)">
-                                                <option value="glm-5">GLM-5</option>
-                                                <option value="glm-5-code">GLM-5 Code</option>
-                                                <option value="glm-5-turbo">GLM-5 Turbo</option>
+                                            <optgroup label="Alibaba (Qwen)">
+                                                <option value="qwen3.6-flash">Qwen 3.6 Flash</option>
+                                                <option value="qwen3.6-plus">Qwen 3.6 Plus</option>
+                                                <option value="qwen3.7-max">Qwen 3.7 Max</option>
+                                                <option value="qwen3.7-plus">Qwen 3.7 Plus</option>
+                                                <option value="qwen3.8-max-preview">Qwen 3.8 Max Preview</option>
                                             </optgroup>
-                                            <optgroup label="Meta & Others">
-                                                <option value="llama-3.1-405b">Llama 3.1 405B</option>
-                                                <option value="llama-3.1-70b">Llama 3.1 70B</option>
-                                                <option value="qwen-max">Qwen Max</option>
-                                                <option value="qwen-plus">Qwen Plus</option>
+                                            <optgroup label="BytePlus (Seed)">
+                                                <option value="seed-2-0-code">Seed 2.0 Code</option>
+                                                <option value="seed-2-0-lite">Seed 2.0 Lite</option>
+                                                <option value="seed-2-0-mini">Seed 2.0 Mini</option>
+                                                <option value="seed-2-0-pro">Seed 2.0 Pro</option>
                                             </optgroup>
                                         </select>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-1.5 mt-4">
+                                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-1">AI Model Pricing Reference</label>
+                                    <div className="overflow-x-auto rounded-2xl border border-gray-100 shadow-sm max-h-[300px] overflow-y-auto custom-scrollbar">
+                                        <table className="min-w-full divide-y divide-gray-200 text-left text-xs">
+                                            <thead className="bg-gray-50 sticky top-0 z-10">
+                                                <tr>
+                                                    <th className="px-6 py-4 font-bold text-gray-500 uppercase tracking-wider">Model Name</th>
+                                                    <th className="px-6 py-4 font-bold text-gray-500 uppercase tracking-wider">Provider</th>
+                                                    <th className="px-6 py-4 font-bold text-gray-500 uppercase tracking-wider">Context Window</th>
+                                                    <th className="px-6 py-4 font-bold text-gray-500 uppercase tracking-wider">Input Price</th>
+                                                    <th className="px-6 py-4 font-bold text-gray-500 uppercase tracking-wider">Cache Price</th>
+                                                    <th className="px-6 py-4 font-bold text-gray-500 uppercase tracking-wider">Output Price</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="bg-white divide-y divide-gray-200">
+                                                <tr className="hover:bg-gray-50">
+                                                    <td className="px-6 py-5">
+                                                        <div className="flex flex-col gap-1.5">
+                                                            <div className="flex items-center gap-2 flex-wrap">
+                                                                <span className="text-sm font-medium text-gray-900">claude-fable-5</span>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap">
+                                                        <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-700">anthropic</span>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">1,000,000</td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$10.00</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$1.000</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$50.00</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                </tr>
+                                                <tr className="hover:bg-gray-50">
+                                                    <td className="px-6 py-5">
+                                                        <div className="flex flex-col gap-1.5">
+                                                            <div className="flex items-center gap-2 flex-wrap">
+                                                                <span className="text-sm font-medium text-gray-900">claude-haiku-4-5</span>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap">
+                                                        <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-700">anthropic</span>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">200,000</td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$1.00</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$0.100</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$5.00</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                </tr>
+                                                <tr className="hover:bg-gray-50">
+                                                    <td className="px-6 py-5">
+                                                        <div className="flex flex-col gap-1.5">
+                                                            <div className="flex items-center gap-2 flex-wrap">
+                                                                <span className="text-sm font-medium text-gray-900">claude-opus-4-7</span>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap">
+                                                        <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-700">anthropic</span>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">1,000,000</td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$5.00</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$0.500</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$25.00</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                </tr>
+                                                <tr className="hover:bg-gray-50">
+                                                    <td className="px-6 py-5">
+                                                        <div className="flex flex-col gap-1.5">
+                                                            <div className="flex items-center gap-2 flex-wrap">
+                                                                <span className="text-sm font-medium text-gray-900">claude-opus-4-8</span>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap">
+                                                        <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-700">anthropic</span>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">1,000,000</td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$5.00</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$0.500</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$25.00</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                </tr>
+                                                <tr className="hover:bg-gray-50">
+                                                    <td className="px-6 py-5">
+                                                        <div className="flex flex-col gap-1.5">
+                                                            <div className="flex items-center gap-2 flex-wrap">
+                                                                <span className="text-sm font-medium text-gray-900">claude-sonnet-4-6</span>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap">
+                                                        <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-700">anthropic</span>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">1,000,000</td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$3.00</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$0.300</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$15.00</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                </tr>
+                                                <tr className="hover:bg-gray-50">
+                                                    <td className="px-6 py-5">
+                                                        <div className="flex flex-col gap-1.5">
+                                                            <div className="flex items-center gap-2 flex-wrap">
+                                                                <span className="text-sm font-medium text-gray-900">claude-sonnet-5</span>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap">
+                                                        <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-700">anthropic</span>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">1,000,000</td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$2.00</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$0.200</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$10.00</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                </tr>
+                                                <tr className="hover:bg-gray-50">
+                                                    <td className="px-6 py-5">
+                                                        <div className="flex flex-col gap-1.5">
+                                                            <div className="flex items-center gap-2 flex-wrap">
+                                                                <span className="text-sm font-medium text-gray-900">deepseek-v4-flash</span>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap">
+                                                        <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-700">deepseek</span>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">1,000,000</td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$0.16</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$0.003</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$0.32</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                </tr>
+                                                <tr className="hover:bg-gray-50">
+                                                    <td className="px-6 py-5">
+                                                        <div className="flex flex-col gap-1.5">
+                                                            <div className="flex items-center gap-2 flex-wrap">
+                                                                <span className="text-sm font-medium text-gray-900">deepseek-v4-pro</span>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap">
+                                                        <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-700">deepseek</span>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">1,000,000</td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$0.50</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$0.004</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$0.95</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                </tr>
+                                                <tr className="hover:bg-gray-50">
+                                                    <td className="px-6 py-5">
+                                                        <div className="flex flex-col gap-1.5">
+                                                            <div className="flex items-center gap-2 flex-wrap">
+                                                                <span className="text-sm font-medium text-gray-900">gemini/gemini-3-flash-preview</span>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap">
+                                                        <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-700">gemini</span>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">1,048,576</td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$0.50</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$0.050</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$3.00</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                </tr>
+                                                <tr className="hover:bg-gray-50">
+                                                    <td className="px-6 py-5">
+                                                        <div className="flex flex-col gap-1.5">
+                                                            <div className="flex items-center gap-2 flex-wrap">
+                                                                <span className="text-sm font-medium text-gray-900">gemini/gemini-3.1-flash-lite</span>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap">
+                                                        <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-700">gemini</span>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">1,048,576</td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$0.25</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$0.025</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$1.50</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                </tr>
+                                                <tr className="hover:bg-gray-50">
+                                                    <td className="px-6 py-5">
+                                                        <div className="flex flex-col gap-1.5">
+                                                            <div className="flex items-center gap-2 flex-wrap">
+                                                                <span className="text-sm font-medium text-gray-900">gemini/gemini-3.1-pro-preview</span>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap">
+                                                        <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-700">gemini</span>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">1,048,576</td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$2.00</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$0.200</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$12.00</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                </tr>
+                                                <tr className="hover:bg-gray-50">
+                                                    <td className="px-6 py-5">
+                                                        <div className="flex flex-col gap-1.5">
+                                                            <div className="flex items-center gap-2 flex-wrap">
+                                                                <span className="text-sm font-medium text-gray-900">gemini/gemini-3.5-flash</span>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap">
+                                                        <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-700">gemini</span>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">1,048,576</td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$1.50</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$0.150</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$9.00</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                </tr>
+                                                <tr className="hover:bg-gray-50">
+                                                    <td className="px-6 py-5">
+                                                        <div className="flex flex-col gap-1.5">
+                                                            <div className="flex items-center gap-2 flex-wrap">
+                                                                <span className="text-sm font-medium text-gray-900">gemini/gemini-embedding-001</span>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap">
+                                                        <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-700">gemini</span>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">2,048</td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$0.15</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <span className="text-gray-400">—</span>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$0.00</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                </tr>
+                                                <tr className="hover:bg-gray-50">
+                                                    <td className="px-6 py-5">
+                                                        <div className="flex flex-col gap-1.5">
+                                                            <div className="flex items-center gap-2 flex-wrap">
+                                                                <span className="text-sm font-medium text-gray-900">glm-5</span>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap">
+                                                        <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-700">z.ai</span>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">128,000</td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$0.60</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$0.120</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$2.00</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                </tr>
+                                                <tr className="hover:bg-gray-50">
+                                                    <td className="px-6 py-5">
+                                                        <div className="flex flex-col gap-1.5">
+                                                            <div className="flex items-center gap-2 flex-wrap">
+                                                                <span className="text-sm font-medium text-gray-900">glm-5-turbo</span>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap">
+                                                        <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-700">z.ai</span>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">128,000</td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$1.20</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$0.260</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$4.00</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                </tr>
+                                                <tr className="hover:bg-gray-50">
+                                                    <td className="px-6 py-5">
+                                                        <div className="flex flex-col gap-1.5">
+                                                            <div className="flex items-center gap-2 flex-wrap">
+                                                                <span className="text-sm font-medium text-gray-900">glm-5.1</span>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap">
+                                                        <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-700">z.ai</span>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">200,000</td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$1.40</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$0.260</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$4.40</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                </tr>
+                                                <tr className="hover:bg-gray-50">
+                                                    <td className="px-6 py-5">
+                                                        <div className="flex flex-col gap-1.5">
+                                                            <div className="flex items-center gap-2 flex-wrap">
+                                                                <span className="text-sm font-medium text-gray-900">glm-5.2</span>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap">
+                                                        <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-700">z.ai</span>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">1,000,000</td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$1.05</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$0.195</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$3.30</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                </tr>
+                                                <tr className="hover:bg-gray-50">
+                                                    <td className="px-6 py-5">
+                                                        <div className="flex flex-col gap-1.5">
+                                                            <div className="flex items-center gap-2 flex-wrap">
+                                                                <span className="text-sm font-medium text-gray-900">glm-5v-turbo</span>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap">
+                                                        <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-700">z.ai</span>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">128,000</td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$1.20</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$0.260</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$4.00</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                </tr>
+                                                <tr className="hover:bg-gray-50">
+                                                    <td className="px-6 py-5">
+                                                        <div className="flex flex-col gap-1.5">
+                                                            <div className="flex items-center gap-2 flex-wrap">
+                                                                <span className="text-sm font-medium text-gray-900">gpt-4.1</span>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap">
+                                                        <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-700">openai</span>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">1,047,576</td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$2.00</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$0.500</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$8.00</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                </tr>
+                                                <tr className="hover:bg-gray-50">
+                                                    <td className="px-6 py-5">
+                                                        <div className="flex flex-col gap-1.5">
+                                                            <div className="flex items-center gap-2 flex-wrap">
+                                                                <span className="text-sm font-medium text-gray-900">gpt-4.1-mini</span>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap">
+                                                        <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-700">openai</span>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">1,047,576</td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$0.40</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$0.100</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$1.60</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                </tr>
+                                                <tr className="hover:bg-gray-50">
+                                                    <td className="px-6 py-5">
+                                                        <div className="flex flex-col gap-1.5">
+                                                            <div className="flex items-center gap-2 flex-wrap">
+                                                                <span className="text-sm font-medium text-gray-900">gpt-4.1-nano</span>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap">
+                                                        <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-700">openai</span>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">1,047,576</td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$0.10</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$0.025</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$0.40</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                </tr>
+                                                <tr className="hover:bg-gray-50">
+                                                    <td className="px-6 py-5">
+                                                        <div className="flex flex-col gap-1.5">
+                                                            <div className="flex items-center gap-2 flex-wrap">
+                                                                <span className="text-sm font-medium text-gray-900">gpt-4o</span>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap">
+                                                        <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-700">openai</span>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">128,000</td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$2.50</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$1.250</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$10.00</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                </tr>
+                                                <tr className="hover:bg-gray-50">
+                                                    <td className="px-6 py-5">
+                                                        <div className="flex flex-col gap-1.5">
+                                                            <div className="flex items-center gap-2 flex-wrap">
+                                                                <span className="text-sm font-medium text-gray-900">gpt-4o-mini</span>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap">
+                                                        <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-700">openai</span>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">128,000</td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$0.15</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$0.075</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$0.60</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                </tr>
+                                                <tr className="hover:bg-gray-50">
+                                                    <td className="px-6 py-5">
+                                                        <div className="flex flex-col gap-1.5">
+                                                            <div className="flex items-center gap-2 flex-wrap">
+                                                                <span className="text-sm font-medium text-gray-900">gpt-5</span>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap">
+                                                        <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-700">openai</span>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">272,000</td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$1.25</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$0.125</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$10.00</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                </tr>
+                                                <tr className="hover:bg-gray-50">
+                                                    <td className="px-6 py-5">
+                                                        <div className="flex flex-col gap-1.5">
+                                                            <div className="flex items-center gap-2 flex-wrap">
+                                                                <span className="text-sm font-medium text-gray-900">gpt-5-mini</span>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap">
+                                                        <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-700">openai</span>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">272,000</td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$0.25</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$0.025</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$2.00</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                </tr>
+                                                <tr className="hover:bg-gray-50">
+                                                    <td className="px-6 py-5">
+                                                        <div className="flex flex-col gap-1.5">
+                                                            <div className="flex items-center gap-2 flex-wrap">
+                                                                <span className="text-sm font-medium text-gray-900">gpt-5-nano</span>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap">
+                                                        <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-700">openai</span>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">272,000</td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$0.05</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$0.005</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$0.40</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                </tr>
+                                                <tr className="hover:bg-gray-50">
+                                                    <td className="px-6 py-5">
+                                                        <div className="flex flex-col gap-1.5">
+                                                            <div className="flex items-center gap-2 flex-wrap">
+                                                                <span className="text-sm font-medium text-gray-900">gpt-5.4</span>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap">
+                                                        <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-700">openai</span>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">1,050,000</td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$2.50</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$0.250</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$15.00</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                </tr>
+                                                <tr className="hover:bg-gray-50">
+                                                    <td className="px-6 py-5">
+                                                        <div className="flex flex-col gap-1.5">
+                                                            <div className="flex items-center gap-2 flex-wrap">
+                                                                <span className="text-sm font-medium text-gray-900">gpt-5.4-mini</span>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap">
+                                                        <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-700">openai</span>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">1,050,000</td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$0.75</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$0.075</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$4.50</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                </tr>
+                                                <tr className="hover:bg-gray-50">
+                                                    <td className="px-6 py-5">
+                                                        <div className="flex flex-col gap-1.5">
+                                                            <div className="flex items-center gap-2 flex-wrap">
+                                                                <span className="text-sm font-medium text-gray-900">gpt-5.4-nano</span>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap">
+                                                        <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-700">openai</span>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">1,050,000</td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$0.20</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$0.020</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$1.25</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                </tr>
+                                                <tr className="hover:bg-gray-50">
+                                                    <td className="px-6 py-5">
+                                                        <div className="flex flex-col gap-1.5">
+                                                            <div className="flex items-center gap-2 flex-wrap">
+                                                                <span className="text-sm font-medium text-gray-900">hy3</span>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap">
+                                                        <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-700">tencent</span>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">256,000</td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$0.13</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$0.033</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$0.53</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                </tr>
+                                                <tr className="hover:bg-gray-50">
+                                                    <td className="px-6 py-5">
+                                                        <div className="flex flex-col gap-1.5">
+                                                            <div className="flex items-center gap-2 flex-wrap">
+                                                                <span className="text-sm font-medium text-gray-900">kimi-k2.6</span>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap">
+                                                        <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-700">moonshoot</span>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">262,100</td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$0.67</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$0.140</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$3.39</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                </tr>
+                                                <tr className="hover:bg-gray-50">
+                                                    <td className="px-6 py-5">
+                                                        <div className="flex flex-col gap-1.5">
+                                                            <div className="flex items-center gap-2 flex-wrap">
+                                                                <span className="text-sm font-medium text-gray-900">kimi-k2.7</span>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap">
+                                                        <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-700">moonshoot</span>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">262,100</td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$0.95</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$0.190</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$4.00</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                </tr>
+                                                <tr className="hover:bg-gray-50">
+                                                    <td className="px-6 py-5">
+                                                        <div className="flex flex-col gap-1.5">
+                                                            <div className="flex items-center gap-2 flex-wrap">
+                                                                <span className="text-sm font-medium text-gray-900">kimi-k3</span>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap">
+                                                        <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-700">moonshoot</span>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">1,000,000</td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$1.50</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$0.150</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$7.50</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                </tr>
+                                                <tr className="hover:bg-gray-50">
+                                                    <td className="px-6 py-5">
+                                                        <div className="flex flex-col gap-1.5">
+                                                            <div className="flex items-center gap-2 flex-wrap">
+                                                                <span className="text-sm font-medium text-gray-900">mimo-v2.5</span>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap">
+                                                        <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-700">mimo</span>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">1,100,000</td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$0.14</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$0.003</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$0.28</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                </tr>
+                                                <tr className="hover:bg-gray-50">
+                                                    <td className="px-6 py-5">
+                                                        <div className="flex flex-col gap-1.5">
+                                                            <div className="flex items-center gap-2 flex-wrap">
+                                                                <span className="text-sm font-medium text-gray-900">mimo-v2.5-pro</span>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap">
+                                                        <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-700">mimo</span>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">1,100,000</td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$0.43</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$0.004</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$0.87</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                </tr>
+                                                <tr className="hover:bg-gray-50">
+                                                    <td className="px-6 py-5">
+                                                        <div className="flex flex-col gap-1.5">
+                                                            <div className="flex items-center gap-2 flex-wrap">
+                                                                <span className="text-sm font-medium text-gray-900">MiniMax-M2.7-highspeed</span>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap">
+                                                        <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-700">sumopod</span>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">204,800</td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$0.03</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$0.030</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$0.12</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                </tr>
+                                                <tr className="hover:bg-gray-50">
+                                                    <td className="px-6 py-5">
+                                                        <div className="flex flex-col gap-1.5">
+                                                            <div className="flex items-center gap-2 flex-wrap">
+                                                                <span className="text-sm font-medium text-gray-900">MiniMax-M3</span>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap">
+                                                        <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-pink-100 text-pink-700">minimax</span>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">1,000,000</td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$0.30</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$0.060</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$1.20</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                </tr>
+                                                <tr className="hover:bg-gray-50">
+                                                    <td className="px-6 py-5">
+                                                        <div className="flex flex-col gap-1.5">
+                                                            <div className="flex items-center gap-2 flex-wrap">
+                                                                <span className="text-sm font-medium text-gray-900">qwen3.6-flash</span>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap">
+                                                        <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-700">alibaba</span>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">1,000,000</td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$0.25</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$0.025</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$1.50</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                </tr>
+                                                <tr className="hover:bg-gray-50">
+                                                    <td className="px-6 py-5">
+                                                        <div className="flex flex-col gap-1.5">
+                                                            <div className="flex items-center gap-2 flex-wrap">
+                                                                <span className="text-sm font-medium text-gray-900">qwen3.6-plus</span>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap">
+                                                        <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-700">alibaba</span>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">1,000,000</td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$0.50</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$0.050</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$3.00</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                </tr>
+                                                <tr className="hover:bg-gray-50">
+                                                    <td className="px-6 py-5">
+                                                        <div className="flex flex-col gap-1.5">
+                                                            <div className="flex items-center gap-2 flex-wrap">
+                                                                <span className="text-sm font-medium text-gray-900">qwen3.7-max</span>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap">
+                                                        <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-700">alibaba</span>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">1,000,000</td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$1.25</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$0.125</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$3.75</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                </tr>
+                                                <tr className="hover:bg-gray-50">
+                                                    <td className="px-6 py-5">
+                                                        <div className="flex flex-col gap-1.5">
+                                                            <div className="flex items-center gap-2 flex-wrap">
+                                                                <span className="text-sm font-medium text-gray-900">qwen3.7-plus</span>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap">
+                                                        <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-700">alibaba</span>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">1,000,000</td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$0.32</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$0.032</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$1.28</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                </tr>
+                                                <tr className="hover:bg-gray-50">
+                                                    <td className="px-6 py-5">
+                                                        <div className="flex flex-col gap-1.5">
+                                                            <div className="flex items-center gap-2 flex-wrap">
+                                                                <span className="text-sm font-medium text-gray-900">qwen3.8-max-preview</span>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap">
+                                                        <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-700">alibaba</span>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">1,000,000</td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$1.25</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$0.130</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$3.75</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                </tr>
+                                                <tr className="hover:bg-gray-50">
+                                                    <td className="px-6 py-5">
+                                                        <div className="flex flex-col gap-1.5">
+                                                            <div className="flex items-center gap-2 flex-wrap">
+                                                                <span className="text-sm font-medium text-gray-900">seed-2-0-code</span>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap">
+                                                        <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-700">byteplus</span>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">256,000</td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$0.50</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$0.100</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$3.00</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                </tr>
+                                                <tr className="hover:bg-gray-50">
+                                                    <td className="px-6 py-5">
+                                                        <div className="flex flex-col gap-1.5">
+                                                            <div className="flex items-center gap-2 flex-wrap">
+                                                                <span className="text-sm font-medium text-gray-900">seed-2-0-lite</span>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap">
+                                                        <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-700">byteplus</span>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">224,000</td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$0.25</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$0.050</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$2.00</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                </tr>
+                                                <tr className="hover:bg-gray-50">
+                                                    <td className="px-6 py-5">
+                                                        <div className="flex flex-col gap-1.5">
+                                                            <div className="flex items-center gap-2 flex-wrap">
+                                                                <span className="text-sm font-medium text-gray-900">seed-2-0-mini</span>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap">
+                                                        <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-700">byteplus</span>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">224,000</td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$0.10</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$0.020</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$0.40</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                </tr>
+                                                <tr className="hover:bg-gray-50">
+                                                    <td className="px-6 py-5">
+                                                        <div className="flex flex-col gap-1.5">
+                                                            <div className="flex items-center gap-2 flex-wrap">
+                                                                <span className="text-sm font-medium text-gray-900">seed-2-0-pro</span>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap">
+                                                        <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-700">byteplus</span>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">256,000</td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$0.50</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$0.100</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$3.00</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                </tr>
+                                                <tr className="hover:bg-gray-50">
+                                                    <td className="px-6 py-5">
+                                                        <div className="flex flex-col gap-1.5">
+                                                            <div className="flex items-center gap-2 flex-wrap">
+                                                                <span className="text-sm font-medium text-gray-900">text-embedding-3-large</span>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap">
+                                                        <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-700">openai</span>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">8,191</td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$0.13</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <span className="text-gray-400">—</span>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$0.00</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                </tr>
+                                                <tr className="hover:bg-gray-50">
+                                                    <td className="px-6 py-5">
+                                                        <div className="flex flex-col gap-1.5">
+                                                            <div className="flex items-center gap-2 flex-wrap">
+                                                                <span className="text-sm font-medium text-gray-900">text-embedding-3-small</span>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap">
+                                                        <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-700">openai</span>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">8,191</td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$0.02</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <span className="text-gray-400">—</span>
+                                                    </td>
+                                                    <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900">
+                                                        <div className="font-medium">$0.00</div>
+                                                        <div className="text-xs text-gray-500">/1M tokens</div>
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
                                     </div>
                                 </div>
 
