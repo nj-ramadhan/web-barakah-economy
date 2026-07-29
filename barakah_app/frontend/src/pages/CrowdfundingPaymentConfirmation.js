@@ -66,8 +66,10 @@ const CrowdfundingPaymentConfirmation = () => {
   }, []);
 
   const handleGenerateDynaQRIS = async () => {
+    const donationId = location.state?.donationId;
     const campaignSlug = location.state?.campaignSlug || 'charity';
-    const sessionKey = `qris_session_charity_${campaignSlug}_${location.state?.amount}`;
+    const referenceId = donationId || campaignSlug;
+    const sessionKey = `qris_session_charity_${referenceId}_${location.state?.amount}`;
     
     // Check active session to avoid spamming requests
     const savedSession = localStorage.getItem(sessionKey);
@@ -79,7 +81,7 @@ const CrowdfundingPaymentConfirmation = () => {
           if (remainingSec > 0) {
             setQrisData(parsed.qrisData);
             setTimeLeft(remainingSec);
-            startCountdownAndPolling(parsed.qrisData, remainingSec, campaignSlug);
+            startCountdownAndPolling(parsed.qrisData, remainingSec, referenceId);
             return;
           } else {
             localStorage.removeItem(sessionKey);
@@ -92,7 +94,7 @@ const CrowdfundingPaymentConfirmation = () => {
 
     setGeneratingQris(true);
     try {
-      const res = await generateDynaQRIS({ amount: location.state?.amount, type: 'charity', reference_id: campaignSlug });
+      const res = await generateDynaQRIS({ amount: location.state?.amount, type: 'charity', reference_id: referenceId });
       if (res.error) {
         alert(res.error);
       } else {
@@ -103,11 +105,11 @@ const CrowdfundingPaymentConfirmation = () => {
         setQrisData(res);
         const initSec = res.timeoutSeconds || 300;
         setTimeLeft(initSec);
-        startCountdownAndPolling(res, initSec, campaignSlug);
+        startCountdownAndPolling(res, initSec, referenceId);
       }
     } catch (err) {
       console.error(err);
-      alert('Gagal menghasilkan QRIS Dinamis.');
+      alert('Gagal menghasilkan QRIS.');
     } finally {
       setGeneratingQris(false);
     }
@@ -151,14 +153,16 @@ const CrowdfundingPaymentConfirmation = () => {
 
   const handleManualCheckStatus = async () => {
     setCheckingStatus(true);
+    const donationId = location.state?.donationId;
     const campaignSlug = location.state?.campaignSlug || 'charity';
+    const refId = donationId || campaignSlug;
     try {
-      const checkRes = await checkDynaQRISStatus('charity', campaignSlug);
+      const checkRes = await checkDynaQRISStatus('charity', refId);
       if (checkRes && checkRes.verified) {
         setStatusText('Pembayaran Berhasil Diverifikasi!');
         setIsSuccess(true);
       } else {
-        const verifyRes = await verifyDynaQRISPayment('charity', campaignSlug);
+        const verifyRes = await verifyDynaQRISPayment('charity', refId);
         if (verifyRes && verifyRes.success) {
           setStatusText('Pembayaran Berhasil Diverifikasi!');
           setIsSuccess(true);
@@ -235,7 +239,7 @@ const CrowdfundingPaymentConfirmation = () => {
             <div className="space-y-2 pt-2">
               <button
                 type="button"
-                onClick={() => navigate(campaignSlug ? `/crowdfunding/${campaignSlug}` : '/crowdfunding')}
+                onClick={() => navigate(campaignSlug ? `/kampanye/${campaignSlug}` : '/crowdfunding')}
                 className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-black py-3.5 px-4 rounded-xl shadow-lg shadow-emerald-100 transition"
               >
                 Kembali ke Program Donasi

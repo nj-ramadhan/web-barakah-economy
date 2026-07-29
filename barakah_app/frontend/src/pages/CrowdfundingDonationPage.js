@@ -284,11 +284,16 @@ const CrowdfundingDonationPage = () => {
     }));
   };
 
+  useEffect(() => {
+    if (paymentConfig?.active_mode === 'dynaqris') {
+      setSelectedBank('qris');
+    }
+  }, [paymentConfig]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     const csrfToken = getCsrfToken();
-    // const authToken = localStorage.getItem('authToken');
 
     // Validate form
     if (!selectedAmount || (selectedAmount === 'custom' && !customAmount)) {
@@ -296,7 +301,8 @@ const CrowdfundingDonationPage = () => {
       return;
     }
 
-    if (!selectedBank) {
+    const effectiveBank = (paymentConfig?.active_mode === 'dynaqris') ? 'qris' : selectedBank;
+    if (!effectiveBank) {
       alert('Silakan pilih metode pembayaran');
       return;
     }
@@ -312,6 +318,37 @@ const CrowdfundingDonationPage = () => {
     const donorName = formData.hideIdentity ? 'Hamba Allah' : formData.fullName;
     const donorPhone = formData.phone;
 
+    // Create a fresh pending donation record on backend so polling tracks THIS specific transaction
+    let createdDonationId = null;
+    try {
+      const formDataObj = new FormData();
+      formDataObj.append('amount', finalAmount);
+      formDataObj.append('donor_name', donorName);
+      formDataObj.append('donor_phone', donorPhone);
+      formDataObj.append('donor_email', formData.email || '');
+      formDataObj.append('payment_method', effectiveBank);
+      if (formData.message) formDataObj.append('message', formData.message);
+
+      const userStr = localStorage.getItem('user');
+      const token = localStorage.getItem('token') || (userStr ? JSON.parse(userStr)?.access : null);
+
+      const res = await axios.post(
+        `${process.env.REACT_APP_API_BASE_URL}/api/donations/campaigns/${slug}/submit/`,
+        formDataObj,
+        {
+          headers: {
+            'X-CSRFToken': csrfToken,
+            ...(token ? { Authorization: `Bearer ${token}` } : {})
+          }
+        }
+      );
+      if (res.data && res.data.donation_id) {
+        createdDonationId = res.data.donation_id;
+      }
+    } catch (err) {
+      console.error("Error creating initial pending donation record:", err);
+    }
+
     const paymentData = {
       amount: finalAmount,
       donorName: donorName,
@@ -320,9 +357,8 @@ const CrowdfundingDonationPage = () => {
     };
 
     // If Midtrans is selected, handle payment via Midtrans
-    if (selectedBank === 'midtrans') {
+    if (effectiveBank === 'midtrans') {
       try {
-        // Fetch payment token from backend
         const response = await axios.post(
           `${process.env.REACT_APP_API_BASE_URL}/api/payments/generate-donation-midtrans-token/`,
           paymentData, {
@@ -334,19 +370,17 @@ const CrowdfundingDonationPage = () => {
         );
 
         const { token } = response.data;
-
-        // Trigger the payment popup
         handlePayment(token);
       } catch (error) {
         console.error('Error generating Midtrans token:', error);
         alert('Terjadi kesalahan saat memproses pembayaran.');
       }
     } else {
-      // Navigate to payment confirmation for Bank BSI
       navigate('/konfirmasi-pembayaran-donasi', {
         state: {
+          donationId: createdDonationId,
           amount: finalAmount,
-          bank: selectedBank,
+          bank: effectiveBank,
           campaignSlug: slug,
           campaignTitle: campaign?.title || 'Program Donasi',
           donorName: donorName,
@@ -417,29 +451,47 @@ const CrowdfundingDonationPage = () => {
         )}
 
         {/* Payment Method */}
-        <h3 className="font-semibold mb-3">Transfer ke</h3>
-        <div className="space-y-3 mb-6">
-          {banks.map((bank) => (
-            <label
-              key={bank.id}
-              className={`flex items-center p-3 rounded-lg cursor-pointer transition-colors ${selectedBank === bank.id
-                ? 'bg-green-50 border border-green-500'
-                : 'bg-white border border-transparent hover:bg-green-50/50'
-                }`}
-            >
-              <input
-                type="radio"
-                name="bank"
-                value={bank.id}
-                checked={selectedBank === bank.id}
-                onChange={(e) => setSelectedBank(e.target.value)}
-                className="mr-3 accent-green-600"
-              />
-              <img src={bank.logo} alt={bank.name} className="h-6 mr-2" />
-              <span>{bank.name}</span>
-            </label>
-          ))}
-        </div>
+        {paymentConfig?.active_mode === 'dynaqris' ? (
+          <div className="mb-6">
+            <h3 className="font-semibold mb-3">Metode Pembayaran</h3>
+            <div className="bg-emerald-50 border-2 border-emerald-500 rounded-xl p-4 flex items-center justify-between shadow-xs">
+              <div className="flex items-center gap-3">
+                <span className="material-icons text-3xl text-emerald-600">qr_code_2</span>
+                <div>
+                  <h4 className="font-bold text-sm text-gray-800">QRIS (Pembayaran Instan)</h4>
+                  <p className="text-xs text-gray-500">Scan via GoPay, OVO, Dana, ShopeePay, m-Banking, dll.</p>
+                </div>
+              </div>
+              <span className="bg-emerald-600 text-white text-[10px] uppercase font-black px-2.5 py-1 rounded-full tracking-wider shrink-0">TERPILIH</span>
+            </div>
+          </div>
+        ) : (
+          <>
+            <h3 className="font-semibold mb-3">Transfer ke</h3>
+            <div className="space-y-3 mb-6">
+              {banks.map((bank) => (
+                <label
+                  key={bank.id}
+                  className={`flex items-center p-3 rounded-lg cursor-pointer transition-colors ${selectedBank === bank.id
+                    ? 'bg-green-50 border border-green-500'
+                    : 'bg-white border border-transparent hover:bg-green-50/50'
+                    }`}
+                >
+                  <input
+                    type="radio"
+                    name="bank"
+                    value={bank.id}
+                    checked={selectedBank === bank.id}
+                    onChange={(e) => setSelectedBank(e.target.value)}
+                    className="mr-3 accent-green-600"
+                  />
+                  <img src={bank.logo} alt={bank.name} className="h-6 mr-2" />
+                  <span>{bank.name}</span>
+                </label>
+              ))}
+            </div>
+          </>
+        )}
 
         {/* Personal Data Form */}
         <h3 className="font-semibold mb-3">Data Anda</h3>
