@@ -375,9 +375,12 @@ class EventViewSet(viewsets.ModelViewSet):
                 "error": f"Pendaftaran belum dibuka. Pendaftaran akan dibuka pada {time_str} WIB."
             }, status=status.HTTP_400_BAD_REQUEST)
         
-        # Check if already registered
-        if EventRegistration.objects.filter(event=event, user=user).exists():
-            return Response({"error": "Anda sudah terdaftar di event ini."}, status=status.HTTP_400_BAD_REQUEST)
+        # Check if already registered & approved
+        if EventRegistration.objects.filter(event=event, user=user, status='approved').exists():
+            return Response({"error": "Anda telah terdaftar & terverifikasi di event ini."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Clean up any unpaid/stale pending registration for this user & event
+        EventRegistration.objects.filter(event=event, user=user, status='pending').delete()
 
         # Extract responses (JSON string if from FormData)
         responses_raw = request.data.get('responses', '{}')

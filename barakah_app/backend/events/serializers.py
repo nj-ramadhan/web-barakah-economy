@@ -227,7 +227,7 @@ class EventSerializer(serializers.ModelSerializer):
             if not request or not request.user or not request.user.is_authenticated:
                 return None
             
-            reg = obj.registrations.filter(user=request.user).first()
+            reg = obj.registrations.filter(user=request.user, status='approved').first()
             if reg:
                 return {
                     "id": reg.id,
