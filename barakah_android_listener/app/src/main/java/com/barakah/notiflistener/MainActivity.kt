@@ -1,6 +1,8 @@
 package com.barakah.notiflistener
 
 import android.content.BroadcastReceiver
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
@@ -12,6 +14,7 @@ import android.os.Bundle
 import android.provider.Settings
 import android.widget.Button
 import android.widget.EditText
+import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
@@ -32,6 +35,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var etWebhookUrl: EditText
     private lateinit var etSecretToken: EditText
     private lateinit var tvLogConsole: TextView
+    private lateinit var svLogConsole: ScrollView
 
     private val logReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
@@ -51,12 +55,15 @@ class MainActivity : AppCompatActivity() {
         etWebhookUrl = findViewById(R.id.etWebhookUrl)
         etSecretToken = findViewById(R.id.etSecretToken)
         tvLogConsole = findViewById(R.id.tvLogConsole)
+        svLogConsole = findViewById(R.id.svLogConsole)
 
         val btnGrantPermission: Button = findViewById(R.id.btnGrantPermission)
         val btnOpenAppInfo: Button = findViewById(R.id.btnOpenAppInfo)
         val btnPickInstalledApps: Button = findViewById(R.id.btnPickInstalledApps)
         val btnSaveSettings: Button = findViewById(R.id.btnSaveSettings)
         val btnTestWebhook: Button = findViewById(R.id.btnTestWebhook)
+        val btnCopyLog: Button = findViewById(R.id.btnCopyLog)
+        val btnClearLog: Button = findViewById(R.id.btnClearLog)
 
         etWebhookUrl.setText(prefs.webhookUrl)
         etSecretToken.setText(prefs.secretToken)
@@ -90,6 +97,18 @@ class MainActivity : AppCompatActivity() {
             sendTestWebhook()
         }
 
+        btnCopyLog.setOnClickListener {
+            val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+            val clip = ClipData.newPlainText("BarakahNotifLog", tvLogConsole.text.toString())
+            clipboard.setPrimaryClip(clip)
+            Toast.makeText(this, "Log riwayat berhasil disalin ke clipboard!", Toast.LENGTH_SHORT).show()
+        }
+
+        btnClearLog.setOnClickListener {
+            tvLogConsole.text = "[System Log Console Cleared...]\n"
+            Toast.makeText(this, "Log riwayat dibersihkan", Toast.LENGTH_SHORT).show()
+        }
+
         val filter = IntentFilter(NotificationService.ACTION_NOTIFICATION_LOG)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             registerReceiver(logReceiver, filter, RECEIVER_EXPORTED)
@@ -121,42 +140,61 @@ class MainActivity : AppCompatActivity() {
     private fun showInstalledAppPickerDialog() {
         val pm = packageManager
         val installedApps = pm.getInstalledApplications(PackageManager.GET_META_DATA)
+        val currentSelected = prefs.selectedPackages.toMutableSet()
 
-        // Filter and sort apps: user apps and bank/e-wallet apps first
+        // Filter and sort apps: Selected apps FIRST, then Bank/E-wallet apps, then User apps, then System apps
         val appList = installedApps.map { appInfo ->
             val label = pm.getApplicationLabel(appInfo).toString()
             val pkg = appInfo.packageName
             val isUserApp = (appInfo.flags and ApplicationInfo.FLAG_SYSTEM) == 0
             AppItem(label, pkg, isUserApp)
-        }.sortedWith(compareByDescending<AppItem> { it.isBankOrWallet() }
-            .thenByDescending { it.isUserApp }
-            .thenBy { it.label.lowercase() })
+        }.sortedWith(
+            compareByDescending<AppItem> { currentSelected.contains(it.packageName) }
+                .thenByDescending { it.isBankOrWallet() }
+                .thenByDescending { it.isUserApp }
+                .thenBy { it.label.lowercase() }
+        )
 
-        val appLabels = appList.map { "${it.label} (${it.packageName})" }.toTypedArray()
-        val currentSelected = prefs.selectedPackages.toMutableSet()
+        val appLabels = appList.map { item ->
+            val statusTag = if (currentSelected.contains(item.packageName)) "✓ " else ""
+            "$statusTag${item.label} (${item.packageName})"
+        }.toTypedArray()
+
         val checkedItems = BooleanArray(appList.size) { i -> currentSelected.contains(appList[i].packageName) }
 
-        AlertDialog.Builder(this)
-            .setTitle("Pilih Aplikasi Terinstall di HP")
-            .setMultiChoiceItems(appLabels, checkedItems) { _, which, isChecked ->
-                val pkg = appList[which].packageName
-                if (isChecked) {
-                    currentSelected.add(pkg)
-                } else {
-                    currentSelected.remove(pkg)
-                }
+        val builder = AlertDialog.Builder(this)
+        builder.setTitle("Pilih Aplikasi Terinstall di HP")
+        builder.setMultiChoiceItems(appLabels, checkedItems) { _, which, isChecked ->
+            val pkg = appList[which].packageName
+            if (isChecked) {
+                currentSelected.add(pkg)
+            } else {
+                currentSelected.remove(pkg)
             }
-            .setPositiveButton("Simpan Pilihan") { dialog, _ ->
-                prefs.selectedPackages = currentSelected
-                updateSelectedAppsSummary()
-                Toast.makeText(this, "Target aplikasi diperbarui (${currentSelected.size} aplikasi)", Toast.LENGTH_SHORT).show()
-                appendLog("✓ Pilihan aplikasi target diperbarui (${currentSelected.size} app).")
-                dialog.dismiss()
-            }
-            .setNegativeButton("Batal") { dialog, _ ->
-                dialog.dismiss()
-            }
-            .show()
+        }
+
+        builder.setPositiveButton("Simpan Pilihan") { dialog, _ ->
+            prefs.selectedPackages = currentSelected
+            updateSelectedAppsSummary()
+            Toast.makeText(this, "Target aplikasi diperbarui (${currentSelected.size} aplikasi aktif)", Toast.LENGTH_SHORT).show()
+            appendLog("✓ Pilihan aplikasi target diperbarui (${currentSelected.size} app aktif).")
+            dialog.dismiss()
+        }
+
+        builder.setNeutralButton("Kosongkan Semua") { dialog, _ ->
+            currentSelected.clear()
+            prefs.selectedPackages = currentSelected
+            updateSelectedAppsSummary()
+            Toast.makeText(this, "Semua pilihan aplikasi dibersihkan", Toast.LENGTH_SHORT).show()
+            appendLog("✓ Pilihan aplikasi target dibersihkan (membaca semua).")
+            dialog.dismiss()
+        }
+
+        builder.setNegativeButton("Batal") { dialog, _ ->
+            dialog.dismiss()
+        }
+
+        builder.show()
     }
 
     private data class AppItem(val label: String, val packageName: String, val isUserApp: Boolean) {
@@ -252,5 +290,8 @@ class MainActivity : AppCompatActivity() {
         val timestamp = sdf.format(Date())
         val newLog = "[$timestamp] $text\n"
         tvLogConsole.append(newLog)
+        svLogConsole.post {
+            svLogConsole.fullScroll(ScrollView.FOCUS_DOWN)
+        }
     }
 }

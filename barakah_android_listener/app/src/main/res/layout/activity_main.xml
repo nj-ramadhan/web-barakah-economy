@@ -218,24 +218,51 @@
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 
-        <!-- Log Activity Card -->
-        <TextView
-            android:layout_width="wrap_content"
+        <!-- Log Activity Card Header -->
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Riwayat Log Notifikasi"
-            android:textColor="@color/gray_800"
-            android:textSize="14sp"
-            android:textStyle="bold"
-            android:layout_marginBottom="8dp" />
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="8dp">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Riwayat Log Notifikasi"
+                android:textColor="@color/gray_800"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+            <Button
+                android:id="@+id/btnCopyLog"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="📋 Salin Log"
+                android:textColor="@color/emerald_700"
+                android:textSize="11sp" />
+
+            <Button
+                android:id="@+id/btnClearLog"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="🗑️ Hapus"
+                android:textColor="@color/gray_700"
+                android:textSize="11sp" />
+        </LinearLayout>
 
         <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
-            android:layout_height="200dp"
+            android:layout_height="220dp"
             app:cardCornerRadius="16dp"
             app:cardElevation="2dp"
             app:cardBackgroundColor="@color/white">
 
             <ScrollView
+                android:id="@+id/svLogConsole"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:padding="12dp">
@@ -247,7 +274,8 @@
                     android:text="[System Log Output Initialized...]\nAplikasi siap mendeteksi notifikasi transfer bank terpilih.\n"
                     android:fontFamily="monospace"
                     android:textSize="11sp"
-                    android:textColor="@color/gray_800" />
+                    android:textColor="@color/gray_800"
+                    android:textIsSelectable="true" />
             </ScrollView>
         </androidx.cardview.widget.CardView>
     </LinearLayout>

@@ -577,16 +577,44 @@ class AndroidNotificationWebhookView(APIView):
         import re
         import decimal
 
-        # Find candidate numbers (e.g. 121, 121.00, 15000, 15.000)
-        raw_matches = re.findall(r'(\d+[\.\,]?\d*)', payload_text)
+        # Extract candidate numbers from text (e.g. Rp20.008, Rp 20.000, Rp.20.000, 20000, 20.008,00, Rp20.00)
+        raw_matches = re.findall(r'(?:Rp\.?\s*)?(\d+(?:[\.\,]\d+)*)', payload_text, re.IGNORECASE)
         extracted_amounts = []
         for m in raw_matches:
             try:
-                clean_num = m.replace(',', '.').rstrip('.')
-                if clean_num.count('.') == 1 and clean_num.endswith('.00'):
-                    clean_num = clean_num.split('.')[0]
-                val = decimal.Decimal(clean_num)
-                if val > 0:
+                s = m.strip()
+                if not s:
+                    continue
+
+                # Handle Indonesian thousand separators vs decimals
+                if ',' in s and '.' in s:
+                    # e.g. "20.008,00" -> 20008
+                    s_clean = s.replace('.', '').replace(',', '.')
+                elif '.' in s and ',' not in s:
+                    parts = s.split('.')
+                    if len(parts) == 2 and len(parts[1]) == 2:
+                        # e.g. "121.00" or "20.00" -> 121 / 20
+                        s_clean = parts[0]
+                    elif len(parts) == 2 and len(parts[1]) == 3:
+                        # e.g. "20.008" -> 20008
+                        s_clean = s.replace('.', '')
+                    elif len(parts) > 2:
+                        # e.g. "1.000.000" -> 1000000
+                        s_clean = s.replace('.', '')
+                    else:
+                        s_clean = s.replace('.', '')
+                elif ',' in s and '.' not in s:
+                    parts = s.split(',')
+                    if len(parts) == 2 and len(parts[1]) in [1, 2]:
+                        # e.g. "121,00" -> 121
+                        s_clean = parts[0]
+                    else:
+                        s_clean = s.replace(',', '')
+                else:
+                    s_clean = s
+
+                val = decimal.Decimal(s_clean)
+                if val > 0 and val not in extracted_amounts:
                     extracted_amounts.append(val)
             except Exception:
                 pass
