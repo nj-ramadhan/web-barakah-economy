@@ -333,7 +333,7 @@ const CrowdfundingDonationPage = () => {
       const token = localStorage.getItem('token') || (userStr ? JSON.parse(userStr)?.access : null);
 
       const res = await axios.post(
-        `${process.env.REACT_APP_API_BASE_URL}/api/donations/campaigns/${slug}/submit/`,
+        `${process.env.REACT_APP_API_BASE_URL}/api/donations/${slug}/create-donation/`,
         formDataObj,
         {
           headers: {
