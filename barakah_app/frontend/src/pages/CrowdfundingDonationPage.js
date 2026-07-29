@@ -47,6 +47,23 @@ const CrowdfundingDonationPage = () => {
   });
 
   useEffect(() => {
+    const userStr = localStorage.getItem('user');
+    if (userStr) {
+      try {
+        const user = JSON.parse(userStr);
+        setFormData(prev => ({
+          ...prev,
+          fullName: user.full_name || user.first_name || user.username || prev.fullName || '',
+          email: user.email || prev.email || '',
+          phone: user.phone_number || user.phone || prev.phone || ''
+        }));
+      } catch (e) {
+        console.error("Error parsing user:", e);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
     // Check if Snap.js is already loaded
     if (typeof window.snap === 'undefined') {
       const script = document.createElement('script');

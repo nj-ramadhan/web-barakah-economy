@@ -115,26 +115,26 @@ const DynaQRISModal = ({
     };
 
     return (
-        <div className="fixed inset-0 z-[500] flex items-start sm:items-center justify-center bg-black/70 backdrop-blur-md p-3 sm:p-4 overflow-y-auto animate-fadeIn">
-            <div className="bg-white rounded-3xl max-w-md w-full p-5 sm:p-6 shadow-2xl relative border border-emerald-100 transform transition-all my-auto max-h-[92vh] overflow-y-auto custom-scrollbar">
+        <div className="fixed inset-0 z-[999999] flex items-start sm:items-center justify-center bg-black/80 backdrop-blur-md p-4 pt-16 sm:pt-6 overflow-y-auto animate-fadeIn">
+            <div className="bg-white rounded-3xl max-w-md w-full p-5 sm:p-6 shadow-2xl relative border border-emerald-100 transform transition-all my-auto max-h-[85vh] overflow-y-auto custom-scrollbar">
                 {/* Sticky Top Close Header */}
-                <div className="sticky top-0 z-20 flex justify-end bg-white/95 backdrop-blur-xs pt-1 pb-2 -mt-2 -mr-2 mb-1">
+                <div className="sticky top-0 z-50 flex items-center justify-between bg-white/95 backdrop-blur-xs pt-1 pb-3 -mt-1 -mr-1 mb-3 border-b border-gray-100">
+                    <span className="text-xs font-black text-emerald-800 uppercase tracking-wider flex items-center gap-1.5">
+                        <span className="material-icons text-base text-emerald-600">qr_code_2</span>
+                        Pembayaran QRIS Dinamis
+                    </span>
                     <button
                         type="button"
                         onClick={onClose}
-                        className="text-gray-500 hover:text-gray-800 w-9 h-9 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition shadow-sm border border-gray-200 active:scale-95"
-                        title="Tutup"
+                        className="text-gray-600 hover:text-gray-900 w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition shadow-sm border border-gray-200 active:scale-95 shrink-0"
+                        title="Tutup Modal"
                     >
                         <span className="material-icons text-base">close</span>
                     </button>
                 </div>
 
-                {/* Header Badge */}
+                {/* Header Subtitle */}
                 <div className="text-center mb-4">
-                    <div className="inline-flex items-center gap-2 bg-emerald-50 text-emerald-700 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-2">
-                        <span className="material-icons text-sm">qr_code_scanner</span>
-                        <span>Pembayaran QRIS Dinamis</span>
-                    </div>
                     <h3 className="text-xl font-black text-gray-800">Scan untuk Membayar</h3>
                     <p className="text-xs text-gray-500 mt-1">
                         Buka BCA Mobile, GoPay, OVO, Dana, ShopeePay, atau m-Banking Anda
@@ -219,11 +219,20 @@ const DynaQRISModal = ({
                             <span>{copied ? 'Kode QRIS Tersalin!' : 'Salin Text Kode QRIS'}</span>
                         </button>
                     )}
+
+                    <button
+                        type="button"
+                        onClick={onClose}
+                        className="w-full bg-gray-900 hover:bg-gray-800 text-white font-extrabold py-3 px-4 rounded-xl text-xs uppercase tracking-wider transition flex items-center justify-center gap-2 shadow-md mt-2"
+                    >
+                        <span className="material-icons text-sm">close</span>
+                        <span>TUTUP POPUP</span>
+                    </button>
                 </div>
 
-                {/* Footer Note */}
+                {/* Footer Status */}
                 <div className="mt-4 text-center">
-                    <p className="text-[11px] text-gray-400">
+                    <p className="text-[11px] text-gray-500 font-medium">
                         {statusText}
                     </p>
                 </div>

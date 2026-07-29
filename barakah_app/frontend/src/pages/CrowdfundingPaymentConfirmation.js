@@ -4,7 +4,7 @@ import axios from 'axios';
 import Header from '../components/layout/Header';
 import NavigationButton from '../components/layout/Navigation';
 import DynaQRISModal from '../components/common/DynaQRISModal';
-import { getPublicPaymentConfig, generateDynaQRIS } from '../services/paymentApi';
+import { getPublicPaymentConfig, generateDynaQRIS, checkDynaQRISStatus, verifyDynaQRISPayment } from '../services/paymentApi';
 import '../styles/Body.css';
 
 const getCsrfToken = () => {
@@ -33,37 +33,77 @@ const CrowdfundingPaymentConfirmation = () => {
   const [previewUrl, setPreviewUrl] = useState('');
   const [isSuccess, setIsSuccess] = useState(false);
   const [formData, setFormData] = useState({
-    accountName: '',
-    sourceBank: '',
+    accountName: location.state?.donorName || '',
+    sourceBank: location.state?.bank || '',
     sourceAccount: '',
     transferDate: new Date().toISOString().split('T')[0],
     amount: location.state?.amount || 0
   });
 
-  // DynaQRIS State
+  // DynaQRIS In-Page State
   const [paymentConfig, setPaymentConfig] = useState(null);
-  const [showDynaModal, setShowDynaModal] = useState(false);
   const [qrisData, setQrisData] = useState(null);
   const [generatingQris, setGeneratingQris] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(300);
+  const [isExpired, setIsExpired] = useState(false);
+  const [checkingStatus, setCheckingStatus] = useState(false);
+  const [statusText, setStatusText] = useState('Menunggu Pembayaran...');
+  const timerRef = useRef(null);
+  const pollRef = useRef(null);
 
   useEffect(() => {
     getPublicPaymentConfig().then((cfg) => {
       setPaymentConfig(cfg);
       if (cfg?.active_mode === 'dynaqris' && location.state?.amount) {
-        handleGenerateDynaQRIS(cfg);
+        handleGenerateDynaQRIS();
       }
     }).catch(err => console.error("Error fetching config:", err));
+
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+      if (pollRef.current) clearInterval(pollRef.current);
+    };
   }, []);
 
   const handleGenerateDynaQRIS = async () => {
+    const campaignSlug = location.state?.campaignSlug || 'charity';
+    const sessionKey = `qris_session_charity_${campaignSlug}_${location.state?.amount}`;
+    
+    // Check active session to avoid spamming requests
+    const savedSession = localStorage.getItem(sessionKey);
+    if (savedSession) {
+      try {
+        const parsed = JSON.parse(savedSession);
+        if (parsed.expiresAt) {
+          const remainingSec = Math.floor((new Date(parsed.expiresAt) - new Date()) / 1000);
+          if (remainingSec > 0) {
+            setQrisData(parsed.qrisData);
+            setTimeLeft(remainingSec);
+            startCountdownAndPolling(parsed.qrisData, remainingSec, campaignSlug);
+            return;
+          } else {
+            localStorage.removeItem(sessionKey);
+          }
+        }
+      } catch (e) {
+        console.error("Error parsing saved QRIS session:", e);
+      }
+    }
+
     setGeneratingQris(true);
     try {
-      const res = await generateDynaQRIS({ amount: location.state?.amount, type: 'charity' });
+      const res = await generateDynaQRIS({ amount: location.state?.amount, type: 'charity', reference_id: campaignSlug });
       if (res.error) {
         alert(res.error);
       } else {
+        localStorage.setItem(sessionKey, JSON.stringify({
+          qrisData: res,
+          expiresAt: res.expiresAt
+        }));
         setQrisData(res);
-        setShowDynaModal(true);
+        const initSec = res.timeoutSeconds || 300;
+        setTimeLeft(initSec);
+        startCountdownAndPolling(res, initSec, campaignSlug);
       }
     } catch (err) {
       console.error(err);
@@ -73,9 +113,71 @@ const CrowdfundingPaymentConfirmation = () => {
     }
   };
 
-  const handleDynaSuccess = (res) => {
-    setShowDynaModal(false);
-    setIsSuccess(true);
+  const startCountdownAndPolling = (resData, seconds, refId) => {
+    if (timerRef.current) clearInterval(timerRef.current);
+    if (pollRef.current) clearInterval(pollRef.current);
+
+    setTimeLeft(seconds);
+    setIsExpired(false);
+    setStatusText('Menunggu Pembayaran...');
+
+    timerRef.current = setInterval(() => {
+      setTimeLeft(prev => {
+        if (prev <= 1) {
+          clearInterval(timerRef.current);
+          clearInterval(pollRef.current);
+          setIsExpired(true);
+          setStatusText('Waktu Pembayaran Telah Habis');
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    pollRef.current = setInterval(async () => {
+      try {
+        const checkRes = await checkDynaQRISStatus('charity', refId);
+        if (checkRes && checkRes.verified) {
+          clearInterval(timerRef.current);
+          clearInterval(pollRef.current);
+          setStatusText('Pembayaran Berhasil Diverifikasi!');
+          setIsSuccess(true);
+        }
+      } catch (e) {
+        console.error("Polling error:", e);
+      }
+    }, 4000);
+  };
+
+  const handleManualCheckStatus = async () => {
+    setCheckingStatus(true);
+    const campaignSlug = location.state?.campaignSlug || 'charity';
+    try {
+      const checkRes = await checkDynaQRISStatus('charity', campaignSlug);
+      if (checkRes && checkRes.verified) {
+        setStatusText('Pembayaran Berhasil Diverifikasi!');
+        setIsSuccess(true);
+      } else {
+        const verifyRes = await verifyDynaQRISPayment('charity', campaignSlug);
+        if (verifyRes && verifyRes.success) {
+          setStatusText('Pembayaran Berhasil Diverifikasi!');
+          setIsSuccess(true);
+        } else {
+          setStatusText('Pembayaran belum terdeteksi. Mohon pastikan Anda sudah scan & bayar via QRIS.');
+        }
+      }
+    } catch (err) {
+      console.error(err);
+      setStatusText('Gagal mengecek status pembayaran.');
+    } finally {
+      setCheckingStatus(false);
+    }
+  };
+
+  const formatTime = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
   // Redirect if no data passed
@@ -262,210 +364,278 @@ Semoga dapat menjadi amal ibadah bagi saya dan bermanfaat untuk program serta pe
           <h2 className="text-2xl font-bold mt-2 mb-6">{campaignTitle}</h2>
         </div>
 
-        {/* DynaQRIS Section if active mode is dynaqris */}
-        {paymentConfig?.active_mode === 'dynaqris' && (
-          <div className="bg-gradient-to-r from-emerald-600 to-green-700 text-white rounded-2xl p-6 mb-6 shadow-xl text-center">
-            <div className="inline-flex items-center gap-2 bg-white/20 text-white px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-2">
-              <span className="material-icons text-sm">qr_code_2</span>
-              <span>Metode Otomatis DynaQRIS Aktif</span>
+        {/* Payment Card Section */}
+        {paymentConfig?.active_mode === 'dynaqris' ? (
+          <div className="bg-white rounded-2xl shadow-xl overflow-hidden mt-6 border border-emerald-100 p-6 text-center space-y-5">
+            <div className="inline-flex items-center gap-2 bg-emerald-50 text-emerald-700 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider">
+              <span className="material-icons text-base">qr_code_2</span>
+              <span>Pembayaran QRIS Dinamis Otomatis</span>
             </div>
-            <h3 className="text-xl font-bold mb-1">Scan QRIS Dinamis Otomatis</h3>
-            <p className="text-xs text-emerald-100 mb-4">
-              Pembayaran donasi langsung terdeteksi otomatis tanpa perlu upload foto bukti bayar.
-            </p>
-            <button
-              onClick={handleGenerateDynaQRIS}
-              disabled={generatingQris}
-              className="w-full bg-white text-emerald-800 font-bold py-3.5 px-6 rounded-2xl shadow hover:bg-emerald-50 transition flex items-center justify-center gap-2"
-            >
-              <span className="material-icons text-lg">qr_code_scanner</span>
-              <span>{generatingQris ? 'Membuat QRIS...' : 'Tampilkan QRIS Donasi'}</span>
-            </button>
+            
+            <div>
+              <h3 className="text-xl font-black text-gray-800">Scan QRIS Untuk Melengkapi Donasi</h3>
+              <p className="text-xs text-gray-500 mt-1">Buka BCA Mobile, GoPay, OVO, Dana, ShopeePay, atau m-Banking Anda</p>
+            </div>
+
+            {/* Total Nominal Box */}
+            <div className="bg-gradient-to-r from-emerald-600 to-green-700 text-white rounded-2xl p-4 text-center max-w-sm mx-auto shadow-lg">
+              <p className="text-[10px] uppercase font-bold tracking-widest text-emerald-100">Total Nominal Donasi</p>
+              <h2 className="text-3xl font-black mt-1">
+                Rp {formattedAmount}
+              </h2>
+              <p className="text-[11px] text-emerald-100/90 mt-1 font-medium">Nominal otomatis terdeteksi saat di-scan</p>
+            </div>
+
+            {/* QR Image */}
+            <div className="flex justify-center py-2">
+              {isExpired ? (
+                <div className="w-64 h-64 bg-gray-100 rounded-2xl flex flex-col items-center justify-center p-6 text-center border-2 border-dashed border-red-300">
+                  <span className="material-icons text-4xl text-red-500 mb-2">timer_off</span>
+                  <p className="font-bold text-red-600 text-sm">Waktu Pembayaran Habis</p>
+                  <p className="text-xs text-gray-500 mt-1">Silakan lakukan donasi ulang untuk mendapatkan QRIS baru.</p>
+                </div>
+              ) : qrisData?.qrisImage ? (
+                <div className="p-3 bg-white border-2 border-emerald-500/20 rounded-2xl shadow-md">
+                  <img src={qrisData.qrisImage} alt="QRIS Code" className="w-64 h-64 object-contain rounded-xl" />
+                </div>
+              ) : (
+                <div className="w-64 h-64 bg-gray-50 rounded-2xl flex flex-col items-center justify-center text-gray-400 text-xs font-bold gap-2">
+                  <div className="w-6 h-6 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin"></div>
+                  <span>{generatingQris ? 'Membuat QRIS...' : 'Mempersiapkan QRIS...'}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Countdown Timer */}
+            {!isExpired && (
+              <div className="flex items-center justify-between bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 max-w-sm mx-auto">
+                <div className="flex items-center gap-2">
+                  <span className="material-icons text-amber-600 text-lg animate-pulse">alarm</span>
+                  <span className="text-xs font-bold text-amber-800">Sisa Waktu Pembayaran:</span>
+                </div>
+                <span className={`font-mono text-base font-black ${timeLeft < 120 ? 'text-red-600 animate-bounce' : 'text-amber-700'}`}>
+                  {formatTime(timeLeft)}
+                </span>
+              </div>
+            )}
+
+            {/* Action & Status Check Button */}
+            <div className="max-w-sm mx-auto space-y-2">
+              {!isExpired && (
+                <button
+                  type="button"
+                  onClick={handleManualCheckStatus}
+                  disabled={checkingStatus}
+                  className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 px-4 rounded-xl shadow-lg shadow-emerald-100 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                >
+                  {checkingStatus ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      <span>Memeriksa...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span className="material-icons text-lg">check_circle</span>
+                      <span>Saya Sudah Bayar / Cek Status</span>
+                    </>
+                  )}
+                </button>
+              )}
+
+              {qrisData?.qrisCode && (
+                <button
+                  type="button"
+                  onClick={() => copyToClipboard(qrisData.qrisCode, 'Kode QRIS')}
+                  className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-2.5 px-4 rounded-xl text-xs transition flex items-center justify-center gap-2"
+                >
+                  <span className="material-icons text-sm">content_copy</span>
+                  <span>Salin Text Kode QRIS</span>
+                </button>
+              )}
+
+              <p className="text-xs text-gray-500 font-medium pt-1">
+                {statusText}
+              </p>
+            </div>
           </div>
-        )}
+        ) : (
+          /* Manual Bank Transfer Option */
+          <>
+            {/* Bank information card */}
+            <div className="bg-white rounded-lg shadow overflow-hidden mb-6">
+              <div className="p-4 flex flex-col items-center">
+                <div className="flex items-center w-full mb-4">
+                  <img
+                    src={`/images/${bank}-logo.png`}
+                    alt={selectedBankInfo.name}
+                    className="w-12 mr-2"
+                  />
+                  <div className="flex-1">
+                    <div className="flex justify-between items-center">
+                      <h3 className="text-xl font-bold">{selectedBankInfo.number}</h3>
+                      {!selectedBankInfo.isQRIS && (
+                        <button
+                          onClick={() => copyToClipboard(selectedBankInfo.number, 'Nomor rekening')}
+                          className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-2 py-1 rounded flex items-center text-sm"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                          </svg>
+                          Salin No Rek.
+                        </button>
+                      )}
+                    </div>
+                    <p className="text-gray-600">
+                      {selectedBankInfo.isQRIS ? 'Scan QRIS untuk pembayaran' : `a.n. ${selectedBankInfo.owner || 'Barakah Economy Community'}`}
+                    </p>
+                  </div>
+                </div>
 
-        <DynaQRISModal
-          isOpen={showDynaModal}
-          onClose={() => setShowDynaModal(false)}
-          qrisData={qrisData}
-          transactionType="charity"
-          amount={amount}
-          onPaymentSuccess={handleDynaSuccess}
-        />
+                {selectedBankInfo.isQRIS && (
+                  <div className="w-full flex justify-center p-4 bg-gray-50 rounded-lg">
+                    <img
+                      src="/images/qris-bae2.png"
+                      alt="QRIS BAE"
+                      className="max-w-xs w-full shadow-sm rounded-lg"
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
 
-        {/* Bank information card */}
-        <div className="bg-white rounded-lg shadow overflow-hidden mb-6">
-          <div className="p-4 flex flex-col items-center">
-            <div className="flex items-center w-full mb-4">
-              <img
-                src={`/images/${bank}-logo.png`}
-                alt={selectedBankInfo.name}
-                className="w-12 mr-2"
-              />
-              <div className="flex-1">
-                <div className="flex justify-between items-center">
-                  <h3 className="text-xl font-bold">{selectedBankInfo.number}</h3>
-                  {!selectedBankInfo.isQRIS && (
+            {/* Amount card */}
+            <div className="bg-white rounded-lg shadow overflow-hidden mb-4">
+              <div className="p-4">
+                <div className="flex items-center mb-2">
+                  <div className="flex-1 flex justify-between items-center">
+                    <h3 className="text-2xl font-bold">
+                      Rp. <span className="text-green-500">{formattedAmount}</span>
+                    </h3>
                     <button
-                      onClick={() => copyToClipboard(selectedBankInfo.number, 'Nomor rekening')}
+                      onClick={() => copyToClipboard(amount, 'Nominal')}
                       className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-2 py-1 rounded flex items-center text-sm"
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                       </svg>
-                      Salin No Rek.
+                      Salin Nominal
                     </button>
-                  )}
+                  </div>
                 </div>
-                <p className="text-gray-600">
-                  {selectedBankInfo.isQRIS ? 'Scan QRIS untuk pembayaran' : `a.n. ${selectedBankInfo.owner || 'Barakah Economy Community'}`}
-                </p>
+                <div className="bg-yellow-100 text-yellow-800 py-2 px-3 rounded-lg text-sm font-medium">
+                  PENTING! Mohon transfer sesuai sampai dengan 3 digit terakhir
+                </div>
               </div>
             </div>
 
-            {selectedBankInfo.isQRIS && (
-              <div className="w-full flex justify-center p-4 bg-gray-50 rounded-lg">
-                <img
-                  src="/images/qris-bae2.png"
-                  alt="QRIS BAE"
-                  className="max-w-xs w-full shadow-sm rounded-lg"
-                />
-              </div>
-            )}
-          </div>
-        </div>
+            {/* Payment confirmation form */}
+            <div className="bg-white rounded-lg shadow overflow-hidden mt-6">
+              <div className="p-4">
+                <h3 className="text-xl font-bold mb-4">Konfirmasi Pembayaran Transfer Bank</h3>
 
-        {/* Amount card */}
-        <div className="bg-white rounded-lg shadow overflow-hidden mb-4">
-          <div className="p-4">
-            <div className="flex items-center mb-2">
-              <div className="flex-1 flex justify-between items-center">
-                <h3 className="text-2xl font-bold">
-                  Rp. <span className="text-green-500">{formattedAmount}</span>
-                </h3>
-                <button
-                  onClick={() => copyToClipboard(amount, 'Nominal')}
-                  className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-2 py-1 rounded flex items-center text-sm"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                  </svg>
-                  Salin Nominal
-                </button>
-              </div>
-            </div>
-            <div className="bg-yellow-100 text-yellow-800 py-2 px-3 rounded-lg text-sm font-medium">
-              PENTING! Mohon transfer sesuai sampai dengan 3 digit terakhir
-            </div>
-          </div>
-        </div>
-
-        {/* Payment confirmation form */}
-        <div className="bg-white rounded-lg shadow overflow-hidden mt-6">
-          <div className="p-4">
-            <h3 className="text-xl font-bold mb-4">Konfirmasi Pembayaran</h3>
-
-            <form onSubmit={handleSubmit} className="space-y-4 mb-10">
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Transfer dari <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  name="sourceBank"
-                  placeholder="Nama Bank Pengirim"
-                  className="w-full p-3 rounded-lg border border-gray-300 focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none mb-2"
-                  value={formData.sourceBank}
-                  onChange={handleInputChange}
-                  required
-                />
-                {!selectedBankInfo.isQRIS && (
-                  <input
-                    type="text"
-                    name="sourceAccount"
-                    placeholder="Nomor Rekening Pengirim"
-                    className="w-full p-3 rounded-lg border border-gray-300 focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none mb-2"
-                    value={formData.sourceAccount}
-                    onChange={handleInputChange}
-                    required
-                  />
-                )}
-                <input
-                  type="text"
-                  name="accountName"
-                  placeholder="Atas Nama (opsional)"
-                  className="w-full p-3 rounded-lg border border-gray-300 focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none mb-2"
-                  value={formData.accountName || ''}
-                  onChange={handleInputChange}
-                />
-
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Tanggal Transfer <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="date"
-                  name="transferDate"
-                  className="w-full p-3 rounded-lg border border-gray-300 focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none"
-                  value={formData.transferDate}
-                  onChange={handleInputChange}
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Bukti Transfer <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  ref={fileInputRef}
-                  onChange={handleFileChange}
-                  style={{ opacity: 0, position: 'absolute', zIndex: -1 }}
-                  required
-                />
-                <div
-                  className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:bg-gray-50 transition-colors cursor-pointer"
-                  onClick={() => fileInputRef.current.click()}
-                >
-                  {previewUrl ? (
-                    <div className="relative">
-                      <img
-                        src={previewUrl}
-                        alt="Bukti Transfer"
-                        className="max-h-48 mx-auto rounded-lg"
+                <form onSubmit={handleSubmit} className="space-y-4 mb-10">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Transfer dari <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      name="sourceBank"
+                      placeholder="Nama Bank Pengirim"
+                      className="w-full p-3 rounded-lg border border-gray-300 focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none mb-2"
+                      value={formData.sourceBank}
+                      onChange={handleInputChange}
+                      required
+                    />
+                    {!selectedBankInfo.isQRIS && (
+                      <input
+                        type="text"
+                        name="sourceAccount"
+                        placeholder="Nomor Rekening Pengirim"
+                        className="w-full p-3 rounded-lg border border-gray-300 focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none mb-2"
+                        value={formData.sourceAccount}
+                        onChange={handleInputChange}
+                        required
                       />
-                      <div className="mt-2 text-sm text-green-600">Klik untuk mengganti</div>
-                    </div>
-                  ) : (
-                    <div className="py-4">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 mx-auto text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                      </svg>
-                      <p className="mt-2 text-sm text-gray-500">Pilih File</p>
-                      <p className="text-xs text-gray-400">JPG, PNG, JPEG</p>
-                    </div>
-                  )}
-                </div>
-              </div>
+                    )}
+                    <input
+                      type="text"
+                      name="accountName"
+                      placeholder="Atas Nama (opsional)"
+                      className="w-full p-3 rounded-lg border border-gray-300 focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none mb-2"
+                      value={formData.accountName || ''}
+                      onChange={handleInputChange}
+                    />
 
-              <div className="mb-3 mt-4 bg-yellow-50 p-3 rounded-lg text-sm border border-yellow-200">
-                <p className="text-yellow-800">
-                  <strong>Catatan:</strong> Setelah klik KIRIM, Anda akan diarahkan ke WhatsApp untuk mengirim konfirmasi kepada admin. Mohon lampirkan juga bukti transfer di chat WhatsApp.
-                </p>
-              </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Tanggal Transfer <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="date"
+                      name="transferDate"
+                      className="w-full p-3 rounded-lg border border-gray-300 focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none"
+                      value={formData.transferDate}
+                      onChange={handleInputChange}
+                      required
+                    />
+                  </div>
 
-              <button
-                type="submit"
-                className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-medium flex items-center justify-center"
-              >
-                KIRIM VIA WHATSAPP
-              </button>
-            </form>
-          </div>
-        </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Bukti Transfer <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      ref={fileInputRef}
+                      onChange={handleFileChange}
+                      style={{ opacity: 0, position: 'absolute', zIndex: -1 }}
+                      required
+                    />
+                    <div
+                      className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:bg-gray-50 transition-colors cursor-pointer"
+                      onClick={() => fileInputRef.current.click()}
+                    >
+                      {previewUrl ? (
+                        <div className="relative">
+                          <img
+                            src={previewUrl}
+                            alt="Bukti Transfer"
+                            className="max-h-48 mx-auto rounded-lg"
+                          />
+                          <div className="mt-2 text-sm text-green-600">Klik untuk mengganti</div>
+                        </div>
+                      ) : (
+                        <div className="py-4">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 mx-auto text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
+                          <p className="mt-2 text-sm text-gray-500">Pilih File</p>
+                          <p className="text-xs text-gray-400">JPG, PNG, JPEG</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="mb-3 mt-4 bg-yellow-50 p-3 rounded-lg text-sm border border-yellow-200">
+                    <p className="text-yellow-800">
+                      <strong>Catatan:</strong> Setelah klik KIRIM, Anda akan diarahkan ke WhatsApp untuk mengirim konfirmasi kepada admin. Mohon lampirkan juga bukti transfer di chat WhatsApp.
+                    </p>
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-medium flex items-center justify-center"
+                  >
+                    KIRIM VIA WHATSAPP
+                  </button>
+                </form>
+              </div>
+            </div>
+          </>
+        )}
       </div>
       <NavigationButton />
     </div>
