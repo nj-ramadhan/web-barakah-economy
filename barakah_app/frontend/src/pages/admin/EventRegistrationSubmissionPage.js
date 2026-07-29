@@ -11,6 +11,8 @@ import CertificateEditor from '../../components/events/CertificateEditor';
 import BibEditor from '../../components/events/BibEditor';
 import SpecialQREditor from '../../components/events/SpecialQREditor';
 import EventCommitteeModal from '../../components/admin/EventCommitteeModal';
+import DynaQRISModal from '../../components/common/DynaQRISModal';
+import { generateDynaQRIS } from '../../services/paymentApi';
 import { formatCurrency } from '../../utils/formatters';
 import '../../styles/Body.css';
 
@@ -58,6 +60,35 @@ const EventRegistrationSubmissionPage = () => {
     const [isResending, setIsResending] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
     const [showCommitteeModal, setShowCommitteeModal] = useState(false);
+
+    // DynaQRIS State for OTS / Unpaid Registrants
+    const [showDynaModal, setShowDynaModal] = useState(false);
+    const [qrisData, setQrisData] = useState(null);
+    const [activeQrisReg, setActiveQrisReg] = useState(null);
+    const [generatingQrisId, setGeneratingQrisId] = useState(null);
+
+    const handleGenerateQrisForReg = async (reg) => {
+        setGeneratingQrisId(reg.id);
+        setActiveQrisReg(reg);
+        try {
+            const res = await generateDynaQRIS({
+                amount: reg.payment_amount,
+                type: 'event',
+                reference_id: reg.id
+            });
+            if (res.error) {
+                alert(res.error);
+            } else {
+                setQrisData(res);
+                setShowDynaModal(true);
+            }
+        } catch (err) {
+            console.error(err);
+            alert('Gagal menghasilkan QRIS Dinamis.');
+        } finally {
+            setGeneratingQrisId(null);
+        }
+    };
     
     // Sorting and Filtering State
     const [sortConfig, setSortConfig] = useState({ key: 'created_at', direction: 'desc' });
@@ -908,23 +939,34 @@ const EventRegistrationSubmissionPage = () => {
                                                         <td className="p-5 text-xs whitespace-nowrap">
                                                         <div className="font-black text-gray-900">Rp {Number(reg.payment_amount || 0).toLocaleString('id-ID')}</div>
                                                         <div className="flex flex-col gap-1.5 mt-1.5">
-                                                            {reg.payment_method === 'ots' ? (
-                                                                <div className="flex flex-col gap-1">
-                                                                    <div className="flex items-center gap-1 text-orange-600 font-bold py-1">
-                                                                        <span className="material-icons text-xs">payments</span>
-                                                                        OTS
-                                                                    </div>
-                                                                    {reg.payment_status !== 'verified' && (
-                                                                        <label className="flex items-center gap-2 cursor-pointer group bg-orange-50 border border-orange-100 px-2 py-1.5 rounded-lg hover:bg-orange-100 transition-colors">
-                                                                            <input 
-                                                                                type="checkbox" 
-                                                                                className="w-3.5 h-3.5 rounded border-orange-300 text-orange-600 focus:ring-orange-500"
-                                                                                onChange={() => handleVerifyPayment(reg.id)}
-                                                                            />
-                                                                            <span className="text-[9px] font-black text-orange-700 uppercase tracking-tighter">Sudah Bayar</span>
-                                                                        </label>
-                                                                    )}
-                                                                </div>
+                                                             {reg.payment_method === 'ots' ? (
+                                                                 <div className="flex flex-col gap-1.5">
+                                                                     <div className="flex items-center gap-1 text-orange-600 font-bold py-0.5 text-xs">
+                                                                         <span className="material-icons text-xs">payments</span>
+                                                                         OTS
+                                                                     </div>
+                                                                     {reg.payment_status !== 'verified' && (
+                                                                         <div className="flex flex-col gap-1">
+                                                                             <label className="flex items-center gap-1.5 cursor-pointer group bg-orange-50 border border-orange-200 px-2 py-1 rounded-lg hover:bg-orange-100 transition-colors">
+                                                                                 <input 
+                                                                                     type="checkbox" 
+                                                                                     className="w-3.5 h-3.5 rounded border-orange-300 text-orange-600 focus:ring-orange-500"
+                                                                                     onChange={() => handleVerifyPayment(reg.id)}
+                                                                                 />
+                                                                                 <span className="text-[9px] font-black text-orange-700 uppercase tracking-tighter">Bayar Tunai</span>
+                                                                             </label>
+                                                                             <button
+                                                                                 type="button"
+                                                                                 onClick={() => handleGenerateQrisForReg(reg)}
+                                                                                 disabled={generatingQrisId === reg.id}
+                                                                                 className="bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-1 rounded-lg text-[9px] font-black uppercase flex items-center justify-center gap-1 hover:bg-emerald-100 transition disabled:opacity-50"
+                                                                             >
+                                                                                 <span className="material-icons text-xs">qr_code_2</span>
+                                                                                 {generatingQrisId === reg.id ? 'Memuat...' : 'QRIS Dinamis'}
+                                                                             </button>
+                                                                         </div>
+                                                                     )}
+                                                                 </div>
                                                             ) : reg.payment_proof ? (
                                                                 <button
                                                                     onClick={() => setSelectedPaymentProof(reg.payment_proof)}
@@ -1449,6 +1491,19 @@ const EventRegistrationSubmissionPage = () => {
                 event={event}
                 registration={editingRegistration}
                 onSuccess={() => fetchData()}
+            />
+
+            <DynaQRISModal
+                isOpen={showDynaModal}
+                onClose={() => setShowDynaModal(false)}
+                qrisData={qrisData}
+                transactionType="event"
+                referenceId={activeQrisReg?.id}
+                amount={activeQrisReg?.payment_amount}
+                onPaymentSuccess={() => {
+                    setShowDynaModal(false);
+                    fetchData();
+                }}
             />
 
             <NavigationButton />

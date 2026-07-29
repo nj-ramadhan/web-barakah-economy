@@ -145,13 +145,7 @@ const DynaQRISModal = ({
                     <h2 className="text-3xl font-black mt-1">
                         Rp {formatCurrency(qrisData.amount || amount || 0)}
                     </h2>
-                    {qrisData.uniqueCode ? (
-                        <p className="text-[10px] bg-white/20 text-white font-semibold py-1 px-3.5 rounded-full inline-block mt-2">
-                            Termasuk Kode Unik: +Rp {qrisData.uniqueCode} (Otomatis terdeteksi saat di-scan)
-                        </p>
-                    ) : (
-                        <p className="text-[11px] text-emerald-100/90 mt-1 font-medium">Nominal otomatis terdeteksi saat di-scan</p>
-                    )}
+                    <p className="text-[11px] text-emerald-100/90 mt-1 font-medium">Nominal otomatis terdeteksi saat di-scan</p>
                 </div>
 
                 {/* QR Code Container */}

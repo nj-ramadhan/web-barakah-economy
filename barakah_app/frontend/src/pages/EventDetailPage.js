@@ -40,6 +40,34 @@ const EventDetailPage = () => {
     useEffect(() => {
         getPublicPaymentConfig().then(cfg => setPaymentConfig(cfg)).catch(err => console.error("Error loading payment config:", err));
     }, []);
+
+    const [generatingQrisForReg, setGeneratingQrisForReg] = useState(false);
+
+    const handleGenerateQrisForExistingUserReg = async () => {
+        if (!event?.user_registration) return;
+        setGeneratingQrisForReg(true);
+        try {
+            const regId = event.user_registration.id;
+            const targetAmount = event.user_registration.payment_amount || 0;
+            const res = await generateDynaQRIS({
+                amount: targetAmount,
+                type: 'event',
+                reference_id: regId
+            });
+            if (res.error) {
+                alert(res.error);
+            } else {
+                setPendingRegId(regId);
+                setQrisData(res);
+                setShowDynaModal(true);
+            }
+        } catch (err) {
+            console.error(err);
+            alert("Gagal membuat QRIS Dinamis.");
+        } finally {
+            setGeneratingQrisForReg(false);
+        }
+    };
     const [guestInfo, setGuestInfo] = useState({ name: '', email: '' });
     const [files, setFiles] = useState({});
     const [participants, setParticipants] = useState([]);
@@ -987,9 +1015,23 @@ const EventDetailPage = () => {
                             </button>
                         )}
                         {event.user_registration ? (
-                            <div className="w-full bg-green-50 text-green-700 py-3.5 rounded-xl font-bold text-xs uppercase tracking-widest flex items-center gap-3 justify-center border border-green-100">
-                                <span className="material-icons text-lg">check_circle</span>
-                                Sudah Terdaftar
+                            <div className="w-full space-y-2.5">
+                                <div className={`w-full ${event.user_registration.status === 'approved' ? 'bg-green-50 text-green-700 border-green-100' : 'bg-amber-50 text-amber-800 border-amber-200'} py-3.5 px-4 rounded-xl font-bold text-xs uppercase tracking-widest flex items-center gap-3 justify-center border shadow-sm`}>
+                                    <span className="material-icons text-lg">{event.user_registration.status === 'approved' ? 'check_circle' : 'hourglass_top'}</span>
+                                    <span>{event.user_registration.status === 'approved' ? 'Sudah Terdaftar (Lunas)' : 'Terdaftar (Belum Dibayar)'}</span>
+                                </div>
+
+                                {event.user_registration.status !== 'approved' && (event.user_registration.payment_amount > 0 || event.user_registration.payment_method === 'ots') && (
+                                    <button
+                                        type="button"
+                                        onClick={handleGenerateQrisForExistingUserReg}
+                                        disabled={generatingQrisForReg}
+                                        className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3 rounded-xl font-extrabold text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg shadow-emerald-900/20 transition active:scale-[0.97] disabled:opacity-50"
+                                    >
+                                        <span className="material-icons text-base">qr_code_2</span>
+                                        <span>{generatingQrisForReg ? 'Memuat QRIS...' : 'Bayar via QRIS Dinamis'}</span>
+                                    </button>
+                                )}
                             </div>
                         ) : isCompleted ? (
                             <div className="w-full bg-gray-50 text-gray-400 py-3.5 rounded-xl font-bold text-xs uppercase tracking-widest flex items-center gap-3 justify-center border border-gray-100">
@@ -2243,35 +2285,49 @@ const EventDetailPage = () => {
                                                     )}
 
                                                     {paymentMethod === 'transfer' ? (
-                                                        <div className="flex flex-col sm:flex-row items-center gap-6 bg-white p-4 rounded-2xl border border-gray-100 animate-fade-in">
-                                                            <div className="w-32 h-32 bg-gray-100 rounded-xl overflow-hidden shrink-0 border border-gray-200">
-                                                                <img src="/images/qris-bae2.png" alt="QRIS BAE" className="w-full h-full object-contain" />
-                                                            </div>
-                                                            <div className="text-center sm:text-left">
-                                                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Pindai QRIS BAE</p>
-                                                                <p className="text-lg font-black text-gray-900 mt-1">Bae Community</p>
-                                                                <p className="text-xs text-gray-500 mt-2 leading-relaxed">Silakan bayar melalui QRIS di atas dan unggah bukti transfernya di bawah ini.</p>
-                                                                <a
-                                                                    href="/images/qris-bae2.png"
-                                                                    download="QRIS-BAE.png"
-                                                                    className="mt-3 inline-flex items-center gap-2 text-[10px] font-bold text-green-700 hover:text-green-800 transition bg-green-50 px-3 py-1.5 rounded-lg border border-green-100"
-                                                                >
-                                                                    <span className="material-icons text-sm">download</span>
-                                                                    UNDUH QRIS
-                                                                </a>
-                                                            </div>
-                                                        </div>
-                                                    ) : (
-                                                        <div className="p-6 bg-blue-50 border border-blue-100 rounded-3xl flex items-start gap-4 animate-fade-in">
-                                                            <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center shrink-0">
-                                                                <span className="material-icons">info</span>
-                                                            </div>
-                                                            <div>
-                                                                <p className="text-[10px] font-bold text-blue-800 uppercase tracking-widest mb-1">Pembayaran OTS (On The Spot)</p>
-                                                                <p className="text-xs text-blue-700 leading-relaxed font-medium">Anda dapat melakukan pendaftaran sekarang dan melakukan pembayaran secara tunai di lokasi acara (Meja Registrasi). Sampai jumpa di lokasi!</p>
-                                                            </div>
-                                                        </div>
-                                                    )}
+                                                         paymentConfig?.active_mode === 'dynaqris' ? (
+                                                             <div className="flex items-center gap-4 bg-emerald-50/90 p-4 rounded-2xl border border-emerald-200 animate-fade-in">
+                                                                 <div className="w-12 h-12 bg-emerald-100 text-emerald-700 rounded-xl flex items-center justify-center shrink-0">
+                                                                     <span className="material-icons text-2xl">qr_code_2</span>
+                                                                 </div>
+                                                                 <div>
+                                                                     <p className="text-[10px] font-bold text-emerald-800 uppercase tracking-widest">Pembayaran Otomatis DynaQRIS</p>
+                                                                     <p className="text-xs text-emerald-700 mt-0.5 leading-relaxed font-medium">
+                                                                         Lengkapi pendaftaran dan tekan <strong className="font-bold">Kirim Pendaftaran</strong> di bawah. QRIS Dinamis ber-nominal pas akan otomatis ditampilkan untuk di-scan. Tidak perlu unggah foto bukti bayar.
+                                                                     </p>
+                                                                 </div>
+                                                             </div>
+                                                         ) : (
+                                                             <div className="flex flex-col sm:flex-row items-center gap-6 bg-white p-4 rounded-2xl border border-gray-100 animate-fade-in">
+                                                                 <div className="w-32 h-32 bg-gray-100 rounded-xl overflow-hidden shrink-0 border border-gray-200">
+                                                                     <img src="/images/qris-bae2.png" alt="QRIS BAE" className="w-full h-full object-contain" />
+                                                                 </div>
+                                                                 <div className="text-center sm:text-left">
+                                                                     <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Pindai QRIS BAE</p>
+                                                                     <p className="text-lg font-black text-gray-900 mt-1">Bae Community</p>
+                                                                     <p className="text-xs text-gray-500 mt-2 leading-relaxed">Silakan bayar melalui QRIS di atas dan unggah bukti transfernya di bawah ini.</p>
+                                                                     <a
+                                                                         href="/images/qris-bae2.png"
+                                                                         download="QRIS-BAE.png"
+                                                                         className="mt-3 inline-flex items-center gap-2 text-[10px] font-bold text-green-700 hover:text-green-800 transition bg-green-50 px-3 py-1.5 rounded-lg border border-green-100"
+                                                                     >
+                                                                         <span className="material-icons text-sm">download</span>
+                                                                         UNDUH QRIS
+                                                                     </a>
+                                                                 </div>
+                                                             </div>
+                                                         )
+                                                     ) : (
+                                                         <div className="p-6 bg-blue-50 border border-blue-100 rounded-3xl flex items-start gap-4 animate-fade-in">
+                                                             <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center shrink-0">
+                                                                 <span className="material-icons">info</span>
+                                                             </div>
+                                                             <div>
+                                                                 <p className="text-[10px] font-bold text-blue-800 uppercase tracking-widest mb-1">Pembayaran OTS (On The Spot)</p>
+                                                                 <p className="text-xs text-blue-700 leading-relaxed font-medium">Anda dapat melakukan pendaftaran sekarang dan melakukan pembayaran secara tunai di lokasi acara (Meja Registrasi). Sampai jumpa di lokasi!</p>
+                                                             </div>
+                                                         </div>
+                                                     )}
 
                                                     {/* Price Inputs based on price_type */}
                                                     <div className="space-y-4">
@@ -2387,7 +2443,7 @@ const EventDetailPage = () => {
                                                         </div>
                                                     </div>
 
-                                                    {paymentMethod === 'transfer' && (
+                                                    {paymentMethod === 'transfer' && paymentConfig?.active_mode === 'manual' && (
                                                         <div className="space-y-2">
                                                             <label className="text-[10px] font-bold text-gray-600 uppercase ml-1">Upload Bukti Transfer *</label>
                                                             <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-200 border-dashed rounded-3xl cursor-pointer bg-white hover:bg-gray-50 hover:border-green-300 transition-all">
@@ -2402,7 +2458,7 @@ const EventDetailPage = () => {
                                                                 </div>
                                                                 <input
                                                                     type="file"
-                                                                    required={paymentMethod === 'transfer' && getCalculatedTotal() > 0}
+                                                                    required={paymentMethod === 'transfer' && paymentConfig?.active_mode === 'manual' && getCalculatedTotal() > 0}
                                                                     accept="image/*"
                                                                     onChange={(e) => {
                                                                         if (e.target.files && e.target.files.length > 0) {
@@ -2431,7 +2487,11 @@ const EventDetailPage = () => {
                                         >
                                             {submitting ? 'SEDANG MENGIRIM...' : 'KIRIM PENDAFTARAN'}
                                         </button>
-                                        <p className="text-center text-[10px] text-gray-400 font-bold uppercase tracking-[0.2em] px-8">Pendaftaran akan ditinjau oleh tim BAE. Mohon persiapkan bukti transfer jika event berbayar.</p>
+                                        <p className="text-center text-[10px] text-gray-400 font-bold uppercase tracking-[0.2em] px-8">
+                                            {paymentConfig?.active_mode === 'dynaqris'
+                                                ? 'Pendaftaran akan diproses dan status pembayaran otomatis diperbarui setelah QRIS dinamis di-scan.'
+                                                : 'Pendaftaran akan ditinjau oleh tim BAE. Mohon persiapkan bukti transfer jika event berbayar.'}
+                                        </p>
                                     </div>
                                 </form>
                             )}
