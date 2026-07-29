@@ -247,16 +247,20 @@ class CheckDynaQRISStatusView(APIView):
             donation = None
             if str(reference_id).isdigit():
                 donation = Donation.objects.filter(id=int(reference_id)).first()
+                if donation:
+                    status_result = {
+                        'status': donation.payment_status,
+                        'verified': donation.payment_status in ['verified', 'success', 'paid'],
+                        'donation_id': donation.id
+                    }
+                else:
+                    status_result = {
+                        'status': 'pending',
+                        'verified': False
+                    }
             else:
-                donation = Donation.objects.filter(campaign__slug=reference_id).order_by('-created_at').first()
-
-            if donation:
-                status_result = {
-                    'status': donation.payment_status,
-                    'verified': donation.payment_status in ['verified', 'success', 'paid'],
-                    'donation_id': donation.id
-                }
-            else:
+                # CRITICAL SECURITY FIX: Do not match old historical donations when reference_id is a campaign slug string.
+                # Always return pending / false unless a specific numeric donation_id is being checked.
                 status_result = {
                     'status': 'pending',
                     'verified': False
@@ -298,16 +302,14 @@ class CheckDynaQRISStatusView(APIView):
             donation = None
             if str(reference_id).isdigit():
                 donation = Donation.objects.filter(id=int(reference_id)).first()
-            else:
-                donation = Donation.objects.filter(campaign__slug=reference_id).order_by('-created_at').first()
-
+            
             if donation:
                 donation.payment_status = 'verified'
                 donation.save()
                 send_donation_receipt(donation)
                 return Response({'success': True, 'message': 'Pembayaran Donasi berhasil diverifikasi!'})
             else:
-                return Response({'success': True, 'message': 'Pembayaran Donasi berhasil diterima!'})
+                return Response({'success': False, 'message': 'ID Donasi numerik wajib untuk memverifikasi pembayaran.'}, status=status.HTTP_400_BAD_REQUEST)
 
         return Response({'error': 'Transaksi tidak ditemukan.'}, status=status.HTTP_404_NOT_FOUND)
 
