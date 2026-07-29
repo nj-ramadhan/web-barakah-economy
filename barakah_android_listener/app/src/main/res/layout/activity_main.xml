@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/gray_50"
+    android:padding="16dp">
+
+    <!-- Header Card -->
+    <androidx.cardview.widget.CardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:cardCornerRadius="16dp"
+        app:cardElevation="4dp"
+        app:cardBackgroundColor="@color/emerald_700"
+        android:layout_marginBottom="16dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Barakah Notif Listener"
+                android:textColor="@color/white"
+                android:textSize="20sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Auto-Verify QRIS &amp; Bank Transfer Realtime"
+                android:textColor="@color/emerald_100"
+                android:textSize="12sp"
+                android:layout_marginTop="4dp" />
+        </LinearLayout>
+    </androidx.cardview.widget.CardView>
+
+    <!-- Permission & Service Status Card -->
+    <androidx.cardview.widget.CardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:cardCornerRadius="16dp"
+        app:cardElevation="2dp"
+        app:cardBackgroundColor="@color/white"
+        android:layout_marginBottom="16dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Status Izin Akses Notifikasi"
+                android:textColor="@color/gray_800"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvPermissionStatus"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Checking..."
+                android:textSize="12sp"
+                android:textColor="@color/gray_700"
+                android:layout_marginTop="4dp" />
+
+            <Button
+                android:id="@+id/btnGrantPermission"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Buka Akses Izin Notifikasi"
+                android:backgroundTint="@color/emerald_600"
+                android:textColor="@color/white"
+                android:layout_marginTop="8dp" />
+        </LinearLayout>
+    </androidx.cardview.widget.CardView>
+
+    <!-- Settings Card -->
+    <androidx.cardview.widget.CardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:cardCornerRadius="16dp"
+        app:cardElevation="2dp"
+        app:cardBackgroundColor="@color/white"
+        android:layout_marginBottom="16dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Pengaturan Webhook Server"
+                android:textColor="@color/gray_800"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+            <EditText
+                android:id="@+id/etWebhookUrl"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Webhook URL Server"
+                android:textSize="12sp"
+                android:inputType="textUri"
+                android:layout_marginTop="8dp" />
+
+            <EditText
+                android:id="@+id/etSecretToken"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Secret Token (X-Android-Secret)"
+                android:textSize="12sp"
+                android:inputType="text"
+                android:layout_marginTop="8dp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="12dp">
+
+                <Button
+                    android:id="@+id/btnSaveSettings"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Simpan Pengaturan"
+                    android:backgroundTint="@color/emerald_600"
+                    android:textColor="@color/white"
+                    android:layout_marginEnd="4dp" />
+
+                <Button
+                    android:id="@+id/btnTestWebhook"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Tes Webhook"
+                    android:backgroundTint="@color/gray_700"
+                    android:textColor="@color/white"
+                    android:layout_marginStart="4dp" />
+            </LinearLayout>
+        </LinearLayout>
+    </androidx.cardview.widget.CardView>
+
+    <!-- Log Activity Card -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Riwayat Log Notifikasi"
+        android:textColor="@color/gray_800"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="8dp" />
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:background="@color/white"
+        android:padding="12dp">
+
+        <TextView
+            android:id="@+id/tvLogConsole"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="[System Log Output Initialized...]\nAplikasi siap mendeteksi notifikasi transfer bank.\n"
+            android:fontFamily="monospace"
+            android:textSize="11sp"
+            android:textColor="@color/gray_800" />
+    </ScrollView>
+</LinearLayout>
