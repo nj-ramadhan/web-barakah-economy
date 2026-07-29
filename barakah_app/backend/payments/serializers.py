@@ -18,6 +18,8 @@ class PaymentSettingSerializer(serializers.ModelSerializer):
             'account_name',
             'manual_qris_image',
             'manual_qris_image_url',
+            'android_webhook_enabled',
+            'android_webhook_secret',
             'updated_at',
         ]
 

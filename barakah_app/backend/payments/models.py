@@ -20,6 +20,10 @@ class PaymentSetting(models.Model):
     account_name = models.CharField(max_length=100, default='Barakah Economy Community')
     manual_qris_image = models.ImageField(upload_to='payment_settings/', null=True, blank=True)
 
+    # Android Notification Listener Webhook Settings
+    android_webhook_enabled = models.BooleanField(default=True, help_text="Aktifkan listener notifikasi bank via HP Android")
+    android_webhook_secret = models.CharField(max_length=255, default='barakah_android_notif_secret_123', help_text="Secret Token untuk verifikasi request webhook HP Android")
+
     updated_at = models.DateTimeField(auto_now=True)
 
     @classmethod

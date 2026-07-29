@@ -551,3 +551,96 @@ class CheckOrderPaymentStatusView(APIView):
         except Exception as e:
             logger.error(f"Error checking payment status: {str(e)}")
             return JsonResponse({'error': str(e)}, status=500)
+
+class AndroidNotificationWebhookView(APIView):
+    """
+    Webhook listener for Android Notification Forwarder apps (MacroDroid, Tasker, Notification Forwarder, etc.).
+    Parses bank transaction push notifications and auto-verifies matching pending payments.
+    """
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        setting = PaymentSetting.get_settings()
+        if not setting.android_webhook_enabled:
+            return Response({"error": "Webhook Android sedang dinonaktifkan di Payment Settings."}, status=status.HTTP_403_FORBIDDEN)
+
+        # Verify secret token (from Header 'X-Android-Secret' or body 'secret')
+        secret_header = request.META.get('HTTP_X_ANDROID_SECRET') or request.data.get('secret')
+        if setting.android_webhook_secret and secret_header != setting.android_webhook_secret:
+            logger.warning(f"Unauthorized Android Notification Webhook attempt with secret: {secret_header}")
+            return Response({"error": "Secret token tidak valid."}, status=status.HTTP_401_UNAUTHORIZED)
+
+        # Extract text / message from payload
+        payload_text = request.data.get('text') or request.data.get('message') or request.data.get('content') or request.data.get('body') or str(request.data)
+        logger.info(f"Received Android Notification Webhook: {payload_text}")
+
+        import re
+        import decimal
+
+        # Find candidate numbers (e.g. 121, 121.00, 15000, 15.000)
+        raw_matches = re.findall(r'(\d+[\.\,]?\d*)', payload_text)
+        extracted_amounts = []
+        for m in raw_matches:
+            try:
+                clean_num = m.replace(',', '.').rstrip('.')
+                if clean_num.count('.') == 1 and clean_num.endswith('.00'):
+                    clean_num = clean_num.split('.')[0]
+                val = decimal.Decimal(clean_num)
+                if val > 0:
+                    extracted_amounts.append(val)
+            except Exception:
+                pass
+
+        if not extracted_amounts:
+            return Response({"success": False, "message": "Tidak ada nominal angka terdeteksi dalam notifikasi."}, status=status.HTTP_200_OK)
+
+        from events.models import EventRegistration
+        from donations.models import Donation
+        from orders.models import Order
+
+        for amt in extracted_amounts:
+            # 1. Search pending Event Registration with matching payment_amount
+            reg = EventRegistration.objects.filter(payment_amount=amt, status='pending').order_by('-created_at').first()
+            if reg:
+                reg.payment_status = 'verified'
+                reg.status = 'approved'
+                reg.save()
+                try:
+                    from events.views import EventViewSet
+                    EventViewSet()._send_registration_notifications(reg)
+                except Exception as e:
+                    logger.error(f"Failed to send event notifications for reg {reg.id}: {e}")
+                return Response({
+                    "success": True,
+                    "matched": True,
+                    "type": "event",
+                    "reference_id": reg.id,
+                    "amount": float(amt),
+                    "message": f"Pendaftaran Event #{reg.id} berhasil diverifikasi otomatis via Android Webhook!"
+                })
+
+            # 2. Search pending Donation with matching amount
+            donation = Donation.objects.filter(amount=amt, payment_status='pending').order_by('-created_at').first()
+            if donation:
+                donation.payment_status = 'verified'
+                donation.save()
+                try:
+                    from donations.views import CreateDonationView
+                    CreateDonationView()._send_donation_receipt(donation)
+                except Exception as e:
+                    logger.error(f"Failed to send donation receipt for {donation.id}: {e}")
+                return Response({
+                    "success": True,
+                    "matched": True,
+                    "type": "charity",
+                    "reference_id": donation.id,
+                    "amount": float(amt),
+                    "message": f"Donasi #{donation.id} berhasil diverifikasi otomatis via Android Webhook!"
+                })
+
+        return Response({
+            "success": False,
+            "matched": False,
+            "extracted_amounts": [float(a) for a in extracted_amounts],
+            "message": "Notifikasi diterima, namun tidak ada transaksi pending dengan nominal tersebut."
+        }, status=status.HTTP_200_OK)

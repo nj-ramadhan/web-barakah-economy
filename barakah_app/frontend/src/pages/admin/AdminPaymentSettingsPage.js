@@ -22,8 +22,12 @@ const AdminPaymentSettingsPage = () => {
         account_number: '7260599187',
         account_name: 'Barakah Economy Community',
         manual_qris_image_url: null,
+        android_webhook_enabled: true,
+        android_webhook_secret: 'barakah_android_notif_secret_123',
     });
 
+    const [copiedUrl, setCopiedUrl] = useState(false);
+    const [showGuideModal, setShowGuideModal] = useState(false);
     const [manualQrisFile, setManualQrisFile] = useState(null);
     const [previewUrl, setPreviewUrl] = useState(null);
     const [message, setMessage] = useState({ type: '', text: '' });
@@ -42,6 +46,8 @@ const AdminPaymentSettingsPage = () => {
                     account_number: data.account_number || '7260599187',
                     account_name: data.account_name || 'Barakah Economy Community',
                     manual_qris_image_url: data.manual_qris_image_url || null,
+                    android_webhook_enabled: data.android_webhook_enabled !== undefined ? data.android_webhook_enabled : true,
+                    android_webhook_secret: data.android_webhook_secret || 'barakah_android_notif_secret_123',
                 });
                 if (data.manual_qris_image_url) {
                     setPreviewUrl(data.manual_qris_image_url);
@@ -56,6 +62,14 @@ const AdminPaymentSettingsPage = () => {
 
         fetchSettings();
     }, []);
+
+    const webhookEndpointUrl = `${window.location.origin.replace('http://localhost:3000', 'https://api.barakah.cloud')}/api/payments/webhook/android-notification/`;
+
+    const handleCopyWebhookUrl = () => {
+        navigator.clipboard.writeText(webhookEndpointUrl);
+        setCopiedUrl(true);
+        setTimeout(() => setCopiedUrl(false), 2000);
+    };
 
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
@@ -105,6 +119,8 @@ const AdminPaymentSettingsPage = () => {
             formData.append('bank_name', form.bank_name);
             formData.append('account_number', form.account_number);
             formData.append('account_name', form.account_name);
+            formData.append('android_webhook_enabled', form.android_webhook_enabled);
+            formData.append('android_webhook_secret', form.android_webhook_secret);
             if (manualQrisFile) {
                 formData.append('manual_qris_image', manualQrisFile);
             }
@@ -418,6 +434,85 @@ const AdminPaymentSettingsPage = () => {
                                 </div>
                             </div>
 
+                            {/* SECTION 4: WEBHOOK NOTIFIKASI HP ANDROID (AUTO VERIFY) */}
+                            <div className="border-t border-gray-100 pt-6">
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
+                                    <h3 className="text-base font-bold text-gray-800 flex items-center gap-2">
+                                        <span className="material-icons text-emerald-600 text-lg">phonelink_ring</span>
+                                        <span>WebHook Notifikasi HP Android (Auto-Verify Realtime)</span>
+                                    </h3>
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowGuideModal(true)}
+                                        className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-700 hover:text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-3 py-1.5 rounded-xl transition self-start sm:self-auto"
+                                    >
+                                        <span className="material-icons text-sm">help_outline</span>
+                                        <span>Panduan Cara Setting HP Android</span>
+                                    </button>
+                                </div>
+
+                                <p className="text-xs text-gray-500 mb-4">
+                                    Verifikasi otomatis 100% tanpa Payment Gateway! Setiap kali m-Banking/E-Wallet di HP Android menerima notifikasi uang masuk, sistem akan membaca nominalnya dan langsung memverifikasi transaksi yang pending.
+                                </p>
+
+                                <div className="space-y-4 bg-emerald-50/40 p-4 rounded-2xl border border-emerald-100 mb-4">
+                                    <label className="flex items-center gap-3 cursor-pointer select-none">
+                                        <input
+                                            type="checkbox"
+                                            name="android_webhook_enabled"
+                                            checked={form.android_webhook_enabled}
+                                            onChange={handleChange}
+                                            className="w-4 h-4 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500"
+                                        />
+                                        <div>
+                                            <span className="text-xs font-bold text-gray-800">Aktifkan Listener Webhook Notifikasi Android</span>
+                                            <p className="text-[10px] text-gray-500">Menerima notifikasi otomatis dari HP Android pengurus</p>
+                                        </div>
+                                    </label>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                                        <div>
+                                            <label className="block text-xs font-bold text-gray-700 mb-1">
+                                                Secret Token (`X-Android-Secret`)
+                                            </label>
+                                            <input
+                                                type="text"
+                                                name="android_webhook_secret"
+                                                value={form.android_webhook_secret}
+                                                onChange={handleChange}
+                                                placeholder="barakah_android_notif_secret_123"
+                                                className="w-full bg-white border border-gray-200 rounded-xl px-3.5 py-2.5 text-xs font-mono focus:border-emerald-600 focus:outline-none transition"
+                                                required
+                                            />
+                                            <p className="text-[10px] text-gray-400 mt-1">Kunci rahasia untuk mengamankan request dari aplikasi Android Anda</p>
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-xs font-bold text-gray-700 mb-1">
+                                                Endpoint URL Webhook (Salin ke App Android)
+                                            </label>
+                                            <div className="flex gap-2">
+                                                <input
+                                                    type="text"
+                                                    readOnly
+                                                    value={webhookEndpointUrl}
+                                                    className="w-full bg-gray-100 border border-gray-200 rounded-xl px-3.5 py-2.5 text-xs font-mono text-gray-600 select-all cursor-text"
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={handleCopyWebhookUrl}
+                                                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-3.5 py-2.5 rounded-xl transition shrink-0 flex items-center gap-1"
+                                                >
+                                                    <span className="material-icons text-sm">{copiedUrl ? 'check' : 'content_copy'}</span>
+                                                    <span>{copiedUrl ? 'Tersalin' : 'Salin'}</span>
+                                                </button>
+                                            </div>
+                                            <p className="text-[10px] text-emerald-700 font-medium mt-1">Tempelkan URL ini di aplikasi Forwarder Notifikasi HP Android</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
                             {/* Submit Button */}
                             <div className="border-t border-gray-100 pt-6 flex justify-end">
                                 <button
@@ -442,6 +537,75 @@ const AdminPaymentSettingsPage = () => {
                     )}
                 </div>
             </div>
+
+            {/* Guide Modal */}
+            {showGuideModal && (
+                <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 overflow-y-auto">
+                    <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl relative border border-emerald-100 max-h-[85vh] overflow-y-auto custom-scrollbar">
+                        <div className="flex items-center justify-between pb-3 border-b border-gray-100 mb-4">
+                            <h3 className="text-base font-black text-emerald-800 flex items-center gap-2">
+                                <span className="material-icons text-emerald-600">phonelink_ring</span>
+                                Panduan Setting HP Android
+                            </h3>
+                            <button
+                                onClick={() => setShowGuideModal(false)}
+                                className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-600 font-bold transition"
+                            >
+                                ✕
+                            </button>
+                        </div>
+
+                        <div className="space-y-4 text-xs text-gray-700 leading-relaxed">
+                            <div className="bg-emerald-50 p-3.5 rounded-2xl border border-emerald-200">
+                                <p className="font-bold text-emerald-900 mb-1">📱 Prinsip Kerja:</p>
+                                <p className="text-emerald-800">
+                                    Aplikasi di HP Android Anda akan mendeteksi notifikasi transfer bank/e-wallet masuk (BSI Mobile, BCA, DANA, GoPay, OVO, ShopeePay) lalu langsung mengirim nominalnya ke server website ini untuk memverifikasi transaksi pending secara otomatis!
+                                </p>
+                            </div>
+
+                            <div className="border-l-2 border-emerald-500 pl-3 space-y-1">
+                                <p className="font-bold text-gray-900">Langkah 1: Install Aplikasi Listener di Play Store</p>
+                                <p className="text-gray-600">
+                                    Buka Google Play Store di HP Android pengurus/toko, cari dan install aplikasi gratis bernama: <strong>Notification Forwarder</strong> atau <strong>MacroDroid</strong>.
+                                </p>
+                            </div>
+
+                            <div className="border-l-2 border-emerald-500 pl-3 space-y-1">
+                                <p className="font-bold text-gray-900">Langkah 2: Tambahkan Rule Webhook HTTP POST</p>
+                                <p className="text-gray-600">Pilih aplikasi bank yang ingin dibaca notifikasinya (BSI Mobile, BCA, DANA, dll).</p>
+                                <p className="text-gray-600">Pilih tipe aksi: <strong>HTTP Request / Webhook (POST)</strong>.</p>
+                            </div>
+
+                            <div className="border-l-2 border-emerald-500 pl-3 space-y-1">
+                                <p className="font-bold text-gray-900">Langkah 3: Masukkan Data Server</p>
+                                <div className="bg-gray-50 p-3 rounded-xl font-mono text-[11px] space-y-1 border border-gray-200">
+                                    <p><strong>URL:</strong> <span className="text-emerald-700">{webhookEndpointUrl}</span></p>
+                                    <p><strong>Method:</strong> POST</p>
+                                    <p><strong>Header Name:</strong> X-Android-Secret</p>
+                                    <p><strong>Header Value:</strong> {form.android_webhook_secret}</p>
+                                    <p><strong>Body JSON:</strong> &#123;"text": "Transfer masuk sebesar Rp 121.00"&#125;</p>
+                                </div>
+                            </div>
+
+                            <div className="border-l-2 border-emerald-500 pl-3 space-y-1">
+                                <p className="font-bold text-gray-900">Langkah 4: Simpan & Tes Transaksi</p>
+                                <p className="text-gray-600">
+                                    Simpan rule. Sekarang setiap ada notifikasi transfer masuk di HP Android Anda, transaksi QRIS di website akan <strong>otomatis 100% lunas & e-tiket terkirim!</strong>
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="mt-6 flex justify-end">
+                            <button
+                                onClick={() => setShowGuideModal(false)}
+                                className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-6 py-2.5 rounded-xl transition"
+                            >
+                                Paham & Tutup
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             <NavigationButton />
         </div>
