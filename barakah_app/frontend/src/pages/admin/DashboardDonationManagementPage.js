@@ -397,6 +397,15 @@ const DashboardDonationManagementPage = () => {
                                             >
                                                 <img src={d.proof_file_url} alt="Bukti" className="w-full h-full object-cover" />
                                             </div>
+                                        ) : (d.payment_method === 'qris' || d.payment_method === 'dynaqris') ? (
+                                            <div 
+                                                onClick={() => setSelectedProof('qris_badge')}
+                                                className="w-20 h-20 bg-emerald-50 rounded-2xl flex flex-col items-center justify-center border border-emerald-200 text-emerald-600 cursor-pointer hover:bg-emerald-100 transition p-1 text-center shadow-xs"
+                                                title="Pembayaran QRIS Otomatis"
+                                            >
+                                                <span className="material-icons text-2xl">qr_code_2</span>
+                                                <span className="text-[9px] font-black uppercase mt-1 leading-none">QRIS OTOMATIS</span>
+                                            </div>
                                         ) : (
                                             <div className="w-20 h-20 bg-gray-100 rounded-2xl flex items-center justify-center border border-gray-100 text-gray-400">
                                                 <span className="material-icons">no_photography</span>
@@ -796,15 +805,51 @@ const DashboardDonationManagementPage = () => {
             {/* Proof Modal */}
             {selectedProof && (
                 <div 
-                    className="fixed inset-0 bg-black/90 z-[999] flex items-center justify-center p-4 animate-fade-in"
+                    className="fixed inset-0 bg-black/80 backdrop-blur-xs z-[999] flex items-center justify-center p-4 animate-fade-in"
                     onClick={() => setSelectedProof(null)}
                 >
-                    <div className="relative max-w-4xl w-full max-h-[90vh]">
-                        <button className="absolute -top-12 right-0 text-white flex items-center gap-2">
-                            <span className="material-icons">close</span> Tutup
-                        </button>
-                        <img src={selectedProof} alt="Bukti Transfer" className="w-full h-full object-contain rounded-lg animate-scale-up" />
-                    </div>
+                    {selectedProof === 'qris_badge' ? (
+                        <div 
+                            className="relative max-w-md w-full bg-white rounded-3xl p-6 shadow-2xl text-center space-y-4 animate-scale-up border border-emerald-100"
+                            onClick={e => e.stopPropagation()}
+                        >
+                            <button 
+                                onClick={() => setSelectedProof(null)}
+                                className="absolute top-4 right-4 w-8 h-8 rounded-full bg-gray-50 text-gray-400 hover:bg-gray-100 flex items-center justify-center transition"
+                            >
+                                <span className="material-icons text-base">close</span>
+                            </button>
+
+                            <div className="space-y-4 py-2">
+                                <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto shadow-inner animate-pulse">
+                                    <span className="material-icons text-4xl">verified_user</span>
+                                </div>
+                                <div>
+                                    <span className="bg-emerald-100 text-emerald-800 text-[10px] font-black uppercase px-3 py-1 rounded-full tracking-wider">
+                                        Terverifikasi Otomatis
+                                    </span>
+                                    <h3 className="text-xl font-black text-gray-800 mt-2.5">Pembayaran QRIS Dinamis</h3>
+                                    <p className="text-xs text-gray-500 mt-1.5 leading-relaxed font-medium">
+                                        Transaksi donasi ini telah diverifikasi secara otomatis oleh sistem melalui scan QRIS tanpa memerlukan upload bukti transfer manual.
+                                    </p>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => setSelectedProof(null)}
+                                    className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold py-3 rounded-xl text-xs uppercase tracking-wider shadow-lg shadow-emerald-100 transition active:scale-[0.98]"
+                                >
+                                    Tutup Informasi
+                                </button>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="relative max-w-4xl w-full max-h-[90vh]">
+                            <button className="absolute -top-12 right-0 text-white flex items-center gap-2 font-bold">
+                                <span className="material-icons">close</span> Tutup
+                            </button>
+                            <img src={selectedProof} alt="Bukti Transfer" className="w-full h-full object-contain rounded-lg animate-scale-up" />
+                        </div>
+                    )}
                 </div>
             )}
 
