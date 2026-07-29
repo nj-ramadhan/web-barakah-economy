@@ -36,6 +36,44 @@ media/
 node_modules/
 
 # Ignore compiled CSS/JS files (if using a frontend build tool)
+# Ignore virtual environment files
+venv/
+.env/
+
+# Ignore Python cache files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pyc
+
+# Ignore local settings files
+local_settings.py
+settings/local.py
+
+# Ignore database files
+*.sqlite3
+*.db
+
+# Ignore static files (if collected in production)
+static/
+
+# Ignore media files (user-uploaded files)
+media/
+
+# Ignore IDE-specific files
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Ignore log files
+*.log
+
+# Ignore npm and node_modules (if using Node.js)
+node_modules/
+
+# Ignore compiled CSS/JS files (if using a frontend build tool)
 static/css/
 static/js/
 
@@ -48,3 +86,21 @@ static/js/
 .env.development
 barakah_app/frontend/package-lock.json
 barakah_app/frontend/package-lock.json
+
+# Ignore Android App Build Outputs & IDE Files
+*.apk
+*.aab
+.gradle/
+**/build/
+**/app/build/
+.idea/
+*.iml
+local.properties
+*.keystore
+*.jks
+
+# Ignore BAE run temporary files
+bae_run/
+bae_run
+bae-run/
+bae-run
