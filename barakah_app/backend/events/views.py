@@ -529,14 +529,27 @@ class EventViewSet(viewsets.ModelViewSet):
             except EventVoucher.DoesNotExist:
                 return Response({"error": "Voucher tidak valid untuk event ini."}, status=status.HTTP_400_BAD_REQUEST)
 
-        # 2d. Require payment proof only if event is not free, not OTS, not free by label, and expected amount > 0
-        if event.price_type != 'free' and not is_ots_valid and not is_free_by_label and expected_amount > 0 and not payment_proof:
+        # 2d. Check if DynaQRIS is active
+        payment_method = request.data.get('payment_method')
+        is_dynaqris = payment_method == 'dynaqris'
+        if not is_dynaqris and payment_method != 'ots':
+            try:
+                from payments.models import PaymentSetting
+                setting = PaymentSetting.get_settings()
+                if setting.active_mode == 'dynaqris':
+                    is_dynaqris = True
+                    payment_method = 'dynaqris'
+            except Exception as e:
+                logger.error(f"Error checking PaymentSetting: {e}")
+
+        # Require payment proof only if event is not free, not OTS, not free by label, not dynaqris, and expected amount > 0
+        if event.price_type != 'free' and not is_ots_valid and not is_free_by_label and not is_dynaqris and expected_amount > 0 and not payment_proof:
             return Response({"error": "Bukti pembayaran wajib diunggah untuk event berbayar."}, status=status.HTTP_400_BAD_REQUEST)
 
-        # 2e. OCR Validation (Only if expected_amount > 0 and payment_proof exists)
+        # 2e. OCR Validation (Only if expected_amount > 0 and payment_proof exists and not dynaqris)
         ocr_data = None
         ocr_verified = False
-        if payment_proof and not is_ots_valid and not is_free_by_label and expected_amount > 0:
+        if payment_proof and not is_ots_valid and not is_free_by_label and not is_dynaqris and expected_amount > 0:
             # Call OCR Service
             ocr_result = extract_payment_data(payment_proof)
             
@@ -594,6 +607,10 @@ class EventViewSet(viewsets.ModelViewSet):
                 
                 ocr_verified = True
 
+        # Determine registration status & payment status
+        initial_status = 'pending' if (is_dynaqris or (expected_amount > 0 and not is_free_by_label and not ocr_verified and not is_ots_valid)) else 'approved'
+        initial_pay_status = 'pending' if (is_dynaqris or (expected_amount > 0 and not is_free_by_label and not ocr_verified and not is_ots_valid)) else 'verified'
+
         # 3. Create registration
         registration = EventRegistration.objects.create(
             event=event,
@@ -606,8 +623,8 @@ class EventViewSet(viewsets.ModelViewSet):
             payment_amount=payment_amount,
             ocr_data=ocr_data,
             ocr_verified=ocr_verified,
-            status='approved', # Force auto-approve
-            payment_status='verified' if (is_free_by_label or expected_amount <= 0 or ocr_verified) else 'pending',
+            status=initial_status,
+            payment_status=initial_pay_status,
             applied_voucher=applied_voucher,
             discount_amount=discount_amount
         )
