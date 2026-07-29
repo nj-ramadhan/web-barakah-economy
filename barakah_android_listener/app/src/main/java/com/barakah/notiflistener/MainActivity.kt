@@ -4,6 +4,9 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.content.pm.ApplicationInfo
+import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
@@ -11,6 +14,7 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import okhttp3.*
 import okhttp3.MediaType.Companion.toMediaType
@@ -24,6 +28,7 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var prefs: PreferencesHelper
     private lateinit var tvPermissionStatus: TextView
+    private lateinit var tvSelectedAppsSummary: TextView
     private lateinit var etWebhookUrl: EditText
     private lateinit var etSecretToken: EditText
     private lateinit var tvLogConsole: TextView
@@ -42,26 +47,43 @@ class MainActivity : AppCompatActivity() {
         prefs = PreferencesHelper(this)
 
         tvPermissionStatus = findViewById(R.id.tvPermissionStatus)
+        tvSelectedAppsSummary = findViewById(R.id.tvSelectedAppsSummary)
         etWebhookUrl = findViewById(R.id.etWebhookUrl)
         etSecretToken = findViewById(R.id.etSecretToken)
         tvLogConsole = findViewById(R.id.tvLogConsole)
 
         val btnGrantPermission: Button = findViewById(R.id.btnGrantPermission)
+        val btnOpenAppInfo: Button = findViewById(R.id.btnOpenAppInfo)
+        val btnPickInstalledApps: Button = findViewById(R.id.btnPickInstalledApps)
         val btnSaveSettings: Button = findViewById(R.id.btnSaveSettings)
         val btnTestWebhook: Button = findViewById(R.id.btnTestWebhook)
 
         etWebhookUrl.setText(prefs.webhookUrl)
         etSecretToken.setText(prefs.secretToken)
 
+        updateSelectedAppsSummary()
+
         btnGrantPermission.setOnClickListener {
             startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
+        }
+
+        btnOpenAppInfo.setOnClickListener {
+            val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                data = Uri.fromParts("package", packageName, null)
+            }
+            startActivity(intent)
+        }
+
+        btnPickInstalledApps.setOnClickListener {
+            showInstalledAppPickerDialog()
         }
 
         btnSaveSettings.setOnClickListener {
             prefs.webhookUrl = etWebhookUrl.text.toString().trim()
             prefs.secretToken = etSecretToken.text.toString().trim()
-            Toast.makeText(this, "Pengaturan Webhook berhasil disimpan!", Toast.LENGTH_SHORT).show()
-            appendLog("✓ Pengaturan disimpan: ${prefs.webhookUrl}")
+
+            Toast.makeText(this, "Pengaturan Webhook & Aplikasi Target disimpan!", Toast.LENGTH_SHORT).show()
+            appendLog("✓ Pengaturan disimpan. Target App aktif: ${prefs.selectedPackages.size} aplikasi.")
         }
 
         btnTestWebhook.setOnClickListener {
@@ -73,6 +95,74 @@ class MainActivity : AppCompatActivity() {
             registerReceiver(logReceiver, filter, RECEIVER_EXPORTED)
         } else {
             registerReceiver(logReceiver, filter)
+        }
+    }
+
+    private fun updateSelectedAppsSummary() {
+        val selected = prefs.selectedPackages
+        val pm = packageManager
+        val names = selected.map { pkg ->
+            try {
+                val appInfo = pm.getApplicationInfo(pkg, 0)
+                pm.getApplicationLabel(appInfo).toString()
+            } catch (e: Exception) {
+                pkg
+            }
+        }
+        if (names.isEmpty()) {
+            tvSelectedAppsSummary.text = "Aplikasi Aktif: Belum ada (Membaca semua notifikasi)"
+        } else {
+            val previewText = names.take(5).joinToString(", ")
+            val extraCount = if (names.size > 5) " +${names.size - 5} lainnya" else ""
+            tvSelectedAppsSummary.text = "Aplikasi Aktif: $previewText$extraCount (Total: ${names.size} App)"
+        }
+    }
+
+    private fun showInstalledAppPickerDialog() {
+        val pm = packageManager
+        val installedApps = pm.getInstalledApplications(PackageManager.GET_META_DATA)
+
+        // Filter and sort apps: user apps and bank/e-wallet apps first
+        val appList = installedApps.map { appInfo ->
+            val label = pm.getApplicationLabel(appInfo).toString()
+            val pkg = appInfo.packageName
+            val isUserApp = (appInfo.flags and ApplicationInfo.FLAG_SYSTEM) == 0
+            AppItem(label, pkg, isUserApp)
+        }.sortedWith(compareByDescending<AppItem> { it.isBankOrWallet() }
+            .thenByDescending { it.isUserApp }
+            .thenBy { it.label.lowercase() })
+
+        val appLabels = appList.map { "${it.label} (${it.packageName})" }.toTypedArray()
+        val currentSelected = prefs.selectedPackages.toMutableSet()
+        val checkedItems = BooleanArray(appList.size) { i -> currentSelected.contains(appList[i].packageName) }
+
+        AlertDialog.Builder(this)
+            .setTitle("Pilih Aplikasi Terinstall di HP")
+            .setMultiChoiceItems(appLabels, checkedItems) { _, which, isChecked ->
+                val pkg = appList[which].packageName
+                if (isChecked) {
+                    currentSelected.add(pkg)
+                } else {
+                    currentSelected.remove(pkg)
+                }
+            }
+            .setPositiveButton("Simpan Pilihan") { dialog, _ ->
+                prefs.selectedPackages = currentSelected
+                updateSelectedAppsSummary()
+                Toast.makeText(this, "Target aplikasi diperbarui (${currentSelected.size} aplikasi)", Toast.LENGTH_SHORT).show()
+                appendLog("✓ Pilihan aplikasi target diperbarui (${currentSelected.size} app).")
+                dialog.dismiss()
+            }
+            .setNegativeButton("Batal") { dialog, _ ->
+                dialog.dismiss()
+            }
+            .show()
+    }
+
+    private data class AppItem(val label: String, val packageName: String, val isUserApp: Boolean) {
+        fun isBankOrWallet(): Boolean {
+            val lower = "$label $packageName".lowercase()
+            return listOf("bsi", "bca", "mandiri", "bri", "bni", "dana", "gopay", "ovo", "shopee", "seabank", "blu", "jenius", "permata", "danamon", "cimb", "neo").any { lower.contains(it) }
         }
     }
 
@@ -99,7 +189,7 @@ class MainActivity : AppCompatActivity() {
             tvPermissionStatus.text = "✓ Izin Akses Notifikasi AKTIF"
             tvPermissionStatus.setTextColor(getColor(R.color.emerald_700))
         } else {
-            tvPermissionStatus.text = "✗ Izin Akses Belum Diberikan (Klik tombol di bawah)"
+            tvPermissionStatus.text = "✗ Izin Akses Belum Diberikan / Pengaturan Dibatasi (Android 13/14/15)"
             tvPermissionStatus.setTextColor(getColor(android.R.color.holo_red_dark))
         }
     }
@@ -118,7 +208,10 @@ class MainActivity : AppCompatActivity() {
 
         try {
             val json = JSONObject().apply {
+                put("package", "id.co.bankbsi.mobile")
+                put("title", "BSI Mobile Uang Masuk")
                 put("text", "Transfer masuk sebesar Rp 121.00 dari TES ANDROID APP")
+                put("content", "Transfer masuk sebesar Rp 121.00 dari TES ANDROID APP")
                 put("secret", secret)
             }
             val body = json.toString().toRequestBody("application/json; charset=utf-8".toMediaType())

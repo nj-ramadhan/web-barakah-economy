@@ -17,4 +17,22 @@ class PreferencesHelper(context: Context) {
     var isServiceEnabled: Boolean
         get() = prefs.getBoolean("is_service_enabled", true)
         set(value) = prefs.edit().putBoolean("is_service_enabled", value).apply()
+
+    var selectedPackages: Set<String>
+        get() = prefs.getStringSet("selected_packages", defaultBankPackages) ?: defaultBankPackages
+        set(value) = prefs.edit().putStringSet("selected_packages", value).apply()
+
+    companion object {
+        val defaultBankPackages = setOf(
+            "id.co.bankbsi.mobile",     // BSI Mobile
+            "com.bca",                  // BCA Mobile
+            "id.bmri.livin",            // Mandiri Livin
+            "id.co.bri.brimo",          // BRImo
+            "id.co.bni.newmobile",      // BNI Mobile
+            "id.dana",                  // DANA
+            "com.gojek.app",            // GoPay / Gojek
+            "net.oneoryx.ovo",          // OVO
+            "com.shopee.id"             // ShopeePay
+        )
+    }
 }

@@ -35,13 +35,23 @@ class NotificationService : NotificationListenerService() {
 
         Log.d(TAG, "Notification received from [$packageName]: $fullText")
 
-        // Filter: Only process notifications containing money keywords or bank package names
+        // Filter: Only process notifications from selected target bank/e-wallet apps
         if (isRelevantNotification(packageName, fullText)) {
             sendWebhookPayload(packageName, title, text, fullText)
         }
     }
 
     private fun isRelevantNotification(pkg: String, text: String): Boolean {
+        // 1. Check if the app package is selected by the user in settings
+        val selectedPkgs = prefs.selectedPackages
+        val isPackageAllowed = selectedPkgs.isEmpty() || selectedPkgs.contains(pkg) || selectedPkgs.any { pkg.lowercase().contains(it.lowercase()) }
+        
+        if (!isPackageAllowed) {
+            Log.d(TAG, "Skipping notification from $pkg because app is not selected in target list")
+            return false
+        }
+
+        // 2. Check money / transfer keywords
         val lowerText = text.lowercase()
         val bankKeywords = listOf(
             "bsi", "bca", "mandiri", "bri", "bni", "dana", "gopay", "ovo", "shopeepay",
@@ -83,7 +93,7 @@ class NotificationService : NotificationListenerService() {
                     val respBody = response.body?.string() ?: ""
                     Log.d(TAG, "Webhook response (${response.code}): $respBody")
                     if (response.isSuccessful) {
-                        broadcastLog("✓ Webhook Terkirim: $fullContent")
+                        broadcastLog("✓ Webhook Terkirim [$pkgName]: $fullContent")
                     } else {
                         broadcastLog("✗ Server Response HTTP ${response.code}: $respBody")
                     }
