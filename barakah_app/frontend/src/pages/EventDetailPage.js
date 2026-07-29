@@ -2361,9 +2361,9 @@ const EventDetailPage = () => {
                                                                      <span className="material-icons text-2xl">qr_code_2</span>
                                                                  </div>
                                                                  <div>
-                                                                     <p className="text-[10px] font-bold text-emerald-800 uppercase tracking-widest">Pembayaran Otomatis DynaQRIS</p>
+                                                                     <p className="text-[10px] font-bold text-emerald-800 uppercase tracking-widest">Pembayaran Otomatis QRIS</p>
                                                                      <p className="text-xs text-emerald-700 mt-0.5 leading-relaxed font-medium">
-                                                                         Lengkapi pendaftaran dan tekan <strong className="font-bold">Kirim Pendaftaran</strong> di bawah. QRIS Dinamis ber-nominal pas akan otomatis ditampilkan untuk di-scan. Tidak perlu unggah foto bukti bayar.
+                                                                         Lengkapi pendaftaran dan tekan <strong className="font-bold">Kirim Pendaftaran</strong> di bawah. Kode QRIS dengan nominal pas akan otomatis ditampilkan untuk di-scan. Pembayaran terverifikasi otomatis tanpa perlu unggah bukti bayar.
                                                                      </p>
                                                                  </div>
                                                              </div>

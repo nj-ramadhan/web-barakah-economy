@@ -645,12 +645,13 @@ class EventViewSet(viewsets.ModelViewSet):
         # 5. Auto-update user phone if missing
         self._update_user_phone_if_missing(registration)
         
-        # 6. Automated Notifications
-        try:
-            self._send_registration_notifications(registration)
-        except Exception as e:
-            import logging
-            logging.getLogger(__name__).error(f"Failed to send notifications for registration {registration.id}: {e}")
+        # 6. Automated Notifications (Only send if registration is approved & payment verified, e.g. Free, Bayar di Tempat/OTS, or auto-verified)
+        if registration.status == 'approved' and registration.payment_status == 'verified':
+            try:
+                self._send_registration_notifications(registration)
+            except Exception as e:
+                import logging
+                logging.getLogger(__name__).error(f"Failed to send notifications for registration {registration.id}: {e}")
         
         return Response({"message": "Pendaftaran berhasil! Kode tiket Anda: " + registration.unique_code, "id": registration.id, "unique_code": registration.unique_code}, status=status.HTTP_201_CREATED)
 

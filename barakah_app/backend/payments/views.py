@@ -274,11 +274,17 @@ class CheckDynaQRISStatusView(APIView):
 
         if transaction_type == 'event':
             from events.models import EventRegistration
+            from events.views import EventViewSet
             reg = EventRegistration.objects.filter(id=reference_id).first()
             if reg:
                 reg.payment_status = 'verified'
                 reg.status = 'approved'
                 reg.save()
+                try:
+                    viewset = EventViewSet()
+                    viewset._send_registration_notifications(reg)
+                except Exception as e:
+                    logger.error(f"Failed to send event notifications upon QRIS verification for reg {reg.id}: {e}")
                 return Response({'success': True, 'message': 'Pembayaran Event berhasil diverifikasi!'})
         elif transaction_type == 'ecommerce':
             from orders.models import Order
