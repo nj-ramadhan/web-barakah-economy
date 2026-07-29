@@ -53,7 +53,8 @@ export const checkDynaQRISStatus = async (type, referenceId) => {
 export const verifyDynaQRISPayment = async (type, referenceId) => {
     const response = await axios.post(`${API_BASE_URL}/api/payments/dynaqris/check-status/`, {
         type,
-        reference_id: referenceId
+        reference_id: referenceId,
+        action: 'verify'
     });
     return response.data;
 };
