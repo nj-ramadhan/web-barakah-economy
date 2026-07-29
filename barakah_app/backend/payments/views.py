@@ -265,7 +265,16 @@ class CheckDynaQRISStatusView(APIView):
         return Response(status_result)
 
     def post(self, request):
-        """Simulate / Verify completion of DynaQRIS payment."""
+        """
+        Verify completion of DynaQRIS payment.
+        Only mutates payment status if 'action' == 'verify' or 'simulate' == True.
+        Otherwise delegates to get(request) to safely check current status.
+        """
+        is_simulate = request.data.get('simulate') is True or request.data.get('action') == 'verify'
+        
+        if not is_simulate:
+            return self.get(request)
+
         transaction_type = request.data.get('type')
         reference_id = request.data.get('reference_id')
 
@@ -305,7 +314,7 @@ class CheckDynaQRISStatusView(APIView):
             if str(reference_id).isdigit():
                 donation = Donation.objects.filter(id=int(reference_id)).first()
             else:
-                donation = Donation.objects.filter(campaign__slug=reference_id).order_by('-created_at').first()
+                donation = Donation.objects.filter(campaign__slug=reference_id, payment_status='pending').order_by('-created_at').first()
             
             if donation:
                 donation.payment_status = 'verified'

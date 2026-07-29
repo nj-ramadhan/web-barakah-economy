@@ -17,26 +17,33 @@ class DynaQRISService:
         return PaymentSetting.get_settings()
 
     @classmethod
-    def get_lowest_available_unique_code(cls, base_amount, timeout_seconds=300, max_code=500):
+    def get_random_available_unique_code(cls, base_amount, timeout_seconds=300, min_code=1, max_code=500):
         """
-        Finds the lowest available unique nominal code (from 1 up to max_code=500).
-        Prioritizes lowest numbers first (1, 2, 3, etc.).
-        Automatically recycles/refreshes the code once timeout_seconds (e.g. 5 minutes) expires.
+        Generates a RANDOM unique nominal code between min_code=1 and max_code=500.
+        Locks the generated code in cache for the duration of timeout_seconds configured in admin settings.
+        The code stays locked for the full timeout duration regardless of payment outcome to prevent duplicate nominal collisions.
         """
-        for code in range(1, max_code + 1):
+        lock_duration = max(60, int(timeout_seconds))
+        for _ in range(50):
+            code = random.randint(min_code, max_code)
             cache_key = f"active_qris_ucode_{base_amount}_{code}"
             if not cache.get(cache_key):
-                # Lock code in cache for the payment timer duration
-                cache.set(cache_key, True, timeout=timeout_seconds)
+                cache.set(cache_key, True, timeout=lock_duration)
                 return code
-        # Fallback in the rare case that all 1..500 are concurrently active
-        return random.randint(1, max_code)
+
+        for code in range(min_code, max_code + 1):
+            cache_key = f"active_qris_ucode_{base_amount}_{code}"
+            if not cache.get(cache_key):
+                cache.set(cache_key, True, timeout=lock_duration)
+                return code
+
+        return random.randint(min_code, max_code)
 
     @classmethod
     def generate_dynamic_qris(cls, amount, user_id=None, reference_id=None, add_unique_code=True):
         """
         Convert Static QRIS to Dynamic QRIS via DynaQRIS API.
-        Includes anti-spam rate limiting per user/IP and recycled low unique nominal code (1..500).
+        Includes anti-spam rate limiting per user/IP and random unique nominal code (1..500) locked for admin timeout duration.
         """
         settings_obj = PaymentSetting.get_settings()
         timeout_minutes = settings_obj.payment_timeout_minutes or 5
@@ -66,12 +73,13 @@ class DynaQRISService:
         except (ValueError, TypeError):
             return {"error": "Format nominal tidak valid."}
 
-        # Find the lowest available unique nominal code (range 1-500), auto-refreshed after timeout
+        # Find a random available unique nominal code (range 1-500), locked for admin setting timeout duration
         unique_code = 0
         if add_unique_code:
-            unique_code = cls.get_lowest_available_unique_code(
+            unique_code = cls.get_random_available_unique_code(
                 base_amount=base_amount,
                 timeout_seconds=timeout_seconds,
+                min_code=1,
                 max_code=500
             )
 
