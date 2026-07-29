@@ -1,8 +1,28 @@
 # payments/urls.py
 from django.urls import path
-from .views import GenerateDonationMidtransTokenView, MidtransDonationNotificationView, CheckDonationPaymentStatusView, GenerateOrderMidtransTokenView, MidtransOrderNotificationView, CheckOrderPaymentStatusView
+from .views import (
+    GenerateDonationMidtransTokenView,
+    MidtransDonationNotificationView,
+    CheckDonationPaymentStatusView,
+    GenerateOrderMidtransTokenView,
+    MidtransOrderNotificationView,
+    CheckOrderPaymentStatusView,
+    PaymentPublicConfigView,
+    PaymentAdminSettingsView,
+    TestDynaQRISConnectionView,
+    GenerateDynaQRISView,
+    CheckDynaQRISStatusView,
+)
 
 urlpatterns = [
+    # Global Payment Configuration & Settings
+    path('config/', PaymentPublicConfigView.as_view(), name='payment-public-config'),
+    path('admin-settings/', PaymentAdminSettingsView.as_view(), name='payment-admin-settings'),
+    path('dynaqris/test-connection/', TestDynaQRISConnectionView.as_view(), name='test-dynaqris-connection'),
+    path('dynaqris/generate/', GenerateDynaQRISView.as_view(), name='generate-dynaqris'),
+    path('dynaqris/check-status/', CheckDynaQRISStatusView.as_view(), name='check-dynaqris-status'),
+
+    # Midtrans URLs
     path('generate-donation-midtrans-token/', GenerateDonationMidtransTokenView.as_view(), name='generate-donation-midtrans-token'),
     path('midtrans-donation-notification/', MidtransDonationNotificationView.as_view(), name='midtrans-donation-notification'),
     path('check-donation-payment-status/', CheckDonationPaymentStatusView.as_view(), name='check-donation-payment-status'),

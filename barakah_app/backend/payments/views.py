@@ -1,12 +1,18 @@
 # payments/views.py
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, IsAdminUser, AllowAny
 from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
 from django.http import JsonResponse
 from django.conf import settings
+from django.utils import timezone
 from midtransclient import Snap
 from donations.models import Donation
 from campaigns.models import Campaign
 from orders.models import Order
+from .models import PaymentSetting
+from .serializers import PaymentSettingSerializer
+from .dynaqris_service import DynaQRISService
 import logging
 
 logger = logging.getLogger(__name__)
@@ -18,13 +24,200 @@ snap = Snap(
     client_key=settings.MIDTRANS_CLIENT_KEY
 )
 
+class PaymentPublicConfigView(APIView):
+    """Public endpoint for retrieving active payment configuration."""
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        settings_obj = PaymentSetting.get_settings()
+        serializer = PaymentSettingSerializer(settings_obj, context={'request': request})
+        # Mask sensitive api key for public view
+        data = serializer.data
+        data.pop('dynaqris_api_key', None)
+        return Response(data)
+
+class PaymentAdminSettingsView(APIView):
+    """Admin endpoint for viewing and managing payment settings."""
+    permission_classes = [IsAuthenticated]
+
+    def check_admin_permission(self, request):
+        user = request.user
+        return user.is_staff or getattr(user, 'role', '') == 'admin' or getattr(user, 'username', '') == 'admin'
+
+    def get(self, request):
+        if not self.check_admin_permission(request):
+            return Response({'detail': 'Akses ditolak. Membutuhkan hak akses admin.'}, status=status.HTTP_403_FORBIDDEN)
+        settings_obj = PaymentSetting.get_settings()
+        serializer = PaymentSettingSerializer(settings_obj, context={'request': request})
+        return Response(serializer.data)
+
+    def put(self, request):
+        if not self.check_admin_permission(request):
+            return Response({'detail': 'Akses ditolak. Membutuhkan hak akses admin.'}, status=status.HTTP_403_FORBIDDEN)
+        settings_obj = PaymentSetting.get_settings()
+        serializer = PaymentSettingSerializer(settings_obj, data=request.data, partial=True, context={'request': request})
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class TestDynaQRISConnectionView(APIView):
+    """Admin endpoint to test DynaQRIS credentials."""
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        user = request.user
+        if not (user.is_staff or getattr(user, 'role', '') == 'admin' or getattr(user, 'username', '') == 'admin'):
+            return Response({'detail': 'Akses ditolak.'}, status=status.HTTP_403_FORBIDDEN)
+
+        api_key = request.data.get('dynaqris_api_key') or PaymentSetting.get_settings().dynaqris_api_key
+        qris_id = request.data.get('dynaqris_qris_id') or PaymentSetting.get_settings().dynaqris_qris_id
+
+        if not api_key or not qris_id:
+            return Response({'error': 'API Key dan QRIS ID wajib diisi.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        import requests
+        headers = {"X-API-Key": api_key, "Content-Type": "application/json"}
+        payload = {"qrisId": qris_id, "amount": 10000}
+
+        try:
+            res = requests.post("https://dynaqris.web.id/api/v1/convert", json=payload, headers=headers, timeout=10)
+            if res.status_code == 200:
+                data = res.json()
+                return Response({
+                    "success": True,
+                    "message": "Koneksi DynaQRIS Berhasil!",
+                    "qrisCode": data.get("qrisCode"),
+                    "hasImage": bool(data.get("qrisImage"))
+                })
+            else:
+                return Response({
+                    "success": False,
+                    "error": f"DynaQRIS Error ({res.status_code}): {res.text}"
+                }, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({
+                "success": False,
+                "error": f"Gagal terhubung ke server DynaQRIS: {str(e)}"
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class GenerateDynaQRISView(APIView):
+    """Generates dynamic QRIS code for a given transaction."""
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        amount = request.data.get('amount')
+        reference_id = request.data.get('reference_id')
+        transaction_type = request.data.get('type')  # 'event', 'ecommerce', 'digital', 'charity'
+
+        if not amount:
+            return Response({'error': 'Nominal pembayaran wajib diisi.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        user_id = request.user.id if request.user and request.user.is_authenticated else None
+        result = DynaQRISService.generate_dynamic_qris(amount, user_id=user_id, reference_id=reference_id)
+
+        if "error" in result:
+            status_code = status.HTTP_429_TOO_MANY_REQUESTS if result.get("code") == "RATE_LIMITED" else status.HTTP_400_BAD_REQUEST
+            return Response(result, status=status_code)
+
+        return Response(result)
+
+class CheckDynaQRISStatusView(APIView):
+    """Checks and handles payment status updates for DynaQRIS transactions."""
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        transaction_type = request.GET.get('type')
+        reference_id = request.GET.get('reference_id')
+
+        if not transaction_type or not reference_id:
+            return Response({'error': 'Tipe dan ID referensi transaksi wajib diisi.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        status_result = {'status': 'pending'}
+
+        if transaction_type == 'event':
+            from events.models import EventRegistration
+            reg = EventRegistration.objects.filter(id=reference_id).first()
+            if reg:
+                status_result = {
+                    'status': reg.payment_status, # e.g. 'verified', 'pending', 'rejected'
+                    'verified': reg.payment_status in ['verified', 'approved'],
+                    'registration_id': reg.id
+                }
+        elif transaction_type == 'ecommerce':
+            from orders.models import Order
+            order = Order.objects.filter(id=reference_id).first() or Order.objects.filter(order_id=reference_id).first()
+            if order:
+                status_result = {
+                    'status': order.status,
+                    'verified': order.status in ['paid', 'completed', 'shipped', 'delivered'],
+                    'order_id': order.id
+                }
+        elif transaction_type == 'digital':
+            from digital_products.models import DigitalOrder
+            d_order = DigitalOrder.objects.filter(id=reference_id).first() or DigitalOrder.objects.filter(order_number=reference_id).first()
+            if d_order:
+                status_result = {
+                    'status': d_order.payment_status,
+                    'verified': d_order.payment_status == 'completed',
+                    'order_number': d_order.order_number
+                }
+        elif transaction_type == 'charity':
+            donation = Donation.objects.filter(id=reference_id).first()
+            if donation:
+                status_result = {
+                    'status': donation.payment_status,
+                    'verified': donation.payment_status in ['verified', 'success'],
+                    'donation_id': donation.id
+                }
+
+        return Response(status_result)
+
+    def post(self, request):
+        """Simulate / Verify completion of DynaQRIS payment."""
+        transaction_type = request.data.get('type')
+        reference_id = request.data.get('reference_id')
+
+        if not transaction_type or not reference_id:
+            return Response({'error': 'Tipe dan ID referensi wajib diisi.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if transaction_type == 'event':
+            from events.models import EventRegistration
+            reg = EventRegistration.objects.filter(id=reference_id).first()
+            if reg:
+                reg.payment_status = 'verified'
+                reg.status = 'approved'
+                reg.save()
+                return Response({'success': True, 'message': 'Pembayaran Event berhasil diverifikasi!'})
+        elif transaction_type == 'ecommerce':
+            from orders.models import Order
+            order = Order.objects.filter(id=reference_id).first() or Order.objects.filter(order_id=reference_id).first()
+            if order:
+                order.status = 'paid'
+                order.save()
+                return Response({'success': True, 'message': 'Pembayaran Pesanan E-commerce berhasil diverifikasi!'})
+        elif transaction_type == 'digital':
+            from digital_products.models import DigitalOrder
+            d_order = DigitalOrder.objects.filter(id=reference_id).first() or DigitalOrder.objects.filter(order_number=reference_id).first()
+            if d_order:
+                d_order.payment_status = 'completed'
+                d_order.save()
+                return Response({'success': True, 'message': 'Pembayaran Produk Digital berhasil diverifikasi!'})
+        elif transaction_type == 'charity':
+            donation = Donation.objects.filter(id=reference_id).first()
+            if donation:
+                donation.payment_status = 'verified'
+                donation.save()
+                return Response({'success': True, 'message': 'Pembayaran Donasi berhasil diverifikasi!'})
+
+        return Response({'error': 'Transaksi tidak ditemukan.'}, status=status.HTTP_404_NOT_FOUND)
+
 class GenerateDonationMidtransTokenView(APIView):
     def post(self, request):
         try:
             data = request.data
             logger.info(f"Request data: {data}")
 
-            # Validate and parse amount
             try:
                 amount = int(data.get('amount'))
             except (TypeError, ValueError):
@@ -34,7 +227,6 @@ class GenerateDonationMidtransTokenView(APIView):
             donor_phone = data.get('donorPhone')
             campaign_slug = data.get('campaignSlug')
 
-            # Validate required fields
             if not donor_name or not donor_phone:
                 return JsonResponse({'error': 'Missing required fields'}, status=400)
             
@@ -43,7 +235,6 @@ class GenerateDonationMidtransTokenView(APIView):
             except Campaign.DoesNotExist:
                 return JsonResponse({'error': 'Campaign not found'}, status=404)
 
-            # Create a donation record
             donation = Donation.objects.create(
                 campaign=campaign,
                 donor_name=donor_name,
@@ -53,11 +244,8 @@ class GenerateDonationMidtransTokenView(APIView):
                 payment_status='pending'
             )
 
-            logger.info(f"Donation: {donation}")
-
-            # Prepare transaction details for Midtrans
             transaction_details = {
-                'order_id': f'D{donation.id}-C{campaign.id}',  # Unique order ID
+                'order_id': f'D{donation.id}-C{campaign.id}',
                 'gross_amount': amount,
             }
 
@@ -66,20 +254,15 @@ class GenerateDonationMidtransTokenView(APIView):
                 'phone': donor_phone,
             }
 
-            logger.info(f"Transaction details: {transaction_details}")
-            logger.info(f"Customer details: {customer_details}")
-
-            # Generate payment token
             transaction = snap.create_transaction({
                 'transaction_details': transaction_details,
                 'customer_details': customer_details,
             })
-            logger.info(f"Midtrans token: {transaction['token']}")
 
             return JsonResponse({
                 'token': transaction['token'],
-                'redirect_url': transaction['redirect_url'],  # Redirect URL for Midtrans
-                'order_id': transaction_details['order_id'],  # Return order ID for reference
+                'redirect_url': transaction['redirect_url'],
+                'order_id': transaction_details['order_id'],
             })
         except Exception as e:
             logger.error(f"Error generating Midtrans token: {str(e)}")
@@ -89,9 +272,6 @@ class GenerateOrderMidtransTokenView(APIView):
     def post(self, request):
         try:
             data = request.data
-            logger.info(f"Request data: {data}")
-
-            # Validate and parse amount
             try:
                 total_amount = int(data.get('amount'))
             except (TypeError, ValueError):
@@ -101,12 +281,10 @@ class GenerateOrderMidtransTokenView(APIView):
             customer_phone = data.get('customerPhone')
             checkout_number = data.get('checkoutNumber')
 
-            # Validate required fields
             if not customer_name or not customer_phone or not checkout_number:
                 return JsonResponse({'error': 'Missing required fields'}, status=400)
 
-            # Create an order record
-            user = request.user  # Ensure the user is authenticated
+            user = request.user
             order = Order.objects.create(
                 user=user,
                 order_id=checkout_number,
@@ -115,11 +293,8 @@ class GenerateOrderMidtransTokenView(APIView):
                 payment_status='pending'
             )
 
-            logger.info(f"Order: {order}")
-
-            # Prepare transaction details for Midtrans
             transaction_details = {
-                'order_id': order.order_id,  # Unique order ID
+                'order_id': order.order_id,
                 'gross_amount': total_amount,
             }
 
@@ -128,20 +303,15 @@ class GenerateOrderMidtransTokenView(APIView):
                 'phone': customer_phone,
             }
 
-            logger.info(f"Transaction details: {transaction_details}")
-            logger.info(f"Customer details: {customer_details}")
-
-            # Generate payment token
             transaction = snap.create_transaction({
                 'transaction_details': transaction_details,
                 'customer_details': customer_details,
             })
-            logger.info(f"Midtrans token: {transaction['token']}")
 
             return JsonResponse({
                 'token': transaction['token'],
-                'redirect_url': transaction['redirect_url'],  # Redirect URL for Midtrans
-                'order_id': transaction_details['order_id'],  # Return order ID for reference
+                'redirect_url': transaction['redirect_url'],
+                'order_id': transaction_details['order_id'],
             })
         except Exception as e:
             logger.error(f"Error generating Midtrans token: {str(e)}")
@@ -150,15 +320,13 @@ class GenerateOrderMidtransTokenView(APIView):
 class MidtransDonationNotificationView(APIView):
     def post(self, request):
         try:
-            data = request.data  # Use request.data for parsed JSON
+            data = request.data
             order_id = data.get('order_id')
             transaction_status = data.get('transaction_status')
             fraud_status = data.get('fraud_status')
 
-            # Extract donation ID from order_id
-            donation_id = order_id.split('-')[1]  # Format: DNT-{donation_id}-CPG-{campaign_id}
+            donation_id = order_id.split('-')[1]
 
-            # Update donation status based on notification
             donation = Donation.objects.get(id=donation_id)
             if transaction_status == 'capture':
                 if fraud_status == 'accept':
@@ -180,12 +348,11 @@ class MidtransDonationNotificationView(APIView):
 class MidtransOrderNotificationView(APIView):
     def post(self, request):
         try:
-            data = request.data  # Use request.data for parsed JSON
+            data = request.data
             order_id = data.get('order_id')
             transaction_status = data.get('transaction_status')
             fraud_status = data.get('fraud_status')
 
-            # Update order status based on notification
             try:
                 order = Order.objects.get(order_id=order_id)
             except Order.DoesNotExist:
@@ -213,14 +380,11 @@ class CheckDonationPaymentStatusView(APIView):
             if not transaction_id:
                 return JsonResponse({'error': 'Order ID is required'}, status=400)
 
-            # Check transaction status from Midtrans
             status_response = snap.transactions.status(transaction_id)
             transaction_status = status_response.get('transaction_status')
 
-            # Extract donation ID from order_id
-            donation_id = transaction_id.split('-')[1]  # Format: DNT-{donation_id}-CPG-{campaign_id}
+            donation_id = transaction_id.split('-')[1]
 
-            # Update donation status in database
             donation = Donation.objects.get(id=donation_id)
             donation.payment_status = transaction_status
             donation.save()
@@ -245,14 +409,11 @@ class CheckOrderPaymentStatusView(APIView):
             if not transaction_id:
                 return JsonResponse({'error': 'Order ID is required'}, status=400)
 
-            # Check transaction status from Midtrans
             status_response = snap.transactions.status(transaction_id)
             transaction_status = status_response.get('transaction_status')
 
-            # Extract donation ID from order_id
-            order_id = transaction_id.split('-')[1]  # Format: DNT-{donation_id}-CPG-{campaign_id}
+            order_id = transaction_id.split('-')[1]
 
-            # Update donation status in database
             donation = Donation.objects.get(id=order_id)
             donation.payment_status = transaction_status
             donation.save()
@@ -268,4 +429,4 @@ class CheckOrderPaymentStatusView(APIView):
             return JsonResponse({'error': 'Donation not found'}, status=404)
         except Exception as e:
             logger.error(f"Error checking payment status: {str(e)}")
-            return JsonResponse({'error': str(e)}, status=500)        
+            return JsonResponse({'error': str(e)}, status=500)

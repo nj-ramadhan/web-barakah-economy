@@ -1,9 +1,10 @@
-// pages/CrowdfundingPaymentConfirmation.js
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import Header from '../components/layout/Header';
 import NavigationButton from '../components/layout/Navigation';
+import DynaQRISModal from '../components/common/DynaQRISModal';
+import { getPublicPaymentConfig, generateDynaQRIS } from '../services/paymentApi';
 import '../styles/Body.css';
 
 const getCsrfToken = () => {
@@ -30,6 +31,7 @@ const CrowdfundingPaymentConfirmation = () => {
   const fileInputRef = useRef(null);
   const [selectedFile, setSelectedFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState('');
+  const [isSuccess, setIsSuccess] = useState(false);
   const [formData, setFormData] = useState({
     accountName: '',
     sourceBank: '',
@@ -37,6 +39,44 @@ const CrowdfundingPaymentConfirmation = () => {
     transferDate: new Date().toISOString().split('T')[0],
     amount: location.state?.amount || 0
   });
+
+  // DynaQRIS State
+  const [paymentConfig, setPaymentConfig] = useState(null);
+  const [showDynaModal, setShowDynaModal] = useState(false);
+  const [qrisData, setQrisData] = useState(null);
+  const [generatingQris, setGeneratingQris] = useState(false);
+
+  useEffect(() => {
+    getPublicPaymentConfig().then((cfg) => {
+      setPaymentConfig(cfg);
+      if (cfg?.active_mode === 'dynaqris' && location.state?.amount) {
+        handleGenerateDynaQRIS(cfg);
+      }
+    }).catch(err => console.error("Error fetching config:", err));
+  }, []);
+
+  const handleGenerateDynaQRIS = async () => {
+    setGeneratingQris(true);
+    try {
+      const res = await generateDynaQRIS({ amount: location.state?.amount, type: 'charity' });
+      if (res.error) {
+        alert(res.error);
+      } else {
+        setQrisData(res);
+        setShowDynaModal(true);
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Gagal menghasilkan QRIS Dinamis.');
+    } finally {
+      setGeneratingQris(false);
+    }
+  };
+
+  const handleDynaSuccess = (res) => {
+    setShowDynaModal(false);
+    setIsSuccess(true);
+  };
 
   // Redirect if no data passed
   if (!location.state) {
@@ -221,6 +261,37 @@ Semoga dapat menjadi amal ibadah bagi saya dan bermanfaat untuk program serta pe
           </p>
           <h2 className="text-2xl font-bold mt-2 mb-6">{campaignTitle}</h2>
         </div>
+
+        {/* DynaQRIS Section if active mode is dynaqris */}
+        {paymentConfig?.active_mode === 'dynaqris' && (
+          <div className="bg-gradient-to-r from-emerald-600 to-green-700 text-white rounded-2xl p-6 mb-6 shadow-xl text-center">
+            <div className="inline-flex items-center gap-2 bg-white/20 text-white px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-2">
+              <span className="material-icons text-sm">qr_code_2</span>
+              <span>Metode Otomatis DynaQRIS Aktif</span>
+            </div>
+            <h3 className="text-xl font-bold mb-1">Scan QRIS Dinamis Otomatis</h3>
+            <p className="text-xs text-emerald-100 mb-4">
+              Pembayaran donasi langsung terdeteksi otomatis tanpa perlu upload foto bukti bayar.
+            </p>
+            <button
+              onClick={handleGenerateDynaQRIS}
+              disabled={generatingQris}
+              className="w-full bg-white text-emerald-800 font-bold py-3.5 px-6 rounded-2xl shadow hover:bg-emerald-50 transition flex items-center justify-center gap-2"
+            >
+              <span className="material-icons text-lg">qr_code_scanner</span>
+              <span>{generatingQris ? 'Membuat QRIS...' : 'Tampilkan QRIS Donasi'}</span>
+            </button>
+          </div>
+        )}
+
+        <DynaQRISModal
+          isOpen={showDynaModal}
+          onClose={() => setShowDynaModal(false)}
+          qrisData={qrisData}
+          transactionType="charity"
+          amount={amount}
+          onPaymentSuccess={handleDynaSuccess}
+        />
 
         {/* Bank information card */}
         <div className="bg-white rounded-lg shadow overflow-hidden mb-6">

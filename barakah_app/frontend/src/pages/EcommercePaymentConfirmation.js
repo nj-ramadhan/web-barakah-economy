@@ -1,10 +1,11 @@
-// pages/EcommercePaymentConfirmation.js
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import Tesseract from 'tesseract.js';
 import Header from '../components/layout/Header';
 import NavigationButton from '../components/layout/Navigation';
+import DynaQRISModal from '../components/common/DynaQRISModal';
+import { getPublicPaymentConfig, generateDynaQRIS } from '../services/paymentApi';
 import '../styles/Body.css';
 
 const getCsrfToken = () => {
@@ -27,6 +28,76 @@ const EcommercePaymentConfirmation = () => {
   const [ocrError, setOcrError] = useState('');
   const [isSuccess, setIsSuccess] = useState(false);
   const [orderNumber, setOrderNumber] = useState('');
+
+  // DynaQRIS State
+  const [paymentConfig, setPaymentConfig] = useState(null);
+  const [showDynaModal, setShowDynaModal] = useState(false);
+  const [qrisData, setQrisData] = useState(null);
+  const [generatingQris, setGeneratingQris] = useState(false);
+
+  useEffect(() => {
+    getPublicPaymentConfig().then((cfg) => {
+      setPaymentConfig(cfg);
+      if (cfg?.active_mode === 'dynaqris' && location.state?.amount) {
+        handleGenerateDynaQRIS(cfg);
+      }
+    }).catch(err => console.error("Error fetching config:", err));
+  }, []);
+
+  const handleGenerateDynaQRIS = async () => {
+    setGeneratingQris(true);
+    try {
+      const res = await generateDynaQRIS({ amount: location.state?.amount, type: 'ecommerce' });
+      if (res.error) {
+        alert(res.error);
+      } else {
+        setQrisData(res);
+        setShowDynaModal(true);
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Gagal menghasilkan QRIS Dinamis.');
+    } finally {
+      setGeneratingQris(false);
+    }
+  };
+
+  const handleDynaSuccess = async (res) => {
+    setShowDynaModal(false);
+    try {
+      const csrfToken = getCsrfToken();
+      const paymentData = new FormData();
+      paymentData.append('amount', amount);
+      paymentData.append('customer_name', customerName);
+      paymentData.append('customer_phone', customerPhone);
+      paymentData.append('payment_method', 'dynaqris');
+      paymentData.append('transfer_date', new Date().toISOString().split('T')[0]);
+      paymentData.append('shipping_cost', shippingCost || 0);
+      paymentData.append('shipping_courier', courier || '');
+      paymentData.append('voucher_code', voucherCode || '');
+      paymentData.append('voucher_nominal', voucherDiscount || 0);
+
+      const userData = localStorage.getItem('user');
+      let authToken = null;
+      if (userData) authToken = JSON.parse(userData).access;
+
+      const headers = { 'X-CSRFToken': csrfToken };
+      if (authToken) headers['Authorization'] = `Bearer ${authToken}`;
+
+      const response = await axios.post(
+        `${process.env.REACT_APP_API_BASE_URL}/api/orders/create-order/`,
+        paymentData,
+        { headers }
+      );
+
+      if (response.status === 201) {
+        setOrderNumber(response.data[0]?.order_number || 'N/A');
+        setIsSuccess(true);
+      }
+    } catch (err) {
+      console.error('Failed to create order after DynaQRIS payment:', err);
+    }
+  };
 
   // Redirect if no data passed
   if (!location.state) {
@@ -252,8 +323,43 @@ const EcommercePaymentConfirmation = () => {
         {/* Header Section */}
         <div className="text-center py-6">
           <h1 className="text-2xl font-black text-gray-800 tracking-tight">Konfirmasi Pembayaran</h1>
-          <p className="text-gray-500 text-sm">Upload struk untuk verifikasi otomatis via <span className="text-emerald-600 font-bold">OCR AI</span></p>
+          <p className="text-gray-500 text-sm">
+            {paymentConfig?.active_mode === 'dynaqris'
+              ? 'Pembayaran Otomatis Menggunakan DynaQRIS'
+              : 'Upload struk untuk verifikasi otomatis via OCR AI'}
+          </p>
         </div>
+
+        {/* DynaQRIS Section if active mode is dynaqris */}
+        {paymentConfig?.active_mode === 'dynaqris' && (
+          <div className="bg-gradient-to-r from-emerald-600 to-teal-700 text-white rounded-[32px] p-6 mb-6 shadow-xl text-center relative overflow-hidden">
+            <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-md text-white px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-3">
+              <span className="material-icons text-sm">qr_code_2</span>
+              <span>Metode Otomatis DynaQRIS Aktif</span>
+            </div>
+            <h3 className="text-xl font-black mb-1">Scan QRIS Dinamis Otomatis</h3>
+            <p className="text-xs text-emerald-100 mb-4">
+              Pembayaran langsung terdeteksi otomatis tanpa perlu upload foto bukti bayar.
+            </p>
+            <button
+              onClick={handleGenerateDynaQRIS}
+              disabled={generatingQris}
+              className="w-full bg-white text-emerald-800 font-bold py-3.5 px-6 rounded-2xl shadow-lg hover:bg-emerald-50 transition flex items-center justify-center gap-2"
+            >
+              <span className="material-icons text-lg">qr_code_scanner</span>
+              <span>{generatingQris ? 'Membuat QRIS...' : 'Tampilkan QRIS Pembayaran'}</span>
+            </button>
+          </div>
+        )}
+
+        <DynaQRISModal
+          isOpen={showDynaModal}
+          onClose={() => setShowDynaModal(false)}
+          qrisData={qrisData}
+          transactionType="ecommerce"
+          amount={amount}
+          onPaymentSuccess={handleDynaSuccess}
+        />
 
         {/* Bank Card */}
         <div className="bg-white rounded-[32px] shadow-xl shadow-gray-200/50 p-6 mb-6 border border-gray-50">

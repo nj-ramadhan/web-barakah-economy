@@ -5,6 +5,8 @@ import api from '../services/api';
 import authService from '../services/auth';
 import Header from '../components/layout/Header';
 import NavigationButton from '../components/layout/Navigation';
+import DynaQRISModal from '../components/common/DynaQRISModal';
+import { getPublicPaymentConfig, generateDynaQRIS } from '../services/paymentApi';
 import '../styles/Body.css';
 
 const getCsrfToken = () => {
@@ -62,24 +64,63 @@ const EcoursePaymentConfirmation = () => {
     transferDate: new Date().toISOString().split('T')[0],
   });
   const [selectedBank, setSelectedBank] = useState('bsi');
+  const [isSuccess, setIsSuccess] = useState(false);
   const fileInputRef = useRef(null);
   const navigate = useNavigate();
+
+  // DynaQRIS State
+  const [paymentConfig, setPaymentConfig] = useState(null);
+  const [showDynaModal, setShowDynaModal] = useState(false);
+  const [qrisData, setQrisData] = useState(null);
+  const [generatingQris, setGeneratingQris] = useState(false);
 
   // Get user from localStorage
   const user = JSON.parse(localStorage.getItem('user')) || {};
 
-  // Fetch course on slug change
+  // Fetch course & payment config
   useEffect(() => {
     const fetchCourse = async () => {
       try {
-        const res = await getCourseBySlug(slug);
+        const [res, configRes] = await Promise.all([
+          getCourseBySlug(slug),
+          getPublicPaymentConfig().catch(() => null)
+        ]);
         setCourse(res.data);
+        setPaymentConfig(configRes);
+        if (configRes?.active_mode === 'dynaqris' && res.data?.price) {
+          handleGenerateDynaQRIS(res.data.price);
+        }
       } catch (err) {
-        console.error("Error fetching course:", err);
+        console.error("Error fetching course and config:", err);
       }
     };
     fetchCourse();
   }, [slug]);
+
+  const handleGenerateDynaQRIS = async (amtOverride) => {
+    const targetAmt = amtOverride || course?.price;
+    if (!targetAmt) return;
+    setGeneratingQris(true);
+    try {
+      const res = await generateDynaQRIS({ amount: targetAmt, type: 'digital' });
+      if (res.error) {
+        alert(res.error);
+      } else {
+        setQrisData(res);
+        setShowDynaModal(true);
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Gagal menghasilkan QRIS Dinamis.');
+    } finally {
+      setGeneratingQris(false);
+    }
+  };
+
+  const handleDynaSuccess = (res) => {
+    setShowDynaModal(false);
+    setIsSuccess(true);
+  };
 
   // Fetch profile only once on mount if user exists
   useEffect(() => {
@@ -246,6 +287,37 @@ const EcoursePaymentConfirmation = () => {
           </p>
           <h2 className="text-2xl font-bold mt-2 mb-6">{course.title}</h2>
         </div>
+
+        {/* DynaQRIS Section if active mode is dynaqris */}
+        {paymentConfig?.active_mode === 'dynaqris' && (
+          <div className="bg-gradient-to-r from-emerald-600 to-green-700 text-white rounded-2xl p-6 mb-6 shadow-xl text-center">
+            <div className="inline-flex items-center gap-2 bg-white/20 text-white px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-2">
+              <span className="material-icons text-sm">qr_code_2</span>
+              <span>Metode Otomatis DynaQRIS Aktif</span>
+            </div>
+            <h3 className="text-xl font-bold mb-1">Scan QRIS Dinamis Otomatis</h3>
+            <p className="text-xs text-emerald-100 mb-4">
+              Pembayaran e-course terverifikasi otomatis dan memberikan akses materi secara langsung.
+            </p>
+            <button
+              onClick={() => handleGenerateDynaQRIS()}
+              disabled={generatingQris}
+              className="w-full bg-white text-emerald-800 font-bold py-3.5 px-6 rounded-2xl shadow hover:bg-emerald-50 transition flex items-center justify-center gap-2"
+            >
+              <span className="material-icons text-lg">qr_code_scanner</span>
+              <span>{generatingQris ? 'Membuat QRIS...' : 'Tampilkan QRIS E-Course'}</span>
+            </button>
+          </div>
+        )}
+
+        <DynaQRISModal
+          isOpen={showDynaModal}
+          onClose={() => setShowDynaModal(false)}
+          qrisData={qrisData}
+          transactionType="digital"
+          amount={course?.price}
+          onPaymentSuccess={handleDynaSuccess}
+        />
 
         {/* Bank selection */}
         <div className="mb-4">

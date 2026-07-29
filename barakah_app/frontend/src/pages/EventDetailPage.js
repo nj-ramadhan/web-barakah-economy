@@ -12,6 +12,8 @@ import CurrencyInput from '../components/common/CurrencyInput';
 import { formatCurrency } from '../utils/formatters';
 import { getMediaUrl } from '../utils/mediaUtils';
 import UserProfileModal from '../components/modals/UserProfileModal';
+import DynaQRISModal from '../components/common/DynaQRISModal';
+import { getPublicPaymentConfig, generateDynaQRIS } from '../services/paymentApi';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Pagination, Autoplay, EffectFade } from 'swiper/modules';
 import 'swiper/css';
@@ -28,6 +30,16 @@ const EventDetailPage = () => {
     const [error, setError] = useState(null);
     const [success, setSuccess] = useState(false);
     const [responses, setResponses] = useState({});
+
+    // DynaQRIS State
+    const [paymentConfig, setPaymentConfig] = useState(null);
+    const [showDynaModal, setShowDynaModal] = useState(false);
+    const [qrisData, setQrisData] = useState(null);
+    const [pendingRegId, setPendingRegId] = useState(null);
+
+    useEffect(() => {
+        getPublicPaymentConfig().then(cfg => setPaymentConfig(cfg)).catch(err => console.error("Error loading payment config:", err));
+    }, []);
     const [guestInfo, setGuestInfo] = useState({ name: '', email: '' });
     const [files, setFiles] = useState({});
     const [participants, setParticipants] = useState([]);
@@ -469,6 +481,9 @@ const EventDetailPage = () => {
                 // Total is 0 (e.g. team modifier made it free) — skip payment entirely
                 data.append('payment_amount', 0);
                 data.append('payment_method', 'transfer');
+            } else if (paymentConfig?.active_mode === 'dynaqris') {
+                data.append('payment_amount', calculatedTotal);
+                data.append('payment_method', 'dynaqris');
             } else if (paymentMethod === 'transfer' && paymentProof) {
                 data.append('payment_proof', paymentProof);
                 data.append('payment_amount', calculatedTotal);
@@ -483,9 +498,23 @@ const EventDetailPage = () => {
             if (res.data?.unique_code) {
                 setRegisteredCode(res.data.unique_code);
             }
-            setSuccess(true);
-            setShowRegisterModal(false);
-            window.scrollTo(0, 0);
+
+            const calculatedTotal = getCalculatedTotal();
+            if (paymentConfig?.active_mode === 'dynaqris' && calculatedTotal > 0) {
+                const regId = res.data?.id || res.data?.registration_id;
+                setPendingRegId(regId);
+                const qrisRes = await generateDynaQRIS({ amount: calculatedTotal, reference_id: regId, type: 'event' });
+                if (qrisRes.error) {
+                    setError(qrisRes.error);
+                } else {
+                    setQrisData(qrisRes);
+                    setShowDynaModal(true);
+                }
+            } else {
+                setSuccess(true);
+                setShowRegisterModal(false);
+                window.scrollTo(0, 0);
+            }
             fetchDetail(); // Refresh data kecil
             if (activeTab === 'participants') fetchParticipants();
         } catch (err) {
@@ -2480,6 +2509,21 @@ const EventDetailPage = () => {
                     onClose={() => setShowStreamModal(false)}
                 />
             )}
+
+            <DynaQRISModal
+                isOpen={showDynaModal}
+                onClose={() => setShowDynaModal(false)}
+                qrisData={qrisData}
+                transactionType="event"
+                referenceId={pendingRegId}
+                amount={getCalculatedTotal()}
+                onPaymentSuccess={() => {
+                    setShowDynaModal(false);
+                    setSuccess(true);
+                    setShowRegisterModal(false);
+                    window.scrollTo(0, 0);
+                }}
+            />
         </div>
     );
 };

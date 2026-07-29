@@ -614,6 +614,15 @@ const DashboardPage = () => {
                             title: 'Admin Keuangan & Bisnis',
                             items: [
                                 {
+                                    id: 'payment_settings',
+                                    access: isAdmin || hasAccess('payment_settings'),
+                                    to: '/dashboard/admin/payment-settings',
+                                    icon: 'qr_code_2',
+                                    color: 'emerald',
+                                    title: 'Pengaturan Metode Pembayaran',
+                                    desc: 'Atur metode pembayaran (Bukti Transfer / DynaQRIS)'
+                                },
+                                {
                                     id: 'withdrawals',
                                     access: hasAccess('withdrawals'),
                                     to: '/dashboard/admin/withdrawals',

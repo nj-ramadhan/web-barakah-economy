@@ -1,11 +1,12 @@
-// pages/DigitalProductPaymentPage.js
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
 import Header from '../components/layout/Header';
 import { uploadPaymentProof, getDigitalOrderStatus } from '../services/digitalProductApi';
 import Tesseract from 'tesseract.js';
 import { formatCurrency } from '../utils/formatters';
+import DynaQRISModal from '../components/common/DynaQRISModal';
+import { getPublicPaymentConfig, generateDynaQRIS, verifyDynaQRISPayment } from '../services/paymentApi';
 import '../styles/Body.css';
 
 const DigitalProductPaymentPage = () => {
@@ -19,23 +20,71 @@ const DigitalProductPaymentPage = () => {
     const [ocrError, setOcrError] = useState('');
     const [ocrLoading, setOcrLoading] = useState(false);
 
+    // DynaQRIS State
+    const [paymentConfig, setPaymentConfig] = useState(null);
+    const [showDynaModal, setShowDynaModal] = useState(false);
+    const [qrisData, setQrisData] = useState(null);
+    const [generatingQris, setGeneratingQris] = useState(false);
+
     const getMediaUrl = (url) => {
         if (!url) return null;
         if (url.startsWith('http')) return url;
         return `${process.env.REACT_APP_API_BASE_URL || ''}${url}`;
     };
 
-    React.useEffect(() => {
-        const fetchOrder = async () => {
+    useEffect(() => {
+        const fetchOrderAndConfig = async () => {
             try {
-                const res = await getDigitalOrderStatus(orderNumber);
-                setOrder(res.data);
+                const [orderRes, configRes] = await Promise.all([
+                    getDigitalOrderStatus(orderNumber),
+                    getPublicPaymentConfig().catch(() => null)
+                ]);
+                setOrder(orderRes.data);
+                setPaymentConfig(configRes);
+                if (configRes?.active_mode === 'dynaqris' && orderRes.data?.amount) {
+                    handleGenerateDynaQRIS(orderRes.data.amount);
+                }
             } catch (err) {
-                console.error('Error fetching order:', err);
+                console.error('Error fetching order and config:', err);
             }
         };
-        fetchOrder();
+        fetchOrderAndConfig();
     }, [orderNumber]);
+
+    const handleGenerateDynaQRIS = async (amtOverride) => {
+        const targetAmt = amtOverride || order?.amount;
+        if (!targetAmt) return;
+        setGeneratingQris(true);
+        try {
+            const res = await generateDynaQRIS({
+                amount: targetAmt,
+                reference_id: orderNumber,
+                type: 'digital'
+            });
+            if (res.error) {
+                alert(res.error);
+            } else {
+                setQrisData(res);
+                setShowDynaModal(true);
+            }
+        } catch (err) {
+            console.error(err);
+            alert('Gagal menghasilkan QRIS Dinamis.');
+        } finally {
+            setGeneratingQris(false);
+        }
+    };
+
+    const handleDynaSuccess = async (res) => {
+        setShowDynaModal(false);
+        try {
+            await verifyDynaQRISPayment('digital', orderNumber);
+            setSuccess(true);
+        } catch (err) {
+            console.error(err);
+            setSuccess(true);
+        }
+    };
 
 
     const sendWhatsAppMessage = async (phone, message) => {
@@ -177,8 +226,40 @@ const DigitalProductPaymentPage = () => {
             <Header />
 
             <div className="px-4 py-4 pb-32">
-                <h1 className="text-lg font-bold mb-2">Upload Bukti Pembayaran</h1>
+                <h1 className="text-lg font-bold mb-2">Pembayaran Produk Digital</h1>
                 <p className="text-sm text-gray-500 mb-6">Order: <strong>{orderNumber}</strong></p>
+
+                {/* DynaQRIS Banner if mode is dynaqris */}
+                {paymentConfig?.active_mode === 'dynaqris' && (
+                    <div className="bg-gradient-to-r from-emerald-600 to-green-700 text-white rounded-2xl p-5 mb-6 shadow-lg text-center">
+                        <div className="inline-flex items-center gap-2 bg-white/20 text-white px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-2">
+                            <span className="material-icons text-sm">qr_code_2</span>
+                            <span>Metode Otomatis DynaQRIS Aktif</span>
+                        </div>
+                        <h3 className="text-lg font-bold">Scan QRIS Dinamis Otomatis</h3>
+                        <p className="text-xs text-emerald-100 mt-1 mb-4">
+                            Pembayaran otomatis terverifikasi dan langsung memberikan akses produk digital.
+                        </p>
+                        <button
+                            onClick={() => handleGenerateDynaQRIS()}
+                            disabled={generatingQris}
+                            className="w-full bg-white text-emerald-800 font-bold py-3 px-4 rounded-xl shadow hover:bg-emerald-50 transition flex items-center justify-center gap-2 text-sm"
+                        >
+                            <span className="material-icons text-base">qr_code_scanner</span>
+                            <span>{generatingQris ? 'Membuat QRIS...' : 'Tampilkan QRIS Pembayaran'}</span>
+                        </button>
+                    </div>
+                )}
+
+                <DynaQRISModal
+                    isOpen={showDynaModal}
+                    onClose={() => setShowDynaModal(false)}
+                    qrisData={qrisData}
+                    transactionType="digital"
+                    referenceId={orderNumber}
+                    amount={order?.amount}
+                    onPaymentSuccess={handleDynaSuccess}
+                />
 
                 <div className="bg-gray-50 rounded-xl p-4 mb-4">
                     <h2 className="font-semibold text-sm mb-3">Pilihan Pembayaran</h2>
