@@ -121,7 +121,7 @@ const DynaQRISModal = ({
                 <div className="sticky top-0 z-50 flex items-center justify-between bg-white/95 backdrop-blur-xs pt-1 pb-3 -mt-1 -mr-1 mb-3 border-b border-gray-100">
                     <span className="text-xs font-black text-emerald-800 uppercase tracking-wider flex items-center gap-1.5">
                         <span className="material-icons text-base text-emerald-600">qr_code_2</span>
-                        Pembayaran QRIS Dinamis
+                        Pembayaran QRIS
                     </span>
                     <button
                         type="button"

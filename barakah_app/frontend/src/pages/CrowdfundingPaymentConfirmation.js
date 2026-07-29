@@ -195,6 +195,66 @@ const CrowdfundingPaymentConfirmation = () => {
     campaignSlug // Extract campaign slug
   } = location.state;
 
+  if (isSuccess) {
+    return (
+      <div className="bg-gray-50 min-h-screen pb-20">
+        <Header />
+        <div className="container max-w-lg mx-auto pt-24 px-4">
+          <div className="bg-white rounded-3xl p-8 text-center shadow-xl border border-emerald-100 space-y-6 animate-fadeIn">
+            <div className="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto shadow-inner animate-bounce">
+              <span className="material-icons text-5xl">check_circle</span>
+            </div>
+
+            <div>
+              <span className="bg-emerald-50 text-emerald-700 text-xs font-black uppercase px-3.5 py-1.5 rounded-full tracking-wider">
+                Pembayaran Berhasil
+              </span>
+              <h2 className="text-2xl font-black text-gray-800 mt-3">Jazakallah Khairan!</h2>
+              <p className="text-xs text-gray-500 mt-1">Donasi Anda telah berhasil diterima oleh sistem.</p>
+            </div>
+
+            <div className="bg-gray-50 rounded-2xl p-4 text-left space-y-3 text-xs border border-gray-100">
+              <div className="flex justify-between border-b border-gray-200/60 pb-2">
+                <span className="text-gray-500 font-medium">Program Donasi</span>
+                <span className="font-bold text-gray-800 text-right max-w-[200px] truncate">{campaignTitle}</span>
+              </div>
+              <div className="flex justify-between border-b border-gray-200/60 pb-2">
+                <span className="text-gray-500 font-medium">Nama Donatur</span>
+                <span className="font-bold text-gray-800">{donorName}</span>
+              </div>
+              <div className="flex justify-between border-b border-gray-200/60 pb-2">
+                <span className="text-gray-500 font-medium">Total Nominal</span>
+                <span className="font-black text-emerald-700 text-sm">Rp {new Intl.NumberFormat('id-ID').format(qrisData?.amount || amount || 0)}</span>
+              </div>
+              <div className="flex justify-between pt-1">
+                <span className="text-gray-500 font-medium">Status</span>
+                <span className="bg-emerald-100 text-emerald-800 px-2.5 py-0.5 rounded font-black text-[10px] uppercase">SUKSES / LUNAS</span>
+              </div>
+            </div>
+
+            <div className="space-y-2 pt-2">
+              <button
+                type="button"
+                onClick={() => navigate(campaignSlug ? `/crowdfunding/${campaignSlug}` : '/crowdfunding')}
+                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-black py-3.5 px-4 rounded-xl shadow-lg shadow-emerald-100 transition"
+              >
+                Kembali ke Program Donasi
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate('/')}
+                className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-3 px-4 rounded-xl text-xs transition"
+              >
+                Ke Beranda Utama
+              </button>
+            </div>
+          </div>
+        </div>
+        <NavigationButton />
+      </div>
+    );
+  }
+
   // Format amount with dot thousand separator
   const formattedAmount = new Intl.NumberFormat('id-ID').format(amount);
 
@@ -369,7 +429,7 @@ Semoga dapat menjadi amal ibadah bagi saya dan bermanfaat untuk program serta pe
           <div className="bg-white rounded-2xl shadow-xl overflow-hidden mt-6 border border-emerald-100 p-6 text-center space-y-5">
             <div className="inline-flex items-center gap-2 bg-emerald-50 text-emerald-700 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider">
               <span className="material-icons text-base">qr_code_2</span>
-              <span>Pembayaran QRIS Dinamis Otomatis</span>
+              <span>Pembayaran QRIS</span>
             </div>
             
             <div>
