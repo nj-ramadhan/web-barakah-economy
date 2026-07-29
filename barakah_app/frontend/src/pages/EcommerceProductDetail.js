@@ -122,10 +122,54 @@ const EcommerceProductDetail = () => {
         }
       });
 
-      window.dispatchEvent(new Event('cartUpdated'));
+      window.dispatchEvent(new CustomEvent('cartUpdated', {
+        detail: { showToast: true, title: product?.title || 'Produk' }
+      }));
     } catch (error) {
       console.error('Error adding product to cart:', error);
       const msg = error.response?.data?.error || 'Gagal menambahkan produk ke keranjang';
+      alert(msg);
+    }
+  };
+
+  const handleBuyNow = async () => {
+    const currentStock = selectedVariation ? selectedVariation.stock : (product?.total_stock || product?.stock || 0);
+    if (currentStock <= 0) {
+      alert('Maaf, stok produk ini sedang habis.');
+      return;
+    }
+    if (product?.variations && product.variations.length > 0 && !selectedVariation) {
+        alert('Silakan pilih variasi terlebih dahulu (misal: Warna/Ukuran)');
+        return;
+    }
+
+    const csrfToken = getCsrfToken();
+    try {
+      const user = JSON.parse(localStorage.getItem('user'));
+      if (!user || !user.access) {
+        navigate('/login');
+        return;
+      }
+
+      await axios.post(`${process.env.REACT_APP_API_BASE_URL}/api/carts/cart/`, {
+        product_id: product.id,
+        variation_id: selectedVariation?.id || null,
+        quantity: quantity
+      }, {
+        headers: {
+          Authorization: `Bearer ${user.access}`,
+          'X-CSRFToken': csrfToken,
+        }
+      });
+
+      window.dispatchEvent(new CustomEvent('cartUpdated', {
+        detail: { showToast: true, title: product?.title || 'Produk' }
+      }));
+
+      navigate('/keranjang');
+    } catch (error) {
+      console.error('Error in Beli Langsung:', error);
+      const msg = error.response?.data?.error || 'Gagal memproses pembelian';
       alert(msg);
     }
   };
@@ -434,14 +478,7 @@ const EcommerceProductDetail = () => {
 
                     <button 
                       className={`flex-[2] py-3 px-6 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg transition-all transform mt-4 md:mt-0 ${isOutOfStock ? 'bg-gray-50 text-gray-300 cursor-not-allowed shadow-none' : 'bg-emerald-500 hover:bg-emerald-600 text-white shadow-emerald-200 hover:-translate-y-1'}`}
-                      onClick={() => {
-                          if (isOutOfStock) return;
-                          addToCart();
-                          setTimeout(() => {
-                              const bubble = document.getElementById('cart-floating-bubble');
-                              if(bubble) bubble.click();
-                          }, 500);
-                      }}
+                      onClick={handleBuyNow}
                       disabled={isOutOfStock}
                     >
                       <span className="material-icons text-xl">{isOutOfStock ? 'block' : 'shopping_bag'}</span>

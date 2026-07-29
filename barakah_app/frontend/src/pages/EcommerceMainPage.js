@@ -150,7 +150,9 @@ const EcommerceMainPage = () => {
         }
       });
 
-      window.dispatchEvent(new Event('cartUpdated'));
+      window.dispatchEvent(new CustomEvent('cartUpdated', {
+        detail: { showToast: true, title: product?.title || 'Produk' }
+      }));
       // Removed alert to use visual feedback from bubble
     } catch (error) {
       console.error('Error adding product to cart:', error);

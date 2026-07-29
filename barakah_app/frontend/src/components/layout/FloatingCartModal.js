@@ -142,11 +142,25 @@ const FloatingCartModal = () => {
         }
     }, [location.pathname]);
 
+    const [toastInfo, setToastInfo] = useState({ show: false, title: '' });
+    const toastTimerRef = useRef(null);
+
     useEffect(() => {
         fetchItems();
         // Add listener for custom event to trigger animation and refetch
-        const handleCartUpdate = () => {
+        const handleCartUpdate = (e) => {
             fetchItems();
+            
+            const showToast = e?.detail?.showToast !== false;
+            const title = e?.detail?.title || 'Produk';
+            if (showToast) {
+                if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+                setToastInfo({ show: true, title });
+                toastTimerRef.current = setTimeout(() => {
+                    setToastInfo({ show: false, title: '' });
+                }, 4500);
+            }
+
             // Trigger animation class
             const bubble = document.getElementById('cart-floating-bubble');
             if (bubble) {
@@ -155,7 +169,10 @@ const FloatingCartModal = () => {
             }
         };
         window.addEventListener('cartUpdated', handleCartUpdate);
-        return () => window.removeEventListener('cartUpdated', handleCartUpdate);
+        return () => {
+            window.removeEventListener('cartUpdated', handleCartUpdate);
+            if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+        };
     }, []);
 
     const toggleCart = () => setIsOpen(!isOpen);
@@ -275,6 +292,40 @@ const FloatingCartModal = () => {
 
     return (
         <>
+            {/* Toast Notification Popup */}
+            {toastInfo.show && (
+                <div className="fixed top-20 right-4 md:right-8 z-50 bg-white/95 backdrop-blur-md border border-emerald-500/30 rounded-2xl p-4 shadow-2xl flex items-center gap-3.5 animate-slideInRight max-w-sm border-l-4 border-l-emerald-500">
+                    <div className="w-10 h-10 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center shrink-0 shadow-inner">
+                        <span className="material-icons text-2xl">shopping_bag</span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                        <span className="bg-emerald-100 text-emerald-800 text-[10px] font-black uppercase px-2 py-0.5 rounded">Keranjang Diperbarui</span>
+                        <p className="text-xs font-bold text-gray-800 truncate mt-1">{toastInfo.title}</p>
+                        <p className="text-[10px] text-gray-500 font-medium">Berhasil ditambahkan ke keranjang</p>
+                    </div>
+                    <div className="flex items-center gap-1 shrink-0">
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setToastInfo({ show: false, title: '' });
+                                navigate('/keranjang');
+                            }}
+                            className="bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs py-2 px-3 rounded-xl shadow-md transition active:scale-95 whitespace-nowrap"
+                        >
+                            Checkout
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setToastInfo({ show: false, title: '' })}
+                            className="text-gray-400 hover:text-gray-600 p-1 rounded-full hover:bg-gray-100"
+                            title="Tutup"
+                        >
+                            <span className="material-icons text-sm">close</span>
+                        </button>
+                    </div>
+                </div>
+            )}
+
             {/* The Floating Bubble */}
             <div
                 ref={bubbleRef}
