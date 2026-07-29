@@ -89,6 +89,32 @@ const EventDetailPage = () => {
         try {
             const regId = event.user_registration.id;
             const targetAmount = event.user_registration.payment_amount || 0;
+
+            // Check active session to avoid spamming requests
+            const savedSession = localStorage.getItem(`qris_session_event_${event.id}`);
+            if (savedSession) {
+                try {
+                    const parsed = JSON.parse(savedSession);
+                    if (parsed.expiresAt) {
+                        const remainingSec = Math.floor((new Date(parsed.expiresAt) - new Date()) / 1000);
+                        if (remainingSec > 0) {
+                            setQrisData({
+                                ...parsed.qrisData,
+                                timeoutSeconds: remainingSec
+                            });
+                            setPendingRegId(regId);
+                            setShowDynaModal(true);
+                            setGeneratingQrisForReg(false);
+                            return;
+                        } else {
+                            localStorage.removeItem(`qris_session_event_${event.id}`);
+                        }
+                    }
+                } catch (e) {
+                    console.error("Error parsing saved QRIS session:", e);
+                }
+            }
+
             const res = await generateDynaQRIS({
                 amount: targetAmount,
                 type: 'event',
@@ -2617,7 +2643,6 @@ const EventDetailPage = () => {
             <DynaQRISModal
                 isOpen={showDynaModal}
                 onClose={() => {
-                    clearQrisSession();
                     setShowDynaModal(false);
                 }}
                 qrisData={qrisData}

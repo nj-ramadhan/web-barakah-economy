@@ -115,15 +115,19 @@ const DynaQRISModal = ({
     };
 
     return (
-        <div className="fixed inset-0 z-[300] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto animate-fadeIn">
-            <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl relative border border-emerald-100 transform transition-all scale-100">
-                {/* Close Button */}
-                <button
-                    onClick={onClose}
-                    className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center transition"
-                >
-                    <span className="material-icons text-sm">close</span>
-                </button>
+        <div className="fixed inset-0 z-[500] flex items-start sm:items-center justify-center bg-black/70 backdrop-blur-md p-3 sm:p-4 overflow-y-auto animate-fadeIn">
+            <div className="bg-white rounded-3xl max-w-md w-full p-5 sm:p-6 shadow-2xl relative border border-emerald-100 transform transition-all my-auto max-h-[92vh] overflow-y-auto custom-scrollbar">
+                {/* Sticky Top Close Header */}
+                <div className="sticky top-0 z-20 flex justify-end bg-white/95 backdrop-blur-xs pt-1 pb-2 -mt-2 -mr-2 mb-1">
+                    <button
+                        type="button"
+                        onClick={onClose}
+                        className="text-gray-500 hover:text-gray-800 w-9 h-9 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition shadow-sm border border-gray-200 active:scale-95"
+                        title="Tutup"
+                    >
+                        <span className="material-icons text-base">close</span>
+                    </button>
+                </div>
 
                 {/* Header Badge */}
                 <div className="text-center mb-4">
