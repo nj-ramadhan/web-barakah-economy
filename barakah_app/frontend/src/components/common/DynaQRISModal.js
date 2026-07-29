@@ -94,16 +94,7 @@ const DynaQRISModal = ({
                     setTimeout(() => onPaymentSuccess(res), 1000);
                 }
             } else {
-                setVerifying(true);
-                const verifyRes = await verifyDynaQRISPayment(transactionType, referenceId);
-                if (verifyRes && verifyRes.success) {
-                    setStatusText('Pembayaran Berhasil Diverifikasi!');
-                    if (onPaymentSuccess) {
-                        setTimeout(() => onPaymentSuccess(verifyRes), 1000);
-                    }
-                } else {
-                    setStatusText('Pembayaran belum terdeteksi oleh sistem. Mohon pastikan Anda sudah melakukan pembayaran via QRIS di atas.');
-                }
+                setStatusText('Pembayaran belum terdeteksi. Mohon selesaikan pembayaran via QRIS terlebih dahulu.');
             }
         } catch (err) {
             console.error('Status check error:', err);

@@ -204,17 +204,25 @@ def send_donation_receipt(donation):
             logger.error(f"Failed to send Email receipt for donation {donation.id}: {e}")
 
 class CheckDynaQRISStatusView(APIView):
-    """Checks and handles payment status updates for DynaQRIS transactions."""
+    """
+    Public endpoint to check or verify DynaQRIS payment status.
+    GET / POST: Safely checks actual current status from DB.
+    POST with simulate=True / action='verify': Explicitly marks transaction as verified (for Admin / Webhook).
+    """
     permission_classes = [AllowAny]
 
+    def _extract_params(self, request):
+        t_type = request.GET.get('type') or (request.data.get('type') if isinstance(getattr(request, 'data', None), dict) else None)
+        ref_id = request.GET.get('reference_id') or (request.data.get('reference_id') if isinstance(getattr(request, 'data', None), dict) else None)
+        return t_type, ref_id
+
     def get(self, request):
-        transaction_type = request.GET.get('type')
-        reference_id = request.GET.get('reference_id')
+        transaction_type, reference_id = self._extract_params(request)
 
         if not transaction_type or not reference_id:
             return Response({'error': 'Tipe dan ID referensi transaksi wajib diisi.'}, status=status.HTTP_400_BAD_REQUEST)
 
-        status_result = {'status': 'pending'}
+        status_result = {'status': 'pending', 'verified': False}
 
         if transaction_type == 'event':
             from events.models import EventRegistration
@@ -275,8 +283,7 @@ class CheckDynaQRISStatusView(APIView):
         if not is_simulate:
             return self.get(request)
 
-        transaction_type = request.data.get('type')
-        reference_id = request.data.get('reference_id')
+        transaction_type, reference_id = self._extract_params(request)
 
         if not transaction_type or not reference_id:
             return Response({'error': 'Tipe dan ID referensi wajib diisi.'}, status=status.HTTP_400_BAD_REQUEST)
