@@ -381,7 +381,7 @@ Semoga dapat menjadi amal ibadah bagi saya dan bermanfaat untuk program serta pe
             <div className="bg-gradient-to-r from-emerald-600 to-green-700 text-white rounded-2xl p-4 text-center max-w-sm mx-auto shadow-lg">
               <p className="text-[10px] uppercase font-bold tracking-widest text-emerald-100">Total Nominal Donasi</p>
               <h2 className="text-3xl font-black mt-1">
-                Rp {formattedAmount}
+                Rp {new Intl.NumberFormat('id-ID').format(qrisData?.amount || amount || 0)}
               </h2>
               <p className="text-[11px] text-emerald-100/90 mt-1 font-medium">Nominal otomatis terdeteksi saat di-scan</p>
             </div>

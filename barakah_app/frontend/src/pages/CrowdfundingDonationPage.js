@@ -5,6 +5,7 @@ import axios from 'axios';
 import Header from '../components/layout/Header';
 import NavigationButton from '../components/layout/Navigation';
 import CurrencyInput from '../components/common/CurrencyInput';
+import { getPublicPaymentConfig } from '../services/paymentApi';
 import '../styles/Body.css';
 
 const getCsrfToken = () => {
@@ -38,6 +39,11 @@ const CrowdfundingDonationPage = () => {
   const [selectedBank, setSelectedBank] = useState('');
   const [campaign, setCampaign] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [paymentConfig, setPaymentConfig] = useState(null);
+
+  useEffect(() => {
+    getPublicPaymentConfig().then(cfg => setPaymentConfig(cfg)).catch(e => console.error(e));
+  }, []);
   const [formData, setFormData] = useState({
     fullName: '',
     hideIdentity: false,
@@ -255,10 +261,10 @@ const CrowdfundingDonationPage = () => {
       return;
     }
 
-    // Generate additional amount based on category
+    // Generate additional amount based on category if manual transfer mode (for finance tracking)
     const category = campaign?.category || 'default';
-    const { value } = categoryAdditionalAmounts[category];
-    const uniqueDigits = value;
+    const { value } = categoryAdditionalAmounts[category] || { value: 0 };
+    const uniqueDigits = (paymentConfig?.active_mode === 'dynaqris') ? 0 : value;
     const amount = selectedAmount === 'custom' ? parseInt(customAmount) : selectedAmount;
     const finalAmount = amount + uniqueDigits;
 

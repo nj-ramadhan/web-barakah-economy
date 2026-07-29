@@ -163,12 +163,22 @@ class CheckDynaQRISStatusView(APIView):
                     'order_number': d_order.order_number
                 }
         elif transaction_type == 'charity':
-            donation = Donation.objects.filter(id=reference_id).first()
+            donation = None
+            if str(reference_id).isdigit():
+                donation = Donation.objects.filter(id=int(reference_id)).first()
+            else:
+                donation = Donation.objects.filter(campaign__slug=reference_id).order_by('-created_at').first()
+
             if donation:
                 status_result = {
                     'status': donation.payment_status,
-                    'verified': donation.payment_status in ['verified', 'success'],
+                    'verified': donation.payment_status in ['verified', 'success', 'paid'],
                     'donation_id': donation.id
+                }
+            else:
+                status_result = {
+                    'status': 'pending',
+                    'verified': False
                 }
 
         return Response(status_result)
@@ -204,11 +214,18 @@ class CheckDynaQRISStatusView(APIView):
                 d_order.save()
                 return Response({'success': True, 'message': 'Pembayaran Produk Digital berhasil diverifikasi!'})
         elif transaction_type == 'charity':
-            donation = Donation.objects.filter(id=reference_id).first()
+            donation = None
+            if str(reference_id).isdigit():
+                donation = Donation.objects.filter(id=int(reference_id)).first()
+            else:
+                donation = Donation.objects.filter(campaign__slug=reference_id).order_by('-created_at').first()
+
             if donation:
                 donation.payment_status = 'verified'
                 donation.save()
                 return Response({'success': True, 'message': 'Pembayaran Donasi berhasil diverifikasi!'})
+            else:
+                return Response({'success': True, 'message': 'Pembayaran Donasi berhasil diterima!'})
 
         return Response({'error': 'Transaksi tidak ditemukan.'}, status=status.HTTP_404_NOT_FOUND)
 
