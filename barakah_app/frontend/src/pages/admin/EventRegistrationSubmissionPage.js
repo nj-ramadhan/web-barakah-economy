@@ -937,67 +937,57 @@ const EventRegistrationSubmissionPage = () => {
                                                 {event?.price_type !== 'free' && (
                                                     <>
                                                         <td className="p-5 text-xs whitespace-nowrap">
-                                                        <div className="font-black text-gray-900">Rp {Number(reg.payment_amount || 0).toLocaleString('id-ID')}</div>
-                                                        <div className="flex flex-col gap-1.5 mt-1.5">
-                                                             {reg.payment_method === 'ots' ? (
-                                                                 <div className="flex flex-col gap-1.5">
-                                                                     <div className="flex items-center gap-1 text-orange-600 font-bold py-0.5 text-xs">
-                                                                         <span className="material-icons text-xs">payments</span>
-                                                                         OTS
-                                                                     </div>
-                                                                     {reg.payment_status !== 'verified' && (
-                                                                         <div className="flex flex-col gap-1">
-                                                                             <label className="flex items-center gap-1.5 cursor-pointer group bg-orange-50 border border-orange-200 px-2 py-1 rounded-lg hover:bg-orange-100 transition-colors">
-                                                                                 <input 
-                                                                                     type="checkbox" 
-                                                                                     className="w-3.5 h-3.5 rounded border-orange-300 text-orange-600 focus:ring-orange-500"
-                                                                                     onChange={() => handleVerifyPayment(reg.id)}
-                                                                                 />
-                                                                                 <span className="text-[9px] font-black text-orange-700 uppercase tracking-tighter">Bayar Tunai</span>
-                                                                             </label>
-                                                                             <button
-                                                                                 type="button"
-                                                                                 onClick={() => handleGenerateQrisForReg(reg)}
-                                                                                 disabled={generatingQrisId === reg.id}
-                                                                                 className="bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-1 rounded-lg text-[9px] font-black uppercase flex items-center justify-center gap-1 hover:bg-emerald-100 transition disabled:opacity-50"
-                                                                             >
-                                                                                 <span className="material-icons text-xs">qr_code_2</span>
-                                                                                 {generatingQrisId === reg.id ? 'Memuat...' : 'QRIS Dinamis'}
-                                                                             </button>
-                                                                         </div>
-                                                                     )}
+                                                         <div className="font-black text-gray-900">Rp {Number(reg.payment_amount || 0).toLocaleString('id-ID')}</div>
+                                                         <div className="flex flex-col gap-1.5 mt-1.5">
+                                                             {reg.payment_method === 'ots' && (
+                                                                 <div className="flex items-center gap-1 text-orange-600 font-bold py-0.5 text-xs">
+                                                                     <span className="material-icons text-xs">payments</span>
+                                                                     OTS
                                                                  </div>
-                                                            ) : reg.payment_proof ? (
-                                                                <button
-                                                                    onClick={() => setSelectedPaymentProof(reg.payment_proof)}
-                                                                    className="flex items-center gap-1 text-blue-600 font-bold hover:underline py-1"
-                                                                >
-                                                                    <span className="material-icons text-xs">receipt_long</span>
-                                                                    Bukti Transfer
-                                                                </button>
-                                                            ) : (reg.payment_amount === 0 || (() => {
-                                                                // Label detection for free registration
-                                                                if (!reg.user_details?.labels || !event?.free_for_labels) return false;
-                                                                const userLabelIds = reg.user_details.labels.map(l => l.id);
-                                                                const freeLabelIds = event.free_for_labels.map(l => l.id);
-                                                                return userLabelIds.some(id => freeLabelIds.includes(id));
-                                                            })()) ? (
-                                                                <div className="flex items-center gap-1 text-green-600 font-bold py-1">
-                                                                    <span className="material-icons text-xs">verified</span>
-                                                                    Gratis (Label)
-                                                                </div>
-                                                            ) : (
-                                                                <span className="text-gray-400 italic text-[8px]">No Proof</span>
-                                                            )}
-                                                            <span className={`w-fit px-1.5 py-0.5 rounded text-[8px] font-black uppercase ${reg.payment_status === 'verified' ? 'bg-green-50 text-green-700' :
-                                                                reg.payment_status === 'rejected' ? 'bg-red-50 text-red-700' :
-                                                                    'bg-orange-50 text-orange-700'
-                                                                }`}>
-                                                                {reg.payment_status === 'verified' ? 'TERVERIFIKASI' : 
-                                                                 reg.payment_status === 'rejected' ? 'DITOLAK' : 
-                                                                 'MENUNGGU'}
-                                                            </span>
-                                                        </div>
+                                                             )}
+                                                             {reg.payment_proof && (
+                                                                 <button
+                                                                     type="button"
+                                                                     onClick={() => setSelectedPaymentProof(reg.payment_proof)}
+                                                                     className="flex items-center gap-1 text-blue-600 font-bold hover:underline py-0.5"
+                                                                 >
+                                                                     <span className="material-icons text-xs">receipt_long</span>
+                                                                     Bukti Transfer
+                                                                 </button>
+                                                             )}
+                                                             {reg.payment_status !== 'verified' && Number(reg.payment_amount) > 0 && (
+                                                                 <div className="flex flex-col gap-1 mt-1">
+                                                                     <label className="flex items-center gap-1.5 cursor-pointer group bg-orange-50 border border-orange-200 px-2 py-1 rounded-lg hover:bg-orange-100 transition-colors">
+                                                                         <input 
+                                                                             type="checkbox" 
+                                                                             className="w-3.5 h-3.5 rounded border-orange-300 text-orange-600 focus:ring-orange-500"
+                                                                             onChange={() => handleVerifyPayment(reg.id)}
+                                                                         />
+                                                                         <span className="text-[9px] font-black text-orange-700 uppercase tracking-tighter">Bayar Tunai</span>
+                                                                     </label>
+                                                                     <button
+                                                                         type="button"
+                                                                         onClick={() => handleGenerateQrisForReg(reg)}
+                                                                         disabled={generatingQrisId === reg.id}
+                                                                         className="bg-emerald-600 text-white shadow-sm px-2.5 py-1.5 rounded-lg text-[9px] font-black uppercase flex items-center justify-center gap-1 hover:bg-emerald-700 transition disabled:opacity-50"
+                                                                     >
+                                                                         <span className="material-icons text-xs">qr_code_2</span>
+                                                                         {generatingQrisId === reg.id ? 'Memuat...' : 'QRIS Dinamis'}
+                                                                     </button>
+                                                                 </div>
+                                                             )}
+                                                             {!reg.payment_proof && reg.payment_status === 'verified' && (
+                                                                 <span className="text-gray-400 italic text-[8px]">No Proof</span>
+                                                             )}
+                                                             <span className={`w-fit px-1.5 py-0.5 rounded text-[8px] font-black uppercase ${reg.payment_status === 'verified' ? 'bg-green-50 text-green-700' :
+                                                                 reg.payment_status === 'rejected' ? 'bg-red-50 text-red-700' :
+                                                                     'bg-orange-50 text-orange-700'
+                                                                 }`}>
+                                                                 {reg.payment_status === 'verified' ? 'TERVERIFIKASI' : 
+                                                                  reg.payment_status === 'rejected' ? 'DITOLAK' : 
+                                                                  'MENUNGGU'}
+                                                             </span>
+                                                         </div>
                                                     </td>
                                                     <td className="p-5 text-xs whitespace-nowrap">
                                                         {reg.applied_voucher ? (
