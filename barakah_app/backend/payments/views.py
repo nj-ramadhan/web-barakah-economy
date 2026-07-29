@@ -597,6 +597,7 @@ class AndroidNotificationWebhookView(APIView):
         from events.models import EventRegistration
         from donations.models import Donation
         from orders.models import Order
+        from digital_products.models import DigitalOrder
 
         for amt in extracted_amounts:
             # 1. Search pending Event Registration with matching payment_amount
@@ -636,6 +637,34 @@ class AndroidNotificationWebhookView(APIView):
                     "reference_id": donation.id,
                     "amount": float(amt),
                     "message": f"Donasi #{donation.id} berhasil diverifikasi otomatis via Android Webhook!"
+                })
+
+            # 3. Search pending E-Commerce Order with matching grand_total or total_price
+            order = Order.objects.filter(status__iexact='pending').filter(grand_total=amt).order_by('-created_at').first() or Order.objects.filter(status__iexact='pending').filter(total_price=amt).order_by('-created_at').first()
+            if order:
+                order.status = 'paid'
+                order.save()
+                return Response({
+                    "success": True,
+                    "matched": True,
+                    "type": "ecommerce",
+                    "reference_id": order.id,
+                    "amount": float(amt),
+                    "message": f"Pesanan E-commerce #{order.order_number or order.id} berhasil diverifikasi otomatis via Android Webhook!"
+                })
+
+            # 4. Search pending Digital Product Order with matching amount
+            d_order = DigitalOrder.objects.filter(amount=amt, payment_status='pending').order_by('-created_at').first()
+            if d_order:
+                d_order.payment_status = 'completed'
+                d_order.save()
+                return Response({
+                    "success": True,
+                    "matched": True,
+                    "type": "digital",
+                    "reference_id": d_order.id,
+                    "amount": float(amt),
+                    "message": f"Pesanan Produk Digital #{d_order.order_number} berhasil diverifikasi otomatis via Android Webhook!"
                 })
 
         return Response({
