@@ -54,18 +54,58 @@ const CrowdfundingDonationPage = () => {
 
   useEffect(() => {
     const userStr = localStorage.getItem('user');
+    let phoneVal = '';
+    let nameVal = '';
+    let emailVal = '';
+
     if (userStr) {
       try {
         const user = JSON.parse(userStr);
-        setFormData(prev => ({
-          ...prev,
-          fullName: user.full_name || user.first_name || user.username || prev.fullName || '',
-          email: user.email || prev.email || '',
-          phone: user.phone_number || user.phone || prev.phone || ''
-        }));
+        nameVal = user.full_name || user.first_name || user.username || '';
+        emailVal = user.email || '';
+        phoneVal = user.phone_number || user.phone || user.no_whatsapp || user.whatsapp || user.no_hp || user.handphone || '';
       } catch (e) {
         console.error("Error parsing user:", e);
       }
+    }
+
+    setFormData(prev => ({
+      ...prev,
+      fullName: nameVal || prev.fullName,
+      email: emailVal || prev.email,
+      phone: phoneVal || prev.phone
+    }));
+
+    // Fetch full profile from API to ensure phone is auto-filled if missing in local state
+    const token = localStorage.getItem('token') || (userStr ? JSON.parse(userStr)?.access : null);
+    if (token) {
+      axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/accounts/profile/`, {
+        headers: { Authorization: `Bearer ${token}` }
+      }).then(res => {
+        if (res.data) {
+          const profilePhone = res.data.phone_number || res.data.phone || res.data.whatsapp || res.data.no_hp || res.data.no_whatsapp || '';
+          const profileName = res.data.full_name || res.data.username || '';
+          const profileEmail = res.data.email || '';
+          
+          setFormData(prev => ({
+            ...prev,
+            fullName: prev.fullName || profileName,
+            email: prev.email || profileEmail,
+            phone: prev.phone || profilePhone
+          }));
+        }
+      }).catch(() => {
+        axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/profiles/me/`, {
+          headers: { Authorization: `Bearer ${token}` }
+        }).then(res2 => {
+          if (res2.data) {
+            const pPhone = res2.data.phone_number || res2.data.whatsapp || res2.data.phone || res2.data.no_hp || '';
+            if (pPhone) {
+              setFormData(prev => ({ ...prev, phone: prev.phone || pPhone }));
+            }
+          }
+        }).catch(() => {});
+      });
     }
   }, []);
 

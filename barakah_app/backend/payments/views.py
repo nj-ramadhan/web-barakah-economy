@@ -122,6 +122,87 @@ class GenerateDynaQRISView(APIView):
 
         return Response(result)
 
+def send_donation_receipt(donation):
+    """
+    Sends automatic Email and WhatsApp receipts to donor upon verified donation.
+    Customizes messaging based on charity category (Zakat, Sedekah, Infak, Donasi, etc.) and campaign title.
+    """
+    if not donation:
+        return
+        
+    category_raw = getattr(donation.campaign, 'category', 'donasi') if donation.campaign else 'donasi'
+    category_lower = str(category_raw).lower()
+    
+    if 'zakat' in category_lower:
+        cat_label = 'Zakat'
+        doa = 'Semoga Allah melipatgandakan pahala, membersihkan harta, dan membawakan keberkahan bagi Anda dan keluarga. Aamiin.'
+    elif 'sedekah' in category_lower:
+        cat_label = 'Sedekah'
+        doa = 'Semoga sedekah ini menjadi naungan dan pembuka pintu-pintu kebaikan & rezeki bagi Anda. Aamiin.'
+    elif 'infak' in category_lower or 'infaq' in category_lower:
+        cat_label = 'Infak'
+        doa = 'Semoga infak ini menjadi amal jariyah yang terus mengalir pahalanya. Aamiin.'
+    elif 'bencana' in category_lower or 'kemanusiaan' in category_lower:
+        cat_label = 'Donasi Kemanusiaan'
+        doa = 'Terima kasih atas bantuan & kepedulian Anda untuk saudara-saudara kita yang membutuhkan. Semoga Allah membalas kebaikan Anda dengan berlipat ganda. Aamiin.'
+    else:
+        cat_label = 'Donasi'
+        doa = 'Terima kasih atas kepedulian dan kebaikan Anda. Semoga Allah membalas dengan kebaikan yang berlipat ganda. Aamiin.'
+
+    try:
+        formatted_amount = f"Rp {int(donation.amount):,}".replace(',', '.')
+    except Exception:
+        formatted_amount = f"Rp {donation.amount}"
+
+    campaign_title = donation.campaign.title if donation.campaign else 'Program Kebajikan'
+    donor_disp_name = 'Hamba Allah' if donation.is_anonymous else (donation.donor_name or 'Donatur')
+
+    # Build Message Text
+    msg_text = (
+        f"ASSALAMU'ALAIKUM WARAHMATULLAHI WABARAKATUH\n\n"
+        f"BUKTI TANDA TERIMA {cat_label.upper()} BERHASIL\n"
+        f"----------------------------------------\n"
+        f"Yth. {donor_disp_name},\n\n"
+        f"Alhamdulillah, pembayaran {cat_label} Anda telah berhasil diterima dan diverifikasi oleh sistem Barakah Economy.\n\n"
+        f"Rincian Donasi:\n"
+        f"• Program    : {campaign_title}\n"
+        f"• Kategori   : {cat_label}\n"
+        f"• Nominal    : {formatted_amount}\n"
+        f"• Tanggal    : {donation.created_at.strftime('%d-%m-%Y %H:%M') if donation.created_at else timezone.now().strftime('%d-%m-%Y %H:%M')}\n"
+        f"• Status     : TERVERIFIKASI / LUNAS\n\n"
+        f"{doa}\n\n"
+        f"Salam hangat,\n"
+        f"Tim Barakah Economy Community"
+    )
+
+    # 1. Send WhatsApp if phone available
+    if donation.donor_phone:
+        try:
+            from accounts import whatsapp_service
+            phone = str(donation.donor_phone).strip().replace('-', '').replace(' ', '').replace('+', '')
+            if phone.startswith('0'):
+                phone = '62' + phone[1:]
+            whatsapp_service.send_message(phone, msg_text)
+            donation.whatsapp_sent = True
+            donation.whatsapp_sent_at = timezone.now()
+            donation.save(update_fields=['whatsapp_sent', 'whatsapp_sent_at'])
+        except Exception as e:
+            logger.error(f"Failed to send WA receipt for donation {donation.id}: {e}")
+
+    # 2. Send Email if email available
+    if donation.donor_email:
+        try:
+            from barakah_app.utils import send_email
+            subject = f"Bukti Penerimaan {cat_label} - {campaign_title}"
+            send_email(
+                subject=subject,
+                message=msg_text,
+                recipient_list=[donation.donor_email],
+                fail_silently=True
+            )
+        except Exception as e:
+            logger.error(f"Failed to send Email receipt for donation {donation.id}: {e}")
+
 class CheckDynaQRISStatusView(APIView):
     """Checks and handles payment status updates for DynaQRIS transactions."""
     permission_classes = [AllowAny]
@@ -223,6 +304,7 @@ class CheckDynaQRISStatusView(APIView):
             if donation:
                 donation.payment_status = 'verified'
                 donation.save()
+                send_donation_receipt(donation)
                 return Response({'success': True, 'message': 'Pembayaran Donasi berhasil diverifikasi!'})
             else:
                 return Response({'success': True, 'message': 'Pembayaran Donasi berhasil diterima!'})
