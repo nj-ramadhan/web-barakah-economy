@@ -94,22 +94,20 @@ const DynaQRISModal = ({
                     setTimeout(() => onPaymentSuccess(res), 1000);
                 }
             } else {
-                // If not automatically verified by webhook, offer quick manual verification
-                const confirmVerify = window.confirm('Apakah Anda sudah menyelesaikan pembayaran QRIS di aplikasi m-Banking/e-Wallet?');
-                if (confirmVerify) {
-                    setVerifying(true);
-                    const verifyRes = await verifyDynaQRISPayment(transactionType, referenceId);
-                    if (verifyRes && verifyRes.success) {
-                        setStatusText('Pembayaran Berhasil Diverifikasi!');
-                        if (onPaymentSuccess) {
-                            setTimeout(() => onPaymentSuccess(verifyRes), 1000);
-                        }
+                setVerifying(true);
+                const verifyRes = await verifyDynaQRISPayment(transactionType, referenceId);
+                if (verifyRes && verifyRes.success) {
+                    setStatusText('Pembayaran Berhasil Diverifikasi!');
+                    if (onPaymentSuccess) {
+                        setTimeout(() => onPaymentSuccess(verifyRes), 1000);
                     }
+                } else {
+                    setStatusText('Pembayaran belum terdeteksi oleh sistem. Mohon pastikan Anda sudah melakukan pembayaran via QRIS di atas.');
                 }
             }
         } catch (err) {
             console.error('Status check error:', err);
-            alert('Gagal mengecek status pembayaran. Silakan coba lagi.');
+            setStatusText('Gagal mengecek status pembayaran. Silakan coba beberapa saat lagi.');
         } finally {
             setCheckingStatus(false);
             setVerifying(false);
@@ -117,7 +115,7 @@ const DynaQRISModal = ({
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto animate-fadeIn">
+        <div className="fixed inset-0 z-[300] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto animate-fadeIn">
             <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl relative border border-emerald-100 transform transition-all scale-100">
                 {/* Close Button */}
                 <button

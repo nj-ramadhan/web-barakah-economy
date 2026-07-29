@@ -36,12 +36,52 @@ const EventDetailPage = () => {
     const [showDynaModal, setShowDynaModal] = useState(false);
     const [qrisData, setQrisData] = useState(null);
     const [pendingRegId, setPendingRegId] = useState(null);
+    const [generatingQrisForReg, setGeneratingQrisForReg] = useState(false);
 
     useEffect(() => {
         getPublicPaymentConfig().then(cfg => setPaymentConfig(cfg)).catch(err => console.error("Error loading payment config:", err));
     }, []);
 
-    const [generatingQrisForReg, setGeneratingQrisForReg] = useState(false);
+    const saveQrisSession = useCallback((resData, regId) => {
+        if (!event?.id || !resData) return;
+        const session = {
+            qrisData: resData,
+            referenceId: regId,
+            expiresAt: resData.expiresAt
+        };
+        localStorage.setItem(`qris_session_event_${event.id}`, JSON.stringify(session));
+    }, [event?.id]);
+
+    const clearQrisSession = useCallback(() => {
+        if (event?.id) {
+            localStorage.removeItem(`qris_session_event_${event.id}`);
+        }
+    }, [event?.id]);
+
+    useEffect(() => {
+        if (!event?.id) return;
+        const savedSession = localStorage.getItem(`qris_session_event_${event.id}`);
+        if (savedSession) {
+            try {
+                const parsed = JSON.parse(savedSession);
+                if (parsed.expiresAt) {
+                    const remainingSec = Math.floor((new Date(parsed.expiresAt) - new Date()) / 1000);
+                    if (remainingSec > 0) {
+                        setQrisData({
+                            ...parsed.qrisData,
+                            timeoutSeconds: remainingSec
+                        });
+                        setPendingRegId(parsed.referenceId);
+                        setShowDynaModal(true);
+                    } else {
+                        localStorage.removeItem(`qris_session_event_${event.id}`);
+                    }
+                }
+            } catch (e) {
+                console.error("Error parsing saved QRIS session:", e);
+            }
+        }
+    }, [event?.id]);
 
     const handleGenerateQrisForExistingUserReg = async () => {
         if (!event?.user_registration) return;
@@ -57,6 +97,7 @@ const EventDetailPage = () => {
             if (res.error) {
                 alert(res.error);
             } else {
+                saveQrisSession(res, regId);
                 setPendingRegId(regId);
                 setQrisData(res);
                 setShowDynaModal(true);
@@ -509,13 +550,14 @@ const EventDetailPage = () => {
                 // Total is 0 (e.g. team modifier made it free) — skip payment entirely
                 data.append('payment_amount', 0);
                 data.append('payment_method', 'transfer');
+            } else if (paymentMethod === 'ots') {
+                data.append('payment_amount', calculatedTotal);
+                data.append('payment_method', 'ots');
             } else if (paymentConfig?.active_mode === 'dynaqris') {
                 data.append('payment_amount', calculatedTotal);
                 data.append('payment_method', 'dynaqris');
             } else if (paymentMethod === 'transfer' && paymentProof) {
                 data.append('payment_proof', paymentProof);
-                data.append('payment_amount', calculatedTotal);
-            } else if (paymentMethod === 'ots') {
                 data.append('payment_amount', calculatedTotal);
             }
         }
@@ -528,14 +570,16 @@ const EventDetailPage = () => {
             }
 
             const calculatedTotal = getCalculatedTotal();
-            if (paymentConfig?.active_mode === 'dynaqris' && calculatedTotal > 0) {
+            if (paymentConfig?.active_mode === 'dynaqris' && calculatedTotal > 0 && paymentMethod !== 'ots') {
                 const regId = res.data?.id || res.data?.registration_id;
                 setPendingRegId(regId);
                 const qrisRes = await generateDynaQRIS({ amount: calculatedTotal, reference_id: regId, type: 'event' });
                 if (qrisRes.error) {
                     setError(qrisRes.error);
                 } else {
+                    saveQrisSession(qrisRes, regId);
                     setQrisData(qrisRes);
+                    setShowRegisterModal(false);
                     setShowDynaModal(true);
                 }
             } else {
@@ -2572,15 +2616,20 @@ const EventDetailPage = () => {
 
             <DynaQRISModal
                 isOpen={showDynaModal}
-                onClose={() => setShowDynaModal(false)}
+                onClose={() => {
+                    clearQrisSession();
+                    setShowDynaModal(false);
+                }}
                 qrisData={qrisData}
                 transactionType="event"
                 referenceId={pendingRegId}
                 amount={getCalculatedTotal()}
                 onPaymentSuccess={() => {
+                    clearQrisSession();
                     setShowDynaModal(false);
                     setSuccess(true);
                     setShowRegisterModal(false);
+                    fetchDetail();
                     window.scrollTo(0, 0);
                 }}
             />
