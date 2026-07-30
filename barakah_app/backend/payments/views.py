@@ -251,6 +251,20 @@ class CheckDynaQRISStatusView(APIView):
                     'verified': d_order.payment_status == 'completed',
                     'order_number': d_order.order_number
                 }
+        elif transaction_type in ['ecourse', 'course']:
+            from courses.models import CourseEnrollment
+            c_enrollment = None
+            if str(reference_id).isdigit():
+                c_enrollment = CourseEnrollment.objects.filter(id=int(reference_id)).first()
+            else:
+                c_enrollment = CourseEnrollment.objects.filter(order_number=reference_id).first()
+            if c_enrollment:
+                status_result = {
+                    'status': c_enrollment.payment_status,
+                    'verified': c_enrollment.payment_status in ['paid', 'verified'],
+                    'enrollment_id': c_enrollment.id,
+                    'order_number': c_enrollment.order_number
+                }
         elif transaction_type == 'charity':
             donation = None
             if str(reference_id).isdigit():
@@ -316,6 +330,17 @@ class CheckDynaQRISStatusView(APIView):
                 d_order.payment_status = 'completed'
                 d_order.save()
                 return Response({'success': True, 'message': 'Pembayaran Produk Digital berhasil diverifikasi!'})
+        elif transaction_type in ['ecourse', 'course']:
+            from courses.models import CourseEnrollment
+            c_enrollment = None
+            if str(reference_id).isdigit():
+                c_enrollment = CourseEnrollment.objects.filter(id=int(reference_id)).first()
+            else:
+                c_enrollment = CourseEnrollment.objects.filter(order_number=reference_id).first()
+            if c_enrollment:
+                c_enrollment.payment_status = 'paid'
+                c_enrollment.save()
+                return Response({'success': True, 'message': 'Pembayaran E-Course berhasil diverifikasi!'})
         elif transaction_type == 'charity':
             donation = None
             if str(reference_id).isdigit():
@@ -564,14 +589,25 @@ class AndroidNotificationWebhookView(APIView):
         if not setting.android_webhook_enabled:
             return Response({"error": "Webhook Android sedang dinonaktifkan di Payment Settings."}, status=status.HTTP_403_FORBIDDEN)
 
-        # Verify secret token (from Header 'X-Android-Secret' or body 'secret')
-        secret_header = request.META.get('HTTP_X_ANDROID_SECRET') or request.data.get('secret')
+        # Verify secret token (from Headers, Body, or Query Params)
+        secret_header = (
+            request.META.get('HTTP_X_ANDROID_SECRET') or
+            request.META.get('HTTP_SECRET') or
+            request.META.get('HTTP_X_SECRET') or
+            (request.data.get('secret') if isinstance(getattr(request, 'data', None), dict) else None) or
+            (request.data.get('secret_token') if isinstance(getattr(request, 'data', None), dict) else None) or
+            request.GET.get('secret')
+        )
         if setting.android_webhook_secret and secret_header != setting.android_webhook_secret:
             logger.warning(f"Unauthorized Android Notification Webhook attempt with secret: {secret_header}")
             return Response({"error": "Secret token tidak valid."}, status=status.HTTP_401_UNAUTHORIZED)
 
-        # Extract text / message from payload
-        payload_text = request.data.get('text') or request.data.get('message') or request.data.get('content') or request.data.get('body') or str(request.data)
+        # Extract text / message from payload (combine all string values if dict)
+        if isinstance(request.data, dict):
+            text_parts = [str(v) for k, v in request.data.items() if v and isinstance(v, (str, int, float))]
+            payload_text = " ".join(text_parts)
+        else:
+            payload_text = str(request.data)
         logger.info(f"Received Android Notification Webhook: {payload_text}")
 
         import re
@@ -626,6 +662,7 @@ class AndroidNotificationWebhookView(APIView):
         from donations.models import Donation
         from orders.models import Order
         from digital_products.models import DigitalOrder
+        from courses.models import CourseEnrollment
 
         for amt in extracted_amounts:
             # 1. Search pending Event Registration with matching payment_amount
@@ -693,6 +730,20 @@ class AndroidNotificationWebhookView(APIView):
                     "reference_id": d_order.id,
                     "amount": float(amt),
                     "message": f"Pesanan Produk Digital #{d_order.order_number} berhasil diverifikasi otomatis via Android Webhook!"
+                })
+
+            # 5. Search pending Course Enrollment with matching amount
+            c_enrollment = CourseEnrollment.objects.filter(amount=amt, payment_status='pending').order_by('-created_at').first()
+            if c_enrollment:
+                c_enrollment.payment_status = 'paid'
+                c_enrollment.save()
+                return Response({
+                    "success": True,
+                    "matched": True,
+                    "type": "ecourse",
+                    "reference_id": c_enrollment.id,
+                    "amount": float(amt),
+                    "message": f"Pendaftaran E-Course #{c_enrollment.order_number or c_enrollment.id} berhasil diverifikasi otomatis via Android Webhook!"
                 })
 
         return Response({

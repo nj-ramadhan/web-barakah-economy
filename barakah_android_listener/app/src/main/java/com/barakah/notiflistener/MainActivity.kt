@@ -32,6 +32,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var prefs: PreferencesHelper
     private lateinit var tvPermissionStatus: TextView
     private lateinit var tvSelectedAppsSummary: TextView
+    private lateinit var tvLiveStatusHeader: TextView
+    private lateinit var tvLiveStatusDetail: TextView
     private lateinit var etWebhookUrl: EditText
     private lateinit var etSecretToken: EditText
     private lateinit var tvLogConsole: TextView
@@ -52,6 +54,8 @@ class MainActivity : AppCompatActivity() {
 
         tvPermissionStatus = findViewById(R.id.tvPermissionStatus)
         tvSelectedAppsSummary = findViewById(R.id.tvSelectedAppsSummary)
+        tvLiveStatusHeader = findViewById(R.id.tvLiveStatusHeader)
+        tvLiveStatusDetail = findViewById(R.id.tvLiveStatusDetail)
         etWebhookUrl = findViewById(R.id.etWebhookUrl)
         etSecretToken = findViewById(R.id.etSecretToken)
         tvLogConsole = findViewById(R.id.tvLogConsole)
@@ -59,6 +63,7 @@ class MainActivity : AppCompatActivity() {
 
         val btnGrantPermission: Button = findViewById(R.id.btnGrantPermission)
         val btnOpenAppInfo: Button = findViewById(R.id.btnOpenAppInfo)
+        val btnDisableBatteryOpt: Button = findViewById(R.id.btnDisableBatteryOpt)
         val btnPickInstalledApps: Button = findViewById(R.id.btnPickInstalledApps)
         val btnSaveSettings: Button = findViewById(R.id.btnSaveSettings)
         val btnTestWebhook: Button = findViewById(R.id.btnTestWebhook)
@@ -79,6 +84,17 @@ class MainActivity : AppCompatActivity() {
                 data = Uri.fromParts("package", packageName, null)
             }
             startActivity(intent)
+        }
+
+        btnDisableBatteryOpt.setOnClickListener {
+            try {
+                val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
+                    data = Uri.parse("package:$packageName")
+                }
+                startActivity(intent)
+            } catch (e: Exception) {
+                startActivity(Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS))
+            }
         }
 
         btnPickInstalledApps.setOnClickListener {
@@ -142,7 +158,6 @@ class MainActivity : AppCompatActivity() {
         val installedApps = pm.getInstalledApplications(PackageManager.GET_META_DATA)
         val currentSelected = prefs.selectedPackages.toMutableSet()
 
-        // Filter and sort apps: Selected apps FIRST, then Bank/E-wallet apps, then User apps, then System apps
         val appList = installedApps.map { appInfo ->
             val label = pm.getApplicationLabel(appInfo).toString()
             val pkg = appInfo.packageName
@@ -226,9 +241,13 @@ class MainActivity : AppCompatActivity() {
         if (isGranted) {
             tvPermissionStatus.text = "✓ Izin Akses Notifikasi AKTIF"
             tvPermissionStatus.setTextColor(getColor(R.color.emerald_700))
+            tvLiveStatusHeader.text = "LISTENER AKTIF 24/7 (MODE HEMAT BATERAI)"
+            tvLiveStatusDetail.text = "Aplikasi memantau di latar belakang 24/7. Notifikasi m-Banking akan otomatis diverifikasi!"
         } else {
             tvPermissionStatus.text = "✗ Izin Akses Belum Diberikan / Pengaturan Dibatasi (Android 13/14/15)"
             tvPermissionStatus.setTextColor(getColor(android.R.color.holo_red_dark))
+            tvLiveStatusHeader.text = "LISTENER NONAKTIF (Tunggu Izin)"
+            tvLiveStatusDetail.text = "Buka izin akses notifikasi agar aplikasi dapat berjalan memantau di latar belakang."
         }
     }
 

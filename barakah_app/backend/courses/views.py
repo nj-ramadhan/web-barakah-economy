@@ -715,8 +715,29 @@ class CourseEnrollmentViewSet(viewsets.ModelViewSet):
         if existing_paid:
             return Response(CourseEnrollmentSerializer(existing_paid).data, status=status.HTTP_200_OK)
 
-        # Create new enrollment (order)
+        # Check for existing pending enrollment to update instead of duplicating
+        existing_pending = CourseEnrollment.objects.filter(
+            user=request.user,
+            course=course,
+            payment_status='pending'
+        ).first()
+
         paid_directly = course.own_bank_status == 'approved'
+
+        if existing_pending:
+            existing_pending.buyer_name = request.data.get('buyer_name', request.user.username)
+            existing_pending.buyer_email = request.data.get('buyer_email', request.user.email)
+            existing_pending.buyer_phone = request.data.get('buyer_phone', getattr(request.user, 'phone', ''))
+            existing_pending.amount = course.price
+            existing_pending.paid_to_seller_directly = paid_directly
+            existing_pending.seller_bank_name = course.own_bank_name if paid_directly else None
+            existing_pending.seller_bank_account = course.own_bank_account if paid_directly else None
+            existing_pending.seller_bank_holder = course.own_bank_holder if paid_directly else None
+            existing_pending.seller_qris_image = course.own_qris_image if paid_directly else None
+            existing_pending.save()
+            return Response(CourseEnrollmentSerializer(existing_pending).data, status=status.HTTP_200_OK)
+
+        # Create new enrollment (order)
         enrollment = CourseEnrollment.objects.create(
             user=request.user,
             course=course,

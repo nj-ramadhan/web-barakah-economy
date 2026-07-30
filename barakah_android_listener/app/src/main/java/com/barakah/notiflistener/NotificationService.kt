@@ -1,9 +1,16 @@
 package com.barakah.notiflistener
 
+import android.app.Notification
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
+import android.content.Context
 import android.content.Intent
+import android.os.Build
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 import android.util.Log
+import androidx.core.app.NotificationCompat
 import okhttp3.*
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -19,6 +26,59 @@ class NotificationService : NotificationListenerService() {
         super.onCreate()
         prefs = PreferencesHelper(applicationContext)
         Log.d(TAG, "Barakah NotificationListenerService created")
+        createNotificationChannel()
+        startForegroundServiceNotification()
+    }
+
+    override fun onListenerConnected() {
+        super.onListenerConnected()
+        Log.d(TAG, "NotificationListenerConnected: Service active and listening 24/7")
+        broadcastLog("🟢 Listener Aktif 24/7 & Terhubung ke Sistem Android")
+        startForegroundServiceNotification()
+    }
+
+    override fun onListenerDisconnected() {
+        super.onListenerDisconnected()
+        Log.w(TAG, "NotificationListenerDisconnected")
+        broadcastLog("🔴 Listener Terputus dari Sistem Android")
+    }
+
+    private fun createNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel = NotificationChannel(
+                CHANNEL_ID,
+                "Barakah Notif Listener Status",
+                NotificationManager.IMPORTANCE_LOW
+            ).apply {
+                description = "Notifikasi status pemantauan m-Banking 24/7 (Hemat Baterai)"
+                setShowBadge(false)
+            }
+            val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            manager.createNotificationChannel(channel)
+        }
+    }
+
+    private fun startForegroundServiceNotification() {
+        val intent = Intent(this, MainActivity::class.java)
+        val pendingIntent = PendingIntent.getActivity(
+            this, 0, intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val notification: Notification = NotificationCompat.Builder(this, CHANNEL_ID)
+            .setContentTitle("🟢 Barakah Listener Aktif (Realtime)")
+            .setContentText("Memantau notifikasi m-Banking & QRIS (Mode Hemat Baterai)")
+            .setSmallIcon(android.R.drawable.ic_dialog_info)
+            .setContentIntent(pendingIntent)
+            .setOngoing(true)
+            .setPriority(NotificationCompat.PRIORITY_LOW)
+            .build()
+
+        try {
+            startForeground(NOTIFICATION_ID, notification)
+        } catch (e: Exception) {
+            Log.e(TAG, "Error starting foreground notification: ${e.message}")
+        }
     }
 
     override fun onNotificationPosted(sbn: StatusBarNotification?) {
@@ -45,7 +105,7 @@ class NotificationService : NotificationListenerService() {
         // 1. Check if the app package is selected by the user in settings
         val selectedPkgs = prefs.selectedPackages
         val isPackageAllowed = selectedPkgs.isEmpty() || selectedPkgs.contains(pkg) || selectedPkgs.any { pkg.lowercase().contains(it.lowercase()) }
-        
+
         if (!isPackageAllowed) {
             Log.d(TAG, "Skipping notification from $pkg because app is not selected in target list")
             return false
@@ -55,7 +115,7 @@ class NotificationService : NotificationListenerService() {
         val lowerText = text.lowercase()
         val bankKeywords = listOf(
             "bsi", "bca", "mandiri", "bri", "bni", "dana", "gopay", "ovo", "shopeepay",
-            "transfer", "uang masuk", "diterima", "masuk", "kredit", "rp", "rupiah"
+            "transfer", "uang masuk", "diterima", "masuk", "kredit", "rp", "rupiah", "top up"
         )
         return bankKeywords.any { lowerText.contains(it) }
     }
@@ -114,5 +174,7 @@ class NotificationService : NotificationListenerService() {
     companion object {
         const val TAG = "BarakahNotifService"
         const val ACTION_NOTIFICATION_LOG = "com.barakah.notiflistener.LOG"
+        const val CHANNEL_ID = "barakah_listener_channel"
+        const val NOTIFICATION_ID = 1001
     }
 }

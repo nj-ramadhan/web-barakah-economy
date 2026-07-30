@@ -87,9 +87,6 @@ const EcoursePaymentConfirmation = () => {
         ]);
         setCourse(res.data);
         setPaymentConfig(configRes);
-        if (configRes?.active_mode === 'dynaqris' && res.data?.price) {
-          handleGenerateDynaQRIS(res.data.price);
-        }
       } catch (err) {
         console.error("Error fetching course and config:", err);
       }
@@ -102,7 +99,7 @@ const EcoursePaymentConfirmation = () => {
     if (!targetAmt) return;
     setGeneratingQris(true);
     try {
-      const res = await generateDynaQRIS({ amount: targetAmt, type: 'digital' });
+      const res = await generateDynaQRIS({ amount: targetAmt, type: 'ecourse' });
       if (res.error) {
         alert(res.error);
       } else {
@@ -120,6 +117,8 @@ const EcoursePaymentConfirmation = () => {
   const handleDynaSuccess = (res) => {
     setShowDynaModal(false);
     setIsSuccess(true);
+    alert('Pembayaran berhasil! Selamat belajar.');
+    navigate(`/kelas/${course?.slug || slug}`);
   };
 
   // Fetch profile only once on mount if user exists
@@ -314,7 +313,7 @@ const EcoursePaymentConfirmation = () => {
           isOpen={showDynaModal}
           onClose={() => setShowDynaModal(false)}
           qrisData={qrisData}
-          transactionType="digital"
+          transactionType="ecourse"
           amount={course?.price}
           onPaymentSuccess={handleDynaSuccess}
         />

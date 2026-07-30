@@ -38,9 +38,57 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Auto-Verify QRIS &amp; Bank Transfer Realtime"
+                    android:text="Auto-Verify QRIS &amp; Bank Transfer Realtime 24/7"
                     android:textColor="@color/emerald_100"
                     android:textSize="12sp"
+                    android:layout_marginTop="4dp" />
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+        <!-- Live Status Indicator Card -->
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="3dp"
+            app:cardBackgroundColor="@color/emerald_50"
+            android:layout_marginBottom="16dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="🟢 "
+                        android:textSize="16sp" />
+
+                    <TextView
+                        android:id="@+id/tvLiveStatusHeader"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="LISTENER AKTIF 24/7 (LOW POWER)"
+                        android:textColor="@color/emerald_800"
+                        android:textSize="13sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/tvLiveStatusDetail"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Aplikasi berjalan di latar belakang tanpa menguras baterai HP. Notifikasi m-Banking akan langsung diverifikasi otomatis!"
+                    android:textSize="11sp"
+                    android:textColor="@color/emerald_700"
                     android:layout_marginTop="4dp" />
             </LinearLayout>
         </androidx.cardview.widget.CardView>
@@ -92,6 +140,15 @@
                     android:layout_height="wrap_content"
                     android:text="2. Info Aplikasi (Khusus Android 13/14/15)"
                     android:backgroundTint="@color/gray_700"
+                    android:textColor="@color/white"
+                    android:layout_marginTop="4dp" />
+
+                <Button
+                    android:id="@+id/btnDisableBatteryOpt"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="⚡ Matikan Hemat Baterai HP (Biar Jalan Terus)"
+                    android:backgroundTint="@color/emerald_800"
                     android:textColor="@color/white"
                     android:layout_marginTop="4dp" />
 

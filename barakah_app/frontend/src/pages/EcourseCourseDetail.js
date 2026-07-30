@@ -142,27 +142,14 @@ const EcourseCourseDetail = () => {
     if (course) checkEnrollment();
   }, [course]);
 
-  const handleEnroll = async () => {
+  const handleEnroll = () => {
     const user = JSON.parse(localStorage.getItem('user'));
     if (!user) {
-      alert('Anda harus login terlebih dahulu untuk membeli E-Course.');
+      alert('Anda harus login terlebih dahulu untuk mendaftar E-Course.');
       navigate('/login');
       return;
     }
-    try {
-      // Create enrollment
-      await createEnrollment({ course: course.id });
-      setIsEnrolled(true);
-      if (Number(course.price) > 0) {
-        navigate(`/konfirmasi-pembayaran-kelas/${course.slug || course.id}`);
-      } else {
-        // Free course: show success or redirect to course page
-        alert('Anda berhasil mendaftar kelas gratis!');
-        navigate(`/kelas/${course.slug || course.id}`);
-      }
-    } catch (err) {
-      alert('Gagal mendaftar kelas. Silakan coba lagi.');
-    }
+    navigate(`/ikut-kelas/${course.slug || course.id}`);
   };
 
   const handleToggleLike = async () => {
