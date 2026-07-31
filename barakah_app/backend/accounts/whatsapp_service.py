@@ -2,7 +2,7 @@
 """
 WhatsApp messaging service - Python port of the PHP WhatsAppController reference.
 Uses the go-whatsapp-web-multidevice API.
-Supports GoWA v8+ Multi-device scoping via X-Device-Id header.
+Supports GoWA v8+ Multi-device scoping via X-Device-Id header with automatic multi-device fallback.
 """
 import requests
 import base64
@@ -20,22 +20,24 @@ WA_API_URL = getattr(settings, 'WHATSAPP_API_URL', 'https://bae.dailykas.com')
 WA_API_USER = getattr(settings, 'WHATSAPP_API_USER', 'admin')
 WA_API_PASS = getattr(settings, 'WHATSAPP_API_PASS', 'admin123')
 
-_cached_device_id = None
-_cached_device_id_time = 0
+_cached_device_ids = []
+_cached_device_time = 0
 
-def get_default_device_id():
+
+def get_logged_in_device_ids():
     """
-    Fetch and cache active logged_in device ID for GoWA v8+ multi-device mode.
+    Fetch and cache all active logged_in device IDs for GoWA v8+ multi-device mode,
+    sorted newest first so the most recently connected device is prioritized.
     """
-    global _cached_device_id, _cached_device_id_time
+    global _cached_device_ids, _cached_device_time
     now = time.time()
     configured = getattr(settings, 'WHATSAPP_API_DEVICE_ID', None) or os.environ.get('WHATSAPP_API_DEVICE_ID')
     if configured:
-        return configured
+        return [configured]
 
-    # Cache device ID for 60 seconds
-    if _cached_device_id and (now - _cached_device_id_time < 60):
-        return _cached_device_id
+    # Cache device IDs for 30 seconds
+    if _cached_device_ids and (now - _cached_device_time < 30):
+        return _cached_device_ids
 
     try:
         url = f"{WA_API_URL.rstrip('/')}/devices"
@@ -43,19 +45,26 @@ def get_default_device_id():
         if res.status_code == 200:
             data = res.json()
             results = data.get('results', [])
-            for d in results:
-                if d.get('state') == 'logged_in' and d.get('id'):
-                    _cached_device_id = d.get('id')
-                    _cached_device_id_time = now
-                    return _cached_device_id
-            if results and results[0].get('id'):
-                _cached_device_id = results[0].get('id')
-                _cached_device_id_time = now
-                return _cached_device_id
+            logged_in = [d for d in results if d.get('state') == 'logged_in' and d.get('id')]
+            # Sort newest first based on created_at
+            logged_in.sort(key=lambda x: x.get('created_at', ''), reverse=True)
+            device_ids = [d.get('id') for d in logged_in]
+            if not device_ids and results and results[0].get('id'):
+                device_ids = [results[0].get('id')]
+            
+            _cached_device_ids = device_ids
+            _cached_device_time = now
+            return _cached_device_ids
     except Exception as e:
         logger.error(f"Error fetching WA devices from {WA_API_URL}: {e}")
 
-    return None
+    return _cached_device_ids or []
+
+
+def get_default_device_id():
+    devices = get_logged_in_device_ids()
+    return devices[0] if devices else None
+
 
 def get_wa_headers(device_id=None):
     headers = {}
@@ -63,6 +72,7 @@ def get_wa_headers(device_id=None):
     if dev_id:
         headers['X-Device-Id'] = dev_id
     return headers
+
 
 def _clean_phone_number(phone):
     if not phone: return ""
@@ -76,7 +86,7 @@ def _clean_phone_number(phone):
 
 
 def send_message(phone, message, device_id=None):
-    """Send a text message via WhatsApp API."""
+    """Send a text message via WhatsApp API with automatic multi-device fallback."""
     phone = _clean_phone_number(phone)
     if not phone:
         return {'success': False, 'message': 'No HP kosong/tidak valid'}
@@ -86,47 +96,63 @@ def send_message(phone, message, device_id=None):
         'phone': phone,
         'message': message
     }
-    headers = get_wa_headers(device_id)
 
-    try:
-        response = requests.post(
-            api_url,
-            json=payload,
-            auth=(WA_API_USER, WA_API_PASS),
-            headers=headers,
-            timeout=30,
-            verify=False
-        )
-        
-        logger.info(f"WA Text Response to {phone}: {response.status_code}")
+    device_candidates = [device_id] if device_id else get_logged_in_device_ids()
+    if not device_candidates:
+        device_candidates = [None]
 
-        if 200 <= response.status_code < 300:
-            return {
-                'success': True,
-                'message': 'Pesan WhatsApp berhasil dikirim',
-                'data': {
-                    'mode': 'text',
-                    'api_response': response.json() if response.text else None
+    last_error = "Unknown error"
+    for dev_id in device_candidates:
+        headers = {}
+        if dev_id:
+            headers['X-Device-Id'] = dev_id
+
+        try:
+            response = requests.post(
+                api_url,
+                json=payload,
+                auth=(WA_API_USER, WA_API_PASS),
+                headers=headers,
+                timeout=30,
+                verify=False
+            )
+            
+            logger.info(f"WA Text Response to {phone} (Device {dev_id}): {response.status_code}")
+
+            if 200 <= response.status_code < 300:
+                return {
+                    'success': True,
+                    'message': 'Pesan WhatsApp berhasil dikirim',
+                    'data': {
+                        'mode': 'text',
+                        'device_id': dev_id,
+                        'api_response': response.json() if response.text else None
+                    }
                 }
-            }
-        else:
-            err_msg = response.json().get('message') if response.text else f"HTTP {response.status_code}"
-            logger.warning(f"WA Text send failed for {phone}: {err_msg}")
-            return {
-                'success': False,
-                'message': f'Gagal mengirim pesan WhatsApp: {err_msg}',
-                'data': {
-                    'mode': 'text',
-                    'http_code': response.status_code,
-                    'api_response': response.json() if response.text else None
+            
+            err_json = response.json() if response.text else {}
+            err_code = err_json.get('code', '')
+            err_msg = err_json.get('message', f"HTTP {response.status_code}")
+            last_error = err_msg
+
+            # If rejected with timelock or device required error, try fallback to next candidate
+            if err_code in ['WA_REACHOUT_TIMELOCK', 'DEVICE_ID_REQUIRED'] or 'timelock' in err_msg.lower():
+                logger.warning(f"Device {dev_id} hit {err_code} for {phone}, trying fallback device...")
+                continue
+            else:
+                return {
+                    'success': False,
+                    'message': f'Gagal mengirim pesan WhatsApp: {err_msg}',
+                    'data': {'mode': 'text', 'http_code': response.status_code, 'api_response': err_json}
                 }
-            }
-    except requests.exceptions.RequestException as e:
-        logger.error(f"WhatsApp send_message error: {e}")
-        return {
-            'success': False,
-            'message': f'Gagal mengirim pesan WhatsApp: {str(e)}'
-        }
+        except requests.exceptions.RequestException as e:
+            last_error = str(e)
+            logger.error(f"WhatsApp send_message error on device {dev_id}: {e}")
+
+    return {
+        'success': False,
+        'message': f'Gagal mengirim pesan WhatsApp: {last_error}'
+    }
 
 
 def send_file(phone, caption, file_data_base64, filename='document.pdf', device_id=None):
@@ -171,7 +197,7 @@ def send_file(phone, caption, file_data_base64, filename='document.pdf', device_
 
 
 def _send_file_internal(phone, caption, file_path, filename, mime_type, device_id=None):
-    """Internal helper to send a file from a local path."""
+    """Internal helper to send a file from a local path with automatic fallback."""
     phone = _clean_phone_number(phone)
     if not phone:
         return {'success': False, 'message': 'No HP kosong/tidak valid'}
@@ -179,46 +205,65 @@ def _send_file_internal(phone, caption, file_path, filename, mime_type, device_i
     is_image = mime_type.startswith('image/')
     endpoint = "image" if is_image else "file"
     api_url = f"{WA_API_URL.rstrip('/')}/send/{endpoint}"
-    headers = get_wa_headers(device_id)
 
-    try:
-        with open(file_path, 'rb') as f:
-            field_name = 'image' if is_image else 'file'
-            files = {field_name: (filename, f, mime_type)}
-            data = {'phone': phone, 'caption': caption}
+    device_candidates = [device_id] if device_id else get_logged_in_device_ids()
+    if not device_candidates:
+        device_candidates = [None]
+
+    last_error = "Unknown error"
+    for dev_id in device_candidates:
+        headers = {}
+        if dev_id:
+            headers['X-Device-Id'] = dev_id
+
+        try:
+            with open(file_path, 'rb') as f:
+                field_name = 'image' if is_image else 'file'
+                files = {field_name: (filename, f, mime_type)}
+                data = {'phone': phone, 'caption': caption}
+                
+                response = requests.post(
+                    api_url,
+                    data=data,
+                    files=files,
+                    auth=(WA_API_USER, WA_API_PASS),
+                    headers=headers,
+                    timeout=45,
+                    verify=False
+                )
             
-            response = requests.post(
-                api_url,
-                data=data,
-                files=files,
-                auth=(WA_API_USER, WA_API_PASS),
-                headers=headers,
-                timeout=45,
-                verify=False
-            )
-        
-        logger.info(f"WA {endpoint.capitalize()} Response to {phone} ({mime_type}): {response.status_code}")
+            logger.info(f"WA {endpoint.capitalize()} Response to {phone} (Device {dev_id}): {response.status_code}")
 
-        if 200 <= response.status_code < 300:
-            return {
-                'success': True,
-                'data': {
-                    'mode': endpoint,
-                    'mime': mime_type,
-                    'api_response': response.json() if response.text else None
+            if 200 <= response.status_code < 300:
+                return {
+                    'success': True,
+                    'data': {
+                        'mode': endpoint,
+                        'mime': mime_type,
+                        'device_id': dev_id,
+                        'api_response': response.json() if response.text else None
+                    }
                 }
-            }
-        else:
-            err_msg = response.json().get('message') if response.text else f"HTTP {response.status_code}"
-            logger.warning(f"WA {endpoint} send failed ({err_msg}, MIME: {mime_type})")
-            return {
-                'success': False,
-                'message': f"Gagal kirim {endpoint} ({err_msg})"
-            }
+            
+            err_json = response.json() if response.text else {}
+            err_code = err_json.get('code', '')
+            err_msg = err_json.get('message', f"HTTP {response.status_code}")
+            last_error = err_msg
 
-    except Exception as e:
-        logger.error(f"WhatsApp _send_file_internal error: {e}")
-        return {'success': False, 'message': f'Internal error sending {endpoint}: {str(e)}'}
+            if err_code in ['WA_REACHOUT_TIMELOCK', 'DEVICE_ID_REQUIRED'] or 'timelock' in err_msg.lower():
+                logger.warning(f"Device {dev_id} hit {err_code} for {phone} file send, trying fallback device...")
+                continue
+            else:
+                return {
+                    'success': False,
+                    'message': f"Gagal kirim {endpoint} ({err_msg})"
+                }
+
+        except Exception as e:
+            last_error = str(e)
+            logger.error(f"WhatsApp _send_file_internal error on device {dev_id}: {e}")
+
+    return {'success': False, 'message': f'Internal error sending {endpoint}: {last_error}'}
 
 
 def blast_messages(phone_list, message_template, placeholder_data_list=None, file_data_base64=None, filename='image.jpg', use_queue=True, delay_seconds=5.0, created_by_user_id=None, device_id=None):

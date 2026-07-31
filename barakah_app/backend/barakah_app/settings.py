@@ -421,3 +421,4 @@ DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL', default='noreply@barakah-economy.
 WHATSAPP_API_URL = env('WHATSAPP_API_URL', default='https://bae.dailykas.com')
 WHATSAPP_API_USER = env('WHATSAPP_API_USER', default='admin')
 WHATSAPP_API_PASS = env('WHATSAPP_API_PASS', default='admin123')
+WHATSAPP_API_DEVICE_ID = env('WHATSAPP_API_DEVICE_ID', default='')
