@@ -5,7 +5,7 @@ import { Helmet } from 'react-helmet';
 import { QRCodeSVG } from 'qrcode.react';
 import Header from '../components/layout/Header';
 import NavigationButton from '../components/layout/Navigation';
-import { getEventDetail, registerForEvent, getEventParticipants, downloadCertificate, downloadBib, toggleLikeEvent, validateEventVoucher, getEventTestimonies, submitEventTestimony } from '../services/eventApi';
+import { getEventDetail, registerForEvent, cancelPendingRegistration, getEventParticipants, downloadCertificate, downloadBib, toggleLikeEvent, validateEventVoucher, getEventTestimonies, submitEventTestimony } from '../services/eventApi';
 import authService from '../services/auth';
 import Footer from '../components/layout/Footer';
 import CurrencyInput from '../components/common/CurrencyInput';
@@ -2644,6 +2644,16 @@ const EventDetailPage = () => {
                 isOpen={showDynaModal}
                 onClose={() => {
                     setShowDynaModal(false);
+                }}
+                onCancel={async () => {
+                    if (slug) {
+                        try {
+                            await cancelPendingRegistration(slug);
+                            clearQrisSession();
+                        } catch (err) {
+                            console.error("Error cancelling pending registration:", err);
+                        }
+                    }
                 }}
                 qrisData={qrisData}
                 transactionType="event"

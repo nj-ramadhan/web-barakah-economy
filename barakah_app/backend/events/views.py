@@ -379,8 +379,10 @@ class EventViewSet(viewsets.ModelViewSet):
         if EventRegistration.objects.filter(event=event, user=user, status='approved').exists():
             return Response({"error": "Anda telah terdaftar & terverifikasi di event ini."}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Clean up any unpaid/stale pending registration for this user & event
+        # Clean up any unpaid/stale pending registration for this user & event, plus any stale pending > 10 mins
+        from datetime import timedelta
         EventRegistration.objects.filter(event=event, user=user, status='pending').delete()
+        EventRegistration.objects.filter(event=event, status='pending', created_at__lt=now - timedelta(minutes=10)).delete()
 
         # Extract responses (JSON string if from FormData)
         responses_raw = request.data.get('responses', '{}')
@@ -659,6 +661,14 @@ class EventViewSet(viewsets.ModelViewSet):
         return Response({"message": "Pendaftaran berhasil! Kode tiket Anda: " + registration.unique_code, "id": registration.id, "unique_code": registration.unique_code}, status=status.HTTP_201_CREATED)
 
     @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
+    def cancel_pending(self, request, slug=None):
+        """Cancel and remove any pending registration for this user & event so they can register again immediately."""
+        event = self.get_object()
+        user = request.user
+        deleted_count, _ = EventRegistration.objects.filter(event=event, user=user, status='pending').delete()
+        return Response({"message": "Pendaftaran pending berhasil dibatalkan. Anda dapat mendaftar kembali.", "deleted": deleted_count})
+
+    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
     def manual_register(self, request, slug=None):
         """
         Manually add a participant (Admin/Organizer only).
@@ -818,7 +828,7 @@ class EventViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
     def bulk_resend_notifications(self, request, slug=None):
-        """Resend QR/BIB notifications to selected participants."""
+        """Resend QR/BIB notifications to selected participants via background queue."""
         event = self.get_object()
         is_committee = event.committees.filter(id=request.user.id).exists()
         if not (request.user.is_staff or event.created_by == request.user or request.user.is_superuser or is_committee):
@@ -828,24 +838,29 @@ class EventViewSet(viewsets.ModelViewSet):
         if not registration_ids:
             return Response({"error": "Pilih minimal satu peserta."}, status=status.HTTP_400_BAD_REQUEST)
 
-        registrations = EventRegistration.objects.filter(id__in=registration_ids, event=event)
-        
-        success_count = 0
-        fail_count = 0
-        
-        for reg in registrations:
-            try:
-                self._send_registration_notifications(reg)
-                success_count += 1
-            except Exception as e:
-                import logging
-                logging.getLogger(__name__).error(f"Bulk resend failed for reg {reg.id}: {e}")
-                fail_count += 1
+        registrations = list(EventRegistration.objects.filter(id__in=registration_ids, event=event))
+        if not registrations:
+            return Response({"error": "Tidak ada data peserta yang ditemukan."}, status=status.HTTP_400_BAD_REQUEST)
+
+        def _bg_resend_task(regs):
+            import time, random, logging
+            logger = logging.getLogger(__name__)
+            for idx, reg in enumerate(regs):
+                if idx > 0:
+                    time.sleep(random.uniform(2.0, 4.5)) # Safe jitter delay between QR/BIB resends
+                try:
+                    self._send_registration_notifications(reg)
+                except Exception as e:
+                    logger.error(f"Bulk resend failed for reg {reg.id}: {e}")
+
+        import threading
+        t = threading.Thread(target=_bg_resend_task, args=(registrations,), daemon=True)
+        t.start()
         
         return Response({
-            "message": f"Selesai. {success_count} notifikasi terkirim, {fail_count} gagal.",
-            "success_count": success_count,
-            "fail_count": fail_count
+            "message": f"Pengiriman ulang QR/BIB ke {len(registrations)} peserta berhasil dimasukkan ke antrian background.",
+            "status": "queued",
+            "count": len(registrations)
         })
 
     @action(detail=True, methods=['get'], permission_classes=[permissions.IsAuthenticated], url_path='available-users')

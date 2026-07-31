@@ -117,6 +117,14 @@ class GenerateDynaQRISView(APIView):
         result = DynaQRISService.generate_dynamic_qris(amount, user_id=user_id, reference_id=reference_id)
 
         if "error" in result:
+            # Clean up pending event registration immediately if DynaQRIS generation failed
+            if transaction_type == 'event' and reference_id:
+                try:
+                    from events.models import EventRegistration
+                    EventRegistration.objects.filter(id=reference_id, status='pending').delete()
+                except Exception as del_err:
+                    logger.error(f"Failed to delete pending registration {reference_id} after DynaQRIS error: {del_err}")
+
             status_code = status.HTTP_429_TOO_MANY_REQUESTS if result.get("code") == "RATE_LIMITED" else status.HTTP_400_BAD_REQUEST
             return Response(result, status=status_code)
 

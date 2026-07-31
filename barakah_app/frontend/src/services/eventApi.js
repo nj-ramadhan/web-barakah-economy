@@ -71,6 +71,12 @@ export const registerForEvent = (slug, formData) => {
     });
 };
 
+export const cancelPendingRegistration = (slug) => {
+    return axios.post(`${API_BASE_URL}/api/events/${slug}/cancel_pending/`, {}, {
+        headers: getAuthHeaders()
+    });
+};
+
 export const manualRegisterParticipant = (slug, data) => {
     return axios.post(`${API_BASE_URL}/api/events/${slug}/manual_register/`, data, {
         headers: getAuthHeaders()

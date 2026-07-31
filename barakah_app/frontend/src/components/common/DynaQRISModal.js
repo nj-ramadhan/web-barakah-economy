@@ -9,7 +9,8 @@ const DynaQRISModal = ({
     transactionType,
     referenceId,
     amount,
-    onPaymentSuccess
+    onPaymentSuccess,
+    onCancel
 }) => {
     const [timeLeft, setTimeLeft] = useState(qrisData?.timeoutSeconds || 300);
     const [isExpired, setIsExpired] = useState(false);
@@ -19,14 +20,35 @@ const DynaQRISModal = ({
     const [statusText, setStatusText] = useState('Menunggu Pembayaran...');
     const timerRef = useRef(null);
     const pollRef = useRef(null);
+    const isVerifiedRef = useRef(false);
+
+    const handleCancelPending = () => {
+        if (!isVerifiedRef.current && onCancel) {
+            onCancel(referenceId, transactionType);
+        }
+    };
+
+    const handleCloseModal = () => {
+        handleCancelPending();
+        onClose();
+    };
 
     useEffect(() => {
         if (!isOpen || !qrisData) return;
 
+        isVerifiedRef.current = false;
         const initialSeconds = qrisData.timeoutSeconds || 300;
         setTimeLeft(initialSeconds);
         setIsExpired(false);
         setStatusText('Menunggu Pembayaran...');
+
+        // Handle page refresh / close tab unload
+        const handleBeforeUnload = (e) => {
+            if (!isVerifiedRef.current) {
+                handleCancelPending();
+            }
+        };
+        window.addEventListener('beforeunload', handleBeforeUnload);
 
         // Start Countdown Timer
         timerRef.current = setInterval(() => {
@@ -34,7 +56,8 @@ const DynaQRISModal = ({
                 if (prev <= 1) {
                     clearInterval(timerRef.current);
                     setIsExpired(true);
-                    setStatusText('Waktu Pembayaran Telah Habis');
+                    setStatusText('Waktu Pembayaran Telah Habis. Pendaftaran otomatis dibatalkan.');
+                    handleCancelPending();
                     return 0;
                 }
                 return prev - 1;
@@ -47,6 +70,7 @@ const DynaQRISModal = ({
                 try {
                     const res = await checkDynaQRISStatus(transactionType, referenceId);
                     if (res && res.verified) {
+                        isVerifiedRef.current = true;
                         clearInterval(timerRef.current);
                         clearInterval(pollRef.current);
                         setStatusText('Pembayaran Berhasil Diverifikasi!');
@@ -65,6 +89,7 @@ const DynaQRISModal = ({
         return () => {
             if (timerRef.current) clearInterval(timerRef.current);
             if (pollRef.current) clearInterval(pollRef.current);
+            window.removeEventListener('beforeunload', handleBeforeUnload);
         };
     }, [isOpen, qrisData, transactionType, referenceId]);
 
@@ -116,7 +141,7 @@ const DynaQRISModal = ({
                     </span>
                     <button
                         type="button"
-                        onClick={onClose}
+                        onClick={handleCloseModal}
                         className="text-gray-600 hover:text-gray-900 w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition shadow-sm border border-gray-200 active:scale-95 shrink-0"
                         title="Tutup Modal"
                     >
@@ -213,7 +238,7 @@ const DynaQRISModal = ({
 
                     <button
                         type="button"
-                        onClick={onClose}
+                        onClick={handleCloseModal}
                         className="w-full bg-gray-900 hover:bg-gray-800 text-white font-extrabold py-3 px-4 rounded-xl text-xs uppercase tracking-wider transition flex items-center justify-center gap-2 shadow-md mt-2"
                     >
                         <span className="material-icons text-sm">close</span>

@@ -31,8 +31,10 @@ def _worker_loop():
             task = _blast_queue.get()
             if task is None:
                 break
-            _process_task(task)
-            _blast_queue.task_done()
+            try:
+                _process_task(task)
+            finally:
+                _blast_queue.task_done()
         except Exception as e:
             logger.error(f"Error in BlastQueue worker loop: {e}", exc_info=True)
 
