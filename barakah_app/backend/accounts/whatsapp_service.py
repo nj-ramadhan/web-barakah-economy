@@ -179,7 +179,7 @@ def _send_file_internal(phone, caption, file_path, filename, mime_type):
         return {'success': False, 'message': f'Internal error sending {endpoint}: {str(e)}'}
 
 
-def blast_messages(phone_list, message_template, placeholder_data_list=None, file_data_base64=None, filename='image.jpg', use_queue=True, delay_seconds=5.0):
+def blast_messages(phone_list, message_template, placeholder_data_list=None, file_data_base64=None, filename='image.jpg', use_queue=True, delay_seconds=5.0, created_by_user_id=None):
     """
     Send WhatsApp messages to multiple recipients efficiently via background queue by default.
     """
@@ -191,7 +191,8 @@ def blast_messages(phone_list, message_template, placeholder_data_list=None, fil
             placeholder_data_list=placeholder_data_list,
             file_data_base64=file_data_base64,
             filename=filename,
-            delay_seconds=delay_seconds
+            delay_seconds=delay_seconds,
+            created_by_user_id=created_by_user_id
         )
 
     results = {'total': len(phone_list), 'success': 0, 'failed': 0, 'details': []}

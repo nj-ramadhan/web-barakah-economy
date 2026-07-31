@@ -784,7 +784,7 @@ class UserViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        result = blast_messages(phone_list, message_template, placeholder_data_list, file_data_base64=image_base64)
+        result = blast_messages(phone_list, message_template, placeholder_data_list, file_data_base64=image_base64, created_by_user_id=request.user.id)
         return Response({
             "message": result.get('message', f"Blast WhatsApp dimasukkan ke antrian ({len(phone_list)} nomor)."),
             "details": result
@@ -842,13 +842,33 @@ class UserViewSet(viewsets.ModelViewSet):
             subject=subject,
             message_template=message_template,
             placeholder_data_list=placeholder_data_list,
-            attachments=attachments
+            attachments=attachments,
+            created_by_user_id=request.user.id
         )
 
         return Response({
             "message": result['message'],
             "details": result
         })
+
+    @action(detail=False, methods=['get'])
+    def blast_queue_status(self, request):
+        """Get list of active or queued blast tasks for admin UI widget monitoring."""
+        if not (request.user.is_staff or getattr(request.user, 'role', '') == 'admin' or request.user.is_superuser):
+            return Response({"tasks": []})
+        from barakah_app.blast_queue import get_active_blast_tasks
+        tasks = get_active_blast_tasks(user_id=request.user.id, is_superuser=request.user.is_superuser)
+        return Response({"tasks": tasks})
+
+    @action(detail=False, methods=['post'])
+    def cancel_blast_task(self, request):
+        """Cancel a running or queued blast task by ID or 'all' for admin users."""
+        if not (request.user.is_staff or getattr(request.user, 'role', '') == 'admin' or request.user.is_superuser):
+            return Response({"error": "Unauthorized"}, status=status.HTTP_403_FORBIDDEN)
+        task_id = request.data.get('task_id', 'all')
+        from barakah_app.blast_queue import cancel_blast_task
+        ok = cancel_blast_task(task_id, user_id=request.user.id, is_superuser=request.user.is_superuser)
+        return Response({"success": ok, "message": "Antrian blasting berhasil dibatalkan."})
 
     @action(detail=False, methods=['get'])
     def roles_list(self, request):

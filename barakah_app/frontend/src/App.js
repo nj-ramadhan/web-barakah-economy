@@ -3,6 +3,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation, useNavigate } from 'react-router-dom';
 import GlobalPopupManager from './components/common/GlobalPopupManager';
 import GlobalStreamingPopup from './components/common/GlobalStreamingPopup';
+import GlobalBlastQueueWidget from './components/common/GlobalBlastQueueWidget';
 import PrivateRoute from './utils/PrivateRoute';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
@@ -251,6 +252,7 @@ const App = () => {
       <NotificationHandler />
       <GlobalPopupManager />
       <GlobalStreamingPopup />
+      <GlobalBlastQueueWidget />
       <div className="min-h-screen bg-gray-100 dark:bg-gray-950 flex justify-center transition-colors duration-300">
         <Routes>
           <Route path="/*" element={<LayoutWrapper isDesktop={isDesktop} />} />
