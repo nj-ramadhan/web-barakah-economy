@@ -675,6 +675,7 @@ const DashboardUserPage = () => {
                                         <th className="px-3 py-4 text-gray-600 font-bold uppercase tracking-wider text-[11px] min-w-[120px]">Digital</th>
 
                                         <SH label="Join" field="date_joined" {...{ sortField, sortDir, handleSort, getSortIcon }} />
+                                        <SH label="Last Login" field="last_login" {...{ sortField, sortDir, handleSort, getSortIcon }} />
                                         <th className="px-3 py-4 text-gray-600 font-bold uppercase tracking-wider text-[11px] text-center">V</th>
                                         <th className="px-3 py-4 text-gray-600 font-bold uppercase tracking-wider text-[11px] text-center">Aksi</th>
                                     </tr>
@@ -842,8 +843,21 @@ const DashboardUserPage = () => {
                                                 </div>
                                             </td>
 
-                                            <td className="px-3 py-3 text-gray-500 text-[10px] whitespace-nowrap font-medium italic">
-                                                {new Date(u.date_joined).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                            <td className="px-3 py-3 text-gray-500 text-[10px] whitespace-nowrap font-medium">
+                                                <div className="flex flex-col leading-tight">
+                                                    <span className="font-bold text-gray-700">{new Date(u.date_joined).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                                                    <span className="text-[9px] text-gray-400 font-mono mt-0.5">{new Date(u.date_joined).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }).replace(/\./g, ':')} WIB</span>
+                                                </div>
+                                            </td>
+                                            <td className="px-3 py-3 text-gray-500 text-[10px] whitespace-nowrap font-medium">
+                                                {u.last_login ? (
+                                                    <div className="flex flex-col leading-tight">
+                                                        <span className="font-bold text-gray-700">{new Date(u.last_login).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                                                        <span className="text-[9px] text-gray-400 font-mono mt-0.5">{new Date(u.last_login).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }).replace(/\./g, ':')} WIB</span>
+                                                    </div>
+                                                ) : (
+                                                    <span className="text-gray-300 text-[9px] font-normal italic">Belum Pernah</span>
+                                                )}
                                             </td>
                                             <td className="px-3 py-3 text-center">
                                                 <input type="checkbox" defaultChecked={u.is_verified_member} onChange={(e) => handleInlineEdit(u.id, 'is_verified_member', e.target.checked)} className="w-4 h-4 text-green-600 rounded cursor-pointer" />

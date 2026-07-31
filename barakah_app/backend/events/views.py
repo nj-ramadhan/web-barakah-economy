@@ -887,20 +887,25 @@ class EventViewSet(viewsets.ModelViewSet):
         users = User.objects.exclude(id__in=registered_ids)
         
         if search:
-            # If search contains @ or looks like a phone, do more specific filtering
-            if '@' in search or search.isdigit():
-                users = users.filter(
-                    Q(email__icontains=search) | 
-                    Q(username__icontains=search) | 
-                    Q(phone__icontains=search)
-                )
-            else:
-                users = users.filter(
-                    Q(username__icontains=search) |
-                    Q(email__icontains=search) |
-                    Q(profile__name_full__icontains=search) |
-                    Q(phone__icontains=search)
-                )
+            # Clean non-digits for flexible phone number searching (handles +62, 62, 08, etc.)
+            phone_digits = ''.join(filter(str.isdigit, search))
+            
+            search_filter = (
+                Q(username__icontains=search) |
+                Q(email__icontains=search) |
+                Q(phone__icontains=search) |
+                Q(profile__name_full__icontains=search) |
+                Q(profile__nickname__icontains=search)
+            )
+            
+            if phone_digits and len(phone_digits) >= 3:
+                search_filter |= Q(phone__icontains=phone_digits)
+                if phone_digits.startswith('62'):
+                    search_filter |= Q(phone__icontains='0' + phone_digits[2:])
+                elif phone_digits.startswith('0'):
+                    search_filter |= Q(phone__icontains='62' + phone_digits[1:])
+
+            users = users.filter(search_filter)
             
         users = users.select_related('profile').order_by('profile__name_full')
         

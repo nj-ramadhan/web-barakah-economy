@@ -158,14 +158,14 @@ const UserSelectionOverlay = ({
                                                     <p className={`text-sm font-black uppercase tracking-tight transition-colors ${
                                                         selectedUserIds.includes(user.id) ? 'text-green-900' : 'text-gray-900'
                                                     }`}>
-                                                        {user.full_name || user.username}
+                                                        {user.full_name || user.profile?.name_full || user.name || user.username}
                                                     </p>
                                                     <span className="px-2 py-0.5 bg-gray-100 text-gray-400 rounded-md text-[8px] font-black tracking-widest uppercase">#{user.id}</span>
                                                 </div>
                                                 <p className="text-[10px] text-gray-400 font-bold tracking-tight flex items-center gap-2">
-                                                    <span className="flex items-center gap-1"><span className="material-icons text-[10px]">alternate_email</span>{user.email}</span>
+                                                    <span className="flex items-center gap-1"><span className="material-icons text-[10px]">alternate_email</span>{user.email || '-'}</span>
                                                     <span className="w-1 h-1 bg-gray-200 rounded-full"></span>
-                                                    <span className="flex items-center gap-1"><span className="material-icons text-[10px]">phone</span>{user.phone || '-'}</span>
+                                                    <span className="flex items-center gap-1"><span className="material-icons text-[10px]">phone</span>{user.phone || user.profile?.phone || '-'}</span>
                                                 </p>
                                             </div>
                                         </div>

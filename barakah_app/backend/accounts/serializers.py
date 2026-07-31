@@ -152,7 +152,7 @@ class UserAdminSerializer(serializers.ModelSerializer):
             'id', 'username', 'email', 'phone', 'role', 'is_verified_member',
             'user_agreement_accepted',
             'position',
-            'profile', 'date_joined',
+            'profile', 'date_joined', 'last_login',
             'custom_roles', 'custom_role_ids',
             'labels', 'label_ids',
             'lingkup_tugas', 'lingkup_tugas_ids',

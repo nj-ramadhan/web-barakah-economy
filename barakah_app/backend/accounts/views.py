@@ -430,9 +430,10 @@ class UserViewSet(viewsets.ModelViewSet):
         qs = super().get_queryset()
         
         # Search across multiple fields
-        search = self.request.query_params.get('search', '')
+        search = self.request.query_params.get('search', '').strip()
         if search:
-            qs = qs.filter(
+            phone_digits = ''.join(filter(str.isdigit, search))
+            search_filter = (
                 Q(username__icontains=search) |
                 Q(email__icontains=search) |
                 Q(phone__icontains=search) |
@@ -442,6 +443,14 @@ class UserViewSet(viewsets.ModelViewSet):
                 Q(profile__address__icontains=search) |
                 Q(profile__agama__icontains=search)
             )
+            if phone_digits and len(phone_digits) >= 3:
+                search_filter |= Q(phone__icontains=phone_digits)
+                if phone_digits.startswith('62'):
+                    search_filter |= Q(phone__icontains='0' + phone_digits[2:])
+                elif phone_digits.startswith('0'):
+                    search_filter |= Q(phone__icontains='62' + phone_digits[1:])
+
+            qs = qs.filter(search_filter)
 
         # Filter by role
         role_filter = self.request.query_params.get('role', '')
@@ -492,7 +501,8 @@ class UserViewSet(viewsets.ModelViewSet):
         ordering = self.request.query_params.get('ordering', '-date_joined')
         allowed_orderings = [
             'username', '-username', 'email', '-email', 'role', '-role',
-            'date_joined', '-date_joined', 'profile__name_full', '-profile__name_full',
+            'date_joined', '-date_joined', 'last_login', '-last_login',
+            'profile__name_full', '-profile__name_full',
             'profile__agama', '-profile__agama'
         ]
         if ordering in allowed_orderings:
