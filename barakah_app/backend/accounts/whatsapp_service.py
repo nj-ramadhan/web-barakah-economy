@@ -163,10 +163,21 @@ def _send_file_internal(phone, caption, file_path, filename, mime_type):
         return {'success': False, 'message': f'Internal error sending {endpoint}: {str(e)}'}
 
 
-def blast_messages(phone_list, message_template, placeholder_data_list=None, file_data_base64=None, filename='image.jpg'):
+def blast_messages(phone_list, message_template, placeholder_data_list=None, file_data_base64=None, filename='image.jpg', use_queue=True, delay_seconds=5.0):
     """
-    Send WhatsApp messages to multiple recipients efficiently.
+    Send WhatsApp messages to multiple recipients efficiently via background queue by default.
     """
+    if use_queue:
+        from barakah_app.blast_queue import enqueue_whatsapp_blast
+        return enqueue_whatsapp_blast(
+            phone_list=phone_list,
+            message_template=message_template,
+            placeholder_data_list=placeholder_data_list,
+            file_data_base64=file_data_base64,
+            filename=filename,
+            delay_seconds=delay_seconds
+        )
+
     results = {'total': len(phone_list), 'success': 0, 'failed': 0, 'details': []}
     
     # Pre-process file once if provided

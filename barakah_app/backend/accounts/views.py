@@ -786,13 +786,13 @@ class UserViewSet(viewsets.ModelViewSet):
 
         result = blast_messages(phone_list, message_template, placeholder_data_list, file_data_base64=image_base64)
         return Response({
-            "message": f"Blast selesai dikirim ke {result['success']} nomor unik.",
+            "message": result.get('message', f"Blast WhatsApp dimasukkan ke antrian ({len(phone_list)} nomor)."),
             "details": result
         })
 
     @action(detail=False, methods=['post'])
     def blast_email(self, request):
-        """Send Email message blast to selected users."""
+        """Send Email message blast to selected users via background queue."""
         user_ids = request.data.get('user_ids', [])
         subject = request.data.get('subject')
         message_template = request.data.get('message', '')
@@ -836,34 +836,18 @@ class UserViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        success_count = 0
-        failed_count = 0
-        from barakah_app.utils import send_email
-        
-        for p in placeholder_data_list:
-            personalized_msg = message_template
-            for k, v in p.items():
-                personalized_msg = personalized_msg.replace(f"{{{k}}}", str(v))
-            
-            ok = send_email(
-                subject=subject,
-                message=personalized_msg,
-                recipient_list=[p['email']],
-                attachments=attachments,
-                fail_silently=True
-            )
-            if ok:
-                success_count += 1
-            else:
-                failed_count += 1
+        from barakah_app.blast_queue import enqueue_email_blast
+        result = enqueue_email_blast(
+            email_list=email_list,
+            subject=subject,
+            message_template=message_template,
+            placeholder_data_list=placeholder_data_list,
+            attachments=attachments
+        )
 
         return Response({
-            "message": f"Blast email selesai dikirim ke {success_count} alamat email.",
-            "details": {
-                "success": success_count,
-                "failed": failed_count,
-                "total": len(email_list)
-            }
+            "message": result['message'],
+            "details": result
         })
 
     @action(detail=False, methods=['get'])

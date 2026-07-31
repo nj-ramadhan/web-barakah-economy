@@ -294,7 +294,7 @@ class MeetingViewSet(viewsets.ModelViewSet):
                 return Response({"error": "Tidak ada nomor WhatsApp peserta yang valid."}, status=status.HTTP_400_BAD_REQUEST)
 
             result = whatsapp_service.blast_messages(phone_list, custom_message, placeholder_data)
-            return Response({"message": f"Blast terkirim ke {result['success']} peserta.", "details": result})
+            return Response({"message": result.get('message', f"Blast WA dimasukkan ke antrian ({len(phone_list)} peserta)."), "details": result})
         except Exception as e:
             import traceback
             logger.error(f"Error in meeting blast_whatsapp: {str(e)}\n{traceback.format_exc()}")

@@ -1438,13 +1438,13 @@ class EventViewSet(viewsets.ModelViewSet):
         result = whatsapp_service.blast_messages(phone_list, custom_message, placeholder_data, file_data_base64=image_base64)
         
         return Response({
-            "message": f"Blast selesai dikirim ke {result['success']} peserta.",
+            "message": result.get('message', f"Blast WA dimasukkan ke antrian ({len(phone_list)} peserta)."),
             "details": result
         })
 
     @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
     def blast_email(self, request, slug=None):
-        """Blast email to participants of a specific event."""
+        """Blast email to participants of a specific event via background queue."""
         event = self.get_object()
         
         if not (request.user.is_staff or event.created_by == request.user):
@@ -1517,34 +1517,18 @@ class EventViewSet(viewsets.ModelViewSet):
                 "error": "Tidak ada alamat email peserta yang terdeteksi."
             }, status=status.HTTP_400_BAD_REQUEST)
             
-        success_count = 0
-        failed_count = 0
-        from barakah_app.utils import send_email
-        
-        for p in placeholder_data:
-            personalized_msg = message_template
-            for k, v in p.items():
-                personalized_msg = personalized_msg.replace(f"{{{k}}}", str(v))
-            
-            ok = send_email(
-                subject=subject,
-                message=personalized_msg,
-                recipient_list=[p['email']],
-                attachments=attachments,
-                fail_silently=True
-            )
-            if ok:
-                success_count += 1
-            else:
-                failed_count += 1
+        from barakah_app.blast_queue import enqueue_email_blast
+        result = enqueue_email_blast(
+            email_list=email_list,
+            subject=subject,
+            message_template=message_template,
+            placeholder_data_list=placeholder_data,
+            attachments=attachments
+        )
                 
         return Response({
-            "message": f"Blast email selesai dikirim ke {success_count} peserta.",
-            "details": {
-                "success": success_count,
-                "failed": failed_count,
-                "total": len(email_list)
-            }
+            "message": result['message'],
+            "details": result
         })
 
     @action(detail=False, methods=['get'], permission_classes=[permissions.IsAuthenticated])
@@ -1642,13 +1626,13 @@ class EventViewSet(viewsets.ModelViewSet):
         result = whatsapp_service.blast_messages(phone_list, custom_message, placeholder_data, file_data_base64=image_base64)
         
         return Response({
-            "message": f"Blast global selesai dikirim ke {result['success']} nomor unik.",
+            "message": result.get('message', f"Blast WA global dimasukkan ke antrian ({len(phone_list)} nomor)."),
             "details": result
         })
 
     @action(detail=False, methods=['post'], permission_classes=[permissions.IsAuthenticated])
     def global_blast_email(self, request):
-        """Blast email to selected participants from the global recap list."""
+        """Blast email to selected participants from the global recap list via background queue."""
         if not (request.user.is_staff or request.user.is_superuser):
             return Response({"error": "Unauthorized"}, status=status.HTTP_403_FORBIDDEN)
             
@@ -1716,34 +1700,18 @@ class EventViewSet(viewsets.ModelViewSet):
                 "error": "Tidak ada alamat email peserta yang terdeteksi."
             }, status=status.HTTP_400_BAD_REQUEST)
             
-        success_count = 0
-        failed_count = 0
-        from barakah_app.utils import send_email
-        
-        for p in placeholder_data:
-            personalized_msg = custom_message
-            for k, v in p.items():
-                personalized_msg = personalized_msg.replace(f"{{{k}}}", str(v))
-            
-            ok = send_email(
-                subject=subject,
-                message=personalized_msg,
-                recipient_list=[p['email']],
-                attachments=attachments,
-                fail_silently=True
-            )
-            if ok:
-                success_count += 1
-            else:
-                failed_count += 1
+        from barakah_app.blast_queue import enqueue_email_blast
+        result = enqueue_email_blast(
+            email_list=email_list,
+            subject=subject,
+            message_template=custom_message,
+            placeholder_data_list=placeholder_data,
+            attachments=attachments
+        )
                 
         return Response({
-            "message": f"Blast email selesai dikirim ke {success_count} peserta.",
-            "details": {
-                "success": success_count,
-                "failed": failed_count,
-                "total": len(email_list)
-            }
+            "message": result['message'],
+            "details": result
         })
 
     @action(detail=True, methods=['get'], permission_classes=[permissions.AllowAny])
