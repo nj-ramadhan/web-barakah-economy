@@ -53,11 +53,21 @@ const EventManualRegistrationModal = ({ isOpen, onClose, event, registrations = 
     // Get IDs of users who are already registered
     const registeredUserIds = registrations.map(r => r.user).filter(id => id !== null);
 
-    const fetchUsers = async (query = '', pageNum = 1, size = 10) => {
+    // Abort controller for canceling stale search requests
+    const abortControllerRef = useRef(null);
+    const [isRegistering, setIsRegistering] = useState(false);
+
+    const fetchUsers = useCallback(async (query = '', pageNum = 1, size = 10) => {
+        if (!event?.slug) return;
+        
+        if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
+        }
+        abortControllerRef.current = new AbortController();
+
         setIsFetchingUsers(true);
         try {
-            // Updated to handle pagination parameters using the eventApi helper
-            const res = await getAvailableUsers(event.slug, query, pageNum, size);
+            const res = await getAvailableUsers(event.slug, query, pageNum, size, abortControllerRef.current.signal);
             
             if (res.data.results) {
                 setAllUsers(res.data.results);
@@ -67,16 +77,18 @@ const EventManualRegistrationModal = ({ isOpen, onClose, event, registrations = 
                     count: res.data.count
                 });
             } else {
-                // Fallback for non-paginated or old API
                 setAllUsers(res.data || []);
                 setPaginationInfo({ next: null, previous: null, count: (res.data || []).length });
             }
         } catch (err) {
+            if (axios.isCancel(err) || err.name === 'CanceledError' || err.code === 'ERR_CANCELED') {
+                return;
+            }
             console.error("Fetch users failed", err);
         } finally {
             setIsFetchingUsers(false);
         }
-    };
+    }, [event?.slug]);
 
     const handleSearchChange = (newSearch) => {
         setUserSearch(newSearch);
@@ -87,23 +99,20 @@ const EventManualRegistrationModal = ({ isOpen, onClose, event, registrations = 
         if (!isUserListOpen) return;
 
         if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
-        
-        // Show loading state immediately when user types or changes pages
         setIsFetchingUsers(true);
 
         const searchChanged = prevSearchRef.current !== userSearch;
         prevSearchRef.current = userSearch;
 
-        // Skip debounce delay (0ms) if only pagination/pageSize changes.
-        // Use debounce delay (600ms) only when user typing search query changes.
-        const delay = (searchChanged && userSearch) ? 600 : 0;
+        // Skip debounce delay if search didn't change (e.g. page/pageSize click)
+        const delay = searchChanged ? 300 : 0;
 
         searchTimeoutRef.current = setTimeout(() => {
             fetchUsers(userSearch, page, pageSize);
         }, delay);
 
         return () => { if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current); };
-    }, [isUserListOpen, userSearch, page, pageSize]);
+    }, [isUserListOpen, userSearch, page, pageSize, fetchUsers]);
 
     if (!isOpen || !event) return null;
 
@@ -118,40 +127,23 @@ const EventManualRegistrationModal = ({ isOpen, onClose, event, registrations = 
         const allAlreadySelected = foundIds.every(id => selectedUserIds.includes(id));
         
         if (allAlreadySelected) {
-            // Remove all found users from selection
             setSelectedUserIds(prev => prev.filter(id => !foundIds.includes(id)));
         } else {
-            // Add all found users to selection (deduplicated)
             setSelectedUserIds(prev => [...new Set([...prev, ...foundIds])]);
         }
     };
 
-    const handleConfirmSelection = async () => {
-        if (selectedUserIds.length === 0) {
+    const handleConfirmSelection = async (targetUserIds = null) => {
+        const idsToRegister = targetUserIds || selectedUserIds;
+        if (!idsToRegister || idsToRegister.length === 0) {
             setIsUserListOpen(false);
             return;
         }
 
-        if (selectedUserIds.length === 1) {
-            const user = allUsers.find(u => u.id === selectedUserIds[0]);
-            if (user) {
-                setFormData(prev => ({
-                    ...prev,
-                    user_id: user.id,
-                    name: user.profile?.name_full || user.username,
-                    email: user.email || '',
-                    phone: user.phone || ''
-                }));
-            }
-            setIsUserListOpen(false);
-            setSelectedUserIds([]);
-            return;
-        }
-
-        setLoading(true);
+        setIsRegistering(true);
         setError(null);
         try {
-            await bulkManualRegister(event.slug, { user_ids: selectedUserIds });
+            await bulkManualRegister(event.slug, { user_ids: idsToRegister });
             onSuccess();
             onClose();
             setFormData({ name: '', email: '', phone: '', user_id: null, responses: {} });
@@ -160,7 +152,7 @@ const EventManualRegistrationModal = ({ isOpen, onClose, event, registrations = 
             console.error(err);
             setError(err.response?.data?.error || 'Gagal mendaftarkan peserta.');
         } finally {
-            setLoading(false);
+            setIsRegistering(false);
             setIsUserListOpen(false);
         }
     };
@@ -395,15 +387,17 @@ const EventManualRegistrationModal = ({ isOpen, onClose, event, registrations = 
                 selectedUserIds={selectedUserIds}
                 handleToggleUserSelection={handleToggleUserSelection}
                 handleSelectAllFound={handleSelectAllFound}
-                handleConfirmSelection={handleConfirmSelection}
+                handleConfirmSelection={() => handleConfirmSelection()}
+                handleDirectRegister={(userId) => handleConfirmSelection([userId])}
+                isRegistering={isRegistering}
                 pagination={{
                     current: page,
                     pageSize: pageSize,
-                    onPageSizeChange: (size) => { setPageSize(size); setPage(1); },
+                    onPageSizeChange: (size) => { setPageSize(parseInt(size)); setPage(1); },
                     hasNext: !!paginationInfo.next,
                     hasPrev: !!paginationInfo.previous,
                     total: paginationInfo.count,
-                    totalPages: Math.ceil(paginationInfo.count / pageSize),
+                    totalPages: Math.ceil(paginationInfo.count / pageSize) || 1,
                     onPageChange: setPage
                 }}
             />

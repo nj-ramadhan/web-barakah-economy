@@ -292,10 +292,11 @@ export const searchUsers = (search = '') => {
     });
 };
 
-export const getAvailableUsers = (slug, search = '', page = 1, pageSize = 10) => {
+export const getAvailableUsers = (slug, search = '', page = 1, pageSize = 10, signal = null) => {
     return axios.get(`${API_BASE_URL}/api/events/${slug}/available-users/`, {
         params: { search, page, page_size: pageSize },
-        headers: getAuthHeaders()
+        headers: getAuthHeaders(),
+        signal
     });
 };
 
