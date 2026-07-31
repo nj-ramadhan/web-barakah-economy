@@ -217,10 +217,11 @@ def _process_task(task):
                     task_data['current_item'] = phone
                     task_data['updated_at'] = time.time()
                     
+                    wa_device_id = task.extra_data.get('device_id')
                     if temp_file_info and os.path.exists(temp_file_info['path']):
-                        res = _send_file_internal(phone, message, temp_file_info['path'], temp_file_info['filename'], temp_file_info['mime'])
+                        res = _send_file_internal(phone, message, temp_file_info['path'], temp_file_info['filename'], temp_file_info['mime'], device_id=wa_device_id)
                     else:
-                        res = send_message(phone, message)
+                        res = send_message(phone, message, device_id=wa_device_id)
                     
                     task_data['processed_count'] += 1
                     if res.get('success'):
@@ -274,7 +275,7 @@ def _process_task(task):
     logger.info(f"Completed BlastTask {task_id} ({task.task_type}): {task_data['success_count']} success, {task_data['failed_count']} failed out of {len(task.items)}.")
 
 
-def enqueue_whatsapp_blast(phone_list, message_template, placeholder_data_list=None, file_data_base64=None, filename='image.jpg', delay_seconds=5.0, created_by_user_id=None):
+def enqueue_whatsapp_blast(phone_list, message_template, placeholder_data_list=None, file_data_base64=None, filename='image.jpg', delay_seconds=5.0, created_by_user_id=None, device_id=None):
     """
     Enqueue a WhatsApp message blast task to run asynchronously in background.
     Returns task metadata immediately.
@@ -301,7 +302,8 @@ def enqueue_whatsapp_blast(phone_list, message_template, placeholder_data_list=N
         delay_seconds=delay_seconds,
         extra_data={
             'file_data_base64': file_data_base64,
-            'filename': filename
+            'filename': filename,
+            'device_id': device_id
         },
         created_by_user_id=created_by_user_id
     )
