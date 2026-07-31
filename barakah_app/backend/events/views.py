@@ -58,7 +58,14 @@ class EventViewSet(viewsets.ModelViewSet):
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_fields = ['status', 'is_featured', 'created_by']
     search_fields = ['title', 'description', 'location', 'organizer_name']
-    ordering_fields = ['start_date', 'created_at']
+    def get_event_object(self, slug=None):
+        """Helper to retrieve an Event by slug or ID without public visibility restrictions."""
+        if not slug:
+            return None
+        event = Event.objects.filter(slug=slug).first()
+        if not event and str(slug).isdigit():
+            event = Event.objects.filter(id=int(slug)).first()
+        return event
 
     def _auto_complete_expired_events(self):
         """
@@ -866,9 +873,13 @@ class EventViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['get'], permission_classes=[permissions.IsAuthenticated], url_path='available-users')
     def available_users(self, request, slug=None):
         """Get users who are NOT yet registered for this event and have complete data with pagination."""
-        event = self.get_object()
+        event = self.get_event_object(slug)
+        if not event:
+            return Response({"error": "Event tidak ditemukan"}, status=status.HTTP_404_NOT_FOUND)
+
         is_committee = event.committees.filter(id=request.user.id).exists()
-        if not (request.user.is_staff or event.created_by == request.user or request.user.is_superuser or is_committee):
+        is_admin_user = getattr(request.user, 'role', '') in ['admin', 'seller', 'staff'] or request.user.is_staff or request.user.is_superuser
+        if not (is_admin_user or event.created_by == request.user or is_committee):
             return Response({"error": "Unauthorized"}, status=status.HTTP_403_FORBIDDEN)
 
         from accounts.models import User
