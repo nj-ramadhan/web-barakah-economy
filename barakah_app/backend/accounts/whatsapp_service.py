@@ -20,10 +20,22 @@ WA_API_USER = getattr(settings, 'WHATSAPP_API_USER', 'admin')
 WA_API_PASS = getattr(settings, 'WHATSAPP_API_PASS', 'admin123')
 
 
+def _clean_phone_number(phone):
+    if not phone: return ""
+    phone_str = str(phone).strip()
+    digits = ''.join(filter(str.isdigit, phone_str))
+    if digits.startswith('0'):
+        digits = '62' + digits[1:]
+    elif digits.startswith('8'):
+        digits = '62' + digits
+    return digits
+
+
 def send_message(phone, message):
     """Send a text message via WhatsApp API."""
+    phone = _clean_phone_number(phone)
     if not phone:
-        return {'success': False, 'message': 'No HP kosong'}
+        return {'success': False, 'message': 'No HP kosong/tidak valid'}
 
     api_url = f"{WA_API_URL.rstrip('/')}/send/message"
     payload = {
@@ -118,6 +130,10 @@ def send_file(phone, caption, file_data_base64, filename='document.pdf'):
 
 def _send_file_internal(phone, caption, file_path, filename, mime_type):
     """Internal helper to send a file from a local path."""
+    phone = _clean_phone_number(phone)
+    if not phone:
+        return {'success': False, 'message': 'No HP kosong/tidak valid'}
+
     is_image = mime_type.startswith('image/')
     endpoint = "image" if is_image else "file"
     api_url = f"{WA_API_URL.rstrip('/')}/send/{endpoint}"

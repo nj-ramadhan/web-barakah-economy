@@ -12,7 +12,7 @@ logger = logging.getLogger('barakah_app')
 
 # Thread-safe FIFO Queue
 _blast_queue = queue.Queue()
-_worker_started = False
+_worker_thread = None
 _worker_lock = threading.Lock()
 
 class BlastTask:
@@ -32,19 +32,29 @@ def _worker_loop():
             if task is None:
                 break
             try:
+                from django.db import close_old_connections
+                close_old_connections()
                 _process_task(task)
+            except Exception as proc_err:
+                logger.error(f"Error processing BlastTask {getattr(task, 'task_id', 'unknown')}: {proc_err}", exc_info=True)
             finally:
+                try:
+                    from django.db import close_old_connections
+                    close_old_connections()
+                except Exception:
+                    pass
                 _blast_queue.task_done()
         except Exception as e:
             logger.error(f"Error in BlastQueue worker loop: {e}", exc_info=True)
+            time.sleep(1)
 
 def ensure_worker_running():
-    global _worker_started
+    global _worker_thread
     with _worker_lock:
-        if not _worker_started:
-            worker_thread = threading.Thread(target=_worker_loop, daemon=True, name="BlastQueueWorker")
-            worker_thread.start()
-            _worker_started = True
+        if _worker_thread is None or not _worker_thread.is_alive():
+            _worker_thread = threading.Thread(target=_worker_loop, daemon=True, name="BlastQueueWorker")
+            _worker_thread.start()
+            logger.info("BlastQueueWorker thread initialized and running.")
 
 def _process_task(task):
     logger.info(f"Starting BlastTask {task.task_id} ({task.task_type}) with {len(task.items)} recipients.")
