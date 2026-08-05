@@ -196,7 +196,8 @@ const CrowdfundingPaymentConfirmation = () => {
     campaignTitle,
     donorName, // Extract the Donatur's name
     donorPhone,
-    campaignSlug // Extract campaign slug
+    campaignSlug, // Extract campaign slug
+    message: donorMessage
   } = location.state;
 
   if (isSuccess) {
@@ -344,6 +345,9 @@ const CrowdfundingPaymentConfirmation = () => {
     donationData.append('source_account', formData.sourceAccount);
     donationData.append('transfer_date', formData.transferDate);
     donationData.append('proof_file', selectedFile);
+    if (donorMessage) {
+      donationData.append('message', donorMessage);
+    }
 
     const userData = localStorage.getItem('user');
 

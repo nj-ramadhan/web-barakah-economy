@@ -107,6 +107,8 @@ class UpdateDonationView(APIView):
 
             if proof_file:
                 donation.proof_file = proof_file
+            if request.data.get('message'):
+                donation.message = request.data.get('message')
 
             donation.save()
 
@@ -163,6 +165,8 @@ class CreateDonationView(APIView):
             transfer_date = request.data.get('transfer_date')
             proof_file = request.FILES.get('proof_file')
 
+            message = request.data.get('message', '')
+
             # Check if the user is authenticated
             donor = authenticated_user if authenticated_user else None
 
@@ -177,6 +181,7 @@ class CreateDonationView(APIView):
                 source_bank=source_bank,
                 source_account=source_account,
                 transfer_date=transfer_date,
+                message=message,
                 payment_status='pending',  # Set initial status as pending
                 donor=donor  # Associate the donation with the logged-in user (if any)
             )
