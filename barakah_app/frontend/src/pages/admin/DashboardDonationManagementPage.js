@@ -387,6 +387,15 @@ const DashboardDonationManagementPage = () => {
                                             <span className="text-lg font-black text-gray-900">{formatIDR(d.amount)}</span>
                                         </div>
                                         <p className="text-xs text-gray-400 mt-1 italic">Metode: {d.payment_method.toUpperCase()}</p>
+                                        {d.message && (
+                                            <div className="mt-2.5 p-3 bg-emerald-50/70 border border-emerald-100/80 rounded-2xl text-xs">
+                                                <span className="font-bold text-emerald-800 flex items-center gap-1.5 mb-1">
+                                                    <span className="material-icons text-[15px]">chat_bubble_outline</span>
+                                                    Keterangan / Ucapan Doa:
+                                                </span>
+                                                <p className="text-gray-700 italic leading-relaxed whitespace-pre-line pl-5">"{d.message}"</p>
+                                            </div>
+                                        )}
                                     </div>
 
                                     <div className="flex flex-col sm:flex-row md:flex-col items-center justify-center gap-3">

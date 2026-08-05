@@ -269,7 +269,7 @@ class AdminDonationViewSet(viewsets.ModelViewSet):
         writer = csv.writer(response, delimiter=';')
         writer.writerow([
             'ID', 'Tanggal', 'Kampanye', 'Nama Donatur', 'WhatsApp', 
-            'Email', 'Nominal', 'Metode', 'Status', 'Bukti Transfer'
+            'Email', 'Pesan / Doa', 'Nominal', 'Metode', 'Status', 'Bukti Transfer'
         ])
         
         for d in queryset:
@@ -280,7 +280,7 @@ class AdminDonationViewSet(viewsets.ModelViewSet):
             
             writer.writerow([
                 d.id, created_at, d.campaign.title, d.donor_name, d.donor_phone,
-                d.donor_email, d.amount, d.payment_method, d.payment_status, proof_url
+                d.donor_email, d.message or '', d.amount, d.payment_method, d.payment_status, proof_url
             ])
             
         return response

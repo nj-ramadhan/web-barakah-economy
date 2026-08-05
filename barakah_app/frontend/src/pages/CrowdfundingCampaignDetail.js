@@ -413,9 +413,14 @@ const CrowdfundingCampaignDetail = () => {
                           })} - {getTimeElapsed(donation.transfer_date)}
                         </p>
                       </div>
-                      <p className="text-sm text-gray-500">
+                      <p className="text-sm text-gray-500 font-bold">
                         {formatIDR(donation.amount)}
                       </p>
+                      {donation.message && (
+                        <p className="text-xs text-gray-600 italic mt-1.5 bg-emerald-50/60 p-2.5 rounded-lg border border-emerald-100/60">
+                          💬 "{donation.message}"
+                        </p>
+                      )}
                     </li>
                   ))
                 ) : (

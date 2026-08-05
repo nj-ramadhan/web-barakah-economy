@@ -499,6 +499,11 @@ const DonationsTab = () => {
                                     <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
                                     <span className="text-[10px] text-gray-400 font-bold uppercase tracking-tight">{formatDate(item.created_at)}</span>
                                 </div>
+                                {item.message && (
+                                    <p className="text-xs text-gray-600 italic mt-1.5 bg-emerald-50/60 p-2 rounded-xl border border-emerald-100/60">
+                                        💬 "{item.message}"
+                                    </p>
+                                )}
                             </div>
                             <div className="w-8 h-8 bg-green-50 rounded-full flex items-center justify-center">
                                 <span className="material-icons text-green-500 text-lg">check_circle</span>

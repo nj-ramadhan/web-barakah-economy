@@ -108,6 +108,11 @@ const CrowdfundingDonationHistoryPage = () => {
                                             <h3 className="text-sm font-semibold">{item.campaign_title}</h3>
                                             <p className="text-gray-600 text-xs">Nominal : {formatIDR(item.amount)}</p>
                                             <p className="text-gray-600 text-xs">Tanggal : {formatDate(item.created_at)}</p>
+                                            {item.message && (
+                                                <p className="text-xs text-gray-600 italic mt-1.5 bg-emerald-50/60 p-2 rounded-md border border-emerald-100/60">
+                                                    💬 "{item.message}"
+                                                </p>
+                                            )}
                                         </div>    
                                     </span>
                                 </div>
