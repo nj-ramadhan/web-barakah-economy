@@ -134,7 +134,15 @@ const EcommerceCheckoutSinergy = () => {
     };
 
 
+    const isProfileIncomplete = !addresses?.name_full || (!addresses?.phone_number && !addresses?.whatsapp) || !addresses?.address;
+
     const handleProcessSplitCheckout = async () => {
+        if (isProfileIncomplete) {
+            alert('Mohon lengkapi data profil (Nama Lengkap, No. HP/WA, dan Alamat) Anda terlebih dahulu sebelum membuat pesanan.');
+            navigate('/profile/edit');
+            return;
+        }
+
         const user = JSON.parse(localStorage.getItem('user'));
         
         // Transform checkoutConfigs to list format expected by API
@@ -192,6 +200,29 @@ const EcommerceCheckoutSinergy = () => {
             <div className="max-w-4xl mx-auto px-4 py-8 pb-24">
                 <h1 className="text-2xl font-bold text-gray-800 mb-6">Checkout Produk Fisik</h1>
 
+                {/* Profile Completeness Warning Banner */}
+                {isProfileIncomplete && (
+                    <div className="bg-amber-50 border-2 border-amber-200 rounded-2xl p-4 mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm">
+                        <div className="flex items-start gap-3">
+                            <div className="w-10 h-10 bg-amber-100 text-amber-700 rounded-xl flex items-center justify-center shrink-0">
+                                <span className="material-icons text-xl">warning</span>
+                            </div>
+                            <div>
+                                <h4 className="text-xs font-black text-amber-900">Data Pemesan Belum Lengkap!</h4>
+                                <p className="text-xs text-amber-800 mt-0.5">
+                                    Nama lengkap, No. HP/WA, atau Alamat pengiriman Anda belum diisi. Lengkapi profil Anda agar pesanan dapat diproses.
+                                </p>
+                            </div>
+                        </div>
+                        <button
+                            onClick={() => navigate('/profile/edit')}
+                            className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-xl text-xs shrink-0 transition shadow-sm"
+                        >
+                            Lengkapi Profil
+                        </button>
+                    </div>
+                )}
+
                 {/* Address Card */}
                 <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 mb-6">
                     <div className="flex justify-between items-center mb-3">
@@ -200,9 +231,9 @@ const EcommerceCheckoutSinergy = () => {
                     </div>
                     {addresses && (
                         <div>
-                            <p className="font-bold text-sm text-gray-800">{addresses.name_full}</p>
-                            <p className="text-xs text-gray-500 mt-1">{addresses.address}</p>
-                            <p className="text-xs text-gray-500">{addresses.address_city_name}, {addresses.address_province}</p>
+                            <p className="font-bold text-sm text-gray-800">{addresses.name_full || <span className="text-red-500 font-normal italic">Belum mengisi Nama Lengkap</span>}</p>
+                            <p className="text-xs text-gray-500 mt-1">{addresses.address || <span className="text-red-500 font-normal italic">Belum mengisi Alamat</span>}</p>
+                            <p className="text-xs text-gray-500">{addresses.address_city_name ? `${addresses.address_city_name}, ${addresses.address_province}` : ''}</p>
                         </div>
                     )}
                 </div>
@@ -250,30 +281,18 @@ const EcommerceCheckoutSinergy = () => {
                                 </div>
                             </div>
 
-
-
-                            {/* Vouchers and Payments Options */}
+                            {/* Vouchers & Payment Info */}
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div className="border border-gray-100 rounded-xl p-3">
                                     <label className="block text-xs font-bold text-gray-700 mb-2">Voucher Toko</label>
                                     <input type="text" placeholder="BERKAH2025" className="w-full text-sm bg-gray-50 border-none rounded-lg p-2" />
                                 </div>
-                                <div className="border border-gray-100 rounded-xl p-3">
-                                    <label className="block text-xs font-bold text-gray-700 mb-2">Metode Pembayaran</label>
-                                    <select 
-                                        className="w-full text-sm bg-gray-50 border-none rounded-lg p-2 font-bold"
-                                        value={config?.payment_method || 'manual'}
-                                        onChange={(e) => handleConfigChange(s_id, 'payment_method', e.target.value)}
-                                    >
-                                        <option value="manual">Transfer Bank Manual (OCR)</option>
-                                        <option value="qris">QRIS Otomatis Dinamis</option>
-                                        {group.items.every(item => item.product?.is_cod_available) && (
-                                            <option value="cod">Bayar di Tempat (COD)</option>
-                                        )}
-                                    </select>
-                                    {group.items.some(item => !item.product?.is_cod_available) && (
-                                        <p className="text-[9px] text-gray-400 mt-1 italic leading-tight">Metode COD tidak tersedia karena salah satu produk tidak mendukung COD.</p>
-                                    )}
+                                <div className="border border-gray-100 rounded-xl p-3 bg-gray-50/50">
+                                    <label className="block text-xs font-bold text-gray-700 mb-1">Metode Pembayaran</label>
+                                    <p className="text-xs font-bold text-emerald-700 flex items-center gap-1.5 mt-1">
+                                        <span className="material-icons text-sm">qr_code_2</span> QRIS / Transfer Bank Sistem
+                                    </p>
+                                    <p className="text-[10px] text-gray-400 mt-0.5">Otomatis mengikuti pengaturan sistem global</p>
                                 </div>
                             </div>
 
