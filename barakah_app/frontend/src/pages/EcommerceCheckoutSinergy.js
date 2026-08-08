@@ -42,7 +42,7 @@ const EcommerceCheckoutSinergy = () => {
                 setAddresses(p || {});
 
                 // Fetch Carts
-                const cartRes = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/carts/?selected=true`, {
+                const cartRes = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/carts/cart/`, {
                     headers: { Authorization: `Bearer ${user.access}` }
                 });
                 
@@ -162,7 +162,9 @@ const EcommerceCheckoutSinergy = () => {
             }
 
         } catch (err) {
-            alert('Gagal memproses Checkout. Silakan coba lagi.');
+            console.error("Checkout Error Details:", err.response?.data || err.message);
+            const errMsg = err.response?.data?.message || err.response?.data?.error || 'Gagal memproses Checkout. Silakan coba lagi.';
+            alert(`Gagal Checkout: ${errMsg}`);
         }
     };
 

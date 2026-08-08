@@ -37,11 +37,13 @@ class CreateOrderView(APIView):
             # Map configurations by seller_id for easy access
             configs_by_seller = {str(c.get('seller_id')): c for c in checkouts_data}
 
-            # Fetch only selected cart items for the user
+            # Fetch cart items for the user
             cart_items = Cart.objects.filter(user=user, is_selected=True)
+            if not cart_items.exists():
+                cart_items = Cart.objects.filter(user=user)
 
             if not cart_items.exists():
-                return Response({'message': 'No selected items in cart'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({'message': 'Keranjang belanja kosong'}, status=status.HTTP_400_BAD_REQUEST)
 
             # Group by seller
             seller_carts = {}
