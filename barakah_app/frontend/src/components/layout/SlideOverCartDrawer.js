@@ -101,8 +101,23 @@ const SlideOverCartDrawer = () => {
         }
     };
 
+    const getItemPrice = (item) => {
+        if (!item) return 0;
+        const prodP = Number(item.product?.price) || 0;
+        let varP = 0;
+        if (item.variation) {
+            if (item.variation.additional_price !== undefined && item.variation.additional_price !== null) {
+                varP = Number(item.variation.additional_price) || 0;
+            } else if (item.variation.price !== undefined && item.variation.price !== null) {
+                varP = Number(item.variation.price) || 0;
+            }
+        }
+        if (varP >= prodP && prodP > 0) return varP;
+        return prodP + varP;
+    };
+
     const totalGrandPrice = cartItems.reduce((sum, item) => {
-        const itemPrice = (item.product?.price || 0) + (item.variation?.additional_price || 0);
+        const itemPrice = getItemPrice(item);
         return sum + (itemPrice * item.quantity);
     }, 0);
 
@@ -152,7 +167,7 @@ const SlideOverCartDrawer = () => {
                             <div className="divide-y divide-gray-100 dark:divide-gray-800">
                                 {cartItems.map((item) => {
                                     const thumbUrl = getMediaUrl(item.product?.thumbnail || item.product?.thumbnail_url);
-                                    const itemPrice = (item.product?.price || 0) + (item.variation?.additional_price || 0);
+                                    const itemPrice = getItemPrice(item);
 
                                     return (
                                         <div key={item.id} className="py-4 first:pt-0 last:pb-0 flex gap-3 items-center">

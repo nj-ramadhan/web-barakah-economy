@@ -74,7 +74,7 @@ const DashboardSinergySellersPage = () => {
             setVouchers(voucherRes.data);
 
             // Fetch pending incoming orders count for red badge counter
-            const ordersRes = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/orders/seller_orders/`, {
+            const ordersRes = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/orders/seller-orders/`, {
                 headers: { Authorization: `Bearer ${user.access}` }
             });
             const newOrders = (ordersRes.data || []).filter(o => {

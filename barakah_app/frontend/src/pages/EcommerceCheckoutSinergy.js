@@ -200,6 +200,21 @@ const EcommerceCheckoutSinergy = () => {
         return <div className="min-h-screen flex items-center justify-center bg-gray-50"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600"></div></div>;
     }
 
+    const getItemPrice = (item) => {
+        if (!item) return 0;
+        const prodP = Number(item.product?.price) || 0;
+        let varP = 0;
+        if (item.variation) {
+            if (item.variation.additional_price !== undefined && item.variation.additional_price !== null) {
+                varP = Number(item.variation.additional_price) || 0;
+            } else if (item.variation.price !== undefined && item.variation.price !== null) {
+                varP = Number(item.variation.price) || 0;
+            }
+        }
+        if (varP >= prodP && prodP > 0) return varP;
+        return prodP + varP;
+    };
+
     // Group items by seller for UI
     const sellerGroups = {};
     cartItems.forEach(item => {
@@ -207,9 +222,8 @@ const EcommerceCheckoutSinergy = () => {
         if (!sellerGroups[s_id]) sellerGroups[s_id] = { items: [], total_price: 0 };
         sellerGroups[s_id].items.push(item);
         
-        let p = item.product.price;
-        if(item.variation && item.variation.additional_price) p += item.variation.additional_price;
-        sellerGroups[s_id].total_price += (p * item.quantity);
+        const unitPrice = getItemPrice(item);
+        sellerGroups[s_id].total_price += (unitPrice * item.quantity);
     });
 
     return (
@@ -305,7 +319,9 @@ const EcommerceCheckoutSinergy = () => {
                                         <div className="flex-1">
                                             <h4 className="font-bold text-sm text-gray-800">{item.product.title}</h4>
                                             {item.variation && <p className="text-[10px] text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full w-fit mt-1">{item.variation.name}</p>}
-                                            <p className="text-xs text-gray-500 mt-1">Rp {item.product.price} x {item.quantity} = <span className="font-bold text-green-700">Rp {(item.product.price + (item.variation?.additional_price || 0)) * item.quantity}</span></p>
+                                            <p className="text-xs text-gray-500 mt-1">
+                                                Rp {new Intl.NumberFormat('id-ID').format(getItemPrice(item))} x {item.quantity} = <span className="font-bold text-green-700">Rp {new Intl.NumberFormat('id-ID').format(getItemPrice(item) * item.quantity)}</span>
+                                            </p>
                                         </div>
                                     </div>
                                 ))}
