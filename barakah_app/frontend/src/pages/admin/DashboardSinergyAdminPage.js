@@ -11,7 +11,7 @@ const DashboardSinergyAdminPage = () => {
 
     const fetchProducts = async () => {
         const user = JSON.parse(localStorage.getItem('user'));
-        if (!user || user.role !== 'admin') return;
+        if (!user) return;
         try {
             // Note: with our ModelViewSet, Admin receives ALL products if ?manage=true is set.
             const res = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/products/?manage=true`, {
@@ -33,12 +33,39 @@ const DashboardSinergyAdminPage = () => {
         const user = JSON.parse(localStorage.getItem('user'));
         try {
             await axios.patch(`${process.env.REACT_APP_API_BASE_URL}/api/products/${productId}/?manage=true`, 
-                { status }, 
+                { status, is_active: status === 'approved' ? true : undefined }, 
                 { headers: { Authorization: `Bearer ${user.access}` } }
             );
             fetchProducts();
         } catch (err) {
             alert('Gagal mengubah status produk');
+        }
+    };
+
+    const handleToggleActive = async (productId, currentActive) => {
+        const user = JSON.parse(localStorage.getItem('user'));
+        try {
+            await axios.patch(`${process.env.REACT_APP_API_BASE_URL}/api/products/${productId}/?manage=true`, 
+                { is_active: !currentActive }, 
+                { headers: { Authorization: `Bearer ${user.access}` } }
+            );
+            fetchProducts();
+        } catch (err) {
+            alert('Gagal mengubah status aktif produk');
+        }
+    };
+
+    const handleDeleteProduct = async (productId) => {
+        if (!window.confirm('Apakah Anda yakin ingin menghapus produk ini secara permanen?')) return;
+        const user = JSON.parse(localStorage.getItem('user'));
+        try {
+            await axios.delete(`${process.env.REACT_APP_API_BASE_URL}/api/products/${productId}/?manage=true`, {
+                headers: { Authorization: `Bearer ${user.access}` }
+            });
+            alert('Produk berhasil dihapus');
+            fetchProducts();
+        } catch (err) {
+            alert('Gagal menghapus produk');
         }
     };
 
@@ -52,7 +79,7 @@ const DashboardSinergyAdminPage = () => {
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
                     <div>
                         <h1 className="text-2xl font-bold text-gray-800">Manajemen Produk E-commerce</h1>
-                        <p className="text-sm text-gray-500">Persetujuan produk fisik dari seluruh seller</p>
+                        <p className="text-sm text-gray-500">Kelola persetujuan, aktivasi, dan penghapusan produk seller</p>
                     </div>
                 </div>
 
@@ -88,10 +115,15 @@ const DashboardSinergyAdminPage = () => {
                     <div className="grid grid-cols-1 gap-4">
                         {filteredProducts.map(p => (
                             <div key={p.id} className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
-                                <img src={p.thumbnail || p.thumbnail_url} alt={p.title} className="w-16 h-16 sm:w-24 sm:h-24 object-cover rounded-xl bg-gray-50 border border-gray-100" />
+                                <img src={p.thumbnail || p.thumbnail_url || '/placeholder-image.jpg'} alt={p.title} className="w-16 h-16 sm:w-24 sm:h-24 object-cover rounded-xl bg-gray-50 border border-gray-100" />
                                 <div className="flex-1 text-center sm:text-left">
-                                    <h3 className="font-bold text-gray-800 text-sm sm:text-base">{p.title}</h3>
-                                    <p className="text-xs text-gray-500 mt-1">
+                                    <div className="flex items-center justify-center sm:justify-start gap-2 mb-1">
+                                        <h3 className="font-bold text-gray-800 text-sm sm:text-base">{p.title}</h3>
+                                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${p.is_active ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-gray-100 text-gray-500 border-gray-200'}`}>
+                                            {p.is_active ? 'Aktif' : 'Nonaktif'}
+                                        </span>
+                                    </div>
+                                    <p className="text-xs text-gray-500">
                                         Oleh: <span className="font-bold text-emerald-700">{p.seller_name || 'Admin'}</span> • 
                                         Stok: {p.stock} • Berat: {p.weight}g
                                     </p>
@@ -104,20 +136,32 @@ const DashboardSinergyAdminPage = () => {
                                 <div className="flex items-center gap-2">
                                     {p.status === 'pending' && (
                                         <>
-                                            <button onClick={() => handleUpdateStatus(p.id, 'rejected')} className="w-10 h-10 flex items-center justify-center bg-red-50 hover:bg-red-100 text-red-600 rounded-xl transition">
-                                                <span className="material-icons text-sm">close</span>
-                                            </button>
-                                            <button onClick={() => handleUpdateStatus(p.id, 'approved')} className="w-10 h-10 flex items-center justify-center bg-emerald-50 hover:bg-emerald-100 text-emerald-600 rounded-xl transition">
-                                                <span className="material-icons text-sm">check</span>
-                                            </button>
+                                            <button onClick={() => handleUpdateStatus(p.id, 'rejected')} className="px-3 py-2 text-xs font-bold text-red-600 bg-red-50 hover:bg-red-100 rounded-xl transition">Ditolak</button>
+                                            <button onClick={() => handleUpdateStatus(p.id, 'approved')} className="px-4 py-2 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl shadow-sm transition">Setujui</button>
                                         </>
                                     )}
                                     {p.status === 'approved' && (
-                                        <button onClick={() => handleUpdateStatus(p.id, 'rejected')} className="px-4 py-2 text-xs font-bold text-red-600 bg-red-50 hover:bg-red-100 rounded-xl transition">Batalkan</button>
+                                        <button onClick={() => handleUpdateStatus(p.id, 'rejected')} className="px-3 py-2 text-xs font-bold text-red-600 bg-red-50 hover:bg-red-100 rounded-xl transition">Batalkan</button>
                                     )}
                                     {p.status === 'rejected' && (
-                                        <button onClick={() => handleUpdateStatus(p.id, 'approved')} className="px-4 py-2 text-xs font-bold text-emerald-600 bg-emerald-50 hover:bg-emerald-100 rounded-xl transition">Setujui</button>
+                                        <button onClick={() => handleUpdateStatus(p.id, 'approved')} className="px-3 py-2 text-xs font-bold text-emerald-600 bg-emerald-50 hover:bg-emerald-100 rounded-xl transition">Setujui</button>
                                     )}
+
+                                    <button 
+                                        onClick={() => handleToggleActive(p.id, p.is_active)} 
+                                        className={`px-3 py-2 text-xs font-bold rounded-xl transition border ${p.is_active ? 'text-amber-700 bg-amber-50 hover:bg-amber-100 border-amber-200' : 'text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border-emerald-200'}`}
+                                        title={p.is_active ? 'Sembunyikan dari katalog' : 'Tampilkan di katalog'}
+                                    >
+                                        {p.is_active ? 'Nonaktifkan' : 'Aktifkan'}
+                                    </button>
+
+                                    <button 
+                                        onClick={() => handleDeleteProduct(p.id)} 
+                                        className="w-9 h-9 flex items-center justify-center text-red-600 bg-red-50 hover:bg-red-600 hover:text-white rounded-xl transition border border-red-100"
+                                        title="Hapus Produk Permanen"
+                                    >
+                                        <span className="material-icons text-sm">delete</span>
+                                    </button>
                                 </div>
                             </div>
                         ))}

@@ -83,21 +83,21 @@ class ProductViewSet(viewsets.ModelViewSet):
         if self.request.query_params.get('manage') == 'true' or is_detail:
             if not user.is_authenticated:
                 if is_detail: # Public can still retrieve approved products
-                    return queryset.filter(status='approved', is_active=True)
+                    return queryset.filter(status__iexact='approved', is_active=True)
                 return queryset.none()
                 
-            # Superusers see everything
-            if user.is_superuser:
+            # Superusers, Admins, or Staff see everything
+            if user.is_superuser or user.is_staff or getattr(user, 'role', '') == 'admin':
                 return queryset
                 
             # Owners see their own (all status)
             if is_detail:
                 # For detail, show my own OR approved products
-                return queryset.filter(Q(seller=user) | Q(status='approved', is_active=True)).distinct()
+                return queryset.filter(Q(seller=user) | Q(status__iexact='approved', is_active=True)).distinct()
             return queryset.filter(seller=user)
 
         # Public Marketplace View - Only show approved & active products
-        return queryset.filter(status='approved', is_active=True)
+        return queryset.filter(status__iexact='approved', is_active=True)
 
 
     def retrieve(self, request, *args, **kwargs):
