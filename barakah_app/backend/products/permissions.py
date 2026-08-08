@@ -2,14 +2,18 @@ from rest_framework import permissions
 
 class IsOwnerOrAdmin(permissions.BasePermission):
     """
-    Custom permission to only allow owners of an object or admins to edit it.
+    Custom permission to only allow owners of an object or admins/staff to edit it.
     Assumes the model instance has a `seller` attribute.
     """
     def has_object_permission(self, request, view, obj):
-        # Read permissions are allowed to any request,
-        # but queryset filtering is handled in the view's get_queryset.
         if request.method in permissions.SAFE_METHODS:
             return True
 
-        # Write permissions are only allowed to the owner or superuser.
-        return obj.seller == request.user or request.user.is_superuser
+        user = request.user
+        if not user or not user.is_authenticated:
+            return False
+
+        if user.is_superuser or user.is_staff or getattr(user, 'role', '') == 'admin':
+            return True
+
+        return hasattr(obj, 'seller') and obj.seller == user
