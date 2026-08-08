@@ -134,7 +134,7 @@ const EcommerceCheckoutSinergy = () => {
     };
 
 
-    const isProfileIncomplete = !addresses?.name_full || (!addresses?.phone_number && !addresses?.whatsapp) || !addresses?.address;
+    const isProfileIncomplete = !addresses?.name_full || !addresses?.phone || !addresses?.address;
 
     const handleProcessSplitCheckout = async () => {
         if (isProfileIncomplete) {
@@ -226,14 +226,36 @@ const EcommerceCheckoutSinergy = () => {
                 {/* Address Card */}
                 <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 mb-6">
                     <div className="flex justify-between items-center mb-3">
-                        <h2 className="font-bold text-sm text-gray-800 flex items-center gap-2"><span className="material-icons text-emerald-600 text-[18px]">location_on</span> Alamat Pengiriman</h2>
+                        <h2 className="font-bold text-sm text-gray-800 flex items-center gap-2"><span className="material-icons text-emerald-600 text-[18px]">location_on</span> Data Pemesan & Alamat Pengiriman</h2>
                         <button onClick={() => navigate('/profile/edit')} className="text-xs text-blue-600 font-bold bg-blue-50 px-3 py-1 rounded-full">Ubah</button>
                     </div>
                     {addresses && (
-                        <div>
-                            <p className="font-bold text-sm text-gray-800">{addresses.name_full || <span className="text-red-500 font-normal italic">Belum mengisi Nama Lengkap</span>}</p>
-                            <p className="text-xs text-gray-500 mt-1">{addresses.address || <span className="text-red-500 font-normal italic">Belum mengisi Alamat</span>}</p>
-                            <p className="text-xs text-gray-500">{addresses.address_city_name ? `${addresses.address_city_name}, ${addresses.address_province}` : ''}</p>
+                        <div className="space-y-1.5">
+                            <div className="flex flex-wrap items-center gap-2">
+                                <span className="font-bold text-sm text-gray-800">
+                                    {addresses.name_full || <span className="text-red-500 font-normal italic">Nama Lengkap belum diisi</span>}
+                                </span>
+                                {addresses.phone ? (
+                                    <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-100 flex items-center gap-1">
+                                        <span className="material-icons text-[12px]">phone</span> {addresses.phone}
+                                    </span>
+                                ) : (
+                                    <span className="text-xs text-red-500 font-medium bg-red-50 px-2 py-0.5 rounded-md border border-red-100">
+                                        No. HP/WA belum diisi
+                                    </span>
+                                )}
+                            </div>
+                            <p className="text-xs text-gray-600">
+                                <span className="font-bold text-gray-500">Email:</span> {addresses.email || '-'}
+                            </p>
+                            <p className="text-xs text-gray-600 leading-relaxed">
+                                <span className="font-bold text-gray-500">Alamat:</span> {addresses.address || <span className="text-red-500 italic">Alamat belum diisi</span>}
+                            </p>
+                            {(addresses.address_city_name || addresses.address_province) && (
+                                <p className="text-xs text-gray-500 font-medium">
+                                    {addresses.address_city_name}, {addresses.address_province}
+                                </p>
+                            )}
                         </div>
                     )}
                 </div>
