@@ -238,17 +238,24 @@ class SellerOrderViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # 2. Buyer Permissions: Allow setting to 'Selesai' or 'Komplain'
+        # 2. Buyer Permissions: Allow setting to 'Selesai', 'Komplain', or 'Batal' (Cancellation)
         if instance.user == user and instance.seller != user and not user.is_superuser:
-            if new_status not in ['Selesai', 'Komplain']:
+            if new_status in ['Batal', 'cancelled', 'Cancelled']:
+                if instance.status in ['Proses', 'Dikirim', 'Selesai', 'shipped', 'completed', 'processing']:
+                    return Response(
+                        {'error': 'Pesanan yang telah diproses/dikirim oleh penjual tidak dapat dibatalkan lagi.'},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+            elif new_status in ['Selesai', 'Komplain']:
+                if instance.status not in ['Dikirim', 'shipped', 'Proses']:
+                    return Response(
+                        {'error': 'Komplain atau konfirmasi selesai hanya dapat dilakukan jika barang sudah dikirim.'},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+            else:
                 return Response(
-                    {'error': 'Sebagai pembeli, Anda hanya dapat menyelesaikan pesanan atau mengajukan komplain.'},
+                    {'error': 'Sebagai pembeli, Anda hanya dapat menyelesaikan pesanan, mengajukan komplain, atau membatalkan pesanan sebelum diproses.'},
                     status=status.HTTP_403_FORBIDDEN
-                )
-            if instance.status != 'Dikirim':
-                return Response(
-                    {'error': 'Komplain atau konfirmasi selesai hanya dapat dilakukan jika barang sudah Dikirim.'},
-                    status=status.HTTP_400_BAD_REQUEST
                 )
         
         # 3. Enforce Sequential Status Updates (for sellers/admins)

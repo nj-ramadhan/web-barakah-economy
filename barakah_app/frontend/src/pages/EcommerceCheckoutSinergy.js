@@ -151,22 +151,41 @@ const EcommerceCheckoutSinergy = () => {
             ...checkoutConfigs[s_id]
         }));
 
+        const selectedPaymentMethod = checkoutsList[0]?.payment_method || 'manual';
+
         try {
             const res = await axios.post(`${process.env.REACT_APP_API_BASE_URL}/api/orders/`, {
                 checkouts: checkoutsList,
-                payment_method: checkoutsList[0]?.payment_method || 'manual' // Assuming single method for now
+                payment_method: selectedPaymentMethod
             }, {
                 headers: { Authorization: `Bearer ${user.access}` }
             });
 
             const orders = res.data;
-            const qrisOrder = orders.find(o => o.payment_method === 'qris');
+            const firstOrder = Array.isArray(orders) ? orders[0] : orders;
             
-            if (qrisOrder) {
-                setQrisData({ amount: qrisOrder.grand_total, orderNumber: qrisOrder.order_number });
-                setShowQrisModal(true);
-            } else {
+            if (selectedPaymentMethod === 'cod') {
+                // COD: Directly navigate to Riwayat Belanja (Skip Payment Page)
                 navigate('/riwayat-belanja');
+            } else {
+                // Non-COD (QRIS / Transfer Bank): Navigate to Halaman Pembayaran (Konfirmasi Pembayaran) FIRST!
+                const totalAmount = Object.keys(sellerGroups).reduce((sum, s_id) => {
+                    const group = sellerGroups[s_id];
+                    const config = checkoutConfigs[s_id];
+                    return sum + group.total_price + (config?.shipping_cost || 0) - (config?.voucher_nominal || 0);
+                }, 0);
+
+                navigate('/konfirmasi-pembayaran-belanja', {
+                    state: {
+                        orderId: firstOrder?.id,
+                        orderNumber: firstOrder?.order_number,
+                        amount: firstOrder?.grand_total || firstOrder?.total_price || totalAmount,
+                        bank: 'qris',
+                        customerName: addresses.name_full,
+                        customerPhone: addresses.phone,
+                        cartItems: cartItems
+                    }
+                });
             }
 
         } catch (err) {
@@ -303,18 +322,33 @@ const EcommerceCheckoutSinergy = () => {
                                 </div>
                             </div>
 
-                            {/* Vouchers & Payment Info */}
+                            {/* Vouchers & Payment Options */}
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div className="border border-gray-100 rounded-xl p-3">
                                     <label className="block text-xs font-bold text-gray-700 mb-2">Voucher Toko</label>
                                     <input type="text" placeholder="BERKAH2025" className="w-full text-sm bg-gray-50 border-none rounded-lg p-2" />
                                 </div>
-                                <div className="border border-gray-100 rounded-xl p-3 bg-gray-50/50">
+                                <div className="border border-gray-100 rounded-xl p-3">
                                     <label className="block text-xs font-bold text-gray-700 mb-1">Metode Pembayaran</label>
-                                    <p className="text-xs font-bold text-emerald-700 flex items-center gap-1.5 mt-1">
-                                        <span className="material-icons text-sm">qr_code_2</span> QRIS / Transfer Bank Sistem
-                                    </p>
-                                    <p className="text-[10px] text-gray-400 mt-0.5">Otomatis mengikuti pengaturan sistem global</p>
+                                    <select 
+                                        className="w-full text-xs font-bold bg-gray-50 border border-gray-200 rounded-lg p-2 focus:ring-1 focus:ring-emerald-500 outline-none text-emerald-800"
+                                        value={config?.payment_method || 'manual'}
+                                        onChange={(e) => handleConfigChange(s_id, 'payment_method', e.target.value)}
+                                    >
+                                        <option value="manual">Bayar Langsung (QRIS / Transfer Bank)</option>
+                                        {group.items.every(item => item.product?.is_cod_available) && (
+                                            <option value="cod">Bayar di Tempat (COD)</option>
+                                        )}
+                                    </select>
+                                    {group.items.some(item => !item.product?.is_cod_available) ? (
+                                        <p className="text-[9px] text-gray-400 mt-1 italic leading-tight">
+                                            Fitur COD tidak aktif karena produk tidak mendukung COD.
+                                        </p>
+                                    ) : (
+                                        <p className="text-[9px] text-emerald-600 mt-1 italic leading-tight font-bold">
+                                            ✓ Penjual mengaktifkan fitur COD untuk produk ini.
+                                        </p>
+                                    )}
                                 </div>
                             </div>
 

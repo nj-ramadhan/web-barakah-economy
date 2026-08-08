@@ -51,6 +51,8 @@ const DashboardSinergySellersPage = () => {
     };
 
 
+    const [pendingOrdersCount, setPendingOrdersCount] = useState(0);
+
     const fetchDashboardData = async () => {
         const user = JSON.parse(localStorage.getItem('user'));
         if (!user) return;
@@ -58,13 +60,28 @@ const DashboardSinergySellersPage = () => {
             const productRes = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/products/?manage=true`, {
                 headers: { Authorization: `Bearer ${user.access}` }
             });
-            setProducts(productRes.data);
-
+            // Lock products display strictly to logged in seller
+            const allProds = productRes.data || [];
+            const myProds = allProds.filter(p => {
+                const sId = p.seller?.id || p.seller_id || p.seller;
+                return String(sId) === String(user.id);
+            });
+            setProducts(myProds);
 
             const voucherRes = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/products/vouchers/`, {
                 headers: { Authorization: `Bearer ${user.access}` }
             });
             setVouchers(voucherRes.data);
+
+            // Fetch pending incoming orders count for red badge counter
+            const ordersRes = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/orders/seller_orders/`, {
+                headers: { Authorization: `Bearer ${user.access}` }
+            });
+            const newOrders = (ordersRes.data || []).filter(o => {
+                const s = (o.status || '').toLowerCase();
+                return s === 'pending' || s === 'paid' || s === 'unpaid' || s === 'menunggu';
+            });
+            setPendingOrdersCount(newOrders.length);
         } catch (error) {
             console.error("Failed fetching E-commerce dashboard data", error);
         } finally {
@@ -74,13 +91,7 @@ const DashboardSinergySellersPage = () => {
 
     useEffect(() => {
         fetchDashboardData();
-        const user = JSON.parse(localStorage.getItem('user'));
-        // If not admin and no products found after loading, redirect
-        if (!loading && products.length === 0 && user?.role !== 'admin' && !user?.is_staff) {
-            // Optional: redirect to dashboard
-            // navigate('/dashboard'); 
-        }
-    }, [loading, products.length]);
+    }, []);
 
     const handleEdit = (product) => {
         setEditingProduct(product);
@@ -294,8 +305,14 @@ const DashboardSinergySellersPage = () => {
             <div className="flex justify-between items-center mb-6">
                 <h2 className="text-xl font-bold text-gray-800">Produk Saya</h2>
                 <div className="flex gap-2">
-                    <Link to="/dashboard/sinergy/seller/orders" className="bg-blue-100 hover:bg-blue-200 text-blue-700 px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 transition-all">
-                        <span className="material-icons text-sm">shopping_basket</span> Pesanan Masuk
+                    <Link to="/dashboard/sinergy/seller/orders" className="relative bg-blue-100 hover:bg-blue-200 text-blue-700 px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 transition-all">
+                        <span className="material-icons text-sm">shopping_basket</span> 
+                        <span>Pesanan Masuk</span>
+                        {pendingOrdersCount > 0 && (
+                            <span className="bg-red-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full animate-pulse shadow">
+                                {pendingOrdersCount}
+                            </span>
+                        )}
                     </Link>
                     <button onClick={() => setActiveTab('voucher')} className="bg-orange-100 hover:bg-orange-200 text-orange-700 px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 transition-all">
                         <span className="material-icons text-sm">local_activity</span> Buat Voucher

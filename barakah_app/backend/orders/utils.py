@@ -94,12 +94,15 @@ def send_order_notification_to_seller(order):
         var_str = f" ({item.variation.name})" if item.variation else ""
         items_str += f"- {item.product.title}{var_str} x{item.quantity}\n"
 
+    pay_status = "BAYAR DI TEMPAT (COD)" if (order.payment_method or '').lower() == 'cod' else ("SUDAH DIBAYAR (LUNAS via QRIS/Transfer)" if (order.status or '').lower() in ['paid', 'lunas', 'proses'] else "MENUNGGU PEMBAYARAN")
+
     message = (
         f"*PESANAN BARU MASUK! (SINERGY)*\n"
-        f"No. Pesanan: {order.order_number}\n\n"
+        f"No. Pesanan: {order.order_number}\n"
+        f"STATUS PEMBAYARAN: *{pay_status}*\n\n"
         f"*Data Pemesan:*\n"
         f"Nama: {buyer_name}\n"
-        f"No. HP Pembeli: {order.user.phone}\n"
+        f"No. HP Pembeli: {order.user.phone or '-'}\n"
         f"No. HP Penjual: {order.seller.phone if order.seller else '-'}\n"
         f"Chat Pembeli: wa.me/{clean_phone(order.user.phone)}\n\n"
         f"*Alamat Kirim:*\n"
@@ -107,7 +110,7 @@ def send_order_notification_to_seller(order):
         f"*Daftar Produk:*\n"
         f"{items_str}\n"
         f"Total Transaksi: {format_idr(order.grand_total)}\n"
-        f"Metode Bayar: *{order.payment_method}*\n"
+        f"Metode Bayar: *{order.payment_method}* ({pay_status})\n"
         f"*Kontak Pembeli:* {order.user.phone or '-'}\n"
         f"*Kontak Penjual:* {raw_phone or '-'}\n\n"
     )
