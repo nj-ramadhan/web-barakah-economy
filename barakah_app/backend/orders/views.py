@@ -32,6 +32,36 @@ class CreateOrderView(APIView):
         logger = logging.getLogger('accounts')
         
         try:
+            # If order_id or order_number is provided, update existing order with proof_file
+            order_id = request.data.get('order_id') or request.data.get('order_number') or request.data.get('orderId')
+            if order_id:
+                existing_orders = Order.objects.filter(user=user, pk=order_id) if str(order_id).isdigit() else Order.objects.filter(user=user, order_number=order_id)
+                if not existing_orders.exists():
+                    existing_orders = Order.objects.filter(pk=order_id) if str(order_id).isdigit() else Order.objects.filter(order_number=order_id)
+
+                if existing_orders.exists():
+                    payment_proof = request.FILES.get('proof_file') or request.FILES.get('payment_proof')
+                    updated_orders = []
+                    for ord_obj in existing_orders:
+                        if payment_proof:
+                            ord_obj.payment_proof = payment_proof
+                            ord_obj.status = 'paid'
+                        if request.data.get('payment_method'):
+                            ord_obj.payment_method = request.data.get('payment_method')
+                        ord_obj.save()
+                        updated_orders.append(ord_obj)
+
+                        try:
+                            from .utils import send_order_invoice_to_buyer, send_order_notification_to_seller
+                            customer_phone = request.data.get('customer_phone') or request.data.get('phone')
+                            send_order_invoice_to_buyer(ord_obj, alternate_phone=customer_phone)
+                            send_order_notification_to_seller(ord_obj)
+                        except Exception as e:
+                            logger.error(f"WA Notification Error on Payment Update ({ord_obj.order_number}): {str(e)}")
+
+                    serializer = OrderSerializer(updated_orders, many=True)
+                    return Response(serializer.data, status=status.HTTP_201_CREATED)
+
             # Extract list of checkout configurations (one per seller)
             checkouts_data = request.data.get('checkouts', [])
             # Map configurations by seller_id for easy access

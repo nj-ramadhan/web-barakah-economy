@@ -106,6 +106,8 @@ const EcommercePaymentConfirmation = () => {
   }
 
   const {
+    orderId,
+    orderNumber: orderNumberParam,
     amount,
     bank,
     customerName,
@@ -117,7 +119,7 @@ const EcommercePaymentConfirmation = () => {
     cartItems = []
   } = location.state;
 
-  const formattedAmount = new Intl.NumberFormat('id-ID').format(amount);
+  const formattedAmount = new Intl.NumberFormat('id-ID', { maximumFractionDigits: 0 }).format(amount || 0);
 
   const getMediaUrl = (url) => {
     if (!url) return null;
@@ -189,11 +191,13 @@ const EcommercePaymentConfirmation = () => {
       const lowerText = text.toLowerCase();
       console.log("OCR Result:", text);
 
-      const numericTotal = Math.floor(Number(amount));
+      const numericTotal = Math.floor(Number(amount || 0));
       const totalStr = String(numericTotal);
-      const totalFormatted = new Intl.NumberFormat('id-ID').format(numericTotal);
+      const totalFormatted = new Intl.NumberFormat('id-ID', { maximumFractionDigits: 0 }).format(numericTotal);
 
-      const scrubbedOCR = lowerText.replace(/rp/g, '').replace(/\./g, '').replace(/,/g, '').replace(/\s+/g, '');
+      // Clean OCR text: remove trailing cents like .00 or ,00 then strip non-digits
+      const cleanOcrText = text.replace(/[\.,]00\b/g, '').replace(/rp/gi, '');
+      const scrubbedOCR = cleanOcrText.replace(/[^0-9]/g, '');
 
       const isAmountPresent =
           text.includes(totalStr) ||
@@ -202,11 +206,11 @@ const EcommercePaymentConfirmation = () => {
 
       let isRecipientValid = false;
       let expectedRecipientName = 'BAE Community / Barakah Economy';
-      if (isDirect && firstProduct.own_bank_holder) {
+      if (isDirect && firstProduct?.own_bank_holder) {
         expectedRecipientName = firstProduct.own_bank_holder;
         isRecipientValid = lowerText.includes(firstProduct.own_bank_holder.toLowerCase());
       } else {
-        isRecipientValid = lowerText.includes('bae community') || lowerText.includes('barakah economy');
+        isRecipientValid = lowerText.includes('bae community') || lowerText.includes('barakah economy') || lowerText.includes('gopay');
       }
 
       if (!isRecipientValid) {
@@ -226,6 +230,8 @@ const EcommercePaymentConfirmation = () => {
 
       const csrfToken = getCsrfToken();
       const paymentData = new FormData();
+      if (orderId) paymentData.append('order_id', orderId);
+      if (orderNumberParam) paymentData.append('order_number', orderNumberParam);
       paymentData.append('amount', amount);
       paymentData.append('customer_name', customerName);
       paymentData.append('customer_phone', customerPhone);
