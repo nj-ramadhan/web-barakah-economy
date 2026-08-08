@@ -96,7 +96,11 @@ const EcommerceProductDetail = () => {
     fetchProductDetail();
   }, [slug]);
 
+  const [isAddingCart, setIsAddingCart] = useState(false);
+  const [isBuyingNow, setIsBuyingNow] = useState(false);
+
   const addToCart = async () => {
+    if (isAddingCart) return;
     const currentStock = selectedVariation ? selectedVariation.stock : (product?.total_stock || product?.stock || 0);
     if (currentStock <= 0) {
       alert('Maaf, stok produk ini sedang habis.');
@@ -109,10 +113,10 @@ const EcommerceProductDetail = () => {
 
     const csrfToken = getCsrfToken();
     try {
+      setIsAddingCart(true);
       const user = JSON.parse(localStorage.getItem('user'));
       if (!user || !user.access) {
-        console.error('User not logged in');
-        navigate('/login'); // Redirect to login page if not logged in
+        navigate('/login');
         return;
       }
 
@@ -138,10 +142,13 @@ const EcommerceProductDetail = () => {
       console.error('Error adding product to cart:', error);
       const msg = error.response?.data?.error || 'Gagal menambahkan produk ke keranjang';
       alert(msg);
+    } finally {
+      setIsAddingCart(false);
     }
   };
 
   const handleBuyNow = async () => {
+    if (isBuyingNow) return;
     const currentStock = selectedVariation ? selectedVariation.stock : (product?.total_stock || product?.stock || 0);
     if (currentStock <= 0) {
       alert('Maaf, stok produk ini sedang habis.');
@@ -154,6 +161,7 @@ const EcommerceProductDetail = () => {
 
     const csrfToken = getCsrfToken();
     try {
+      setIsBuyingNow(true);
       const user = JSON.parse(localStorage.getItem('user'));
       if (!user || !user.access) {
         navigate('/login');
@@ -178,9 +186,11 @@ const EcommerceProductDetail = () => {
       // Directly navigate to checkout
       navigate('/ecommerce/checkout-sinergy');
     } catch (error) {
-      console.error('Error in Beli Langsung:', error);
-      const msg = error.response?.data?.error || 'Gagal memproses pembelian';
+      console.error('Error in buy now:', error);
+      const msg = error.response?.data?.error || 'Gagal memproses Beli Langsung';
       alert(msg);
+    } finally {
+      setIsBuyingNow(false);
     }
   };
 
@@ -463,12 +473,21 @@ const EcommerceProductDetail = () => {
 
                   <div className="flex flex-col md:flex-row gap-4">
                     <button 
-                      className={`flex-1 py-3 px-6 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg transition-all transform ${isOutOfStock ? 'bg-gray-100 text-gray-400 cursor-not-allowed shadow-none' : 'bg-green-600 hover:bg-green-700 text-white shadow-green-200 hover:-translate-y-1'} ${isCartAnimating ? 'animate-bounce ring-4 ring-green-300 scale-105' : ''}`}
+                      className={`flex-1 py-3 px-6 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg transition-all transform ${isOutOfStock || isAddingCart ? 'bg-gray-200 text-gray-500 cursor-not-allowed shadow-none' : 'bg-green-600 hover:bg-green-700 text-white shadow-green-200 hover:-translate-y-1'} ${isCartAnimating ? 'animate-bounce ring-4 ring-green-300 scale-105' : ''}`}
                       onClick={addToCart}
-                      disabled={isOutOfStock}
+                      disabled={isOutOfStock || isAddingCart}
                     >
-                      <span className="material-icons text-xl">{isOutOfStock ? 'remove_shopping_cart' : 'shopping_cart'}</span>
-                      {isOutOfStock ? 'Stok Habis' : 'Keranjang'}
+                      {isAddingCart ? (
+                        <span className="flex items-center gap-2">
+                          <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></span>
+                          <span>Menambahkan...</span>
+                        </span>
+                      ) : (
+                        <>
+                          <span className="material-icons text-xl">{isOutOfStock ? 'remove_shopping_cart' : 'shopping_cart'}</span>
+                          {isOutOfStock ? 'Stok Habis' : 'Keranjang'}
+                        </>
+                      )}
                     </button>
                     <button 
                       className={`px-4 py-3 border-2 transition-all rounded-xl flex items-center justify-center gap-1.5 active:scale-90 shadow-sm ${isLiked ? 'border-red-500 bg-red-50 text-red-600' : 'border-gray-200 text-gray-400 hover:border-red-200 hover:text-red-400'}`}
@@ -487,12 +506,21 @@ const EcommerceProductDetail = () => {
                     </button>
 
                     <button 
-                      className={`flex-[2] py-3 px-6 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg transition-all transform mt-4 md:mt-0 ${isOutOfStock ? 'bg-gray-50 text-gray-300 cursor-not-allowed shadow-none' : 'bg-emerald-500 hover:bg-emerald-600 text-white shadow-emerald-200 hover:-translate-y-1'}`}
+                      className={`flex-[2] py-3 px-6 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg transition-all transform mt-4 md:mt-0 ${isOutOfStock || isBuyingNow ? 'bg-gray-200 text-gray-500 cursor-not-allowed shadow-none' : 'bg-emerald-500 hover:bg-emerald-600 text-white shadow-emerald-200 hover:-translate-y-1'}`}
                       onClick={handleBuyNow}
-                      disabled={isOutOfStock}
+                      disabled={isOutOfStock || isBuyingNow}
                     >
-                      <span className="material-icons text-xl">{isOutOfStock ? 'block' : 'shopping_bag'}</span>
-                      {isOutOfStock ? 'Habis' : 'Beli Langsung'}
+                      {isBuyingNow ? (
+                        <span className="flex items-center gap-2">
+                          <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></span>
+                          <span>Memproses...</span>
+                        </span>
+                      ) : (
+                        <>
+                          <span className="material-icons text-xl">{isOutOfStock ? 'block' : 'shopping_bag'}</span>
+                          {isOutOfStock ? 'Habis' : 'Beli Langsung'}
+                        </>
+                      )}
                     </button>
                   </div>
                 </div>

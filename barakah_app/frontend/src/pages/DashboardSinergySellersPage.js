@@ -169,12 +169,16 @@ const DashboardSinergySellersPage = () => {
         setGalleryPreviews(files.map(file => URL.createObjectURL(file)));
     };
 
+    const [savingProduct, setSavingProduct] = useState(false);
+
     const handleSaveProduct = async (e) => {
         e.preventDefault();
+        if (savingProduct) return;
         const user = JSON.parse(localStorage.getItem('user'));
         if (!user || !user.access) return;
 
         try {
+            setSavingProduct(true);
             const formData = new FormData();
             formData.append('title', e.target.title.value);
             formData.append('description', e.target.description ? e.target.description.value : '');
@@ -251,6 +255,8 @@ const DashboardSinergySellersPage = () => {
             console.error('Error saving product detail:', error.response?.data || error);
             const detailMsg = error.response?.data ? JSON.stringify(error.response.data) : 'Gagal menyimpan produk';
             alert(`Gagal menyimpan produk: ${detailMsg}`);
+        } finally {
+            setSavingProduct(false);
         }
     };
 
@@ -736,7 +742,20 @@ const DashboardSinergySellersPage = () => {
 
                 <div className="pt-4 border-t border-gray-100 flex gap-3">
                     <button type="button" onClick={() => setActiveTab('list')} className="flex-1 py-4 text-sm font-bold text-gray-500 bg-gray-100 hover:bg-gray-200 rounded-xl transition">Batal</button>
-                    <button type="submit" className="flex-[2] py-4 text-sm font-bold text-white bg-gradient-to-r from-emerald-500 to-teal-600 shadow-lg shadow-emerald-200 hover:shadow-xl hover:scale-[1.01] rounded-xl transition-all">Simpan & Ajukan Persetujuan</button>
+                    <button 
+                        type="submit" 
+                        disabled={savingProduct}
+                        className={`flex-[2] py-4 text-sm font-bold text-white rounded-xl transition-all ${savingProduct ? 'bg-gray-300 cursor-not-allowed shadow-none' : 'bg-gradient-to-r from-emerald-500 to-teal-600 shadow-lg shadow-emerald-200 hover:shadow-xl hover:scale-[1.01]'}`}
+                    >
+                        {savingProduct ? (
+                            <span className="flex items-center justify-center gap-2">
+                                <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></span>
+                                <span>Menyimpan Produk...</span>
+                            </span>
+                        ) : (
+                            <span>{editingProduct ? 'Simpan Perubahan' : 'Simpan & Ajukan Persetujuan'}</span>
+                        )}
+                    </button>
                 </div>
             </form>
         </div>

@@ -136,7 +136,10 @@ const EcommerceCheckoutSinergy = () => {
 
     const isProfileIncomplete = !addresses?.name_full || !addresses?.phone || !addresses?.address;
 
+    const [submittingOrder, setSubmittingOrder] = useState(false);
+
     const handleProcessSplitCheckout = async () => {
+        if (submittingOrder) return;
         if (isProfileIncomplete) {
             alert('Mohon lengkapi data profil (Nama Lengkap, No. HP/WA, dan Alamat) Anda terlebih dahulu sebelum membuat pesanan.');
             navigate('/profile/edit');
@@ -154,6 +157,7 @@ const EcommerceCheckoutSinergy = () => {
         const selectedPaymentMethod = checkoutsList[0]?.payment_method || 'manual';
 
         try {
+            setSubmittingOrder(true);
             const res = await axios.post(`${process.env.REACT_APP_API_BASE_URL}/api/orders/`, {
                 checkouts: checkoutsList,
                 payment_method: selectedPaymentMethod
@@ -192,6 +196,8 @@ const EcommerceCheckoutSinergy = () => {
             console.error("Checkout Error Details:", err.response?.data || err.message);
             const errMsg = err.response?.data?.message || err.response?.data?.error || 'Gagal memproses Checkout. Silakan coba lagi.';
             alert(`Gagal Checkout: ${errMsg}`);
+        } finally {
+            setSubmittingOrder(false);
         }
     };
 
@@ -392,8 +398,19 @@ const EcommerceCheckoutSinergy = () => {
                         <span className="text-xs text-gray-500 uppercase font-bold tracking-wider">Total Pembayaran Keseluruhan</span>
                         <span className="text-2xl font-black text-gray-800">Rp {Object.keys(sellerGroups).reduce((acc, sid) => acc + sellerGroups[sid].total_price + (checkoutConfigs[sid]?.shipping_cost || 0)  - (checkoutConfigs[sid]?.voucher_nominal || 0), 0)}</span>
                     </div>
-                    <button onClick={handleProcessSplitCheckout} className="w-full sm:w-auto px-8 py-4 bg-gradient-to-r from-emerald-600 to-emerald-700 text-white font-bold rounded-2xl shadow-lg shadow-emerald-200 focus:outline-none hover:scale-[1.02] transition-transform">
-                        Buat Pesanan & Bayar
+                    <button 
+                        onClick={handleProcessSplitCheckout} 
+                        disabled={submittingOrder || isProfileIncomplete}
+                        className={`w-full sm:w-auto px-8 py-4 font-bold rounded-2xl shadow-lg transition-all ${submittingOrder || isProfileIncomplete ? 'bg-gray-300 text-gray-500 cursor-not-allowed shadow-none' : 'bg-gradient-to-r from-emerald-600 to-emerald-700 text-white shadow-emerald-200 hover:scale-[1.02]'}`}
+                    >
+                        {submittingOrder ? (
+                            <span className="flex items-center justify-center gap-2">
+                                <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></span>
+                                <span>Memproses Pesanan...</span>
+                            </span>
+                        ) : (
+                            <span>Buat Pesanan & Bayar</span>
+                        )}
                     </button>
                 </div>
 
