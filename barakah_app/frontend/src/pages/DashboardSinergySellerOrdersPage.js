@@ -4,6 +4,7 @@ import { Helmet } from 'react-helmet';
 import Header from '../components/layout/Header';
 import NavigationButton from '../components/layout/Navigation';
 import { Link } from 'react-router-dom';
+import { getMediaUrl } from '../utils/mediaUtils';
 
 const DashboardSinergySellerOrdersPage = () => {
     const [orders, setOrders] = useState([]);
@@ -243,8 +244,13 @@ const DashboardSinergySellerOrdersPage = () => {
                                             {order.items?.map(item => (
                                                 <div key={item.id} className="flex gap-3">
                                                     <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden border border-gray-100">
-                                                        {item.product_image ? (
-                                                            <img src={`${process.env.REACT_APP_API_BASE_URL}${item.product_image}`} alt={item.product_name} className="w-full h-full object-cover" />
+                                                        {item.product_image || item.product_thumbnail || item.thumbnail ? (
+                                                            <img 
+                                                                src={getMediaUrl(item.product_image || item.product_thumbnail || item.thumbnail)} 
+                                                                alt={item.product_name} 
+                                                                className="w-full h-full object-cover" 
+                                                                onError={(e) => { e.target.onerror = null; e.target.src = '/placeholder-image.jpg'; }}
+                                                            />
                                                         ) : (
                                                             <span className="material-icons text-gray-400">image</span>
                                                         )}
@@ -267,7 +273,7 @@ const DashboardSinergySellerOrdersPage = () => {
                                                     <span className="font-bold">{formatIDR(order.total_price)}</span>
                                                 </div>
                                                 <div className="flex justify-between items-center text-xs mt-1">
-                                                    <span className="text-gray-500">Ongkir ({order.shipping_courier})</span>
+                                                    <span className="text-gray-500">Pengiriman ({order.shipping_courier || 'Bayar Ongkir Di Tempat / Kesepakatan Seller & Buyer'})</span>
                                                     <span className="font-bold">{formatIDR(order.shipping_cost)}</span>
                                                 </div>
                                                 <div className="flex justify-between items-center text-sm font-black text-emerald-700 mt-2 p-2 bg-emerald-50 rounded-lg">

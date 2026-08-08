@@ -3,7 +3,7 @@ import axios from 'axios';
 import { Helmet } from 'react-helmet';
 import Header from '../components/layout/Header';
 import NavigationButton from '../components/layout/Navigation';
-import { useNavigate } from 'react-router-dom';
+import { getMediaUrl } from '../utils/mediaUtils';
 
 const EcommerceCheckoutSinergy = () => {
     const [cartItems, setCartItems] = useState([]);
@@ -216,7 +216,17 @@ const EcommerceCheckoutSinergy = () => {
                             <div className="space-y-4 mb-4">
                                 {group.items.map(item => (
                                     <div key={item.id} className="flex gap-4">
-                                        <div className="w-16 h-16 bg-gray-100 rounded-xl"></div>
+                                        <div className="w-16 h-16 bg-gray-100 rounded-xl overflow-hidden shrink-0 border border-gray-100">
+                                            <img 
+                                                src={getMediaUrl(item.product?.thumbnail || item.product?.thumbnail_url) || '/placeholder-image.jpg'} 
+                                                alt={item.product?.title}
+                                                className="w-full h-full object-cover"
+                                                onError={(e) => {
+                                                    e.target.onerror = null;
+                                                    e.target.src = '/placeholder-image.jpg';
+                                                }}
+                                            />
+                                        </div>
                                         <div className="flex-1">
                                             <h4 className="font-bold text-sm text-gray-800">{item.product.title}</h4>
                                             {item.variation && <p className="text-[10px] text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full w-fit mt-1">{item.variation.name}</p>}

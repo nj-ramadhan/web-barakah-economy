@@ -379,12 +379,14 @@ const EcommercePaymentConfirmation = () => {
             </div>
           </div>
 
-          <button
-            onClick={() => copyToClipboard(selectedBankInfo.number, 'Nomor rekening')}
-            className="w-full py-3 bg-emerald-50 text-emerald-700 rounded-xl font-bold text-xs hover:bg-emerald-100 transition-colors flex items-center justify-center gap-2"
-          >
-            <span className="material-icons text-sm">content_copy</span> SALIN NOMOR REKENING
-          </button>
+          {!selectedBankInfo?.isQRIS && bank !== 'qris' && (
+            <button
+              onClick={() => copyToClipboard(selectedBankInfo.number, 'Nomor rekening')}
+              className="w-full py-3 bg-emerald-50 text-emerald-700 rounded-xl font-bold text-xs hover:bg-emerald-100 transition-colors flex items-center justify-center gap-2"
+            >
+              <span className="material-icons text-sm">content_copy</span> SALIN NOMOR REKENING
+            </button>
+          )}
         </div>
 
         {/* Amount Card */}

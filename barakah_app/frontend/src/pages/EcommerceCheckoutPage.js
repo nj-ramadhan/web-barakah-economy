@@ -27,7 +27,7 @@ const EcommerceCheckoutPage = () => {
   const [profile, setProfile] = useState(null);
 
   // Checkout States
-  const [courier, setCourier] = useState('');
+  const [courier, setCourier] = useState('none');
   const [shippingOptions, setShippingOptions] = useState([]);
   const [selectedShipping, setSelectedShipping] = useState(0);
   const [isFetchingShipping, setIsFetchingShipping] = useState(false);
@@ -69,18 +69,16 @@ const EcommerceCheckoutPage = () => {
         });
         const p = res.data;
         setProfile(p || {});
-        setFormData(prev => ({ ...prev, fullName: p?.name_full || user.username, phone: p?.phone_number || '' }));
+        setFormData(prev => ({ 
+          ...prev, 
+          fullName: p?.name_full || user.name_full || user.username || '', 
+          phone: p?.phone_number || p?.whatsapp || user.phone_number || '',
+          email: user.email || p?.email || ''
+        }));
         
         // CHECK COD AVAILABILITY - All items must support COD
         const codSupported = cartItems.length > 0 && cartItems.every(item => item.product.is_cod_available);
         setIsCodAvailable(codSupported);
-
-        // AUTO SHIPPING CHECK
-        // If some products don't have couriers specified, default to 'none'
-        const hasNoShipping = cartItems.some(item => !item.product.supported_couriers || item.product.supported_couriers.trim() === "");
-        if (hasNoShipping) {
-          setCourier('none');
-        }
       } catch (error) {
         console.error(error);
       }
@@ -334,7 +332,12 @@ const EcommerceCheckoutPage = () => {
           <ul className="space-y-4">
             {cartItems.map((item) => (
               <li key={item.id} className="flex items-start gap-4">
-                <img src={item.product.thumbnail || '/images/produk.jpg'} alt={item.product.title} className="w-16 h-16 object-cover rounded-xl border border-gray-100" />
+                <img 
+                  src={getMediaUrl(item.product?.thumbnail || item.product?.thumbnail_url) || '/placeholder-image.jpg'} 
+                  alt={item.product?.title} 
+                  className="w-16 h-16 object-cover rounded-xl border border-gray-100 shrink-0" 
+                  onError={(e) => { e.target.onerror = null; e.target.src = '/placeholder-image.jpg'; }}
+                />
                 <div className="flex-1">
                   <h3 className="text-sm font-semibold">{item.product.title}</h3>
                   {item.variation && <p className="text-[10px] text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full w-fit mt-1">{item.variation.name}</p>}

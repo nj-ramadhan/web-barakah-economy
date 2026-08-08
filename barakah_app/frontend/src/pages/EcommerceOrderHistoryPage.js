@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import Header from '../components/layout/Header';
 import NavigationButton from '../components/layout/Navigation';
+import { getMediaUrl } from '../utils/mediaUtils';
 import '../styles/Body.css';
 
 const formatIDR = (amount) => {
@@ -194,8 +195,19 @@ const EcommerceOrderHistoryPage = () => {
                                     <div className="space-y-3">
                                         {(order.items || []).map((item, idx) => (
                                             <div key={idx} className="flex gap-4 items-center p-3 bg-gray-50/50 rounded-2xl border border-gray-50 group-hover:bg-gray-50 transition-colors">
-                                                <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm border border-gray-100 shrink-0">
-                                                    <span className="material-icons text-emerald-600">inventory_2</span>
+                                                <div className="w-12 h-12 bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100 shrink-0">
+                                                    {item.product_thumbnail || item.thumbnail ? (
+                                                        <img 
+                                                            src={getMediaUrl(item.product_thumbnail || item.thumbnail)} 
+                                                            alt={item.product_name} 
+                                                            className="w-full h-full object-cover"
+                                                            onError={(e) => { e.target.onerror = null; e.target.src = '/placeholder-image.jpg'; }}
+                                                        />
+                                                    ) : (
+                                                        <div className="w-full h-full flex items-center justify-center text-emerald-600">
+                                                            <span className="material-icons text-sm">inventory_2</span>
+                                                        </div>
+                                                    )}
                                                 </div>
                                                 <div className="flex-1 min-w-0">
                                                     <h4 className="text-xs font-bold text-gray-900 truncate">{item.product_name}</h4>
