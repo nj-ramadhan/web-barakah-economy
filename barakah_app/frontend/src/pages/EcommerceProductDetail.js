@@ -132,7 +132,7 @@ const EcommerceProductDetail = () => {
       setTimeout(() => setIsCartAnimating(false), 1000);
 
       window.dispatchEvent(new CustomEvent('cartUpdated', {
-        detail: { showToast: true, title: product?.title || 'Produk' }
+        detail: { showToast: true, openDrawer: true, title: product?.title || 'Produk' }
       }));
     } catch (error) {
       console.error('Error adding product to cart:', error);

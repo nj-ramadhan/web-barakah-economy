@@ -151,12 +151,44 @@ const EcommerceMainPage = () => {
       });
 
       window.dispatchEvent(new CustomEvent('cartUpdated', {
-        detail: { showToast: true, title: product?.title || 'Produk' }
+        detail: { showToast: true, openDrawer: true, title: product?.title || 'Produk' }
       }));
-      // Removed alert to use visual feedback from bubble
     } catch (error) {
       console.error('Error adding product to cart:', error);
       alert('Gagal menambahkan ke Keranjang Belanja');
+    }
+  };
+
+  const handleBuyNow = async (productId) => {
+    const csrfToken = getCsrfToken();
+    try {
+      const user = JSON.parse(localStorage.getItem('user'));
+      if (!user || !user.access) {
+        navigate('/login');
+        return;
+      }
+
+      const product = products.find(p => p.id === productId) || featuredProducts.find(p => p.id === productId);
+      if (product && product.variations && product.variations.length > 0) {
+        navigate(`/produk/${product.slug || product.id}`);
+        return;
+      }
+
+      await axios.post(`${process.env.REACT_APP_API_BASE_URL}/api/carts/cart/`, {
+        product_id: productId,
+        quantity: 1
+      }, {
+        headers: {
+          Authorization: `Bearer ${user.access}`,
+          'X-CSRFToken': csrfToken,
+        }
+      });
+
+      window.dispatchEvent(new CustomEvent('cartUpdated'));
+      navigate('/ecommerce/checkout-sinergy');
+    } catch (error) {
+      console.error('Error in Beli Langsung:', error);
+      alert('Gagal memproses pembelian langsung');
     }
   };
 
@@ -372,13 +404,7 @@ const EcommerceMainPage = () => {
                           </button>
                         </div>
                         <button
-                          onClick={() => {
-                            addToCart(product.id);
-                            setTimeout(() => {
-                              const bubble = document.getElementById('cart-floating-bubble');
-                              if (bubble) bubble.click();
-                            }, 500);
-                          }}
+                          onClick={() => handleBuyNow(product.id)}
                           className="w-full bg-emerald-500 hover:bg-emerald-600 text-white py-2.5 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-emerald-100 transition-all transform hover:-translate-y-1 text-[10px]"
                         >
                           <span className="material-icons text-sm">shopping_bag</span>

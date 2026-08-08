@@ -125,9 +125,9 @@ import DashboardHeroBannersPage from './pages/admin/DashboardHeroBannersPage';
 import DashboardUserAgreementPage from './pages/admin/DashboardUserAgreementPage';
 import CalendarWidgetPage from './pages/widget/CalendarWidgetPage';
 
-import FloatingCartModal from './components/layout/FloatingCartModal';
 import ProfileNotice from './components/common/ProfileNotice';
 import UserAgreementModal from './components/common/UserAgreementModal';
+import SlideOverCartDrawer from './components/layout/SlideOverCartDrawer';
 
 import { ResponsiveLayout, MobileContainer } from './components/layout/ResponsiveLayout';
 import ScrollToTop from './components/layout/ScrollToTop';
@@ -470,6 +470,7 @@ const LayoutWrapper = ({ isDesktop }) => {
         {/* Widget Routes — standalone, auth dikelola di dalam komponen */}
         <Route path="/widget/calendar" element={<CalendarWidgetPage />} />
       </Routes>
+      <SlideOverCartDrawer />
     </div>
   );
 };

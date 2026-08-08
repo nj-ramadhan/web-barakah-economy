@@ -3,6 +3,8 @@ import { Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../context/ThemeContext';
 
+import axios from 'axios';
+
 const NavDropdown = ({ title, items }) => {
     const [isOpen, setIsOpen] = useState(false);
 
@@ -40,9 +42,31 @@ const NavDropdown = ({ title, items }) => {
 const DesktopHeader = () => {
     const [user, setUser] = useState(null);
     const [showProfileMenu, setShowProfileMenu] = useState(false);
+    const [cartCount, setCartCount] = useState(0);
     const { t, i18n } = useTranslation();
     const { isDark, toggleTheme } = useTheme();
     const location = useLocation();
+
+    const fetchCartCount = async () => {
+        const userStr = localStorage.getItem('user');
+        if (!userStr) { setCartCount(0); return; }
+        try {
+            const userObj = JSON.parse(userStr);
+            if (!userObj.access) return;
+            const res = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/carts/cart/`, {
+                headers: { Authorization: `Bearer ${userObj.access}` }
+            });
+            const totalItems = (res.data || []).reduce((sum, item) => sum + (item.quantity || 1), 0);
+            setCartCount(totalItems);
+        } catch (err) {}
+    };
+
+    useEffect(() => {
+        fetchCartCount();
+        const handleCartUpdate = () => fetchCartCount();
+        window.addEventListener('cartUpdated', handleCartUpdate);
+        return () => window.removeEventListener('cartUpdated', handleCartUpdate);
+    }, []);
 
     useEffect(() => {
         const userData = JSON.parse(localStorage.getItem('user'));
@@ -113,6 +137,20 @@ const DesktopHeader = () => {
                     title={isDark ? 'Mode Terang' : 'Mode Gelap'}
                 >
                     <span className="material-icons text-xl">{isDark ? 'light_mode' : 'dark_mode'}</span>
+                </button>
+
+                {/* Cart Drawer Trigger Button */}
+                <button
+                    onClick={() => window.dispatchEvent(new CustomEvent('openCartDrawer'))}
+                    className="relative w-10 h-10 flex items-center justify-center rounded-full border border-emerald-100 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition-all duration-200"
+                    title="Keranjang Belanja"
+                >
+                    <span className="material-icons text-xl">shopping_cart</span>
+                    {cartCount > 0 && (
+                        <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[9px] font-black w-5 h-5 rounded-full flex items-center justify-center border-2 border-white dark:border-gray-900 animate-pulse">
+                            {cartCount > 9 ? '9+' : cartCount}
+                        </span>
+                    )}
                 </button>
 
                 {user ? (
