@@ -28,6 +28,7 @@ import EcommerceCartPage from './pages/EcommerceCartPage';
 import EcommerceOrderHistoryPage from './pages/EcommerceOrderHistoryPage';
 import EcommerceProductDetail from './pages/EcommerceProductDetail';
 import EcommerceCheckoutPage from './pages/EcommerceCheckoutPage';
+import EcommerceCheckoutSinergy from './pages/EcommerceCheckoutSinergy';
 import EcommercePaymentConfirmation from './pages/EcommercePaymentConfirmation';
 
 import ArticleListPage from "./pages/ArticleListPage";
@@ -331,11 +332,15 @@ const LayoutWrapper = ({ isDesktop }) => {
         <Route path="/konfirmasi-pembayaran-donasi" element={<ResponsiveLayout isDesktop={isDesktop}><CrowdfundingPaymentConfirmation /></ResponsiveLayout>} />
 
         <Route path="/sinergy" element={<ResponsiveLayout isDesktop={isDesktop}><EcommerceMainPage /></ResponsiveLayout>} />
+        <Route path="/ecommerce" element={<ResponsiveLayout isDesktop={isDesktop}><EcommerceMainPage /></ResponsiveLayout>} />
         <Route path="/produk/:slug" element={<ResponsiveLayout isDesktop={isDesktop}><EcommerceProductDetail /></ResponsiveLayout>} />
         <Route path="/incaran" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><EcommerceWishlistPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/keranjang" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><EcommerceCartPage /></ResponsiveLayout></PrivateRoute>} />
+        <Route path="/ecommerce/cart" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><EcommerceCartPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/riwayat-belanja" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><EcommerceOrderHistoryPage /></ResponsiveLayout></PrivateRoute>} />
-        <Route path="/bayar-belanja" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><EcommerceCheckoutPage /></ResponsiveLayout></PrivateRoute>} />
+        <Route path="/bayar-belanja" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><EcommerceCheckoutSinergy /></ResponsiveLayout></PrivateRoute>} />
+        <Route path="/ecommerce/checkout" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><EcommerceCheckoutSinergy /></ResponsiveLayout></PrivateRoute>} />
+        <Route path="/ecommerce/checkout-sinergy" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><EcommerceCheckoutSinergy /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/konfirmasi-pembayaran-belanja" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><EcommercePaymentConfirmation /></ResponsiveLayout></PrivateRoute>} />
 
         {/* Article Routes */}
