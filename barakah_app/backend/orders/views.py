@@ -208,6 +208,15 @@ class SellerOrderViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         user = self.request.user
         from django.db.models import Q
+        from django.utils import timezone
+        
+        # Auto-complete orders older than 7 days shipped
+        now = timezone.now()
+        Order.objects.filter(status='Dikirim', auto_complete_at__lte=now).update(
+            status='Selesai',
+            completed_at=now
+        )
+
         if user.is_superuser:
             # Admins can see all orders
             return Order.objects.all().order_by('-created_at')
@@ -218,6 +227,7 @@ class SellerOrderViewSet(viewsets.ModelViewSet):
         instance = self.get_object()
         user = request.user
         new_status = request.data.get('status')
+        complaint_reason = request.data.get('complaint_reason')
         
         # 1. Enforce Immutability for Terminal Statuses
         if instance.status in ['Selesai', 'Batal']:
@@ -226,16 +236,16 @@ class SellerOrderViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # 2. Buyer Permissions: Only allow setting to 'Selesai'
-        if instance.user == user and instance.seller != user:
-            if new_status != 'Selesai':
+        # 2. Buyer Permissions: Allow setting to 'Selesai' or 'Komplain'
+        if instance.user == user and instance.seller != user and not user.is_superuser:
+            if new_status not in ['Selesai', 'Komplain']:
                 return Response(
-                    {'error': 'Sebagai pembeli, Anda hanya dapat mengubah status menjadi Selesai.'},
+                    {'error': 'Sebagai pembeli, Anda hanya dapat menyelesaikan pesanan atau mengajukan komplain.'},
                     status=status.HTTP_403_FORBIDDEN
                 )
             if instance.status != 'Dikirim':
                 return Response(
-                    {'error': 'Pesanan hanya dapat diselesaikan jika status sudah Dikirim.'},
+                    {'error': 'Komplain atau konfirmasi selesai hanya dapat dilakukan jika barang sudah Dikirim.'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
         
@@ -245,31 +255,34 @@ class SellerOrderViewSet(viewsets.ModelViewSet):
                 'Pending': ['Paid', 'Batal'],
                 'Paid': ['Proses', 'Batal'],
                 'Proses': ['Dikirim', 'Batal'],
-                'Dikirim': ['Selesai', 'Batal'],
+                'Dikirim': ['Selesai', 'Komplain', 'Batal'],
+                'Komplain': ['Selesai', 'Proses', 'Batal'],
                 'Selesai': [],
                 'Batal': []
             }
             
             # If the current status is not in the list (e.g. legacy status), we allow transition to any from the list
-            current_allowed = allowed_transitions.get(instance.status, ['Pending', 'Paid', 'Proses', 'Dikirim', 'Selesai', 'Batal'])
+            current_allowed = allowed_transitions.get(instance.status, ['Pending', 'Paid', 'Proses', 'Dikirim', 'Komplain', 'Selesai', 'Batal'])
             
             if new_status not in current_allowed:
                 return Response(
-                    {'error': f'Status tidak dapat diubah dari {instance.status} ke {new_status}. Urutan: Pending -> Paid -> Proses -> Dikirim -> Selesai.'},
+                    {'error': f'Status tidak dapat diubah dari {instance.status} ke {new_status}.'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
 
-            # 3. Handle Status-Specific Logic
+            # 4. Handle Status-Specific Logic
             from django.utils import timezone
             from datetime import timedelta
             
             if new_status == 'Dikirim':
                 instance.shipped_at = timezone.now()
-                # Use estimated_delivery_days from request or default
-                est_days = request.data.get('estimated_delivery_days', instance.estimated_delivery_days)
-                instance.estimated_delivery_days = int(est_days)
-                # Auto complete after estimation + 5 days buffer
-                instance.auto_complete_at = instance.shipped_at + timedelta(days=instance.estimated_delivery_days + 5)
+                # 7-day auto completion rule as requested
+                instance.auto_complete_at = instance.shipped_at + timedelta(days=7)
+                
+            elif new_status == 'Komplain':
+                instance.complaint_at = timezone.now()
+                if complaint_reason:
+                    instance.complaint_reason = complaint_reason
                 
             elif new_status == 'Selesai':
                 instance.completed_at = timezone.now()

@@ -166,14 +166,15 @@ const DashboardSinergySellersPage = () => {
         try {
             const formData = new FormData();
             formData.append('title', e.target.title.value);
+            formData.append('description', e.target.description ? e.target.description.value : '');
             formData.append('purchase_price', parseCurrency(e.target.purchase_price.value));
             formData.append('price', parseCurrency(e.target.price.value));
             formData.append('stock', e.target.stock.value);
-            formData.append('weight', e.target.weight.value);
-            formData.append('category', e.target.category.value);
-            formData.append('supported_couriers', selectedCouriers.join(','));
+            formData.append('weight', e.target.weight ? e.target.weight.value : 1000);
+            formData.append('category', e.target.category ? e.target.category.value : 'lainnya');
+            formData.append('supported_couriers', selectedCouriers.length > 0 ? selectedCouriers.join(',') : 'bebas');
             formData.append('is_cod_available', isCodAvailable);
-            formData.append('purchase_instructions', e.target.purchase_instructions.value);
+            formData.append('purchase_instructions', e.target.purchase_instructions ? e.target.purchase_instructions.value : '');
 
             let targetStatus = ownBankStatus;
             if (!useOwnBank) {
@@ -218,17 +219,16 @@ const DashboardSinergySellersPage = () => {
             }));
             formData.append('variations', JSON.stringify(sanitizedVariants));
 
-
             if (editingProduct) {
                 await axios.patch(`${process.env.REACT_APP_API_BASE_URL}/api/products/${editingProduct.id}/?manage=true`, formData, {
                     headers: { 'Authorization': `Bearer ${user.access}` }
                 });
-                alert('Produk berhasil diubah');
+                alert('Produk berhasil diubah!');
             } else {
                 await axios.post(`${process.env.REACT_APP_API_BASE_URL}/api/products/`, formData, {
                     headers: { 'Authorization': `Bearer ${user.access}` }
                 });
-                alert('Produk berhasil ditambahkan');
+                alert('Produk berhasil ditambahkan!');
             }
             fetchDashboardData();
             setActiveTab('list');
@@ -237,8 +237,9 @@ const DashboardSinergySellersPage = () => {
             setGalleryFiles([]);
             setGalleryPreviews([]);
         } catch (error) {
-            console.error(error);
-            alert('Gagal menyimpan produk');
+            console.error('Error saving product detail:', error.response?.data || error);
+            const detailMsg = error.response?.data ? JSON.stringify(error.response.data) : 'Gagal menyimpan produk';
+            alert(`Gagal menyimpan produk: ${detailMsg}`);
         }
     };
 
@@ -493,60 +494,45 @@ const DashboardSinergySellersPage = () => {
                 </div>
 
                 <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1">Deskripsi Produk *</label>
+                    <textarea 
+                        name="description" 
+                        defaultValue={editingProduct?.description || ''} 
+                        placeholder="Tuliskan deskripsi lengkap, spesifikasi, atau keunggulan produk Anda..." 
+                        required
+                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none transition h-28 resize-y"
+                    ></textarea>
+                </div>
+
+                <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-1">Informasi Pengambilan / Teknis (Opsional)</label>
                     <textarea 
                         name="purchase_instructions" 
                         defaultValue={editingProduct?.purchase_instructions || ''} 
-                        placeholder="Contoh: Pengambilan dilakukan di lokasi kandang, atau teknis pengiriman hewan qurban..." 
+                        placeholder="Contoh: Pengambilan dilakukan di lokasi toko/kandang, atau teknis khusus..." 
                         className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none transition h-24"
                     ></textarea>
                 </div>
 
-                <div className="bg-emerald-50 p-6 rounded-3xl border border-emerald-100">
-                    <div className="flex items-center justify-between mb-4">
-                        <div>
-                            <label className="block text-sm font-bold text-emerald-800">Layanan Ekspedisi & COD</label>
-                            <p className="text-[10px] text-emerald-600">Pilih kurir dan aktifkan fitur Bayar di Tempat (COD)</p>
+                <div className="bg-emerald-50 p-5 rounded-2xl border border-emerald-100 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold shadow-md shadow-emerald-200">
+                            <span className="material-icons">local_shipping</span>
                         </div>
-                        <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-2xl shadow-sm border border-emerald-200">
-                            <span className="text-[11px] font-bold text-gray-600 uppercase tracking-tight">Aktifkan COD</span>
-                            <button
-                                type="button"
-                                onClick={() => setIsCodAvailable(!isCodAvailable)}
-                                className={`w-12 h-6 rounded-full transition-all relative ${isCodAvailable ? 'bg-emerald-500' : 'bg-gray-300'}`}
-                            >
-                                <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow-sm transition-all ${isCodAvailable ? 'left-7' : 'left-1'}`}></div>
-                            </button>
+                        <div>
+                            <h4 className="text-sm font-bold text-emerald-900">Sistem Pengiriman E-Commerce</h4>
+                            <p className="text-xs text-emerald-700">Pengiriman dilakukan langsung oleh Penjual / Bebas Ongkir (Kesepakatan dengan Pembeli).</p>
                         </div>
                     </div>
-                    
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                        {[
-                            { id: 'jne', name: 'JNE' },
-                            { id: 'pos', name: 'POS' },
-                            { id: 'tiki', name: 'TIKI' },
-                            { id: 'jnt', name: 'J&T' },
-                            { id: 'sicepat', name: 'SiCepat' },
-                            { id: 'anteraja', name: 'AnterAja' },
-                            { id: 'wahana', name: 'Wahana' },
-                            { id: 'ninja', name: 'Ninja' },
-                        ].map(courier => (
-                            <label key={courier.id} className="flex items-center gap-2 p-2 bg-gray-50 rounded-xl border border-gray-200 cursor-pointer hover:bg-emerald-50 transition-colors">
-                                <input 
-                                    type="checkbox" 
-                                    className="form-checkbox h-4 w-4 text-emerald-600 rounded border-gray-300 focus:ring-emerald-500"
-                                    checked={selectedCouriers.includes(courier.id)}
-                                    onChange={(e) => {
-                                        if (e.target.checked) {
-                                            setSelectedCouriers([...selectedCouriers, courier.id]);
-                                        } else {
-                                            setSelectedCouriers(selectedCouriers.filter(c => c !== courier.id));
-                                        }
-                                    }}
-                                />
-                                <span className="text-xs font-bold text-gray-700">{courier.name}</span>
-                            </label>
-                        ))}
+                    <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-xl shadow-sm border border-emerald-200">
+                        <span className="text-[11px] font-bold text-gray-700 uppercase tracking-tight">Aktifkan COD</span>
+                        <button
+                            type="button"
+                            onClick={() => setIsCodAvailable(!isCodAvailable)}
+                            className={`w-10 h-5 rounded-full transition-all relative ${isCodAvailable ? 'bg-emerald-500' : 'bg-gray-300'}`}
+                        >
+                            <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow-sm transition-all ${isCodAvailable ? 'left-5.5' : 'left-0.5'}`}></div>
+                        </button>
                     </div>
                 </div>
 

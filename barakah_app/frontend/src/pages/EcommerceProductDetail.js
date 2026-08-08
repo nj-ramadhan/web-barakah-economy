@@ -63,6 +63,7 @@ const EcommerceProductDetail = () => {
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
   const [likesCount, setLikesCount] = useState(0);
+  const [isCartAnimating, setIsCartAnimating] = useState(false);
   const [liking, setLiking] = useState(false);
 
   const baseUrl = process.env.REACT_APP_API_BASE_URL;
@@ -96,7 +97,11 @@ const EcommerceProductDetail = () => {
   }, [slug]);
 
   const addToCart = async () => {
-    // Check if variations exist but top one wasn't selected
+    const currentStock = selectedVariation ? selectedVariation.stock : (product?.total_stock || product?.stock || 0);
+    if (currentStock <= 0) {
+      alert('Maaf, stok produk ini sedang habis.');
+      return;
+    }
     if (product.variations && product.variations.length > 0 && !selectedVariation) {
         alert('Silakan pilih variasi terlebih dahulu (misal: Warna/Ukuran)');
         return;
@@ -121,6 +126,10 @@ const EcommerceProductDetail = () => {
           'X-CSRFToken': csrfToken,
         }
       });
+
+      // Trigger Cart Pop & Flying Micro-animation
+      setIsCartAnimating(true);
+      setTimeout(() => setIsCartAnimating(false), 1000);
 
       window.dispatchEvent(new CustomEvent('cartUpdated', {
         detail: { showToast: true, title: product?.title || 'Produk' }
@@ -166,7 +175,8 @@ const EcommerceProductDetail = () => {
         detail: { showToast: true, title: product?.title || 'Produk' }
       }));
 
-      navigate('/keranjang');
+      // Directly navigate to checkout
+      navigate('/ecommerce/checkout-sinergy');
     } catch (error) {
       console.error('Error in Beli Langsung:', error);
       const msg = error.response?.data?.error || 'Gagal memproses pembelian';
@@ -453,7 +463,7 @@ const EcommerceProductDetail = () => {
 
                   <div className="flex flex-col md:flex-row gap-4">
                     <button 
-                      className={`flex-1 py-3 px-6 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg transition-all transform ${isOutOfStock ? 'bg-gray-100 text-gray-400 cursor-not-allowed shadow-none' : 'bg-green-600 hover:bg-green-700 text-white shadow-green-200 hover:-translate-y-1'}`}
+                      className={`flex-1 py-3 px-6 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg transition-all transform ${isOutOfStock ? 'bg-gray-100 text-gray-400 cursor-not-allowed shadow-none' : 'bg-green-600 hover:bg-green-700 text-white shadow-green-200 hover:-translate-y-1'} ${isCartAnimating ? 'animate-bounce ring-4 ring-green-300 scale-105' : ''}`}
                       onClick={addToCart}
                       disabled={isOutOfStock}
                     >

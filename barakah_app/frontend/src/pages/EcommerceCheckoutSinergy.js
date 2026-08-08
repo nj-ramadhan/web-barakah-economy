@@ -38,15 +38,7 @@ const EcommerceCheckoutSinergy = () => {
                 });
                 
                 const p = profileRes.data;
-                // Basic Validation for Shipping
-                if (!p.address_village_id || !p.address) {
-                    alert('Mohon lengkapi Alamat, Kota, Kecamatan, dan Kelurahan di profil Anda untuk kalkulasi ongkos kirim E-commerce.');
-                    navigate('/profile/edit?complete=address');
-                    return;
-                }
-
-
-                setAddresses(p);
+                setAddresses(p || {});
 
                 // Fetch Carts
                 const cartRes = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/carts/?selected=true`, {
@@ -234,97 +226,15 @@ const EcommerceCheckoutSinergy = () => {
                                 ))}
                             </div>
 
-                            {/* Couriers Selection */}
-                            <div className="bg-orange-50/50 p-3 rounded-xl border border-orange-100 mb-4">
-                                <label className="block text-[11px] font-bold text-orange-800 mb-2 uppercase tracking-wider">Cek Ongkos Kirim Otomatis</label>
-
-                                <div className="space-y-2">
-                                    <select 
-                                        className="w-full text-sm bg-white border border-orange-200 rounded-lg p-2 focus:ring-1 focus:ring-orange-500"
-                                        value={config?.shipping_courier || ''}
-                                        onChange={(e) => {
-                                            handleConfigChange(s_id, 'shipping_courier', e.target.value);
-                                            fetchShippingOptions(s_id, e.target.value);
-                                        }}
-                                    >
-                                        <option value="">Pilih Kurir</option>
-                                        {[
-                                            { id: 'jne', name: 'JNE (Jalur Nugraha Ekakurir)' },
-                                            { id: 'pos', name: 'POS Indonesia' },
-                                            { id: 'tiki', name: 'TIKI (Titipan Kilat)' },
-                                            { id: 'jnt', name: 'J&T Express' },
-                                            { id: 'sicepat', name: 'SiCepat' },
-                                            { id: 'anteraja', name: 'AnterAja' },
-                                            { id: 'wahana', name: 'Wahana' },
-                                            { id: 'ninja', name: 'Ninja' },
-                                        ].filter(c => {
-                                            // Intersection: courier must be supported by ALL products in this seller's group
-                                            const itemsFromThisSeller = cartItems.filter(item => (item.product?.seller_id || "0") === s_id);
-                                            if (itemsFromThisSeller.length === 0) return false;
-                                            
-                                            return itemsFromThisSeller.every(item => {
-                                                const supportedStr = item.product?.supported_couriers;
-                                                // If field is empty or missing, assume it supports all standard couriers
-                                                if (!supportedStr) return true; 
-                                                const supportedList = supportedStr.split(',').map(s => s.trim().toLowerCase());
-                                                return supportedList.includes(c.id);
-                                            });
-                                        }).map(c => (
-                                            <option key={c.id} value={c.id}>{c.name}</option>
-                                        ))}
-                                    </select>
-
-                                    {/* Warning if no common courier found */}
-                                    {(() => {
-                                        const itemsFromThisSeller = cartItems.filter(item => (item.product?.seller_id || "0") === s_id);
-                                        const availableCouriers = [
-                                            { id: 'jne' }, { id: 'pos' }, { id: 'tiki' }, { id: 'jnt' }, 
-                                            { id: 'sicepat' }, { id: 'anteraja' }, { id: 'wahana' }, { id: 'ninja' }
-                                        ].filter(c => itemsFromThisSeller.every(item => {
-                                            const supportedStr = item.product?.supported_couriers;
-                                            if (!supportedStr) return true;
-                                            return supportedStr.split(',').map(s => s.trim().toLowerCase()).includes(c.id);
-                                        }));
-                                        
-                                        if (availableCouriers.length === 0 && itemsFromThisSeller.length > 0) {
-                                            return (
-                                                <div className="flex items-center gap-2 p-2 bg-red-50 border border-red-100 rounded-lg mt-2">
-                                                    <span className="material-icons text-red-500 text-sm">warning</span>
-                                                    <p className="text-[10px] text-red-600 font-semibold leading-tight">
-                                                        Produk dalam pesanan ini memiliki pilihan kurir yang berbeda-beda. 
-                                                        Mohon pisahkan pesanan agar bisa dikirim.
-                                                    </p>
-                                                </div>
-                                            );
-                                        }
-                                        return null;
-                                    })()}
-
-
-
-                                    {config?.shipping_courier && (
-                                        <select 
-                                            className="w-full text-sm bg-white border border-orange-200 rounded-lg p-2 focus:ring-1 focus:ring-orange-500"
-                                            value={config?.shipping_service || ''}
-                                            onChange={(e) => {
-                                                const opt = courierOptions[s_id]?.find(o => o.service === e.target.value);
-                                                if (opt) {
-                                                    handleConfigChange(s_id, 'shipping_service', opt.service);
-                                                    handleConfigChange(s_id, 'shipping_cost', opt.cost);
-                                                }
-                                            }}
-                                            disabled={loadingCosts[s_id]}
-                                        >
-                                            <option value="">{loadingCosts[s_id] ? 'Memuat Layanan...' : 'Pilih Layanan'}</option>
-                                            {courierOptions[s_id]?.map(opt => (
-                                                <option key={opt.service} value={opt.service}>
-                                                    {opt.service} - Rp {opt.cost.toLocaleString('id-ID')} ({opt.etd})
-                                                </option>
-                                            ))}
-                                        </select>
-                                    )}
+                            {/* Simplified Shipping Notice */}
+                            <div className="bg-emerald-50/70 p-3.5 rounded-2xl border border-emerald-100 mb-4 flex items-center gap-3">
+                                <div className="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold flex-shrink-0">
+                                    <span className="material-icons text-lg">local_shipping</span>
                                 </div>
-                                <p className="text-[10px] text-gray-400 mt-1 italic">*Terkoneksi langsung dengan API.co.id (Kelurahan Accurate)</p>
+                                <div>
+                                    <span className="text-[10px] font-extrabold text-emerald-800 uppercase tracking-wider block">Pengiriman & Logistik</span>
+                                    <p className="text-xs font-medium text-emerald-900">Bebas Ongkir / Ambil Sendiri (Kesepakatan dengan Penjual)</p>
+                                </div>
                             </div>
 
 

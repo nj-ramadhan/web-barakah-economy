@@ -56,9 +56,9 @@ class Product(models.Model):
 
     title = models.CharField(max_length=100)
     slug = models.SlugField(max_length=100, unique=True, blank=True)
-    description = models.TextField()
-    category = models.CharField(max_length=20, choices=CATEGORY_CHOICES)
-    thumbnail = models.ImageField(upload_to='product_images/')
+    description = models.TextField(blank=True, default='')
+    category = models.CharField(max_length=50, blank=True, default='lainnya')
+    thumbnail = models.ImageField(upload_to='product_images/', blank=True, null=True)
     
     # Sinergy / Physical Attributes
     seller = models.ForeignKey('accounts.User', on_delete=models.CASCADE, related_name='physical_products', null=True, blank=True)

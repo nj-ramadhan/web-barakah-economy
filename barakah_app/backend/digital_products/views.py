@@ -606,7 +606,7 @@ class WithdrawalViewSet(viewsets.ModelViewSet):
             # --- Sinergy Pending (separate BAE vs Direct) ---
             total_sinergy_pending_available = Order.objects.filter(
                 seller=request.user,
-                status__in=['Paid', 'paid', 'PAID', 'Proses', 'proses', 'PROSES', 'Dikirim', 'dikirim', 'DIKIRIM', 'Shipped', 'shipped', 'SHIPPED'],
+                status__in=['Paid', 'paid', 'PAID', 'Proses', 'proses', 'PROSES', 'Dikirim', 'dikirim', 'DIKIRIM', 'Shipped', 'shipped', 'SHIPPED', 'Komplain', 'komplain', 'KOMPLAIN', 'Banding', 'banding'],
                 paid_to_seller_directly=False
             ).aggregate(
                 total=Sum(F('total_price') - F('voucher_nominal'), output_field=DecimalField())
@@ -614,7 +614,7 @@ class WithdrawalViewSet(viewsets.ModelViewSet):
 
             total_sinergy_pending_direct = Order.objects.filter(
                 seller=request.user,
-                status__in=['Paid', 'paid', 'PAID', 'Proses', 'proses', 'PROSES', 'Dikirim', 'dikirim', 'DIKIRIM', 'Shipped', 'shipped', 'SHIPPED'],
+                status__in=['Paid', 'paid', 'PAID', 'Proses', 'proses', 'PROSES', 'Dikirim', 'dikirim', 'DIKIRIM', 'Shipped', 'shipped', 'SHIPPED', 'Komplain', 'komplain', 'KOMPLAIN', 'Banding', 'banding'],
                 paid_to_seller_directly=True
             ).aggregate(
                 total=Sum(F('total_price') - F('voucher_nominal'), output_field=DecimalField())

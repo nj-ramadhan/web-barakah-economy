@@ -68,13 +68,8 @@ const EcommerceCheckoutPage = () => {
           headers: { Authorization: `Bearer ${user.access}` }
         });
         const p = res.data;
-        if (!p.address_city_id || !p.address) {
-          alert('Tolong lengkapi alamat dan kota Anda terlebih dahulu untuk pengiriman barang (E-commerce).');
-          navigate('/profile/edit?complete=address');
-          return;
-        }
-        setProfile(p);
-        setFormData(prev => ({ ...prev, fullName: p.name_full || user.username, phone: p.phone_number || '' }));
+        setProfile(p || {});
+        setFormData(prev => ({ ...prev, fullName: p?.name_full || user.username, phone: p?.phone_number || '' }));
         
         // CHECK COD AVAILABILITY - All items must support COD
         const codSupported = cartItems.length > 0 && cartItems.every(item => item.product.is_cod_available);

@@ -27,6 +27,8 @@ class Order(models.Model):
     auto_complete_at = models.DateTimeField(null=True, blank=True)
     completed_at = models.DateTimeField(null=True, blank=True)
     buyer_note = models.TextField(blank=True, null=True, help_text="Catatan pembeli untuk penjual")
+    complaint_reason = models.TextField(blank=True, null=True, help_text="Alasan komplain / banding dari pembeli")
+    complaint_at = models.DateTimeField(null=True, blank=True)
     paid_to_seller_directly = models.BooleanField(default=False)
     seller_bank_name = models.CharField(max_length=100, blank=True, null=True)
     seller_bank_account = models.CharField(max_length=100, blank=True, null=True)

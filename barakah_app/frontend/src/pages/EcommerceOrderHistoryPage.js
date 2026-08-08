@@ -98,7 +98,27 @@ const EcommerceOrderHistoryPage = () => {
             alert('Terima kasih! Pesanan telah selesai.');
             fetchOrders();
         } catch (error) {
-            alert(error.response?.data?.error || 'Gagal menyelesaikan pesanan');
+            alert(error.response?.data?.error || 'Gagal mengubah status pesanan');
+        }
+    };
+
+    const handleComplaintOrder = async (orderId) => {
+        const reason = window.prompt('Masukkan alasan komplain / banding (Contoh: Barang belum sampai, atau paket bermasalah):');
+        if (!reason || !reason.trim()) return;
+
+        const userData = localStorage.getItem('user');
+        if (!userData) return;
+        const user = JSON.parse(userData);
+
+        try {
+            await axios.patch(`${process.env.REACT_APP_API_BASE_URL}/api/orders/seller-orders/${orderId}/`, 
+                { status: 'Komplain', complaint_reason: reason },
+                { headers: { Authorization: `Bearer ${user.access}` } }
+            );
+            alert('Komplain / banding berhasil diajukan! Status pesanan diubah menjadi Komplain dan saldo ditahan.');
+            fetchOrders();
+        } catch (error) {
+            alert(error.response?.data?.error || 'Gagal mengajukan komplain');
         }
     };
 
@@ -236,13 +256,30 @@ const EcommerceOrderHistoryPage = () => {
                                     )}
 
                                         {order.status === 'Dikirim' && (
-                                            <button 
-                                                onClick={() => handleCompleteOrder(order.id)}
-                                                className="w-full flex items-center justify-center gap-2 py-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl text-xs font-black uppercase tracking-widest transition-all shadow-lg shadow-emerald-100 mb-2"
-                                            >
-                                                <span className="material-icons">check_circle</span>
-                                                Pesanan Diterima
-                                            </button>
+                                            <div className="flex gap-2 mb-2">
+                                                <button 
+                                                    onClick={() => handleCompleteOrder(order.id)}
+                                                    className="flex-[2] flex items-center justify-center gap-2 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl text-xs font-black uppercase tracking-widest transition-all shadow-lg shadow-emerald-100"
+                                                >
+                                                    <span className="material-icons text-sm">check_circle</span>
+                                                    Pesanan Diterima
+                                                </button>
+                                                <button 
+                                                    onClick={() => handleComplaintOrder(order.id)}
+                                                    className="flex-1 flex items-center justify-center gap-1 py-3 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all"
+                                                >
+                                                    <span className="material-icons text-sm">report_problem</span>
+                                                    Komplain / Banding
+                                                </button>
+                                            </div>
+                                        )}
+
+                                        {order.status === 'Komplain' && (
+                                            <div className="p-4 bg-red-50/80 rounded-2xl border border-red-100 text-xs text-red-800 space-y-1 mb-2">
+                                                <span className="font-black uppercase tracking-widest text-[9px] block text-red-700">⚠️ Status Komplain / Banding Ditinjau:</span>
+                                                <p className="font-semibold">"{order.complaint_reason || 'Barang belum diterima / paket bermasalah'}"</p>
+                                                <p className="text-[10px] text-red-600 italic">Saldo penjual ditahan hingga komplain selesai diselesaikan.</p>
+                                            </div>
                                         )}
 
                                         <div className="flex gap-2">
