@@ -53,7 +53,7 @@ const NavigationButton = () => {
       {!isNavVisible && (
         <button
           onClick={() => setIsNavVisible(true)}
-          className="fixed bottom-6 left-1/2 -translate-x-1/2 px-6 py-2 bg-green-700 dark:bg-green-600 text-white rounded-full shadow-xl z-[1001] flex items-center justify-center gap-2 animate-bounce-subtle"
+          className="fixed bottom-6 left-1/2 -translate-x-1/2 px-6 py-2 bg-green-700 dark:bg-green-600 text-white rounded-full shadow-xl z-[1001] flex lg:hidden items-center justify-center gap-2 animate-bounce-subtle"
         >
           <span className="material-icons text-sm">keyboard_arrow_up</span>
           <span className="text-sm font-medium">Buka Menu</span>
@@ -61,7 +61,7 @@ const NavigationButton = () => {
       )}
 
       {isNavVisible && (
-        <nav className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-950 border-t border-gray-100 dark:border-gray-800 max-w-md mx-auto z-50 rounded-t-3xl shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] dark:shadow-[0_-4px_12px_-1px_rgba(0,0,0,0.5)] transition-all duration-300" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
+        <nav className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-950 border-t border-gray-100 dark:border-gray-800 max-w-md mx-auto z-50 rounded-t-3xl shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] dark:shadow-[0_-4px_12px_-1px_rgba(0,0,0,0.5)] transition-all duration-300 lg:hidden" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
           <div className="grid grid-cols-12 items-center px-4 py-2 relative">
 
             {/* Close Toggle Button */}

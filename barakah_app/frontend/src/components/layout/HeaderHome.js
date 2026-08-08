@@ -44,7 +44,7 @@ const HeaderHome = ({ onSearch }) => {
   };
 
   return (
-    <header className="bg-white dark:bg-gray-950 shadow-sm dark:shadow-gray-900 border-b border-transparent dark:border-gray-800 fixed top-0 left-0 w-full z-[900] lg:static lg:shadow-none lg:bg-transparent transition-colors duration-300" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
+    <header className="bg-white dark:bg-gray-950 shadow-sm dark:shadow-gray-900 border-b border-transparent dark:border-gray-800 fixed top-0 left-0 w-full z-[900] lg:hidden transition-colors duration-300" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
       <div className="px-4 py-3 lg:max-w-6xl lg:mx-auto lg:px-6">
         <div className="flex justify-between items-center lg:justify-end">
           <Link to="/" className="flex items-center gap-2 group">
