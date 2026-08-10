@@ -8,6 +8,7 @@ import NavigationButton from '../components/layout/Navigation';
 import { formatCurrency } from '../utils/formatters';
 import UserProfileModal from '../components/modals/UserProfileModal';
 import { getMediaUrl } from '../utils/mediaUtils';
+import { toggleLikeProduct } from '../services/productApi';
 import ShareButton from '../components/campaigns/ShareButton';
 import '../styles/Body.css';
 
@@ -386,6 +387,7 @@ const EcommerceProductDetail = () => {
             </div>
           </div>
           <div className="p-6 md:p-10 md:w-1/2 flex flex-col justify-between">
+            <div>
               <div className="flex justify-between items-start gap-4 mb-4">
                 <h1 className="text-2xl md:text-3xl font-bold text-gray-900">{product.title}</h1>
                 <ShareButton slug={product.slug} title={product.title} type="product" />
