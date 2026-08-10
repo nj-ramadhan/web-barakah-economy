@@ -25,14 +25,17 @@ def get_seo_response(request, metadata):
 
         # Build absolute image URL
         if image_url:
+            if hasattr(image_url, 'url'):
+                image_url = image_url.url
             if not (image_url.startswith('http://') or image_url.startswith('https://')):
                 image_url = request.build_absolute_uri(image_url)
-            # Ensure https if request came over https/reverse proxy
-            if request.headers.get('x-forwarded-proto') == 'https' and image_url.startswith('http://'):
+            
+            # Force HTTPS for social media scrapers (WhatsApp requires https for media previews)
+            if image_url.startswith('http://'):
                 image_url = 'https://' + image_url[7:]
         else:
             site_url = request.build_absolute_uri('/')[:-1]
-            if request.headers.get('x-forwarded-proto') == 'https' and site_url.startswith('http://'):
+            if site_url.startswith('http://'):
                 site_url = 'https://' + site_url[7:]
             image_url = f"{site_url}/images/web-thumbnail.jpg"
 
@@ -57,7 +60,8 @@ def get_seo_response(request, metadata):
     <meta property="og:description" content="{description}">
     <meta property="og:image" content="{image_url}">
     <meta property="og:image:secure_url" content="{image_url}">
-    <meta property="og:image:type" content="image/jpeg">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
     <meta property="og:url" content="{current_url}">
     <meta property="og:type" content="{page_type}">
     <meta name="twitter:card" content="summary_large_image">

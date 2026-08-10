@@ -1,5 +1,4 @@
-from django.http import HttpResponse, Http404
-from django.shortcuts import get_object_or_404
+from django.http import HttpResponse
 from django.utils.text import slugify
 import re
 
@@ -18,164 +17,246 @@ from .seo_utils import get_seo_response
 
 def clean_html(text):
     if not text: return ""
-    # Remove HTML tags and truncate
     clean = re.sub(r'<[^>]*>', '', text)
-    return clean[:160]
+    return clean[:160].strip()
 
 # --- MODULE HANDLERS ---
 
 def seo_product_detail(request, slug):
-    if slug.isdigit():
-        product = get_object_or_404(Product, id=int(slug), status='approved', is_active=True)
-    else:
-        product = get_object_or_404(Product, slug=slug, status='approved', is_active=True)
-        
-    image_url = ''
-    if product.thumbnail:
-        image_url = product.thumbnail.url
-    elif product.images.exists():
-        image_url = product.images.first().image.url
+    product = None
+    if str(slug).isdigit():
+        product = Product.objects.filter(id=int(slug)).first()
+    if not product:
+        product = Product.objects.filter(slug=slug).first()
 
-    metadata = {
-        'title': product.title,
-        'description': clean_html(product.description),
-        'image_url': image_url,
+    if product:
+        title = product.title
+        desc = clean_html(product.description) or f"Beli {product.title} di Barakah Economy."
+        img = ''
+        if product.thumbnail and hasattr(product.thumbnail, 'url'):
+            img = product.thumbnail.url
+        elif product.images.exists():
+            first_img = product.images.first()
+            if first_img and hasattr(first_img.image, 'url'):
+                img = first_img.image.url
+    else:
+        title = str(slug).replace('-', ' ').title()
+        desc = "Lihat produk unggulan di Barakah Economy."
+        img = ''
+
+    return get_seo_response(request, {
+        'title': title,
+        'description': desc,
+        'image_url': img,
         'type': 'product'
-    }
-    return get_seo_response(request, metadata)
+    })
 
 def seo_campaign_detail(request, slug):
-    if slug.isdigit():
-        campaign = get_object_or_404(Campaign, id=int(slug), approval_status='approved', is_active=True)
+    campaign = None
+    if str(slug).isdigit():
+        campaign = Campaign.objects.filter(id=int(slug)).first()
+    if not campaign:
+        campaign = Campaign.objects.filter(slug=slug).first()
+
+    if campaign:
+        title = campaign.title
+        desc = clean_html(campaign.description) or f"Bantu program {campaign.title} di Barakah Economy"
+        img = campaign.thumbnail.url if (campaign.thumbnail and hasattr(campaign.thumbnail, 'url')) else ''
+        body = campaign.description
     else:
-        campaign = get_object_or_404(Campaign, slug=slug, approval_status='approved', is_active=True)
-        
-    metadata = {
-        'title': campaign.title,
-        'description': clean_html(campaign.description),
-        'image_url': campaign.thumbnail.url if campaign.thumbnail else '',
+        title = str(slug).replace('-', ' ').title()
+        desc = "Lihat program donasi & kebaikan di Barakah Economy."
+        img = ''
+        body = ''
+
+    return get_seo_response(request, {
+        'title': title,
+        'description': desc,
+        'image_url': img,
         'type': 'article',
-        'body_content': campaign.description
-    }
-    return get_seo_response(request, metadata)
+        'body_content': body
+    })
 
 def seo_article_detail(request, id_or_slug):
-    if id_or_slug.isdigit():
-        article = get_object_or_404(Article, id=int(id_or_slug), status='approved')
+    article = None
+    if str(id_or_slug).isdigit():
+        article = Article.objects.filter(id=int(id_or_slug)).first()
+    if not article:
+        article = Article.objects.filter(slug=id_or_slug).first()
+
+    if article:
+        title = article.title
+        desc = clean_html(article.content) or f"Baca artikel {article.title} di Barakah Economy"
+        img = ''
+        if article.images.exists():
+            first_img = article.images.first()
+            if first_img and hasattr(first_img.path, 'url'):
+                img = first_img.path.url
+        body = article.content
     else:
-        article = get_object_or_404(Article, slug=id_or_slug, status='approved')
-        
-    image_url = ''
-    if article.images.exists():
-        image_url = article.images.first().path.url
-        
-    metadata = {
-        'title': article.title,
-        'description': clean_html(article.content),
-        'image_url': image_url,
+        title = str(id_or_slug).replace('-', ' ').title()
+        desc = "Baca artikel inspiratif di Barakah Economy."
+        img = ''
+        body = ''
+
+    return get_seo_response(request, {
+        'title': title,
+        'description': desc,
+        'image_url': img,
         'type': 'article',
-        'body_content': article.content
-    }
-    return get_seo_response(request, metadata)
+        'body_content': body
+    })
 
 def seo_course_detail(request, slug):
-    if slug.isdigit():
-        course = get_object_or_404(Course, id=int(slug), is_active=True)
+    course = None
+    if str(slug).isdigit():
+        course = Course.objects.filter(id=int(slug)).first()
+    if not course:
+        course = Course.objects.filter(slug=slug).first()
+
+    if course:
+        title = course.title
+        desc = clean_html(course.description) or f"Ikuti kelas {course.title} di Barakah Economy"
+        img = course.thumbnail.url if (course.thumbnail and hasattr(course.thumbnail, 'url')) else ''
     else:
-        course = get_object_or_404(Course, slug=slug, is_active=True)
-        
-    metadata = {
-        'title': course.title,
-        'description': clean_html(course.description),
-        'image_url': course.thumbnail.url if course.thumbnail else '',
+        title = str(slug).replace('-', ' ').title()
+        desc = "Lihat e-course bermanfaat di Barakah Academy."
+        img = ''
+
+    return get_seo_response(request, {
+        'title': title,
+        'description': desc,
+        'image_url': img,
         'type': 'website'
-    }
-    return get_seo_response(request, metadata)
+    })
 
 def seo_event_detail(request, slug):
-    if slug.isdigit():
-        event = get_object_or_404(Event, id=int(slug))
+    event = None
+    if str(slug).isdigit():
+        event = Event.objects.filter(id=int(slug)).first()
+    if not event:
+        event = Event.objects.filter(slug=slug).first()
+
+    if event:
+        title = event.title
+        desc = clean_html(event.short_description or event.description) or f"Ikuti event {event.title}"
+        img = event.thumbnail.url if (event.thumbnail and hasattr(event.thumbnail, 'url')) else (
+            event.header_image.url if (event.header_image and hasattr(event.header_image, 'url')) else ''
+        )
     else:
-        event = get_object_or_404(Event, slug=slug)
-        
-    image_url = event.thumbnail.url if event.thumbnail else (event.header_image.url if event.header_image else '')
-    metadata = {
-        'title': event.title,
-        'description': clean_html(event.short_description or event.description),
-        'image_url': image_url,
+        title = str(slug).replace('-', ' ').title()
+        desc = "Lihat event & kegiatan menarik di Barakah Economy."
+        img = ''
+
+    return get_seo_response(request, {
+        'title': title,
+        'description': desc,
+        'image_url': img,
         'type': 'article'
-    }
-    return get_seo_response(request, metadata)
+    })
 
 def seo_digital_product_detail(request, slug, username=None):
+    dp = None
     if username:
-        user = get_object_or_404(User, username=username)
-        if slug.isdigit():
-            dp = get_object_or_404(DigitalProduct, user=user, id=int(slug), is_active=True)
-        else:
-            dp = get_object_or_404(DigitalProduct, user=user, slug=slug, is_active=True)
+        user = User.objects.filter(username=username).first()
+        if user:
+            if str(slug).isdigit():
+                dp = DigitalProduct.objects.filter(user=user, id=int(slug)).first()
+            if not dp:
+                dp = DigitalProduct.objects.filter(user=user, slug=slug).first()
+    if not dp:
+        if str(slug).isdigit():
+            dp = DigitalProduct.objects.filter(id=int(slug)).first()
+        if not dp:
+            dp = DigitalProduct.objects.filter(slug=slug).first()
+
+    if dp:
+        title = dp.title
+        desc = clean_html(dp.description) or f"Dapatkan {dp.title} di Barakah Economy"
+        img = dp.thumbnail.url if (dp.thumbnail and hasattr(dp.thumbnail, 'url')) else ''
     else:
-        if slug.isdigit():
-            dp = get_object_or_404(DigitalProduct, id=int(slug), is_active=True)
-        else:
-            dp = get_object_or_404(DigitalProduct, slug=slug, is_active=True)
-            
-    metadata = {
-        'title': dp.title,
-        'description': clean_html(dp.description),
-        'image_url': dp.thumbnail.url if dp.thumbnail else '',
+        title = str(slug).replace('-', ' ').title()
+        desc = "Lihat produk digital di Barakah Economy."
+        img = ''
+
+    return get_seo_response(request, {
+        'title': title,
+        'description': desc,
+        'image_url': img,
         'type': 'product'
-    }
-    return get_seo_response(request, metadata)
+    })
 
 def seo_forum_detail(request, slug):
-    if slug.isdigit():
-        thread = get_object_or_404(Thread, id=int(slug))
+    thread = None
+    if str(slug).isdigit():
+        thread = Thread.objects.filter(id=int(slug)).first()
+    if not thread:
+        thread = Thread.objects.filter(slug=slug).first()
+
+    if thread:
+        title = thread.title
+        desc = clean_html(thread.content) or f"Diskusi tentang {thread.title}"
+        img = thread.image.url if (thread.image and hasattr(thread.image, 'url')) else (
+            thread.author.profile.photo.url if (hasattr(thread.author, 'profile') and thread.author.profile.photo and hasattr(thread.author.profile.photo, 'url')) else ''
+        )
+        body = thread.content
     else:
-        thread = get_object_or_404(Thread, slug=slug)
-        
-    image_url = thread.image.url if thread.image else (thread.author.profile.photo.url if hasattr(thread.author, 'profile') and thread.author.profile.photo else '')
-    metadata = {
-        'title': thread.title,
-        'description': clean_html(thread.content),
-        'image_url': image_url,
+        title = str(slug).replace('-', ' ').title()
+        desc = "Simak diskusi bermanfaat di Forum Barakah Economy."
+        img = ''
+        body = ''
+
+    return get_seo_response(request, {
+        'title': title,
+        'description': desc,
+        'image_url': img,
         'type': 'article',
-        'body_content': thread.content
-    }
-    return get_seo_response(request, metadata)
+        'body_content': body
+    })
 
 def seo_activity_detail(request, id_or_slug):
+    activity = None
     if str(id_or_slug).isdigit():
-        activity = get_object_or_404(Activity, id=int(id_or_slug))
+        activity = Activity.objects.filter(id=int(id_or_slug)).first()
+    if not activity:
+        activity = Activity.objects.filter(id=id_or_slug).first()
+
+    if activity:
+        title = activity.title
+        desc = clean_html(activity.content) or f"Kegiatan: {activity.title}"
+        img = activity.get_image_url or ''
+        body = activity.content
     else:
-        activity = get_object_or_404(Activity, id=id_or_slug)
-        
-    image_url = activity.get_image_url or ''
-    metadata = {
-        'title': activity.title,
-        'description': clean_html(activity.content),
-        'image_url': image_url,
+        title = str(id_or_slug).replace('-', ' ').title()
+        desc = "Dokumentasi kegiatan di Barakah Economy."
+        img = ''
+        body = ''
+
+    return get_seo_response(request, {
+        'title': title,
+        'description': desc,
+        'image_url': img,
         'type': 'article',
-        'body_content': activity.content
-    }
-    return get_seo_response(request, metadata)
+        'body_content': body
+    })
 
 def seo_seller_profile(request, username):
-    user = get_object_or_404(User, username=username)
-    has_products = Product.objects.filter(seller=user, status='approved').exists() or \
-                   DigitalProduct.objects.filter(user=user, is_active=True).exists()
-    
-    if not has_products:
-        raise Http404
+    user = User.objects.filter(username=username).first()
+    if user:
+        name = user.profile.name_full if (hasattr(user, 'profile') and user.profile.name_full) else user.username
+        desc = f"Lihat produk unggulan dari {name} di Barakah Economy."
+        img = user.profile.photo.url if (hasattr(user, 'profile') and user.profile.photo and hasattr(user.profile.photo, 'url')) else ''
+    else:
+        name = username
+        desc = "Profil Toko Barakah Economy."
+        img = ''
 
-    name = user.profile.name_full if hasattr(user, 'profile') and user.profile.name_full else user.username
-    metadata = {
+    return get_seo_response(request, {
         'title': f"Toko {name}",
-        'description': f"Lihat produk unggulan dari {name} di Barakah Economy.",
-        'image_url': user.profile.photo.url if hasattr(user, 'profile') and user.profile.photo else '',
+        'description': desc,
+        'image_url': img,
         'type': 'profile'
-    }
-    return get_seo_response(request, metadata)
+    })
 
 # --- DISCOVERY ---
 

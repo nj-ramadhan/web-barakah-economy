@@ -43,8 +43,6 @@ urlpatterns = [
     path('forum/<str:slug>', seo_forum_detail),
     path('kegiatan/<str:id_or_slug>/', seo_activity_detail),
     path('kegiatan/<str:id_or_slug>', seo_activity_detail),
-    path('<str:username>/', seo_seller_profile),
-    path('<str:username>', seo_seller_profile),
 
     path('api/auth/', include('accounts.urls')),
     path('api/profiles/', include('profiles.urls')),
@@ -77,7 +75,9 @@ urlpatterns = [
     path('api/tracking/', include('tracking.urls')),
     path('ckeditor/', include('ckeditor_uploader.urls')),
     path('ckeditor/upload/', ckeditor_views.upload, name='ckeditor_upload'),
-    
+
+    path('<str:username>/', seo_seller_profile),
+    path('<str:username>', seo_seller_profile),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 if settings.DEBUG:
