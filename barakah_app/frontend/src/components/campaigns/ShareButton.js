@@ -1,46 +1,66 @@
 import React, { useState, useEffect, useRef } from 'react';
 
-const ShareButton = ({ slug, title, type = 'campaign' }) => {
+const ShareButton = ({ slug, title, type = 'campaign', username }) => {
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef(null);
 
-    // Construct the share URL using the backend endpoint to ensure preview generation
-    // Use the origin if REACT_APP_API_BASE_URL is not set or is relative
-    const baseUrl = process.env.REACT_APP_API_BASE_URL && process.env.REACT_APP_API_BASE_URL.startsWith('http')
-        ? process.env.REACT_APP_API_BASE_URL
-        : window.location.origin;
+    // Use current origin so share URLs are clean frontend URLs without /api/
+    const baseUrl = window.location.origin;
 
-    // Determine share URL based on type
+    // Determine share URL based on type (clean frontend URLs)
     let shareUrl = '';
-    if (type === 'article') {
-        shareUrl = `${baseUrl}/api/articles/share/${slug}/`;
-    } else if (type === 'seller') {
-        shareUrl = `${baseUrl}/api/digital-products/share/seller/${slug}/`;
+    if (type === 'product') {
+        shareUrl = `${baseUrl}/produk/${slug}`;
+    } else if (type === 'article') {
+        shareUrl = `${baseUrl}/articles/${slug}`;
+    } else if (type === 'event') {
+        shareUrl = `${baseUrl}/event/${slug}`;
     } else if (type === 'course') {
-        shareUrl = `${baseUrl}/api/courses/share/${slug}/`;
+        shareUrl = `${baseUrl}/kelas/${slug}`;
+    } else if (type === 'digital_product') {
+        if (username) {
+            shareUrl = `${baseUrl}/digital-produk/${username}/${slug}`;
+        } else {
+            shareUrl = `${baseUrl}/digital-products/${slug}`;
+        }
+    } else if (type === 'forum') {
+        shareUrl = `${baseUrl}/forum/${slug}`;
     } else if (type === 'activity') {
-        shareUrl = `${baseUrl}/api/site-content/activities/share/${slug}/`;
+        shareUrl = `${baseUrl}/kegiatan/${slug}`;
+    } else if (type === 'seller') {
+        shareUrl = `${baseUrl}/${slug}`;
     } else if (type === 'charity_page') {
-        // Just share the direct frontend URL for the main page as it has its own meta tags
-        const frontendUrl = window.location.origin;
-        shareUrl = `${frontendUrl}/charity`;
+        shareUrl = `${baseUrl}/charity`;
     } else {
-        shareUrl = `${baseUrl}/api/campaigns/share/${slug}/`;
+        // default campaign
+        shareUrl = `${baseUrl}/kampanye/${slug}`;
     }
 
     // Determine WhatsApp text based on type
     const getWhatsAppText = () => {
+        if (type === 'product') {
+            return `Bismillah, izin share produk ini ya: ${title}\n\nKlik tautan ini untuk lihat detail & beli:\n${shareUrl}`;
+        }
         if (type === 'article') {
             return `Bismillah, izin share artikel ini ya: ${title}\n\nKlik tautan ini untuk baca selengkapnya:\n${shareUrl}`;
         }
-        if (type === 'seller') {
-            return `Bismillah, cek profil penjual digital ini ya: @${slug}\n\nLihat koleksi produk digitalnya di sini:\n${shareUrl}`;
+        if (type === 'event') {
+            return `Bismillah, cek event menarik ini ya: ${title}\n\nLihat info selengkapnya & daftar di sini:\n${shareUrl}`;
         }
         if (type === 'course') {
             return `Bismillah, cek e-course bermanfaat ini ya: ${title}\n\nLihat info selengkapnya & daftar di sini:\n${shareUrl}`;
         }
+        if (type === 'digital_product') {
+            return `Bismillah, cek produk digital ini ya: ${title}\n\nLihat info selengkapnya di sini:\n${shareUrl}`;
+        }
+        if (type === 'forum') {
+            return `Bismillah, simak diskusi ini ya: ${title}\n\nBaca & gabung diskusi di sini:\n${shareUrl}`;
+        }
         if (type === 'activity') {
             return `Bismillah, cek kegiatan kebaikan ini ya: ${title}\n\nLihat info selengkapnya di sini:\n${shareUrl}`;
+        }
+        if (type === 'seller') {
+            return `Bismillah, cek profil penjual ini ya: @${slug}\n\nLihat toko & produknya di sini:\n${shareUrl}`;
         }
         if (type === 'charity_page') {
             return `Bismillah, mari bantu sesama melalui program-program kebaikan di Barakah Economy:\n\nLihat semua program di sini:\n${shareUrl}`;

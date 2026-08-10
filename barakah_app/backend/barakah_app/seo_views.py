@@ -10,6 +10,8 @@ from article.models import Article
 from courses.models import Course
 from events.models import Event
 from digital_products.models import DigitalProduct
+from forum.models import Thread
+from site_content.models import Activity
 from accounts.models import User
 
 from .seo_utils import get_seo_response
@@ -23,17 +25,31 @@ def clean_html(text):
 # --- MODULE HANDLERS ---
 
 def seo_product_detail(request, slug):
-    product = get_object_or_404(Product, slug=slug, status='approved', is_active=True)
+    if slug.isdigit():
+        product = get_object_or_404(Product, id=int(slug), status='approved', is_active=True)
+    else:
+        product = get_object_or_404(Product, slug=slug, status='approved', is_active=True)
+        
+    image_url = ''
+    if product.thumbnail:
+        image_url = product.thumbnail.url
+    elif product.images.exists():
+        image_url = product.images.first().image.url
+
     metadata = {
         'title': product.title,
         'description': clean_html(product.description),
-        'image_url': product.thumbnail.url if product.thumbnail else '',
+        'image_url': image_url,
         'type': 'product'
     }
     return get_seo_response(request, metadata)
 
 def seo_campaign_detail(request, slug):
-    campaign = get_object_or_404(Campaign, slug=slug, approval_status='approved', is_active=True)
+    if slug.isdigit():
+        campaign = get_object_or_404(Campaign, id=int(slug), approval_status='approved', is_active=True)
+    else:
+        campaign = get_object_or_404(Campaign, slug=slug, approval_status='approved', is_active=True)
+        
     metadata = {
         'title': campaign.title,
         'description': clean_html(campaign.description),
@@ -43,9 +59,12 @@ def seo_campaign_detail(request, slug):
     }
     return get_seo_response(request, metadata)
 
-def seo_article_detail(request, slug):
-    article = get_object_or_404(Article, slug=slug, status='approved')
-    # Use first image if available
+def seo_article_detail(request, id_or_slug):
+    if id_or_slug.isdigit():
+        article = get_object_or_404(Article, id=int(id_or_slug), status='approved')
+    else:
+        article = get_object_or_404(Article, slug=id_or_slug, status='approved')
+        
     image_url = ''
     if article.images.exists():
         image_url = article.images.first().path.url
@@ -60,7 +79,11 @@ def seo_article_detail(request, slug):
     return get_seo_response(request, metadata)
 
 def seo_course_detail(request, slug):
-    course = get_object_or_404(Course, slug=slug, is_active=True)
+    if slug.isdigit():
+        course = get_object_or_404(Course, id=int(slug), is_active=True)
+    else:
+        course = get_object_or_404(Course, slug=slug, is_active=True)
+        
     metadata = {
         'title': course.title,
         'description': clean_html(course.description),
@@ -70,28 +93,82 @@ def seo_course_detail(request, slug):
     return get_seo_response(request, metadata)
 
 def seo_event_detail(request, slug):
-    # This replaces the logic previously in events/views.py
-    event = get_object_or_404(Event, slug=slug)
-    # Events can be active or not for indexing, usually better to keep them
+    if slug.isdigit():
+        event = get_object_or_404(Event, id=int(slug))
+    else:
+        event = get_object_or_404(Event, slug=slug)
+        
+    image_url = event.thumbnail.url if event.thumbnail else (event.header_image.url if event.header_image else '')
     metadata = {
         'title': event.title,
-        'description': clean_html(event.description),
-        'image_url': event.thumbnail.url if event.thumbnail else (event.header_image.url if event.header_image else ''),
+        'description': clean_html(event.short_description or event.description),
+        'image_url': image_url,
         'type': 'article'
+    }
+    return get_seo_response(request, metadata)
+
+def seo_digital_product_detail(request, slug, username=None):
+    if username:
+        user = get_object_or_404(User, username=username)
+        if slug.isdigit():
+            dp = get_object_or_404(DigitalProduct, user=user, id=int(slug), is_active=True)
+        else:
+            dp = get_object_or_404(DigitalProduct, user=user, slug=slug, is_active=True)
+    else:
+        if slug.isdigit():
+            dp = get_object_or_404(DigitalProduct, id=int(slug), is_active=True)
+        else:
+            dp = get_object_or_404(DigitalProduct, slug=slug, is_active=True)
+            
+    metadata = {
+        'title': dp.title,
+        'description': clean_html(dp.description),
+        'image_url': dp.thumbnail.url if dp.thumbnail else '',
+        'type': 'product'
+    }
+    return get_seo_response(request, metadata)
+
+def seo_forum_detail(request, slug):
+    if slug.isdigit():
+        thread = get_object_or_404(Thread, id=int(slug))
+    else:
+        thread = get_object_or_404(Thread, slug=slug)
+        
+    image_url = thread.image.url if thread.image else (thread.author.profile.photo.url if hasattr(thread.author, 'profile') and thread.author.profile.photo else '')
+    metadata = {
+        'title': thread.title,
+        'description': clean_html(thread.content),
+        'image_url': image_url,
+        'type': 'article',
+        'body_content': thread.content
+    }
+    return get_seo_response(request, metadata)
+
+def seo_activity_detail(request, id_or_slug):
+    if str(id_or_slug).isdigit():
+        activity = get_object_or_404(Activity, id=int(id_or_slug))
+    else:
+        activity = get_object_or_404(Activity, id=id_or_slug)
+        
+    image_url = activity.get_image_url or ''
+    metadata = {
+        'title': activity.title,
+        'description': clean_html(activity.content),
+        'image_url': image_url,
+        'type': 'article',
+        'body_content': activity.content
     }
     return get_seo_response(request, metadata)
 
 def seo_seller_profile(request, username):
     user = get_object_or_404(User, username=username)
-    # Check if user has physical products or digital products
     has_products = Product.objects.filter(seller=user, status='approved').exists() or \
                    DigitalProduct.objects.filter(user=user, is_active=True).exists()
     
     if not has_products:
-        # Don't spend SEO juice on empty profiles or non-sellers
         raise Http404
 
-    name = user.profile.name_full if hasattr(user, 'profile') else user.username
+    name = user.profile.name_full if hasattr(user, 'profile') and user.profile.name_full else user.username
     metadata = {
         'title': f"Toko {name}",
         'description': f"Lihat produk unggulan dari {name} di Barakah Economy.",

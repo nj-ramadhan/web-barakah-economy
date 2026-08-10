@@ -7,6 +7,7 @@ import NavigationButton from '../components/layout/Navigation';
 import { getDigitalProductBySlug, toggleLikeDigitalProduct } from '../services/digitalProductApi';
 import { getMediaUrl } from '../utils/mediaUtils';
 import UserProfileModal from '../components/modals/UserProfileModal';
+import ShareButton from '../components/campaigns/ShareButton';
 import '../styles/Body.css';
 
 const formatIDR = (amount) => {
@@ -132,8 +133,10 @@ const DigitalProductDetailPage = () => {
 
                     <div className="md:w-1/2 p-6 md:p-10 flex flex-col justify-between">
                         <div>
-                            <span className="inline-block text-xs font-semibold bg-green-100 text-green-700 px-3 py-1 rounded-full mb-4">{product.category}</span>
-                            <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">{product.title}</h1>
+                            <div className="flex justify-between items-start gap-4 mb-2">
+                                <h1 className="text-2xl md:text-3xl font-bold text-gray-900">{product.title}</h1>
+                                <ShareButton slug={product.slug} title={product.title} type="digital_product" username={product.username} />
+                            </div>
                             <div className="flex items-center justify-between mb-6">
                                 <p className="text-sm text-gray-400 flex items-center gap-1">
                                     <span className="material-icons text-sm">person</span>

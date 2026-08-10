@@ -23,9 +23,17 @@ def get_seo_response(request, metadata):
         page_type = metadata.get('type', 'website')
         body_content = metadata.get('body_content', '')
 
-        # Fallback image
-        if not image_url:
+        # Build absolute image URL
+        if image_url:
+            if not (image_url.startswith('http://') or image_url.startswith('https://')):
+                image_url = request.build_absolute_uri(image_url)
+            # Ensure https if request came over https/reverse proxy
+            if request.headers.get('x-forwarded-proto') == 'https' and image_url.startswith('http://'):
+                image_url = 'https://' + image_url[7:]
+        else:
             site_url = request.build_absolute_uri('/')[:-1]
+            if request.headers.get('x-forwarded-proto') == 'https' and site_url.startswith('http://'):
+                site_url = 'https://' + site_url[7:]
             image_url = f"{site_url}/images/web-thumbnail.jpg"
 
         # Path to the frontend index.html
@@ -44,32 +52,34 @@ def get_seo_response(request, metadata):
     <title>{title}</title>
     <meta name="description" content="{description}">
     <link rel="canonical" href="{current_url}">
+    <meta property="og:site_name" content="Barakah Economy">
     <meta property="og:title" content="{title}">
     <meta property="og:description" content="{description}">
     <meta property="og:image" content="{image_url}">
+    <meta property="og:image:secure_url" content="{image_url}">
+    <meta property="og:image:type" content="image/jpeg">
     <meta property="og:url" content="{current_url}">
     <meta property="og:type" content="{page_type}">
-    <meta property="twitter:card" content="summary_large_image">
-    <meta property="twitter:title" content="{title}">
-    <meta property="twitter:description" content="{description}">
-    <meta property="twitter:image" content="{image_url}">'''
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{title}">
+    <meta name="twitter:description" content="{description}">
+    <meta name="twitter:image" content="{image_url}">'''
 
-        # Remove existing title tag and inject new tags into <head>
-        content = re.sub(r'<title>.*?</title>', '', content)
-        # Remove any pre-existing meta descriptions to avoid duplicates
-        content = re.sub(r'<meta name="description".*?>', '', content)
-        
+        # Remove existing title and meta tags to avoid duplicates
+        content = re.sub(r'<title>.*?</title>', '', content, flags=re.IGNORECASE)
+        content = re.sub(r'<meta\s+name=["\']description["\'].*?>', '', content, flags=re.IGNORECASE)
+        content = re.sub(r'<meta\s+property=["\']og:.*?["\'].*?>', '', content, flags=re.IGNORECASE)
+        content = re.sub(r'<meta\s+name=["\']twitter:.*?["\'].*?>', '', content, flags=re.IGNORECASE)
+
         content = content.replace('</head>', f'{meta_tags}\n</head>')
 
         # Inject body content if provided for crawler indexing
         if body_content:
-            # We'll put it in a hidden div or an article tag at the start of body
-            # This is standard practice for SSR-lite with React
             seo_body = f'<div id="seo-content" style="display:none;"><article><h1>{title}</h1>{body_content}</article></div>'
             content = content.replace('<body>', f'<body>\n{seo_body}')
-        
+
         return HttpResponse(content)
 
     except Exception as e:
-        # Fallback to serving the file as is if it exists
         return HttpResponse(f"SEO Generation Error: {str(e)}", status=500)
+

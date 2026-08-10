@@ -9,7 +9,8 @@ router = SimpleRouter()
 from barakah_app.seo_views import (
     robots_txt, sitemap_xml, seo_product_detail, 
     seo_campaign_detail, seo_article_detail, 
-    seo_course_detail, seo_event_detail, seo_seller_profile
+    seo_course_detail, seo_event_detail, seo_digital_product_detail,
+    seo_forum_detail, seo_activity_detail, seo_seller_profile
 )
 from streaming.views import seo_streaming_detail
 
@@ -18,15 +19,32 @@ urlpatterns = [
     path('robots.txt', robots_txt),
     path('sitemap.xml', sitemap_xml),
     
-    # --- SEO Crawler Traps (Frontend Paths Caught by Backend) ---
+    # --- SEO Crawler Traps & Detail Views (Frontend Paths Caught by Backend) ---
     path('streaming/', seo_streaming_detail),
-    path('produk/<slug:slug>/', seo_product_detail),
-    path('kampanye/<slug:slug>/', seo_campaign_detail),
-    path('articles/<slug:slug>/', seo_article_detail),
-    path('academy/articles/<slug:slug>/', seo_article_detail),
-    path('kelas/<slug:slug>/', seo_course_detail),
-    path('event/<slug:slug>/', seo_event_detail),
+    path('produk/<str:slug>/', seo_product_detail),
+    path('produk/<str:slug>', seo_product_detail),
+    path('kampanye/<str:slug>/', seo_campaign_detail),
+    path('kampanye/<str:slug>', seo_campaign_detail),
+    path('articles/<str:id_or_slug>/', seo_article_detail),
+    path('articles/<str:id_or_slug>', seo_article_detail),
+    path('academy/articles/<str:id_or_slug>/', seo_article_detail),
+    path('academy/articles/<str:id_or_slug>', seo_article_detail),
+    path('kelas/<str:slug>/', seo_course_detail),
+    path('kelas/<str:slug>', seo_course_detail),
+    path('event/<str:slug>/', seo_event_detail),
+    path('event/<str:slug>', seo_event_detail),
+    path('digital-products/<str:slug>/', seo_digital_product_detail),
+    path('digital-products/<str:slug>', seo_digital_product_detail),
+    path('digital-produk/<str:username>/<str:slug>/', seo_digital_product_detail),
+    path('digital-produk/<str:username>/<str:slug>', seo_digital_product_detail),
+    path('digital_produk/<str:username>/<str:slug>/', seo_digital_product_detail),
+    path('digital_produk/<str:username>/<str:slug>', seo_digital_product_detail),
+    path('forum/<str:slug>/', seo_forum_detail),
+    path('forum/<str:slug>', seo_forum_detail),
+    path('kegiatan/<str:id_or_slug>/', seo_activity_detail),
+    path('kegiatan/<str:id_or_slug>', seo_activity_detail),
     path('<str:username>/', seo_seller_profile),
+    path('<str:username>', seo_seller_profile),
 
     path('api/auth/', include('accounts.urls')),
     path('api/profiles/', include('profiles.urls')),
