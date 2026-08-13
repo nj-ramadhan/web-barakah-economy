@@ -102,7 +102,16 @@ class CreateOrderView(APIView):
                 voucher_code = config.get('voucher_code', '')
                 voucher_nominal = clean_decimal(config.get('voucher_nominal', 0))
                 payment_method = config.get('payment_method') or request.data.get('payment_method', 'manual')
-                buyer_note = config.get('buyer_note') or request.data.get('buyer_note', '')
+                recipient_name = config.get('recipient_name') or request.data.get('recipient_name') or request.data.get('customer_name')
+                recipient_phone = config.get('recipient_phone') or request.data.get('recipient_phone') or request.data.get('customer_phone')
+                shipping_address = config.get('shipping_address') or request.data.get('shipping_address')
+                shipping_village = config.get('shipping_village') or request.data.get('shipping_village')
+                shipping_district = config.get('shipping_district') or request.data.get('shipping_district')
+                shipping_city = config.get('shipping_city') or request.data.get('shipping_city')
+                shipping_province = config.get('shipping_province') or request.data.get('shipping_province')
+                shipping_postal_code = config.get('shipping_postal_code') or request.data.get('shipping_postal_code')
+                shipping_address_detail = config.get('shipping_address_detail') or request.data.get('shipping_address_detail')
+                shipping_coordinates = config.get('shipping_coordinates') or request.data.get('shipping_coordinates')
 
                 seller_user = None
                 if s_id != "0":
@@ -136,7 +145,17 @@ class CreateOrderView(APIView):
                     seller_bank_name=product.own_bank_name if paid_directly else None,
                     seller_bank_account=product.own_bank_account if paid_directly else None,
                     seller_bank_holder=product.own_bank_holder if paid_directly else None,
-                    seller_qris_image=product.own_qris_image if paid_directly else None
+                    seller_qris_image=product.own_qris_image if paid_directly else None,
+                    recipient_name=recipient_name,
+                    recipient_phone=recipient_phone,
+                    shipping_address=shipping_address,
+                    shipping_village=shipping_village,
+                    shipping_district=shipping_district,
+                    shipping_city=shipping_city,
+                    shipping_province=shipping_province,
+                    shipping_postal_code=shipping_postal_code,
+                    shipping_address_detail=shipping_address_detail,
+                    shipping_coordinates=shipping_coordinates
                 )
                 
                 total_price = Decimal('0')
@@ -183,7 +202,7 @@ class CreateOrderView(APIView):
             cart_items.delete()
 
             # Send Notifications for each created order
-            from .utils import send_order_invoice_to_buyer, send_order_notification_to_seller
+            from .utils import send_order_invoice_to_buyer, send_order_notification_to_seller, send_order_email_notifications
             customer_phone = request.data.get('customer_phone') or request.data.get('phone')
             
             for order in created_orders:
@@ -195,8 +214,11 @@ class CreateOrderView(APIView):
                     res_seller = send_order_notification_to_seller(order)
                     if res_seller and not res_seller.get('success'):
                         logger.error(f"WA Seller Fail ({order.order_number}): {res_seller.get('message')}")
+
+                    # Send Email Notifications to both buyer & seller login emails
+                    send_order_email_notifications(order)
                 except Exception as e:
-                    logger.error(f"WA Notification Error ({order.order_number}): {str(e)}")
+                    logger.error(f"Notification Error ({order.order_number}): {str(e)}")
 
             serializer = OrderSerializer(created_orders, many=True)
             return Response(serializer.data, status=status.HTTP_201_CREATED)

@@ -549,12 +549,8 @@ const ProfileEditPage = () => {
   const inputCls = (field) => {
     const mandatoryFields = [
       'name_full', 'nickname', 'phone', 'gender', 'agama', 
-      'birth_place', 'birth_date', 'marital_status', 'segment',
-      'info_source'
+      'birth_place', 'birth_date', 'marital_status', 'segment'
     ];
-    if (profile.info_source === 'teman') {
-      mandatoryFields.push('referred_by');
-    }
     const isMandatoryMissing = mandatoryFields.includes(field) && (!profile[field] || profile[field] === '');
     return `w-full p-3 border rounded-xl text-sm transition outline-none focus:ring-2 ${(isFieldMissing(field) || isMandatoryMissing)
       ? 'border-red-500 bg-red-50 focus:ring-red-400'
@@ -567,47 +563,6 @@ const ProfileEditPage = () => {
       case 'general':
         return (
           <div className="space-y-4">
-            <div className="bg-orange-50 p-4 rounded-2xl border border-orange-100 mb-6">
-              <div className="flex gap-3 mb-4">
-                <span className="material-icons text-orange-600">info</span>
-                <div>
-                  <h4 className="text-sm font-bold text-orange-900">Sumber Informasi</h4>
-                  <p className="text-[11px] text-orange-700 leading-relaxed">Wajib diisi agar dapat mengakses fitur Barakah Economy secara lengkap.</p>
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
-                    Dapat info dari mana? <span className="text-red-500">*wajib</span>
-                  </label>
-                  <select name="info_source" value={profile.info_source || ''} onChange={handleChange} className={inputCls('info_source')}>
-                    <option value="">Pilih Sumber Info</option>
-                    <option value="sosmed">Sosial Media (Instagram/FB/TikTok)</option>
-                    <option value="teman">Teman / Keluarga</option>
-                    <option value="iklan">Iklan</option>
-                    <option value="website">Website / Google</option>
-                    <option value="lainnya">Lainnya</option>
-                  </select>
-                </div>
-                {profile.info_source === 'teman' && (
-                  <div>
-                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
-                      Siapa yang mengajak? <span className="text-red-500">*wajib</span>
-                    </label>
-                    <input
-                      type="text"
-                      name="referred_by"
-                      placeholder="Nama orang yang merekomendasikan"
-                      value={profile.referred_by || ''}
-                      onChange={handleChange}
-                      className={inputCls('referred_by')}
-                    />
-                    <p className="text-[9px] text-gray-400 mt-1 italic">Tulis nama teman/rekan/keluarga yang mengajak</p>
-                  </div>
-                )}
-              </div>
-            </div>
             <div>
               <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
                 Username
@@ -649,31 +604,7 @@ const ProfileEditPage = () => {
               </label>
               <input type="text" name="phone" placeholder="Contoh: 081234567890" value={profile.phone || ''} onChange={handleChange} className={inputCls('phone')} />
             </div>
-            {/* Start File Upload KTP inside tab */}
-            <div className="bg-gray-50 rounded-xl p-4 border border-gray-100 flex flex-col sm:flex-row items-start sm:items-center gap-4">
-              <div className="bg-gray-100 text-gray-500 w-12 h-12 rounded-full flex items-center justify-center shrink-0">
-                <span className="material-icons">badge</span>
-              </div>
-              <div className="flex-1">
-                <h4 className="text-sm font-bold text-gray-900 flex items-center gap-1.5">
-                  Scan KTP Otomatis
-                  <span className="text-[9px] bg-gray-200/70 text-gray-500 font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">opsional</span>
-                </h4>
-                <p className="text-xs text-gray-600 mt-0.5">Isi data lebih cepat secara otomatis dengan mengunggah foto KTP Anda (tidak wajib).</p>
 
-                {ktpResult && (
-                  <div className={`mt-2 p-2 rounded-lg text-xs font-medium ${ktpResult.success ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                    {ktpResult.message}
-                  </div>
-                )}
-              </div>
-              <label className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg text-sm font-bold cursor-pointer transition shadow-sm whitespace-nowrap self-stretch sm:self-auto text-center flex items-center justify-center gap-2">
-                <span className="material-icons text-sm">photo_camera</span>
-                {ktpScanning ? 'Memproses...' : 'Scan KTP'}
-                <input type="file" accept="image/*" onChange={handleKtpScan} className="absolute inset-0 w-0 h-0 opacity-0 pointer-events-none" disabled={ktpScanning} />
-              </label>
-            </div>
-            {/* End File Upload KTP */}
 
             <div>
               <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
@@ -784,8 +715,8 @@ const ProfileEditPage = () => {
               <div className="flex gap-3">
                 <span className="material-icons text-emerald-600">location_on</span>
                 <div>
-                  <h4 className="text-sm font-bold text-emerald-900">Lokasi & Pengiriman</h4>
-                  <p className="text-[11px] text-emerald-700 leading-relaxed">Sistem kami menggunakan Keluarahan/Desa untuk akurasi biaya pengiriman (API.co.id). Mohon pilih hingga tingkat Kelurahan.</p>
+                  <h4 className="text-sm font-bold text-emerald-900">Alamat & Pengiriman</h4>
+                  <p className="text-[11px] text-emerald-700 leading-relaxed">Alamat data diri ini digunakan sebagai alamat pengiriman saat berbelanja di E-Commerce.</p>
                 </div>
               </div>
             </div>

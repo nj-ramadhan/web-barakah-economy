@@ -39,6 +39,18 @@ class Order(models.Model):
     qrisly_history_id = models.CharField(max_length=100, blank=True, null=True)
     qris_payload = models.TextField(blank=True, null=True)
 
+    # Detailed Recipient & Shipping Address (from profile or custom saved address)
+    recipient_name = models.CharField(max_length=150, blank=True, null=True)
+    recipient_phone = models.CharField(max_length=50, blank=True, null=True)
+    shipping_address = models.TextField(blank=True, null=True)
+    shipping_village = models.CharField(max_length=100, blank=True, null=True)
+    shipping_district = models.CharField(max_length=100, blank=True, null=True)
+    shipping_city = models.CharField(max_length=100, blank=True, null=True)
+    shipping_province = models.CharField(max_length=100, blank=True, null=True)
+    shipping_postal_code = models.CharField(max_length=20, blank=True, null=True)
+    shipping_address_detail = models.TextField(blank=True, null=True)
+    shipping_coordinates = models.CharField(max_length=100, blank=True, null=True)
+
 
 
     def save(self, *args, **kwargs):

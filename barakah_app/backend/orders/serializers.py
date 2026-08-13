@@ -39,6 +39,8 @@ class OrderSerializer(serializers.ModelSerializer):
                   'total_price', 'shipping_cost', 'shipping_courier', 'shipping_service', 
                   'voucher_code', 'voucher_nominal', 'grand_total', 'status', 'resi_number', 'payment_proof', 'items', 'qris_payload', 'buyer_note', 'payment_method',
                   'paid_to_seller_directly', 'seller_bank_name', 'seller_bank_account', 'seller_bank_holder', 'seller_qris_image',
+                  'recipient_name', 'recipient_phone', 'shipping_address', 'shipping_village', 'shipping_district', 'shipping_city',
+                  'shipping_province', 'shipping_postal_code', 'shipping_address_detail', 'shipping_coordinates',
                   'auto_complete_at', 'shipped_at', 'completed_at', 'complaint_reason', 'complaint_at']
 
 

@@ -4,6 +4,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import Header from '../components/layout/Header';
 import NavigationButton from '../components/layout/Navigation';
+import ShippingAddressSelector from '../components/common/ShippingAddressSelector';
 import { formatCurrency } from '../utils/formatters';
 import '../styles/Body.css';
 
@@ -25,6 +26,7 @@ const EcommerceCheckoutPage = () => {
   const { cartItems } = location.state || { cartItems: [] };
   const [selectedBank, setSelectedBank] = useState('qris');
   const [profile, setProfile] = useState(null);
+  const [selectedAddress, setSelectedAddress] = useState(null);
 
   // Checkout States
   const [courier, setCourier] = useState('none');
@@ -114,15 +116,14 @@ const EcommerceCheckoutPage = () => {
     setIsFetchingShipping(true);
     try {
       const originCode = String(cartItems[0]?.product?.seller_city_id || '3216061005');
-      const destCode = String(profile.address_village_id || profile.address_city_id || '');
+      const destCode = String(selectedAddress?.address_village_id || profile?.address_village_id || profile?.address_city_id || '');
 
       if (originCode.length !== 10) {
         alert('Alamat pengirim (toko) tidak valid. Harap hubungi admin.');
         return;
       }
       if (destCode.length !== 10) {
-        alert('Alamat Anda (penerima) belum lengkap dengan Kelurahan. Silakan update profil Anda.');
-        navigate('/profile/edit?complete=address');
+        alert('Alamat pengiriman belum lengkap dengan Kelurahan. Silakan pilih atau lengkapi alamat.');
         return;
       }
 
@@ -232,12 +233,22 @@ const EcommerceCheckoutPage = () => {
       try {
         const paymentData = new FormData();
         paymentData.append('amount', grandTotal);
-        paymentData.append('customer_name', formData.fullName);
-        paymentData.append('customer_phone', formData.phone);
+        paymentData.append('customer_name', selectedAddress?.nama_penerima || formData.fullName);
+        paymentData.append('customer_phone', selectedAddress?.phone || formData.phone);
         paymentData.append('payment_method', 'COD');
         paymentData.append('shipping_cost', selectedShipping || 0);
         paymentData.append('shipping_courier', courier || '');
         paymentData.append('buyer_note', formData.message || '');
+        if (selectedAddress) {
+          paymentData.append('shipping_address', selectedAddress.alamat || '');
+          paymentData.append('shipping_village', selectedAddress.kelurahan || '');
+          paymentData.append('shipping_district', selectedAddress.kecamatan || '');
+          paymentData.append('shipping_city', selectedAddress.kota || '');
+          paymentData.append('shipping_province', selectedAddress.provinsi || '');
+          paymentData.append('shipping_postal_code', selectedAddress.kode_pos || '');
+          paymentData.append('shipping_address_detail', selectedAddress.detail_alamat || '');
+          paymentData.append('shipping_coordinates', selectedAddress.titik_koordinat || '');
+        }
 
         const userData = localStorage.getItem('user');
         const headers = { 'X-CSRFToken': getCsrfToken() };
@@ -283,15 +294,16 @@ const EcommerceCheckoutPage = () => {
         state: {
           amount: grandTotal,
           bank: selectedBank,
-          customerName: formData.fullName,
-          customerPhone: formData.phone,
+          customerName: selectedAddress?.nama_penerima || formData.fullName,
+          customerPhone: selectedAddress?.phone || formData.phone,
           email: formData.email,
           message: formData.message,
           cartItems: cartItems,
           shippingCost: selectedShipping,
           courier: courier,
           voucherCode: voucherCode,
-          voucherDiscount: voucherDiscount
+          voucherDiscount: voucherDiscount,
+          shippingAddressData: selectedAddress
         }
       });
     }
@@ -311,19 +323,13 @@ const EcommerceCheckoutPage = () => {
       <div className="container mx-auto px-4 py-6 max-w-2xl pb-24">
         <h2 className="text-2xl font-bold mb-6 text-gray-800 text-center">Checkout E-commerce</h2>
 
-        {/* Alamat Penerima */}
+        {/* Alamat Pengiriman Pemesan */}
         {profile && (
-          <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 mb-6">
-            <div className="flex justify-between items-center mb-3">
-              <h2 className="font-bold text-sm text-gray-800 flex items-center gap-2"><span className="material-icons text-emerald-600 text-[18px]">location_on</span> Alamat Pengiriman (Tujuan)</h2>
-              <button type="button" onClick={() => navigate('/profile/edit')} className="text-xs text-blue-600 font-bold bg-blue-50 px-3 py-1 rounded-full">Ubah</button>
-            </div>
-            <div>
-              <p className="font-bold text-sm text-gray-800">{profile.name_full || formData.fullName}</p>
-              <p className="text-xs text-gray-500 mt-1">{profile.address}</p>
-              <p className="text-xs text-gray-500">{profile.address_city_name}, {profile.address_province}</p>
-            </div>
-          </div>
+          <ShippingAddressSelector 
+            profile={profile} 
+            selectedAddress={selectedAddress} 
+            onAddressSelect={setSelectedAddress} 
+          />
         )}
 
         {/* Daftar Barang */}

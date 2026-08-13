@@ -3,6 +3,7 @@ import axios from 'axios';
 import { Helmet } from 'react-helmet';
 import Header from '../components/layout/Header';
 import NavigationButton from '../components/layout/Navigation';
+import ShippingAddressSelector from '../components/common/ShippingAddressSelector';
 import { useNavigate } from 'react-router-dom';
 import { getMediaUrl } from '../utils/mediaUtils';
 
@@ -15,6 +16,7 @@ const EcommerceCheckoutSinergy = () => {
     const [showQrisModal, setShowQrisModal] = useState(false);
     const [courierOptions, setCourierOptions] = useState({}); // { sellerId: [ { service, cost, description, etd } ] }
     const [loadingCosts, setLoadingCosts] = useState({});
+    const [selectedAddress, setSelectedAddress] = useState(null);
     // sellerConfigs is removed because we focus on product level
 
 
@@ -89,7 +91,7 @@ const EcommerceCheckoutSinergy = () => {
             
             // Logic: Use Seller's City ID from Serializer (which we fixed in backend to be 10-digit village ID)
             const origin_code = String(firstItem?.product?.seller_city_id || "3216061005"); 
-            const destination_code = String(addresses.address_village_id || "");
+            const destination_code = String(selectedAddress?.address_village_id || addresses?.address_village_id || "");
             
             // Validation for 10-digit codes required by API.co.id
             if (origin_code.length !== 10) {
@@ -98,8 +100,7 @@ const EcommerceCheckoutSinergy = () => {
             }
 
             if (destination_code.length !== 10) {
-                alert(`Alamat Kelurahan Anda (${destination_code.length} digit) tidak valid. Mohon lengkapi profil Anda dengan Kelurahan yang benar agar ongkir bisa dihitung.`);
-                navigate('/profile/edit?complete=address');
+                alert(`Alamat Kelurahan pengiriman belum dipilih atau tidak valid (${destination_code.length} digit). Mohon pilih/lengkapi alamat pengiriman.`);
                 return;
             }
 
@@ -160,7 +161,17 @@ const EcommerceCheckoutSinergy = () => {
             setSubmittingOrder(true);
             const res = await axios.post(`${process.env.REACT_APP_API_BASE_URL}/api/orders/`, {
                 checkouts: checkoutsList,
-                payment_method: selectedPaymentMethod
+                payment_method: selectedPaymentMethod,
+                shipping_address: selectedAddress?.alamat || '',
+                shipping_village: selectedAddress?.kelurahan || '',
+                shipping_district: selectedAddress?.kecamatan || '',
+                shipping_city: selectedAddress?.kota || '',
+                shipping_province: selectedAddress?.provinsi || '',
+                shipping_postal_code: selectedAddress?.kode_pos || '',
+                shipping_address_detail: selectedAddress?.detail_alamat || '',
+                shipping_coordinates: selectedAddress?.titik_koordinat || '',
+                recipient_name: selectedAddress?.nama_penerima || '',
+                recipient_phone: selectedAddress?.phone || ''
             }, {
                 headers: { Authorization: `Bearer ${user.access}` }
             });
@@ -262,42 +273,14 @@ const EcommerceCheckoutSinergy = () => {
                     </div>
                 )}
 
-                {/* Address Card */}
-                <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 mb-6">
-                    <div className="flex justify-between items-center mb-3">
-                        <h2 className="font-bold text-sm text-gray-800 flex items-center gap-2"><span className="material-icons text-emerald-600 text-[18px]">location_on</span> Data Pemesan & Alamat Pengiriman</h2>
-                        <button onClick={() => navigate('/profile/edit')} className="text-xs text-blue-600 font-bold bg-blue-50 px-3 py-1 rounded-full">Ubah</button>
-                    </div>
-                    {addresses && (
-                        <div className="space-y-1.5">
-                            <div className="flex flex-wrap items-center gap-2">
-                                <span className="font-bold text-sm text-gray-800">
-                                    {addresses.name_full || <span className="text-red-500 font-normal italic">Nama Lengkap belum diisi</span>}
-                                </span>
-                                {addresses.phone ? (
-                                    <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-100 flex items-center gap-1">
-                                        <span className="material-icons text-[12px]">phone</span> {addresses.phone}
-                                    </span>
-                                ) : (
-                                    <span className="text-xs text-red-500 font-medium bg-red-50 px-2 py-0.5 rounded-md border border-red-100">
-                                        No. HP/WA belum diisi
-                                    </span>
-                                )}
-                            </div>
-                            <p className="text-xs text-gray-600">
-                                <span className="font-bold text-gray-500">Email:</span> {addresses.email || '-'}
-                            </p>
-                            <p className="text-xs text-gray-600 leading-relaxed">
-                                <span className="font-bold text-gray-500">Alamat:</span> {addresses.address || <span className="text-red-500 italic">Alamat belum diisi</span>}
-                            </p>
-                            {(addresses.address_city_name || addresses.address_province) && (
-                                <p className="text-xs text-gray-500 font-medium">
-                                    {addresses.address_city_name}, {addresses.address_province}
-                                </p>
-                            )}
-                        </div>
-                    )}
-                </div>
+                {/* Address Card & Selector */}
+                {addresses && (
+                    <ShippingAddressSelector 
+                        profile={addresses} 
+                        selectedAddress={selectedAddress} 
+                        onAddressSelect={setSelectedAddress} 
+                    />
+                )}
 
                 {/* Seller Groups Loop */}
                 {Object.keys(sellerGroups).map(s_id => {
