@@ -275,7 +275,14 @@ class SellerOrderViewSet(viewsets.ModelViewSet):
         if user.is_superuser:
             # Admins can see all orders
             return Order.objects.all().order_by('-created_at')
-        # Sellers see their sales, buyers see their purchases
+        
+        # Check query param for seller dashboard mode vs buyer mode, or filter strictly
+        is_seller_view = self.request.query_params.get('mode') == 'seller' or 'seller-orders' in self.request.path
+        if is_seller_view:
+            # Sellers see ONLY sales orders where seller == user
+            return Order.objects.filter(seller=user).order_by('-created_at')
+        
+        # Default: user sees orders where they are seller OR buyer
         return Order.objects.filter(Q(seller=user) | Q(user=user)).distinct().order_by('-created_at')
 
     def partial_update(self, request, *args, **kwargs):

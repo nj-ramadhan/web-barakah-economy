@@ -23,7 +23,7 @@ const DashboardSinergySellerOrdersPage = () => {
         if (!user) return;
         setLoading(true);
         try {
-            const res = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/orders/seller-orders/`, {
+            const res = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/orders/seller-orders/?mode=seller`, {
                 headers: { Authorization: `Bearer ${user.access}` }
             });
             setOrders(res.data);
