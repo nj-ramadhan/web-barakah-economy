@@ -78,12 +78,7 @@ const ProfileEditPage = () => {
 
 
   const [cropper, setCropper] = useState({ active: false, image: null });
-
   const [activeTab, setActiveTab] = useState('general');
-  const [ktpScanning, setKtpScanning] = useState(false);
-  const [ktpPreview, setKtpPreview] = useState(null);
-  const [ktpResult, setKtpResult] = useState(null);
-  const [showKtpBanner, setShowKtpBanner] = useState(true);
 
   const [loading, setLoading] = useState(true);
   const [agamaDropdown, setAgamaDropdown] = useState('');
@@ -374,68 +369,7 @@ const ProfileEditPage = () => {
     }
   };
 
-  const handleKtpScan = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
 
-    if (file.size > 50 * 1024 * 1024) {
-      alert('Ukuran file KTP terlalu besar. Maksimal 50MB.');
-      return;
-    }
-
-    // Show preview
-    const reader = new FileReader();
-    reader.onload = (ev) => setKtpPreview(ev.target.result);
-    reader.readAsDataURL(file);
-
-    // Send to OCR
-    setKtpScanning(true);
-    setKtpResult(null);
-    try {
-      const user = JSON.parse(localStorage.getItem('user'));
-      const formData = new FormData();
-      formData.append('ktp_image', file);
-      const res = await axios.post(`${API}/api/profiles/scan-ktp/`, formData, {
-        headers: {
-          Authorization: `Bearer ${user.access}`,
-          'Content-Type': 'multipart/form-data',
-        }
-      });
-
-      const data = res.data;
-      if (data._error) {
-        setKtpResult({ success: false, message: data._error });
-      } else {
-        // Auto-fill profile fields
-        const fillable = ['nik', 'name_full', 'nickname', 'gender', 'birth_place', 'birth_date', 'marital_status', 'address', 'address_province', 'agama'];
-        let filled = 0;
-        setProfile(prev => {
-          const updated = { ...prev, ktp_image: file, is_verified_member: data.is_verified_member || prev.is_verified_member };
-          fillable.forEach(field => {
-            if (data[field] && (!prev[field] || prev[field] === '')) {
-              updated[field] = data[field];
-              if (field === 'agama') {
-                const agamaVal = data[field];
-                if (['', 'islam', 'kristen', 'katolik', 'hindu', 'buddha', 'konghucu'].includes(agamaVal)) {
-                  setAgamaDropdown(agamaVal);
-                } else {
-                  setAgamaDropdown('kepercayaan');
-                  setCustomAgama(agamaVal);
-                }
-              }
-              filled++;
-            }
-          });
-          return updated;
-        });
-        setKtpResult({ success: true, message: `Discan dengan ${filled} baris ditemukan. Foto KTP berhasil disimpan dan akun Anda telah terverifikasi.` });
-      }
-    } catch (err) {
-      console.error('KTP scan error:', err);
-      setKtpResult({ success: false, message: 'Gagal scan KTP. Silakan isi data secara manual.' });
-    }
-    setKtpScanning(false);
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();

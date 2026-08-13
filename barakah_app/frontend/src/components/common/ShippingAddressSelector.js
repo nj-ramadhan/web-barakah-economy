@@ -1,4 +1,39 @@
 import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from 'react-leaflet';
+import 'leaflet/dist/leaflet.css';
+import L from 'leaflet';
+import icon from 'leaflet/dist/images/marker-icon.png';
+import iconShadow from 'leaflet/dist/images/marker-shadow.png';
+
+// Fix Leaflet Marker Icon bug in React builds
+let DefaultIcon = L.icon({
+  iconUrl: icon,
+  shadowUrl: iconShadow,
+  iconAnchor: [12, 41]
+});
+L.Marker.prototype.options.icon = DefaultIcon;
+
+// Map click listener component
+const MapClickHandler = ({ onSelectLocation }) => {
+  useMapEvents({
+    click(e) {
+      onSelectLocation(e.latlng.lat, e.latlng.lng);
+    },
+  });
+  return null;
+};
+
+// Map view controller component to center map dynamically
+const MapController = ({ center }) => {
+  const map = useMap();
+  useEffect(() => {
+    if (center && center[0] && center[1]) {
+      map.setView(center, 15);
+    }
+  }, [center, map]);
+  return null;
+};
 
 const ShippingAddressSelector = ({ profile, onAddressSelect, selectedAddress }) => {
   const [showModal, setShowModal] = useState(false);
@@ -10,6 +45,8 @@ const ShippingAddressSelector = ({ profile, onAddressSelect, selectedAddress }) 
   const user = JSON.parse(localStorage.getItem('user') || '{}');
   const storageKey = user?.id ? `barakah_saved_addresses_${user.id}` : 'barakah_saved_addresses_guest';
 
+  const API = process.env.REACT_APP_API_BASE_URL || '';
+
   // Form State
   const defaultFormData = {
     id: null,
@@ -17,17 +54,140 @@ const ShippingAddressSelector = ({ profile, onAddressSelect, selectedAddress }) 
     nama_penerima: '',
     phone: '',
     alamat: '',
-    kelurahan: '',
-    kecamatan: '',
-    kota: '',
     provinsi: '',
+    address_province_id: '',
+    kota: '',
+    address_city_id: '',
+    kecamatan: '',
+    address_subdistrict_id: '',
+    kelurahan: '',
+    address_village_id: '',
     kode_pos: '',
     detail_alamat: '',
     titik_koordinat: '',
-    address_village_id: ''
   };
 
   const [formData, setFormData] = useState(defaultFormData);
+
+  // Administrative Region Lists & Loading States
+  const [provinces, setProvinces] = useState([]);
+  const [cities, setCities] = useState([]);
+  const [districts, setDistricts] = useState([]);
+  const [villages, setVillages] = useState([]);
+
+  const [loadingCities, setLoadingCities] = useState(false);
+  const [loadingDistricts, setLoadingDistricts] = useState(false);
+  const [loadingVillages, setLoadingVillages] = useState(false);
+
+  // Interactive Map & Search State
+  const [mapCenter, setMapCenter] = useState([-6.914744, 107.609810]); // Default Bandung
+  const [mapSearchQuery, setMapSearchQuery] = useState('');
+  const [isSearchingMap, setIsSearchingMap] = useState(false);
+  const [mapSearchResults, setMapSearchResults] = useState([]);
+
+  // Fetch Shipping Administrative Regions
+  const fetchProvinces = async (force = false) => {
+    if (provinces.length > 0 && !force) return;
+    try {
+      const res = await axios.get(`${API}/api/shippings/provinces/`);
+      if (Array.isArray(res.data)) setProvinces(res.data);
+    } catch (err) {
+      console.error("Failed to fetch provinces:", err);
+    }
+  };
+
+  const fetchCities = async (provinceId, force = false) => {
+    if (!provinceId) return;
+    if (cities.length > 0 && !force) return;
+    setLoadingCities(true);
+    try {
+      const res = await axios.get(`${API}/api/shippings/cities/?province=${provinceId}`);
+      if (Array.isArray(res.data)) setCities(res.data);
+    } catch (err) {
+      console.error("Failed to fetch cities:", err);
+    } finally {
+      setLoadingCities(false);
+    }
+  };
+
+  const fetchDistricts = async (cityId, force = false) => {
+    if (!cityId) return;
+    if (districts.length > 0 && !force) return;
+    setLoadingDistricts(true);
+    try {
+      const res = await axios.get(`${API}/api/shippings/districts/?city=${cityId}`);
+      if (Array.isArray(res.data)) setDistricts(res.data);
+    } catch (err) {
+      console.error("Failed to fetch districts:", err);
+    } finally {
+      setLoadingDistricts(false);
+    }
+  };
+
+  const fetchVillages = async (districtId, force = false) => {
+    if (!districtId) return;
+    if (villages.length > 0 && !force) return;
+    setLoadingVillages(true);
+    try {
+      const res = await axios.get(`${API}/api/shippings/villages/?district=${districtId}`);
+      if (Array.isArray(res.data)) setVillages(res.data);
+    } catch (err) {
+      console.error("Failed to fetch villages:", err);
+    } finally {
+      setLoadingVillages(false);
+    }
+  };
+
+  // Helper to parse "lat, lng" string
+  const parseCoords = (coordStr) => {
+    if (!coordStr || typeof coordStr !== 'string') return null;
+    const parts = coordStr.split(',').map(s => parseFloat(s.trim()));
+    if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
+      return [parts[0], parts[1]];
+    }
+    return null;
+  };
+
+  // Update coordinates state and map center
+  const updateCoordinates = (lat, lng) => {
+    const formattedLat = Number(lat).toFixed(6);
+    const formattedLng = Number(lng).toFixed(6);
+    const coordsStr = `${formattedLat}, ${formattedLng}`;
+    setFormData(prev => ({ ...prev, titik_koordinat: coordsStr }));
+    setMapCenter([parseFloat(formattedLat), parseFloat(formattedLng)]);
+  };
+
+  // Handle OpenStreetMap location search
+  const handleSearchMapLocation = async (e) => {
+    if (e) e.preventDefault();
+    if (!mapSearchQuery.trim()) return;
+    setIsSearchingMap(true);
+    setMapSearchResults([]);
+    try {
+      const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(mapSearchQuery)}&countrycodes=id&limit=5`);
+      const data = await res.json();
+      if (Array.isArray(data) && data.length > 0) {
+        setMapSearchResults(data);
+        const first = data[0];
+        updateCoordinates(parseFloat(first.lat), parseFloat(first.lon));
+      } else {
+        alert('Lokasi tidak ditemukan. Coba kata kunci yang lebih spesifik.');
+      }
+    } catch (err) {
+      console.error('Search map location error:', err);
+      alert('Gagal melakukan pencarian lokasi.');
+    } finally {
+      setIsSearchingMap(false);
+    }
+  };
+
+  const handleSelectSearchResult = (res) => {
+    const lat = parseFloat(res.lat);
+    const lng = parseFloat(res.lon);
+    updateCoordinates(lat, lng);
+    setMapSearchResults([]);
+    setMapSearchQuery(res.display_name);
+  };
 
   // Load saved addresses on mount
   useEffect(() => {
@@ -56,7 +216,7 @@ const ShippingAddressSelector = ({ profile, onAddressSelect, selectedAddress }) 
         provinsi: profile.address_province || '',
         kode_pos: profile.address_postal_code || '',
         detail_alamat: profile.address_detail || profile.notes || '',
-        titik_koordinat: profile.coordinates || profile.lat_long || '',
+        titik_koordinat: profile.coordinates || profile.lat_long || profile.address_latitude && profile.address_longitude ? `${profile.address_latitude}, ${profile.address_longitude}` : '',
         address_village_id: profile.address_village_id || profile.address_city_id || '',
         is_primary: true
       };
@@ -74,20 +234,45 @@ const ShippingAddressSelector = ({ profile, onAddressSelect, selectedAddress }) 
       alert('Maksimal 5 alamat tersimpan tambahan telah tercapai.');
       return;
     }
+    fetchProvinces();
+    setMapSearchQuery('');
+    setMapSearchResults([]);
     setEditingId(null);
-    setFormData({
+
+    const initialForm = {
       ...defaultFormData,
       label: `Alamat Alternatif ${savedAddresses.length + 1}`,
       nama_penerima: profile?.name_full || '',
       phone: profile?.phone_number || profile?.phone || ''
-    });
+    };
+    setFormData(initialForm);
+
+    const defaultCoords = profile?.address_latitude && profile?.address_longitude
+      ? [parseFloat(profile.address_latitude), parseFloat(profile.address_longitude)]
+      : [-6.914744, 107.609810];
+    setMapCenter(defaultCoords);
+
     setShowFormModal(true);
   };
 
   const handleOpenEditForm = (addr, e) => {
     e.stopPropagation();
+    fetchProvinces();
+    setMapSearchQuery('');
+    setMapSearchResults([]);
     setEditingId(addr.id);
     setFormData(addr);
+
+    if (addr.address_province_id) fetchCities(addr.address_province_id);
+    if (addr.address_city_id) fetchDistricts(addr.address_city_id);
+    if (addr.address_subdistrict_id) fetchVillages(addr.address_subdistrict_id);
+
+    const parsed = parseCoords(addr.titik_koordinat);
+    if (parsed) {
+      setMapCenter(parsed);
+    } else {
+      setMapCenter([-6.914744, 107.609810]);
+    }
     setShowFormModal(true);
   };
 
@@ -97,7 +282,6 @@ const ShippingAddressSelector = ({ profile, onAddressSelect, selectedAddress }) 
       const updated = savedAddresses.filter(a => a.id !== id);
       saveAddressesToStorage(updated);
       if (selectedAddress?.id === id) {
-        // Fallback to primary address
         onAddressSelect({
           id: 'primary',
           label: 'Alamat Utama Profil',
@@ -121,7 +305,7 @@ const ShippingAddressSelector = ({ profile, onAddressSelect, selectedAddress }) 
   const handleSaveForm = (e) => {
     e.preventDefault();
     if (!formData.nama_penerima || !formData.phone || !formData.alamat || !formData.kota) {
-      alert('Mohon isi Nama Penerima, No. Telp, Alamat Lengkap, dan Kota.');
+      alert('Mohon isi Nama Penerima, No. Telp, Alamat Lengkap, dan Kota/Kabupaten.');
       return;
     }
 
@@ -149,10 +333,9 @@ const ShippingAddressSelector = ({ profile, onAddressSelect, selectedAddress }) 
     setIsLocating(true);
     navigator.geolocation.getCurrentPosition(
       (position) => {
-        const lat = position.coords.latitude.toFixed(6);
-        const lng = position.coords.longitude.toFixed(6);
-        const coords = `${lat}, ${lng}`;
-        setFormData(prev => ({ ...prev, titik_koordinat: coords }));
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
+        updateCoordinates(lat, lng);
         setIsLocating(false);
       },
       (error) => {
@@ -248,7 +431,7 @@ const ShippingAddressSelector = ({ profile, onAddressSelect, selectedAddress }) 
                     provinsi: profile?.address_province || '',
                     kode_pos: profile?.address_postal_code || '',
                     detail_alamat: '',
-                    titik_koordinat: '',
+                    titik_koordinat: profile?.address_latitude && profile?.address_longitude ? `${profile.address_latitude}, ${profile.address_longitude}` : '',
                     address_village_id: profile?.address_village_id || '',
                     is_primary: true
                   });
@@ -323,8 +506,8 @@ const ShippingAddressSelector = ({ profile, onAddressSelect, selectedAddress }) 
 
       {/* FORM MODAL (ADD / EDIT) */}
       {showFormModal && (
-        <div className="fixed inset-0 z-[60] bg-black/60 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-lg w-full p-6 max-h-[92vh] overflow-y-auto shadow-2xl">
+        <div className="fixed inset-0 z-[60] bg-black/60 flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-6 max-h-[92vh] overflow-y-auto shadow-2xl my-auto">
             <div className="flex justify-between items-center mb-4 border-b pb-3">
               <h3 className="text-sm font-bold text-gray-900 flex items-center gap-2">
                 <span className="material-icons text-emerald-600">edit_location</span>
@@ -384,59 +567,156 @@ const ShippingAddressSelector = ({ profile, onAddressSelect, selectedAddress }) 
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-[11px] font-bold text-gray-600 uppercase mb-1">Kelurahan / Desa</label>
-                  <input
-                    type="text"
-                    placeholder="Nama Kelurahan"
-                    value={formData.kelurahan}
-                    onChange={e => setFormData({ ...formData, kelurahan: e.target.value })}
-                    className="w-full p-2.5 bg-gray-50 border rounded-xl text-xs outline-none focus:ring-2 focus:ring-emerald-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[11px] font-bold text-gray-600 uppercase mb-1">Kecamatan</label>
-                  <input
-                    type="text"
-                    placeholder="Nama Kecamatan"
-                    value={formData.kecamatan}
-                    onChange={e => setFormData({ ...formData, kecamatan: e.target.value })}
-                    className="w-full p-2.5 bg-gray-50 border rounded-xl text-xs outline-none focus:ring-2 focus:ring-emerald-500"
-                  />
-                </div>
-              </div>
+              {/* Administrative Regions Ordered High to Low */}
+              <div className="space-y-3 bg-gray-50/70 p-3 rounded-2xl border border-gray-200/60">
+                <h4 className="text-[11px] font-bold text-emerald-800 uppercase flex items-center gap-1">
+                  <span className="material-icons text-[14px]">map</span>
+                  Wilayah Pengiriman (Provinsi s/d Kelurahan)
+                </h4>
 
-              <div className="grid grid-cols-3 gap-2">
-                <div>
-                  <label className="block text-[11px] font-bold text-gray-600 uppercase mb-1">Kota / Kab *</label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="Kota/Kab"
-                    value={formData.kota}
-                    onChange={e => setFormData({ ...formData, kota: e.target.value })}
-                    className="w-full p-2.5 bg-gray-50 border rounded-xl text-xs outline-none focus:ring-2 focus:ring-emerald-500"
-                  />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {/* 1. Provinsi */}
+                  <div>
+                    <label className="block text-[11px] font-bold text-gray-600 uppercase mb-1">1. Provinsi *</label>
+                    <select
+                      required
+                      value={formData.address_province_id || ''}
+                      onFocus={() => fetchProvinces()}
+                      onChange={(e) => {
+                        const selectedId = e.target.value;
+                        const selectedObj = provinces.find(p => String(p.province_id) === String(selectedId));
+                        const provName = selectedObj ? selectedObj.province : (formData.provinsi || '');
+                        setFormData(prev => ({
+                          ...prev,
+                          address_province_id: selectedId,
+                          provinsi: provName,
+                          address_city_id: '', kota: '',
+                          address_subdistrict_id: '', kecamatan: '',
+                          address_village_id: '', kelurahan: ''
+                        }));
+                        setCities([]);
+                        setDistricts([]);
+                        setVillages([]);
+                        if (selectedId) fetchCities(selectedId, true);
+                      }}
+                      className="w-full p-2.5 bg-white border rounded-xl text-xs outline-none focus:ring-2 focus:ring-emerald-500"
+                    >
+                      <option value="">-- Pilih Provinsi --</option>
+                      {provinces.length === 0 && formData.provinsi && (
+                        <option value={formData.address_province_id || 'custom'}>{formData.provinsi}</option>
+                      )}
+                      {provinces.map(p => (
+                        <option key={p.province_id} value={p.province_id}>{p.province}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* 2. Kota / Kabupaten */}
+                  <div>
+                    <label className="block text-[11px] font-bold text-gray-600 uppercase mb-1">2. Kota / Kabupaten *</label>
+                    <select
+                      required
+                      disabled={!formData.address_province_id && !formData.provinsi}
+                      value={formData.address_city_id || ''}
+                      onFocus={() => fetchCities(formData.address_province_id)}
+                      onChange={(e) => {
+                        const selectedId = e.target.value;
+                        const selectedObj = cities.find(c => String(c.city_id) === String(selectedId));
+                        const cityName = selectedObj ? `${selectedObj.type} ${selectedObj.city_name}` : (formData.kota || '');
+                        setFormData(prev => ({
+                          ...prev,
+                          address_city_id: selectedId,
+                          kota: cityName,
+                          address_subdistrict_id: '', kecamatan: '',
+                          address_village_id: '', kelurahan: ''
+                        }));
+                        setDistricts([]);
+                        setVillages([]);
+                        if (selectedId) fetchDistricts(selectedId, true);
+                      }}
+                      className="w-full p-2.5 bg-white border rounded-xl text-xs outline-none focus:ring-2 focus:ring-emerald-500 disabled:bg-gray-100 disabled:opacity-70"
+                    >
+                      <option value="">{loadingCities ? 'Memuat Kota...' : '-- Pilih Kota / Kabupaten --'}</option>
+                      {cities.length === 0 && formData.kota && (
+                        <option value={formData.address_city_id || 'custom'}>{formData.kota}</option>
+                      )}
+                      {cities.map(c => (
+                        <option key={c.city_id} value={c.city_id}>{c.type} {c.city_name}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* 3. Kecamatan */}
+                  <div>
+                    <label className="block text-[11px] font-bold text-gray-600 uppercase mb-1">3. Kecamatan</label>
+                    <select
+                      disabled={!formData.address_city_id && !formData.kota}
+                      value={formData.address_subdistrict_id || ''}
+                      onFocus={() => fetchDistricts(formData.address_city_id)}
+                      onChange={(e) => {
+                        const selectedId = e.target.value;
+                        const selectedObj = districts.find(d => String(d.district_id) === String(selectedId));
+                        const distName = selectedObj ? selectedObj.district_name : (formData.kecamatan || '');
+                        setFormData(prev => ({
+                          ...prev,
+                          address_subdistrict_id: selectedId,
+                          kecamatan: distName,
+                          address_village_id: '', kelurahan: ''
+                        }));
+                        setVillages([]);
+                        if (selectedId) fetchVillages(selectedId, true);
+                      }}
+                      className="w-full p-2.5 bg-white border rounded-xl text-xs outline-none focus:ring-2 focus:ring-emerald-500 disabled:bg-gray-100 disabled:opacity-70"
+                    >
+                      <option value="">{loadingDistricts ? 'Memuat Kecamatan...' : '-- Pilih Kecamatan --'}</option>
+                      {districts.length === 0 && formData.kecamatan && (
+                        <option value={formData.address_subdistrict_id || 'custom'}>{formData.kecamatan}</option>
+                      )}
+                      {districts.map(d => (
+                        <option key={d.district_id} value={d.district_id}>{d.district_name}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* 4. Kelurahan / Desa */}
+                  <div>
+                    <label className="block text-[11px] font-bold text-gray-600 uppercase mb-1">4. Kelurahan / Desa</label>
+                    <select
+                      disabled={!formData.address_subdistrict_id && !formData.kecamatan}
+                      value={formData.address_village_id || ''}
+                      onFocus={() => fetchVillages(formData.address_subdistrict_id)}
+                      onChange={(e) => {
+                        const selectedId = e.target.value;
+                        const selectedObj = villages.find(v => String(v.village_id) === String(selectedId));
+                        const villageName = selectedObj ? selectedObj.village_name : (formData.kelurahan || '');
+                        setFormData(prev => ({
+                          ...prev,
+                          address_village_id: selectedId,
+                          kelurahan: villageName
+                        }));
+                      }}
+                      className="w-full p-2.5 bg-white border rounded-xl text-xs outline-none focus:ring-2 focus:ring-emerald-500 disabled:bg-gray-100 disabled:opacity-70"
+                    >
+                      <option value="">{loadingVillages ? 'Memuat Kelurahan...' : '-- Pilih Kelurahan / Desa --'}</option>
+                      {villages.length === 0 && formData.kelurahan && (
+                        <option value={formData.address_village_id || 'custom'}>{formData.kelurahan}</option>
+                      )}
+                      {villages.map(v => (
+                        <option key={v.village_id} value={v.village_id}>{v.village_name}</option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-[11px] font-bold text-gray-600 uppercase mb-1">Provinsi</label>
-                  <input
-                    type="text"
-                    placeholder="Provinsi"
-                    value={formData.provinsi}
-                    onChange={e => setFormData({ ...formData, provinsi: e.target.value })}
-                    className="w-full p-2.5 bg-gray-50 border rounded-xl text-xs outline-none focus:ring-2 focus:ring-emerald-500"
-                  />
-                </div>
+
+                {/* 5. Kode Pos */}
                 <div>
                   <label className="block text-[11px] font-bold text-gray-600 uppercase mb-1">Kode Pos</label>
                   <input
                     type="text"
-                    placeholder="12345"
+                    placeholder="Contoh: 40123"
                     value={formData.kode_pos}
                     onChange={e => setFormData({ ...formData, kode_pos: e.target.value })}
-                    className="w-full p-2.5 bg-gray-50 border rounded-xl text-xs outline-none focus:ring-2 focus:ring-emerald-500"
+                    className="w-full p-2.5 bg-white border rounded-xl text-xs outline-none focus:ring-2 focus:ring-emerald-500"
                   />
                 </div>
               </div>
@@ -452,27 +732,111 @@ const ShippingAddressSelector = ({ profile, onAddressSelect, selectedAddress }) 
                 />
               </div>
 
-              <div>
-                <div className="flex justify-between items-center mb-1">
-                  <label className="block text-[11px] font-bold text-gray-600 uppercase">Titik Koordinat Lokasi (GPS)</label>
+              {/* Interactive Maps Picker & Search */}
+              <div className="pt-2 border-t border-gray-100 mt-4">
+                <div className="flex justify-between items-center mb-2">
+                  <label className="block text-[11px] font-bold text-gray-700 uppercase flex items-center gap-1.5">
+                    <span className="material-icons text-emerald-600 text-[16px]">pin_drop</span>
+                    Titik Koordinat Lokasi (Peta Interaktif GPS)
+                  </label>
                   <button
                     type="button"
                     onClick={handleDetectGPS}
                     disabled={isLocating}
-                    className="text-[10px] text-blue-700 bg-blue-50 hover:bg-blue-100 px-2 py-0.5 rounded-lg font-bold flex items-center gap-1"
+                    className="text-[10px] text-emerald-800 bg-emerald-100 hover:bg-emerald-200 px-2.5 py-1 rounded-lg font-bold flex items-center gap-1 transition"
                   >
-                    <span className="material-icons text-[12px]">gps_fixed</span>
-                    {isLocating ? 'Deteksi...' : 'Ambil Lokasi Saya'}
+                    <span className="material-icons text-[13px]">my_location</span>
+                    {isLocating ? 'Mendeteksi...' : 'Lokasi Saya Saat Ini'}
                   </button>
                 </div>
+
+                {/* Search Box on Map */}
+                <div className="relative mb-2">
+                  <div className="flex gap-1.5">
+                    <div className="relative flex-1">
+                      <span className="material-icons absolute left-3 top-2.5 text-gray-400 text-[16px]">search</span>
+                      <input
+                        type="text"
+                        placeholder="Cari nama lokasi / jalan di peta..."
+                        value={mapSearchQuery}
+                        onChange={(e) => setMapSearchQuery(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            handleSearchMapLocation();
+                          }
+                        }}
+                        className="w-full pl-9 pr-3 py-2 bg-gray-50 border rounded-xl text-xs outline-none focus:ring-2 focus:ring-emerald-500"
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleSearchMapLocation}
+                      disabled={isSearchingMap}
+                      className="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl transition shrink-0 flex items-center gap-1"
+                    >
+                      {isSearchingMap ? (
+                        <span className="animate-spin text-xs">...</span>
+                      ) : (
+                        <>
+                          <span className="material-icons text-[14px]">travel_explore</span>
+                          Cari
+                        </>
+                      )}
+                    </button>
+                  </div>
+
+                  {/* Search Results Dropdown List */}
+                  {mapSearchResults.length > 0 && (
+                    <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-gray-200 rounded-xl shadow-xl z-20 max-h-48 overflow-y-auto">
+                      {mapSearchResults.map((item, idx) => (
+                        <div
+                          key={idx}
+                          onClick={() => handleSelectSearchResult(item)}
+                          className="p-2.5 hover:bg-emerald-50 cursor-pointer border-b border-gray-100 text-xs text-gray-700 flex items-start gap-2"
+                        >
+                          <span className="material-icons text-emerald-600 text-[16px] shrink-0 mt-0.5">place</span>
+                          <span className="leading-tight">{item.display_name}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Leaflet Map Component */}
+                <div className="h-60 rounded-2xl overflow-hidden border border-gray-200 relative z-0 mb-2 shadow-inner">
+                  <MapContainer
+                    center={mapCenter}
+                    zoom={14}
+                    style={{ height: '100%', width: '100%' }}
+                  >
+                    <TileLayer
+                      url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                      attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                    />
+                    <MapController center={mapCenter} />
+                    <MapClickHandler onSelectLocation={(lat, lng) => updateCoordinates(lat, lng)} />
+                    {mapCenter && mapCenter[0] && mapCenter[1] && (
+                      <Marker position={mapCenter} />
+                    )}
+                  </MapContainer>
+                </div>
+
                 <input
                   type="text"
                   placeholder="-6.175392, 106.827153 (Latitude, Longitude)"
                   value={formData.titik_koordinat}
-                  onChange={e => setFormData({ ...formData, titik_koordinat: e.target.value })}
-                  className="w-full p-2.5 bg-gray-50 border rounded-xl text-xs outline-none focus:ring-2 focus:ring-emerald-500"
+                  onChange={e => {
+                    const val = e.target.value;
+                    setFormData(prev => ({ ...prev, titik_koordinat: val }));
+                    const parsed = parseCoords(val);
+                    if (parsed) setMapCenter(parsed);
+                  }}
+                  className="w-full p-2 bg-gray-50 border rounded-xl text-xs font-mono text-gray-700 outline-none focus:ring-2 focus:ring-emerald-500"
                 />
-                <p className="text-[9px] text-gray-400 mt-1">Koordinat diperlukan agar lokasi pengiriman lebih akurat.</p>
+                <p className="text-[10px] text-gray-500 mt-1">
+                  * Klik pada peta untuk memilih titik lokasi secara presisi, atau gunakan pencarian alamat di atas.
+                </p>
               </div>
 
               <div className="flex gap-2 pt-3 border-t">
