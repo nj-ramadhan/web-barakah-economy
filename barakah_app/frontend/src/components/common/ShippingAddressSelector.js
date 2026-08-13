@@ -402,20 +402,25 @@ const ShippingAddressSelector = ({ profile, onAddressSelect, selectedAddress }) 
 
       {/* MODAL SELECTION */}
       {showModal && (
-        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-lg w-full p-6 max-h-[90vh] overflow-y-auto shadow-2xl animate-fade-in">
-            <div className="flex justify-between items-center mb-4 border-b pb-3">
-              <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
+        <div className="fixed inset-0 z-[9999] bg-black/60 flex items-center justify-center p-3 sm:p-4 pt-14 pb-16 sm:pt-4 sm:pb-4 overflow-hidden">
+          <div className="bg-white rounded-2xl sm:rounded-3xl max-w-lg w-full max-h-[80vh] sm:max-h-[85vh] flex flex-col shadow-2xl overflow-hidden my-auto animate-fade-in">
+            <div className="flex justify-between items-center px-4 py-3 sm:px-6 sm:py-4 border-b bg-white shrink-0">
+              <h3 className="text-sm font-bold text-gray-900 flex items-center gap-2">
                 <span className="material-icons text-emerald-600">local_shipping</span>
                 Pilih Alamat Pengiriman (Maks 5)
               </h3>
-              <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-gray-600">
-                <span className="material-icons">close</span>
+              <button 
+                type="button"
+                onClick={() => setShowModal(false)} 
+                className="p-1 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition"
+                aria-label="Close"
+              >
+                <span className="material-icons text-xl">close</span>
               </button>
             </div>
 
             {/* Address List */}
-            <div className="space-y-3 mb-4">
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-3">
               {/* Primary Address */}
               <div
                 onClick={() => {
@@ -489,7 +494,7 @@ const ShippingAddressSelector = ({ profile, onAddressSelect, selectedAddress }) 
             </div>
 
             {/* Add New Button */}
-            <div className="flex gap-2 pt-2 border-t">
+            <div className="p-4 bg-gray-50 border-t shrink-0">
               <button
                 type="button"
                 onClick={handleOpenAddForm}
@@ -506,8 +511,8 @@ const ShippingAddressSelector = ({ profile, onAddressSelect, selectedAddress }) 
 
       {/* FORM MODAL (ADD / EDIT) */}
       {showFormModal && (
-        <div className="fixed inset-0 z-[60] bg-black/60 flex items-center justify-center p-2 sm:p-4">
-          <div className="bg-white rounded-2xl sm:rounded-3xl max-w-lg w-full max-h-[90vh] sm:max-h-[85vh] flex flex-col shadow-2xl overflow-hidden my-auto animate-fade-in">
+        <div className="fixed inset-0 z-[9999] bg-black/60 flex items-center justify-center p-3 sm:p-4 pt-14 pb-16 sm:pt-4 sm:pb-4 overflow-hidden">
+          <div className="bg-white rounded-2xl sm:rounded-3xl max-w-lg w-full max-h-[80vh] sm:max-h-[85vh] flex flex-col shadow-2xl overflow-hidden my-auto animate-fade-in">
             {/* STICKY HEADER */}
             <div className="flex justify-between items-center px-4 py-3 sm:px-6 sm:py-4 border-b bg-white shrink-0">
               <h3 className="text-xs sm:text-sm font-bold text-gray-900 flex items-center gap-2">
