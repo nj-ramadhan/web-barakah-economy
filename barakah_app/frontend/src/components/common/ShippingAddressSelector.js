@@ -506,355 +506,366 @@ const ShippingAddressSelector = ({ profile, onAddressSelect, selectedAddress }) 
 
       {/* FORM MODAL (ADD / EDIT) */}
       {showFormModal && (
-        <div className="fixed inset-0 z-[60] bg-black/60 flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-white rounded-3xl max-w-lg w-full p-6 max-h-[92vh] overflow-y-auto shadow-2xl my-auto">
-            <div className="flex justify-between items-center mb-4 border-b pb-3">
-              <h3 className="text-sm font-bold text-gray-900 flex items-center gap-2">
-                <span className="material-icons text-emerald-600">edit_location</span>
+        <div className="fixed inset-0 z-[60] bg-black/60 flex items-center justify-center p-2 sm:p-4">
+          <div className="bg-white rounded-2xl sm:rounded-3xl max-w-lg w-full max-h-[90vh] sm:max-h-[85vh] flex flex-col shadow-2xl overflow-hidden my-auto animate-fade-in">
+            {/* STICKY HEADER */}
+            <div className="flex justify-between items-center px-4 py-3 sm:px-6 sm:py-4 border-b bg-white shrink-0">
+              <h3 className="text-xs sm:text-sm font-bold text-gray-900 flex items-center gap-2">
+                <span className="material-icons text-emerald-600 text-base sm:text-lg">edit_location</span>
                 {editingId ? 'Edit Alamat Pengiriman' : 'Tambah Alamat Pengiriman Baru'}
               </h3>
-              <button onClick={() => setShowFormModal(false)} className="text-gray-400 hover:text-gray-600">
-                <span className="material-icons">close</span>
+              <button 
+                type="button"
+                onClick={() => setShowFormModal(false)} 
+                className="p-1 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition"
+                aria-label="Close"
+              >
+                <span className="material-icons text-xl sm:text-2xl">close</span>
               </button>
             </div>
 
-            <form onSubmit={handleSaveForm} className="space-y-3">
-              <div>
-                <label className="block text-[11px] font-bold text-gray-600 uppercase mb-1">Label Alamat (mis: Rumah, Kantor, Toko)</label>
-                <input
-                  type="text"
-                  placeholder="Contoh: Rumah Orang Tua"
-                  value={formData.label}
-                  onChange={e => setFormData({ ...formData, label: e.target.value })}
-                  className="w-full p-2.5 bg-gray-50 border rounded-xl text-xs outline-none focus:ring-2 focus:ring-emerald-500"
-                />
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {/* SCROLLABLE FORM BODY */}
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-3">
+              <form id="shipping-address-form" onSubmit={handleSaveForm} className="space-y-3">
                 <div>
-                  <label className="block text-[11px] font-bold text-gray-600 uppercase mb-1">Nama Penerima *</label>
+                  <label className="block text-[10px] sm:text-[11px] font-bold text-gray-600 uppercase mb-1">Label Alamat (mis: Rumah, Kantor, Toko)</label>
                   <input
                     type="text"
-                    required
-                    placeholder="Nama lengkap penerima"
-                    value={formData.nama_penerima}
-                    onChange={e => setFormData({ ...formData, nama_penerima: e.target.value })}
-                    className="w-full p-2.5 bg-gray-50 border rounded-xl text-xs outline-none focus:ring-2 focus:ring-emerald-500"
+                    placeholder="Contoh: Rumah Orang Tua"
+                    value={formData.label}
+                    onChange={e => setFormData({ ...formData, label: e.target.value })}
+                    className="w-full p-2 sm:p-2.5 bg-gray-50 border rounded-xl text-xs outline-none focus:ring-2 focus:ring-emerald-500"
                   />
                 </div>
-                <div>
-                  <label className="block text-[11px] font-bold text-gray-600 uppercase mb-1">No. Telp / WhatsApp *</label>
-                  <input
-                    type="tel"
-                    required
-                    placeholder="08xxxxxxxxxx"
-                    value={formData.phone}
-                    onChange={e => setFormData({ ...formData, phone: e.target.value })}
-                    className="w-full p-2.5 bg-gray-50 border rounded-xl text-xs outline-none focus:ring-2 focus:ring-emerald-500"
-                  />
-                </div>
-              </div>
 
-              <div>
-                <label className="block text-[11px] font-bold text-gray-600 uppercase mb-1">Alamat Lengkap (Jalan / No. Rumah) *</label>
-                <textarea
-                  required
-                  rows="2"
-                  placeholder="Jl. Merdeka No. 123, RT 01/RW 02"
-                  value={formData.alamat}
-                  onChange={e => setFormData({ ...formData, alamat: e.target.value })}
-                  className="w-full p-2.5 bg-gray-50 border rounded-xl text-xs outline-none focus:ring-2 focus:ring-emerald-500"
-                />
-              </div>
-
-              {/* Administrative Regions Ordered High to Low */}
-              <div className="space-y-3 bg-gray-50/70 p-3 rounded-2xl border border-gray-200/60">
-                <h4 className="text-[11px] font-bold text-emerald-800 uppercase flex items-center gap-1">
-                  <span className="material-icons text-[14px]">map</span>
-                  Wilayah Pengiriman (Provinsi s/d Kelurahan)
-                </h4>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {/* 1. Provinsi */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
                   <div>
-                    <label className="block text-[11px] font-bold text-gray-600 uppercase mb-1">1. Provinsi *</label>
-                    <select
+                    <label className="block text-[10px] sm:text-[11px] font-bold text-gray-600 uppercase mb-1">Nama Penerima *</label>
+                    <input
+                      type="text"
                       required
-                      value={formData.address_province_id || ''}
-                      onFocus={() => fetchProvinces()}
-                      onChange={(e) => {
-                        const selectedId = e.target.value;
-                        const selectedObj = provinces.find(p => String(p.province_id) === String(selectedId));
-                        const provName = selectedObj ? selectedObj.province : (formData.provinsi || '');
-                        setFormData(prev => ({
-                          ...prev,
-                          address_province_id: selectedId,
-                          provinsi: provName,
-                          address_city_id: '', kota: '',
-                          address_subdistrict_id: '', kecamatan: '',
-                          address_village_id: '', kelurahan: ''
-                        }));
-                        setCities([]);
-                        setDistricts([]);
-                        setVillages([]);
-                        if (selectedId) fetchCities(selectedId, true);
-                      }}
-                      className="w-full p-2.5 bg-white border rounded-xl text-xs outline-none focus:ring-2 focus:ring-emerald-500"
-                    >
-                      <option value="">-- Pilih Provinsi --</option>
-                      {provinces.length === 0 && formData.provinsi && (
-                        <option value={formData.address_province_id || 'custom'}>{formData.provinsi}</option>
-                      )}
-                      {provinces.map(p => (
-                        <option key={p.province_id} value={p.province_id}>{p.province}</option>
-                      ))}
-                    </select>
+                      placeholder="Nama lengkap penerima"
+                      value={formData.nama_penerima}
+                      onChange={e => setFormData({ ...formData, nama_penerima: e.target.value })}
+                      className="w-full p-2 sm:p-2.5 bg-gray-50 border rounded-xl text-xs outline-none focus:ring-2 focus:ring-emerald-500"
+                    />
                   </div>
-
-                  {/* 2. Kota / Kabupaten */}
                   <div>
-                    <label className="block text-[11px] font-bold text-gray-600 uppercase mb-1">2. Kota / Kabupaten *</label>
-                    <select
+                    <label className="block text-[10px] sm:text-[11px] font-bold text-gray-600 uppercase mb-1">No. Telp / WhatsApp *</label>
+                    <input
+                      type="tel"
                       required
-                      disabled={!formData.address_province_id && !formData.provinsi}
-                      value={formData.address_city_id || ''}
-                      onFocus={() => fetchCities(formData.address_province_id)}
-                      onChange={(e) => {
-                        const selectedId = e.target.value;
-                        const selectedObj = cities.find(c => String(c.city_id) === String(selectedId));
-                        const cityName = selectedObj ? `${selectedObj.type} ${selectedObj.city_name}` : (formData.kota || '');
-                        setFormData(prev => ({
-                          ...prev,
-                          address_city_id: selectedId,
-                          kota: cityName,
-                          address_subdistrict_id: '', kecamatan: '',
-                          address_village_id: '', kelurahan: ''
-                        }));
-                        setDistricts([]);
-                        setVillages([]);
-                        if (selectedId) fetchDistricts(selectedId, true);
-                      }}
-                      className="w-full p-2.5 bg-white border rounded-xl text-xs outline-none focus:ring-2 focus:ring-emerald-500 disabled:bg-gray-100 disabled:opacity-70"
-                    >
-                      <option value="">{loadingCities ? 'Memuat Kota...' : '-- Pilih Kota / Kabupaten --'}</option>
-                      {cities.length === 0 && formData.kota && (
-                        <option value={formData.address_city_id || 'custom'}>{formData.kota}</option>
-                      )}
-                      {cities.map(c => (
-                        <option key={c.city_id} value={c.city_id}>{c.type} {c.city_name}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {/* 3. Kecamatan */}
-                  <div>
-                    <label className="block text-[11px] font-bold text-gray-600 uppercase mb-1">3. Kecamatan</label>
-                    <select
-                      disabled={!formData.address_city_id && !formData.kota}
-                      value={formData.address_subdistrict_id || ''}
-                      onFocus={() => fetchDistricts(formData.address_city_id)}
-                      onChange={(e) => {
-                        const selectedId = e.target.value;
-                        const selectedObj = districts.find(d => String(d.district_id) === String(selectedId));
-                        const distName = selectedObj ? selectedObj.district_name : (formData.kecamatan || '');
-                        setFormData(prev => ({
-                          ...prev,
-                          address_subdistrict_id: selectedId,
-                          kecamatan: distName,
-                          address_village_id: '', kelurahan: ''
-                        }));
-                        setVillages([]);
-                        if (selectedId) fetchVillages(selectedId, true);
-                      }}
-                      className="w-full p-2.5 bg-white border rounded-xl text-xs outline-none focus:ring-2 focus:ring-emerald-500 disabled:bg-gray-100 disabled:opacity-70"
-                    >
-                      <option value="">{loadingDistricts ? 'Memuat Kecamatan...' : '-- Pilih Kecamatan --'}</option>
-                      {districts.length === 0 && formData.kecamatan && (
-                        <option value={formData.address_subdistrict_id || 'custom'}>{formData.kecamatan}</option>
-                      )}
-                      {districts.map(d => (
-                        <option key={d.district_id} value={d.district_id}>{d.district_name}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {/* 4. Kelurahan / Desa */}
-                  <div>
-                    <label className="block text-[11px] font-bold text-gray-600 uppercase mb-1">4. Kelurahan / Desa</label>
-                    <select
-                      disabled={!formData.address_subdistrict_id && !formData.kecamatan}
-                      value={formData.address_village_id || ''}
-                      onFocus={() => fetchVillages(formData.address_subdistrict_id)}
-                      onChange={(e) => {
-                        const selectedId = e.target.value;
-                        const selectedObj = villages.find(v => String(v.village_id) === String(selectedId));
-                        const villageName = selectedObj ? selectedObj.village_name : (formData.kelurahan || '');
-                        setFormData(prev => ({
-                          ...prev,
-                          address_village_id: selectedId,
-                          kelurahan: villageName
-                        }));
-                      }}
-                      className="w-full p-2.5 bg-white border rounded-xl text-xs outline-none focus:ring-2 focus:ring-emerald-500 disabled:bg-gray-100 disabled:opacity-70"
-                    >
-                      <option value="">{loadingVillages ? 'Memuat Kelurahan...' : '-- Pilih Kelurahan / Desa --'}</option>
-                      {villages.length === 0 && formData.kelurahan && (
-                        <option value={formData.address_village_id || 'custom'}>{formData.kelurahan}</option>
-                      )}
-                      {villages.map(v => (
-                        <option key={v.village_id} value={v.village_id}>{v.village_name}</option>
-                      ))}
-                    </select>
+                      placeholder="08xxxxxxxxxx"
+                      value={formData.phone}
+                      onChange={e => setFormData({ ...formData, phone: e.target.value })}
+                      className="w-full p-2 sm:p-2.5 bg-gray-50 border rounded-xl text-xs outline-none focus:ring-2 focus:ring-emerald-500"
+                    />
                   </div>
                 </div>
 
-                {/* 5. Kode Pos */}
                 <div>
-                  <label className="block text-[11px] font-bold text-gray-600 uppercase mb-1">Kode Pos</label>
-                  <input
-                    type="text"
-                    placeholder="Contoh: 40123"
-                    value={formData.kode_pos}
-                    onChange={e => setFormData({ ...formData, kode_pos: e.target.value })}
-                    className="w-full p-2.5 bg-white border rounded-xl text-xs outline-none focus:ring-2 focus:ring-emerald-500"
+                  <label className="block text-[10px] sm:text-[11px] font-bold text-gray-600 uppercase mb-1">Alamat Lengkap (Jalan / No. Rumah) *</label>
+                  <textarea
+                    required
+                    rows="2"
+                    placeholder="Jl. Merdeka No. 123, RT 01/RW 02"
+                    value={formData.alamat}
+                    onChange={e => setFormData({ ...formData, alamat: e.target.value })}
+                    className="w-full p-2 sm:p-2.5 bg-gray-50 border rounded-xl text-xs outline-none focus:ring-2 focus:ring-emerald-500"
                   />
                 </div>
-              </div>
 
-              <div>
-                <label className="block text-[11px] font-bold text-gray-600 uppercase mb-1">Detail Alamat Lainnya (Patokan)</label>
-                <input
-                  type="text"
-                  placeholder="Dekat masjid, pagar warna hijau..."
-                  value={formData.detail_alamat}
-                  onChange={e => setFormData({ ...formData, detail_alamat: e.target.value })}
-                  className="w-full p-2.5 bg-gray-50 border rounded-xl text-xs outline-none focus:ring-2 focus:ring-emerald-500"
-                />
-              </div>
+                {/* Administrative Regions Ordered High to Low */}
+                <div className="space-y-2.5 sm:space-y-3 bg-gray-50/70 p-2.5 sm:p-3 rounded-2xl border border-gray-200/60">
+                  <h4 className="text-[10px] sm:text-[11px] font-bold text-emerald-800 uppercase flex items-center gap-1">
+                    <span className="material-icons text-[14px]">map</span>
+                    Wilayah Pengiriman (Provinsi s/d Kelurahan)
+                  </h4>
 
-              {/* Interactive Maps Picker & Search */}
-              <div className="pt-2 border-t border-gray-100 mt-4">
-                <div className="flex justify-between items-center mb-2">
-                  <label className="block text-[11px] font-bold text-gray-700 uppercase flex items-center gap-1.5">
-                    <span className="material-icons text-emerald-600 text-[16px]">pin_drop</span>
-                    Titik Koordinat Lokasi (Peta Interaktif GPS)
-                  </label>
-                  <button
-                    type="button"
-                    onClick={handleDetectGPS}
-                    disabled={isLocating}
-                    className="text-[10px] text-emerald-800 bg-emerald-100 hover:bg-emerald-200 px-2.5 py-1 rounded-lg font-bold flex items-center gap-1 transition"
-                  >
-                    <span className="material-icons text-[13px]">my_location</span>
-                    {isLocating ? 'Mendeteksi...' : 'Lokasi Saya Saat Ini'}
-                  </button>
-                </div>
-
-                {/* Search Box on Map */}
-                <div className="relative mb-2">
-                  <div className="flex gap-1.5">
-                    <div className="relative flex-1">
-                      <span className="material-icons absolute left-3 top-2.5 text-gray-400 text-[16px]">search</span>
-                      <input
-                        type="text"
-                        placeholder="Cari nama lokasi / jalan di peta..."
-                        value={mapSearchQuery}
-                        onChange={(e) => setMapSearchQuery(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') {
-                            e.preventDefault();
-                            handleSearchMapLocation();
-                          }
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
+                    {/* 1. Provinsi */}
+                    <div>
+                      <label className="block text-[10px] sm:text-[11px] font-bold text-gray-600 uppercase mb-1">1. Provinsi *</label>
+                      <select
+                        required
+                        value={formData.address_province_id || ''}
+                        onFocus={() => fetchProvinces()}
+                        onChange={(e) => {
+                          const selectedId = e.target.value;
+                          const selectedObj = provinces.find(p => String(p.province_id) === String(selectedId));
+                          const provName = selectedObj ? selectedObj.province : (formData.provinsi || '');
+                          setFormData(prev => ({
+                            ...prev,
+                            address_province_id: selectedId,
+                            provinsi: provName,
+                            address_city_id: '', kota: '',
+                            address_subdistrict_id: '', kecamatan: '',
+                            address_village_id: '', kelurahan: ''
+                          }));
+                          setCities([]);
+                          setDistricts([]);
+                          setVillages([]);
+                          if (selectedId) fetchCities(selectedId, true);
                         }}
-                        className="w-full pl-9 pr-3 py-2 bg-gray-50 border rounded-xl text-xs outline-none focus:ring-2 focus:ring-emerald-500"
-                      />
+                        className="w-full p-2 sm:p-2.5 bg-white border rounded-xl text-xs outline-none focus:ring-2 focus:ring-emerald-500"
+                      >
+                        <option value="">-- Pilih Provinsi --</option>
+                        {provinces.length === 0 && formData.provinsi && (
+                          <option value={formData.address_province_id || 'custom'}>{formData.provinsi}</option>
+                        )}
+                        {provinces.map(p => (
+                          <option key={p.province_id} value={p.province_id}>{p.province}</option>
+                        ))}
+                      </select>
                     </div>
+
+                    {/* 2. Kota / Kabupaten */}
+                    <div>
+                      <label className="block text-[10px] sm:text-[11px] font-bold text-gray-600 uppercase mb-1">2. Kota / Kabupaten *</label>
+                      <select
+                        required
+                        disabled={!formData.address_province_id && !formData.provinsi}
+                        value={formData.address_city_id || ''}
+                        onFocus={() => fetchCities(formData.address_province_id)}
+                        onChange={(e) => {
+                          const selectedId = e.target.value;
+                          const selectedObj = cities.find(c => String(c.city_id) === String(selectedId));
+                          const cityName = selectedObj ? `${selectedObj.type} ${selectedObj.city_name}` : (formData.kota || '');
+                          setFormData(prev => ({
+                            ...prev,
+                            address_city_id: selectedId,
+                            kota: cityName,
+                            address_subdistrict_id: '', kecamatan: '',
+                            address_village_id: '', kelurahan: ''
+                          }));
+                          setDistricts([]);
+                          setVillages([]);
+                          if (selectedId) fetchDistricts(selectedId, true);
+                        }}
+                        className="w-full p-2 sm:p-2.5 bg-white border rounded-xl text-xs outline-none focus:ring-2 focus:ring-emerald-500 disabled:bg-gray-100 disabled:opacity-70"
+                      >
+                        <option value="">{loadingCities ? 'Memuat Kota...' : '-- Pilih Kota / Kabupaten --'}</option>
+                        {cities.length === 0 && formData.kota && (
+                          <option value={formData.address_city_id || 'custom'}>{formData.kota}</option>
+                        )}
+                        {cities.map(c => (
+                          <option key={c.city_id} value={c.city_id}>{c.type} {c.city_name}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* 3. Kecamatan */}
+                    <div>
+                      <label className="block text-[10px] sm:text-[11px] font-bold text-gray-600 uppercase mb-1">3. Kecamatan</label>
+                      <select
+                        disabled={!formData.address_city_id && !formData.kota}
+                        value={formData.address_subdistrict_id || ''}
+                        onFocus={() => fetchDistricts(formData.address_city_id)}
+                        onChange={(e) => {
+                          const selectedId = e.target.value;
+                          const selectedObj = districts.find(d => String(d.district_id) === String(selectedId));
+                          const distName = selectedObj ? selectedObj.district_name : (formData.kecamatan || '');
+                          setFormData(prev => ({
+                            ...prev,
+                            address_subdistrict_id: selectedId,
+                            kecamatan: distName,
+                            address_village_id: '', kelurahan: ''
+                          }));
+                          setVillages([]);
+                          if (selectedId) fetchVillages(selectedId, true);
+                        }}
+                        className="w-full p-2 sm:p-2.5 bg-white border rounded-xl text-xs outline-none focus:ring-2 focus:ring-emerald-500 disabled:bg-gray-100 disabled:opacity-70"
+                      >
+                        <option value="">{loadingDistricts ? 'Memuat Kecamatan...' : '-- Pilih Kecamatan --'}</option>
+                        {districts.length === 0 && formData.kecamatan && (
+                          <option value={formData.address_subdistrict_id || 'custom'}>{formData.kecamatan}</option>
+                        )}
+                        {districts.map(d => (
+                          <option key={d.district_id} value={d.district_id}>{d.district_name}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* 4. Kelurahan / Desa */}
+                    <div>
+                      <label className="block text-[10px] sm:text-[11px] font-bold text-gray-600 uppercase mb-1">4. Kelurahan / Desa</label>
+                      <select
+                        disabled={!formData.address_subdistrict_id && !formData.kecamatan}
+                        value={formData.address_village_id || ''}
+                        onFocus={() => fetchVillages(formData.address_subdistrict_id)}
+                        onChange={(e) => {
+                          const selectedId = e.target.value;
+                          const selectedObj = villages.find(v => String(v.village_id) === String(selectedId));
+                          const villageName = selectedObj ? selectedObj.village_name : (formData.kelurahan || '');
+                          setFormData(prev => ({
+                            ...prev,
+                            address_village_id: selectedId,
+                            kelurahan: villageName
+                          }));
+                        }}
+                        className="w-full p-2 sm:p-2.5 bg-white border rounded-xl text-xs outline-none focus:ring-2 focus:ring-emerald-500 disabled:bg-gray-100 disabled:opacity-70"
+                      >
+                        <option value="">{loadingVillages ? 'Memuat Kelurahan...' : '-- Pilih Kelurahan / Desa --'}</option>
+                        {villages.length === 0 && formData.kelurahan && (
+                          <option value={formData.address_village_id || 'custom'}>{formData.kelurahan}</option>
+                        )}
+                        {villages.map(v => (
+                          <option key={v.village_id} value={v.village_id}>{v.village_name}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* 5. Kode Pos */}
+                  <div>
+                    <label className="block text-[10px] sm:text-[11px] font-bold text-gray-600 uppercase mb-1">Kode Pos</label>
+                    <input
+                      type="text"
+                      placeholder="Contoh: 40123"
+                      value={formData.kode_pos}
+                      onChange={e => setFormData({ ...formData, kode_pos: e.target.value })}
+                      className="w-full p-2 sm:p-2.5 bg-white border rounded-xl text-xs outline-none focus:ring-2 focus:ring-emerald-500"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-[10px] sm:text-[11px] font-bold text-gray-600 uppercase mb-1">Detail Alamat Lainnya (Patokan)</label>
+                  <input
+                    type="text"
+                    placeholder="Dekat masjid, pagar warna hijau..."
+                    value={formData.detail_alamat}
+                    onChange={e => setFormData({ ...formData, detail_alamat: e.target.value })}
+                    className="w-full p-2 sm:p-2.5 bg-gray-50 border rounded-xl text-xs outline-none focus:ring-2 focus:ring-emerald-500"
+                  />
+                </div>
+
+                {/* Interactive Maps Picker & Search */}
+                <div className="pt-2 border-t border-gray-100 mt-3 sm:mt-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 mb-2">
+                    <label className="block text-[10px] sm:text-[11px] font-bold text-gray-700 uppercase flex items-center gap-1.5">
+                      <span className="material-icons text-emerald-600 text-sm sm:text-[16px]">pin_drop</span>
+                      Titik Koordinat Lokasi (Peta Interaktif GPS)
+                    </label>
                     <button
                       type="button"
-                      onClick={handleSearchMapLocation}
-                      disabled={isSearchingMap}
-                      className="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl transition shrink-0 flex items-center gap-1"
+                      onClick={handleDetectGPS}
+                      disabled={isLocating}
+                      className="text-[10px] text-emerald-800 bg-emerald-100 hover:bg-emerald-200 px-2.5 py-1 rounded-lg font-bold flex items-center justify-center gap-1 transition self-start sm:self-auto"
                     >
-                      {isSearchingMap ? (
-                        <span className="animate-spin text-xs">...</span>
-                      ) : (
-                        <>
-                          <span className="material-icons text-[14px]">travel_explore</span>
-                          Cari
-                        </>
-                      )}
+                      <span className="material-icons text-[12px]">my_location</span>
+                      {isLocating ? 'Mendeteksi...' : 'Lokasi Saya Saat Ini'}
                     </button>
                   </div>
 
-                  {/* Search Results Dropdown List */}
-                  {mapSearchResults.length > 0 && (
-                    <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-gray-200 rounded-xl shadow-xl z-20 max-h-48 overflow-y-auto">
-                      {mapSearchResults.map((item, idx) => (
-                        <div
-                          key={idx}
-                          onClick={() => handleSelectSearchResult(item)}
-                          className="p-2.5 hover:bg-emerald-50 cursor-pointer border-b border-gray-100 text-xs text-gray-700 flex items-start gap-2"
-                        >
-                          <span className="material-icons text-emerald-600 text-[16px] shrink-0 mt-0.5">place</span>
-                          <span className="leading-tight">{item.display_name}</span>
-                        </div>
-                      ))}
+                  {/* Search Box on Map */}
+                  <div className="relative mb-2">
+                    <div className="flex gap-1.5">
+                      <div className="relative flex-1">
+                        <span className="material-icons absolute left-2.5 top-2 text-gray-400 text-sm sm:text-[16px]">search</span>
+                        <input
+                          type="text"
+                          placeholder="Cari nama lokasi / jalan di peta..."
+                          value={mapSearchQuery}
+                          onChange={(e) => setMapSearchQuery(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              handleSearchMapLocation();
+                            }
+                          }}
+                          className="w-full pl-8 pr-2.5 py-1.5 sm:py-2 bg-gray-50 border rounded-xl text-xs outline-none focus:ring-2 focus:ring-emerald-500"
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleSearchMapLocation}
+                        disabled={isSearchingMap}
+                        className="px-2.5 sm:px-3 py-1.5 sm:py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl transition shrink-0 flex items-center gap-1"
+                      >
+                        {isSearchingMap ? (
+                          <span className="animate-spin text-xs">...</span>
+                        ) : (
+                          <>
+                            <span className="material-icons text-xs sm:text-[14px]">travel_explore</span>
+                            Cari
+                          </>
+                        )}
+                      </button>
                     </div>
-                  )}
-                </div>
 
-                {/* Leaflet Map Component */}
-                <div className="h-60 rounded-2xl overflow-hidden border border-gray-200 relative z-0 mb-2 shadow-inner">
-                  <MapContainer
-                    center={mapCenter}
-                    zoom={14}
-                    style={{ height: '100%', width: '100%' }}
-                  >
-                    <TileLayer
-                      url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                      attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-                    />
-                    <MapController center={mapCenter} />
-                    <MapClickHandler onSelectLocation={(lat, lng) => updateCoordinates(lat, lng)} />
-                    {mapCenter && mapCenter[0] && mapCenter[1] && (
-                      <Marker position={mapCenter} />
+                    {/* Search Results Dropdown List */}
+                    {mapSearchResults.length > 0 && (
+                      <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-gray-200 rounded-xl shadow-xl z-20 max-h-40 overflow-y-auto">
+                        {mapSearchResults.map((item, idx) => (
+                          <div
+                            key={idx}
+                            onClick={() => handleSelectSearchResult(item)}
+                            className="p-2 sm:p-2.5 hover:bg-emerald-50 cursor-pointer border-b border-gray-100 text-xs text-gray-700 flex items-start gap-2"
+                          >
+                            <span className="material-icons text-emerald-600 text-sm shrink-0 mt-0.5">place</span>
+                            <span className="leading-tight">{item.display_name}</span>
+                          </div>
+                        ))}
+                      </div>
                     )}
-                  </MapContainer>
+                  </div>
+
+                  {/* Leaflet Map Component */}
+                  <div className="h-44 sm:h-52 rounded-xl sm:rounded-2xl overflow-hidden border border-gray-200 relative z-0 mb-2 shadow-inner">
+                    <MapContainer
+                      center={mapCenter}
+                      zoom={14}
+                      style={{ height: '100%', width: '100%' }}
+                    >
+                      <TileLayer
+                        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                      />
+                      <MapController center={mapCenter} />
+                      <MapClickHandler onSelectLocation={(lat, lng) => updateCoordinates(lat, lng)} />
+                      {mapCenter && mapCenter[0] && mapCenter[1] && (
+                        <Marker position={mapCenter} />
+                      )}
+                    </MapContainer>
+                  </div>
+
+                  <input
+                    type="text"
+                    placeholder="-6.175392, 106.827153 (Latitude, Longitude)"
+                    value={formData.titik_koordinat}
+                    onChange={e => {
+                      const val = e.target.value;
+                      setFormData(prev => ({ ...prev, titik_koordinat: val }));
+                      const parsed = parseCoords(val);
+                      if (parsed) setMapCenter(parsed);
+                    }}
+                    className="w-full p-2 bg-gray-50 border rounded-xl text-xs font-mono text-gray-700 outline-none focus:ring-2 focus:ring-emerald-500"
+                  />
+                  <p className="text-[9px] sm:text-[10px] text-gray-500 mt-1">
+                    * Klik pada peta untuk memilih titik lokasi secara presisi, atau gunakan pencarian alamat di atas.
+                  </p>
                 </div>
+              </form>
+            </div>
 
-                <input
-                  type="text"
-                  placeholder="-6.175392, 106.827153 (Latitude, Longitude)"
-                  value={formData.titik_koordinat}
-                  onChange={e => {
-                    const val = e.target.value;
-                    setFormData(prev => ({ ...prev, titik_koordinat: val }));
-                    const parsed = parseCoords(val);
-                    if (parsed) setMapCenter(parsed);
-                  }}
-                  className="w-full p-2 bg-gray-50 border rounded-xl text-xs font-mono text-gray-700 outline-none focus:ring-2 focus:ring-emerald-500"
-                />
-                <p className="text-[10px] text-gray-500 mt-1">
-                  * Klik pada peta untuk memilih titik lokasi secara presisi, atau gunakan pencarian alamat di atas.
-                </p>
-              </div>
-
-              <div className="flex gap-2 pt-3 border-t">
-                <button
-                  type="button"
-                  onClick={() => setShowFormModal(false)}
-                  className="w-1/2 py-2.5 bg-gray-100 text-gray-700 font-bold text-xs rounded-xl"
-                >
-                  Batal
-                </button>
-                <button
-                  type="submit"
-                  className="w-1/2 py-2.5 bg-emerald-600 text-white font-bold text-xs rounded-xl hover:bg-emerald-700"
-                >
-                  Simpan Alamat
-                </button>
-              </div>
-            </form>
+            {/* STICKY FOOTER */}
+            <div className="px-4 py-3 sm:px-6 sm:py-4 bg-gray-50 border-t flex gap-2 shrink-0">
+              <button
+                type="button"
+                onClick={() => setShowFormModal(false)}
+                className="w-1/2 py-2.5 bg-white border border-gray-300 text-gray-700 font-bold text-xs rounded-xl hover:bg-gray-100 transition"
+              >
+                Batal
+              </button>
+              <button
+                type="submit"
+                form="shipping-address-form"
+                className="w-1/2 py-2.5 bg-emerald-600 text-white font-bold text-xs rounded-xl hover:bg-emerald-700 transition shadow-sm"
+              >
+                Simpan Alamat
+              </button>
+            </div>
           </div>
         </div>
       )}

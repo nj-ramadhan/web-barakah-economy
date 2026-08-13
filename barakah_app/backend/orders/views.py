@@ -112,6 +112,7 @@ class CreateOrderView(APIView):
                 shipping_postal_code = config.get('shipping_postal_code') or request.data.get('shipping_postal_code')
                 shipping_address_detail = config.get('shipping_address_detail') or request.data.get('shipping_address_detail')
                 shipping_coordinates = config.get('shipping_coordinates') or request.data.get('shipping_coordinates')
+                buyer_note = config.get('buyer_note') or request.data.get('buyer_note') or ''
 
                 seller_user = None
                 if s_id != "0":
