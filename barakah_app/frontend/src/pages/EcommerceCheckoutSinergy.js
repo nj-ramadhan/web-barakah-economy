@@ -340,62 +340,215 @@ const EcommerceCheckoutSinergy = () => {
                                 </div>
                             </div>
 
-                            {/* Vouchers & Payment Options */}
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div className="border border-gray-100 rounded-xl p-3">
-                                    <label className="block text-xs font-bold text-gray-700 mb-2">Voucher Toko</label>
-                                    <input type="text" placeholder="BERKAH2025" className="w-full text-sm bg-gray-50 border-none rounded-lg p-2" />
+                            {/* Voucher & Notes */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                                <div className="border border-gray-100 rounded-2xl p-4 bg-gray-50/50">
+                                    <label className="block text-xs font-black text-gray-700 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                                        <span className="material-icons text-sm text-emerald-600">confirmation_number</span>
+                                        Voucher Toko
+                                    </label>
+                                    <input 
+                                        type="text" 
+                                        placeholder="Masukkan kode voucher (opsional)" 
+                                        className="w-full text-xs font-bold bg-white border border-gray-200 rounded-xl p-3 focus:ring-2 focus:ring-emerald-500 outline-none uppercase" 
+                                    />
                                 </div>
-                                <div className="border border-gray-100 rounded-xl p-3">
-                                    <div className="flex justify-between items-center mb-1">
-                                        <label className="block text-xs font-bold text-gray-700">Metode Pembayaran</label>
-                                        <span className="text-[10px] font-bold text-emerald-600">Saldo BAE: Rp {new Intl.NumberFormat('id-ID').format(userWallet.balance || 0)}</span>
-                                    </div>
-                                    <select 
-                                        className="w-full text-xs font-bold bg-gray-50 border border-gray-200 rounded-lg p-2 focus:ring-1 focus:ring-emerald-500 outline-none text-emerald-800"
-                                        value={config?.payment_method || 'manual'}
-                                        onChange={(e) => handleConfigChange(s_id, 'payment_method', e.target.value)}
-                                    >
-                                        <option value="manual">Bayar Langsung (QRIS / Transfer Bank)</option>
-                                        {Number(userWallet.balance) >= grandTotal && (
-                                            <option value="saldo_bae">100% Saldo BAE (Rp {new Intl.NumberFormat('id-ID').format(userWallet.balance || 0)})</option>
-                                        )}
-                                        {Number(userWallet.balance) > 0 && Number(userWallet.balance) < grandTotal && (
-                                            <option value="hybrid">Hybrid (Saldo BAE Rp {new Intl.NumberFormat('id-ID').format(userWallet.balance || 0)} + Sisa QRIS)</option>
-                                        )}
-                                        {group.items.every(item => item.product?.is_cod_available) && (
-                                            <option value="cod">Bayar di Tempat (COD)</option>
-                                        )}
-                                    </select>
-                                    {config?.payment_method === 'saldo_bae' ? (
-                                        <p className="text-[9px] text-emerald-600 mt-1 italic leading-tight font-bold">
-                                            ✓ Saldo BAE Anda mencukupi untuk pembayaran lunas instan.
-                                        </p>
-                                    ) : config?.payment_method === 'hybrid' ? (
-                                        <p className="text-[9px] text-emerald-600 mt-1 italic leading-tight font-bold">
-                                            ✓ Saldo BAE akan dipotong Rp {new Intl.NumberFormat('id-ID').format(userWallet.balance || 0)}, sisa Rp {new Intl.NumberFormat('id-ID').format(Math.max(0, grandTotal - userWallet.balance))} dibayar via QRIS.
-                                        </p>
-                                    ) : group.items.some(item => !item.product?.is_cod_available) ? (
-                                        <p className="text-[9px] text-gray-400 mt-1 italic leading-tight">
-                                            Fitur COD tidak aktif karena produk tidak mendukung COD.
-                                        </p>
-                                    ) : (
-                                        <p className="text-[9px] text-emerald-600 mt-1 italic leading-tight font-bold">
-                                            ✓ Penjual mengaktifkan fitur COD untuk produk ini.
-                                        </p>
-                                    )}
+
+                                <div className="border border-gray-100 rounded-2xl p-4 bg-gray-50/50">
+                                    <label className="block text-xs font-black text-gray-700 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                                        <span className="material-icons text-sm text-emerald-600">note_alt</span>
+                                        Catatan untuk Penjual (Opsional)
+                                    </label>
+                                    <input 
+                                        type="text" 
+                                        placeholder="Pesan khusus atau instruksi pengiriman..." 
+                                        className="w-full text-xs bg-white border border-gray-200 rounded-xl p-3 focus:ring-2 focus:ring-emerald-500 outline-none"
+                                        value={config?.buyer_note || ''}
+                                        onChange={(e) => handleConfigChange(s_id, 'buyer_note', e.target.value)}
+                                    />
                                 </div>
                             </div>
 
-                            {/* Buyer Note Input */}
-                            <div className="mt-4">
-                                <label className="block text-xs font-bold text-gray-700 mb-2">Catatan untuk Penjual (Opsional)</label>
-                                <textarea 
-                                    placeholder="Tulis pesan atau instruksi khusus untuk penjual..." 
-                                    className="w-full text-sm bg-gray-50 border border-gray-100 rounded-xl p-3 focus:ring-1 focus:ring-emerald-500 outline-none h-20"
-                                    value={config?.buyer_note || ''}
-                                    onChange={(e) => handleConfigChange(s_id, 'buyer_note', e.target.value)}
-                                ></textarea>
+                            {/* Payment Method Interactive Cards Selection */}
+                            <div className="border border-gray-100 rounded-2xl p-4 bg-gray-50/40 mb-4">
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 pb-3 mb-3 border-b border-gray-200/70">
+                                    <label className="text-xs font-black text-gray-800 uppercase tracking-wider flex items-center gap-1.5">
+                                        <span className="material-icons text-base text-emerald-600">credit_card</span>
+                                        Pilih Metode Pembayaran
+                                    </label>
+                                    <div className="flex items-center gap-1 text-xs">
+                                        <span className="text-gray-500 font-medium">Saldo BAE Anda:</span>
+                                        <span className="font-black text-emerald-700 bg-emerald-100/70 px-2 py-0.5 rounded-lg">
+                                            Rp {new Intl.NumberFormat('id-ID').format(userWallet.balance || 0)}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    {/* 1. QRIS / Transfer Bank */}
+                                    <div 
+                                        onClick={() => handleConfigChange(s_id, 'payment_method', 'manual')}
+                                        className={`p-3.5 rounded-2xl border-2 cursor-pointer transition-all flex items-start gap-3 relative ${
+                                            (config?.payment_method || 'manual') === 'manual'
+                                                ? 'bg-emerald-50/80 border-emerald-500 shadow-sm'
+                                                : 'bg-white border-gray-200 hover:border-emerald-300'
+                                        }`}
+                                    >
+                                        <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
+                                            (config?.payment_method || 'manual') === 'manual' ? 'bg-emerald-600 text-white' : 'bg-gray-100 text-gray-600'
+                                        }`}>
+                                            <span className="material-icons text-lg">qr_code_2</span>
+                                        </div>
+                                        <div className="flex-1 min-w-0 pr-5">
+                                            <p className="text-xs font-black text-gray-800 leading-tight">QRIS / Transfer Bank</p>
+                                            <p className="text-[10px] text-gray-500 mt-0.5 leading-snug">
+                                                Bayar lunas 100% via QRIS atau Transfer Bank manual.
+                                            </p>
+                                        </div>
+                                        <div className={`w-4 h-4 rounded-full border-2 absolute top-3.5 right-3.5 flex items-center justify-center ${
+                                            (config?.payment_method || 'manual') === 'manual' ? 'border-emerald-600 bg-emerald-600' : 'border-gray-300'
+                                        }`}>
+                                            {(config?.payment_method || 'manual') === 'manual' && <div className="w-1.5 h-1.5 rounded-full bg-white"></div>}
+                                        </div>
+                                    </div>
+
+                                    {/* 2. Bayar di Tempat (COD) */}
+                                    {(() => {
+                                        const isCodAvailable = group.items.every(item => item.product?.is_cod_available);
+                                        return (
+                                            <div 
+                                                onClick={() => {
+                                                    if (isCodAvailable) {
+                                                        handleConfigChange(s_id, 'payment_method', 'cod');
+                                                    }
+                                                }}
+                                                className={`p-3.5 rounded-2xl border-2 transition-all flex items-start gap-3 relative ${
+                                                    !isCodAvailable 
+                                                        ? 'bg-gray-100/70 border-gray-200 opacity-60 cursor-not-allowed'
+                                                        : config?.payment_method === 'cod'
+                                                            ? 'bg-emerald-50/80 border-emerald-500 shadow-sm cursor-pointer'
+                                                            : 'bg-white border-gray-200 hover:border-emerald-300 cursor-pointer'
+                                                }`}
+                                            >
+                                                <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
+                                                    config?.payment_method === 'cod' ? 'bg-emerald-600 text-white' : 'bg-gray-100 text-gray-600'
+                                                }`}>
+                                                    <span className="material-icons text-lg">local_shipping</span>
+                                                </div>
+                                                <div className="flex-1 min-w-0 pr-5">
+                                                    <div className="flex items-center gap-1.5">
+                                                        <p className="text-xs font-black text-gray-800 leading-tight">Bayar di Tempat (COD)</p>
+                                                        {!isCodAvailable && (
+                                                            <span className="text-[8px] bg-gray-200 text-gray-600 font-bold px-1.5 py-0.2 rounded">Non-COD</span>
+                                                        )}
+                                                    </div>
+                                                    <p className="text-[10px] text-gray-500 mt-0.5 leading-snug">
+                                                        {isCodAvailable 
+                                                            ? 'Bayar tunai saat barang pesanan tiba di tujuan.'
+                                                            : 'Produk tidak mendukung fitur pembayaran COD.'}
+                                                    </p>
+                                                </div>
+                                                <div className={`w-4 h-4 rounded-full border-2 absolute top-3.5 right-3.5 flex items-center justify-center ${
+                                                    config?.payment_method === 'cod' ? 'border-emerald-600 bg-emerald-600' : 'border-gray-300'
+                                                }`}>
+                                                    {config?.payment_method === 'cod' && <div className="w-1.5 h-1.5 rounded-full bg-white"></div>}
+                                                </div>
+                                            </div>
+                                        );
+                                    })()}
+
+                                    {/* 3. 100% Saldo BAE */}
+                                    {(() => {
+                                        const isSaldoEnough = Number(userWallet.balance) >= grandTotal && grandTotal > 0;
+                                        return (
+                                            <div 
+                                                onClick={() => {
+                                                    if (isSaldoEnough) {
+                                                        handleConfigChange(s_id, 'payment_method', 'saldo_bae');
+                                                    }
+                                                }}
+                                                className={`p-3.5 rounded-2xl border-2 transition-all flex items-start gap-3 relative ${
+                                                    !isSaldoEnough 
+                                                        ? 'bg-gray-100/70 border-gray-200 opacity-60 cursor-not-allowed'
+                                                        : config?.payment_method === 'saldo_bae'
+                                                            ? 'bg-emerald-50/80 border-emerald-500 shadow-sm cursor-pointer'
+                                                            : 'bg-white border-gray-200 hover:border-emerald-300 cursor-pointer'
+                                                }`}
+                                            >
+                                                <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
+                                                    config?.payment_method === 'saldo_bae' ? 'bg-emerald-600 text-white' : 'bg-gray-100 text-gray-600'
+                                                }`}>
+                                                    <span className="material-icons text-lg">account_balance_wallet</span>
+                                                </div>
+                                                <div className="flex-1 min-w-0 pr-5">
+                                                    <div className="flex items-center gap-1.5">
+                                                        <p className="text-xs font-black text-gray-800 leading-tight">100% Saldo BAE</p>
+                                                        {isSaldoEnough && (
+                                                            <span className="text-[8px] bg-emerald-100 text-emerald-800 font-bold px-1.5 py-0.2 rounded">Cukup</span>
+                                                        )}
+                                                    </div>
+                                                    <p className="text-[10px] text-gray-500 mt-0.5 leading-snug">
+                                                        {isSaldoEnough
+                                                            ? `Lunas instan dipotong Rp ${new Intl.NumberFormat('id-ID').format(grandTotal)} dari Saldo BAE.`
+                                                            : `Saldo BAE (Rp ${new Intl.NumberFormat('id-ID').format(userWallet.balance || 0)}) kurang dari tagihan.`}
+                                                    </p>
+                                                </div>
+                                                <div className={`w-4 h-4 rounded-full border-2 absolute top-3.5 right-3.5 flex items-center justify-center ${
+                                                    config?.payment_method === 'saldo_bae' ? 'border-emerald-600 bg-emerald-600' : 'border-gray-300'
+                                                }`}>
+                                                    {config?.payment_method === 'saldo_bae' && <div className="w-1.5 h-1.5 rounded-full bg-white"></div>}
+                                                </div>
+                                            </div>
+                                        );
+                                    })()}
+
+                                    {/* 4. Saldo BAE + QRIS (Hybrid) */}
+                                    {(() => {
+                                        const isHybridPossible = Number(userWallet.balance) > 0 && Number(userWallet.balance) < grandTotal;
+                                        return (
+                                            <div 
+                                                onClick={() => {
+                                                    if (isHybridPossible) {
+                                                        handleConfigChange(s_id, 'payment_method', 'hybrid');
+                                                    }
+                                                }}
+                                                className={`p-3.5 rounded-2xl border-2 transition-all flex items-start gap-3 relative ${
+                                                    !isHybridPossible 
+                                                        ? 'bg-gray-100/70 border-gray-200 opacity-60 cursor-not-allowed'
+                                                        : config?.payment_method === 'hybrid'
+                                                            ? 'bg-emerald-50/80 border-emerald-500 shadow-sm cursor-pointer'
+                                                            : 'bg-white border-gray-200 hover:border-emerald-300 cursor-pointer'
+                                                }`}
+                                            >
+                                                <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
+                                                    config?.payment_method === 'hybrid' ? 'bg-emerald-600 text-white' : 'bg-gray-100 text-gray-600'
+                                                }`}>
+                                                    <span className="material-icons text-lg">call_split</span>
+                                                </div>
+                                                <div className="flex-1 min-w-0 pr-5">
+                                                    <div className="flex items-center gap-1.5">
+                                                        <p className="text-xs font-black text-gray-800 leading-tight">Saldo BAE + QRIS</p>
+                                                        {isHybridPossible && (
+                                                            <span className="text-[8px] bg-blue-100 text-blue-800 font-bold px-1.5 py-0.2 rounded">Kombinasi</span>
+                                                        )}
+                                                    </div>
+                                                    <p className="text-[10px] text-gray-500 mt-0.5 leading-snug">
+                                                        {isHybridPossible
+                                                            ? `Saldo BAE: Rp ${new Intl.NumberFormat('id-ID').format(userWallet.balance || 0)} + Sisa QRIS: Rp ${new Intl.NumberFormat('id-ID').format(Math.max(0, grandTotal - userWallet.balance))}.`
+                                                            : Number(userWallet.balance) === 0
+                                                                ? 'Saldo BAE Anda Rp 0 (tidak ada saldo untuk dipotong).'
+                                                                : 'Saldo BAE Anda mencukupi 100%, gunakan opsi 100% Saldo BAE.'}
+                                                    </p>
+                                                </div>
+                                                <div className={`w-4 h-4 rounded-full border-2 absolute top-3.5 right-3.5 flex items-center justify-center ${
+                                                    config?.payment_method === 'hybrid' ? 'border-emerald-600 bg-emerald-600' : 'border-gray-300'
+                                                }`}>
+                                                    {config?.payment_method === 'hybrid' && <div className="w-1.5 h-1.5 rounded-full bg-white"></div>}
+                                                </div>
+                                            </div>
+                                        );
+                                    })()}
+                                </div>
                             </div>
 
                             <div className="mt-4 pt-4 border-t border-gray-100 flex justify-between items-center">
