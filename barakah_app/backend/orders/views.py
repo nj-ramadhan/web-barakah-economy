@@ -7,30 +7,106 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from django.shortcuts import get_object_or_404
-from .models import Order, OrderItem
-from carts.models import Cart # Assuming you have a Cart and CartItem model
-from .serializers import OrderSerializer, OrderItemSerializer
-# Removed dynamic Qrisly for now
+from django.utils import timezone
+from datetime import timedelta
+from decimal import Decimal
+import logging
 
+from .models import Order, OrderItem
+from carts.models import Cart
+from .serializers import OrderSerializer, OrderItemSerializer
+from transactions.models import UserWallet, WalletTransaction
+
+logger = logging.getLogger('accounts')
+
+
+def perform_order_maintenance():
+    """
+    1. Auto-complete orders older than 7 days shipped.
+    2. Auto-cancel pending orders older than 48 hours (2x24 jam), restore stock, and refund if paid.
+    """
+    now = timezone.now()
+    try:
+        # 1. Auto-complete shipped orders
+        Order.objects.filter(status='Dikirim', auto_complete_at__lte=now).update(
+            status='Selesai',
+            completed_at=now
+        )
+
+        # 2. Auto-cancel pending orders older than 48 hours
+        deadline_48h = now - timedelta(hours=48)
+        expired_pending_orders = Order.objects.filter(status='Pending', created_at__lte=deadline_48h)
+        for ord_obj in expired_pending_orders:
+            restore_order_stock(ord_obj)
+            refund_order_to_wallet(ord_obj, reason_note="Otomatis sistem: tidak diproses penjual dalam 48 jam")
+            ord_obj.status = 'Batal'
+            ord_obj.cancelled_at = now
+            ord_obj.cancel_request_reason = 'Dibatalkan otomatis oleh sistem (tidak diproses penjual dalam 48 jam)'
+            ord_obj.save()
+    except Exception as e:
+        logger.error(f"Error in perform_order_maintenance: {e}")
+
+
+def restore_order_stock(order):
+    """Restore inventory stock when an order is cancelled or deleted."""
+    try:
+        for item in order.items.all():
+            if item.variation:
+                item.variation.stock += item.quantity
+                item.variation.save()
+                item.product.sync_variations()
+            else:
+                item.product.stock += item.quantity
+                item.product.save()
+    except Exception as e:
+        logger.error(f"Error restoring stock for order {order.order_number}: {e}")
+
+
+def refund_order_to_wallet(order, reason_note=''):
+    """Safely refund paid money or used Saldo BAE back to buyer's UserWallet."""
+    try:
+        if WalletTransaction.objects.filter(order=order, transaction_type='REFUND').exists():
+            return
+
+        is_non_cod = (order.payment_method or '').lower() != 'cod'
+        refund_amount = Decimal('0')
+
+        if order.used_balance and order.used_balance > 0:
+            refund_amount = order.used_balance
+        elif is_non_cod and ((order.status or '').lower() == 'paid' or order.payment_proof):
+            refund_amount = order.grand_total
+
+        if refund_amount > 0:
+            wallet = UserWallet.get_or_create_wallet(order.user)
+            desc = f"Pengembalian dana (Refund) pembatalan pesanan #{order.order_number}"
+            if reason_note:
+                desc += f" - {reason_note}"
+            wallet.credit(
+                amount=refund_amount,
+                transaction_type='REFUND',
+                description=desc,
+                reference_order=order
+            )
+            logger.info(f"Successfully refunded Rp {refund_amount:,.0f} to {order.user.username} for order {order.order_number}")
+    except Exception as e:
+        logger.error(f"Error refunding order {order.order_number}: {e}")
 
 
 class CreateOrderView(APIView):
     permission_classes = [IsAuthenticated]
-
     parser_classes = [JSONParser, MultiPartParser, FormParser]
 
     def get(self, request):
+        perform_order_maintenance()
         user = request.user
-        orders = Order.objects.filter(user=user)
+        orders = Order.objects.filter(user=user).order_by('-created_at')
         serializer = OrderSerializer(orders, many=True)
         return Response(serializer.data)
 
     def post(self, request):
+        perform_order_maintenance()
         user = request.user
-        from decimal import Decimal
-        import logging
-        logger = logging.getLogger('accounts')
-        
+
         try:
             # If order_id or order_number is provided, update existing order with proof_file
             order_id = request.data.get('order_id') or request.data.get('order_number') or request.data.get('orderId')
@@ -64,7 +140,6 @@ class CreateOrderView(APIView):
 
             # Extract list of checkout configurations (one per seller)
             checkouts_data = request.data.get('checkouts', [])
-            # Map configurations by seller_id for easy access
             configs_by_seller = {str(c.get('seller_id')): c for c in checkouts_data}
 
             # Fetch cart items for the user
@@ -85,11 +160,16 @@ class CreateOrderView(APIView):
 
             created_orders = []
             payment_proof = request.FILES.get('proof_file')
+            global_payment_method = request.data.get('payment_method', 'manual')
+            use_saldo_bae = request.data.get('use_saldo_bae', False) or global_payment_method in ['saldo_bae', 'hybrid']
+
+            # Check wallet if using Saldo BAE
+            wallet = UserWallet.get_or_create_wallet(user)
+            available_user_balance = wallet.balance if use_saldo_bae else Decimal('0')
 
             for s_id, items in seller_carts.items():
-                # Get config for this seller
                 config = configs_by_seller.get(s_id, {})
-                
+
                 def clean_decimal(val):
                     try:
                         if val is None or str(val).strip() == "": return Decimal('0')
@@ -101,7 +181,7 @@ class CreateOrderView(APIView):
                 shipping_service = config.get('shipping_service', '')
                 voucher_code = config.get('voucher_code', '')
                 voucher_nominal = clean_decimal(config.get('voucher_nominal', 0))
-                payment_method = config.get('payment_method') or request.data.get('payment_method', 'manual')
+                payment_method = config.get('payment_method') or global_payment_method
                 recipient_name = config.get('recipient_name') or request.data.get('recipient_name') or request.data.get('customer_name')
                 recipient_phone = config.get('recipient_phone') or request.data.get('recipient_phone') or request.data.get('customer_phone')
                 shipping_address = config.get('shipping_address') or request.data.get('shipping_address')
@@ -118,27 +198,61 @@ class CreateOrderView(APIView):
                 if s_id != "0":
                     from accounts.models import User
                     seller_user = User.objects.filter(id=s_id).first()
-                
+
                 if not seller_user:
                     from accounts.models import User
                     seller_user = User.objects.filter(is_superuser=True).first()
 
-                # Check if seller uses their own bank details for physical products
+                # Check if seller uses their own bank details
                 first_item = items[0]
                 product = first_item.product
                 paid_directly = product.own_bank_status == 'approved'
+
+                # Calculate item total
+                total_price = Decimal('0')
+                for cart_item in items:
+                    base_price = cart_item.product.price
+                    if cart_item.variation and cart_item.variation.additional_price and cart_item.variation.additional_price > 0:
+                        base_price = cart_item.variation.additional_price
+                    total_price += (base_price * cart_item.quantity)
+
+                grand_total = total_price + shipping_cost - voucher_nominal
+                if grand_total < 0: grand_total = Decimal('0')
+
+                # Saldo BAE / Hybrid deduction logic
+                used_balance_for_this_order = Decimal('0')
+                order_initial_status = 'pending'
+
+                if payment_proof:
+                    order_initial_status = 'paid'
+                elif payment_method == 'cod':
+                    order_initial_status = 'Pending'
+                elif payment_method == 'saldo_bae' or (use_saldo_bae and available_user_balance >= grand_total):
+                    if available_user_balance < grand_total:
+                        return Response({'message': f'Saldo BAE tidak mencukupi untuk pesanan {product.title}. Saldo Anda: Rp {available_user_balance:,.0f}'}, status=status.HTTP_400_BAD_REQUEST)
+                    used_balance_for_this_order = grand_total
+                    available_user_balance -= grand_total
+                    payment_method = 'saldo_bae'
+                    order_initial_status = 'paid'
+                elif payment_method == 'hybrid' or (use_saldo_bae and available_user_balance > 0):
+                    used_balance_for_this_order = min(available_user_balance, grand_total)
+                    available_user_balance -= used_balance_for_this_order
+                    payment_method = 'hybrid'
+                    order_initial_status = 'paid' if used_balance_for_this_order >= grand_total else 'pending'
 
                 # Create Order
                 order = Order.objects.create(
                     user=user,
                     seller=seller_user,
-                    total_price=Decimal('0'),
+                    total_price=total_price,
                     shipping_cost=shipping_cost,
                     shipping_courier=shipping_courier,
                     shipping_service=shipping_service,
                     voucher_code=voucher_code,
                     voucher_nominal=voucher_nominal,
-                    status='paid' if payment_proof else 'pending',
+                    grand_total=grand_total,
+                    used_balance=used_balance_for_this_order,
+                    status=order_initial_status,
                     payment_method=payment_method,
                     payment_proof=payment_proof,
                     buyer_note=buyer_note,
@@ -158,16 +272,23 @@ class CreateOrderView(APIView):
                     shipping_address_detail=shipping_address_detail,
                     shipping_coordinates=shipping_coordinates
                 )
-                
-                total_price = Decimal('0')
+
+                # Debit wallet if used_balance > 0
+                if used_balance_for_this_order > 0:
+                    wallet.debit(
+                        amount=used_balance_for_this_order,
+                        transaction_type='PAYMENT',
+                        description=f"Pembayaran belanja e-commerce pesanan #{order.order_number}",
+                        reference_order=order
+                    )
+
+                # Create Order Items and decrease stock
                 for cart_item in items:
                     base_price = cart_item.product.price
                     if cart_item.variation and cart_item.variation.additional_price and cart_item.variation.additional_price > 0:
                         base_price = cart_item.variation.additional_price
-                    
                     price_for_item = base_price * cart_item.quantity
 
-                    # Stock reduction
                     if cart_item.variation:
                         if cart_item.variation.stock >= cart_item.quantity:
                             cart_item.variation.stock -= cart_item.quantity
@@ -191,12 +312,7 @@ class CreateOrderView(APIView):
                         quantity=cart_item.quantity,
                         price=price_for_item
                     )
-                    total_price += price_for_item
 
-                order.total_price = total_price
-                order.grand_total = total_price + shipping_cost - voucher_nominal
-                if order.grand_total < 0: order.grand_total = Decimal('0')
-                order.save() 
                 created_orders.append(order)
 
             # Clear selected cart items
@@ -205,18 +321,11 @@ class CreateOrderView(APIView):
             # Send Notifications for each created order
             from .utils import send_order_invoice_to_buyer, send_order_notification_to_seller, send_order_email_notifications
             customer_phone = request.data.get('customer_phone') or request.data.get('phone')
-            
+
             for order in created_orders:
                 try:
-                    res_buyer = send_order_invoice_to_buyer(order, alternate_phone=customer_phone)
-                    if res_buyer and not res_buyer.get('success'):
-                        logger.error(f"WA Buyer Fail ({order.order_number}): {res_buyer.get('message')}")
-                        
-                    res_seller = send_order_notification_to_seller(order)
-                    if res_seller and not res_seller.get('success'):
-                        logger.error(f"WA Seller Fail ({order.order_number}): {res_seller.get('message')}")
-
-                    # Send Email Notifications to both buyer & seller login emails
+                    send_order_invoice_to_buyer(order, alternate_phone=customer_phone)
+                    send_order_notification_to_seller(order)
                     send_order_email_notifications(order)
                 except Exception as e:
                     logger.error(f"Notification Error ({order.order_number}): {str(e)}")
@@ -229,31 +338,34 @@ class CreateOrderView(APIView):
             import traceback
             logger.error(traceback.format_exc())
             return Response(
-                {'message': f'Server Error: {str(e)}', 'details': 'Pastikan kolom database sudah terupdate dan folder media tersedia.'}, 
+                {'message': f'Server Error: {str(e)}', 'details': 'Terjadi kesalahan saat memproses pesanan.'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
-
 
     def delete(self, request):
         user = request.user
         order_id = request.data.get('id')
         order = get_object_or_404(Order, user=user, id=order_id)
+        restore_order_stock(order)
         order.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
-    
+
+
 class OrderListView(generics.ListAPIView):
     serializer_class = OrderSerializer
 
     def get_queryset(self):
-        return Order.objects.filter(user=self.request.user)
+        perform_order_maintenance()
+        return Order.objects.filter(user=self.request.user).order_by('-created_at')
+
 
 class OrderDetailView(generics.RetrieveAPIView):
     serializer_class = OrderItemSerializer
 
     def get_queryset(self):
+        perform_order_maintenance()
         return Order.objects.filter(user=self.request.user)
 
-from rest_framework import viewsets
 
 class SellerOrderViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
@@ -261,55 +373,106 @@ class SellerOrderViewSet(viewsets.ModelViewSet):
     http_method_names = ['get', 'post', 'patch', 'delete', 'head', 'options']
 
     def get_queryset(self):
+        perform_order_maintenance()
         user = self.request.user
-        from django.db.models import Q
-        from django.utils import timezone
-        
-        # Auto-complete orders older than 7 days shipped
-        now = timezone.now()
-        Order.objects.filter(status='Dikirim', auto_complete_at__lte=now).update(
-            status='Selesai',
-            completed_at=now
-        )
 
         if user.is_superuser:
-            # Admins can see all orders
             return Order.objects.all().order_by('-created_at')
-        
-        # Check query param for seller dashboard mode vs buyer mode, or filter strictly
-        is_seller_view = self.request.query_params.get('mode') == 'seller' or 'seller-orders' in self.request.path
+
+        # For single object operations (retrieve, patch, etc), allow if user is either buyer or seller
+        if self.action in ['retrieve', 'partial_update', 'update', 'destroy']:
+            from django.db.models import Q
+            return Order.objects.filter(Q(seller=user) | Q(user=user)).distinct()
+
+        # For list actions: check if explicitly requested seller mode
+        is_seller_view = self.request.query_params.get('mode') == 'seller'
         if is_seller_view:
-            # Sellers see ONLY sales orders where seller == user
             return Order.objects.filter(seller=user).order_by('-created_at')
-        
-        # Default: user sees orders where they are seller OR buyer
+
+        # Default list: user sees orders where they are seller OR buyer
+        from django.db.models import Q
         return Order.objects.filter(Q(seller=user) | Q(user=user)).distinct().order_by('-created_at')
 
     def partial_update(self, request, *args, **kwargs):
         instance = self.get_object()
         user = request.user
         new_status = request.data.get('status')
-        complaint_reason = request.data.get('complaint_reason')
-        
+        action_type = request.data.get('action')
+        complaint_reason = request.data.get('complaint_reason') or request.data.get('cancel_reason')
+
         # 1. Enforce Immutability for Terminal Statuses
-        if instance.status in ['Selesai', 'Batal']:
+        if instance.status in ['Selesai', 'Batal'] and new_status != instance.status:
             return Response(
-                {'error': f'Pesanan dengan status {instance.status} tidak dapat diubah lagi.'}, 
+                {'error': f'Pesanan dengan status {instance.status} sudah permanen dan tidak dapat diubah lagi.'},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # 2. Buyer Permissions: Allow setting to 'Selesai', 'Komplain', or 'Batal' (Cancellation)
-        if instance.user == user and instance.seller != user and not user.is_superuser:
-            if new_status in ['Batal', 'cancelled', 'Cancelled']:
-                if instance.status in ['Proses', 'Dikirim', 'Selesai', 'shipped', 'completed', 'processing']:
-                    return Response(
-                        {'error': 'Pesanan yang telah diproses/dikirim oleh penjual tidak dapat dibatalkan lagi.'},
-                        status=status.HTTP_400_BAD_REQUEST
-                    )
-            elif new_status in ['Selesai', 'Komplain']:
+        # 2. Buyer Cancellation / Dispute Workflow
+        is_buyer = (instance.user == user)
+        is_seller = (instance.seller == user or user.is_superuser)
+
+        # Buyer Submitting Cancellation Discussion / Dispute on Processed/Shipped order
+        if is_buyer and (action_type == 'request_cancel' or request.data.get('cancel_request_status') == 'pending'):
+            if instance.status in ['Selesai', 'Batal']:
+                return Response({'error': f'Pesanan {instance.status} tidak dapat diajukan pembatalan.'}, status=status.HTTP_400_BAD_REQUEST)
+            instance.cancel_request_status = 'pending'
+            instance.cancel_request_reason = complaint_reason or 'Permohonan pembatalan diajukan oleh pembeli'
+            instance.cancel_requested_at = timezone.now()
+            instance.save()
+            return Response(OrderSerializer(instance).data)
+
+        # Buyer cancelling order
+        if is_buyer and not is_seller and new_status in ['Batal', 'cancelled', 'Cancelled']:
+            current_status_lower = (instance.status or '').lower()
+            is_unprocessed = current_status_lower in ['pending', 'menunggu', 'paid']
+
+            if not is_unprocessed:
+                # If already processed or shipped, buyer cannot unilaterally cancel, must submit request
+                instance.cancel_request_status = 'pending'
+                instance.cancel_request_reason = complaint_reason or 'Pengajuan pembatalan oleh pembeli'
+                instance.cancel_requested_at = timezone.now()
+                instance.save()
+                return Response({
+                    'message': 'Pengajuan pembatalan telah dikirim ke penjual untuk ditinjau / didiskusikan.',
+                    'order': OrderSerializer(instance).data
+                })
+
+            # Direct cancel allowed for unprocessed orders
+            restore_order_stock(instance)
+            refund_order_to_wallet(instance, reason_note="Dibatalkan oleh pembeli")
+            instance.status = 'Batal'
+            instance.cancelled_at = timezone.now()
+            instance.cancelled_by = user
+            if complaint_reason:
+                instance.cancel_request_reason = complaint_reason
+            instance.save()
+            return Response(OrderSerializer(instance).data)
+
+        # Seller / Admin approving cancellation
+        if is_seller and new_status in ['Batal', 'cancelled', 'Cancelled']:
+            restore_order_stock(instance)
+            refund_order_to_wallet(instance, reason_note="Dibatalkan / disetujui penjual")
+            instance.status = 'Batal'
+            instance.cancel_request_status = 'approved'
+            instance.cancelled_at = timezone.now()
+            instance.cancelled_by = user
+            if complaint_reason:
+                instance.cancel_request_reason = complaint_reason
+            instance.save()
+            return Response(OrderSerializer(instance).data)
+
+        # Seller rejecting cancel request
+        if is_seller and request.data.get('cancel_request_status') == 'rejected':
+            instance.cancel_request_status = 'rejected'
+            instance.save()
+            return Response(OrderSerializer(instance).data)
+
+        # Buyer setting 'Selesai' or 'Komplain'
+        if is_buyer and not is_seller:
+            if new_status in ['Selesai', 'Komplain']:
                 if instance.status not in ['Dikirim', 'shipped', 'Proses']:
                     return Response(
-                        {'error': 'Komplain atau konfirmasi selesai hanya dapat dilakukan jika barang sudah dikirim.'},
+                        {'error': 'Komplain atau konfirmasi selesai hanya dapat dilakukan jika barang sudah dikirim atau diproses.'},
                         status=status.HTTP_400_BAD_REQUEST
                     )
             else:
@@ -317,63 +480,43 @@ class SellerOrderViewSet(viewsets.ModelViewSet):
                     {'error': 'Sebagai pembeli, Anda hanya dapat menyelesaikan pesanan, mengajukan komplain, atau membatalkan pesanan sebelum diproses.'},
                     status=status.HTTP_403_FORBIDDEN
                 )
-        
-        # 3. Enforce Sequential Status Updates (for sellers/admins)
+
+        # Sequential status updates for sellers/admins
         if new_status:
             allowed_transitions = {
-                'Pending': ['Paid', 'Batal'],
-                'Paid': ['Proses', 'Batal'],
-                'Proses': ['Dikirim', 'Batal'],
-                'Dikirim': ['Selesai', 'Komplain', 'Batal'],
-                'Komplain': ['Selesai', 'Proses', 'Batal'],
-                'Selesai': [],
-                'Batal': []
+                'Pending': ['Pending', 'Paid', 'Batal'],
+                'Paid': ['Paid', 'Proses', 'Batal'],
+                'Proses': ['Proses', 'Dikirim', 'Batal'],
+                'Dikirim': ['Dikirim', 'Selesai', 'Komplain', 'Batal'],
+                'Komplain': ['Komplain', 'Selesai', 'Proses', 'Batal'],
+                'Selesai': ['Selesai'],
+                'Batal': ['Batal']
             }
-            
-            # If the current status is not in the list (e.g. legacy status), we allow transition to any from the list
             current_allowed = allowed_transitions.get(instance.status, ['Pending', 'Paid', 'Proses', 'Dikirim', 'Komplain', 'Selesai', 'Batal'])
-            
             if new_status not in current_allowed:
                 return Response(
                     {'error': f'Status tidak dapat diubah dari {instance.status} ke {new_status}.'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
 
-            # 4. Handle Status-Specific Logic
-            from django.utils import timezone
-            from datetime import timedelta
-            
             if new_status == 'Dikirim':
                 instance.shipped_at = timezone.now()
-                # 7-day auto completion rule as requested
                 instance.auto_complete_at = instance.shipped_at + timedelta(days=7)
-                
             elif new_status == 'Komplain':
                 instance.complaint_at = timezone.now()
                 if complaint_reason:
                     instance.complaint_reason = complaint_reason
-                
             elif new_status == 'Selesai':
                 instance.completed_at = timezone.now()
-        
+
         return super().partial_update(request, *args, **kwargs)
 
     def destroy(self, request, *args, **kwargs):
         if not request.user.is_superuser:
             return Response({'error': 'Hanya admin yang dapat menghapus pesanan'}, status=status.HTTP_403_FORBIDDEN)
-        
+
         instance = self.get_object()
-        
-        # Return stock before deleting
-        for item in instance.items.all():
-            if item.variation:
-                item.variation.stock += item.quantity
-                item.variation.save()
-                item.product.sync_variations()
-            else:
-                item.product.stock += item.quantity
-                item.product.save()
-        
+        restore_order_stock(instance)
         return super().destroy(request, *args, **kwargs)
 
     @action(detail=True, methods=['post'], url_path='send-wa-update')
@@ -403,22 +546,20 @@ class SellerOrderViewSet(viewsets.ModelViewSet):
     def export_csv(self, request):
         import csv
         from django.http import HttpResponse
-        
+
         queryset = self.get_queryset()
-        
+
         response = HttpResponse(content_type='text/csv')
         response['Content-Disposition'] = 'attachment; filename="rekap_pesanan_sinergy.csv"'
-        
-        # BOM for Excel UTF-8 support
         response.write(u'\ufeff'.encode('utf8'))
-        
+
         writer = csv.writer(response)
         writer.writerow([
-            'Order Number', 'Tanggal', 'Nama Pembeli', 'HP Pembeli', 
-            'Penjual', 'Produk', 'Total Harga', 'Ongkir', 
+            'Order Number', 'Tanggal', 'Nama Pembeli', 'HP Pembeli',
+            'Penjual', 'Produk', 'Total Harga', 'Ongkir',
             'Diskon Voucher', 'Grand Total', 'Status', 'Metode Bayar', 'Catatan'
         ])
-        
+
         for order in queryset:
             items_desc = ", ".join([f"{item.product.title} (x{item.quantity})" for item in order.items.all()])
             writer.writerow([
@@ -436,6 +577,5 @@ class SellerOrderViewSet(viewsets.ModelViewSet):
                 order.payment_method,
                 order.buyer_note or '-'
             ])
-            
-        return response
 
+        return response

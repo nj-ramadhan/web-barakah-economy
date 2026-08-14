@@ -176,9 +176,13 @@ const ProfileInfoItem = ({ label, value, icon, fullWidth = false }) => (
     </div>
 );
 
+import Pagination from '../components/common/Pagination';
+
 const CoursesTab = () => {
     const [courses, setCourses] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [currentPage, setCurrentPage] = useState(1);
+    const ITEMS_PER_PAGE = 10;
 
     useEffect(() => {
         const fetchCourses = async () => {
@@ -188,9 +192,10 @@ const CoursesTab = () => {
                 const res = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/courses/enrollments/`, {
                     headers: { Authorization: `Bearer ${user.access}` }
                 });
-                // res.data is expected to be a list of enrollments
-                // we should filter for only verified ones if the API doesn't do it
-                setCourses(res.data.filter(e => e.payment_status === 'verified' || e.payment_status === 'paid'));
+                const verified = res.data.filter(e => e.payment_status === 'verified' || e.payment_status === 'paid');
+                // Urutan paling atas adalah yang terbaru
+                const sorted = verified.sort((a, b) => new Date(b.enrolled_at || b.id || 0) - new Date(a.enrolled_at || a.id || 0));
+                setCourses(sorted);
             } catch (err) {
                 console.error('Error fetching courses:', err);
             } finally {
@@ -224,51 +229,66 @@ const CoursesTab = () => {
 
     if (loading) return <CourseSkeleton />;
 
+    const paginatedCourses = courses.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+
     return (
         <div className="space-y-4">
-            <h2 className="font-bold text-gray-800">E-Course Saya</h2>
+            <div className="flex justify-between items-center px-1">
+                <h2 className="font-bold text-gray-800">E-Course Saya</h2>
+                <span className="text-[10px] bg-emerald-50 text-emerald-700 px-2.5 py-1 rounded-full font-bold">
+                    {courses.length} Kelas
+                </span>
+            </div>
             {courses.length === 0 ? (
                 <div className="text-center py-8 text-gray-400 bg-gray-50 rounded-xl border border-dashed">
                     <p className="text-sm">Belum ada e-course yang diikuti</p>
                 </div>
             ) : (
-                <div className="grid grid-cols-1 gap-3">
-                    {courses.map(enroll => (
-                        <div key={enroll.id} className="bg-white p-3 rounded-xl border shadow-sm flex items-center gap-3 hover:shadow-md transition">
-                            <div className="w-16 h-16 bg-green-50 rounded-xl overflow-hidden flex items-center justify-center shrink-0 border border-gray-100">
-                                {enroll.course_thumbnail ? (
-                                    <img 
-                                        src={enroll.course_thumbnail.startsWith('http') ? enroll.course_thumbnail : `${process.env.REACT_APP_API_BASE_URL}${enroll.course_thumbnail}`} 
-                                        alt={enroll.course_title} 
-                                        className="w-full h-full object-cover"
-                                        onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
-                                    />
-                                ) : null}
-                                <span className={`material-icons text-green-600 ${enroll.course_thumbnail ? 'hidden' : ''}`}>school</span>
-                            </div>
-                            <div className="flex-1 min-w-0">
-                                <h3 className="text-sm font-bold text-gray-800">{enroll.course_title}</h3>
-                                <div className="flex items-center gap-2 mt-1">
-                                    <span className="text-[9px] text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded flex items-center gap-0.5">
-                                        <span className="material-icons text-[10px]">person</span>
-                                        {enroll.student_count || 0} Siswa
-                                    </span>
-                                    <span className="text-[9px] text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded flex items-center gap-0.5">
-                                        <span className="material-icons text-[10px]">video_library</span>
-                                        {enroll.material_count || 0} Materi
-                                    </span>
+                <>
+                    <div className="grid grid-cols-1 gap-3">
+                        {paginatedCourses.map(enroll => (
+                            <div key={enroll.id} className="bg-white p-3 rounded-xl border shadow-sm flex items-center gap-3 hover:shadow-md transition">
+                                <div className="w-16 h-16 bg-green-50 rounded-xl overflow-hidden flex items-center justify-center shrink-0 border border-gray-100">
+                                    {enroll.course_thumbnail ? (
+                                        <img 
+                                            src={enroll.course_thumbnail.startsWith('http') ? enroll.course_thumbnail : `${process.env.REACT_APP_API_BASE_URL}${enroll.course_thumbnail}`} 
+                                            alt={enroll.course_title} 
+                                            className="w-full h-full object-cover"
+                                            onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
+                                        />
+                                    ) : null}
+                                    <span className={`material-icons text-green-600 ${enroll.course_thumbnail ? 'hidden' : ''}`}>school</span>
                                 </div>
-                                <p className="text-[9px] text-gray-400 mt-1">Terdaftar: {formatDate(enroll.enrolled_at)}</p>
+                                <div className="flex-1 min-w-0">
+                                    <h3 className="text-sm font-bold text-gray-800">{enroll.course_title}</h3>
+                                    <div className="flex items-center gap-2 mt-1">
+                                        <span className="text-[9px] text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded flex items-center gap-0.5">
+                                            <span className="material-icons text-[10px]">person</span>
+                                            {enroll.student_count || 0} Siswa
+                                        </span>
+                                        <span className="text-[9px] text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded flex items-center gap-0.5">
+                                            <span className="material-icons text-[10px]">video_library</span>
+                                            {enroll.material_count || 0} Materi
+                                        </span>
+                                    </div>
+                                    <p className="text-[9px] text-gray-400 mt-1">Terdaftar: {formatDate(enroll.enrolled_at)}</p>
+                                </div>
+                                <Link
+                                    to={`/kelas/buka/${enroll.course_slug}`}
+                                    className="bg-green-600 text-white px-4 py-1.5 rounded-full text-xs font-bold shrink-0 hover:bg-green-700 transition shadow-sm"
+                                >
+                                    Buka
+                                </Link>
                             </div>
-                            <Link
-                                to={`/kelas/buka/${enroll.course_slug}`}
-                                className="bg-green-600 text-white px-4 py-1.5 rounded-full text-xs font-bold"
-                            >
-                                Buka
-                            </Link>
-                        </div>
-                    ))}
-                </div>
+                        ))}
+                    </div>
+                    <Pagination 
+                        currentPage={currentPage}
+                        totalItems={courses.length}
+                        itemsPerPage={ITEMS_PER_PAGE}
+                        onPageChange={setCurrentPage}
+                    />
+                </>
             )}
         </div>
     );
@@ -279,6 +299,9 @@ const PurchasesTab = () => {
     const [physicalOrders, setPhysicalOrders] = useState([]);
     const [loading, setLoading] = useState(true);
     const [historyType, setHistoryType] = useState('digital'); // 'digital' or 'sinergy'
+    const [digitalPage, setDigitalPage] = useState(1);
+    const [sinergyPage, setSinergyPage] = useState(1);
+    const ITEMS_PER_PAGE = 10;
 
     useEffect(() => {
         const fetchAllHistory = async () => {
@@ -286,17 +309,19 @@ const PurchasesTab = () => {
             if (!user) return;
             setLoading(true);
             try {
-                // Fetch Digital
+                // Fetch Digital & sort newest first
                 const resDigital = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/digital-products/orders/my-purchases/`, {
                     headers: { Authorization: `Bearer ${user.access}` }
                 });
-                setPurchases(resDigital.data);
+                const sortedDigital = (resDigital.data || []).sort((a, b) => new Date(b.created_at || b.id || 0) - new Date(a.created_at || a.id || 0));
+                setPurchases(sortedDigital);
 
-                // Fetch Sinergy (Physical)
+                // Fetch Sinergy (Physical) & sort newest first
                 const resSinergy = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/orders/`, {
                     headers: { Authorization: `Bearer ${user.access}` }
                 });
-                setPhysicalOrders(resSinergy.data);
+                const sortedSinergy = (resSinergy.data || []).sort((a, b) => new Date(b.created_at || b.id || 0) - new Date(a.created_at || a.id || 0));
+                setPhysicalOrders(sortedSinergy);
             } catch (err) {
                 console.error('Error fetching purchase history:', err);
             } finally {
@@ -334,22 +359,25 @@ const PurchasesTab = () => {
 
     if (loading) return <PurchaseSkeleton />;
 
+    const paginatedDigital = purchases.slice((digitalPage - 1) * ITEMS_PER_PAGE, digitalPage * ITEMS_PER_PAGE);
+    const paginatedPhysical = physicalOrders.slice((sinergyPage - 1) * ITEMS_PER_PAGE, sinergyPage * ITEMS_PER_PAGE);
+
     return (
         <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
             <div className="flex items-center justify-between">
                 <h2 className="font-bold text-gray-800">Riwayat Transaksi</h2>
                 <div className="flex bg-gray-100 p-1 rounded-lg gap-1">
                     <button
-                        onClick={() => setHistoryType('digital')}
+                        onClick={() => { setHistoryType('digital'); setDigitalPage(1); }}
                         className={`px-3 py-1 rounded text-[10px] font-black uppercase transition-all ${historyType === 'digital' ? 'bg-white text-green-700 shadow-sm' : 'text-gray-400'}`}
                     >
-                        Digital
+                        Digital ({purchases.length})
                     </button>
                     <button
-                        onClick={() => setHistoryType('sinergy')}
+                        onClick={() => { setHistoryType('sinergy'); setSinergyPage(1); }}
                         className={`px-3 py-1 rounded text-[10px] font-black uppercase transition-all ${historyType === 'sinergy' ? 'bg-white text-green-700 shadow-sm' : 'text-gray-400'}`}
                     >
-                        E-commerce
+                        E-commerce ({physicalOrders.length})
                     </button>
                 </div>
             </div>
@@ -360,24 +388,32 @@ const PurchasesTab = () => {
                         Belum ada riwayat pembelian produk digital
                     </div>
                 ) : (
-                    <div className="space-y-3">
-                        {purchases.map(order => (
-                            <div key={order.id} className="bg-white p-3 rounded-xl border shadow-sm">
-                                <div className="flex justify-between items-start mb-2">
-                                    <h3 className="text-sm font-bold text-gray-800">{order.product_title}</h3>
-                                    <span className="text-[10px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full font-bold">Terverifikasi</span>
+                    <>
+                        <div className="space-y-3">
+                            {paginatedDigital.map(order => (
+                                <div key={order.id} className="bg-white p-3 rounded-xl border shadow-sm">
+                                    <div className="flex justify-between items-start mb-2">
+                                        <h3 className="text-sm font-bold text-gray-800">{order.product_title}</h3>
+                                        <span className="text-[10px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full font-bold">Terverifikasi</span>
+                                    </div>
+                                    <div className="flex justify-between items-center text-[10px] text-gray-400">
+                                        <span>#{order.order_number}</span>
+                                        <span>{formatDate(order.created_at)}</span>
+                                    </div>
+                                    <div className="mt-3 pt-2 border-t flex justify-between items-center">
+                                        <span className="text-xs font-black text-gray-900">Rp {formatIDR(order.price)}</span>
+                                        <Link to={`/digital-products/${order.product_slug}`} className="text-[10px] text-green-600 font-bold hover:underline">Detail Produk</Link>
+                                    </div>
                                 </div>
-                                <div className="flex justify-between items-center text-[10px] text-gray-400">
-                                    <span>#{order.order_number}</span>
-                                    <span>{formatDate(order.created_at)}</span>
-                                </div>
-                                <div className="mt-3 pt-2 border-t flex justify-between items-center">
-                                    <span className="text-xs font-black text-gray-900">Rp {formatIDR(order.price)}</span>
-                                    <Link to={`/digital-products/${order.product_slug}`} className="text-[10px] text-green-600 font-bold hover:underline">Detail Produk</Link>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
+                            ))}
+                        </div>
+                        <Pagination 
+                            currentPage={digitalPage}
+                            totalItems={purchases.length}
+                            itemsPerPage={ITEMS_PER_PAGE}
+                            onPageChange={setDigitalPage}
+                        />
+                    </>
                 )
             ) : (
                 physicalOrders.length === 0 ? (
@@ -385,52 +421,60 @@ const PurchasesTab = () => {
                         Belum ada riwayat belanja produk E-commerce
                     </div>
                 ) : (
-                    <div className="space-y-3">
-                        {physicalOrders.map(order => {
-                            const status = (order.status || '').toLowerCase();
-                            let badgeStyle = 'bg-gray-50 text-gray-500';
-                            if (['paid', 'berhasil', 'success'].includes(status)) badgeStyle = 'bg-emerald-50 text-emerald-600';
-                            else if (['shipped', 'dikirim'].includes(status)) badgeStyle = 'bg-blue-50 text-blue-600';
-                            else if (['pending', 'menunggu'].includes(status)) badgeStyle = 'bg-amber-50 text-amber-600';
-                            else if (['failed', 'gagal', 'batal'].includes(status)) badgeStyle = 'bg-red-50 text-red-600';
+                    <>
+                        <div className="space-y-3">
+                            {paginatedPhysical.map(order => {
+                                const status = (order.status || '').toLowerCase();
+                                let badgeStyle = 'bg-gray-50 text-gray-500';
+                                if (['paid', 'berhasil', 'success'].includes(status)) badgeStyle = 'bg-emerald-50 text-emerald-600';
+                                else if (['shipped', 'dikirim'].includes(status)) badgeStyle = 'bg-blue-50 text-blue-600';
+                                else if (['pending', 'menunggu'].includes(status)) badgeStyle = 'bg-amber-50 text-amber-600';
+                                else if (['failed', 'gagal', 'batal'].includes(status)) badgeStyle = 'bg-red-50 text-red-600';
 
-                            return (
-                                <div key={order.id} className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-all">
-                                    <div className="flex justify-between items-start mb-2">
-                                        <h3 className="text-sm font-black text-gray-900 tracking-tight">Order #{order.order_number}</h3>
-                                        <span className={`text-[10px] px-2.5 py-1 rounded-full font-black uppercase tracking-widest ${badgeStyle}`}>
-                                            {order.status || 'Pending'}
-                                        </span>
-                                    </div>
-                                    <div className="space-y-1.5 my-3">
-                                        {order.items?.map((item, idx) => (
-                                            <div key={idx} className="text-[11px] text-gray-600 flex justify-between items-center bg-gray-50/50 p-2 rounded-lg">
-                                                <span className="font-bold">{item.product_name} <span className="text-gray-400 font-medium">x{item.quantity}</span></span>
-                                                <span className="font-black text-gray-400">{formatIDR(item.price)}</span>
+                                return (
+                                    <div key={order.id} className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-all">
+                                        <div className="flex justify-between items-start mb-2">
+                                            <h3 className="text-sm font-black text-gray-900 tracking-tight">Order #{order.order_number}</h3>
+                                            <span className={`text-[10px] px-2.5 py-1 rounded-full font-black uppercase tracking-widest ${badgeStyle}`}>
+                                                {order.status || 'Pending'}
+                                            </span>
+                                        </div>
+                                        <div className="space-y-1.5 my-3">
+                                            {order.items?.map((item, idx) => (
+                                                <div key={idx} className="text-[11px] text-gray-600 flex justify-between items-center bg-gray-50/50 p-2 rounded-lg">
+                                                    <span className="font-bold">{item.product_name} <span className="text-gray-400 font-medium">x{item.quantity}</span></span>
+                                                    <span className="font-black text-gray-400">{formatIDR(item.price)}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                        <div className="flex justify-between items-center pt-3 border-t border-gray-50 mt-3">
+                                            <div className="flex items-center gap-1.5 text-gray-400">
+                                                <span className="material-icons text-xs">calendar_today</span>
+                                                <span className="text-[10px] font-bold">{formatDate(order.created_at)}</span>
                                             </div>
-                                        ))}
-                                    </div>
-                                    <div className="flex justify-between items-center pt-3 border-t border-gray-50 mt-3">
-                                        <div className="flex items-center gap-1.5 text-gray-400">
-                                            <span className="material-icons text-xs">calendar_today</span>
-                                            <span className="text-[10px] font-bold">{formatDate(order.created_at)}</span>
+                                            <div className="text-right">
+                                                <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">Grand Total</p>
+                                                <p className="text-sm font-black text-emerald-600">
+                                                    Rp {formatIDR(Number(order.grand_total) > 0 ? order.grand_total : order.total_price)}
+                                                </p>
+                                            </div>
                                         </div>
-                                        <div className="text-right">
-                                            <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">Grand Total</p>
-                                            <p className="text-sm font-black text-emerald-600">
-                                                Rp {formatIDR(Number(order.grand_total) > 0 ? order.grand_total : order.total_price)}
-                                            </p>
+                                        <div className="mt-4 flex justify-end">
+                                            <Link to="/riwayat-belanja" className="text-[10px] bg-gray-900 text-white px-4 py-2 rounded-xl font-black uppercase tracking-widest hover:bg-emerald-600 transition-colors flex items-center gap-2">
+                                                Detail Lacak <span className="material-icons text-xs">arrow_forward</span>
+                                            </Link>
                                         </div>
                                     </div>
-                                    <div className="mt-4 flex justify-end">
-                                        <Link to="/riwayat-belanja" className="text-[10px] bg-gray-900 text-white px-4 py-2 rounded-xl font-black uppercase tracking-widest hover:bg-emerald-600 transition-colors flex items-center gap-2">
-                                            Detail Lacak <span className="material-icons text-xs">arrow_forward</span>
-                                        </Link>
-                                    </div>
-                                </div>
-                            );
-                        })}
-                    </div>
+                                );
+                            })}
+                        </div>
+                        <Pagination 
+                            currentPage={sinergyPage}
+                            totalItems={physicalOrders.length}
+                            itemsPerPage={ITEMS_PER_PAGE}
+                            onPageChange={setSinergyPage}
+                        />
+                    </>
                 )
             )}
         </div>
@@ -440,6 +484,8 @@ const PurchasesTab = () => {
 const DonationsTab = () => {
     const [donations, setDonations] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [currentPage, setCurrentPage] = useState(1);
+    const ITEMS_PER_PAGE = 10;
 
     useEffect(() => {
         const fetchDonations = async () => {
@@ -449,7 +495,8 @@ const DonationsTab = () => {
                 const res = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/donations/donation/`, {
                     headers: { Authorization: `Bearer ${user.access}` }
                 });
-                setDonations(res.data);
+                const sorted = (res.data || []).sort((a, b) => new Date(b.created_at || b.id || 0) - new Date(a.created_at || a.id || 0));
+                setDonations(sorted);
             } catch (err) {
                 console.error('Error fetching donations:', err);
             } finally {
@@ -469,11 +516,18 @@ const DonationsTab = () => {
         </div>
     );
 
+    const paginatedDonations = donations.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+
     return (
         <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
             <div className="flex justify-between items-center px-1">
                 <h2 className="font-bold text-gray-800">Riwayat Donasi</h2>
-                <Link to="/charity" className="text-[10px] bg-green-600 text-white px-3 py-1 rounded-full font-black uppercase tracking-wider hover:bg-green-700 transition-colors">Donasi Lagi</Link>
+                <div className="flex items-center gap-2">
+                    <span className="text-[10px] bg-emerald-50 text-emerald-700 px-2.5 py-1 rounded-full font-bold">
+                        {donations.length} Donasi
+                    </span>
+                    <Link to="/charity" className="text-[10px] bg-green-600 text-white px-3 py-1 rounded-full font-black uppercase tracking-wider hover:bg-green-700 transition-colors">Donasi Lagi</Link>
+                </div>
             </div>
             {donations.length === 0 ? (
                 <div className="text-center py-12 text-gray-400 bg-gray-50 rounded-3xl border border-dashed border-gray-200">
@@ -481,36 +535,44 @@ const DonationsTab = () => {
                     <p className="text-sm font-medium">Belum ada riwayat donasi</p>
                 </div>
             ) : (
-                <div className="space-y-3">
-                    {donations.map(item => (
-                        <div key={item.id} className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow flex items-center gap-4">
-                            <div className="w-14 h-14 rounded-xl overflow-hidden shrink-0 border border-gray-50 bg-gray-50">
-                                <img
-                                    src={item.campaign?.thumbnail || '/images/default-campaign.jpg'}
-                                    alt="Campaign"
-                                    className="w-full h-full object-cover"
-                                    onError={(e) => { e.target.src = '/images/default-campaign.jpg'; }}
-                                />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                                <h3 className="text-sm font-bold text-gray-800 truncate leading-tight">{item.campaign_title || 'Donasi Tanpa Judul'}</h3>
-                                <div className="flex items-center gap-2 mt-1.5">
-                                    <span className="text-[11px] text-emerald-600 font-black">Rp {formatIDR(item.amount)}</span>
-                                    <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
-                                    <span className="text-[10px] text-gray-400 font-bold uppercase tracking-tight">{formatDate(item.created_at)}</span>
+                <>
+                    <div className="space-y-3">
+                        {paginatedDonations.map(item => (
+                            <div key={item.id} className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow flex items-center gap-4">
+                                <div className="w-14 h-14 rounded-xl overflow-hidden shrink-0 border border-gray-50 bg-gray-50">
+                                    <img
+                                        src={item.campaign?.thumbnail || '/images/default-campaign.jpg'}
+                                        alt="Campaign"
+                                        className="w-full h-full object-cover"
+                                        onError={(e) => { e.target.src = '/images/default-campaign.jpg'; }}
+                                    />
                                 </div>
-                                {item.message && (
-                                    <p className="text-xs text-gray-600 italic mt-1.5 bg-emerald-50/60 p-2 rounded-xl border border-emerald-100/60">
-                                        💬 "{item.message}"
-                                    </p>
-                                )}
+                                <div className="flex-1 min-w-0">
+                                    <h3 className="text-sm font-bold text-gray-800 truncate leading-tight">{item.campaign_title || 'Donasi Tanpa Judul'}</h3>
+                                    <div className="flex items-center gap-2 mt-1.5">
+                                        <span className="text-[11px] text-emerald-600 font-black">Rp {formatIDR(item.amount)}</span>
+                                        <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
+                                        <span className="text-[10px] text-gray-400 font-bold uppercase tracking-tight">{formatDate(item.created_at)}</span>
+                                    </div>
+                                    {item.message && (
+                                        <p className="text-xs text-gray-600 italic mt-1.5 bg-emerald-50/60 p-2 rounded-xl border border-emerald-100/60">
+                                            💬 "{item.message}"
+                                        </p>
+                                    )}
+                                </div>
+                                <div className="w-8 h-8 bg-green-50 rounded-full flex items-center justify-center">
+                                    <span className="material-icons text-green-500 text-lg">check_circle</span>
+                                </div>
                             </div>
-                            <div className="w-8 h-8 bg-green-50 rounded-full flex items-center justify-center">
-                                <span className="material-icons text-green-500 text-lg">check_circle</span>
-                            </div>
-                        </div>
-                    ))}
-                </div>
+                        ))}
+                    </div>
+                    <Pagination 
+                        currentPage={currentPage}
+                        totalItems={donations.length}
+                        itemsPerPage={ITEMS_PER_PAGE}
+                        onPageChange={setCurrentPage}
+                    />
+                </>
             )}
         </div>
     );
@@ -525,7 +587,8 @@ const BusinessesTab = () => {
         const fetchBusinesses = async () => {
             try {
                 const res = await businessProfileService.getBusinessProfiles();
-                setBusinesses(res.data);
+                const sorted = (res.data || []).sort((a, b) => new Date(b.created_at || b.id || 0) - new Date(a.created_at || a.id || 0));
+                setBusinesses(sorted);
             } catch (err) {
                 console.error('Error fetching businesses:', err);
             } finally {
@@ -565,7 +628,7 @@ const BusinessesTab = () => {
                             onClick={() => setActiveSubTab(idx)}
                             className={`px-4 py-2 rounded-xl text-xs font-black transition-all ${activeSubTab === idx ? 'bg-white text-green-700 shadow-sm' : 'text-gray-400'}`}
                         >
-                            USAHA {idx + 1}
+                            USAHA {idx + 1} ({b.brand_name})
                         </button>
                     ))}
                 </div>
@@ -745,6 +808,25 @@ const ProfilePage = () => {
     const [sendTempPwMessage, setSendTempPwMessage] = useState('');
     const [sendTempPwError, setSendTempPwError] = useState('');
 
+    const [walletData, setWalletData] = useState({ balance: 0, transactions: [] });
+    const [loadingWallet, setLoadingWallet] = useState(true);
+    const [showWalletModal, setShowWalletModal] = useState(false);
+
+    const fetchWallet = async () => {
+        try {
+            const user = JSON.parse(localStorage.getItem('user'));
+            if (!user) return;
+            const res = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/transactions/history/`, {
+                headers: { Authorization: `Bearer ${user.access}` }
+            });
+            setWalletData(res.data);
+        } catch (error) {
+            console.error('Failed to fetch wallet:', error);
+        } finally {
+            setLoadingWallet(false);
+        }
+    };
+
     useEffect(() => {
         const fetchProfile = async () => {
             try {
@@ -752,6 +834,7 @@ const ProfilePage = () => {
                 if (user && user.id) {
                     const profileData = await authService.getProfile(user.id); // Fetch profile data
                     setProfile(profileData);
+                    fetchWallet();
                 } else {
                     navigate('/login');
                 }
@@ -1085,7 +1168,7 @@ const ProfilePage = () => {
                             </div>
 
                             {/* Quick Stats/Links */}
-                            <div className="grid grid-cols-2 gap-3 mb-8">
+                            <div className="grid grid-cols-2 gap-3 mb-6">
                                 <Link to="/profile/edit" className="flex items-center justify-center gap-2 py-3 bg-gray-50 hover:bg-gray-100 text-gray-700 rounded-2xl text-sm font-bold transition">
                                     <span className="material-icons text-sm">edit</span>
                                     Edit Profil
@@ -1094,6 +1177,42 @@ const ProfilePage = () => {
                                     <span className="material-icons text-sm">dashboard</span>
                                     Dashboard
                                 </Link>
+                            </div>
+
+                            {/* Saldo BAE Card */}
+                            <div className="mb-8 bg-gradient-to-br from-emerald-600 via-emerald-700 to-teal-800 rounded-3xl p-6 text-white shadow-xl shadow-emerald-900/10 relative overflow-hidden">
+                                <div className="absolute -right-6 -bottom-6 w-32 h-32 bg-white/10 rounded-full blur-2xl pointer-events-none"></div>
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
+                                    <div>
+                                        <div className="flex items-center gap-2 mb-1.5 opacity-90">
+                                            <span className="material-icons text-emerald-200 text-sm">account_balance_wallet</span>
+                                            <span className="text-[11px] font-black tracking-widest uppercase text-emerald-100">Saldo BAE Anda</span>
+                                        </div>
+                                        <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
+                                            Rp {formatIDR(walletData.balance || 0)}
+                                        </h2>
+                                        <p className="text-[11px] text-emerald-100/80 mt-1">
+                                            Dapat digunakan untuk belanja E-Commerce, Sinergy, atau dicairkan ke rekening Anda.
+                                        </p>
+                                    </div>
+
+                                    <div className="flex items-center gap-2 pt-2 sm:pt-0">
+                                        <button
+                                            onClick={() => setShowWalletModal(true)}
+                                            className="px-4 py-2.5 bg-white/15 hover:bg-white/25 backdrop-blur-md rounded-2xl text-xs font-black uppercase tracking-wider text-white border border-white/20 transition-all flex items-center gap-1.5 active:scale-95"
+                                        >
+                                            <span className="material-icons text-sm">receipt_long</span>
+                                            Mutasi
+                                        </button>
+                                        <Link
+                                            to="/dashboard"
+                                            className="px-5 py-2.5 bg-white text-emerald-900 hover:bg-emerald-50 rounded-2xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 shadow-lg shadow-black/10 active:scale-95"
+                                        >
+                                            <span className="material-icons text-sm">payments</span>
+                                            Tarik Dana
+                                        </Link>
+                                    </div>
+                                </div>
                             </div>
 
                             {/* Navigation Tabs */}
@@ -1352,6 +1471,81 @@ const ProfilePage = () => {
                                 </button>
                             </div>
                         </form>
+                    </div>
+            {/* Modal Riwayat Mutasi Saldo BAE */}
+            {showWalletModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+                    <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-gray-100 max-h-[85vh] flex flex-col">
+                        <div className="flex justify-between items-center pb-4 border-b border-gray-100">
+                            <div>
+                                <h3 className="text-lg font-black text-gray-900 flex items-center gap-2">
+                                    <span className="material-icons text-emerald-600">account_balance_wallet</span>
+                                    Mutasi Saldo BAE
+                                </h3>
+                                <p className="text-xs text-gray-400 font-bold mt-0.5">
+                                    Saldo Saat Ini: <span className="text-emerald-600 font-black">Rp {formatIDR(walletData.balance || 0)}</span>
+                                </p>
+                            </div>
+                            <button
+                                onClick={() => setShowWalletModal(false)}
+                                className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-500 transition"
+                            >
+                                <span className="material-icons text-base">close</span>
+                            </button>
+                        </div>
+
+                        <div className="overflow-y-auto flex-1 py-4 space-y-3 pr-1">
+                            {(!walletData.transactions || walletData.transactions.length === 0) ? (
+                                <div className="text-center py-12 text-gray-400">
+                                    <span className="material-icons text-4xl mb-2 opacity-20">receipt_long</span>
+                                    <p className="text-sm font-bold">Belum ada riwayat mutasi saldo</p>
+                                </div>
+                            ) : (
+                                walletData.transactions.map(item => {
+                                    const isPositive = Number(item.amount) > 0;
+                                    return (
+                                        <div key={item.id} className="p-3.5 bg-gray-50/80 rounded-2xl border border-gray-100 flex items-start justify-between gap-3 hover:bg-gray-50 transition">
+                                            <div className="flex items-start gap-3 min-w-0">
+                                                <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 mt-0.5 ${isPositive ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
+                                                    <span className="material-icons text-sm">{isPositive ? 'arrow_downward' : 'arrow_upward'}</span>
+                                                </div>
+                                                <div className="min-w-0">
+                                                    <p className="text-xs font-black text-gray-800 leading-tight">
+                                                        {item.transaction_type === 'REFUND' ? 'Pengembalian Dana (Refund)' :
+                                                         item.transaction_type === 'PAYMENT' ? 'Pembayaran Belanja' :
+                                                         item.transaction_type === 'WITHDRAWAL' ? 'Penarikan Saldo' :
+                                                         item.transaction_type === 'EARNING' ? 'Hasil Penjualan' : item.transaction_type}
+                                                    </p>
+                                                    <p className="text-[11px] text-gray-500 mt-0.5 break-words line-clamp-2">
+                                                        {item.description || (item.order_number ? `Order #${item.order_number}` : '-')}
+                                                    </p>
+                                                    <p className="text-[10px] text-gray-400 mt-1 font-bold">
+                                                        {formatDate(item.created_at)}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <div className="text-right shrink-0">
+                                                <p className={`text-sm font-black ${isPositive ? 'text-emerald-600' : 'text-red-600'}`}>
+                                                    {isPositive ? '+' : ''}Rp {formatIDR(Math.abs(item.amount))}
+                                                </p>
+                                                <p className="text-[10px] text-gray-400 font-medium mt-0.5">
+                                                    Akhir: Rp {formatIDR(item.balance_after)}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    );
+                                })
+                            )}
+                        </div>
+
+                        <div className="pt-3 border-t border-gray-100 flex justify-end">
+                            <button
+                                onClick={() => setShowWalletModal(false)}
+                                className="px-5 py-2.5 bg-gray-900 text-white rounded-xl text-xs font-black uppercase tracking-wider hover:bg-gray-800 transition"
+                            >
+                                Tutup
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}

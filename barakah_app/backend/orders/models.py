@@ -17,7 +17,7 @@ class Order(models.Model):
     grand_total = models.DecimalField(max_digits=12, decimal_places=2, default=0) # total_price + shipping - voucher
     payment_method = models.CharField(max_length=50, default='manual')
     payment_proof = models.ImageField(upload_to='payment_proofs/orders/', null=True, blank=True)
-
+    used_balance = models.DecimalField(max_digits=12, decimal_places=2, default=0, help_text="Jumlah Saldo BAE yang digunakan")
 
     status = models.CharField(max_length=50, default='Pending')  # e.g., Pending, Paid, Proses, Dikirim, Selesai, Batal
     order_number = models.CharField(max_length=20, unique=True, blank=True)
@@ -29,6 +29,23 @@ class Order(models.Model):
     buyer_note = models.TextField(blank=True, null=True, help_text="Catatan pembeli untuk penjual")
     complaint_reason = models.TextField(blank=True, null=True, help_text="Alasan komplain / banding dari pembeli")
     complaint_at = models.DateTimeField(null=True, blank=True)
+    
+    # Cancellation & Dispute Workflow
+    cancel_request_status = models.CharField(
+        max_length=20, 
+        choices=[
+            ('none', 'None'),
+            ('pending', 'Menunggu Persetujuan Penjual'),
+            ('approved', 'Disetujui Penjual'),
+            ('rejected', 'Ditolak Penjual')
+        ], 
+        default='none'
+    )
+    cancel_request_reason = models.TextField(blank=True, null=True, help_text="Alasan permohonan pembatalan/diskusi dari pembeli")
+    cancel_requested_at = models.DateTimeField(null=True, blank=True)
+    cancelled_at = models.DateTimeField(null=True, blank=True)
+    cancelled_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='cancelled_orders')
+
     paid_to_seller_directly = models.BooleanField(default=False)
     seller_bank_name = models.CharField(max_length=100, blank=True, null=True)
     seller_bank_account = models.CharField(max_length=100, blank=True, null=True)

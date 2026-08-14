@@ -17,13 +17,7 @@ const EcommerceCheckoutSinergy = () => {
     const [courierOptions, setCourierOptions] = useState({}); // { sellerId: [ { service, cost, description, etd } ] }
     const [loadingCosts, setLoadingCosts] = useState({});
     const [selectedAddress, setSelectedAddress] = useState(null);
-    // sellerConfigs is removed because we focus on product level
-
-
-
-
-    // Example checkoutConfigs state:
-    // { "seller_id_1": { "shipping_cost": 15000, "shipping_courier": "jne", "shipping_service": "REG", "voucher_code": "X", "voucher_nominal": 5000, "payment_method": "qris" } }
+    const [userWallet, setUserWallet] = useState({ balance: 0 });
 
     const navigate = useNavigate();
 
@@ -35,24 +29,31 @@ const EcommerceCheckoutSinergy = () => {
                 return;
             }
             try {
-                // Fetch profile first to ensure address is complete
+                // Fetch profile
                 const profileRes = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/profiles/me/`, {
                     headers: { Authorization: `Bearer ${user.access}` }
                 });
-                
                 const p = profileRes.data;
                 setAddresses(p || {});
+
+                // Fetch User Wallet (Saldo BAE)
+                try {
+                    const walletRes = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/transactions/wallet/`, {
+                        headers: { Authorization: `Bearer ${user.access}` }
+                    });
+                    setUserWallet(walletRes.data || { balance: 0 });
+                } catch (e) {
+                    console.error('Wallet fetch error:', e);
+                }
 
                 // Fetch Carts
                 const cartRes = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/carts/cart/`, {
                     headers: { Authorization: `Bearer ${user.access}` }
                 });
                 
-                // Temporary dummy data if endpoint not fully ready
                 const items = cartRes.data || [];
                 setCartItems(items);
                 
-                // Initialize checkout configs based on sellers in cart
                 const initialConfigs = {};
                 items.forEach(item => {
                     const s_id = item.product?.seller_id || "0";
@@ -66,7 +67,6 @@ const EcommerceCheckoutSinergy = () => {
             } finally {
                 setLoading(false);
             }
-
         };
         fetchData();
     }, [navigate]);
@@ -180,21 +180,34 @@ const EcommerceCheckoutSinergy = () => {
             const firstOrder = Array.isArray(orders) ? orders[0] : orders;
             
             if (selectedPaymentMethod === 'cod') {
-                // COD: Directly navigate to Riwayat Belanja (Skip Payment Page)
+                alert('Pesanan COD berhasil dibuat!');
+                navigate('/riwayat-belanja');
+            } else if (selectedPaymentMethod === 'saldo_bae') {
+                alert('Pembayaran berhasil! 100% Saldo BAE telah dipotong.');
                 navigate('/riwayat-belanja');
             } else {
-                // Non-COD (QRIS / Transfer Bank): Navigate to Halaman Pembayaran (Konfirmasi Pembayaran) FIRST!
+                // Non-COD (QRIS / Transfer Bank or Hybrid): Navigate to Halaman Pembayaran
                 const totalAmount = Object.keys(sellerGroups).reduce((sum, s_id) => {
                     const group = sellerGroups[s_id];
                     const config = checkoutConfigs[s_id];
                     return sum + group.total_price + (config?.shipping_cost || 0) - (config?.voucher_nominal || 0);
                 }, 0);
 
+                const remainingToPay = selectedPaymentMethod === 'hybrid' 
+                    ? Math.max(0, totalAmount - (Number(userWallet.balance) || 0))
+                    : (firstOrder?.grand_total || firstOrder?.total_price || totalAmount);
+
+                if (remainingToPay <= 0) {
+                    alert('Pembayaran berhasil lunas!');
+                    navigate('/riwayat-belanja');
+                    return;
+                }
+
                 navigate('/konfirmasi-pembayaran-belanja', {
                     state: {
                         orderId: firstOrder?.id,
                         orderNumber: firstOrder?.order_number,
-                        amount: firstOrder?.grand_total || firstOrder?.total_price || totalAmount,
+                        amount: remainingToPay,
                         bank: 'qris',
                         customerName: addresses.name_full,
                         customerPhone: addresses.phone,
@@ -334,18 +347,35 @@ const EcommerceCheckoutSinergy = () => {
                                     <input type="text" placeholder="BERKAH2025" className="w-full text-sm bg-gray-50 border-none rounded-lg p-2" />
                                 </div>
                                 <div className="border border-gray-100 rounded-xl p-3">
-                                    <label className="block text-xs font-bold text-gray-700 mb-1">Metode Pembayaran</label>
+                                    <div className="flex justify-between items-center mb-1">
+                                        <label className="block text-xs font-bold text-gray-700">Metode Pembayaran</label>
+                                        <span className="text-[10px] font-bold text-emerald-600">Saldo BAE: Rp {new Intl.NumberFormat('id-ID').format(userWallet.balance || 0)}</span>
+                                    </div>
                                     <select 
                                         className="w-full text-xs font-bold bg-gray-50 border border-gray-200 rounded-lg p-2 focus:ring-1 focus:ring-emerald-500 outline-none text-emerald-800"
                                         value={config?.payment_method || 'manual'}
                                         onChange={(e) => handleConfigChange(s_id, 'payment_method', e.target.value)}
                                     >
                                         <option value="manual">Bayar Langsung (QRIS / Transfer Bank)</option>
+                                        {Number(userWallet.balance) >= grandTotal && (
+                                            <option value="saldo_bae">100% Saldo BAE (Rp {new Intl.NumberFormat('id-ID').format(userWallet.balance || 0)})</option>
+                                        )}
+                                        {Number(userWallet.balance) > 0 && Number(userWallet.balance) < grandTotal && (
+                                            <option value="hybrid">Hybrid (Saldo BAE Rp {new Intl.NumberFormat('id-ID').format(userWallet.balance || 0)} + Sisa QRIS)</option>
+                                        )}
                                         {group.items.every(item => item.product?.is_cod_available) && (
                                             <option value="cod">Bayar di Tempat (COD)</option>
                                         )}
                                     </select>
-                                    {group.items.some(item => !item.product?.is_cod_available) ? (
+                                    {config?.payment_method === 'saldo_bae' ? (
+                                        <p className="text-[9px] text-emerald-600 mt-1 italic leading-tight font-bold">
+                                            ✓ Saldo BAE Anda mencukupi untuk pembayaran lunas instan.
+                                        </p>
+                                    ) : config?.payment_method === 'hybrid' ? (
+                                        <p className="text-[9px] text-emerald-600 mt-1 italic leading-tight font-bold">
+                                            ✓ Saldo BAE akan dipotong Rp {new Intl.NumberFormat('id-ID').format(userWallet.balance || 0)}, sisa Rp {new Intl.NumberFormat('id-ID').format(Math.max(0, grandTotal - userWallet.balance))} dibayar via QRIS.
+                                        </p>
+                                    ) : group.items.some(item => !item.product?.is_cod_available) ? (
                                         <p className="text-[9px] text-gray-400 mt-1 italic leading-tight">
                                             Fitur COD tidak aktif karena produk tidak mendukung COD.
                                         </p>

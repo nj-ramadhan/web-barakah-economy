@@ -83,11 +83,11 @@ const DashboardPage = () => {
                         headers: { Authorization: `Bearer ${user.access}` }
                     }).catch(() => ({ data: [] }))
                 ])
-                
+
                 if (sinergyProductsRes && sinergyProductsRes.data) {
                     setSinergyProductCount(sinergyProductsRes.data.length);
                 }
-                
+
                 if (sinergyStatsRes && sinergyStatsRes.data) {
                     setSinergyPendingCount(sinergyStatsRes.data.pending_count || 0);
                 }
@@ -328,74 +328,132 @@ const DashboardPage = () => {
                 <h1 className="text-xl font-bold mb-6">{t('dashboard.title', 'Dashboard')}</h1>
 
                 {/* Balance Card */}
-                <div className="bg-gradient-to-br from-green-700 to-green-800 rounded-2xl p-5 mb-6 text-white shadow-lg relative overflow-hidden">
-                    <button
-                        onClick={() => setShowHistoryModal(true)}
-                        className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center bg-white/20 rounded-full hover:bg-white/30 transition"
-                        title="Riwayat Penarikan"
-                    >
-                        <span className="material-icons text-sm">history</span>
-                    </button>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                        <div>
-                            <p className="text-[10px] uppercase font-black opacity-70 tracking-widest mb-1">Saldo Tersedia (Tarik BAE)</p>
-                            <h2 className="text-2xl font-black">{formatIDR(balanceData.available_balance)}</h2>
-                        </div>
-                        <div>
-                            <p className="text-[10px] uppercase font-black opacity-70 tracking-widest mb-1">Saldo Bayar Langsung (Non-Penarikan)</p>
-                            <h2 className="text-2xl font-black text-amber-300">{formatIDR(balanceData.direct_sales_balance || 0)}</h2>
-                        </div>
-                        <div className="md:text-right">
-                            <p className="text-[10px] uppercase font-black opacity-70 tracking-widest mb-1">Saldo Tertahan (Pending)</p>
-                            <h2 className="text-xl font-bold text-green-300">{formatIDR(balanceData.pending_balance || 0)}</h2>
-                        </div>
-                    </div>
+                {(() => {
+                    const isSeller = (productCount > 0 || courseCount > 0 || sinergyProductCount > 0 || Number(balanceData.total_sales) > 0 || userProfile?.role === 'admin' || userProfile?.is_staff);
 
-                    <div className="flex flex-wrap gap-3 items-center pt-4 border-t border-white/10">
-                        <button
-                            onClick={() => setShowWithdrawModal(true)}
-                            className="bg-white text-green-800 px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest shadow-lg hover:bg-green-50 transition-all active:scale-95"
-                        >
-                            Tarik Saldo BAE
-                        </button>
-                        
-                        <div className="flex-1 min-w-[200px]">
-                            <div className="flex flex-wrap gap-x-4 gap-y-1 text-[9px] font-bold uppercase tracking-tight opacity-80">
-                                <span className="flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-blue-400"></div> Digital: {formatIDR(balanceData.total_digital_sales || 0)}</span>
-                                <span className="flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-amber-400"></div> Course: {formatIDR(balanceData.total_course_sales || 0)}</span>
-                                <span className="flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-emerald-400"></div> E-com (Selesai): {formatIDR(balanceData.total_sinergy_sales || 0)}</span>
-                                <span className="flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-red-400"></div> E-com (Pending): {formatIDR(balanceData.total_sinergy_pending || 0)}</span>
+                    if (!isSeller) {
+                        return (
+                            <div className="bg-gradient-to-br from-emerald-700 via-emerald-800 to-teal-900 rounded-3xl p-6 mb-6 text-white shadow-xl shadow-emerald-900/10 relative overflow-hidden">
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                    <div>
+                                        <div className="flex items-center gap-2 mb-1.5 opacity-90">
+                                            <span className="material-icons text-emerald-200 text-sm">account_balance_wallet</span>
+                                            <span className="text-[11px] font-black tracking-widest uppercase text-emerald-100">Saldo BAE Saya</span>
+                                        </div>
+                                        <h2 className="text-3xl font-black tracking-tight">{formatIDR(balanceData.available_balance || 0)}</h2>
+                                        <p className="text-xs text-emerald-100/80 mt-1.5 max-w-md leading-relaxed">
+                                            Saldo BAE Anda berasal dari pengembalian dana (refund belanja) atau transaksi di Barakah. Dapat dicairkan ke rekening bank atau digunakan untuk belanja kembali.
+                                        </p>
+                                    </div>
+
+                                    <div className="flex flex-wrap gap-2 pt-2 sm:pt-0">
+                                        <button
+                                            onClick={() => setShowWithdrawModal(true)}
+                                            className="bg-white text-emerald-900 px-6 py-3 rounded-2xl text-xs font-black uppercase tracking-wider shadow-lg hover:bg-emerald-50 transition-all active:scale-95 flex items-center gap-1.5"
+                                        >
+                                            <span className="material-icons text-sm">payments</span>
+                                            Tarik Saldo BAE
+                                        </button>
+                                        <button
+                                            onClick={() => setShowHistoryModal(true)}
+                                            className="bg-white/15 hover:bg-white/25 backdrop-blur-md text-white border border-white/20 px-4 py-3 rounded-2xl text-xs font-black uppercase tracking-wider transition-all active:scale-95 flex items-center gap-1.5"
+                                            title="Riwayat Penarikan"
+                                        >
+                                            <span className="material-icons text-sm">history</span>
+                                            Riwayat
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    }
+
+                    return (
+                        <div className="bg-gradient-to-br from-green-700 to-green-800 rounded-2xl p-5 mb-6 text-white shadow-lg relative overflow-hidden">
+                            <button
+                                onClick={() => setShowHistoryModal(true)}
+                                className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center bg-white/20 rounded-full hover:bg-white/30 transition"
+                                title="Riwayat Penarikan"
+                            >
+                                <span className="material-icons text-sm">history</span>
+                            </button>
+
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                                <div>
+                                    <p className="text-[10px] uppercase font-black opacity-70 tracking-widest mb-1">Saldo Tersedia (Tarik BAE)</p>
+                                    <h2 className="text-2xl font-black">{formatIDR(balanceData.available_balance)}</h2>
+                                </div>
+                                <div>
+                                    <p className="text-[10px] uppercase font-black opacity-70 tracking-widest mb-1">Saldo Bayar Langsung</p>
+                                    <h2 className="text-2xl font-black text-amber-300">{formatIDR(balanceData.direct_sales_balance || 0)}</h2>
+                                </div>
+                                <div className="md:text-right">
+                                    <p className="text-[10px] uppercase font-black opacity-70 tracking-widest mb-1">Saldo Tertahan (Pending)</p>
+                                    <h2 className="text-xl font-bold text-green-300">{formatIDR(balanceData.pending_balance || 0)}</h2>
+                                </div>
+                            </div>
+
+                            <div className="flex flex-wrap gap-3 items-center pt-4 border-t border-white/10">
+                                <button
+                                    onClick={() => setShowWithdrawModal(true)}
+                                    className="bg-white text-green-800 px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest shadow-lg hover:bg-green-50 transition-all active:scale-95"
+                                >
+                                    Tarik Saldo BAE
+                                </button>
+
+                                <div className="flex-1 min-w-[200px]">
+                                    <div className="flex flex-wrap gap-x-4 gap-y-1 text-[9px] font-bold uppercase tracking-tight opacity-80">
+                                        <span className="flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-blue-400"></div> Digital: {formatIDR(balanceData.total_digital_sales || 0)}</span>
+                                        <span className="flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-amber-400"></div> Course: {formatIDR(balanceData.total_course_sales || 0)}</span>
+                                        <span className="flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-emerald-400"></div> E-com (Selesai): {formatIDR(balanceData.total_sinergy_sales || 0)}</span>
+                                        <span className="flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-red-400"></div> E-com (Pending): {formatIDR(balanceData.total_sinergy_pending || 0)}</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                </div>
+                    );
+                })()}
 
-                {/* Stats */}
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-6">
-                    <Link to="/dashboard/digital-products" className="bg-gradient-to-br from-green-500 to-green-700 rounded-xl p-4 text-white">
-                        <span className="material-icons text-2xl mb-1">inventory_2</span>
-                        <p className="font-bold text-2xl">{loading ? '...' : productCount}</p>
-                        <p className="text-[10px] opacity-80 uppercase tracking-wider font-semibold">Produk Digital</p>
-                    </Link>
-                    <Link to="/dashboard/ecourses" className="bg-gradient-to-br from-blue-500 to-blue-700 rounded-xl p-4 text-white">
-                        <span className="material-icons text-2xl mb-1">school</span>
-                        <p className="font-bold text-2xl">{loading ? '...' : courseCount}</p>
-                        <p className="text-[10px] opacity-80 uppercase tracking-wider font-semibold">E-Course Saya</p>
-                    </Link>
-                    {(userProfile?.role === 'admin' || userProfile?.is_staff || sinergyProductCount > 0) ? (
-                        <Link to="/dashboard/sinergy/seller" className="bg-gradient-to-br from-emerald-500 to-emerald-700 rounded-xl p-4 text-white relative">
-                            {sinergyPendingCount > 0 && (
-                                <div className="absolute top-2 right-2 bg-red-500 text-white text-[10px] font-black w-6 h-6 rounded-full flex items-center justify-center border-2 border-white shadow-lg animate-bounce">
-                                    {sinergyPendingCount}
-                                </div>
+                {/* Stats (Shown only if user sells products or is admin) */}
+                {(() => {
+                    const isAdmin = userProfile?.role === 'admin' || userProfile?.is_staff;
+                    const showDigital = isAdmin || productCount > 0;
+                    const showCourse = isAdmin || courseCount > 0;
+                    const showPhysical = isAdmin || sinergyProductCount > 0;
+
+                    if (!showDigital && !showCourse && !showPhysical) return null;
+
+                    return (
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-6">
+                            {showDigital && (
+                                <Link to="/dashboard/digital-products" className="bg-gradient-to-br from-green-500 to-green-700 rounded-xl p-4 text-white">
+                                    <span className="material-icons text-2xl mb-1">inventory_2</span>
+                                    <p className="font-bold text-2xl">{loading ? '...' : productCount}</p>
+                                    <p className="text-[10px] opacity-80 uppercase tracking-wider font-semibold">Produk Digital</p>
+                                </Link>
                             )}
-                            <span className="material-icons text-2xl mb-1">shopping_bag</span>
-                            <p className="font-bold text-2xl">{loading ? '...' : sinergyProductCount}</p>
-                            <p className="text-[10px] opacity-80 uppercase tracking-wider font-semibold">Produk Fisik</p>
-                        </Link>
-                    ) : null}
-                </div>
+                            {showCourse && (
+                                <Link to="/dashboard/ecourses" className="bg-gradient-to-br from-blue-500 to-blue-700 rounded-xl p-4 text-white">
+                                    <span className="material-icons text-2xl mb-1">school</span>
+                                    <p className="font-bold text-2xl">{loading ? '...' : courseCount}</p>
+                                    <p className="text-[10px] opacity-80 uppercase tracking-wider font-semibold">E-Course Saya</p>
+                                </Link>
+                            )}
+                            {showPhysical && (
+                                <Link to="/dashboard/sinergy/seller" className="bg-gradient-to-br from-emerald-500 to-emerald-700 rounded-xl p-4 text-white relative">
+                                    {sinergyPendingCount > 0 && (
+                                        <div className="absolute top-2 right-2 bg-red-500 text-white text-[10px] font-black w-6 h-6 rounded-full flex items-center justify-center border-2 border-white shadow-lg animate-bounce">
+                                            {sinergyPendingCount}
+                                        </div>
+                                    )}
+                                    <span className="material-icons text-2xl mb-1">shopping_bag</span>
+                                    <p className="font-bold text-2xl">{loading ? '...' : sinergyProductCount}</p>
+                                    <p className="text-[10px] opacity-80 uppercase tracking-wider font-semibold">Produk Fisik</p>
+                                </Link>
+                            )}
+                        </div>
+                    );
+                })()}
 
                 {/* Menu */}
                 <h2 className="font-semibold text-gray-700 mb-3 px-1">Manajemen Bisnis & Personal</h2>
@@ -495,7 +553,7 @@ const DashboardPage = () => {
                                     </div>
                                 )}
 
-                                 {hasAccess('submit_campaign') && (
+                                {hasAccess('submit_campaign') && (
                                     <Link
                                         to="/dashboard/my-campaigns"
                                         className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-red-50 hover:shadow-md transition"
@@ -527,7 +585,7 @@ const DashboardPage = () => {
                                     </Link>
                                 )}
 
-                                 {hasAccess('my_events') && (
+                                {hasAccess('my_events') && (
                                     <Link
                                         to="/dashboard/my-events"
                                         className="flex items-center gap-4 bg-white rounded-2xl p-4 shadow-sm border border-indigo-50 hover:shadow-md transition"
@@ -1162,7 +1220,27 @@ const DashboardPage = () => {
                                     <span>Total Pengurangan Saldo:</span>
                                     <span>{formatIDR(totalDeductionVal)}</span>
                                 </div>
-                                <p className="text-[9px] text-orange-600 mt-2">* Gratis biaya admin jika menggunakan BSI atau GOPAY</p>
+                                <p className="text-[9px] text-orange-600 mt-1">* Gratis biaya admin jika menggunakan BSI atau GOPAY</p>
+                            </div>
+
+                            {/* 2x24 Jam & Admin WA Info */}
+                            <div className="bg-emerald-50 p-3.5 rounded-xl border border-emerald-100 text-xs text-emerald-900 space-y-2 leading-relaxed">
+                                <p className="text-[11px] font-bold text-emerald-800 flex items-center gap-1">
+                                    <span className="material-icons text-sm text-emerald-600">schedule</span>
+                                    Proses penarikan saldo diproses maksimal <strong>2x24 jam</strong>.
+                                </p>
+                                <div className="pt-2 border-t border-emerald-200/60 flex items-center justify-between">
+                                    <span className="text-[10px] text-emerald-800 font-medium">Ada kendala penarikan?</span>
+                                    <a
+                                        href="https://wa.me/6285643848251?text=Halo%20Admin%20Barakah%20Ekonomi,%20saya%20ingin%20bertanya%20seputar%20penarikan%20saldo%20BAE"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[10px] font-black uppercase tracking-wider flex items-center gap-1 transition"
+                                    >
+                                        <span className="material-icons text-xs">whatsapp</span>
+                                        Hubungi Admin BAE
+                                    </a>
+                                </div>
                             </div>
 
                             <button

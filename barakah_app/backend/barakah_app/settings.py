@@ -142,6 +142,7 @@ INSTALLED_APPS = [
     'zis',
     'tracking',
     'streaming',
+    'transactions',
     'django_cleanup.apps.CleanupConfig',
 ]
 

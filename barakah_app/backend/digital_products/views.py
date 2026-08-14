@@ -509,7 +509,11 @@ class WithdrawalViewSet(viewsets.ModelViewSet):
                 total=Sum(F('total_price') - F('voucher_nominal'), output_field=DecimalField())
             )['total'] or Decimal('0')
 
-            total_sales = total_sales + total_course_sales + total_sinergy_completed
+            from transactions.models import UserWallet
+            user_wallet = UserWallet.get_or_create_wallet(request.user)
+            wallet_balance = user_wallet.balance or Decimal('0')
+
+            total_sales = total_sales + total_course_sales + total_sinergy_completed + wallet_balance
         except Exception as e:
             logger.error(f"Error calculating total sales: {e}")
             total_sales = Decimal('0')
@@ -578,7 +582,11 @@ class WithdrawalViewSet(viewsets.ModelViewSet):
                 total=Sum(F('total_price') - F('voucher_nominal'), output_field=DecimalField())
             )['total'] or Decimal('0')
 
-            total_sales_available = total_digital_sales_available + total_course_sales_available + Decimal(total_sinergy_completed_available)
+            from transactions.models import UserWallet
+            user_wallet = UserWallet.get_or_create_wallet(request.user)
+            wallet_balance = user_wallet.balance or Decimal('0')
+
+            total_sales_available = total_digital_sales_available + total_course_sales_available + Decimal(total_sinergy_completed_available) + wallet_balance
 
             # --- Direct (Non-Withdrawable) Sales ---
             total_digital_sales_direct = DigitalOrder.objects.filter(

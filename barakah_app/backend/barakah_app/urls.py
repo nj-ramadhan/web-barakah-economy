@@ -73,6 +73,7 @@ urlpatterns = [
     path('api/meetings/', include('meetings.urls')),
     path('api/zis/', include('zis.urls')),
     path('api/tracking/', include('tracking.urls')),
+    path('api/transactions/', include('transactions.urls')),
     path('ckeditor/', include('ckeditor_uploader.urls')),
     path('ckeditor/upload/', ckeditor_views.upload, name='ckeditor_upload'),
 
