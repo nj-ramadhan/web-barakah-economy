@@ -7,6 +7,7 @@ import Header from '../components/layout/Header';
 import NavigationButton from '../components/layout/Navigation';
 import authService from '../services/auth';
 import businessProfileService from '../services/businessProfile';
+import Pagination from '../components/common/Pagination';
 import '../styles/Body.css';
 
 const formatDate = (dateData) => {
@@ -175,8 +176,6 @@ const ProfileInfoItem = ({ label, value, icon, fullWidth = false }) => (
         </div>
     </div>
 );
-
-import Pagination from '../components/common/Pagination';
 
 const CoursesTab = () => {
     const [courses, setCourses] = useState([]);
