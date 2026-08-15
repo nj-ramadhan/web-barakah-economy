@@ -342,7 +342,12 @@ const ProfileEditPage = () => {
       }
       return updated;
     });
+
+    if (value && value.trim() !== '') {
+      setMissingFields((prev) => prev.filter(f => f !== name));
+    }
   };
+
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -478,15 +483,16 @@ const ProfileEditPage = () => {
     info_source: 'Sumber Informasi', referred_by: 'Nama Pengajak',
   };
 
-  const isFieldMissing = (field) => missingFields.includes(field);
+  const isFieldMissing = (field) => missingFields.includes(field) && (!profile[field] || String(profile[field]).trim() === '');
 
   const inputCls = (field) => {
     const mandatoryFields = [
       'name_full', 'nickname', 'phone', 'gender', 'agama', 
-      'birth_place', 'birth_date', 'marital_status', 'segment'
+      'birth_place', 'birth_date', 'marital_status', 'segment', 'info_source'
     ];
-    const isMandatoryMissing = mandatoryFields.includes(field) && (!profile[field] || profile[field] === '');
-    return `w-full p-3 border rounded-xl text-sm transition outline-none focus:ring-2 ${(isFieldMissing(field) || isMandatoryMissing)
+    const isMandatoryMissing = mandatoryFields.includes(field) && (!profile[field] || String(profile[field]).trim() === '');
+    const isError = (isFieldMissing(field) || isMandatoryMissing);
+    return `w-full p-3 border rounded-xl text-sm transition outline-none focus:ring-2 ${isError
       ? 'border-red-500 bg-red-50 focus:ring-red-400'
       : 'border-gray-200 bg-gray-50 focus:ring-green-500'
       }`;
@@ -569,6 +575,9 @@ const ProfileEditPage = () => {
                   if (val !== 'kepercayaan') {
                     setProfile(prev => ({ ...prev, agama: val }));
                     setCustomAgama('');
+                    if (val !== '') {
+                      setMissingFields(prev => prev.filter(f => f !== 'agama'));
+                    }
                   } else {
                     setProfile(prev => ({ ...prev, agama: customAgama }));
                   }
@@ -600,6 +609,9 @@ const ProfileEditPage = () => {
                     const val = e.target.value;
                     setCustomAgama(val);
                     setProfile(prev => ({ ...prev, agama: val }));
+                    if (val && val.trim() !== '') {
+                      setMissingFields(prev => prev.filter(f => f !== 'agama'));
+                    }
                   }} 
                   className={inputCls('agama')} 
                 />
@@ -639,8 +651,41 @@ const ProfileEditPage = () => {
               </select>
             </div>
 
+            <div>
+              <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
+                Sumber Informasi <span className="text-red-500">*wajib</span>
+              </label>
+              <select name="info_source" value={profile.info_source || ''} onChange={handleChange} className={inputCls('info_source')}>
+                <option value="">Pilih Sumber Informasi</option>
+                <option value="sosmed">Sosial Media (Instagram/FB/TikTok)</option>
+                <option value="wa">WhatsApp Group / Chat</option>
+                <option value="teman">Teman / Keluarga</option>
+                <option value="iklan">Iklan</option>
+                <option value="website">Website / Google</option>
+                <option value="event">Event / Acara</option>
+                <option value="lainnya">Lainnya</option>
+              </select>
+            </div>
+
+            {profile.info_source === 'teman' && (
+              <div className="animate-in fade-in slide-in-from-top-1 duration-200">
+                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
+                  Nama Pengajak / Rekomendasi <span className="text-red-500">*wajib</span>
+                </label>
+                <input 
+                  type="text" 
+                  name="referred_by" 
+                  placeholder="Nama orang yang mengajak Anda" 
+                  value={profile.referred_by || ''} 
+                  onChange={handleChange} 
+                  className={inputCls('referred_by')} 
+                />
+              </div>
+            )}
+
           </div>
         );
+
 
       case 'address':
         return (
@@ -957,11 +1002,12 @@ const ProfileEditPage = () => {
                 <h3 className="font-bold text-lg">Lengkapi Data Diri Anda</h3>
                 <p className="text-sm opacity-90 mt-1">
                   Untuk menggunakan fitur Barakah Economy, Anda wajib melengkapi data biodata terlebih dahulu.
-                  {missingFields.length > 0 && (
+                  {missingFields.filter(f => !profile[f] || String(profile[f]).trim() === '').length > 0 && (
                     <span className="block mt-1 font-bold text-yellow-200">
-                      Field wajib: {missingFields.map(f => FIELD_LABELS[f] || f).join(', ')}
+                      Field wajib: {missingFields.filter(f => !profile[f] || String(profile[f]).trim() === '').map(f => FIELD_LABELS[f] || f).join(', ')}
                     </span>
                   )}
+
                 </p>
               </div>
             </div>
