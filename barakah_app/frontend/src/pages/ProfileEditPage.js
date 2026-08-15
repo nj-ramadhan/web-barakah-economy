@@ -128,48 +128,8 @@ const ProfileEditPage = () => {
   }, [navigate, isCompleteMode]);
 
 
-  // Auto-scroll to first missing field when in complete mode
-  useEffect(() => {
-    if (isCompleteMode && missingFields.length > 0 && !loading) {
-      const firstMissing = missingFields[0];
-
-      // Map fields to tabs
-      const fieldTabs = {
-        name_full: 'general',
-        nickname: 'general',
-        phone: 'general',
-        gender: 'general',
-        birth_place: 'general',
-        birth_date: 'general',
-        info_source: 'general',
-        referred_by: 'general',
-        address: 'address',
-        address_province: 'address',
-        address_city_name: 'address',
-        address_subdistrict_name: 'address',
-        address_village_name: 'address',
-        marital_status: 'general',
-        segment: 'general',
-      };
-
-      if (fieldTabs[firstMissing] && fieldTabs[firstMissing] !== activeTab) {
-        setActiveTab(fieldTabs[firstMissing]);
-      }
-
-      // Small delay to allow tab content to render
-      const timer = setTimeout(() => {
-        const element = document.getElementsByName(firstMissing)[0];
-        if (element) {
-          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          element.focus();
-        }
-      }, 300);
-
-      return () => clearTimeout(timer);
-    }
-  }, [missingFields, isCompleteMode, loading, activeTab]);
-
   // Expedition API Fetchers
+
 
   // Lazy Expedition API Fetchers
   const fetchProvinces = async (force = false) => {
@@ -387,14 +347,35 @@ const ProfileEditPage = () => {
 
     // Mandatory fields check
     const isReferredByRequired = profile.info_source === 'teman';
-    if (
-      !profile.name_full || !profile.nickname || !profile.phone || 
-      !profile.info_source || (isReferredByRequired && !profile.referred_by) || !profile.agama ||
-      !profile.gender || !profile.birth_place || !profile.birth_date ||
-      !profile.marital_status || !profile.segment
-    ) {
-      alert(`Nama Lengkap, Nama Panggilan, HP, Agama, Sumber Info, ${isReferredByRequired ? 'Nama Pengajak, ' : ''}Jenis Kelamin, Tempat Lahir, Tanggal Lahir, Status Pernikahan, dan Segmen wajib diisi.`);
-      setActiveTab('general');
+    const mandatoryList = [
+      { key: 'nickname', label: 'Nama Panggilan', tab: 'general' },
+      { key: 'name_full', label: 'Nama Lengkap', tab: 'general' },
+      { key: 'phone', label: 'HP / WhatsApp', tab: 'general' },
+      { key: 'gender', label: 'Jenis Kelamin', tab: 'general' },
+      { key: 'agama', label: 'Agama', tab: 'general', inputName: 'agamaDropdown' },
+      { key: 'birth_place', label: 'Tempat Lahir', tab: 'general' },
+      { key: 'birth_date', label: 'Tanggal Lahir', tab: 'general' },
+      { key: 'marital_status', label: 'Status Pernikahan', tab: 'general' },
+      { key: 'segment', label: 'Segmen', tab: 'general' },
+      { key: 'info_source', label: 'Sumber Informasi', tab: 'general' },
+    ];
+
+    if (isReferredByRequired) {
+      mandatoryList.push({ key: 'referred_by', label: 'Nama Pengajak', tab: 'general' });
+    }
+
+    const firstMissing = mandatoryList.find(m => !profile[m.key] || String(profile[m.key]).trim() === '');
+    if (firstMissing) {
+      setActiveTab(firstMissing.tab);
+      setTimeout(() => {
+        const targetName = firstMissing.inputName || firstMissing.key;
+        const elem = document.getElementsByName(targetName)[0];
+        if (elem) {
+          elem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          elem.focus();
+        }
+      }, 150);
+      alert(`Mohon lengkapi "${firstMissing.label}" terlebih dahulu.`);
       return;
     }
 
@@ -404,13 +385,19 @@ const ProfileEditPage = () => {
     }
 
     // Validation for Shipping (Village ID must be 10 digits if address is started)
-    // Validation for village (only if province is selected)
-    // Relaxed validation: only alert if they have province but no village at all
     if (profile.address_province_id && !profile.address_village_id) {
-      alert('Mohon lengkapi Kelurahan/Desa Anda untuk akurasi data pengiriman.');
       setActiveTab('address');
+      setTimeout(() => {
+        const elem = document.getElementsByName('address_village_id')[0] || document.getElementsByName('address')[0];
+        if (elem) {
+          elem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          elem.focus();
+        }
+      }, 150);
+      alert('Mohon lengkapi Kelurahan/Desa Anda untuk akurasi data pengiriman.');
       return;
     }
+
     try {
       const user = safeStorage.getUser();
       if (user && user.id) {
