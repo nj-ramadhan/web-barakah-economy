@@ -50,6 +50,18 @@ export const checkDynaQRISStatus = async (type, referenceId) => {
     return response.data;
 };
 
+export const verifyDynaQRISPayment = async (type, referenceId) => {
+    const response = await axios.post(`${API_BASE_URL}/api/payments/dynaqris/check-status/`, {
+        type,
+        reference_id: referenceId,
+        action: 'verify',
+        simulate: true
+    }, {
+        headers: getAuthHeaders()
+    });
+    return response.data;
+};
+
 export const checkAndroidWebhookStatus = async () => {
     const response = await axios.get(`${API_BASE_URL}/api/payments/webhook/android-notification/`);
     return response.data;
@@ -64,4 +76,5 @@ export const testAndroidWebhook = async (payload) => {
     });
     return response.data;
 };
+
 
