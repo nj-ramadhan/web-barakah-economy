@@ -108,18 +108,8 @@ const EcommercePaymentConfirmation = () => {
     }
   };
 
-    amount,
-    bank,
-    customerName,
-    customerPhone,
-    shippingCost,
-    courier,
-    voucherCode,
-    voucherDiscount,
-    cartItems = []
-  } = location.state;
-
   const formattedAmount = new Intl.NumberFormat('id-ID', { maximumFractionDigits: 0 }).format(amount || 0);
+
 
   const getMediaUrl = (url) => {
     if (!url) return null;

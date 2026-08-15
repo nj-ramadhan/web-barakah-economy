@@ -289,6 +289,9 @@ const EcommerceCheckoutPage = () => {
         });
         if (response.data.token) handlePayment(response.data.token);
       } catch (e) { alert('Terjadi kesalahan memproses Token Midtrans.'); }
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const orderFormData = new FormData();
@@ -367,6 +370,7 @@ const EcommerceCheckoutPage = () => {
       setIsSubmitting(false);
     }
   };
+
 
 
   const clearCart = async () => {
