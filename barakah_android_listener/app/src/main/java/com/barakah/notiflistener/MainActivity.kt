@@ -13,6 +13,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
+import android.service.notification.NotificationListenerService
 import android.widget.*
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -374,7 +375,7 @@ class MainActivity : AppCompatActivity() {
             tvLiveStatusDetail.text = "Aplikasi memantau di latar belakang 24/7. Notifikasi m-Banking akan otomatis diverifikasi!"
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                 try {
-                    NotificationService().requestRebind(ComponentName(this, NotificationService::class.java))
+                    NotificationListenerService.requestRebind(ComponentName(this, NotificationService::class.java))
                 } catch (e: Exception) {
                     // Ignored
                 }
