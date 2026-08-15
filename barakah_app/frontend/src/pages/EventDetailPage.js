@@ -11,8 +11,10 @@ import Footer from '../components/layout/Footer';
 import CurrencyInput from '../components/common/CurrencyInput';
 import { formatCurrency } from '../utils/formatters';
 import { getMediaUrl } from '../utils/mediaUtils';
+import { parseSafeDate, formatSafeDate, formatSafeTime } from '../utils/dateUtils';
 import UserProfileModal from '../components/modals/UserProfileModal';
 import DynaQRISModal from '../components/common/DynaQRISModal';
+
 import { getPublicPaymentConfig, generateDynaQRIS } from '../services/paymentApi';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Pagination, Autoplay, EffectFade } from 'swiper/modules';
@@ -1202,16 +1204,17 @@ const EventDetailPage = () => {
                                         <span className="material-icons text-green-600 bg-green-50 p-2 rounded-xl">calendar_today</span>
                                         <div>
                                             <p className="text-[10px] font-bold text-gray-400 uppercase">Tanggal</p>
-                                            <p className="text-sm font-extrabold text-gray-800">{new Date(event.start_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+                                            <p className="text-sm font-extrabold text-gray-800">{formatSafeDate(event.start_date, { day: 'numeric', month: 'long', year: 'numeric' })}</p>
                                         </div>
                                     </div>
                                     <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 flex items-start gap-3">
                                         <span className="material-icons text-blue-600 bg-blue-50 p-2 rounded-xl">schedule</span>
                                         <div>
                                             <p className="text-[10px] font-bold text-gray-400 uppercase">Waktu</p>
-                                            <p className="text-sm font-extrabold text-gray-800">{new Date(event.start_date).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })} WIB</p>
+                                            <p className="text-sm font-extrabold text-gray-800">{formatSafeTime(event.start_date)} WIB</p>
                                         </div>
                                     </div>
+
                                     <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 flex items-start gap-3">
                                         <span className="material-icons text-orange-600 bg-orange-50 p-2 rounded-xl">location_on</span>
                                         <div>
@@ -1342,9 +1345,10 @@ const EventDetailPage = () => {
                                                     </div>
                                                     <div className="text-xs font-bold text-gray-500 bg-white px-4 py-2 rounded-xl border border-gray-100 shrink-0 text-center sm:text-right">
                                                         <span className="material-icons text-xs align-middle mr-1 text-purple-500">schedule</span>
-                                                        {ses.start_time ? new Date(ses.start_time).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : ''}
-                                                        {ses.end_time ? ` - ${new Date(ses.end_time).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })} WIB` : ' WIB'}
+                                                        {ses.start_time ? formatSafeTime(ses.start_time) : ''}
+                                                        {ses.end_time ? ` - ${formatSafeTime(ses.end_time)} WIB` : ' WIB'}
                                                     </div>
+
                                                 </div>
                                             ))}
                                         </div>
@@ -1790,7 +1794,7 @@ const EventDetailPage = () => {
                                                             <div className="flex flex-col sm:items-end gap-1">
                                                                 <StarDisplay rating={testi.rating} />
                                                                 <p className="text-[9px] text-gray-400 font-bold">
-                                                                    {new Date(testi.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
+                                                                    {formatSafeDate(testi.created_at, { day: 'numeric', month: 'long', year: 'numeric' })}
                                                                 </p>
                                                             </div>
                                                         </div>
@@ -1828,10 +1832,11 @@ const EventDetailPage = () => {
                                 </div>
                                 <div className="flex items-center gap-3 text-gray-500">
                                     <span className="material-icons text-sm">schedule</span>
-                                    <span className="text-xs font-bold uppercase tracking-wider">Posted {new Date(event.created_at).toLocaleDateString('id-ID')}</span>
+                                    <span className="text-xs font-bold uppercase tracking-wider">Posted {formatSafeDate(event.created_at)}</span>
                                 </div>
                             </div>
                         </div>
+
 
                         {/* Capacity Card */}
                         {event.capacity > 0 && (
@@ -3023,10 +3028,11 @@ const EventStreamingPlayerModal = ({ stream, onClose }) => {
                                             </span>
                                             {c.created_at && (
                                                 <span className="text-[8px] text-zinc-500">
-                                                    {new Date(c.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                    {formatSafeTime(c.created_at)}
                                                 </span>
                                             )}
                                         </div>
+
                                         <p className="text-xs text-zinc-300 leading-relaxed mt-0.5 break-words">
                                             {c.message}
                                         </p>

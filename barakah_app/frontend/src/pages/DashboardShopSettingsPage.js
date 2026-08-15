@@ -9,6 +9,7 @@ import ShopDecoration from '../components/profile/ShopDecoration';
 import StoreTemplates from '../components/profile/StoreTemplates';
 import authService from '../services/auth';
 import { getMediaUrl } from '../utils/mediaUtils';
+import { safeStorage } from '../utils/storageUtils';
 import '../styles/Body.css';
 
 const DashboardShopSettingsPage = () => {
@@ -31,7 +32,7 @@ const DashboardShopSettingsPage = () => {
     useEffect(() => {
         const fetchProfile = async () => {
             try {
-                const user = JSON.parse(localStorage.getItem('user'));
+                const user = safeStorage.getUser();
                 if (user && user.id) {
                     const profileData = await authService.getProfile(user.id);
                     setProfile({
@@ -75,7 +76,7 @@ const DashboardShopSettingsPage = () => {
 
         setSaving(true);
         try {
-            const user = JSON.parse(localStorage.getItem('user'));
+            const user = safeStorage.getUser();
             if (user && user.id) {
                 const formData = new FormData();
 
@@ -105,6 +106,7 @@ const DashboardShopSettingsPage = () => {
             setSaving(false);
         }
     };
+
 
     if (loading) {
         return (

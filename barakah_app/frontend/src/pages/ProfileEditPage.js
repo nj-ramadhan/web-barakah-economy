@@ -3,6 +3,8 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import Header from '../components/layout/Header';
 import BackButton from '../components/global/BackButton';
 import { getMediaUrl } from '../utils/mediaUtils';
+import { toDateInputString } from '../utils/dateUtils';
+import { safeStorage } from '../utils/storageUtils';
 import NavigationButton from '../components/layout/Navigation';
 import ImageCropperModal from '../components/common/ImageCropper';
 import authService from '../services/auth';
@@ -89,9 +91,12 @@ const ProfileEditPage = () => {
     const init = async () => {
       setLoading(true);
       try {
-        const user = JSON.parse(localStorage.getItem('user'));
+        const user = safeStorage.getUser();
         if (user && user.id) {
           const profileData = await authService.getProfile(user.id);
+          if (profileData && profileData.birth_date) {
+            profileData.birth_date = toDateInputString(profileData.birth_date);
+          }
           setProfile(profileData);
           
           const agamaVal = profileData.agama || '';
@@ -121,6 +126,7 @@ const ProfileEditPage = () => {
     };
     init();
   }, [navigate, isCompleteMode]);
+
 
   // Auto-scroll to first missing field when in complete mode
   useEffect(() => {
@@ -401,7 +407,7 @@ const ProfileEditPage = () => {
       return;
     }
     try {
-      const user = JSON.parse(localStorage.getItem('user'));
+      const user = safeStorage.getUser();
       if (user && user.id) {
         const formData = new FormData();
         const numericFields = ['study_semester', 'study_start_year', 'study_finish_year', 'address_latitude', 'address_longitude', 'work_salary'];
@@ -417,10 +423,6 @@ const ProfileEditPage = () => {
             }
             // Fix 2: Clean salary and other numeric fields
             else if (key === 'work_salary' && typeof profile[key] === 'string') {
-              // Only keep digits, but if it's already a DRF decimal string like "1000.00", 
-              // we need to be careful. However, since the user usually sees it formatted with dots 
-              // from formatIDR, we remove everything except digits.
-              // To handle "1000.00" from API: if it contains a dot and ends with .00, remove the .00 first.
               let val = profile[key];
               if (val.includes('.') && val.endsWith('.00')) {
                 val = val.split('.')[0];
@@ -439,19 +441,16 @@ const ProfileEditPage = () => {
           }
         }
 
-        // Debug: Log FormData keys
-        // for (let pair of formData.entries()) { console.log(pair[0] + ': ' + pair[1]); }
-
         const updatedProfile = await authService.updateProfile(user.id, formData);
 
-        // Update user in localStorage with new picture and completion status
+        // Update user in safeStorage with new picture and completion status
         if (updatedProfile) {
-          const currentUser = JSON.parse(localStorage.getItem('user'));
+          const currentUser = safeStorage.getUser();
           if (currentUser) {
             if (updatedProfile.picture) currentUser.picture = updatedProfile.picture;
             currentUser.is_profile_complete = updatedProfile.is_profile_complete;
             if (updatedProfile.username) currentUser.username = updatedProfile.username;
-            localStorage.setItem('user', JSON.stringify(currentUser));
+            safeStorage.setUser(currentUser);
           }
         }
 
@@ -463,6 +462,7 @@ const ProfileEditPage = () => {
         }
       }
     } catch (error) {
+
       const errorMsg = error.response?.data ? JSON.stringify(error.response.data) : 'Data Profile gagal diperbaharui';
       alert('Error: ' + errorMsg);
       console.error('Failed to update profile:', error);

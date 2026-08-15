@@ -1,12 +1,13 @@
 import axios from 'axios';
 import api from './api';
+import { safeStorage } from '../utils/storageUtils';
 
-const API_URL = `${process.env.REACT_APP_API_BASE_URL || 'https://api.barakah.cloud'}/api/auth/`;
+const API_URL = `${process.env.REACT_APP_API_BASE_URL || window.location.origin}/api/auth/`;
 
 // Utility function to get the CSRF token from cookies
 function getCookie(name) {
   let cookieValue = null;
-  if (document.cookie && document.cookie !== '') {
+  if (typeof document !== 'undefined' && document.cookie && document.cookie !== '') {
     const cookies = document.cookie.split(';');
     for (let i = 0; i < cookies.length; i++) {
       const cookie = cookies[i].trim();
@@ -27,7 +28,7 @@ const axiosInstance = axios.create({
   baseURL: API_URL,
   headers: {
     'Content-Type': 'application/json',
-    'X-CSRFToken': csrfToken, // Include CSRF token in headers
+    ...(csrfToken ? { 'X-CSRFToken': csrfToken } : {}),
   },
 });
 
@@ -36,10 +37,10 @@ axiosInstance.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response && error.response.status === 401 && !error.config.url.includes('login')) {
-      const user = localStorage.getItem('user');
+      const user = safeStorage.getUser();
       if (user) {
         alert('Sesi Anda telah berakhir. Silakan login kembali.');
-        localStorage.removeItem('user');
+        safeStorage.removeItem('user');
         window.location.reload();
       }
     }
@@ -82,10 +83,10 @@ const login = (username, password) => {
 const acceptAgreement = async () => {
   try {
     const response = await api.post('/auth/accept-agreement/');
-    const user = JSON.parse(localStorage.getItem('user'));
+    const user = safeStorage.getUser();
     if (user) {
       user.user_agreement_accepted = true;
-      localStorage.setItem('user', JSON.stringify(user));
+      safeStorage.setUser(user);
     }
     return response.data;
   } catch (error) {
@@ -95,7 +96,7 @@ const acceptAgreement = async () => {
 };
 
 const logout = () => {
-  localStorage.removeItem('user');
+  safeStorage.removeItem('user');
 };
 
 const getProfile = async (userId) => {
@@ -128,4 +129,4 @@ const authService = {
   acceptAgreement,
 };
 
-export default authService;
+export default authService;

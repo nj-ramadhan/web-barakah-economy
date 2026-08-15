@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { safeStorage } from '../utils/storageUtils';
 
 const API_URL = `${process.env.REACT_APP_API_BASE_URL || window.location.origin}/api`;
 
@@ -9,13 +10,13 @@ const api = axios.create({
 api.interceptors.request.use(
   (config) => {
     try {
-      const user = JSON.parse(localStorage.getItem('user'));
+      const user = safeStorage.getUser();
       const token = user?.access;
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
       }
     } catch (e) {
-      console.error("Error parsing user from localStorage", e);
+      console.error("Error retrieving user auth token", e);
     }
     return config;
   },
@@ -32,38 +33,33 @@ api.interceptors.response.use(
       originalRequest._retry = true;
       
       try {
-        const userStr = localStorage.getItem('user');
-        if (userStr) {
-          const user = JSON.parse(userStr);
-          if (user.refresh) {
-            // Attempt to refresh the access token
-            const baseUrl = process.env.REACT_APP_API_BASE_URL || 'https://api.barakah.cloud';
-            const refreshResponse = await axios.post(`${baseUrl}/api/auth/token/refresh/`, {
-              refresh: user.refresh
-            });
-            
-            const newAccess = refreshResponse.data.access;
-            
-            // Update user in localStorage
-            user.access = newAccess;
-            localStorage.setItem('user', JSON.stringify(user));
-            
-            // Update the header and retry the original request
-            originalRequest.headers.Authorization = `Bearer ${newAccess}`;
-            return api(originalRequest);
-          }
+        const user = safeStorage.getUser();
+        if (user && user.refresh) {
+          // Attempt to refresh the access token
+          const baseUrl = process.env.REACT_APP_API_BASE_URL || window.location.origin;
+          const refreshResponse = await axios.post(`${baseUrl}/api/auth/token/refresh/`, {
+            refresh: user.refresh
+          });
+          
+          const newAccess = refreshResponse.data.access;
+          
+          // Update user in safeStorage
+          user.access = newAccess;
+          safeStorage.setUser(user);
+          
+          // Update the header and retry the original request
+          originalRequest.headers.Authorization = `Bearer ${newAccess}`;
+          return api(originalRequest);
         }
       } catch (refreshError) {
         // Refresh token is also expired or invalid
         console.error("Token refresh failed", refreshError);
         
-        const user = localStorage.getItem('user');
+        const user = safeStorage.getUser();
         if (user) {
-          // Only clear and reload if we're not on a page that allows guest access (like Meet)
-          // Or if we want to stay logged in as a guest, we just remove the 'user'
-          localStorage.removeItem('user');
+          // Only clear and reload if we're not on a page that allows guest access
+          safeStorage.removeItem('user');
           
-          // Don't interrupt the meeting if refresh fails
           if (!window.location.pathname.includes('/live-meet-test')) {
             alert('Sesi Anda telah berakhir. Silakan login kembali.');
             if (window.location.pathname !== '/login' && window.location.pathname !== '/register') {
@@ -80,3 +76,4 @@ api.interceptors.response.use(
 );
 
 export default api;
+

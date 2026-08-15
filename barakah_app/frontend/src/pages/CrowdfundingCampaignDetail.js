@@ -7,10 +7,12 @@ import Header from '../components/layout/Header';
 import NavigationButton from '../components/layout/Navigation';
 import ShareButton from '../components/campaigns/ShareButton';
 import { toggleLikeCampaign } from '../services/campaigns';
+import { parseSafeDate, formatSafeDate, isDateExpired } from '../utils/dateUtils';
 import '../styles/Body.css';
 
 const getTimeElapsed = (createdAt) => {
-  const createdDate = new Date(createdAt);
+  const createdDate = parseSafeDate(createdAt);
+  if (!createdDate) return '-';
   const now = new Date();
   const timeDifference = now - createdDate;
 
@@ -26,7 +28,7 @@ const getTimeElapsed = (createdAt) => {
   } else if (minutes > 0) {
     return `${minutes} menit lalu`;
   } else {
-    return `${seconds} detik lalu`;
+    return `${Math.max(0, seconds)} detik lalu`;
   }
 };
 
@@ -45,18 +47,18 @@ const formatIDRTarget = (amount) => {
 
 const isCampaignExpired = (deadline) => {
   if (!deadline) return false;
-  return new Date(deadline) < new Date();
+  return isDateExpired(deadline);
 };
 
 const formatDeadline = (deadline) => {
   if (!deadline) return 'tidak ada';
-  const date = new Date(deadline);
-  return date.toLocaleDateString('id-ID', {
+  return formatSafeDate(deadline, {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',
-  });
+  }, 'tidak ada');
 };
+
 
 const getButtonLabel = (title = '') => {
   const lowerTitle = title.toLowerCase();

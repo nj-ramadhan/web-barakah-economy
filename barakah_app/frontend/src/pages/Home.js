@@ -12,6 +12,7 @@ import ShareButton from '../components/campaigns/ShareButton';
 import { getDigitalProducts, getPopularSellers } from '../services/digitalProductApi';
 import { getMediaUrl } from '../utils/mediaUtils';
 import { forumApi } from '../services/forumApi';
+import { parseSafeDate, formatSafeDate, isDateExpired } from '../utils/dateUtils';
 
 
 function getCsrfToken() {
@@ -46,27 +47,28 @@ const formatIDRCourse = (amount) => {
 };
 
 const isCampaignExpired = (deadline) => {
-  if (!deadline) return false; // Campaigns with no deadline never expire
-  return new Date(deadline) < new Date(); // Check if the deadline has passed
+  if (!deadline) return false;
+  return isDateExpired(deadline);
 };
 
 const formatDeadline = (deadline) => {
-  if (!deadline) return 'tidak ada'; // Campaigns with no deadline
-  const date = new Date(deadline);
-  return date.toLocaleDateString('id-ID', {
+  if (!deadline) return 'tidak ada';
+  return formatSafeDate(deadline, {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',
-  });
+  }, 'tidak ada');
 };
 
 
 const getEventStatus = (startStr, endStr) => {
   const now = new Date();
-  const start = new Date(startStr);
-  const end = endStr ? new Date(endStr) : new Date(start.getTime() + 4 * 60 * 60 * 1000);
-  return { isFinished: now > end };
+  const start = parseSafeDate(startStr);
+  if (!start) return { isFinished: false };
+  const end = endStr ? parseSafeDate(endStr) : new Date(start.getTime() + 4 * 60 * 60 * 1000);
+  return { isFinished: end ? now > end : false };
 };
+
 
 const getButtonLabel = (title = '') => {
   const lowerTitle = title.toLowerCase();
