@@ -153,7 +153,7 @@ const EcommerceWishlistPage = () => {
                                         <div className="justify-left">
                                             <h3 className="text-sm font-semibold">{item.product.title}</h3>
                                             <p className="text-gray-600 text-xs">stok{' '} {item.product.stock > 0 ? item.product.stock : 'habis'}</p>
-                                            <p className="text-gray-600 text-xs">{formatIDR(item.product.price)} / {item.product.unit}</p>
+                                            <p className="text-gray-600 text-xs">{formatIDR(item.product.price)} / {item.product.unit || 'pcs'}</p>
                                         </div>    
                                     </span>
                                         {item.product.stock <= 0 ? (

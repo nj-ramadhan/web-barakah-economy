@@ -45,13 +45,30 @@ class Product(models.Model):
     ]
 
     UNIT_CHOICES = [
-        ('kg', 'kg'),
-        ('m', 'meter'),
-        ('pcs', 'butir'),
-        ('pack', 'bungkus'),
-        ('unit', 'unit'),
+        ('pcs', 'pcs / buah'),
+        ('buku', 'buku / eksemplar'),
+        ('eksemplar', 'eksemplar'),
+        ('lembar', 'lembar'),
+        ('jilid', 'jilid'),
+        ('kg', 'kg (Kilogram)'),
+        ('gram', 'gram (g)'),
+        ('ons', 'ons'),
+        ('liter', 'liter (L)'),
+        ('ml', 'mililiter (ml)'),
+        ('pack', 'pack / bungkus'),
+        ('box', 'box / kotak'),
+        ('dus', 'dus / karton'),
+        ('botol', 'botol'),
+        ('sachet', 'sachet'),
+        ('kaleng', 'kaleng'),
+        ('pasang', 'pasang'),
         ('set', 'set'),
-        ('package', 'paket'),
+        ('unit', 'unit'),
+        ('porsi', 'porsi'),
+        ('lusin', 'lusin (12 pcs)'),
+        ('kodi', 'kodi (20 pcs)'),
+        ('meter', 'meter (m)'),
+        ('paket', 'paket'),
     ]
 
     title = models.CharField(max_length=100)
@@ -73,7 +90,7 @@ class Product(models.Model):
     price = models.DecimalField(max_digits=12, decimal_places=2, help_text="Harga Jual") # selling_price
     discount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     
-    unit = models.CharField(max_length=12, choices=UNIT_CHOICES, default='kg')
+    unit = models.CharField(max_length=20, choices=UNIT_CHOICES, default='pcs')
     stock = models.IntegerField(default=0)
     is_featured = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)

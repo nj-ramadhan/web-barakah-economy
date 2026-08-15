@@ -4,6 +4,7 @@ import { Helmet } from 'react-helmet';
 import Header from '../../components/layout/Header';
 import NavigationButton from '../../components/layout/Navigation';
 import { getMediaUrl } from '../../utils/mediaUtils';
+import CKEditorComponent from '../../components/common/CKEditor';
 
 const formatCurrency = (val) => {
     if (!val && val !== 0) return '';
@@ -27,6 +28,7 @@ const DashboardSinergyAdminPage = () => {
     const [editingProduct, setEditingProduct] = useState(null);
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
+    const [unit, setUnit] = useState('pcs');
     const [category, setCategory] = useState('lainnya');
     const [purchasePrice, setPurchasePrice] = useState(0);
     const [sellingPrice, setSellingPrice] = useState(0);
@@ -38,6 +40,7 @@ const DashboardSinergyAdminPage = () => {
     const [thumbnailFile, setThumbnailFile] = useState(null);
     const [thumbnailPreview, setThumbnailPreview] = useState(null);
     const [savingProduct, setSavingProduct] = useState(false);
+
 
     const fetchProducts = async () => {
         const user = JSON.parse(localStorage.getItem('user'));
@@ -103,6 +106,7 @@ const DashboardSinergyAdminPage = () => {
         setEditingProduct(product);
         setTitle(product.title || '');
         setDescription(product.description || '');
+        setUnit(product.unit || 'pcs');
         setCategory(product.category || 'lainnya');
         setPurchasePrice(product.purchase_price || 0);
         setSellingPrice(product.price || 0);
@@ -141,6 +145,7 @@ const DashboardSinergyAdminPage = () => {
             const formData = new FormData();
             formData.append('title', title);
             formData.append('description', description);
+            formData.append('unit', unit || 'pcs');
             formData.append('category', category);
             formData.append('purchase_price', parseCurrency(purchasePrice));
             formData.append('price', parseCurrency(sellingPrice));
@@ -231,11 +236,11 @@ const DashboardSinergyAdminPage = () => {
                                     </div>
                                     <p className="text-xs text-gray-500">
                                         Oleh: <span className="font-bold text-emerald-700">{p.seller_name || 'Admin'}</span> • 
-                                        Stok: {p.stock} • Berat: {p.weight}g
+                                        Stok: {p.stock} {p.unit || 'pcs'} • Berat: {p.weight}g
                                     </p>
                                     <div className="flex justify-center sm:justify-start gap-3 mt-2">
                                         <span className="text-xs font-semibold text-gray-700 bg-gray-100 px-2 py-1 rounded-md">Beli: Rp {formatCurrency(p.purchase_price)}</span>
-                                        <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 px-2 py-1 rounded-md border border-emerald-100">Jual: Rp {formatCurrency(p.price)}</span>
+                                        <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 px-2 py-1 rounded-md border border-emerald-100">Jual: Rp {formatCurrency(p.price)} / {p.unit || 'pcs'}</span>
                                     </div>
                                 </div>
 
@@ -333,7 +338,7 @@ const DashboardSinergyAdminPage = () => {
                                     </div>
                                 </div>
 
-                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
                                     <div>
                                         <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Stok *</label>
                                         <input 
@@ -343,6 +348,39 @@ const DashboardSinergyAdminPage = () => {
                                             className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-semibold focus:ring-2 focus:ring-emerald-500 outline-none" 
                                             required 
                                         />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Satuan (Unit)</label>
+                                        <select 
+                                            value={unit} 
+                                            onChange={(e) => setUnit(e.target.value)}
+                                            className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-semibold focus:ring-2 focus:ring-emerald-500 outline-none"
+                                        >
+                                            <option value="pcs">pcs / buah (Default)</option>
+                                            <option value="buku">buku / eksemplar</option>
+                                            <option value="eksemplar">eksemplar</option>
+                                            <option value="lembar">lembar</option>
+                                            <option value="jilid">jilid</option>
+                                            <option value="kg">kg (Kilogram)</option>
+                                            <option value="gram">gram (g)</option>
+                                            <option value="ons">ons</option>
+                                            <option value="liter">liter (L)</option>
+                                            <option value="ml">mililiter (ml)</option>
+                                            <option value="pack">pack / bungkus</option>
+                                            <option value="box">box / kotak</option>
+                                            <option value="dus">dus / karton</option>
+                                            <option value="botol">botol</option>
+                                            <option value="sachet">sachet</option>
+                                            <option value="kaleng">kaleng</option>
+                                            <option value="pasang">pasang</option>
+                                            <option value="set">set</option>
+                                            <option value="unit">unit</option>
+                                            <option value="porsi">porsi</option>
+                                            <option value="lusin">lusin (12 pcs)</option>
+                                            <option value="kodi">kodi (20 pcs)</option>
+                                            <option value="meter">meter (m)</option>
+                                            <option value="paket">paket</option>
+                                        </select>
                                     </div>
                                     <div>
                                         <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Berat (Gram) *</label>
@@ -361,8 +399,11 @@ const DashboardSinergyAdminPage = () => {
                                             onChange={(e) => setCategory(e.target.value)}
                                             className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-semibold focus:ring-2 focus:ring-emerald-500 outline-none"
                                         >
+                                            <option value="buku">Buku Islami</option>
                                             <option value="fashion">Fashion & Pakaian</option>
                                             <option value="makanan">Makanan & Minuman</option>
+                                            <option value="herbal">Herbal</option>
+                                            <option value="sembako">Sembako</option>
                                             <option value="elektronik">Elektronik</option>
                                             <option value="kesehatan">Kesehatan & Kecantikan</option>
                                             <option value="kerajinan">Kerajinan & Accessories</option>
@@ -372,13 +413,17 @@ const DashboardSinergyAdminPage = () => {
                                 </div>
 
                                 <div>
-                                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Deskripsi Produk</label>
-                                    <textarea 
-                                        rows={3} 
-                                        value={description} 
-                                        onChange={(e) => setDescription(e.target.value)}
-                                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-semibold focus:ring-2 focus:ring-emerald-500 outline-none"
-                                    />
+                                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 flex items-center justify-between">
+                                        <span>Deskripsi Produk</span>
+                                        <span className="text-[10px] text-emerald-600 font-normal">Rich Text Editor</span>
+                                    </label>
+                                    <div className="rounded-xl border border-gray-200 overflow-hidden bg-white">
+                                        <CKEditorComponent 
+                                            content={description}
+                                            onChange={(data) => setDescription(data)}
+                                            placeholder="Tuliskan deskripsi lengkap produk..."
+                                        />
+                                    </div>
                                 </div>
 
                                 {/* Variations Section */}

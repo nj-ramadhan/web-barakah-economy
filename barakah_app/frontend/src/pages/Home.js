@@ -1223,7 +1223,7 @@ const Home = () => {
                       <div className="p-2 mb-6">
                         <h3 className="text-sm font-medium mb-2 line-clamp-2">{product.title}</h3>
                         <div className="flex justify-between">
-                          <p className="text-gray-600 text-xs mb-2">{formatIDR(product.price)} / {product.unit}</p>
+                          <p className="text-gray-600 text-xs mb-2">{formatIDR(product.price)} / {product.unit || 'pcs'}</p>
                           <p className="text-gray-600 text-xs mb-2">stok{' '} {product.stock > 0 ? product.stock : 'habis'}</p>
                         </div>
                         {product.stock <= 0 ? (
@@ -1315,7 +1315,7 @@ const Home = () => {
                   <div className="p-2">
                     <h3 className="text-sm font-medium mb-2 line-clamp-2">{product.title}</h3>
                      <div className="flex justify-between items-center mb-2">
-                       <p className="text-gray-600 text-[10px]">{formatIDR(product.price)} / {product.unit}</p>
+                       <p className="text-gray-600 text-[10px]">{formatIDR(product.price)} / {product.unit || 'pcs'}</p>
                        <div className="flex items-center gap-1 opacity-60">
                          <span className="material-icons text-[12px] text-red-500">favorite</span>
                          <span className="text-[10px] font-bold">{product.likes_count || 0}</span>

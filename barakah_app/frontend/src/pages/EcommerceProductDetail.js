@@ -394,13 +394,16 @@ const EcommerceProductDetail = () => {
               </div>
               <div className="flex justify-between items-center mb-6">
                 <div className="flex flex-col gap-1">
-                   <p className="text-2xl font-bold text-green-700">
-                    {selectedVariation 
-                      ? formatIDR(selectedVariation.additional_price > 0 ? selectedVariation.additional_price : product.price)
-                      : (product.min_price && product.max_price && product.min_price !== product.max_price)
-                        ? `${formatIDR(product.min_price)} ~ ${formatIDR(product.max_price)}`
-                        : formatIDR(product.price)
-                    }
+                   <p className="text-2xl md:text-3xl font-black text-emerald-700 flex items-baseline gap-1">
+                    <span>
+                      {selectedVariation 
+                        ? formatIDR(selectedVariation.additional_price > 0 ? selectedVariation.additional_price : product.price)
+                        : (product.min_price && product.max_price && product.min_price !== product.max_price)
+                          ? `${formatIDR(product.min_price)} ~ ${formatIDR(product.max_price)}`
+                          : formatIDR(product.price)
+                      }
+                    </span>
+                    <span className="text-sm font-semibold text-gray-500">/ {product.unit || 'pcs'}</span>
                    </p>
                     <div className="flex items-center text-gray-400 text-xs gap-4">
                         <div className="flex items-center gap-1">
@@ -425,8 +428,8 @@ const EcommerceProductDetail = () => {
                         </div>
                     </div>
                 </div>
-                <p className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
-                  Stok: {selectedVariation ? selectedVariation.stock : (product.total_stock || product.stock)}
+                <p className="text-sm font-medium text-gray-600 bg-gray-100 px-3.5 py-1.5 rounded-full border border-gray-200">
+                  Stok: <span className="font-bold text-gray-900">{selectedVariation ? selectedVariation.stock : (product.total_stock || product.stock)}</span> {product.unit || 'pcs'}
                 </p>
               </div>
 
@@ -554,27 +557,32 @@ const EcommerceProductDetail = () => {
         {/* Tab Content */}
         <div className="mt-4">
           {activeTab === 'description' && (
-            <div className="bg-white p-4 rounded-lg shadow">
+            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
               {product.description ? (
-                <>
-                  <div
+                <div>
+                  <div 
+                    className={`rich-text-content relative transition-all duration-300 ${!showFullDescription && product.description.length > 400 ? 'max-h-72 overflow-hidden' : ''}`}
                     dangerouslySetInnerHTML={{
-                      __html: showFullDescription
-                        ? convertRelativeUrlsToAbsolute(product.description, baseUrl)
-                        : convertRelativeUrlsToAbsolute(product.description, baseUrl).substring(0, 200) + '...',
+                      __html: convertRelativeUrlsToAbsolute(product.description, baseUrl)
                     }}
                   />
-                  {product.description.length > 200 && (
-                    <button
-                      onClick={toggleDescription}
-                      className="text-green-600 mt-2 text-sm"
-                    >
-                      {showFullDescription ? 'Tampilkan Lebih Sedikit' : 'Tampilkan Selengkapnya'}
-                    </button>
+                  {!showFullDescription && product.description.length > 400 && (
+                    <div className="absolute -mt-16 left-0 right-0 h-16 bg-gradient-to-t from-white to-transparent pointer-events-none" />
                   )}
-                </>
+                  {product.description.length > 400 && (
+                    <div className="mt-4 pt-3 border-t border-gray-100">
+                      <button
+                        onClick={toggleDescription}
+                        className="inline-flex items-center gap-1.5 text-emerald-700 font-bold text-sm hover:text-emerald-800 transition"
+                      >
+                        <span>{showFullDescription ? 'Tampilkan Lebih Ringkas' : 'Baca Selengkapnya'}</span>
+                        <span className="material-icons text-sm">{showFullDescription ? 'expand_less' : 'expand_more'}</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
               ) : (
-                <p className="text-gray-500">Tidak ada deskripsi.</p>
+                <p className="text-gray-400 text-sm italic">Belum ada deskripsi untuk produk ini.</p>
               )}
             </div>
           )}

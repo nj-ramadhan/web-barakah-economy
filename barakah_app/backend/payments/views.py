@@ -587,15 +587,41 @@ class CheckOrderPaymentStatusView(APIView):
 
 class AndroidNotificationWebhookView(APIView):
     """
-    Webhook listener for Android Notification Forwarder apps (MacroDroid, Tasker, Notification Forwarder, etc.).
-    Parses bank transaction push notifications and auto-verifies matching pending payments.
+    Webhook listener for Android Notification Forwarder apps (MacroDroid, Tasker, Notification Forwarder, etc.)
+    and Barakah Android Notif Listener.
+    Parses bank / e-wallet transaction push notifications and auto-verifies matching pending payments.
     """
     permission_classes = [AllowAny]
+
+    def get(self, request):
+        """
+        GET endpoint to verify webhook availability, check status, and retrieve test instructions.
+        """
+        setting = PaymentSetting.get_settings()
+        return Response({
+            "status": "active" if setting.android_webhook_enabled else "disabled",
+            "webhook_enabled": setting.android_webhook_enabled,
+            "service": "Barakah Android Notification Listener Webhook",
+            "message": "Endpoint aktif dan siap menerima push notifikasi m-Banking & E-Wallet.",
+            "supported_apps": [
+                "BSI Mobile", "BCA Mobile", "Mandiri Livin", "BRImo", "BNI Mobile",
+                "DANA", "GoPay", "OVO", "ShopeePay", "SeaBank", "Blu by BCA", "Jenius", "Lainnya"
+            ],
+            "sample_payload": {
+                "package": "id.co.bankbsi.mobile",
+                "title": "BSI Mobile Uang Masuk",
+                "text": "Transfer masuk sebesar Rp 50.000 dari Fulan",
+                "secret": setting.android_webhook_secret or "barakah_android_notif_secret_123"
+            }
+        }, status=status.HTTP_200_OK)
 
     def post(self, request):
         setting = PaymentSetting.get_settings()
         if not setting.android_webhook_enabled:
-            return Response({"error": "Webhook Android sedang dinonaktifkan di Payment Settings."}, status=status.HTTP_403_FORBIDDEN)
+            return Response({
+                "success": False,
+                "error": "Webhook Android sedang dinonaktifkan di Pengaturan Pembayaran."
+            }, status=status.HTTP_403_FORBIDDEN)
 
         # Verify secret token (from Headers, Body, or Query Params)
         secret_header = (
@@ -608,36 +634,40 @@ class AndroidNotificationWebhookView(APIView):
         )
         if setting.android_webhook_secret and secret_header != setting.android_webhook_secret:
             logger.warning(f"Unauthorized Android Notification Webhook attempt with secret: {secret_header}")
-            return Response({"error": "Secret token tidak valid."}, status=status.HTTP_401_UNAUTHORIZED)
+            return Response({
+                "success": False,
+                "error": "Secret token tidak valid. Periksa pengaturan secret token Anda."
+            }, status=status.HTTP_401_UNAUTHORIZED)
 
-        # Extract text / message from payload (combine all string values if dict)
+        # Extract text / message from payload (exclude secret fields from text content)
         if isinstance(request.data, dict):
-            text_parts = [str(v) for k, v in request.data.items() if v and isinstance(v, (str, int, float))]
+            text_parts = [
+                str(v) for k, v in request.data.items()
+                if v and isinstance(v, (str, int, float)) and k not in ['secret', 'secret_token', 'package']
+            ]
             payload_text = " ".join(text_parts)
         else:
             payload_text = str(request.data)
-        logger.info(f"Received Android Notification Webhook: {payload_text}")
+
+        logger.info(f"Received Android Notification Webhook payload: {payload_text}")
 
         import re
         import decimal
 
-        # Extract candidate numbers from text (e.g. Rp20.008, Rp 20.000, Rp.20.000, 20000, 20.008,00, Rp20.00)
-        raw_matches = re.findall(r'(?:Rp\.?\s*)?(\d+(?:[\.\,]\d+)*)', payload_text, re.IGNORECASE)
-        extracted_amounts = []
-        for m in raw_matches:
+        def parse_amount_str(s):
+            """Parses raw matched number string taking into account Indonesian formatting."""
+            s = s.strip()
+            if not s:
+                return None
             try:
-                s = m.strip()
-                if not s:
-                    continue
-
                 # Handle Indonesian thousand separators vs decimals
                 if ',' in s and '.' in s:
                     # e.g. "20.008,00" -> 20008
                     s_clean = s.replace('.', '').replace(',', '.')
                 elif '.' in s and ',' not in s:
                     parts = s.split('.')
-                    if len(parts) == 2 and len(parts[1]) == 2:
-                        # e.g. "121.00" or "20.00" -> 121 / 20
+                    if len(parts) == 2 and len(parts[1]) in [1, 2]:
+                        # e.g. "121.00" -> 121
                         s_clean = parts[0]
                     elif len(parts) == 2 and len(parts[1]) == 3:
                         # e.g. "20.008" -> 20008
@@ -658,13 +688,47 @@ class AndroidNotificationWebhookView(APIView):
                     s_clean = s
 
                 val = decimal.Decimal(s_clean)
-                if val > 0 and val not in extracted_amounts:
-                    extracted_amounts.append(val)
+                if val > 0:
+                    return val
             except Exception:
                 pass
+            return None
+
+        extracted_amounts = []
+
+        # Priority 1: Numbers preceded by currency symbols or keywords (Rp, IDR, Sebesar, Nominal, Total, Nilai, Jumlah)
+        currency_matches = re.findall(
+            r'(?:rp\.?|idr|sebesar|nominal|total|nilai|jumlah)\s*:?\s*(\d+(?:[\.\,]\d+)*)',
+            payload_text,
+            re.IGNORECASE
+        )
+        for m in currency_matches:
+            val = parse_amount_str(m)
+            if val and val not in extracted_amounts:
+                extracted_amounts.append(val)
+
+        # Priority 2: Standard formatted numbers with dots (e.g. 50.000, 100.000, 1.500.000)
+        formatted_matches = re.findall(r'\b(\d{1,3}(?:\.\d{3})+(?:,\d{1,2})?)\b', payload_text)
+        for m in formatted_matches:
+            val = parse_amount_str(m)
+            if val and val not in extracted_amounts:
+                extracted_amounts.append(val)
+
+        # Priority 3: Any standalone numbers >= 1000 and <= 100,000,000 (excluding potential 10+ digit account numbers)
+        if not extracted_amounts:
+            general_matches = re.findall(r'\b(\d{3,9}(?:[\.\,]\d+)?)\b', payload_text)
+            for m in general_matches:
+                val = parse_amount_str(m)
+                if val and val not in extracted_amounts:
+                    extracted_amounts.append(val)
 
         if not extracted_amounts:
-            return Response({"success": False, "message": "Tidak ada nominal angka terdeteksi dalam notifikasi."}, status=status.HTTP_200_OK)
+            return Response({
+                "success": False,
+                "matched": False,
+                "extracted_amounts": [],
+                "message": "Tidak ada nominal angka transfer yang terdeteksi dalam notifikasi."
+            }, status=status.HTTP_200_OK)
 
         from events.models import EventRegistration
         from donations.models import Donation
@@ -674,7 +738,19 @@ class AndroidNotificationWebhookView(APIView):
 
         for amt in extracted_amounts:
             # 1. Search pending Event Registration with matching payment_amount
-            reg = EventRegistration.objects.filter(payment_amount=amt, status='pending').order_by('-created_at').first()
+            reg = EventRegistration.objects.filter(
+                payment_amount=amt
+            ).filter(
+                status__in=['pending', 'unpaid']
+            ).order_by('-created_at').first()
+
+            if not reg:
+                # Also try matching registrations with payment_status='pending' regardless of status
+                reg = EventRegistration.objects.filter(
+                    payment_amount=amt,
+                    payment_status__in=['pending', 'unpaid', '']
+                ).order_by('-created_at').first()
+
             if reg:
                 reg.payment_status = 'verified'
                 reg.status = 'approved'
@@ -690,7 +766,8 @@ class AndroidNotificationWebhookView(APIView):
                     "type": "event",
                     "reference_id": reg.id,
                     "amount": float(amt),
-                    "message": f"Pendaftaran Event #{reg.id} berhasil diverifikasi otomatis via Android Webhook!"
+                    "extracted_amounts": [float(a) for a in extracted_amounts],
+                    "message": f"Pendaftaran Event #{reg.id} ({reg.guest_name or 'Peserta'}) berhasil diverifikasi otomatis via Webhook!"
                 })
 
             # 2. Search pending Donation with matching amount
@@ -699,8 +776,7 @@ class AndroidNotificationWebhookView(APIView):
                 donation.payment_status = 'verified'
                 donation.save()
                 try:
-                    from donations.views import CreateDonationView
-                    CreateDonationView()._send_donation_receipt(donation)
+                    send_donation_receipt(donation)
                 except Exception as e:
                     logger.error(f"Failed to send donation receipt for {donation.id}: {e}")
                 return Response({
@@ -709,11 +785,15 @@ class AndroidNotificationWebhookView(APIView):
                     "type": "charity",
                     "reference_id": donation.id,
                     "amount": float(amt),
-                    "message": f"Donasi #{donation.id} berhasil diverifikasi otomatis via Android Webhook!"
+                    "extracted_amounts": [float(a) for a in extracted_amounts],
+                    "message": f"Donasi #{donation.id} ({donation.donor_name or 'Donatur'}) berhasil diverifikasi otomatis via Webhook!"
                 })
 
             # 3. Search pending E-Commerce Order with matching grand_total or total_price
-            order = Order.objects.filter(status__iexact='pending').filter(grand_total=amt).order_by('-created_at').first() or Order.objects.filter(status__iexact='pending').filter(total_price=amt).order_by('-created_at').first()
+            order = (
+                Order.objects.filter(status__in=['pending', 'waiting_payment', 'unpaid']).filter(grand_total=amt).order_by('-created_at').first() or
+                Order.objects.filter(status__in=['pending', 'waiting_payment', 'unpaid']).filter(total_price=amt).order_by('-created_at').first()
+            )
             if order:
                 order.status = 'paid'
                 order.save()
@@ -722,26 +802,35 @@ class AndroidNotificationWebhookView(APIView):
                     "matched": True,
                     "type": "ecommerce",
                     "reference_id": order.id,
+                    "order_number": order.order_number or str(order.id),
                     "amount": float(amt),
-                    "message": f"Pesanan E-commerce #{order.order_number or order.id} berhasil diverifikasi otomatis via Android Webhook!"
+                    "extracted_amounts": [float(a) for a in extracted_amounts],
+                    "message": f"Pesanan E-commerce #{order.order_number or order.id} berhasil diverifikasi otomatis via Webhook!"
                 })
 
             # 4. Search pending Digital Product Order with matching amount
             d_order = DigitalOrder.objects.filter(amount=amt, payment_status='pending').order_by('-created_at').first()
             if d_order:
-                d_order.payment_status = 'completed'
+                d_order.payment_status = 'verified'
                 d_order.save()
+                try:
+                    from digital_products.views import DigitalProductViewSet
+                    DigitalProductViewSet()._send_digital_product_email(d_order)
+                except Exception as e:
+                    logger.error(f"Failed to send digital product email for order {d_order.id}: {e}")
                 return Response({
                     "success": True,
                     "matched": True,
                     "type": "digital",
                     "reference_id": d_order.id,
+                    "order_number": d_order.order_number,
                     "amount": float(amt),
-                    "message": f"Pesanan Produk Digital #{d_order.order_number} berhasil diverifikasi otomatis via Android Webhook!"
+                    "extracted_amounts": [float(a) for a in extracted_amounts],
+                    "message": f"Pesanan Produk Digital #{d_order.order_number} berhasil diverifikasi otomatis via Webhook!"
                 })
 
             # 5. Search pending Course Enrollment with matching amount
-            c_enrollment = CourseEnrollment.objects.filter(amount=amt, payment_status='pending').order_by('-created_at').first()
+            c_enrollment = CourseEnrollment.objects.filter(amount=amt, payment_status='pending').order_by('-id').first()
             if c_enrollment:
                 c_enrollment.payment_status = 'paid'
                 c_enrollment.save()
@@ -750,13 +839,15 @@ class AndroidNotificationWebhookView(APIView):
                     "matched": True,
                     "type": "ecourse",
                     "reference_id": c_enrollment.id,
+                    "order_number": c_enrollment.order_number,
                     "amount": float(amt),
-                    "message": f"Pendaftaran E-Course #{c_enrollment.order_number or c_enrollment.id} berhasil diverifikasi otomatis via Android Webhook!"
+                    "extracted_amounts": [float(a) for a in extracted_amounts],
+                    "message": f"Pendaftaran E-Course #{c_enrollment.order_number or c_enrollment.id} berhasil diverifikasi otomatis via Webhook!"
                 })
 
         return Response({
-            "success": False,
+            "success": True,
             "matched": False,
             "extracted_amounts": [float(a) for a in extracted_amounts],
-            "message": "Notifikasi diterima, namun tidak ada transaksi pending dengan nominal tersebut."
+            "message": f"Notifikasi berhasil dibaca. Nominal terdeteksi: {', '.join(['Rp ' + f'{int(a):,}'.replace(',', '.') for a in extracted_amounts])}. Namun tidak ditemukan transaksi pending dengan nominal tersebut."
         }, status=status.HTTP_200_OK)

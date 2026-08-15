@@ -185,6 +185,15 @@
                     android:textSize="14sp"
                     android:textStyle="bold" />
 
+                <CheckBox
+                    android:id="@+id/cbAllowAllApps"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="🧪 Mode Uji Coba: Baca notifikasi dari semua aplikasi (WA/SMS/DLL)"
+                    android:textSize="12sp"
+                    android:textColor="@color/emerald_800"
+                    android:layout_marginTop="6dp" />
+
                 <TextView
                     android:id="@+id/tvSelectedAppsSummary"
                     android:layout_width="match_parent"
@@ -201,6 +210,48 @@
                     android:layout_height="wrap_content"
                     android:text="🔍 Pilih Aplikasi Terinstall di HP Ini"
                     android:backgroundTint="@color/emerald_600"
+                    android:textColor="@color/white" />
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+        <!-- Simulation & Testing Card -->
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="2dp"
+            app:cardBackgroundColor="@color/white"
+            android:layout_marginBottom="16dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="🧪 Simulasi &amp; Uji Coba Cepat"
+                    android:textColor="@color/gray_800"
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Kirimkan simulasi notifikasi m-Banking ke server untuk memastikan auto-verifikasi berfungsi sempurna."
+                    android:textSize="11sp"
+                    android:textColor="@color/gray_500"
+                    android:layout_marginTop="2dp"
+                    android:layout_marginBottom="8dp" />
+
+                <Button
+                    android:id="@+id/btnSimulateNotif"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="🚀 Kirim Simulasi Notifikasi Bank Masuk"
+                    android:backgroundTint="@color/emerald_700"
                     android:textColor="@color/white" />
             </LinearLayout>
         </androidx.cardview.widget.CardView>

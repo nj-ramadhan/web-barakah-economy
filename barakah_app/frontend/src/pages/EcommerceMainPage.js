@@ -343,9 +343,9 @@ const EcommerceMainPage = () => {
                           {product.min_price && product.max_price && product.min_price !== product.max_price
                             ? `Rp ${formatCurrency(product.min_price)} ~ ${formatCurrency(product.max_price)}`
                             : formatIDR(product.price)
-                          }
+                          } <span className="text-[11px] font-normal text-gray-500">/ {product.unit || 'pcs'}</span>
                         </p>
-                        <p className="text-gray-500 text-[10px]">stok: {(product.total_stock !== undefined ? product.total_stock : product.stock) > 0 ? (product.total_stock !== undefined ? product.total_stock : product.stock) : 'habis'}</p>
+                        <p className="text-gray-500 text-[10px]">stok: {(product.total_stock !== undefined ? product.total_stock : product.stock) > 0 ? `${product.total_stock !== undefined ? product.total_stock : product.stock} ${product.unit || 'pcs'}` : 'habis'}</p>
                       </div>
                     
                       <div className="flex items-center gap-2 mb-3">

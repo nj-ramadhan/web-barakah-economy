@@ -3,7 +3,13 @@ import { Helmet } from 'react-helmet';
 import { useNavigate } from 'react-router-dom';
 import Header from '../../components/layout/Header';
 import NavigationButton from '../../components/layout/Navigation';
-import { getAdminPaymentSettings, updateAdminPaymentSettings, testDynaQRISConnection } from '../../services/paymentApi';
+import { 
+    getAdminPaymentSettings, 
+    updateAdminPaymentSettings, 
+    testDynaQRISConnection,
+    testAndroidWebhook,
+    checkAndroidWebhookStatus 
+} from '../../services/paymentApi';
 
 const AdminPaymentSettingsPage = () => {
     const navigate = useNavigate();
@@ -11,6 +17,11 @@ const AdminPaymentSettingsPage = () => {
     const [saving, setSaving] = useState(false);
     const [testing, setTesting] = useState(false);
     const [testResult, setTestResult] = useState(null);
+
+    // Webhook simulation test state
+    const [webhookTestPayload, setWebhookTestPayload] = useState('BSI Mobile: Transfer masuk sebesar Rp 50.000 dari Ahmad Fulan');
+    const [webhookTesting, setWebhookTesting] = useState(false);
+    const [webhookTestResult, setWebhookTestResult] = useState(null);
 
     const [form, setForm] = useState({
         active_mode: 'manual',
@@ -31,6 +42,7 @@ const AdminPaymentSettingsPage = () => {
     const [manualQrisFile, setManualQrisFile] = useState(null);
     const [previewUrl, setPreviewUrl] = useState(null);
     const [message, setMessage] = useState({ type: '', text: '' });
+
 
     useEffect(() => {
         const fetchSettings = async () => {
@@ -104,10 +116,35 @@ const AdminPaymentSettingsPage = () => {
         }
     };
 
+    const handleSendTestWebhook = async () => {
+        if (!webhookTestPayload.trim()) return;
+        setWebhookTesting(true);
+        setWebhookTestResult(null);
+
+        try {
+            const res = await testAndroidWebhook({
+                text: webhookTestPayload.trim(),
+                secret: form.android_webhook_secret,
+                title: 'Simulasi Test Webhook Admin'
+            });
+            setWebhookTestResult(res);
+        } catch (err) {
+            const errDetail = err.response?.data?.error || err.response?.data?.message || err.message || 'Gagal mengirim simulasi notifikasi ke webhook';
+            setWebhookTestResult({
+                success: false,
+                matched: false,
+                error: errDetail
+            });
+        } finally {
+            setWebhookTesting(false);
+        }
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setSaving(true);
         setMessage({ type: '', text: '' });
+
 
         try {
             const formData = new FormData();
@@ -437,22 +474,31 @@ const AdminPaymentSettingsPage = () => {
                             {/* SECTION 4: WEBHOOK NOTIFIKASI HP ANDROID (AUTO VERIFY) */}
                             <div className="border-t border-gray-100 pt-6">
                                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
-                                    <h3 className="text-base font-bold text-gray-800 flex items-center gap-2">
-                                        <span className="material-icons text-emerald-600 text-lg">phonelink_ring</span>
-                                        <span>WebHook Notifikasi HP Android (Auto-Verify Realtime)</span>
-                                    </h3>
+                                    <div className="flex items-center gap-2">
+                                        <h3 className="text-base font-bold text-gray-800 flex items-center gap-2">
+                                            <span className="material-icons text-emerald-600 text-lg">phonelink_ring</span>
+                                            <span>WebHook Notifikasi HP Android (Auto-Verify Realtime)</span>
+                                        </h3>
+                                        <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                                            form.android_webhook_enabled ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-200 text-gray-700'
+                                        }`}>
+                                            <span className={`w-1.5 h-1.5 rounded-full ${form.android_webhook_enabled ? 'bg-emerald-500 animate-pulse' : 'bg-gray-400'}`}></span>
+                                            <span>{form.android_webhook_enabled ? 'Webhook Aktif' : 'Nonaktif'}</span>
+                                        </span>
+                                    </div>
+
                                     <button
                                         type="button"
                                         onClick={() => setShowGuideModal(true)}
                                         className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-700 hover:text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-3 py-1.5 rounded-xl transition self-start sm:self-auto"
                                     >
                                         <span className="material-icons text-sm">help_outline</span>
-                                        <span>Panduan Cara Setting HP Android</span>
+                                        <span>Panduan &amp; App Listener Android</span>
                                     </button>
                                 </div>
 
                                 <p className="text-xs text-gray-500 mb-4">
-                                    Verifikasi otomatis 100% tanpa Payment Gateway! Setiap kali m-Banking/E-Wallet di HP Android menerima notifikasi uang masuk, sistem akan membaca nominalnya dan langsung memverifikasi transaksi yang pending.
+                                    Verifikasi otomatis 100% tanpa Payment Gateway! Setiap kali m-Banking/E-Wallet di HP Android menerima notifikasi uang masuk, sistem akan membaca nominalnya dan langsung memverifikasi transaksi pending (Event, Donasi, E-commerce, Produk Digital, E-Course).
                                 </p>
 
                                 <div className="space-y-4 bg-emerald-50/40 p-4 rounded-2xl border border-emerald-100 mb-4">
@@ -466,7 +512,7 @@ const AdminPaymentSettingsPage = () => {
                                         />
                                         <div>
                                             <span className="text-xs font-bold text-gray-800">Aktifkan Listener Webhook Notifikasi Android</span>
-                                            <p className="text-[10px] text-gray-500">Menerima notifikasi otomatis dari HP Android pengurus</p>
+                                            <p className="text-[10px] text-gray-500">Menerima dan memproses notifikasi transfer bank/e-wallet secara otomatis</p>
                                         </div>
                                     </label>
 
@@ -484,7 +530,7 @@ const AdminPaymentSettingsPage = () => {
                                                 className="w-full bg-white border border-gray-200 rounded-xl px-3.5 py-2.5 text-xs font-mono focus:border-emerald-600 focus:outline-none transition"
                                                 required
                                             />
-                                            <p className="text-[10px] text-gray-400 mt-1">Kunci rahasia untuk mengamankan request dari aplikasi Android Anda</p>
+                                            <p className="text-[10px] text-gray-400 mt-1">Kunci rahasia untuk memvalidasi request dari aplikasi Android</p>
                                         </div>
 
                                         <div>
@@ -507,9 +553,137 @@ const AdminPaymentSettingsPage = () => {
                                                     <span>{copiedUrl ? 'Tersalin' : 'Salin'}</span>
                                                 </button>
                                             </div>
-                                            <p className="text-[10px] text-emerald-700 font-medium mt-1">Tempelkan URL ini di aplikasi Forwarder Notifikasi HP Android</p>
+                                            <p className="text-[10px] text-emerald-700 font-medium mt-1">Tempelkan URL ini di aplikasi Barakah Notif Listener / Forwarder HP</p>
                                         </div>
                                     </div>
+                                </div>
+
+                                {/* SECTION 5: LIVE TEST & SIMULASI NOTIFIKASI WEBHOOK */}
+                                <div className="bg-slate-900 text-white rounded-2xl p-5 border border-slate-800">
+                                    <div className="flex items-center justify-between mb-3 border-b border-slate-800 pb-3">
+                                        <div className="flex items-center gap-2">
+                                            <span className="material-icons text-amber-400 text-lg">science</span>
+                                            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-200">
+                                                Uji Coba &amp; Simulasi Webhook Notifikasi
+                                            </h4>
+                                        </div>
+                                        <span className="bg-slate-800 text-emerald-400 text-[10px] font-mono px-2 py-0.5 rounded-lg border border-slate-700">
+                                            LIVE TEST TOOL
+                                        </span>
+                                    </div>
+
+                                    <p className="text-[11px] text-slate-400 mb-3">
+                                        Gunakan form simulasi ini untuk menguji parsing regex nominal dan auto-verifikasi transaksi pending secara realtime tanpa perlu mentransfer uang beneran.
+                                    </p>
+
+                                    {/* Preset Templates */}
+                                    <div className="mb-3">
+                                        <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">
+                                            Pilih Contoh Notifikasi Bank / E-Wallet:
+                                        </label>
+                                        <div className="flex flex-wrap gap-1.5">
+                                            {[
+                                                { label: 'BSI Mobile (Rp 50.000)', text: 'BSI Mobile: Transfer masuk sebesar Rp 50.000 dari Ahmad Fulan' },
+                                                { label: 'BCA (Rp 100.000)', text: 'm-Transfer BCA: Dana Masuk Sebesar Rp 100.000,00 dari REK 1234567890' },
+                                                { label: 'Mandiri (Rp 25.000)', text: 'Livin by Mandiri: Penerimaan transfer Rp 25.000 berhasil diterima' },
+                                                { label: 'DANA (Rp 50.000)', text: 'DANA: Kamu menerima saldo DANA sebesar Rp 50.000' },
+                                                { label: 'GoPay (Rp 20.000)', text: 'GoPay: Transfer masuk sebesar Rp 20.000 berhasil diterima' },
+                                                { label: 'ShopeePay (Rp 75.000)', text: 'ShopeePay: Pembayaran QRIS Rp 75.000 berhasil masuk ke saldo Anda' }
+                                            ].map((preset, idx) => (
+                                                <button
+                                                    key={idx}
+                                                    type="button"
+                                                    onClick={() => setWebhookTestPayload(preset.text)}
+                                                    className="bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-[10px] font-medium px-2.5 py-1 rounded-lg border border-slate-700 transition"
+                                                >
+                                                    {preset.label}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    {/* Input Message */}
+                                    <div className="mb-3">
+                                        <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+                                            Teks Notifikasi yang Diuji:
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={webhookTestPayload}
+                                            onChange={(e) => setWebhookTestPayload(e.target.value)}
+                                            placeholder="Contoh: Transfer masuk sebesar Rp 50.000 dari Tester"
+                                            className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-emerald-400 font-mono focus:border-emerald-500 focus:outline-none transition"
+                                        />
+                                    </div>
+
+                                    <div className="flex items-center justify-between gap-3">
+                                        <button
+                                            type="button"
+                                            onClick={handleSendTestWebhook}
+                                            disabled={webhookTesting || !webhookTestPayload.trim()}
+                                            className="bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-500 hover:to-green-500 text-white text-xs font-bold px-4 py-2.5 rounded-xl transition flex items-center gap-2 shadow-lg shadow-emerald-950 disabled:opacity-50"
+                                        >
+                                            {webhookTesting ? (
+                                                <>
+                                                    <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                                    <span>Memproses Webhook...</span>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <span className="material-icons text-sm">send</span>
+                                                    <span>Kirim Uji Coba ke Webhook</span>
+                                                </>
+                                            )}
+                                        </button>
+
+                                        {webhookTestResult && (
+                                            <button
+                                                type="button"
+                                                onClick={() => setWebhookTestResult(null)}
+                                                className="text-[10px] text-slate-400 hover:text-slate-200 underline"
+                                            >
+                                                Bersihkan Hasil
+                                            </button>
+                                        )}
+                                    </div>
+
+                                    {/* Test Result Display */}
+                                    {webhookTestResult && (
+                                        <div className={`mt-3 p-3.5 rounded-xl text-xs font-mono border transition-all ${
+                                            webhookTestResult.matched
+                                                ? 'bg-emerald-950/80 text-emerald-200 border-emerald-700'
+                                                : webhookTestResult.success
+                                                ? 'bg-amber-950/80 text-amber-200 border-amber-700'
+                                                : 'bg-red-950/80 text-red-200 border-red-700'
+                                        }`}>
+                                            <div className="flex items-center gap-2 font-bold mb-1">
+                                                <span className="material-icons text-sm">
+                                                    {webhookTestResult.matched ? 'check_circle' : webhookTestResult.success ? 'info' : 'error'}
+                                                </span>
+                                                <span>
+                                                    {webhookTestResult.matched
+                                                        ? '🎉 TRANSAKSI PENDING BERHASIL DIVERIFIKASI OTOMATIS!'
+                                                        : webhookTestResult.success
+                                                        ? '✓ NOTIFIKASI TERBACA SERVER (Tidak ada transaksi pending dengan nominal tersebut)'
+                                                        : '✗ GAGAL MEMPROSES WEBHOOK'}
+                                                </span>
+                                            </div>
+                                            <p className="text-[11px] opacity-90 mt-1">{webhookTestResult.message || webhookTestResult.error}</p>
+                                            {webhookTestResult.extracted_amounts && webhookTestResult.extracted_amounts.length > 0 && (
+                                                <div className="mt-2 pt-2 border-t border-white/10 text-[10px] text-slate-300">
+                                                    <span>Nominal Terdeteksi: </span>
+                                                    <span className="font-bold text-white">
+                                                        {webhookTestResult.extracted_amounts.map(a => 'Rp ' + Number(a).toLocaleString('id-ID')).join(', ')}
+                                                    </span>
+                                                    {webhookTestResult.type && (
+                                                        <span className="ml-3">
+                                                            Tipe: <span className="uppercase font-bold text-emerald-400">{webhookTestResult.type}</span> (#{webhookTestResult.reference_id})
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
                                 </div>
                             </div>
 

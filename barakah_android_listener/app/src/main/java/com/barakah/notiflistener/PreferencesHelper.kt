@@ -18,6 +18,10 @@ class PreferencesHelper(context: Context) {
         get() = prefs.getBoolean("is_service_enabled", true)
         set(value) = prefs.edit().putBoolean("is_service_enabled", value).apply()
 
+    var allowAllApps: Boolean
+        get() = prefs.getBoolean("allow_all_apps", false)
+        set(value) = prefs.edit().putBoolean("allow_all_apps", value).apply()
+
     var selectedPackages: Set<String>
         get() = prefs.getStringSet("selected_packages", defaultBankPackages) ?: defaultBankPackages
         set(value) = prefs.edit().putStringSet("selected_packages", value).apply()
@@ -32,7 +36,11 @@ class PreferencesHelper(context: Context) {
             "id.dana",                  // DANA
             "com.gojek.app",            // GoPay / Gojek
             "net.oneoryx.ovo",          // OVO
-            "com.shopee.id"             // ShopeePay
+            "com.shopee.id",            // ShopeePay
+            "com.seabank.id",           // SeaBank
+            "id.btpn.jenius",           // Jenius
+            "id.co.cimbniaga.octomobile" // OCTO Mobile
         )
     }
 }
+

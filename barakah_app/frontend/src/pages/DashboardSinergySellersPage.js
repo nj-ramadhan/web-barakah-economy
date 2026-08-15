@@ -6,6 +6,7 @@ import NavigationButton from '../components/layout/Navigation';
 import { Link } from 'react-router-dom';
 import CurrencyInput from '../components/common/CurrencyInput';
 import { formatCurrency, parseCurrency } from '../utils/formatters';
+import CKEditorComponent from '../components/common/CKEditor';
 
 const DashboardSinergySellersPage = () => {
     const [products, setProducts] = useState([]);
@@ -13,6 +14,8 @@ const DashboardSinergySellersPage = () => {
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('list'); // 'list' | 'add' | 'edit' | 'voucher'
     const [editingProduct, setEditingProduct] = useState(null);
+    const [description, setDescription] = useState('');
+    const [unit, setUnit] = useState('pcs');
     const [variants, setVariants] = useState([{name: '', additional_price: 0, stock: 0}]);
     const [selectedCouriers, setSelectedCouriers] = useState(['jne', 'pos', 'tiki', 'jnt']);
     const [isCodAvailable, setIsCodAvailable] = useState(false);
@@ -22,6 +25,7 @@ const DashboardSinergySellersPage = () => {
     const [thumbnailPreview, setThumbnailPreview] = useState(null);
     const [galleryFiles, setGalleryFiles] = useState([]);
     const [galleryPreviews, setGalleryPreviews] = useState([]);
+
 
     // Custom bank account state
     const [ownBankStatus, setOwnBankStatus] = useState('none');
@@ -95,6 +99,8 @@ const DashboardSinergySellersPage = () => {
 
     const handleEdit = (product) => {
         setEditingProduct(product);
+        setDescription(product.description || '');
+        setUnit(product.unit || 'pcs');
         setVariants(product.variations && product.variations.length > 0 ? product.variations : [{name: '', additional_price: 0, stock: 0}]);
         setSelectedCouriers(product.supported_couriers ? product.supported_couriers.split(',') : ['jne', 'pos', 'tiki', 'jnt']);
         setIsCodAvailable(product.is_cod_available || false);
@@ -181,7 +187,8 @@ const DashboardSinergySellersPage = () => {
             setSavingProduct(true);
             const formData = new FormData();
             formData.append('title', e.target.title.value);
-            formData.append('description', e.target.description ? e.target.description.value : '');
+            formData.append('description', description);
+            formData.append('unit', unit || 'pcs');
             formData.append('purchase_price', parseCurrency(e.target.purchase_price.value));
             formData.append('price', parseCurrency(e.target.price.value));
             formData.append('stock', e.target.stock.value);
@@ -247,6 +254,8 @@ const DashboardSinergySellersPage = () => {
             }
             fetchDashboardData();
             setActiveTab('list');
+            setDescription('');
+            setUnit('pcs');
             setThumbnailFile(null);
             setThumbnailPreview(null);
             setGalleryFiles([]);
@@ -259,6 +268,7 @@ const DashboardSinergySellersPage = () => {
             setSavingProduct(false);
         }
     };
+
 
     const handleSaveVoucher = async (e) => {
         e.preventDefault();
@@ -326,6 +336,8 @@ const DashboardSinergySellersPage = () => {
                     <button onClick={() => { 
                         setActiveTab('add'); 
                         setEditingProduct(null); 
+                        setDescription('');
+                        setUnit('pcs');
                         setVariants([{name: '', additional_price: 0, stock: 0}]); 
                         setThumbnailFile(null);
                         setThumbnailPreview(null);
@@ -361,10 +373,10 @@ const DashboardSinergySellersPage = () => {
                                         {p.min_price && p.max_price && p.min_price !== p.max_price 
                                             ? `Rp ${formatCurrency(p.min_price)} ~ Rp ${formatCurrency(p.max_price)}`
                                             : `Rp ${formatCurrency(p.price)}`
-                                        }
+                                        } / {p.unit || 'pcs'}
                                     </span>
                                 </p>
-                                <p className="text-xs text-gray-400">Total Stok: <span className="font-bold">{p.total_stock || p.stock}</span></p>
+                                <p className="text-xs text-gray-400">Total Stok: <span className="font-bold">{p.total_stock || p.stock} {p.unit || 'pcs'}</span></p>
                                 <p className="text-xs text-gray-500 line-clamp-2 mt-1">
                                     {(p.description || '').replace(/<[^>]*>/g, '')}
                                 </p>
@@ -372,6 +384,8 @@ const DashboardSinergySellersPage = () => {
                             <div className="flex gap-2">
                                 <button onClick={() => {
                                     setEditingProduct(p);
+                                    setDescription(p.description || '');
+                                    setUnit(p.unit || 'pcs');
                                     if (p.variations && p.variations.length > 0) {
                                         setVariants(p.variations);
                                     } else {
@@ -462,7 +476,7 @@ const DashboardSinergySellersPage = () => {
             <form className="space-y-6" onSubmit={handleSaveProduct}>
                 <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-1">Nama Produk</label>
-                    <input type="text" name="title" defaultValue={editingProduct?.title || ''} placeholder="Contoh: Madu Hutan Asli 500ml" required className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none transition" />
+                    <input type="text" name="title" defaultValue={editingProduct?.title || ''} placeholder="Contoh: Buku Fiqih Muamalah Kontemporer / Madu Asli 500ml" required className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none transition" />
                 </div>
                 
                 <div className="grid grid-cols-2 gap-4">
@@ -499,33 +513,72 @@ const DashboardSinergySellersPage = () => {
                         />
                     </div>
                     <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-1">Satuan Produk (Unit)</label>
+                        <select 
+                            name="unit"
+                            value={unit}
+                            onChange={(e) => setUnit(e.target.value)}
+                            className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none transition font-medium text-gray-800"
+                        >
+                            <option value="pcs">pcs / buah (Default)</option>
+                            <option value="buku">buku / eksemplar</option>
+                            <option value="eksemplar">eksemplar</option>
+                            <option value="lembar">lembar</option>
+                            <option value="jilid">jilid</option>
+                            <option value="kg">kg (Kilogram)</option>
+                            <option value="gram">gram (g)</option>
+                            <option value="ons">ons</option>
+                            <option value="liter">liter (L)</option>
+                            <option value="ml">mililiter (ml)</option>
+                            <option value="pack">pack / bungkus</option>
+                            <option value="box">box / kotak</option>
+                            <option value="dus">dus / karton</option>
+                            <option value="botol">botol</option>
+                            <option value="sachet">sachet</option>
+                            <option value="kaleng">kaleng</option>
+                            <option value="pasang">pasang</option>
+                            <option value="set">set</option>
+                            <option value="unit">unit</option>
+                            <option value="porsi">porsi</option>
+                            <option value="lusin">lusin (12 pcs)</option>
+                            <option value="kodi">kodi (20 pcs)</option>
+                            <option value="meter">meter (m)</option>
+                            <option value="paket">paket</option>
+                        </select>
+                    </div>
+                    <div>
                          <label className="block text-sm font-semibold text-gray-700 mb-1">Berat (gram)</label>
                         <input type="number" name="weight" defaultValue={editingProduct?.weight || ''} required placeholder="1000" className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none transition" />
                     </div>
-                    <div className="col-span-2">
+                    <div>
                         <label className="block text-sm font-semibold text-gray-700 mb-1">Kategori</label>
-                        <input type="text" name="category" list="categories" required placeholder="Pilih atau Ketik Kategori Baru" defaultValue={editingProduct?.category || ''} className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none transition" />
+                        <input type="text" name="category" list="categories" required placeholder="Pilih / Ketik Kategori" defaultValue={editingProduct?.category || ''} className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none transition" />
                         <datalist id="categories">
-                            <option value="Sembako" />
-                            <option value="Herbal" />
-                            <option value="Pakaian" />
-                            <option value="Elektronik" />
                             <option value="Buku Islami" />
+                            <option value="Pakaian" />
+                            <option value="Herbal" />
+                            <option value="Sembako" />
+                            <option value="Elektronik" />
                             <option value="Aksesoris" />
+                            <option value="Kuliner / Makanan" />
                         </datalist>
                     </div>
                 </div>
 
                 <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-1">Deskripsi Produk *</label>
-                    <textarea 
-                        name="description" 
-                        defaultValue={editingProduct?.description || ''} 
-                        placeholder="Tuliskan deskripsi lengkap, spesifikasi, atau keunggulan produk Anda..." 
-                        required
-                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none transition h-28 resize-y"
-                    ></textarea>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1 flex items-center justify-between">
+                        <span>Deskripsi Lengkap Produk *</span>
+                        <span className="text-[11px] text-emerald-600 font-medium">Mendukung Rich Text (Tebal, Poin-poin, Heading, dsb)</span>
+                    </label>
+                    <div className="rounded-2xl border border-gray-200 overflow-hidden shadow-sm bg-white">
+                        <CKEditorComponent 
+                            content={description}
+                            onChange={(data) => setDescription(data)}
+                            placeholder="Tuliskan deskripsi lengkap, keunggulan, spesifikasi buku/produk, atau detail lainnya..."
+                        />
+                    </div>
                 </div>
+
 
                 <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-1">Informasi Pengambilan / Teknis (Opsional)</label>
