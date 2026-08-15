@@ -44,10 +44,36 @@ const EcommercePaymentConfirmation = () => {
     }).catch(err => console.error("Error fetching config:", err));
   }, []);
 
+  // Redirect if no data passed
+  if (!location.state) {
+    navigate('/');
+    return null;
+  }
+
+  const {
+    orderId,
+    orderNumber: orderNumberParam,
+    amount,
+    bank,
+    customerName,
+    customerPhone,
+    shippingCost,
+    courier,
+    voucherCode,
+    voucherDiscount,
+    cartItems = []
+  } = location.state;
+
+  const currentOrderNumber = orderNumberParam || orderId || '';
+
   const handleGenerateDynaQRIS = async () => {
     setGeneratingQris(true);
     try {
-      const res = await generateDynaQRIS({ amount: location.state?.amount, type: 'ecommerce' });
+      const res = await generateDynaQRIS({ 
+        amount: location.state?.amount, 
+        reference_id: currentOrderNumber, 
+        type: 'ecommerce' 
+      });
       if (res.error) {
         alert(res.error);
       } else {
@@ -64,50 +90,24 @@ const EcommercePaymentConfirmation = () => {
 
   const handleDynaSuccess = async (res) => {
     setShowDynaModal(false);
+    setOrderNumber(currentOrderNumber || res?.order_number || res?.order_id || 'N/A');
+    setIsSuccess(true);
+
     try {
-      const csrfToken = getCsrfToken();
-      const paymentData = new FormData();
-      paymentData.append('amount', amount);
-      paymentData.append('customer_name', customerName);
-      paymentData.append('customer_phone', customerPhone);
-      paymentData.append('payment_method', 'dynaqris');
-      paymentData.append('transfer_date', new Date().toISOString().split('T')[0]);
-      paymentData.append('shipping_cost', shippingCost || 0);
-      paymentData.append('shipping_courier', courier || '');
-      paymentData.append('voucher_code', voucherCode || '');
-      paymentData.append('voucher_nominal', voucherDiscount || 0);
-
       const userData = localStorage.getItem('user');
-      let authToken = null;
-      if (userData) authToken = JSON.parse(userData).access;
-
-      const headers = { 'X-CSRFToken': csrfToken };
-      if (authToken) headers['Authorization'] = `Bearer ${authToken}`;
-
-      const response = await axios.post(
-        `${process.env.REACT_APP_API_BASE_URL}/api/orders/create-order/`,
-        paymentData,
-        { headers }
-      );
-
-      if (response.status === 201) {
-        setOrderNumber(response.data[0]?.order_number || 'N/A');
-        setIsSuccess(true);
+      if (userData) {
+        const user = JSON.parse(userData);
+        if (user && user.access) {
+          await axios.delete(`${process.env.REACT_APP_API_BASE_URL}/api/cart/clear/`, {
+            headers: { Authorization: `Bearer ${user.access}` }
+          });
+        }
       }
     } catch (err) {
-      console.error('Failed to create order after DynaQRIS payment:', err);
+      console.error('Error clearing cart after DynaQRIS payment:', err);
     }
   };
 
-  // Redirect if no data passed
-  if (!location.state) {
-    navigate('/');
-    return null;
-  }
-
-  const {
-    orderId,
-    orderNumber: orderNumberParam,
     amount,
     bank,
     customerName,
@@ -363,6 +363,7 @@ const EcommercePaymentConfirmation = () => {
           onClose={() => setShowDynaModal(false)}
           qrisData={qrisData}
           transactionType="ecommerce"
+          referenceId={currentOrderNumber}
           amount={amount}
           onPaymentSuccess={handleDynaSuccess}
         />

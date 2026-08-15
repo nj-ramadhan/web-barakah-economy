@@ -227,8 +227,18 @@ class CheckDynaQRISStatusView(APIView):
     def get(self, request):
         transaction_type, reference_id = self._extract_params(request)
 
-        if not transaction_type or not reference_id:
-            return Response({'error': 'Tipe dan ID referensi transaksi wajib diisi.'}, status=status.HTTP_400_BAD_REQUEST)
+        if not transaction_type:
+            return Response({'error': 'Tipe transaksi wajib diisi.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Fallback reference_id for ecommerce if missing but user is logged in
+        if not reference_id and transaction_type == 'ecommerce' and request.user and request.user.is_authenticated:
+            from orders.models import Order
+            latest_ord = Order.objects.filter(user=request.user).order_by('-created_at').first()
+            if latest_ord:
+                reference_id = latest_ord.order_number or latest_ord.id
+
+        if not reference_id:
+            return Response({'error': 'ID referensi transaksi wajib diisi.', 'status': 'pending', 'verified': False}, status=status.HTTP_400_BAD_REQUEST)
 
         status_result = {'status': 'pending', 'verified': False}
 
@@ -243,13 +253,19 @@ class CheckDynaQRISStatusView(APIView):
                 }
         elif transaction_type == 'ecommerce':
             from orders.models import Order
-            order = Order.objects.filter(id=reference_id).first() or Order.objects.filter(order_id=reference_id).first()
+            order = None
+            if str(reference_id).isdigit():
+                order = Order.objects.filter(id=int(reference_id)).first()
+            if not order:
+                order = Order.objects.filter(order_number=reference_id).first()
             if order:
                 status_result = {
                     'status': order.status,
-                    'verified': order.status in ['paid', 'completed', 'shipped', 'delivered'],
-                    'order_id': order.id
+                    'verified': (order.status or '').lower() in ['paid', 'proses', 'dikirim', 'selesai', 'completed', 'shipped', 'delivered'],
+                    'order_id': order.id,
+                    'order_number': order.order_number
                 }
+
         elif transaction_type == 'digital':
             from digital_products.models import DigitalOrder
             d_order = DigitalOrder.objects.filter(id=reference_id).first() or DigitalOrder.objects.filter(order_number=reference_id).first()
@@ -326,11 +342,23 @@ class CheckDynaQRISStatusView(APIView):
                 return Response({'success': True, 'message': 'Pembayaran Event berhasil diverifikasi!'})
         elif transaction_type == 'ecommerce':
             from orders.models import Order
-            order = Order.objects.filter(id=reference_id).first() or Order.objects.filter(order_id=reference_id).first()
+            order = None
+            if str(reference_id).isdigit():
+                order = Order.objects.filter(id=int(reference_id)).first()
+            if not order:
+                order = Order.objects.filter(order_number=reference_id).first()
             if order:
-                order.status = 'paid'
+                order.status = 'Paid'
+                order.payment_method = 'dynaqris'
                 order.save()
+                try:
+                    from orders.utils import send_order_invoice_to_buyer, send_order_notification_to_seller
+                    send_order_invoice_to_buyer(order)
+                    send_order_notification_to_seller(order)
+                except Exception as e:
+                    logger.error(f"Error sending order notifications for {order.order_number}: {e}")
                 return Response({'success': True, 'message': 'Pembayaran Pesanan E-commerce berhasil diverifikasi!'})
+
         elif transaction_type == 'digital':
             from digital_products.models import DigitalOrder
             d_order = DigitalOrder.objects.filter(id=reference_id).first() or DigitalOrder.objects.filter(order_number=reference_id).first()

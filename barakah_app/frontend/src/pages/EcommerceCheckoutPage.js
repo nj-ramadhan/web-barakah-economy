@@ -289,7 +289,64 @@ const EcommerceCheckoutPage = () => {
         });
         if (response.data.token) handlePayment(response.data.token);
       } catch (e) { alert('Terjadi kesalahan memproses Token Midtrans.'); }
-    } else {
+    setIsSubmitting(true);
+    try {
+      const orderFormData = new FormData();
+      orderFormData.append('amount', grandTotal);
+      orderFormData.append('customer_name', selectedAddress?.nama_penerima || formData.fullName);
+      orderFormData.append('customer_phone', selectedAddress?.phone || formData.phone);
+      orderFormData.append('payment_method', selectedBank || 'dynaqris');
+      orderFormData.append('shipping_cost', selectedShipping || 0);
+      orderFormData.append('shipping_courier', courier || '');
+      orderFormData.append('buyer_note', formData.message || '');
+      orderFormData.append('voucher_code', voucherCode || '');
+      orderFormData.append('voucher_nominal', voucherDiscount || 0);
+      if (selectedAddress) {
+        orderFormData.append('shipping_address', selectedAddress.alamat || '');
+        orderFormData.append('shipping_village', selectedAddress.kelurahan || '');
+        orderFormData.append('shipping_district', selectedAddress.kecamatan || '');
+        orderFormData.append('shipping_city', selectedAddress.kota || '');
+        orderFormData.append('shipping_province', selectedAddress.provinsi || '');
+        orderFormData.append('shipping_postal_code', selectedAddress.kode_pos || '');
+        orderFormData.append('shipping_address_detail', selectedAddress.detail_alamat || '');
+        orderFormData.append('shipping_coordinates', selectedAddress.titik_koordinat || '');
+      }
+
+      const userData = localStorage.getItem('user');
+      const headers = { 'X-CSRFToken': getCsrfToken() };
+      if (userData) headers['Authorization'] = `Bearer ${JSON.parse(userData).access}`;
+
+      const response = await axios.post(
+        `${process.env.REACT_APP_API_BASE_URL}/api/orders/create-order/`,
+        orderFormData,
+        { headers }
+      );
+
+      const createdOrder = Array.isArray(response.data) ? response.data[0] : response.data;
+      const orderNumber = createdOrder?.order_number || createdOrder?.id || '';
+      const orderId = createdOrder?.id || '';
+
+      navigate('/konfirmasi-pembayaran-belanja', {
+        state: {
+          orderNumber: orderNumber,
+          orderId: orderId,
+          amount: grandTotal,
+          bank: selectedBank,
+          customerName: selectedAddress?.nama_penerima || formData.fullName,
+          customerPhone: selectedAddress?.phone || formData.phone,
+          email: formData.email,
+          message: formData.message,
+          cartItems: cartItems,
+          shippingCost: selectedShipping,
+          courier: courier,
+          voucherCode: voucherCode,
+          voucherDiscount: voucherDiscount,
+          shippingAddressData: selectedAddress
+        }
+      });
+    } catch (err) {
+      console.error('Error creating pending order before payment:', err);
+      // Fallback navigate without orderNumber
       navigate('/konfirmasi-pembayaran-belanja', {
         state: {
           amount: grandTotal,
@@ -306,8 +363,11 @@ const EcommerceCheckoutPage = () => {
           shippingAddressData: selectedAddress
         }
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
+
 
   const clearCart = async () => {
     try {
