@@ -6,35 +6,32 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ product.title }}</title>
 
-    <!-- Open Graph / Facebook -->
+    <!-- Instant Meta Refresh for standard browsers -->
+    <meta http-equiv="refresh" content="0; url={{ target_url }}">
+
+    <!-- Schema.org for Google+ & WhatsApp Preview -->
+    <meta itemprop="name" content="{{ product.title }}">
+    <meta itemprop="description" content="{{ product.description }}">
+    <meta itemprop="image" content="{{ product.thumbnail_url }}">
+
+    <!-- Open Graph / Facebook / WhatsApp -->
     <meta property="og:site_name" content="Barakah Economy">
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="{{ request.build_absolute_uri }}">
+    <meta property="og:type" content="product">
+    <meta property="og:url" content="{{ target_url }}">
     <meta property="og:title" content="{{ product.title }}">
-    <meta property="og:description" content="{{ product.description|striptags|truncatewords:20 }}">
-    {% if product.thumbnail_url %}
+    <meta property="og:description" content="{{ product.description }}">
     <meta property="og:image" content="{{ product.thumbnail_url }}">
-    <meta property="og:image:type" content="{{ product.thumbnail_type|default:'image/jpeg' }}">
-    <meta property="og:image:width" content="1200">
-    <meta property="og:image:height" content="630">
-    {% elif product.thumbnail %}
-    <meta property="og:image" content="https://{{ request.get_host }}{{ product.thumbnail.url }}">
+    <meta property="og:image:secure_url" content="{{ product.thumbnail_url }}">
     <meta property="og:image:type" content="image/jpeg">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
-    {% endif %}
 
     <!-- Twitter -->
-    <meta property="twitter:card" content="summary_large_image">
-    <meta property="twitter:url" content="{{ request.build_absolute_uri }}">
-    <meta property="twitter:title" content="{{ product.title }}">
-    <meta property="twitter:description" content="{{ product.description|striptags|truncatewords:20 }}">
-    {% if product.thumbnail_url %}
-    <meta property="twitter:image" content="{{ product.thumbnail_url }}">
-    {% elif product.thumbnail %}
-    <meta property="twitter:image" content="https://{{ request.get_host }}{{ product.thumbnail.url }}">
-    {% endif %}
-
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="{{ target_url }}">
+    <meta name="twitter:title" content="{{ product.title }}">
+    <meta name="twitter:description" content="{{ product.description }}">
+    <meta name="twitter:image" content="{{ product.thumbnail_url }}">
 
     <style>
         body {
@@ -44,49 +41,54 @@
             align-items: center;
             height: 100vh;
             margin: 0;
-            background-color: #ffffff;
-            color: #333;
+            background-color: #f9fafb;
+            color: #111827;
             flex-direction: column;
             text-align: center;
         }
 
         .loader {
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #10b981;
+            border: 3px solid #e5e7eb;
+            border-top: 3px solid #059669;
             border-radius: 50%;
-            width: 30px;
-            height: 30px;
-            animation: spin 1s linear infinite;
-            margin-bottom: 15px;
+            width: 36px;
+            height: 36px;
+            animation: spin 0.8s linear infinite;
+            margin-bottom: 16px;
         }
 
         .redirect-text {
             font-size: 14px;
-            color: #666;
+            font-weight: 600;
+            color: #374151;
+        }
+
+        .btn-link {
+            margin-top: 12px;
+            display: inline-block;
+            font-size: 12px;
+            font-weight: bold;
+            color: #059669;
+            text-decoration: none;
         }
 
         @keyframes spin {
-            0% {
-                transform: rotate(0deg);
-            }
-
-            100% {
-                transform: rotate(360deg);
-            }
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
     </style>
 </head>
 
 <body>
     <div class="loader"></div>
-    <div class="redirect-text">Membuka produk...</div>
+    <div class="redirect-text">Membuka produk {{ product.title }}...</div>
+    <a href="{{ target_url }}" class="btn-link">Klik di sini jika tidak otomatis dialihkan</a>
 
     <script>
         var targetUrl = "{{ target_url|safe }}";
-
-        setTimeout(function () {
+        if (targetUrl) {
             window.location.replace(targetUrl);
-        }, 50);
+        }
     </script>
 </body>
 

@@ -32,6 +32,7 @@ class ProductSerializer(serializers.ModelSerializer):
     promo_discount_percentage = serializers.SerializerMethodField()
 
     seller_name = serializers.CharField(source='seller.username', read_only=True)
+    category_display = serializers.CharField(source='get_category_display', read_only=True)
     seller_city_id = serializers.SerializerMethodField()
     seller_city_name = serializers.CharField(source='seller.profile.address_city_name', read_only=True)
     seller_village_id = serializers.CharField(source='seller.profile.address_village_id', read_only=True)

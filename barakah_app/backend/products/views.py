@@ -392,37 +392,84 @@ class ProductDetailView(APIView):
 class ProductShareView(APIView):
     """
     View for rendering server-side HTML with Open Graph tags for social media sharing.
-    Includes logic for dummy/cloaked links without querying the actual product database.
+    When accessed by scrapers (WhatsApp, FB, Twitter), renders rich Open Graph preview with thumbnail.
+    When accessed by human users, immediately redirects to the frontend product page.
     """
     def get(self, request, slug):
-        ref = request.query_params.get('ref', None) # Get 'ref' parameter if it exists
-        
-        # Build query string
-        query_string = f"?ref={ref}" if ref else ""
-        
-        # Specific logic for bae-cookies (Cloaked Link)
-        if slug == 'barakah-cookies':
-            target_url = f"https://barakah-cookies.hwofficial.com/{query_string}"
-            # Dummy product data for the preview
+        import re
+        slug_clean = str(slug).strip('/')
+        product = Product.objects.filter(slug__iexact=slug_clean).first()
+        if not product and slug_clean.isdigit():
+            product = Product.objects.filter(id=int(slug_clean)).first()
+        if not product:
+            search_term = slug_clean.replace('-', ' ').strip()
+            product = Product.objects.filter(title__icontains=search_term).first()
+
+        # Fallback to digital product if needed
+        if not product:
+            from digital_products.models import DigitalProduct
+            dp = DigitalProduct.objects.filter(slug__iexact=slug_clean).first()
+            if dp:
+                target_url = f"https://barakah.cloud/digital-products/{dp.slug}"
+                thumb = dp.thumbnail.url if dp.thumbnail else 'https://barakah.cloud/images/web-thumbnail.jpg'
+                if thumb and not thumb.startswith('http'):
+                    thumb = f"https://api.barakah.cloud{thumb}"
+                
+                clean_desc = re.sub(r'<[^>]*>', '', dp.description or '')[:160].strip()
+                price_str = f"Rp {int(dp.price):,}".replace(',', '.') if dp.price else ''
+                desc_text = f"Harga: {price_str} | {clean_desc}" if price_str else clean_desc
+
+                product_data = {
+                    'title': dp.title,
+                    'description': desc_text or f"Beli {dp.title} di Barakah Economy.",
+                    'thumbnail_url': thumb,
+                }
+                from django.shortcuts import render
+                return render(request, 'products/product_share.html', {
+                    'product': product_data,
+                    'target_url': target_url
+                })
+
+        if product:
+            target_url = f"https://barakah.cloud/produk/{product.slug}"
+            thumb_url = ''
+            if product.thumbnail and hasattr(product.thumbnail, 'url') and product.thumbnail.url:
+                thumb_url = product.thumbnail.url
+            elif hasattr(product, 'images') and product.images.exists():
+                first_img = product.images.first()
+                if first_img and hasattr(first_img.image, 'url'):
+                    thumb_url = first_img.image.url
+            
+            if thumb_url and not thumb_url.startswith('http'):
+                thumb_url = f"https://api.barakah.cloud{thumb_url}"
+            elif not thumb_url:
+                thumb_url = 'https://barakah.cloud/images/web-thumbnail.jpg'
+
+            price_str = f"Rp {int(product.price):,}".replace(',', '.') if product.price else ''
+            clean_desc = re.sub(r'<[^>]*>', '', product.description or '')[:160].strip()
+            desc_parts = []
+            if price_str:
+                desc_parts.append(f"Harga: {price_str}")
+            if clean_desc:
+                desc_parts.append(clean_desc)
+            else:
+                desc_parts.append(f"Beli {product.title} di Barakah Economy.")
+
             product_data = {
-                'title': 'Barakah Cookies',
-                'description': 'Kue Kering Premium persembahan Barakah Economy. Cek detail dan variasinya sekarang!',
-                # 'thumbnail_url': 'https://barakah-economy.com/images/Barakah-Cookies.jpg',
-                'thumbnail_url': 'https://barakah.cloud/images/Barakah-Cookies.jpg',
+                'title': product.title,
+                'description': " | ".join(desc_parts),
+                'thumbnail_url': thumb_url,
                 'thumbnail_type': 'image/jpeg',
             }
         else:
-            # Standard logic if you still want other products to point to your DB, 
-            # Or if you want ALL to be dummy links, we just default to hwofficial
-            target_url = f"https://barakah-cookies.hwofficial.com/{query_string}"
+            target_url = f"https://barakah.cloud/sinergy"
             product_data = {
-                'title': 'Barakah Cookies',
+                'title': str(slug_clean).replace('-', ' ').title(),
                 'description': 'Temukan produk unggulan dan berkualitas dari Barakah Economy.',
-                # 'thumbnail_url': 'https://barakah-economy.com/images/Barakah-Cookies.jpg',
-                'thumbnail_url': 'https://barakah.cloud/images/Barakah-Cookies.jpg',
+                'thumbnail_url': 'https://barakah.cloud/images/web-thumbnail.jpg',
                 'thumbnail_type': 'image/jpeg',
             }
-            
+
         from django.shortcuts import render
         return render(request, 'products/product_share.html', {
             'product': product_data,

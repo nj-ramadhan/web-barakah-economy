@@ -15,36 +15,36 @@ const ShareButton = ({
     const [copied, setCopied] = useState(false);
     const dropdownRef = useRef(null);
 
-    // Use current origin for clean frontend URLs (e.g. https://barakah.cloud)
-    const baseUrl = window.location.origin;
+    // API domain for Open Graph HTML rendering & instant redirection to barakah.cloud
+    const shareBaseUrl = 'https://api.barakah.cloud';
 
     // Determine share URL based on type
     let shareUrl = '';
     if (type === 'product' || type === 'sinergy') {
-        shareUrl = `${baseUrl}/produk/${slug}`;
+        shareUrl = `${shareBaseUrl}/sinergy/${slug}`;
     } else if (type === 'article') {
-        shareUrl = `${baseUrl}/articles/${slug}`;
+        shareUrl = `${shareBaseUrl}/articles/${slug}`;
     } else if (type === 'event') {
-        shareUrl = `${baseUrl}/event/${slug}`;
+        shareUrl = `${shareBaseUrl}/event/${slug}`;
     } else if (type === 'course') {
-        shareUrl = `${baseUrl}/kelas/${slug}`;
+        shareUrl = `${shareBaseUrl}/kelas/${slug}`;
     } else if (type === 'digital_product') {
         if (username) {
-            shareUrl = `${baseUrl}/digital-produk/${username}/${slug}`;
+            shareUrl = `${shareBaseUrl}/digital-produk/${username}/${slug}`;
         } else {
-            shareUrl = `${baseUrl}/digital-products/${slug}`;
+            shareUrl = `${shareBaseUrl}/digital-products/${slug}`;
         }
     } else if (type === 'forum') {
-        shareUrl = `${baseUrl}/forum/${slug}`;
+        shareUrl = `${shareBaseUrl}/forum/${slug}`;
     } else if (type === 'activity') {
-        shareUrl = `${baseUrl}/kegiatan/${slug}`;
+        shareUrl = `${shareBaseUrl}/kegiatan/${slug}`;
     } else if (type === 'seller') {
-        shareUrl = `${baseUrl}/${slug}`;
+        shareUrl = `${shareBaseUrl}/${slug}`;
     } else if (type === 'charity_page') {
-        shareUrl = `${baseUrl}/charity`;
+        shareUrl = `https://barakah.cloud/charity`;
     } else {
         // default campaign
-        shareUrl = `${baseUrl}/kampanye/${slug}`;
+        shareUrl = `${shareBaseUrl}/kampanye/${slug}`;
     }
 
     // Clean plain text description

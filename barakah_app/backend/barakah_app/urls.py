@@ -13,20 +13,21 @@ from barakah_app.seo_views import (
     seo_forum_detail, seo_activity_detail, seo_seller_profile
 )
 from streaming.views import seo_streaming_detail
+from products.views import ProductShareView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('robots.txt', robots_txt),
     path('sitemap.xml', sitemap_xml),
     
-    # --- SEO Crawler Traps & Detail Views (Frontend Paths Caught by Backend) ---
+    # --- SEO Crawler Traps & Share Views (Served by Django with OG tags & instant redirect) ---
     path('streaming/', seo_streaming_detail),
-    path('produk/<str:slug>/', seo_product_detail),
-    path('produk/<str:slug>', seo_product_detail),
-    path('sinergy/<str:slug>/', seo_product_detail),
-    path('sinergy/<str:slug>', seo_product_detail),
-    path('ecommerce/<str:slug>/', seo_product_detail),
-    path('ecommerce/<str:slug>', seo_product_detail),
+    path('produk/<str:slug>/', ProductShareView.as_view()),
+    path('produk/<str:slug>', ProductShareView.as_view()),
+    path('sinergy/<str:slug>/', ProductShareView.as_view()),
+    path('sinergy/<str:slug>', ProductShareView.as_view()),
+    path('ecommerce/<str:slug>/', ProductShareView.as_view()),
+    path('ecommerce/<str:slug>', ProductShareView.as_view()),
     path('kampanye/<str:slug>/', seo_campaign_detail),
     path('kampanye/<str:slug>', seo_campaign_detail),
     path('articles/<str:id_or_slug>/', seo_article_detail),

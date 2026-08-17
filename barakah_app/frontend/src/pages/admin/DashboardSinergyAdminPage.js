@@ -40,6 +40,7 @@ const DashboardSinergyAdminPage = () => {
     const [selectedCouriers, setSelectedCouriers] = useState(['jne', 'pos', 'tiki', 'jnt']);
     const [variants, setVariants] = useState([]);
     const [thumbnailFile, setThumbnailFile] = useState(null);
+    const [thumbnailPreview, setThumbnailPreview] = useState(null);
     const [savingProduct, setSavingProduct] = useState(false);
 
     // Promo & Testimoni Modal States
