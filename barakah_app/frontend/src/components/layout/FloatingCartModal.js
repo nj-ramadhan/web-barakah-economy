@@ -8,6 +8,7 @@ const isAllowedPage = (pathname) => {
     
     // E-commerce paths
     if (
+        pathname.startsWith('/store') ||
         pathname.startsWith('/sinergy') ||
         pathname.startsWith('/produk/') ||
         pathname === '/incaran' ||

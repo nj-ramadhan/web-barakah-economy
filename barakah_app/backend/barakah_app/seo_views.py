@@ -319,6 +319,7 @@ def sitemap_xml(request):
     # Base URLs
     add_url('/')
     add_url('/charity')
+    add_url('/store')
     add_url('/sinergy')
     add_url('/event')
     add_url('/academy')

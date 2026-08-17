@@ -172,7 +172,7 @@ const EcommerceCartPage = () => {
                         <h3 className="text-lg font-bold text-gray-800">Keranjang Belanja Anda Kosong</h3>
                         <p className="text-xs text-gray-500 mt-1 max-w-xs mx-auto mb-6">Jelajahi produk fisik berkualitas di E-Commerce Barakah Community sekarang!</p>
                         <Link
-                            to="/sinergy"
+                            to="/store"
                             className="px-6 py-3 bg-emerald-600 text-white rounded-2xl font-bold text-xs shadow-lg shadow-emerald-100 hover:bg-emerald-700 transition"
                         >
                             Mulai Belanja

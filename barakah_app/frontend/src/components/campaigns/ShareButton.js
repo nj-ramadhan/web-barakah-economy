@@ -20,8 +20,8 @@ const ShareButton = ({
 
     // Determine share URL based on type
     let shareUrl = '';
-    if (type === 'product' || type === 'sinergy') {
-        shareUrl = `${shareBaseUrl}/sinergy/${slug}`;
+    if (type === 'product' || type === 'sinergy' || type === 'store') {
+        shareUrl = `${shareBaseUrl}/store/${slug}`;
     } else if (type === 'article') {
         shareUrl = `${shareBaseUrl}/articles/${slug}`;
     } else if (type === 'event') {

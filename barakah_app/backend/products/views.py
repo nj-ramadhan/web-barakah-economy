@@ -471,7 +471,7 @@ class ProductShareView(APIView):
                 'thumbnail_type': 'image/jpeg',
             }
         else:
-            target_url = f"https://barakah.cloud/sinergy"
+            target_url = f"https://barakah.cloud/store"
             product_data = {
                 'title': str(slug_clean).replace('-', ' ').title(),
                 'description': 'Temukan produk unggulan dan berkualitas dari Barakah Economy.',

@@ -22,6 +22,8 @@ urlpatterns = [
     
     # --- SEO Crawler Traps & Share Views (Served by Django with OG tags & instant redirect) ---
     path('streaming/', seo_streaming_detail),
+    path('store/<str:slug>/', ProductShareView.as_view()),
+    path('store/<str:slug>', ProductShareView.as_view()),
     path('produk/<str:slug>/', ProductShareView.as_view()),
     path('produk/<str:slug>', ProductShareView.as_view()),
     path('sinergy/<str:slug>/', ProductShareView.as_view()),

@@ -301,7 +301,7 @@ const EcommercePaymentConfirmation = () => {
             </button>
 
             <button
-              onClick={() => navigate('/sinergy')}
+              onClick={() => navigate('/store')}
               className="mt-4 w-full py-2 text-gray-400 font-bold text-sm hover:text-emerald-600 transition-colors"
             >
               Kembali ke E-commerce

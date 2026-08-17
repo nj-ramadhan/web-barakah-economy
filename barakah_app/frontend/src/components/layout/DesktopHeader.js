@@ -83,7 +83,7 @@ const DesktopHeader = () => {
     };
 
     const group1 = [
-        { label: t('menu.ecommerce'), to: '/sinergy', icon: 'handshake' },
+        { label: t('menu.ecommerce'), to: '/store', icon: 'storefront' },
         { label: t('menu.ecourse'), to: '/academy/ecourse', icon: 'school' },
         { label: t('menu.digital_products'), to: '/digital-products', icon: 'shopping_bag' },
     ];

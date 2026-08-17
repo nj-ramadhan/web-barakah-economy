@@ -191,8 +191,8 @@ const DesktopLandingPage = () => {
                                 <Link to="/charity" className="px-8 py-4 bg-green-700 text-white font-bold rounded-2xl shadow-xl shadow-green-200 hover:bg-green-800 hover:-translate-y-1 transition transform duration-300 flex items-center gap-2">
                                     Mulai Donasi <span className="material-icons text-sm">volunteer_activism</span>
                                 </Link>
-                                <Link to="/sinergy" className="px-8 py-4 bg-white text-green-700 font-bold rounded-2xl shadow-sm border border-green-200 hover:bg-green-50 hover:-translate-y-1 transition transform duration-300 flex items-center gap-2">
-                                    Belanja Halal <span className="material-icons text-sm">shopping_bag</span>
+                                <Link to="/store" className="px-8 py-4 bg-white text-green-700 font-bold rounded-2xl shadow-sm border border-green-200 hover:bg-green-50 hover:-translate-y-1 transition transform duration-300 flex items-center gap-2">
+                                    Belanja Halal <span className="material-icons text-sm">storefront</span>
                                 </Link>
                             </div>
                         </div>
@@ -352,7 +352,7 @@ const DesktopLandingPage = () => {
                                     </div>
                                     <h3 className="text-xl font-bold text-gray-900 mb-3">Barakah Store</h3>
                                     <p className="text-gray-600 mb-4 text-sm">Penuhi kebutuhan harian dengan produk halal, bermutu, dan mendukung ekonomi umat.</p>
-                                    <Link className="text-blue-700 font-semibold hover:underline text-sm" to="/sinergy">Lihat Produk →</Link>
+                                    <Link className="text-blue-700 font-semibold hover:underline text-sm" to="/store">Lihat Produk →</Link>
                                 </div>
                             </SwiperSlide>
                             {/* Academy */}
@@ -573,7 +573,7 @@ const DesktopLandingPage = () => {
                                     <h2 className="text-3xl font-bold text-gray-900">Produk Barakah Store</h2>
                                     <p className="text-gray-500 mt-2">Penuhi kebutuhan harianmu dengan produk halal</p>
                                 </div>
-                                <Link to="/sinergy" className="px-6 py-2 border border-blue-600 text-blue-700 font-semibold rounded-lg hover:bg-blue-50 transition">
+                                <Link to="/store" className="px-6 py-2 border border-blue-600 text-blue-700 font-semibold rounded-lg hover:bg-blue-50 transition">
                                     Lihat Semua
                                 </Link>
                             </div>

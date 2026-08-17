@@ -222,10 +222,10 @@ const EcommerceOrderHistoryPage = () => {
                         </div>
                         <h3 className="text-base font-bold text-gray-900">Belum Ada Riwayat Belanja</h3>
                         <p className="text-xs text-gray-400 max-w-xs mx-auto mt-1 mb-6">
-                            Anda belum pernah melakukan pemesanan produk fisik / sinergy.
+                            Anda belum pernah melakukan pemesanan produk fisik / Store.
                         </p>
                         <button 
-                            onClick={() => navigate('/sinergy')} 
+                            onClick={() => navigate('/store')} 
                             className="px-6 py-2.5 bg-emerald-600 text-white text-xs font-black uppercase tracking-wider rounded-xl hover:bg-emerald-700 transition shadow-lg shadow-emerald-200"
                         >
                             Mulai Belanja
