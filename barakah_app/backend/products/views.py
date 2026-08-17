@@ -467,7 +467,7 @@ class ProductShareView(APIView):
             product_data = {
                 'title': product.title,
                 'description': " | ".join(desc_parts),
-                'thumbnail_url': thumb_url,
+                'thumbnail_url': f"https://api.barakah.cloud/api/products/{product.slug}/og-image/",
                 'thumbnail_type': 'image/jpeg',
             }
         else:
@@ -475,7 +475,7 @@ class ProductShareView(APIView):
             product_data = {
                 'title': str(slug_clean).replace('-', ' ').title(),
                 'description': 'Temukan produk unggulan dan berkualitas dari Barakah Economy.',
-                'thumbnail_url': 'https://barakah.cloud/images/web-thumbnail.jpg',
+                'thumbnail_url': f"https://api.barakah.cloud/api/products/{slug_clean}/og-image/",
                 'thumbnail_type': 'image/jpeg',
             }
 
@@ -484,3 +484,85 @@ class ProductShareView(APIView):
             'product': product_data,
             'target_url': target_url
         })
+
+
+class ProductOgImageView(APIView):
+    """
+    Dynamically generates and serves lightweight (< 200KB) JPEG thumbnails for WhatsApp / Telegram Open Graph.
+    WhatsApp rejects thumbnails > 300KB or in non-standard formats (WebP/SVG).
+    """
+    permission_classes = [AllowAny]
+
+    def get(self, request, slug=None, pk=None):
+        from django.http import HttpResponse
+        from PIL import Image
+        import io, os
+        from django.conf import settings
+
+        product = None
+        if slug:
+            product = Product.objects.filter(slug__iexact=slug).first()
+        elif pk:
+            product = Product.objects.filter(pk=pk).first()
+
+        # Fallback to digital product if not found
+        dp = None
+        if not product and slug:
+            from digital_products.models import DigitalProduct
+            dp = DigitalProduct.objects.filter(slug__iexact=slug).first()
+
+        # Resolve image file on disk
+        img_path = None
+        if product:
+            if product.thumbnail and hasattr(product.thumbnail, 'path') and os.path.exists(product.thumbnail.path):
+                img_path = product.thumbnail.path
+            elif hasattr(product, 'images') and product.images.exists():
+                first_img = product.images.first()
+                if first_img and first_img.image and hasattr(first_img.image, 'path') and os.path.exists(first_img.image.path):
+                    img_path = first_img.image.path
+        elif dp:
+            if dp.thumbnail and hasattr(dp.thumbnail, 'path') and os.path.exists(dp.thumbnail.path):
+                img_path = dp.thumbnail.path
+
+        if img_path and os.path.exists(img_path):
+            try:
+                with Image.open(img_path) as img:
+                    # Convert to RGB (in case of RGBA, P, WebP, etc.)
+                    if img.mode in ('RGBA', 'LA', 'P'):
+                        bg = Image.new('RGB', img.size, (255, 255, 255))
+                        if img.mode == 'P':
+                            img = img.convert('RGBA')
+                        bg.paste(img, mask=img.split()[-1] if img.mode == 'RGBA' else None)
+                        img = bg
+                    elif img.mode != 'RGB':
+                        img = img.convert('RGB')
+
+                    # Resize to max 600x600 maintaining aspect ratio for WhatsApp
+                    img.thumbnail((600, 600), Image.Resampling.LANCZOS)
+
+                    buffer = io.BytesIO()
+                    img.save(buffer, format='JPEG', quality=82, optimize=True)
+                    img_bytes = buffer.getvalue()
+
+                    response = HttpResponse(img_bytes, content_type='image/jpeg')
+                    response['Cache-Control'] = 'public, max-age=86400'
+                    return response
+            except Exception as e:
+                pass
+
+        # Fallback to default web-thumbnail.jpg
+        default_thumb_path = os.path.join(settings.BASE_DIR, '..', 'frontend', 'public', 'images', 'web-thumbnail.jpg')
+        if os.path.exists(default_thumb_path):
+            try:
+                with open(default_thumb_path, 'rb') as f:
+                    response = HttpResponse(f.read(), content_type='image/jpeg')
+                    response['Cache-Control'] = 'public, max-age=86400'
+                    return response
+            except:
+                pass
+
+        # In-memory generated placeholder
+        img = Image.new('RGB', (300, 300), color=(5, 150, 105))
+        buffer = io.BytesIO()
+        img.save(buffer, format='JPEG', quality=80)
+        return HttpResponse(buffer.getvalue(), content_type='image/jpeg')

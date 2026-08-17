@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import ProductViewSet, ProductDetailView, ProductShareView, ShopVoucherViewSet, VoucherValidateView
+from .views import ProductViewSet, ProductDetailView, ProductShareView, ProductOgImageView, ShopVoucherViewSet, VoucherValidateView
 
 # Endpoint untuk list dan create product
 product_list = ProductViewSet.as_view({
@@ -34,6 +34,7 @@ urlpatterns = [
 
     # Action endpoints for ID
     path('<int:pk>/like/', ProductViewSet.as_view({'post': 'like'}), name='product-like'),
+    path('<int:pk>/og-image/', ProductOgImageView.as_view(), name='product-og-image-pk'),
     path('<int:pk>/add_testimoni_admin/', ProductViewSet.as_view({'post': 'add_testimoni_admin'}), name='product-testi-admin-id'),
     path('<int:pk>/add_testimoni_buyer/', ProductViewSet.as_view({'post': 'add_testimoni_buyer'}), name='product-testi-buyer-id'),
     path('<int:pk>/testimonies/<int:testimoni_id>/', ProductViewSet.as_view({'delete': 'delete_testimoni'}), name='product-testi-delete-id'),
@@ -42,6 +43,7 @@ urlpatterns = [
 
     # Action endpoints for Slug
     path('<slug:slug>/like/', ProductViewSet.as_view({'post': 'like'}), name='product-like-slug'),
+    path('<slug:slug>/og-image/', ProductOgImageView.as_view(), name='product-og-image-slug'),
     path('<slug:slug>/add_testimoni_admin/', ProductViewSet.as_view({'post': 'add_testimoni_admin'}), name='product-testi-admin-slug'),
     path('<slug:slug>/add_testimoni_buyer/', ProductViewSet.as_view({'post': 'add_testimoni_buyer'}), name='product-testi-buyer-slug'),
     path('<slug:slug>/testimonies/<int:testimoni_id>/', ProductViewSet.as_view({'delete': 'delete_testimoni'}), name='product-testi-delete-slug'),
