@@ -10,6 +10,7 @@ import NavigationButton from '../components/layout/Navigation';
 import DesktopFooter from '../components/layout/DesktopFooter';
 import { useMediaQuery } from 'react-responsive';
 import { getMediaUrl } from '../utils/mediaUtils';
+import BrandPageLoader from '../components/common/BrandPageLoader';
 
 const formatIDR = (amount) => {
     return 'Rp. ' + new Intl.NumberFormat('id-ID', { minimumFractionDigits: 0 }).format(amount);
@@ -83,6 +84,7 @@ const DesktopLandingPage = () => {
     const [selectedPartner, setSelectedPartner] = useState(null);
     const [isFullscreen, setIsFullscreen] = useState(false);
     const [swiperInstance, setSwiperInstance] = useState(null);
+    const [loading, setLoading] = useState(true);
     const isDesktop = useMediaQuery({ minWidth: 1024 });
 
     const handleSlideChange = (swiper) => {
@@ -107,7 +109,7 @@ const DesktopLandingPage = () => {
 
     useEffect(() => {
         // Fetch data
-
+        const startTime = Date.now();
         const fetchData = async () => {
             const getSafe = (promise) => promise.catch(err => {
                 console.error("API Call failed:", err);
@@ -149,6 +151,12 @@ const DesktopLandingPage = () => {
                 if (items.length > 0 && items[0]) setAboutUs(items[0]);
             } catch (err) {
                 console.error('Critical error fetching landing page data:', err);
+            } finally {
+                const elapsed = Date.now() - startTime;
+                const remaining = Math.max(0, 500 - elapsed);
+                setTimeout(() => {
+                    setLoading(false);
+                }, remaining);
             }
         };
         fetchData();
@@ -163,7 +171,8 @@ const DesktopLandingPage = () => {
     }, []);
 
     return (
-        <div className="w-full min-h-screen bg-gray-50 flex flex-col font-sans">
+        <div className="w-full min-h-screen bg-gray-50 flex flex-col font-sans relative">
+            <BrandPageLoader isVisible={loading} />
             {isDesktop ? <DesktopHeader /> : <HeaderHome />}
 
             <main className={`flex-1 ${isDesktop ? 'pt-20' : 'pb-24'}`}>

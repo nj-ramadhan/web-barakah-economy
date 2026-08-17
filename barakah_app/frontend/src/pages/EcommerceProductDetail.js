@@ -388,87 +388,98 @@ const EcommerceProductDetail = () => {
           </div>
           <div className="p-6 md:p-10 md:w-1/2 flex flex-col justify-between">
             <div>
-              <div className="flex justify-between items-start gap-4 mb-4">
-                <h1 className="text-2xl md:text-3xl font-bold text-gray-900">{product.title}</h1>
-                <ShareButton 
-                  slug={product.slug || product.id} 
-                  title={product.title} 
-                  type="sinergy"
-                  price={selectedVariation ? (selectedVariation.additional_price > 0 ? selectedVariation.additional_price : product.price) : product.price}
-                  description={product.description}
-                />
-              </div>
-              <div className="flex justify-between items-center mb-6">
-                <div className="flex flex-col gap-1">
-                  {(() => {
-                    const basePrice = Number(selectedVariation
-                      ? (selectedVariation.additional_price > 0 ? selectedVariation.additional_price : product.price)
-                      : product.price);
+              {(() => {
+                const basePrice = Number(selectedVariation
+                  ? (selectedVariation.additional_price > 0 ? selectedVariation.additional_price : product.price)
+                  : product.price);
 
-                    let finalPrice = basePrice;
-                    let hasPromo = false;
-                    let promoDiscountPct = 0;
+                let finalPrice = basePrice;
+                let hasPromo = false;
+                let promoDiscountPct = 0;
 
-                    if (product.active_promotion) {
-                      const promo = product.active_promotion;
-                      if (promo.discount_type === 'percentage') {
-                        finalPrice = basePrice - (basePrice * (Number(promo.discount_value) / 100));
-                        promoDiscountPct = Number(promo.discount_value);
-                        hasPromo = true;
-                      } else if (promo.discount_type === 'nominal') {
-                        finalPrice = Math.max(0, basePrice - Number(promo.discount_value));
-                        promoDiscountPct = basePrice > 0 ? Math.round((Number(promo.discount_value) / basePrice) * 100) : 0;
-                        hasPromo = true;
-                      } else if (promo.discount_type === 'min_qty_discount' && quantity >= Number(promo.min_quantity || 1)) {
-                        if (promo.is_min_qty_percentage) {
-                          finalPrice = basePrice - (basePrice * (Number(promo.discount_value) / 100));
-                          promoDiscountPct = Number(promo.discount_value);
-                        } else {
-                          finalPrice = Math.max(0, basePrice - Number(promo.discount_value));
-                          promoDiscountPct = basePrice > 0 ? Math.round((Number(promo.discount_value) / basePrice) * 100) : 0;
-                        }
-                        hasPromo = true;
-                      }
+                if (product.active_promotion) {
+                  const promo = product.active_promotion;
+                  if (promo.discount_type === 'percentage') {
+                    finalPrice = basePrice - (basePrice * (Number(promo.discount_value) / 100));
+                    promoDiscountPct = Number(promo.discount_value);
+                    hasPromo = true;
+                  } else if (promo.discount_type === 'nominal') {
+                    finalPrice = Math.max(0, basePrice - Number(promo.discount_value));
+                    promoDiscountPct = basePrice > 0 ? Math.round((Number(promo.discount_value) / basePrice) * 100) : 0;
+                    hasPromo = true;
+                  } else if (promo.discount_type === 'min_qty_discount' && quantity >= Number(promo.min_quantity || 1)) {
+                    if (promo.is_min_qty_percentage) {
+                      finalPrice = basePrice - (basePrice * (Number(promo.discount_value) / 100));
+                      promoDiscountPct = Number(promo.discount_value);
+                    } else {
+                      finalPrice = Math.max(0, basePrice - Number(promo.discount_value));
+                      promoDiscountPct = basePrice > 0 ? Math.round((Number(promo.discount_value) / basePrice) * 100) : 0;
                     }
+                    hasPromo = true;
+                  }
+                }
 
-                    if (hasPromo) {
-                      return (
-                        <div className="flex flex-col">
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="bg-gradient-to-r from-red-600 to-rose-600 text-white text-[10px] font-black px-2.5 py-0.5 rounded-full shadow-sm flex items-center gap-1">
-                              <span className="material-icons text-[12px]">local_fire_department</span>
-                              {promoDiscountPct > 0 ? `HEMAT ${promoDiscountPct}%` : 'PROMO'}
-                            </span>
-                            <span className="text-xs font-bold text-rose-600">{product.active_promotion?.title}</span>
+                return (
+                  <>
+                    <div className="flex justify-between items-start gap-4 mb-4">
+                      <h1 className="text-2xl md:text-3xl font-bold text-gray-900">{product.title}</h1>
+                      <ShareButton 
+                        slug={product.slug || product.id} 
+                        title={product.title} 
+                        type="sinergy"
+                        price={hasPromo ? finalPrice : basePrice}
+                        originalPrice={hasPromo ? basePrice : null}
+                        promoDiscount={hasPromo ? promoDiscountPct : null}
+                        description={product.description}
+                      />
+                    </div>
+                    <div className="flex justify-between items-center mb-6">
+                      <div className="flex flex-col gap-1">
+                        {hasPromo ? (
+                          <div className="flex flex-col">
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="bg-gradient-to-r from-red-600 to-rose-600 text-white text-[10px] font-black px-2.5 py-0.5 rounded-full shadow-sm flex items-center gap-1">
+                                <span className="material-icons text-[12px]">local_fire_department</span>
+                                {promoDiscountPct > 0 ? `HEMAT ${promoDiscountPct}%` : 'PROMO'}
+                              </span>
+                              <span className="text-xs font-bold text-rose-600">{product.active_promotion?.title}</span>
+                            </div>
+                            <div className="flex items-baseline gap-2">
+                              <p className="text-2xl md:text-3xl font-black text-emerald-700">
+                                Rp {formatCurrency(finalPrice)}
+                              </p>
+                              <span className="text-sm font-semibold text-gray-400 line-through">
+                                Rp {formatCurrency(basePrice)}
+                              </span>
+                              <span className="text-sm font-semibold text-gray-500">/ {product.unit || 'pcs'}</span>
+                            </div>
                           </div>
-                          <div className="flex items-baseline gap-2">
-                            <p className="text-2xl md:text-3xl font-black text-emerald-700">
-                              Rp {formatCurrency(finalPrice)}
-                            </p>
-                            <span className="text-sm font-semibold text-gray-400 line-through">
-                              Rp {formatCurrency(basePrice)}
+                        ) : (
+                          <p className="text-2xl md:text-3xl font-black text-emerald-700 flex items-baseline gap-1">
+                            <span>
+                              {selectedVariation 
+                                ? formatIDR(selectedVariation.additional_price > 0 ? selectedVariation.additional_price : product.price)
+                                : (product.min_price && product.max_price && product.min_price !== product.max_price)
+                                  ? `${formatIDR(product.min_price)} ~ ${formatIDR(product.max_price)}`
+                                  : formatIDR(product.price)
+                              }
                             </span>
                             <span className="text-sm font-semibold text-gray-500">/ {product.unit || 'pcs'}</span>
-                          </div>
-                        </div>
-                      );
-                    }
-
-                    return (
-                      <p className="text-2xl md:text-3xl font-black text-emerald-700 flex items-baseline gap-1">
-                        <span>
-                          {selectedVariation 
-                            ? formatIDR(selectedVariation.additional_price > 0 ? selectedVariation.additional_price : product.price)
-                            : (product.min_price && product.max_price && product.min_price !== product.max_price)
-                              ? `${formatIDR(product.min_price)} ~ ${formatIDR(product.max_price)}`
-                              : formatIDR(product.price)
-                          }
-                        </span>
-                        <span className="text-sm font-semibold text-gray-500">/ {product.unit || 'pcs'}</span>
-                      </p>
-                    );
-                  })()}
-                    <div className="flex items-center text-gray-400 text-xs gap-4">
+                          </p>
+                        )}
+                      </div>
+                      <button
+                        onClick={handleToggleLike}
+                        className={`p-2 rounded-full border ${isLiked ? 'border-red-500 bg-red-50 text-red-500' : 'border-gray-200 text-gray-400 hover:text-red-500'} transition`}
+                        title="Sukai produk"
+                      >
+                        <span className="material-icons text-xl">{isLiked ? 'favorite' : 'favorite_border'}</span>
+                      </button>
+                    </div>
+                  </>
+                );
+              })()}
+                    <div className="flex items-center text-gray-400 text-xs gap-4 mb-4">
                         <div className="flex items-center gap-1">
                           <span className="material-icons text-sm">visibility</span>
                           {product.views_count || 0} kali dilihat
@@ -490,29 +501,27 @@ const EcommerceProductDetail = () => {
                           </div>
                         </div>
                     </div>
-                </div>
-                <p className="text-sm font-medium text-gray-600 bg-gray-100 px-3.5 py-1.5 rounded-full border border-gray-200">
+                <p className="text-sm font-medium text-gray-600 bg-gray-100 px-3.5 py-1.5 rounded-full border border-gray-200 mb-6 inline-block">
                   Stok: <span className="font-bold text-gray-900">{selectedVariation ? selectedVariation.stock : (product.total_stock || product.stock)}</span> {product.unit || 'pcs'}
                 </p>
-              </div>
 
-              {product?.variations && product.variations.length > 0 && (
-                <div className="mb-6">
-                  <h3 className="font-semibold text-gray-800 mb-2">Pilih Variasi {selectedVariation ? `: ${selectedVariation.name}` : ''}</h3>
-                  <div className="flex flex-wrap gap-2">
-                    {product.variations.map(variant => (
-                      <button 
-                        key={variant.id} 
-                        onClick={() => setSelectedVariation(variant)}
-                        className={`px-4 py-2 border rounded-xl font-medium text-sm transition ${selectedVariation?.id === variant.id ? 'border-green-600 bg-green-50 text-green-700' : 'border-gray-200 hover:border-green-500 hover:text-green-700'}`}
-                      >
-                        {variant.name} {variant.additional_price > 0 && `(${formatIDR(variant.additional_price)})`}
-                      </button>
-                    ))}
+                {product?.variations && product.variations.length > 0 && (
+                  <div className="mb-6">
+                    <h3 className="font-semibold text-gray-800 mb-2">Pilih Variasi {selectedVariation ? `: ${selectedVariation.name}` : ''}</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {product.variations.map(variant => (
+                        <button 
+                          key={variant.id} 
+                          onClick={() => setSelectedVariation(variant)}
+                          className={`px-4 py-2 border rounded-xl font-medium text-sm transition ${selectedVariation?.id === variant.id ? 'border-green-600 bg-green-50 text-green-700' : 'border-gray-200 hover:border-green-500 hover:text-green-700'}`}
+                        >
+                          {variant.name} {variant.additional_price > 0 && `(${formatIDR(variant.additional_price)})`}
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
-            </div>
+                )}
+              </div>
 
             {(() => {
               const currentStock = selectedVariation ? selectedVariation.stock : (product.total_stock || product.stock);

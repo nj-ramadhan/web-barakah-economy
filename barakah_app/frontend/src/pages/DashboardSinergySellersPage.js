@@ -145,9 +145,16 @@ const DashboardSinergySellersPage = () => {
 
     const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 
-    const validateFileSize = (file) => {
-        if (file && file.size > MAX_FILE_SIZE) {
+    const validateImageFile = (file) => {
+        if (!file) return false;
+        if (file.size > MAX_FILE_SIZE) {
             alert(`Ukuran file "${file.name}" terlalu besar. Maksimal 5MB.`);
+            return false;
+        }
+        const ext = file.name.split('.').pop().toLowerCase();
+        const validExts = ['jpg', 'jpeg'];
+        if (!validExts.includes(ext) && file.type !== 'image/jpeg') {
+            alert(`Format file "${file.name}" tidak didukung. Harap upload gambar berformat .jpg atau .jpeg agar thumbnail muncul optimal saat dibagikan ke media sosial.`);
             return false;
         }
         return true;
@@ -156,7 +163,10 @@ const DashboardSinergySellersPage = () => {
     const handleThumbnailChange = (e) => {
         const file = e.target.files[0];
         if (file) {
-            if (!validateFileSize(file)) return;
+            if (!validateImageFile(file)) {
+                e.target.value = '';
+                return;
+            }
             setThumbnailFile(file);
             setThumbnailPreview(URL.createObjectURL(file));
         }
@@ -166,12 +176,16 @@ const DashboardSinergySellersPage = () => {
         const files = Array.from(e.target.files);
         if (files.length > 5) {
             alert('Maksimal 5 foto galeri');
+            e.target.value = '';
             return;
         }
 
-        // Validate each file size
+        // Validate each file size and format (.jpg)
         for (const file of files) {
-            if (!validateFileSize(file)) return;
+            if (!validateImageFile(file)) {
+                e.target.value = '';
+                return;
+            }
         }
 
         setGalleryFiles(files);
@@ -642,7 +656,7 @@ const DashboardSinergySellersPage = () => {
                                     <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Pilih Foto Utama</p>
                                 </>
                             )}
-                            <input id="thumbnail-input" type="file" accept="image/*" className="hidden" onChange={handleThumbnailChange} />
+                            <input id="thumbnail-input" type="file" accept=".jpg,.jpeg,image/jpeg" className="hidden" onChange={handleThumbnailChange} />
                         </div>
                     </div>
 
@@ -653,8 +667,8 @@ const DashboardSinergySellersPage = () => {
                             className="border-2 border-dashed border-gray-200 rounded-2xl p-4 text-center hover:border-emerald-500 hover:bg-emerald-50/30 cursor-pointer transition-all h-40 flex flex-col items-center justify-center bg-gray-50/50"
                         >
                             <span className="material-icons text-gray-400 text-3xl mb-2">collections</span>
-                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Pilih Hingga 5 Foto</p>
-                            <input id="gallery-input" type="file" accept="image/*" multiple className="hidden" onChange={handleGalleryChange} />
+                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Pilih Hingga 5 Foto (.jpg)</p>
+                            <input id="gallery-input" type="file" accept=".jpg,.jpeg,image/jpeg" multiple className="hidden" onChange={handleGalleryChange} />
                         </div>
                         {galleryPreviews.length > 0 && (
                             <div className="flex gap-2 mt-3 overflow-x-auto pb-2">

@@ -494,17 +494,28 @@ const DashboardSinergyAdminPage = () => {
 
                                 {/* Thumbnail Upload */}
                                 <div className="border-t border-gray-100 pt-4">
-                                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Foto / Thumbnail Produk</label>
+                                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Foto / Thumbnail Produk (.jpg / .jpeg)</label>
                                     <div className="flex items-center gap-4">
                                         {thumbnailPreview && (
                                             <img src={thumbnailPreview} alt="Preview" className="w-16 h-16 object-cover rounded-xl border border-gray-200 shrink-0" />
                                         )}
                                         <input 
                                             type="file" 
-                                            accept="image/*" 
+                                            accept=".jpg,.jpeg,image/jpeg" 
                                             onChange={(e) => {
                                                 const file = e.target.files[0];
                                                 if (file) {
+                                                    if (file.size > 5 * 1024 * 1024) {
+                                                        alert(`Ukuran file "${file.name}" terlalu besar. Maksimal 5MB.`);
+                                                        e.target.value = '';
+                                                        return;
+                                                    }
+                                                    const ext = file.name.split('.').pop().toLowerCase();
+                                                    if (!['jpg', 'jpeg'].includes(ext) && file.type !== 'image/jpeg') {
+                                                        alert(`Format file "${file.name}" tidak didukung. Harap upload gambar berformat .jpg atau .jpeg agar thumbnail optimal saat dishare.`);
+                                                        e.target.value = '';
+                                                        return;
+                                                    }
                                                     setThumbnailFile(file);
                                                     setThumbnailPreview(URL.createObjectURL(file));
                                                 }

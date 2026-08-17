@@ -134,13 +134,67 @@ class ProductViewSet(viewsets.ModelViewSet):
             'likes_count': product.likes.count()
         })
 
+    def _ensure_jpeg(self, image_file):
+        """Converts any uploaded product image into a standard, optimized RGB JPEG (.jpg)."""
+        if not image_file:
+            return None
+        from PIL import Image
+        from django.core.files.uploadedfile import InMemoryUploadedFile
+        import io, os
+
+        try:
+            with Image.open(image_file) as img:
+                if img.mode in ('RGBA', 'LA', 'P'):
+                    bg = Image.new('RGB', img.size, (255, 255, 255))
+                    if img.mode == 'P':
+                        img = img.convert('RGBA')
+                    bg.paste(img, mask=img.split()[-1] if img.mode == 'RGBA' else None)
+                    img = bg
+                elif img.mode != 'RGB':
+                    img = img.convert('RGB')
+
+                # Resize if excessively large for fast page & social preview load
+                img.thumbnail((1600, 1600), Image.Resampling.LANCZOS)
+
+                buffer = io.BytesIO()
+                img.save(buffer, format='JPEG', quality=85, optimize=True)
+                buffer.seek(0)
+
+                base_name = os.path.splitext(image_file.name)[0]
+                new_filename = f"{base_name}.jpg"
+
+                return InMemoryUploadedFile(
+                    buffer,
+                    'ImageField',
+                    new_filename,
+                    'image/jpeg',
+                    buffer.getbuffer().nbytes,
+                    None
+                )
+        except Exception as e:
+            print(f"JPEG conversion error: {e}")
+            return image_file
+
     def perform_create(self, serializer):
-        product = serializer.save(seller=self.request.user, status='pending')
+        user = self.request.user
+        role = getattr(user, 'role', '')
+        auto_approve = user.is_superuser or user.is_staff or role == 'admin'
+        
+        thumb = self._ensure_jpeg(self.request.FILES.get('thumbnail'))
+        if thumb:
+            product = serializer.save(seller=user, thumbnail=thumb, status='approved' if auto_approve else 'pending')
+        else:
+            product = serializer.save(seller=user, status='approved' if auto_approve else 'pending')
+
         self._save_variations(product)
         self._save_gallery_images(product)
 
     def perform_update(self, serializer):
-        product = serializer.save()
+        thumb = self._ensure_jpeg(self.request.FILES.get('thumbnail'))
+        if thumb:
+            product = serializer.save(thumbnail=thumb)
+        else:
+            product = serializer.save()
         self._save_variations(product)
         self._save_gallery_images(product)
 
@@ -194,14 +248,11 @@ class ProductViewSet(viewsets.ModelViewSet):
         gallery_images = self.request.FILES.getlist('gallery_images')
         
         if gallery_images:
-            # If we want to replace images on update, we could delete old ones
-            # But for simplicity, we'll just add new ones or handle it via a separate delete endpoint
-            # product.images.all().delete() 
-            
             for img in gallery_images:
+                converted_img = self._ensure_jpeg(img) or img
                 ProductImage.objects.create(
                     product=product,
-                    image=img
+                    image=converted_img
                 )
 
     @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
@@ -441,24 +492,50 @@ class ProductShareView(APIView):
 
         if product:
             target_url = f"https://barakah.cloud/produk/{product.slug}"
-            thumb_url = ''
-            if product.thumbnail and hasattr(product.thumbnail, 'url') and product.thumbnail.url:
-                thumb_url = product.thumbnail.url
-            elif hasattr(product, 'images') and product.images.exists():
-                first_img = product.images.first()
-                if first_img and hasattr(first_img.image, 'url'):
-                    thumb_url = first_img.image.url
-            
-            if thumb_url and not thumb_url.startswith('http'):
-                thumb_url = f"https://api.barakah.cloud{thumb_url}"
-            elif not thumb_url:
-                thumb_url = 'https://barakah.cloud/images/web-thumbnail.jpg'
 
-            price_str = f"Rp {int(product.price):,}".replace(',', '.') if product.price else ''
+            # Check for active promotion/campaign
+            from django.utils import timezone
+            now = timezone.now()
+            active_promo = product.promotions.filter(
+                is_active=True,
+                start_date__lte=now,
+                end_date__gte=now
+            ).first()
+
+            price_val = float(product.price or 0)
+            orig_price_str = f"Rp {int(price_val):,}".replace(',', '.') if price_val > 0 else ''
+
+            # Helper for unicode strikethrough in link preview snippets (e.g. R̶p̶ ̶1̶0̶0̶.̶0̶0̶0̶)
+            def to_strikethrough(text):
+                return ''.join(c + '\u0336' for c in text)
+
+            price_desc = ''
+            if active_promo and price_val > 0:
+                disc_val = float(active_promo.discount_value or 0)
+                if active_promo.discount_type == 'percentage':
+                    discounted_price = max(0, price_val - (price_val * disc_val / 100))
+                    disc_label = f"-{int(disc_val)}%"
+                elif active_promo.discount_type == 'nominal':
+                    discounted_price = max(0, price_val - disc_val)
+                    disc_label = f"Hemat Rp {int(disc_val):,}".replace(',', '.')
+                else: # min_qty_discount
+                    if active_promo.is_min_qty_percentage:
+                        discounted_price = max(0, price_val - (price_val * disc_val / 100))
+                        disc_label = f"Grosir -{int(disc_val)}%"
+                    else:
+                        discounted_price = max(0, price_val - disc_val)
+                        disc_label = f"Grosir Potongan Rp {int(disc_val):,}".replace(',', '.')
+
+                promo_price_str = f"Rp {int(discounted_price):,}".replace(',', '.')
+                strike_orig = to_strikethrough(orig_price_str)
+                price_desc = f"🔥 PROMO: {promo_price_str} ({strike_orig} | {disc_label})"
+            elif orig_price_str:
+                price_desc = f"Harga: {orig_price_str}"
+
             clean_desc = re.sub(r'<[^>]*>', '', product.description or '')[:160].strip()
             desc_parts = []
-            if price_str:
-                desc_parts.append(f"Harga: {price_str}")
+            if price_desc:
+                desc_parts.append(price_desc)
             if clean_desc:
                 desc_parts.append(clean_desc)
             else:

@@ -7,6 +7,8 @@ const ShareButton = ({
     type = 'campaign', 
     username, 
     price = null, 
+    originalPrice = null,
+    promoDiscount = null,
     description = '', 
     variant = 'icon', 
     className = '' 
@@ -57,10 +59,18 @@ const ShareButton = ({
     // Determine WhatsApp text based on type
     const getWhatsAppText = () => {
         const cleanDesc = getCleanDescription();
-        const priceStr = price ? `💰 Harga: Rp ${formatCurrency(price)}\n` : '';
+        let priceStr = '';
+        if (price) {
+            if (originalPrice && Number(originalPrice) > Number(price)) {
+                const discLabel = promoDiscount ? ` | -${promoDiscount}%` : '';
+                priceStr = `🔥 Promo: Rp ${formatCurrency(price)} (~Rp ${formatCurrency(originalPrice)}~${discLabel})\n`;
+            } else {
+                priceStr = `💰 Harga: Rp ${formatCurrency(price)}\n`;
+            }
+        }
         const descStr = cleanDesc ? `📝 ${cleanDesc}\n` : '';
 
-        if (type === 'product' || type === 'sinergy') {
+        if (type === 'product' || type === 'sinergy' || type === 'store') {
             return `*Beli ${title} di Barakah Economy*\n${priceStr}${descStr}\nLihat detail & pesan sekarang:\n${shareUrl}`;
         }
         if (type === 'article') {

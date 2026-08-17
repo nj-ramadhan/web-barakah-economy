@@ -13,6 +13,7 @@ import { getDigitalProducts, getPopularSellers } from '../services/digitalProduc
 import { getMediaUrl } from '../utils/mediaUtils';
 import { forumApi } from '../services/forumApi';
 import { parseSafeDate, formatSafeDate, isDateExpired } from '../utils/dateUtils';
+import BrandPageLoader from '../components/common/BrandPageLoader';
 
 
 function getCsrfToken() {
@@ -256,6 +257,8 @@ const Home = () => {
         setHeroBanners(Array.isArray(response.data) ? response.data.filter(b => b.is_active) : []);
       } catch (err) {
         console.error('Error fetching hero banners:', err);
+      } finally {
+        setTimeout(() => setLoading(false), 500);
       }
     };
     fetchHeroBanners();
@@ -615,7 +618,8 @@ const Home = () => {
   );
 
   return (
-    <div className="body">
+    <div className="body relative">
+      <BrandPageLoader isVisible={loading} />
       <Helmet>
         <meta name="description" content="Penguatan Sistem Ekonomi Islam yang BARAKAH" />
         <meta property="og:title" content="BARAKAH APP" />
@@ -1190,164 +1194,126 @@ const Home = () => {
         )}
       </div>
 
-      {/* Product Swiper */}
-      <div className="px-4 py-4">
+      {/* Store Products Section */}
+      <div className="px-4 py-6 bg-gray-50/50 mt-2 border-y border-gray-100">
+        <div className="flex justify-between items-center mb-4">
+          <div>
+            <div className="flex items-center gap-1.5 mb-0.5">
+              <span className="material-icons text-emerald-600 text-lg">storefront</span>
+              <h2 className="text-base font-bold text-gray-900">Store UMKM Barakah</h2>
+            </div>
+            <p className="text-xs text-gray-500">Penuhi kebutuhan harian halal & berkualitas</p>
+          </div>
+          <Link 
+            to="/store" 
+            className="text-xs font-bold text-emerald-600 hover:text-emerald-700 flex items-center bg-emerald-50 px-3 py-1.5 rounded-full border border-emerald-100"
+          >
+            <span>Semua</span>
+            <span className="material-icons text-sm">chevron_right</span>
+          </Link>
+        </div>
+
         {loading ? (
           <div className="flex justify-center items-center py-8">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500"></div>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600"></div>
           </div>
         ) : (
-          <div className="swiper-container">
-            <Swiper
-              spaceBetween={16}
-              slidesPerView={2}
-              navigation
-              pagination={{ clickable: true }}
-              scrollbar={{ draggable: true }}
-              modules={[Navigation, Pagination, Scrollbar]}
-            >
-              {sortedProducts.map((product) => {
-                return (
-                  <SwiperSlide key={product.id}>
-                    <div className="bg-white rounded-lg overflow-hidden shadow">
+          <div className="grid grid-cols-2 gap-3">
+            {sortedProducts.slice(0, 6).map((product) => {
+              const basePrice = Number(product.price || 0);
+              let finalPrice = basePrice;
+              let hasPromo = false;
+              let promoDiscountPct = 0;
+
+              if (product.active_promotion) {
+                const promo = product.active_promotion;
+                if (promo.discount_type === 'percentage') {
+                  finalPrice = basePrice - (basePrice * (Number(promo.discount_value) / 100));
+                  promoDiscountPct = Number(promo.discount_value);
+                  hasPromo = true;
+                } else if (promo.discount_type === 'nominal') {
+                  finalPrice = Math.max(0, basePrice - Number(promo.discount_value));
+                  promoDiscountPct = basePrice > 0 ? Math.round((Number(promo.discount_value) / basePrice) * 100) : 0;
+                  hasPromo = true;
+                }
+              }
+
+              return (
+                <div key={product.id} className="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 flex flex-col justify-between hover:shadow-md transition-all">
+                  <div>
+                    <Link to={`/produk/${product.slug || product.id}`} className="block relative aspect-square overflow-hidden bg-gray-50">
+                      <img
+                        src={product.thumbnail || '/placeholder-image.jpg'}
+                        alt={product.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        onError={(e) => {
+                          e.target.src = '/placeholder-image.jpg';
+                        }}
+                      />
+                      {hasPromo && (
+                        <span className="absolute top-2 left-2 bg-gradient-to-r from-red-600 to-rose-600 text-white text-[9px] font-black px-2 py-0.5 rounded-full shadow-sm">
+                          {promoDiscountPct > 0 ? `-${promoDiscountPct}%` : 'PROMO'}
+                        </span>
+                      )}
+                    </Link>
+                    <div className="p-3">
                       <Link to={`/produk/${product.slug || product.id}`}>
-                        <img
-                          src={product.thumbnail || '/placeholder-image.jpg'}
-                          alt={product.title}
-                          className="w-full h-28 object-cover"
-                          onError={(e) => {
-                            e.target.src = '/placeholder-image.jpg';
-                          }}
-                        />
+                        <h3 className="text-xs font-bold text-gray-800 line-clamp-2 hover:text-emerald-700 transition mb-1.5 h-8">
+                          {product.title}
+                        </h3>
                       </Link>
-                      <div className="p-2 mb-6">
-                        <h3 className="text-sm font-medium mb-2 line-clamp-2">{product.title}</h3>
-                        <div className="flex justify-between">
-                          <p className="text-gray-600 text-xs mb-2">{formatIDR(product.price)} / {product.unit || 'pcs'}</p>
-                          <p className="text-gray-600 text-xs mb-2">stok{' '} {product.stock > 0 ? product.stock : 'habis'}</p>
-                        </div>
-                        {product.stock <= 0 ? (
-                          <div className="flex flex-col gap-2">
-                            <button
-                              className="w-full bg-gray-100 text-gray-400 py-3 rounded-xl flex items-center justify-center gap-2 cursor-not-allowed text-xs font-bold"
-                              disabled
-                            >
-                              <span className="material-icons text-sm">remove_shopping_cart</span>
-                              Habis
-                            </button>
+                      
+                      <div className="mb-2">
+                        {hasPromo ? (
+                          <div className="flex flex-col">
+                            <span className="text-xs font-extrabold text-emerald-700">
+                              {formatIDR(finalPrice)}
+                            </span>
+                            <span className="text-[10px] text-gray-400 line-through">
+                              {formatIDR(basePrice)}
+                            </span>
                           </div>
                         ) : (
-                          <div className="flex flex-col gap-2">
-                            <div className="flex gap-2">
-                              <button
-                                onClick={() => addToCart(product.id)}
-                                className="flex-1 bg-green-600 hover:bg-green-700 text-white py-2.5 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-green-100 transition-all transform hover:-translate-y-1 text-[10px]"
-                              >
-                                <span className="material-icons text-sm">shopping_cart</span>
-                                Keranjang
-                              </button>
-                              <button
-                                onClick={() => addToWishlist(product.id)}
-                                className="px-2.5 py-2.5 border-2 border-green-600 text-green-700 font-bold rounded-xl flex items-center justify-center hover:bg-green-50 transition-all"
-                                title="Tambah ke Incaran"
-                              >
-                                <span className="material-icons text-sm">favorite_border</span>
-                              </button>
-                            </div>
-                            <button
-                              onClick={() => {
-                                addToCart(product.id);
-                                setTimeout(() => {
-                                  const bubble = document.getElementById('cart-floating-bubble');
-                                  if (bubble) bubble.click();
-                                }, 500);
-                              }}
-                              className="w-full bg-emerald-500 hover:bg-emerald-600 text-white py-2.5 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-emerald-100 transition-all transform hover:-translate-y-1 text-[10px]"
-                            >
-                              <span className="material-icons text-sm">shopping_bag</span>
-                              Beli Langsung
-                            </button>
-                          </div>
+                          <span className="text-xs font-extrabold text-emerald-700">
+                            {formatIDR(basePrice)}
+                          </span>
                         )}
+                        <div className="flex justify-between items-center text-[10px] text-gray-400 mt-1">
+                          <span>Stok: <b className={product.stock > 0 ? 'text-gray-700' : 'text-red-500'}>{product.stock > 0 ? product.stock : 'Habis'}</b></span>
+                          <div className="flex items-center gap-0.5">
+                            <span className="material-icons text-[11px] text-rose-500">favorite</span>
+                            <span>{product.likes_count || 0}</span>
+                          </div>
+                        </div>
                       </div>
                     </div>
-                  </SwiperSlide>
-                );
-              })}
-            </Swiper>
-          </div>
-        )}
+                  </div>
 
-        {error && (
-          <div className="text-center py-4 text-red-500">
-            {error}
-            <button
-              onClick={() => fetchProducts(searchQuery)}
-              className="ml-4 px-4 py-2 bg-green-500 text-white rounded-lg"
-            >
-              Coba Lagi
-            </button>
-          </div>
-        )}
-      </div>
-
-      {/* Product Grid */}
-      <div className="px-4 py-4">
-        {loading ? (
-          <div className="flex justify-center items-center py-8">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500"></div>
-          </div>
-        ) : (
-          <div className="grid grid-cols-2 gap-4">
-            {products.slice(4, 10).map(product => {
-              return (
-                <div key={product.id} className="bg-white rounded-lg overflow-hidden shadow">
-                  <Link to={`/produk/${product.slug || product.id}`}>
-                    <img
-                      src={product.thumbnail || '/placeholder-image.jpg'}
-                      alt={product.title}
-                      className="w-full h-28 object-cover"
-                      onError={(e) => {
-                        e.target.src = '/placeholder-image.jpg';
-                      }}
-                    />
-                  </Link>
-                  <div className="p-2">
-                    <h3 className="text-sm font-medium mb-2 line-clamp-2">{product.title}</h3>
-                     <div className="flex justify-between items-center mb-2">
-                       <p className="text-gray-600 text-[10px]">{formatIDR(product.price)} / {product.unit || 'pcs'}</p>
-                       <div className="flex items-center gap-1 opacity-60">
-                         <span className="material-icons text-[12px] text-red-500">favorite</span>
-                         <span className="text-[10px] font-bold">{product.likes_count || 0}</span>
-                       </div>
-                       <p className="text-gray-600 text-[10px]">stok{' '} {product.stock > 0 ? product.stock : 'habis'}</p>
-                     </div>
+                  <div className="p-3 pt-0">
                     {product.stock <= 0 ? (
-                      <div className="flex flex-col gap-2">
-                        <button
-                          className="w-full bg-gray-100 text-gray-400 py-3 rounded-xl flex items-center justify-center gap-2 cursor-not-allowed text-xs font-bold"
-                          disabled
-                        >
-                          <span className="material-icons text-sm">remove_shopping_cart</span>
-                          Habis
-                        </button>
-                      </div>
+                      <button
+                        className="w-full bg-gray-100 text-gray-400 py-2 rounded-xl flex items-center justify-center gap-1 cursor-not-allowed text-[10px] font-bold"
+                        disabled
+                      >
+                        <span className="material-icons text-xs">remove_shopping_cart</span>
+                        Habis
+                      </button>
                     ) : (
-                      <div className="flex flex-col gap-2">
-                        <div className="flex gap-2">
+                      <div className="flex flex-col gap-1.5">
+                        <div className="flex gap-1.5">
                           <button
                             onClick={() => addToCart(product.id)}
-                            className="flex-1 bg-green-600 hover:bg-green-700 text-white py-2.5 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-green-100 transition-all transform hover:-translate-y-1 text-[10px]"
+                            className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white py-2 rounded-xl font-bold flex items-center justify-center gap-1 shadow-sm transition text-[10px]"
                           >
-                            <span className="material-icons text-sm">shopping_cart</span>
+                            <span className="material-icons text-xs">shopping_cart</span>
                             Keranjang
                           </button>
                           <button
                             onClick={() => addToWishlist(product.id)}
-                            className="px-2.5 py-2.5 border-2 border-green-600 text-green-700 font-bold rounded-xl flex items-center justify-center hover:bg-green-50 transition-all"
+                            className="p-2 border border-gray-200 text-gray-400 hover:text-red-500 hover:border-red-200 rounded-xl flex items-center justify-center transition"
                             title="Tambah ke Incaran"
                           >
-                            <span className="material-icons text-sm">favorite_border</span>
+                            <span className="material-icons text-xs">favorite_border</span>
                           </button>
                         </div>
                         <button
@@ -1358,9 +1324,9 @@ const Home = () => {
                               if (bubble) bubble.click();
                             }, 500);
                           }}
-                          className="w-full bg-emerald-500 hover:bg-emerald-600 text-white py-2.5 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-emerald-100 transition-all transform hover:-translate-y-1 text-[10px]"
+                          className="w-full bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 py-1.5 rounded-xl font-bold flex items-center justify-center gap-1 transition text-[10px]"
                         >
-                          <span className="material-icons text-sm">shopping_bag</span>
+                          <span className="material-icons text-xs">shopping_bag</span>
                           Beli Langsung
                         </button>
                       </div>
@@ -1372,12 +1338,24 @@ const Home = () => {
           </div>
         )}
 
+        {/* Big "Lihat Semua Produk" button */}
+        <div className="mt-5">
+          <Link 
+            to="/store"
+            className="w-full py-3 px-4 bg-gradient-to-r from-emerald-600 to-green-600 text-white font-bold text-xs rounded-2xl flex items-center justify-center gap-2 shadow-md shadow-emerald-200 hover:from-emerald-700 hover:to-green-700 transition active:scale-[0.98]"
+          >
+            <span className="material-icons text-base">storefront</span>
+            <span>Lihat Semua Produk ({sortedProducts.length > 0 ? sortedProducts.length : '10+'})</span>
+            <span className="material-icons text-base">arrow_forward</span>
+          </Link>
+        </div>
+
         {error && (
-          <div className="text-center py-4 text-red-500">
+          <div className="text-center py-4 text-red-500 text-xs">
             {error}
             <button
               onClick={() => fetchProducts(searchQuery)}
-              className="ml-4 px-4 py-2 bg-green-500 text-white rounded-lg"
+              className="ml-2 px-3 py-1 bg-emerald-600 text-white rounded-lg text-xs"
             >
               Coba Lagi
             </button>
