@@ -39,7 +39,7 @@ class VoucherValidateView(APIView):
         except ShopVoucher.DoesNotExist:
             return Response({'error': 'Voucher tidak valid atau tidak ditemukan'}, status=status.HTTP_404_NOT_FOUND)
 
-from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
+from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly, AllowAny
 from .permissions import IsOwnerOrAdmin
 
 class ProductViewSet(viewsets.ModelViewSet):
