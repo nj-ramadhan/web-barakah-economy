@@ -7,18 +7,7 @@ import { getMediaUrl } from '../../utils/mediaUtils';
 import CKEditorComponent from '../../components/common/CKEditor';
 import AdminTestimonyModal from '../../components/modals/AdminTestimonyModal';
 import ProductPromoModal from '../../components/modals/ProductPromoModal';
-
-const formatCurrency = (val) => {
-    if (!val && val !== 0) return '';
-    return new Intl.NumberFormat('id-ID').format(val);
-};
-
-const parseCurrency = (str) => {
-    if (!str) return 0;
-    if (typeof str === 'number') return str;
-    const cleanStr = str.toString().replace(/[^0-9]/g, '');
-    return cleanStr ? parseInt(cleanStr, 10) : 0;
-};
+import { formatCurrency, parseCurrency } from '../../utils/formatters';
 
 const DashboardSinergyAdminPage = () => {
     const [products, setProducts] = useState([]);
@@ -115,13 +104,16 @@ const DashboardSinergyAdminPage = () => {
         setDescription(product.description || '');
         setUnit(product.unit || 'pcs');
         setCategory(product.category || 'lainnya');
-        setPurchasePrice(product.purchase_price || 0);
-        setSellingPrice(product.price || 0);
+        setPurchasePrice(parseCurrency(product.purchase_price) || 0);
+        setSellingPrice(parseCurrency(product.price) || 0);
         setStock(product.stock || 0);
         setWeight(product.weight || 1000);
         setIsCodAvailable(product.is_cod_available || false);
         setSelectedCouriers(product.supported_couriers ? product.supported_couriers.split(',') : ['jne', 'pos', 'tiki', 'jnt']);
-        setVariants(product.variations && product.variations.length > 0 ? product.variations : [{ name: '', additional_price: 0, stock: 0 }]);
+        setVariants(product.variations && product.variations.length > 0 
+            ? product.variations.map(v => ({ ...v, additional_price: parseCurrency(v.additional_price) || 0 })) 
+            : [{ name: '', additional_price: 0, stock: 0 }]
+        );
         setThumbnailPreview(getMediaUrl(product.thumbnail || product.thumbnail_url));
         setThumbnailFile(null);
         setIsEditModalOpen(true);

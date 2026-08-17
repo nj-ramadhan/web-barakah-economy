@@ -39,7 +39,7 @@ const ProductPromoModal = ({ isOpen, onClose, product, onSuccess }) => {
         setActivePromo(p);
         setTitle(p.title || 'Promo Spesial');
         setDiscountType(p.discount_type || 'percentage');
-        setDiscountValue(p.discount_value || 0);
+        setDiscountValue(parseCurrency(p.discount_value) || 0);
         setMinQuantity(p.min_quantity || 1);
         setIsMinQtyPercentage(p.is_min_qty_percentage ?? true);
         if (p.start_date) setStartDate(new Date(p.start_date).toISOString().slice(0, 16));
@@ -56,14 +56,26 @@ const ProductPromoModal = ({ isOpen, onClose, product, onSuccess }) => {
 
   if (!isOpen || !product) return null;
 
+  const originalPrice = Number(product.price || 0);
+  const isPercentage = discountType === 'percentage' || (discountType === 'min_qty_discount' && isMinQtyPercentage);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!title.trim()) {
       setError('Nama promo wajib diisi.');
       return;
     }
-    if (Number(discountValue) <= 0) {
+    const numericDiscount = Number(discountValue);
+    if (numericDiscount <= 0) {
       setError('Nilai diskon harus lebih dari 0.');
+      return;
+    }
+    if (isPercentage && numericDiscount > 100) {
+      setError('Diskon persentase maksimal 100%.');
+      return;
+    }
+    if (!isPercentage && originalPrice > 0 && numericDiscount > originalPrice) {
+      setError(`Diskon nominal tidak boleh melebihi harga jual produk (Rp ${formatCurrency(originalPrice)}).`);
       return;
     }
     if (new Date(endDate) <= new Date(startDate)) {
@@ -112,18 +124,13 @@ const ProductPromoModal = ({ isOpen, onClose, product, onSuccess }) => {
   };
 
   // Preview Price calculation
-  const originalPrice = Number(product.price || 0);
   let promoPricePreview = originalPrice;
-  if (discountType === 'percentage') {
-    promoPricePreview = originalPrice - (originalPrice * (Number(discountValue) / 100));
-  } else if (discountType === 'nominal') {
-    promoPricePreview = originalPrice - Number(discountValue);
-  } else if (discountType === 'min_qty_discount') {
-    if (isMinQtyPercentage) {
-      promoPricePreview = originalPrice - (originalPrice * (Number(discountValue) / 100));
-    } else {
-      promoPricePreview = originalPrice - Number(discountValue);
-    }
+  if (isPercentage) {
+    const cappedPct = Math.min(100, Math.max(0, Number(discountValue) || 0));
+    promoPricePreview = originalPrice - (originalPrice * (cappedPct / 100));
+  } else {
+    const cappedNom = Math.min(originalPrice, Math.max(0, Number(discountValue) || 0));
+    promoPricePreview = originalPrice - cappedNom;
   }
   promoPricePreview = Math.max(0, promoPricePreview);
 
@@ -140,55 +147,54 @@ const ProductPromoModal = ({ isOpen, onClose, product, onSuccess }) => {
           </div>
           <button 
             onClick={onClose}
-            className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition"
+            className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-500 flex items-center justify-center transition"
           >
-            <span className="material-icons text-xl">close</span>
+            <span className="material-icons text-sm">close</span>
           </button>
         </div>
 
         {error && (
-          <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-2xl text-xs font-semibold text-red-600 flex items-center gap-2">
-            <span className="material-icons text-sm">error</span>
+          <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-2xl text-xs text-red-600 font-semibold flex items-center gap-2">
+            <span className="material-icons text-sm">error_outline</span>
             {error}
           </div>
         )}
 
-        {/* Live Harga Coret Preview Banner */}
-        <div className="mt-4 p-4 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-2xl border border-emerald-100 flex items-center justify-between">
+        {/* Live Calculation Preview Banner */}
+        <div className="mt-4 p-4 bg-gradient-to-br from-emerald-500 to-green-600 rounded-2xl text-white shadow-lg shadow-emerald-200 flex items-center justify-between">
           <div>
-            <span className="text-[10px] font-bold text-emerald-800 uppercase tracking-wider block">Preview Harga Produk</span>
-            <div className="flex items-baseline gap-2 mt-0.5">
-              <span className="text-xs text-gray-400 line-through font-semibold">
-                Rp {formatCurrency(originalPrice)}
-              </span>
-              <span className="text-base font-black text-emerald-700">
-                Rp {formatCurrency(promoPricePreview)}
-              </span>
-            </div>
+            <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-100">Harga Promo Pembeli</p>
+            <p className="text-xl font-black mt-0.5">Rp {formatCurrency(promoPricePreview)}</p>
+            <p className="text-xs text-emerald-100 line-through">Rp {formatCurrency(originalPrice)}</p>
           </div>
-          <div className="px-3 py-1 bg-emerald-600 text-white rounded-xl text-xs font-black shadow-sm">
-            {discountType === 'percentage' ? `-${discountValue}%` : `HEMAT Rp ${formatCurrency(discountValue)}`}
+          <div className="text-right">
+            <span className="bg-white/20 backdrop-blur-sm text-white font-black text-xs px-3 py-1 rounded-full border border-white/30">
+              {isPercentage 
+                ? `HEMAT ${Math.min(100, Math.round(Number(discountValue) || 0))}%`
+                : `HEMAT Rp ${formatCurrency(Math.min(originalPrice, Number(discountValue) || 0))}`
+              }
+            </span>
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="mt-5 space-y-4">
+        <form onSubmit={handleSubmit} className="mt-6 space-y-4">
           <div>
             <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
-              Nama Promo / Kampanye *
+              Nama / Judul Kampanye Promo *
             </label>
             <input
               type="text"
-              placeholder="Contoh: Flash Sale Ramadhan, Promo Gajian, dsb."
+              placeholder="Misal: Flash Sale Kemerdekaan, Promo Berkah Ramadhan"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none"
+              className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none font-medium"
               required
             />
           </div>
 
           <div>
             <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
-              Tipe Diskon
+              Tipe Diskon *
             </label>
             <div className="grid grid-cols-3 gap-2">
               <button
@@ -259,18 +265,33 @@ const ProductPromoModal = ({ isOpen, onClose, product, onSuccess }) => {
           )}
 
           <div>
-            <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
-              Nilai Diskon ({discountType === 'percentage' || (discountType === 'min_qty_discount' && isMinQtyPercentage) ? '%' : 'Rp'}) *
-            </label>
+            <div className="flex justify-between items-center mb-1.5">
+              <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider">
+                Nilai Diskon ({isPercentage ? '%' : 'Rp'}) *
+              </label>
+              <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">
+                {isPercentage ? 'Maksimal 100%' : `Maksimal Rp ${formatCurrency(originalPrice)}`}
+              </span>
+            </div>
             <input
               type="text"
-              placeholder={discountType === 'percentage' ? 'Contoh: 20 (untuk 20%)' : 'Contoh: 15000 (untuk Rp 15.000)'}
-              value={discountType === 'percentage' || (discountType === 'min_qty_discount' && isMinQtyPercentage) ? discountValue : formatCurrency(discountValue)}
+              placeholder={isPercentage ? 'Maksimal 100 (contoh: 20)' : `Maksimal ${originalPrice} (contoh: 15000)`}
+              value={isPercentage ? discountValue : formatCurrency(discountValue)}
               onChange={(e) => {
-                if (discountType === 'percentage' || (discountType === 'min_qty_discount' && isMinQtyPercentage)) {
-                  setDiscountValue(e.target.value.replace(/[^0-9.]/g, ''));
+                if (isPercentage) {
+                  const val = e.target.value.replace(/[^0-9.]/g, '');
+                  if (Number(val) > 100) {
+                    setDiscountValue(100);
+                  } else {
+                    setDiscountValue(val);
+                  }
                 } else {
-                  setDiscountValue(parseCurrency(e.target.value));
+                  const parsed = parseCurrency(e.target.value);
+                  if (originalPrice > 0 && parsed > originalPrice) {
+                    setDiscountValue(originalPrice);
+                  } else {
+                    setDiscountValue(parsed);
+                  }
                 }
               }}
               className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none font-bold"

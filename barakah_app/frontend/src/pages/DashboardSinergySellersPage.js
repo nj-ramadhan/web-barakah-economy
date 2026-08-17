@@ -104,11 +104,14 @@ const DashboardSinergySellersPage = () => {
         setEditingProduct(product);
         setDescription(product.description || '');
         setUnit(product.unit || 'pcs');
-        setVariants(product.variations && product.variations.length > 0 ? product.variations : [{name: '', additional_price: 0, stock: 0}]);
+        setVariants(product.variations && product.variations.length > 0 
+            ? product.variations.map(v => ({ ...v, additional_price: parseCurrency(v.additional_price) || 0 }))
+            : [{name: '', additional_price: 0, stock: 0}]
+        );
         setSelectedCouriers(product.supported_couriers ? product.supported_couriers.split(',') : ['jne', 'pos', 'tiki', 'jnt']);
         setIsCodAvailable(product.is_cod_available || false);
         setManualStock(product.stock || 0);
-        setManualPrice(product.price || 0);
+        setManualPrice(parseCurrency(product.price) || 0);
 
         const detailsObj = {
             own_bank_status: product.own_bank_status || 'none',
@@ -404,14 +407,14 @@ const DashboardSinergySellersPage = () => {
                                     setDescription(p.description || '');
                                     setUnit(p.unit || 'pcs');
                                     if (p.variations && p.variations.length > 0) {
-                                        setVariants(p.variations);
+                                        setVariants(p.variations.map(v => ({ ...v, additional_price: parseCurrency(v.additional_price) || 0 })));
                                     } else {
                                         setVariants([{name: '', additional_price: 0, stock: 0}]);
                                     }
                                     setSelectedCouriers(p.supported_couriers ? p.supported_couriers.split(',') : ['jne', 'pos', 'tiki', 'jnt']);
                                     setIsCodAvailable(p.is_cod_available || false);
                                     setManualStock(p.stock || 0);
-                                    setManualPrice(p.price || 0);
+                                    setManualPrice(parseCurrency(p.price) || 0);
                                     setThumbnailFile(null);
                                     setThumbnailPreview(p.thumbnail || p.thumbnail_url);
                                     setGalleryFiles([]);

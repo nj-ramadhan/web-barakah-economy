@@ -387,6 +387,21 @@ class ProductViewSet(viewsets.ModelViewSet):
             if discount_value <= 0:
                 return Response({'error': 'Nilai diskon harus lebih dari 0.'}, status=status.HTTP_400_BAD_REQUEST)
 
+            product_price = float(product.price or 0)
+            if discount_type == 'percentage':
+                if discount_value > 100:
+                    return Response({'error': 'Diskon persentase maksimal 100%.'}, status=status.HTTP_400_BAD_REQUEST)
+            elif discount_type == 'nominal':
+                if product_price > 0 and discount_value > product_price:
+                    price_formatted = f"Rp {int(product_price):,}".replace(',', '.')
+                    return Response({'error': f'Diskon nominal tidak boleh melebihi harga jual produk ({price_formatted}).'}, status=status.HTTP_400_BAD_REQUEST)
+            elif discount_type == 'min_qty_discount':
+                if is_min_qty_percentage and discount_value > 100:
+                    return Response({'error': 'Diskon persentase grosir maksimal 100%.'}, status=status.HTTP_400_BAD_REQUEST)
+                elif not is_min_qty_percentage and product_price > 0 and discount_value > product_price:
+                    price_formatted = f"Rp {int(product_price):,}".replace(',', '.')
+                    return Response({'error': f'Diskon nominal grosir tidak boleh melebihi harga jual produk ({price_formatted}).'}, status=status.HTTP_400_BAD_REQUEST)
+
             from django.utils.dateparse import parse_datetime
             start_dt = parse_datetime(start_date)
             end_dt = parse_datetime(end_date)

@@ -14,7 +14,7 @@ import {
 import BackButton from '../components/global/BackButton';
 import ImageCropperModal from '../components/common/ImageCropper';
 import CurrencyInput from '../components/common/CurrencyInput';
-import { formatCurrency } from '../utils/formatters';
+import { formatCurrency, parseCurrency } from '../utils/formatters';
 import { getMediaUrl } from '../utils/mediaUtils';
 import '../styles/Body.css';
 
@@ -116,7 +116,7 @@ const DashboardDigitalProductsPage = () => {
         setTitle(product.title);
         setDescription(product.description);
         setCategory(product.category);
-        setPrice(product.price.toString());
+        setPrice(parseCurrency(product.price) || 0);
         setDigitalLink(product.digital_link);
         setIsActive(product.is_active);
         setVisibility(product.visibility || 'global');
@@ -205,7 +205,7 @@ const DashboardDigitalProductsPage = () => {
         formData.append('title', title);
         formData.append('description', description);
         formData.append('category', category);
-        formData.append('price', price);
+        formData.append('price', parseCurrency(price) || 0);
         formData.append('digital_link', digitalLink);
         formData.append('is_active', isActive ? 'true' : 'false');
         formData.append('visibility', visibility);

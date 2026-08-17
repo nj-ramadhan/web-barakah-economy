@@ -9,6 +9,7 @@ import { createEvent, getEventDetail, updateEvent, getUserLabels, deleteDocument
 import CKEditorComponent from '../components/common/CKEditor';
 import { getCampaigns } from '../services/campaigns';
 import CurrencyInput from '../components/common/CurrencyInput';
+import { parseCurrency } from '../utils/formatters';
 
 const EventSubmissionPage = () => {
     const navigate = useNavigate();
@@ -149,7 +150,10 @@ const EventSubmissionPage = () => {
                         allow_ots_payment: d.allow_ots_payment || false,
                         free_for_label_ids: d.free_for_labels ? d.free_for_labels.map(l => l.id) : [],
                         has_special_qr: d.has_special_qr || false,
-                        price_variations: d.price_variations || [],
+                        price_variations: (d.price_variations || []).map(pv => ({
+                            ...pv,
+                            price: parseCurrency(pv.price) || 0
+                        })),
                         teams: d.teams || [],
                         collab_charity: d.collab_charity || false,
                         charity: d.charity || '',
@@ -162,7 +166,12 @@ const EventSubmissionPage = () => {
 
                     if (d.speakers && d.speakers.length > 0) setSpeakers(d.speakers);
                     if (d.sessions && d.sessions.length > 0) setSessions(d.sessions);
-                    if (d.vouchers && d.vouchers.length > 0) setVouchers(d.vouchers);
+                    if (d.vouchers && d.vouchers.length > 0) {
+                        setVouchers(d.vouchers.map(v => ({
+                            ...v,
+                            discount_value: parseCurrency(v.discount_value) || 0
+                        })));
+                    }
 
                     // Populate form fields
                     if (d.form_fields && d.form_fields.length > 0) {
@@ -612,7 +621,11 @@ const EventSubmissionPage = () => {
             data.append('sessions', JSON.stringify(cleanedSessions));
         }
         if (vouchers && vouchers.length > 0) {
-            data.append('vouchers', JSON.stringify(vouchers));
+            const sanitizedVouchers = vouchers.map(v => ({
+                ...v,
+                discount_value: parseCurrency(v.discount_value) || 0
+            }));
+            data.append('vouchers', JSON.stringify(sanitizedVouchers));
         }
 
         if (files.thumbnail_full instanceof File) data.append('thumbnail_full', files.thumbnail_full);

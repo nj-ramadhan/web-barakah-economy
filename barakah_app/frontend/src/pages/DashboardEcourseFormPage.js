@@ -7,6 +7,7 @@ import NavigationButton from '../components/layout/Navigation';
 import { createCourse, updateCourse, getCourseDetail } from '../services/ecourseApi';
 import ImageCropperModal from '../components/common/ImageCropper';
 import CurrencyInput from '../components/common/CurrencyInput';
+import { parseCurrency } from '../utils/formatters';
 import '../styles/Body.css';
 
 import { getMediaUrl } from '../utils/mediaUtils';
@@ -67,8 +68,8 @@ const DashboardEcourseFormPage = () => {
                     setTitle(data.title);
                     setDescription(data.description);
                     setCategory(data.category);
-                    setPrice(data.price.toString());
-                    setDiscount(data.discount.toString());
+                    setPrice(parseCurrency(data.price) || 0);
+                    setDiscount(parseCurrency(data.discount) || 0);
                     setIsActive(data.is_active);
                     setIsFeatured(data.is_featured);
                     setHasCertificate(data.has_certificate || false);
@@ -135,12 +136,8 @@ const DashboardEcourseFormPage = () => {
         formData.append('description', description);
         formData.append('category', category);
         
-        // Ensure price and discount are at least '0' to avoid validation errors
-        const cleanPrice = (price === undefined || price === null || price.toString().trim() === '') ? '0' : price.toString();
-        const cleanDiscount = (discount === undefined || discount === null || discount.toString().trim() === '') ? '0' : discount.toString();
-        
-        formData.append('price', cleanPrice);
-        formData.append('discount', cleanDiscount);
+        formData.append('price', parseCurrency(price) || 0);
+        formData.append('discount', parseCurrency(discount) || 0);
         formData.append('is_active', isActive ? 'true' : 'false');
         formData.append('is_featured', isFeatured ? 'true' : 'false');
         formData.append('has_certificate', hasCertificate ? 'true' : 'false');

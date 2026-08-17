@@ -1194,22 +1194,22 @@ const Home = () => {
         )}
       </div>
 
-      {/* Store Products Section */}
-      <div className="px-4 py-6 bg-gray-50/50 mt-2 border-y border-gray-100">
-        <div className="flex justify-between items-center mb-4">
+      {/* Store Products Carousel Section */}
+      <div className="px-4 py-4 bg-gray-50/70 mt-2 border-y border-gray-100">
+        <div className="flex justify-between items-center mb-3">
           <div>
             <div className="flex items-center gap-1.5 mb-0.5">
               <span className="material-icons text-emerald-600 text-lg">storefront</span>
-              <h2 className="text-base font-bold text-gray-900">Store UMKM Barakah</h2>
+              <h2 className="text-sm font-bold text-gray-900">Store UMKM Barakah</h2>
             </div>
-            <p className="text-xs text-gray-500">Penuhi kebutuhan harian halal & berkualitas</p>
+            <p className="text-[11px] text-gray-500">Produk halal & berkualitas pilihan</p>
           </div>
           <Link 
             to="/store" 
-            className="text-xs font-bold text-emerald-600 hover:text-emerald-700 flex items-center bg-emerald-50 px-3 py-1.5 rounded-full border border-emerald-100"
+            className="text-xs font-bold text-emerald-600 hover:text-emerald-700 flex items-center bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-100 shadow-sm"
           >
             <span>Semua</span>
-            <span className="material-icons text-sm">chevron_right</span>
+            <span className="material-icons text-xs">chevron_right</span>
           </Link>
         </div>
 
@@ -1218,8 +1218,12 @@ const Home = () => {
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600"></div>
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-3">
-            {sortedProducts.slice(0, 6).map((product) => {
+          <Swiper
+            spaceBetween={10}
+            slidesPerView={2.2}
+            className="!overflow-visible"
+          >
+            {sortedProducts.map((product) => {
               const basePrice = Number(product.price || 0);
               let finalPrice = basePrice;
               let hasPromo = false;
@@ -1228,127 +1232,118 @@ const Home = () => {
               if (product.active_promotion) {
                 const promo = product.active_promotion;
                 if (promo.discount_type === 'percentage') {
-                  finalPrice = basePrice - (basePrice * (Number(promo.discount_value) / 100));
-                  promoDiscountPct = Number(promo.discount_value);
+                  promoDiscountPct = Math.min(100, Math.max(1, Math.round(Number(promo.discount_value || 0))));
+                  finalPrice = Math.max(0, basePrice - (basePrice * (promoDiscountPct / 100)));
                   hasPromo = true;
                 } else if (promo.discount_type === 'nominal') {
-                  finalPrice = Math.max(0, basePrice - Number(promo.discount_value));
-                  promoDiscountPct = basePrice > 0 ? Math.round((Number(promo.discount_value) / basePrice) * 100) : 0;
+                  const discVal = Number(promo.discount_value || 0);
+                  finalPrice = Math.max(0, basePrice - discVal);
+                  promoDiscountPct = basePrice > 0 ? Math.min(100, Math.max(1, Math.round((discVal / basePrice) * 100))) : 0;
                   hasPromo = true;
                 }
               }
 
               return (
-                <div key={product.id} className="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 flex flex-col justify-between hover:shadow-md transition-all">
-                  <div>
-                    <Link to={`/produk/${product.slug || product.id}`} className="block relative aspect-square overflow-hidden bg-gray-50">
-                      <img
-                        src={product.thumbnail || '/placeholder-image.jpg'}
-                        alt={product.title}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                        onError={(e) => {
-                          e.target.src = '/placeholder-image.jpg';
-                        }}
-                      />
-                      {hasPromo && (
-                        <span className="absolute top-2 left-2 bg-gradient-to-r from-red-600 to-rose-600 text-white text-[9px] font-black px-2 py-0.5 rounded-full shadow-sm">
-                          {promoDiscountPct > 0 ? `-${promoDiscountPct}%` : 'PROMO'}
-                        </span>
-                      )}
-                    </Link>
-                    <div className="p-3">
-                      <Link to={`/produk/${product.slug || product.id}`}>
-                        <h3 className="text-xs font-bold text-gray-800 line-clamp-2 hover:text-emerald-700 transition mb-1.5 h-8">
-                          {product.title}
-                        </h3>
-                      </Link>
-                      
-                      <div className="mb-2">
-                        {hasPromo ? (
-                          <div className="flex flex-col">
-                            <span className="text-xs font-extrabold text-emerald-700">
-                              {formatIDR(finalPrice)}
-                            </span>
-                            <span className="text-[10px] text-gray-400 line-through">
-                              {formatIDR(basePrice)}
-                            </span>
-                          </div>
-                        ) : (
-                          <span className="text-xs font-extrabold text-emerald-700">
-                            {formatIDR(basePrice)}
+                <SwiperSlide key={product.id} className="!h-auto flex">
+                  <div className="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 flex flex-col justify-between w-full hover:shadow-md transition-all">
+                    <div>
+                      <Link to={`/produk/${product.slug || product.id}`} className="block relative aspect-square overflow-hidden bg-gray-50">
+                        <img
+                          src={product.thumbnail || '/placeholder-image.jpg'}
+                          alt={product.title}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            e.target.src = '/placeholder-image.jpg';
+                          }}
+                        />
+                        {hasPromo && (
+                          <span className="absolute top-1.5 left-1.5 bg-gradient-to-r from-red-600 to-rose-600 text-white text-[8px] font-black px-1.5 py-0.5 rounded-md shadow-sm">
+                            {promoDiscountPct > 0 ? `-${promoDiscountPct}%` : 'PROMO'}
                           </span>
                         )}
-                        <div className="flex justify-between items-center text-[10px] text-gray-400 mt-1">
-                          <span>Stok: <b className={product.stock > 0 ? 'text-gray-700' : 'text-red-500'}>{product.stock > 0 ? product.stock : 'Habis'}</b></span>
-                          <div className="flex items-center gap-0.5">
-                            <span className="material-icons text-[11px] text-rose-500">favorite</span>
-                            <span>{product.likes_count || 0}</span>
+                      </Link>
+                      <div className="p-2.5 pb-1">
+                        <Link to={`/produk/${product.slug || product.id}`}>
+                          <h3 className="text-xs font-bold text-gray-800 line-clamp-2 hover:text-emerald-700 transition mb-1 h-7 leading-tight">
+                            {product.title}
+                          </h3>
+                        </Link>
+                        
+                        <div className="mb-1">
+                          {hasPromo ? (
+                            <div className="flex flex-col">
+                              <span className="text-xs font-extrabold text-emerald-700">
+                                {formatIDR(finalPrice)}
+                              </span>
+                              <span className="text-[9px] text-gray-400 line-through">
+                                {formatIDR(basePrice)}
+                              </span>
+                            </div>
+                          ) : (
+                            <span className="text-xs font-extrabold text-emerald-700">
+                              {formatIDR(basePrice)}
+                            </span>
+                          )}
+                          <div className="flex justify-between items-center text-[9px] text-gray-400 mt-0.5">
+                            <span>Stok: <b className={product.stock > 0 ? 'text-gray-700' : 'text-red-500'}>{product.stock > 0 ? product.stock : '0'}</b></span>
+                            <div className="flex items-center gap-0.5">
+                              <span className="material-icons text-[10px] text-rose-500">favorite</span>
+                              <span>{product.likes_count || 0}</span>
+                            </div>
                           </div>
                         </div>
                       </div>
                     </div>
-                  </div>
 
-                  <div className="p-3 pt-0">
-                    {product.stock <= 0 ? (
-                      <button
-                        className="w-full bg-gray-100 text-gray-400 py-2 rounded-xl flex items-center justify-center gap-1 cursor-not-allowed text-[10px] font-bold"
-                        disabled
-                      >
-                        <span className="material-icons text-xs">remove_shopping_cart</span>
-                        Habis
-                      </button>
-                    ) : (
-                      <div className="flex flex-col gap-1.5">
-                        <div className="flex gap-1.5">
+                    <div className="p-2.5 pt-0 mt-auto">
+                      {product.stock <= 0 ? (
+                        <button
+                          className="w-full bg-gray-100 text-gray-400 py-1.5 rounded-xl flex items-center justify-center gap-1 cursor-not-allowed text-[9px] font-bold"
+                          disabled
+                        >
+                          <span className="material-icons text-xs">remove_shopping_cart</span>
+                          Habis
+                        </button>
+                      ) : (
+                        <div className="flex flex-col gap-1">
+                          <div className="flex gap-1">
+                            <button
+                              onClick={() => addToCart(product.id)}
+                              className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white py-1.5 rounded-xl font-bold flex items-center justify-center gap-1 shadow-sm transition text-[9px]"
+                            >
+                              <span className="material-icons text-xs">shopping_cart</span>
+                              Keranjang
+                            </button>
+                            <button
+                              onClick={() => addToWishlist(product.id)}
+                              className="p-1.5 border border-gray-200 text-gray-400 hover:text-red-500 hover:border-red-200 rounded-xl flex items-center justify-center transition"
+                              title="Tambah ke Incaran"
+                            >
+                              <span className="material-icons text-xs">favorite_border</span>
+                            </button>
+                          </div>
                           <button
-                            onClick={() => addToCart(product.id)}
-                            className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white py-2 rounded-xl font-bold flex items-center justify-center gap-1 shadow-sm transition text-[10px]"
+                            onClick={() => {
+                              addToCart(product.id);
+                              setTimeout(() => {
+                                const bubble = document.getElementById('cart-floating-bubble');
+                                if (bubble) bubble.click();
+                              }, 500);
+                            }}
+                            className="w-full bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 py-1 rounded-xl font-bold flex items-center justify-center gap-1 transition text-[9px]"
                           >
-                            <span className="material-icons text-xs">shopping_cart</span>
-                            Keranjang
-                          </button>
-                          <button
-                            onClick={() => addToWishlist(product.id)}
-                            className="p-2 border border-gray-200 text-gray-400 hover:text-red-500 hover:border-red-200 rounded-xl flex items-center justify-center transition"
-                            title="Tambah ke Incaran"
-                          >
-                            <span className="material-icons text-xs">favorite_border</span>
+                            <span className="material-icons text-xs">shopping_bag</span>
+                            Beli Langsung
                           </button>
                         </div>
-                        <button
-                          onClick={() => {
-                            addToCart(product.id);
-                            setTimeout(() => {
-                              const bubble = document.getElementById('cart-floating-bubble');
-                              if (bubble) bubble.click();
-                            }, 500);
-                          }}
-                          className="w-full bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 py-1.5 rounded-xl font-bold flex items-center justify-center gap-1 transition text-[10px]"
-                        >
-                          <span className="material-icons text-xs">shopping_bag</span>
-                          Beli Langsung
-                        </button>
-                      </div>
-                    )}
+                      )}
+                    </div>
                   </div>
-                </div>
+                </SwiperSlide>
               );
             })}
-          </div>
+          </Swiper>
         )}
-
-        {/* Big "Lihat Semua Produk" button */}
-        <div className="mt-5">
-          <Link 
-            to="/store"
-            className="w-full py-3 px-4 bg-gradient-to-r from-emerald-600 to-green-600 text-white font-bold text-xs rounded-2xl flex items-center justify-center gap-2 shadow-md shadow-emerald-200 hover:from-emerald-700 hover:to-green-700 transition active:scale-[0.98]"
-          >
-            <span className="material-icons text-base">storefront</span>
-            <span>Lihat Semua Produk ({sortedProducts.length > 0 ? sortedProducts.length : '10+'})</span>
-            <span className="material-icons text-base">arrow_forward</span>
-          </Link>
-        </div>
 
         {error && (
           <div className="text-center py-4 text-red-500 text-xs">
