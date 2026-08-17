@@ -400,17 +400,74 @@ const EcommerceProductDetail = () => {
               </div>
               <div className="flex justify-between items-center mb-6">
                 <div className="flex flex-col gap-1">
-                   <p className="text-2xl md:text-3xl font-black text-emerald-700 flex items-baseline gap-1">
-                    <span>
-                      {selectedVariation 
-                        ? formatIDR(selectedVariation.additional_price > 0 ? selectedVariation.additional_price : product.price)
-                        : (product.min_price && product.max_price && product.min_price !== product.max_price)
-                          ? `${formatIDR(product.min_price)} ~ ${formatIDR(product.max_price)}`
-                          : formatIDR(product.price)
+                  {(() => {
+                    const basePrice = Number(selectedVariation
+                      ? (selectedVariation.additional_price > 0 ? selectedVariation.additional_price : product.price)
+                      : product.price);
+
+                    let finalPrice = basePrice;
+                    let hasPromo = false;
+                    let promoDiscountPct = 0;
+
+                    if (product.active_promotion) {
+                      const promo = product.active_promotion;
+                      if (promo.discount_type === 'percentage') {
+                        finalPrice = basePrice - (basePrice * (Number(promo.discount_value) / 100));
+                        promoDiscountPct = Number(promo.discount_value);
+                        hasPromo = true;
+                      } else if (promo.discount_type === 'nominal') {
+                        finalPrice = Math.max(0, basePrice - Number(promo.discount_value));
+                        promoDiscountPct = basePrice > 0 ? Math.round((Number(promo.discount_value) / basePrice) * 100) : 0;
+                        hasPromo = true;
+                      } else if (promo.discount_type === 'min_qty_discount' && quantity >= Number(promo.min_quantity || 1)) {
+                        if (promo.is_min_qty_percentage) {
+                          finalPrice = basePrice - (basePrice * (Number(promo.discount_value) / 100));
+                          promoDiscountPct = Number(promo.discount_value);
+                        } else {
+                          finalPrice = Math.max(0, basePrice - Number(promo.discount_value));
+                          promoDiscountPct = basePrice > 0 ? Math.round((Number(promo.discount_value) / basePrice) * 100) : 0;
+                        }
+                        hasPromo = true;
                       }
-                    </span>
-                    <span className="text-sm font-semibold text-gray-500">/ {product.unit || 'pcs'}</span>
-                   </p>
+                    }
+
+                    if (hasPromo) {
+                      return (
+                        <div className="flex flex-col">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="bg-gradient-to-r from-red-600 to-rose-600 text-white text-[10px] font-black px-2.5 py-0.5 rounded-full shadow-sm flex items-center gap-1">
+                              <span className="material-icons text-[12px]">local_fire_department</span>
+                              {promoDiscountPct > 0 ? `HEMAT ${promoDiscountPct}%` : 'PROMO'}
+                            </span>
+                            <span className="text-xs font-bold text-rose-600">{product.active_promotion?.title}</span>
+                          </div>
+                          <div className="flex items-baseline gap-2">
+                            <p className="text-2xl md:text-3xl font-black text-emerald-700">
+                              Rp {formatCurrency(finalPrice)}
+                            </p>
+                            <span className="text-sm font-semibold text-gray-400 line-through">
+                              Rp {formatCurrency(basePrice)}
+                            </span>
+                            <span className="text-sm font-semibold text-gray-500">/ {product.unit || 'pcs'}</span>
+                          </div>
+                        </div>
+                      );
+                    }
+
+                    return (
+                      <p className="text-2xl md:text-3xl font-black text-emerald-700 flex items-baseline gap-1">
+                        <span>
+                          {selectedVariation 
+                            ? formatIDR(selectedVariation.additional_price > 0 ? selectedVariation.additional_price : product.price)
+                            : (product.min_price && product.max_price && product.min_price !== product.max_price)
+                              ? `${formatIDR(product.min_price)} ~ ${formatIDR(product.max_price)}`
+                              : formatIDR(product.price)
+                          }
+                        </span>
+                        <span className="text-sm font-semibold text-gray-500">/ {product.unit || 'pcs'}</span>
+                      </p>
+                    );
+                  })()}
                     <div className="flex items-center text-gray-400 text-xs gap-4">
                         <div className="flex items-center gap-1">
                           <span className="material-icons text-sm">visibility</span>
@@ -595,53 +652,60 @@ const EcommerceProductDetail = () => {
 
 
           {activeTab === 'testimonies' && (
-            <div className="bg-white p-4 rounded-lg shadow">
-              <ul>
-                {product.testimonies && product.testimonies.length > 0 ? (
-                  product.testimonies.map((testimoni) => (
-                    <li key={testimoni.id} className="border-b py-2 px-4">
-                      <div className="flex justify-between items-center">
-                        <p className="text-green-700 font-semibold">
-                          <strong>{testimoni.customer}</strong>
-                        </p>
-                        <p className="text-sm text-gray-500">
-                          {new Date(testimoni.created_at).toLocaleDateString('id-ID', {
-                            day: '2-digit',
-                            month: '2-digit',
-                            year: 'numeric',
-                          })} - {getTimeElapsed(testimoni.created_at)}
-                        </p>
+            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+              {product.testimonies && product.testimonies.length > 0 ? (
+                <div className="space-y-4 divide-y divide-gray-100">
+                  {product.testimonies.map((testimoni) => (
+                    <div key={testimoni.id} className="pt-4 first:pt-0">
+                      <div className="flex justify-between items-start mb-2">
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-8 h-8 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-xs uppercase">
+                            {testimoni.customer ? testimoni.customer.slice(0, 2) : 'PL'}
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-1.5">
+                              <span className="font-bold text-gray-900 text-xs">{testimoni.customer}</span>
+                              <span className="text-[9px] bg-emerald-50 text-emerald-700 font-bold px-1.5 py-0.5 rounded-full border border-emerald-200">
+                                {testimoni.is_admin_entry ? 'Pembeli Terverifikasi' : 'Verified Buyer'}
+                              </span>
+                            </div>
+                            <span className="text-[10px] text-gray-400">
+                              {new Date(testimoni.created_at).toLocaleDateString('id-ID', {
+                                day: 'numeric',
+                                month: 'short',
+                                year: 'numeric',
+                              })}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="flex text-amber-400 text-sm">
+                          {renderStars(testimoni.stars || 5)}
+                        </div>
                       </div>
-                      <div className="flex justify-between items-center">
-                        {renderStars(testimoni.stars)}
-                      </div>
-                      {testimoni.description ? (
-                        <>
-                          <div
-                            dangerouslySetInnerHTML={{
-                              __html: showFullTestimonies[testimoni.id]
-                                ? convertRelativeUrlsToAbsolute(testimoni.description, baseUrl)
-                                : convertRelativeUrlsToAbsolute(testimoni.description, baseUrl).substring(0, 0) + '',
-                            }}
+
+                      <p className="text-xs text-gray-700 leading-relaxed pl-10 whitespace-pre-line">
+                        {testimoni.description}
+                      </p>
+
+                      {testimoni.image && (
+                        <div className="pl-10 mt-3">
+                          <img
+                            src={getMediaUrl(testimoni.image)}
+                            alt="Foto Ulasan"
+                            className="w-20 h-20 sm:w-28 sm:h-28 object-cover rounded-xl border border-gray-200 shadow-sm cursor-pointer hover:opacity-90 transition"
+                            onClick={() => window.open(getMediaUrl(testimoni.image), '_blank')}
                           />
-                          {testimoni.description.length > 0 && (
-                            <button
-                              onClick={() => toggleTestimoni(testimoni.id)}
-                              className="text-green-600 mt-2 text-sm"
-                            >
-                              {showFullTestimonies[testimoni.id] ? 'Tampilkan Lebih Sedikit' : 'Tampilkan Selengkapnya'}
-                            </button>
-                          )}
-                        </>
-                      ) : (
-                        <p className="text-gray-500">Tidak ada konten.</p>
+                        </div>
                       )}
-                    </li>
-                  ))
-                ) : (
-                  <p className="text-gray-500">Belum ada testimoni terbaru.</p>
-                )}
-              </ul>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-10">
+                  <span className="material-icons text-4xl text-gray-300">rate_review</span>
+                  <p className="text-gray-500 text-xs mt-2">Belum ada testimoni untuk produk ini.</p>
+                </div>
+              )}
             </div>
           )}
         </div>

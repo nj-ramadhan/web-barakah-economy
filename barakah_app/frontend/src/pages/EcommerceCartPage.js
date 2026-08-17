@@ -101,7 +101,7 @@ const EcommerceCartPage = () => {
         }
     };
 
-    const getItemPrice = (item) => {
+    const getItemOriginalPrice = (item) => {
         if (!item) return 0;
         const prodP = Number(item.product?.price) || 0;
         let varP = 0;
@@ -114,6 +114,25 @@ const EcommerceCartPage = () => {
         }
         if (varP >= prodP && prodP > 0) return varP;
         return prodP + varP;
+    };
+
+    const getItemPrice = (item) => {
+        const base = getItemOriginalPrice(item);
+        const promo = item.product?.active_promotion;
+        if (!promo) return base;
+
+        if (promo.discount_type === 'percentage') {
+            return base - (base * (Number(promo.discount_value) / 100));
+        } else if (promo.discount_type === 'nominal') {
+            return Math.max(0, base - Number(promo.discount_value));
+        } else if (promo.discount_type === 'min_qty_discount' && item.quantity >= Number(promo.min_quantity || 1)) {
+            if (promo.is_min_qty_percentage) {
+                return base - (base * (Number(promo.discount_value) / 100));
+            } else {
+                return Math.max(0, base - Number(promo.discount_value));
+            }
+        }
+        return base;
     };
 
     const totalGrandPrice = cartItems.reduce((sum, item) => {
@@ -188,9 +207,21 @@ const EcommerceCartPage = () => {
                                                             Variasi: {item.variation.name}
                                                         </span>
                                                     )}
-                                                    <p className="text-xs font-black text-emerald-600 mt-1.5">
-                                                        {formatIDR(itemPrice)}
-                                                    </p>
+                                                    {item.product?.active_promotion && (
+                                                         <span className="inline-block ml-1 text-[9px] font-bold text-rose-600 bg-rose-50 px-1.5 py-0.5 rounded border border-rose-200">
+                                                             Promo
+                                                         </span>
+                                                     )}
+                                                     <div className="flex items-baseline gap-1.5 mt-1.5">
+                                                         <p className="text-xs font-black text-emerald-600">
+                                                             {formatIDR(itemPrice)}
+                                                         </p>
+                                                         {getItemOriginalPrice(item) > itemPrice && (
+                                                             <span className="text-[10px] text-gray-400 line-through">
+                                                                 {formatIDR(getItemOriginalPrice(item))}
+                                                             </span>
+                                                         )}
+                                                     </div>
                                                     <p className="text-[10px] text-gray-400 mt-0.5">
                                                         Stok: {item.product?.stock || item.product?.total_stock || 'Tersedia'}
                                                     </p>

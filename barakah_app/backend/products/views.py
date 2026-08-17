@@ -195,6 +195,190 @@ class ProductViewSet(viewsets.ModelViewSet):
                     image=img
                 )
 
+    @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
+    def add_testimoni_admin(self, request, pk=None, slug=None):
+        """Admin manual input of testimonials for social proof."""
+        user = request.user
+        if not (user.is_superuser or user.is_staff or getattr(user, 'role', '') == 'admin'):
+            return Response({'error': 'Hanya admin yang dapat menginput testimoni secara manual.'}, status=status.HTTP_403_FORBIDDEN)
+
+        product = self.get_object()
+        customer = request.data.get('customer') or 'Pelanggan Terverifikasi'
+        stars = int(request.data.get('stars', 5))
+        description = request.data.get('description', '').strip()
+        image_file = request.FILES.get('image')
+        created_at_input = request.data.get('created_at')
+
+        if not description:
+            return Response({'error': 'Deskripsi / teks testimoni wajib diisi.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Compress image if uploaded
+        compressed_img = self._compress_image(image_file) if image_file else None
+
+        from .models import Testimoni
+        from django.utils.dateparse import parse_datetime
+
+        testimoni = Testimoni.objects.create(
+            product=product,
+            customer=customer,
+            stars=max(1, min(5, stars)),
+            description=description,
+            image=compressed_img,
+            is_admin_entry=True
+        )
+
+        if created_at_input:
+            dt = parse_datetime(created_at_input)
+            if dt:
+                testimoni.created_at = dt
+                testimoni.save(update_fields=['created_at'])
+
+        from .serializers import TestimoniSerializer
+        return Response(TestimoniSerializer(testimoni).data, status=status.HTTP_201_CREATED)
+
+    @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
+    def add_testimoni_buyer(self, request, pk=None, slug=None):
+        """Verified buyer review submission after purchase completion."""
+        user = request.user
+        product = self.get_object()
+
+        # Check if buyer purchased this product in a completed order
+        from orders.models import Order
+        has_purchased = Order.objects.filter(
+            user=user,
+            items__product=product,
+            status__in=['Selesai', 'Completed', 'selesai', 'completed', 'delivered', 'Delivered']
+        ).exists()
+
+        if not has_purchased and not (user.is_superuser or user.is_staff):
+            return Response({
+                'error': 'Anda hanya dapat memberikan ulasan pada produk dari pesanan yang telah selesai.'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        stars = int(request.data.get('stars', 5))
+        description = request.data.get('description', '').strip()
+        image_file = request.FILES.get('image')
+
+        if not description:
+            return Response({'error': 'Ulasan / testimoni wajib diisi.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        customer_name = getattr(user.profile, 'name_full', None) or user.username
+        compressed_img = self._compress_image(image_file) if image_file else None
+
+        from .models import Testimoni
+        testimoni = Testimoni.objects.create(
+            product=product,
+            user=user,
+            customer=customer_name,
+            stars=max(1, min(5, stars)),
+            description=description,
+            image=compressed_img,
+            is_admin_entry=False
+        )
+
+        from .serializers import TestimoniSerializer
+        return Response(TestimoniSerializer(testimoni).data, status=status.HTTP_201_CREATED)
+
+    @action(detail=True, methods=['delete'], url_path='testimonies/(?P<testimoni_id>[^/.]+)', permission_classes=[IsAuthenticated])
+    def delete_testimoni(self, request, pk=None, slug=None, testimoni_id=None):
+        """Admin or author delete testimonial."""
+        user = request.user
+        product = self.get_object()
+        from .models import Testimoni
+        testimoni = get_object_or_404(Testimoni, id=testimoni_id, product=product)
+
+        if not (user.is_superuser or user.is_staff or getattr(user, 'role', '') == 'admin' or testimoni.user == user):
+            return Response({'error': 'Anda tidak memiliki hak untuk menghapus testimoni ini.'}, status=status.HTTP_403_FORBIDDEN)
+
+        testimoni.delete()
+        return Response({'message': 'Testimoni berhasil dihapus.'}, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=['get', 'post', 'delete'], permission_classes=[IsAuthenticatedOrReadOnly])
+    def promotion(self, request, pk=None, slug=None):
+        """Manage promo / campaign for product."""
+        product = self.get_object()
+        from .models import ProductPromotion
+        from .serializers import ProductPromotionSerializer
+
+        if request.method == 'GET':
+            promos = product.promotions.all().order_by('-created_at')
+            return Response(ProductPromotionSerializer(promos, many=True).data)
+
+        user = request.user
+        if not (user.is_superuser or user.is_staff or getattr(user, 'role', '') == 'admin' or product.seller == user):
+            return Response({'error': 'Hanya admin atau pemilik toko yang dapat mengatur promo produk ini.'}, status=status.HTTP_403_FORBIDDEN)
+
+        if request.method == 'DELETE':
+            product.promotions.all().delete()
+            return Response({'message': 'Promo produk berhasil dinonaktifkan/dihapus.'}, status=status.HTTP_200_OK)
+
+        if request.method == 'POST':
+            title = request.data.get('title') or 'Promo Spesial'
+            discount_type = request.data.get('discount_type', 'percentage')
+            discount_value = float(request.data.get('discount_value', 0) or 0)
+            min_quantity = int(request.data.get('min_quantity', 1) or 1)
+            is_min_qty_percentage = bool(request.data.get('is_min_qty_percentage', True))
+            start_date = request.data.get('start_date')
+            end_date = request.data.get('end_date')
+
+            if not start_date or not end_date:
+                return Response({'error': 'Tanggal mulai dan berakhir promo wajib diisi.'}, status=status.HTTP_400_BAD_REQUEST)
+
+            if discount_value <= 0:
+                return Response({'error': 'Nilai diskon harus lebih dari 0.'}, status=status.HTTP_400_BAD_REQUEST)
+
+            from django.utils.dateparse import parse_datetime
+            start_dt = parse_datetime(start_date)
+            end_dt = parse_datetime(end_date)
+
+            if not start_dt or not end_dt or end_dt <= start_dt:
+                return Response({'error': 'Format tanggal salah atau tanggal berakhir harus lebih besar dari tanggal mulai.'}, status=status.HTTP_400_BAD_REQUEST)
+
+            # Deactivate previous promos
+            product.promotions.all().update(is_active=False)
+
+            promo = ProductPromotion.objects.create(
+                product=product,
+                title=title,
+                discount_type=discount_type,
+                discount_value=discount_value,
+                min_quantity=min_quantity,
+                is_min_qty_percentage=is_min_qty_percentage,
+                start_date=start_dt,
+                end_date=end_dt,
+                is_active=True
+            )
+
+            return Response(ProductPromotionSerializer(promo).data, status=status.HTTP_201_CREATED)
+
+    def _compress_image(self, uploaded_file):
+        """Compress uploaded review image if large to ensure fast database & storage."""
+        if not uploaded_file:
+            return None
+        from io import BytesIO
+        from PIL import Image
+        from django.core.files.uploadedfile import InMemoryUploadedFile
+        import sys
+
+        try:
+            img = Image.open(uploaded_file)
+            if img.mode in ("RGBA", "P"):
+                img = img.convert("RGB")
+            max_dim = 1200
+            if max(img.size) > max_dim:
+                img.thumbnail((max_dim, max_dim), Image.Resampling.LANCZOS)
+            output = BytesIO()
+            img.save(output, format='JPEG', quality=80, optimize=True)
+            output.seek(0)
+            return InMemoryUploadedFile(
+                output, 'ImageField', f"testi_{uploaded_file.name.split('.')[0]}.jpg",
+                'image/jpeg', sys.getsizeof(output), None
+            )
+        except Exception as e:
+            print(f"Image compression fallback: {e}")
+            return uploaded_file
+
+
 class ProductDetailView(APIView):
     def get(self, request, slug):
         product = get_object_or_404(Product, slug=slug)

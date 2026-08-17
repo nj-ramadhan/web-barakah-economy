@@ -511,6 +511,11 @@ class SellerOrderViewSet(viewsets.ModelViewSet):
 
         return super().partial_update(request, *args, **kwargs)
 
+    def get(self, request, *args, **kwargs):
+        from .utils import check_all_deliveries
+        report = check_all_deliveries()
+        return Response(report)
+
     def destroy(self, request, *args, **kwargs):
         if not request.user.is_superuser:
             return Response({'error': 'Hanya admin yang dapat menghapus pesanan'}, status=status.HTTP_403_FORBIDDEN)
@@ -579,3 +584,39 @@ class SellerOrderViewSet(viewsets.ModelViewSet):
             ])
 
         return response
+
+
+class UnreviewedProductsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        completed_orders = Order.objects.filter(
+            user=user,
+            status__in=['Selesai', 'Completed', 'selesai', 'completed', 'delivered', 'Delivered']
+        ).order_by('-created_at')
+
+        from products.models import Testimoni
+
+        unreviewed_items = []
+        seen_product_ids = set()
+
+        for order in completed_orders:
+            for item in order.items.all():
+                if item.product and item.product.id not in seen_product_ids:
+                    has_reviewed = Testimoni.objects.filter(product=item.product, user=user).exists()
+                    if not has_reviewed:
+                        seen_product_ids.add(item.product.id)
+                        thumbnail_url = item.product.thumbnail.url if (item.product.thumbnail and hasattr(item.product.thumbnail, 'url')) else None
+                        unreviewed_items.append({
+                            'order_id': order.id,
+                            'order_number': order.order_number,
+                            'product_id': item.product.id,
+                            'product_title': item.product.title,
+                            'product_slug': item.product.slug,
+                            'product_thumbnail': thumbnail_url,
+                            'price': float(item.price),
+                            'completed_at': order.completed_at or order.updated_at
+                        })
+
+        return Response(unreviewed_items)

@@ -5,6 +5,8 @@ import Header from '../../components/layout/Header';
 import NavigationButton from '../../components/layout/Navigation';
 import { getMediaUrl } from '../../utils/mediaUtils';
 import CKEditorComponent from '../../components/common/CKEditor';
+import AdminTestimonyModal from '../../components/modals/AdminTestimonyModal';
+import ProductPromoModal from '../../components/modals/ProductPromoModal';
 
 const formatCurrency = (val) => {
     if (!val && val !== 0) return '';
@@ -38,9 +40,13 @@ const DashboardSinergyAdminPage = () => {
     const [selectedCouriers, setSelectedCouriers] = useState(['jne', 'pos', 'tiki', 'jnt']);
     const [variants, setVariants] = useState([]);
     const [thumbnailFile, setThumbnailFile] = useState(null);
-    const [thumbnailPreview, setThumbnailPreview] = useState(null);
     const [savingProduct, setSavingProduct] = useState(false);
 
+    // Promo & Testimoni Modal States
+    const [isTestiModalOpen, setIsTestiModalOpen] = useState(false);
+    const [selectedTestiProduct, setSelectedTestiProduct] = useState(null);
+    const [isPromoModalOpen, setIsPromoModalOpen] = useState(false);
+    const [selectedPromoProduct, setSelectedPromoProduct] = useState(null);
 
     const fetchProducts = async () => {
         const user = JSON.parse(localStorage.getItem('user'));
@@ -259,8 +265,26 @@ const DashboardSinergyAdminPage = () => {
                                     )}
 
                                     <button 
+                                        onClick={() => { setSelectedTestiProduct(p); setIsTestiModalOpen(true); }} 
+                                        className="px-3 py-2 text-xs font-bold text-amber-700 bg-amber-50 hover:bg-amber-100 rounded-xl transition border border-amber-200 flex items-center gap-1"
+                                        title="Input Testimoni / Ulasan Produk"
+                                    >
+                                        <span className="material-icons text-sm">rate_review</span>
+                                        <span>+ Testimoni</span>
+                                    </button>
+
+                                    <button 
+                                        onClick={() => { setSelectedPromoProduct(p); setIsPromoModalOpen(true); }} 
+                                        className="px-3 py-2 text-xs font-bold text-purple-700 bg-purple-50 hover:bg-purple-100 rounded-xl transition border border-purple-200 flex items-center gap-1"
+                                        title="Atur Promo & Diskon Produk"
+                                    >
+                                        <span className="material-icons text-sm">campaign</span>
+                                        <span>Atur Promo</span>
+                                    </button>
+
+                                    <button 
                                         onClick={() => handleToggleActive(p.id, p.is_active)} 
-                                        className={`px-3 py-2 text-xs font-bold rounded-xl transition border ${p.is_active ? 'text-amber-700 bg-amber-50 hover:bg-amber-100 border-amber-200' : 'text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border-emerald-200'}`}
+                                        className={`px-3 py-2 text-xs font-bold rounded-xl transition border ${p.is_active ? 'text-gray-600 bg-gray-50 hover:bg-gray-100 border-gray-200' : 'text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border-emerald-200'}`}
                                         title={p.is_active ? 'Sembunyikan dari katalog' : 'Tampilkan di katalog'}
                                     >
                                         {p.is_active ? 'Nonaktifkan' : 'Aktifkan'}
@@ -516,6 +540,26 @@ const DashboardSinergyAdminPage = () => {
                             </form>
                         </div>
                     </div>
+                )}
+
+                {/* Admin Testimony Input Modal */}
+                {isTestiModalOpen && selectedTestiProduct && (
+                    <AdminTestimonyModal
+                        isOpen={isTestiModalOpen}
+                        onClose={() => { setIsTestiModalOpen(false); setSelectedTestiProduct(null); }}
+                        product={selectedTestiProduct}
+                        onSuccess={fetchProducts}
+                    />
+                )}
+
+                {/* Product Promo & Discount Modal */}
+                {isPromoModalOpen && selectedPromoProduct && (
+                    <ProductPromoModal
+                        isOpen={isPromoModalOpen}
+                        onClose={() => { setIsPromoModalOpen(false); setSelectedPromoProduct(null); }}
+                        product={selectedPromoProduct}
+                        onSuccess={fetchProducts}
+                    />
                 )}
             </div>
             <NavigationButton />

@@ -230,7 +230,7 @@ const EcommerceCheckoutSinergy = () => {
         return <div className="min-h-screen flex items-center justify-center bg-gray-50"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600"></div></div>;
     }
 
-    const getItemPrice = (item) => {
+    const getItemOriginalPrice = (item) => {
         if (!item) return 0;
         const prodP = Number(item.product?.price) || 0;
         let varP = 0;
@@ -245,15 +245,46 @@ const EcommerceCheckoutSinergy = () => {
         return prodP + varP;
     };
 
+    const getItemPrice = (item) => {
+        const base = getItemOriginalPrice(item);
+        const promo = item.product?.active_promotion;
+        if (!promo) return base;
+
+        if (promo.discount_type === 'percentage') {
+            return base - (base * (Number(promo.discount_value) / 100));
+        } else if (promo.discount_type === 'nominal') {
+            return Math.max(0, base - Number(promo.discount_value));
+        } else if (promo.discount_type === 'min_qty_discount' && item.quantity >= Number(promo.min_quantity || 1)) {
+            if (promo.is_min_qty_percentage) {
+                return base - (base * (Number(promo.discount_value) / 100));
+            } else {
+                return Math.max(0, base - Number(promo.discount_value));
+            }
+        }
+        return base;
+    };
+
     // Group items by seller for UI
     const sellerGroups = {};
     cartItems.forEach(item => {
         const s_id = item.product?.seller_id || "0";
-        if (!sellerGroups[s_id]) sellerGroups[s_id] = { items: [], total_price: 0 };
+        if (!sellerGroups[s_id]) {
+            sellerGroups[s_id] = { 
+                items: [], 
+                total_original_price: 0, 
+                total_promo_discount: 0, 
+                total_price: 0 
+            };
+        }
         sellerGroups[s_id].items.push(item);
         
-        const unitPrice = getItemPrice(item);
-        sellerGroups[s_id].total_price += (unitPrice * item.quantity);
+        const origPrice = getItemOriginalPrice(item);
+        const finalPrice = getItemPrice(item);
+        const promoDiscount = Math.max(0, (origPrice - finalPrice) * item.quantity);
+
+        sellerGroups[s_id].total_original_price += (origPrice * item.quantity);
+        sellerGroups[s_id].total_promo_discount += promoDiscount;
+        sellerGroups[s_id].total_price += (finalPrice * item.quantity);
     });
 
     return (
@@ -299,34 +330,62 @@ const EcommerceCheckoutSinergy = () => {
                 {Object.keys(sellerGroups).map(s_id => {
                     const group = sellerGroups[s_id];
                     const config = checkoutConfigs[s_id];
-                    const grandTotal = group.total_price + (config?.shipping_cost || 0) - (config?.voucher_nominal || 0);
+                    const grandTotal = Math.max(0, group.total_price + (config?.shipping_cost || 0) - (config?.voucher_nominal || 0));
 
                     return (
                         <div key={s_id} className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 mb-6">
                             <h3 className="font-bold text-gray-800 text-sm mb-4 pb-2 border-b border-gray-100">Pesanan dari Seller/Toko #{s_id === "0" ? "Barakah" : s_id}</h3>
                             <div className="space-y-4 mb-4">
-                                {group.items.map(item => (
-                                    <div key={item.id} className="flex gap-4">
-                                        <div className="w-16 h-16 bg-gray-100 rounded-xl overflow-hidden shrink-0 border border-gray-100">
-                                            <img 
-                                                src={getMediaUrl(item.product?.thumbnail || item.product?.thumbnail_url) || '/placeholder-image.jpg'} 
-                                                alt={item.product?.title}
-                                                className="w-full h-full object-cover"
-                                                onError={(e) => {
-                                                    e.target.onerror = null;
-                                                    e.target.src = '/placeholder-image.jpg';
-                                                }}
-                                            />
+                                {group.items.map(item => {
+                                    const origUnit = getItemOriginalPrice(item);
+                                    const finalUnit = getItemPrice(item);
+                                    const hasPromo = origUnit > finalUnit;
+
+                                    return (
+                                        <div key={item.id} className="flex gap-4">
+                                            <div className="w-16 h-16 bg-gray-100 rounded-xl overflow-hidden shrink-0 border border-gray-100 relative">
+                                                <img 
+                                                    src={getMediaUrl(item.product?.thumbnail || item.product?.thumbnail_url) || '/placeholder-image.jpg'} 
+                                                    alt={item.product?.title}
+                                                    className="w-full h-full object-cover"
+                                                    onError={(e) => {
+                                                        e.target.onerror = null;
+                                                        e.target.src = '/placeholder-image.jpg';
+                                                    }}
+                                                />
+                                            </div>
+                                            <div className="flex-1">
+                                                <h4 className="font-bold text-sm text-gray-800">{item.product.title}</h4>
+                                                {item.variation && <p className="text-[10px] text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full w-fit mt-1">{item.variation.name}</p>}
+                                                {hasPromo && (
+                                                    <span className="text-[9px] font-bold text-rose-600 bg-rose-50 px-1.5 py-0.5 rounded border border-rose-200 mt-1 inline-block">
+                                                        Promo: {item.product?.active_promotion?.title || 'Diskon'}
+                                                    </span>
+                                                )}
+                                                <div className="flex items-center gap-2 mt-1">
+                                                    {hasPromo ? (
+                                                        <div className="flex items-baseline gap-1.5">
+                                                            <span className="font-bold text-emerald-700 text-xs">
+                                                                Rp {new Intl.NumberFormat('id-ID').format(finalUnit)}
+                                                            </span>
+                                                            <span className="text-gray-400 line-through text-[10px]">
+                                                                Rp {new Intl.NumberFormat('id-ID').format(origUnit)}
+                                                            </span>
+                                                        </div>
+                                                    ) : (
+                                                        <span className="text-xs text-gray-600">
+                                                            Rp {new Intl.NumberFormat('id-ID').format(finalUnit)}
+                                                        </span>
+                                                    )}
+                                                    <span className="text-xs text-gray-400">x {item.quantity} =</span>
+                                                    <span className="font-bold text-emerald-700 text-xs">
+                                                        Rp {new Intl.NumberFormat('id-ID').format(finalUnit * item.quantity)}
+                                                    </span>
+                                                </div>
+                                            </div>
                                         </div>
-                                        <div className="flex-1">
-                                            <h4 className="font-bold text-sm text-gray-800">{item.product.title}</h4>
-                                            {item.variation && <p className="text-[10px] text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full w-fit mt-1">{item.variation.name}</p>}
-                                            <p className="text-xs text-gray-500 mt-1">
-                                                Rp {new Intl.NumberFormat('id-ID').format(getItemPrice(item))} x {item.quantity} = <span className="font-bold text-green-700">Rp {new Intl.NumberFormat('id-ID').format(getItemPrice(item) * item.quantity)}</span>
-                                            </p>
-                                        </div>
-                                    </div>
-                                ))}
+                                    );
+                                })}
                             </div>
 
                             {/* Simplified Shipping Notice */}
@@ -551,18 +610,95 @@ const EcommerceCheckoutSinergy = () => {
                                 </div>
                             </div>
 
-                            <div className="mt-4 pt-4 border-t border-gray-100 flex justify-between items-center">
-                                <p className="text-sm text-gray-500">Subtotal Pesanan ini:</p>
-                                <p className="text-lg font-black text-emerald-700">Rp {grandTotal}</p>
+                            {/* Line-by-line Breakdown per seller */}
+                            <div className="mt-4 pt-4 border-t border-gray-100 space-y-1.5 text-xs text-gray-600">
+                                <div className="flex justify-between">
+                                    <span>Subtotal Produk:</span>
+                                    <span className="font-semibold text-gray-800">
+                                        Rp {new Intl.NumberFormat('id-ID').format(group.total_original_price)}
+                                    </span>
+                                </div>
+                                {group.total_promo_discount > 0 && (
+                                    <div className="flex justify-between text-rose-600 font-semibold">
+                                        <span className="flex items-center gap-1">
+                                            <span className="material-icons text-xs">local_fire_department</span>
+                                            Potongan Promo / Kampanye:
+                                        </span>
+                                        <span>- Rp {new Intl.NumberFormat('id-ID').format(group.total_promo_discount)}</span>
+                                    </div>
+                                )}
+                                {(config?.voucher_nominal || 0) > 0 && (
+                                    <div className="flex justify-between text-amber-600 font-semibold">
+                                        <span className="flex items-center gap-1">
+                                            <span className="material-icons text-xs">confirmation_number</span>
+                                            Diskon Voucher:
+                                        </span>
+                                        <span>- Rp {new Intl.NumberFormat('id-ID').format(config.voucher_nominal)}</span>
+                                    </div>
+                                )}
+                                <div className="flex justify-between">
+                                    <span>Ongkos Kirim:</span>
+                                    <span className="font-semibold text-gray-800">
+                                        + Rp {new Intl.NumberFormat('id-ID').format(config?.shipping_cost || 0)}
+                                    </span>
+                                </div>
+                                <div className="flex justify-between items-center pt-2 border-t border-gray-100 text-sm">
+                                    <p className="font-bold text-gray-800">Subtotal Toko ini:</p>
+                                    <p className="text-base font-black text-emerald-700">Rp {new Intl.NumberFormat('id-ID').format(grandTotal)}</p>
+                                </div>
                             </div>
                         </div>
                     );
                 })}
 
-                <div className="sticky bottom-20 sm:static mt-8 bg-white p-4 sm:p-5 flex flex-col sm:flex-row justify-between items-center rounded-t-3xl sm:rounded-2xl shadow-[0_-4px_10px_rgb(0,0,0,0.05)] sm:shadow-lg border sm:border-gray-100">
+                {/* Overall Checkout Summary Box */}
+                {(() => {
+                    const totalOrig = Object.keys(sellerGroups).reduce((acc, sid) => acc + sellerGroups[sid].total_original_price, 0);
+                    const totalPromo = Object.keys(sellerGroups).reduce((acc, sid) => acc + sellerGroups[sid].total_promo_discount, 0);
+                    const totalVoucher = Object.keys(sellerGroups).reduce((acc, sid) => acc + (checkoutConfigs[sid]?.voucher_nominal || 0), 0);
+                    const totalShipping = Object.keys(sellerGroups).reduce((acc, sid) => acc + (checkoutConfigs[sid]?.shipping_cost || 0), 0);
+                    const totalGrand = Math.max(0, totalOrig - totalPromo - totalVoucher + totalShipping);
+
+                    return (
+                        <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 mb-6 space-y-2">
+                            <h3 className="font-bold text-gray-800 text-sm pb-2 border-b border-gray-100 flex items-center gap-1.5">
+                                <span className="material-icons text-emerald-600 text-base">receipt_long</span>
+                                Rincian Pembayaran Keseluruhan
+                            </h3>
+                            <div className="flex justify-between text-xs text-gray-600">
+                                <span>Total Harga Normal:</span>
+                                <span className="font-semibold text-gray-800">Rp {new Intl.NumberFormat('id-ID').format(totalOrig)}</span>
+                            </div>
+                            {totalPromo > 0 && (
+                                <div className="flex justify-between text-xs text-rose-600 font-semibold">
+                                    <span>Hemat Diskon Promo:</span>
+                                    <span>- Rp {new Intl.NumberFormat('id-ID').format(totalPromo)}</span>
+                                </div>
+                            )}
+                            {totalVoucher > 0 && (
+                                <div className="flex justify-between text-xs text-amber-600 font-semibold">
+                                    <span>Potongan Voucher:</span>
+                                    <span>- Rp {new Intl.NumberFormat('id-ID').format(totalVoucher)}</span>
+                                </div>
+                            )}
+                            <div className="flex justify-between text-xs text-gray-600">
+                                <span>Total Ongkir:</span>
+                                <span className="font-semibold text-gray-800">+ Rp {new Intl.NumberFormat('id-ID').format(totalShipping)}</span>
+                            </div>
+                            <div className="flex justify-between items-center pt-2 border-t border-gray-100">
+                                <span className="text-sm font-black text-gray-900 uppercase">Total Akhir</span>
+                                <span className="text-xl font-black text-emerald-600">Rp {new Intl.NumberFormat('id-ID').format(totalGrand)}</span>
+                            </div>
+                        </div>
+                    );
+                })()}
+
+                <div className="sticky bottom-20 sm:static mt-4 bg-white p-4 sm:p-5 flex flex-col sm:flex-row justify-between items-center rounded-t-3xl sm:rounded-2xl shadow-[0_-4px_10px_rgb(0,0,0,0.05)] sm:shadow-lg border sm:border-gray-100">
                     <div className="flex flex-col text-center sm:text-left mb-4 sm:mb-0 w-full sm:w-auto">
                         <span className="text-xs text-gray-500 uppercase font-bold tracking-wider">Total Pembayaran Keseluruhan</span>
-                        <span className="text-2xl font-black text-gray-800">Rp {Object.keys(sellerGroups).reduce((acc, sid) => acc + sellerGroups[sid].total_price + (checkoutConfigs[sid]?.shipping_cost || 0)  - (checkoutConfigs[sid]?.voucher_nominal || 0), 0)}</span>
+                        <span className="text-2xl font-black text-emerald-700">
+                            Rp {new Intl.NumberFormat('id-ID').format(Math.max(0, Object.keys(sellerGroups).reduce((acc, sid) => acc + sellerGroups[sid].total_price + (checkoutConfigs[sid]?.shipping_cost || 0)  - (checkoutConfigs[sid]?.voucher_nominal || 0), 0)))}
+                        </span>
                     </div>
                     <button 
                         onClick={handleProcessSplitCheckout} 

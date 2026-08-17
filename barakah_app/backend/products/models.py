@@ -169,10 +169,41 @@ class ShopVoucher(models.Model):
 
 class Testimoni(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='testimonies')
+    user = models.ForeignKey('accounts.User', on_delete=models.SET_NULL, null=True, blank=True, related_name='product_testimonies')
     customer = models.CharField(max_length=100)
     stars = models.IntegerField(default=5)
-    description = RichTextField()
+    description = models.TextField(blank=True, default='')
+    image = models.ImageField(upload_to='product_testimonies/', blank=True, null=True)
+    is_admin_entry = models.BooleanField(default=False, help_text="Diinput secara manual oleh admin")
     created_at = models.DateTimeField(auto_now_add=True)
 
+    class Meta:
+        ordering = ['-created_at']
+
     def __str__(self):
-        return f"{self.customer}"      
+        return f"{self.customer} - {self.product.title} ({self.stars} stars)"
+
+
+class ProductPromotion(models.Model):
+    PROMO_TYPE_CHOICES = [
+        ('percentage', 'Diskon Persentase (%)'),
+        ('nominal', 'Potongan Tetap (Rp)'),
+        ('min_qty_discount', 'Diskon Grosir (Beli >= X Qty)'),
+    ]
+
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='promotions')
+    title = models.CharField(max_length=150, help_text="Nama Promo / Kampanye")
+    discount_type = models.CharField(max_length=30, choices=PROMO_TYPE_CHOICES, default='percentage')
+    discount_value = models.DecimalField(max_digits=12, decimal_places=2, help_text="Nilai Diskon (% atau Rp)")
+    min_quantity = models.PositiveIntegerField(default=1, help_text="Minimal jumlah beli untuk promo grosir")
+    is_min_qty_percentage = models.BooleanField(default=True, help_text="Jika grosir, nilai diskon berupa % (True) atau Rp (False)")
+    start_date = models.DateTimeField()
+    end_date = models.DateTimeField()
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.title} - {self.product.title}"      

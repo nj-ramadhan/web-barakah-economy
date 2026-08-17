@@ -328,6 +328,12 @@ const EcommerceMainPage = () => {
               return (
                 <div key={product.id} className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all border border-gray-100 flex flex-col justify-between group">
                   <div className="relative">
+                    {product.active_promotion && (
+                      <div className="absolute top-2 left-2 z-10 bg-gradient-to-r from-red-600 to-rose-600 text-white text-[10px] font-black px-2.5 py-1 rounded-xl shadow-md flex items-center gap-1">
+                        <span className="material-icons text-[12px]">local_fire_department</span>
+                        {product.promo_discount_percentage ? `-${product.promo_discount_percentage}%` : 'PROMO'}
+                      </div>
+                    )}
                     <Link to={`/produk/${product.slug || product.id}`}>
                       <img
                         src={getMediaUrl(product.thumbnail) || '/placeholder-image.jpg'}
@@ -343,7 +349,7 @@ const EcommerceMainPage = () => {
                         slug={product.slug || product.id}
                         title={product.title}
                         type="product"
-                        price={product.price}
+                        price={product.discounted_price || product.price}
                         description={product.description}
                         variant="card-icon"
                       />
@@ -358,12 +364,26 @@ const EcommerceMainPage = () => {
                         </Link>
                       </h3>
                       <div className="mb-2">
-                        <p className="text-emerald-700 font-bold text-sm">
-                          {product.min_price && product.max_price && product.min_price !== product.max_price
-                            ? `Rp ${formatCurrency(product.min_price)} ~ ${formatCurrency(product.max_price)}`
-                            : formatIDR(product.price)
-                          } <span className="text-[10px] font-normal text-gray-400">/ {product.unit || 'pcs'}</span>
-                        </p>
+                        {product.active_promotion && product.discounted_price ? (
+                          <div>
+                            <div className="flex items-baseline gap-1.5">
+                              <p className="text-emerald-700 font-bold text-sm">
+                                Rp {formatCurrency(product.discounted_price)}
+                              </p>
+                              <span className="text-gray-400 line-through text-[11px] font-semibold">
+                                Rp {formatCurrency(product.price)}
+                              </span>
+                            </div>
+                            <span className="text-[10px] font-normal text-gray-400 block">/ {product.unit || 'pcs'}</span>
+                          </div>
+                        ) : (
+                          <p className="text-emerald-700 font-bold text-sm">
+                            {product.min_price && product.max_price && product.min_price !== product.max_price
+                              ? `Rp ${formatCurrency(product.min_price)} ~ ${formatCurrency(product.max_price)}`
+                              : formatIDR(product.price)
+                            } <span className="text-[10px] font-normal text-gray-400">/ {product.unit || 'pcs'}</span>
+                          </p>
+                        )}
                         <p className="text-gray-400 text-[10px]">
                           stok: {(product.total_stock !== undefined ? product.total_stock : product.stock) > 0 ? `${product.total_stock !== undefined ? product.total_stock : product.stock} ${product.unit || 'pcs'}` : 'habis'}
                         </p>

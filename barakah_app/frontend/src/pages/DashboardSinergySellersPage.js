@@ -7,12 +7,15 @@ import { Link } from 'react-router-dom';
 import CurrencyInput from '../components/common/CurrencyInput';
 import { formatCurrency, parseCurrency } from '../utils/formatters';
 import CKEditorComponent from '../components/common/CKEditor';
+import ProductPromoModal from '../components/modals/ProductPromoModal';
 
 const DashboardSinergySellersPage = () => {
     const [products, setProducts] = useState([]);
     const [vouchers, setVouchers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('list'); // 'list' | 'add' | 'edit' | 'voucher'
+    const [isPromoModalOpen, setIsPromoModalOpen] = useState(false);
+    const [selectedPromoProduct, setSelectedPromoProduct] = useState(null);
     const [editingProduct, setEditingProduct] = useState(null);
     const [description, setDescription] = useState('');
     const [unit, setUnit] = useState('pcs');
@@ -400,10 +403,22 @@ const DashboardSinergySellersPage = () => {
                                     setGalleryFiles([]);
                                     setGalleryPreviews(p.images ? p.images.map(img => img.image) : []);
                                     setActiveTab('edit');
-                                }} className="flex-[2] py-2 text-xs font-bold text-emerald-700 bg-emerald-50 rounded-xl hover:bg-emerald-100 border border-emerald-100 transition">Edit & Variasi</button>
+                                }} className="flex-1 py-2 text-xs font-bold text-emerald-700 bg-emerald-50 rounded-xl hover:bg-emerald-100 border border-emerald-100 transition">Edit</button>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setSelectedPromoProduct(p);
+                                        setIsPromoModalOpen(true);
+                                    }}
+                                    className="flex-1 py-2 text-xs font-bold text-purple-700 bg-purple-50 rounded-xl hover:bg-purple-100 border border-purple-100 transition flex items-center justify-center gap-1"
+                                    title="Atur Promo & Diskon"
+                                >
+                                    <span className="material-icons text-xs">campaign</span>
+                                    <span>Promo</span>
+                                </button>
                                 <button 
                                     onClick={() => handleDeleteProduct(p.id)}
-                                    className="flex-1 py-2 text-xs font-bold text-red-600 bg-red-50 rounded-xl hover:bg-red-100 border border-red-100 transition flex items-center justify-center"
+                                    className="w-8 py-2 text-xs font-bold text-red-600 bg-red-50 rounded-xl hover:bg-red-100 border border-red-100 transition flex items-center justify-center"
                                     title="Hapus Produk"
                                 >
                                     <span className="material-icons text-sm">delete</span>
@@ -821,6 +836,16 @@ const DashboardSinergySellersPage = () => {
             <div className="max-w-4xl mx-auto px-4 py-6 pb-24">
                 {activeTab === 'list' ? renderList() : activeTab === 'voucher' ? renderVouchers() : renderForm()}
             </div>
+
+            {isPromoModalOpen && selectedPromoProduct && (
+                <ProductPromoModal
+                    isOpen={isPromoModalOpen}
+                    onClose={() => { setIsPromoModalOpen(false); setSelectedPromoProduct(null); }}
+                    product={selectedPromoProduct}
+                    onSuccess={fetchDashboardData}
+                />
+            )}
+
             <NavigationButton />
         </div>
     );

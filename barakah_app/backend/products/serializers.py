@@ -1,10 +1,16 @@
 from rest_framework import serializers
-from .models import Product, Testimoni, ProductImage, ProductVariation, ShopVoucher
+from django.utils import timezone
+from .models import Product, Testimoni, ProductImage, ProductVariation, ShopVoucher, ProductPromotion
 
 class TestimoniSerializer(serializers.ModelSerializer):
     class Meta:
         model = Testimoni
-        fields = ['id', 'customer', 'stars', 'description', 'created_at']   
+        fields = ['id', 'customer', 'stars', 'description', 'image', 'is_admin_entry', 'created_at', 'user']   
+
+class ProductPromotionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProductPromotion
+        fields = '__all__'
 
 class ProductImageSerializer(serializers.ModelSerializer):
     class Meta:
@@ -20,6 +26,11 @@ class ProductSerializer(serializers.ModelSerializer):
     testimonies = TestimoniSerializer(many=True, read_only=True)
     images = ProductImageSerializer(many=True, read_only=True)
     variations = ProductVariationSerializer(many=True, read_only=True)
+    promotions = ProductPromotionSerializer(many=True, read_only=True)
+    active_promotion = serializers.SerializerMethodField()
+    discounted_price = serializers.SerializerMethodField()
+    promo_discount_percentage = serializers.SerializerMethodField()
+
     seller_name = serializers.CharField(source='seller.username', read_only=True)
     seller_city_id = serializers.SerializerMethodField()
     seller_city_name = serializers.CharField(source='seller.profile.address_city_name', read_only=True)
@@ -35,6 +46,44 @@ class ProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
         fields = '__all__'
+
+    def get_active_promotion(self, obj):
+        now = timezone.now()
+        promo = obj.promotions.filter(is_active=True, start_date__lte=now, end_date__gte=now).first()
+        if promo:
+            return ProductPromotionSerializer(promo).data
+        return None
+
+    def get_discounted_price(self, obj):
+        now = timezone.now()
+        promo = obj.promotions.filter(is_active=True, start_date__lte=now, end_date__gte=now).first()
+        if not promo:
+            return None
+        price = float(obj.price)
+        if promo.discount_type == 'percentage':
+            discount_amount = price * (float(promo.discount_value) / 100.0)
+            return max(0, price - discount_amount)
+        elif promo.discount_type == 'nominal':
+            return max(0, price - float(promo.discount_value))
+        elif promo.discount_type == 'min_qty_discount' and promo.min_quantity <= 1:
+            if promo.is_min_qty_percentage:
+                discount_amount = price * (float(promo.discount_value) / 100.0)
+                return max(0, price - discount_amount)
+            else:
+                return max(0, price - float(promo.discount_value))
+        return None
+
+    def get_promo_discount_percentage(self, obj):
+        now = timezone.now()
+        promo = obj.promotions.filter(is_active=True, start_date__lte=now, end_date__gte=now).first()
+        if not promo:
+            return None
+        if promo.discount_type == 'percentage':
+            return int(promo.discount_value)
+        elif promo.discount_type == 'nominal' and obj.price > 0:
+            pct = (float(promo.discount_value) / float(obj.price)) * 100.0
+            return int(round(pct))
+        return None
 
     def get_seller_city_id(self, obj):
         try:

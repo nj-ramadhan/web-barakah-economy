@@ -101,7 +101,7 @@ const SlideOverCartDrawer = () => {
         }
     };
 
-    const getItemPrice = (item) => {
+    const getItemOriginalPrice = (item) => {
         if (!item) return 0;
         const prodP = Number(item.product?.price) || 0;
         let varP = 0;
@@ -114,6 +114,25 @@ const SlideOverCartDrawer = () => {
         }
         if (varP >= prodP && prodP > 0) return varP;
         return prodP + varP;
+    };
+
+    const getItemPrice = (item) => {
+        const base = getItemOriginalPrice(item);
+        const promo = item.product?.active_promotion;
+        if (!promo) return base;
+
+        if (promo.discount_type === 'percentage') {
+            return base - (base * (Number(promo.discount_value) / 100));
+        } else if (promo.discount_type === 'nominal') {
+            return Math.max(0, base - Number(promo.discount_value));
+        } else if (promo.discount_type === 'min_qty_discount' && item.quantity >= Number(promo.min_quantity || 1)) {
+            if (promo.is_min_qty_percentage) {
+                return base - (base * (Number(promo.discount_value) / 100));
+            } else {
+                return Math.max(0, base - Number(promo.discount_value));
+            }
+        }
+        return base;
     };
 
     const totalGrandPrice = cartItems.reduce((sum, item) => {
@@ -182,7 +201,14 @@ const SlideOverCartDrawer = () => {
                                                 {item.variation && (
                                                     <span className="text-[10px] text-emerald-600 font-semibold block">{item.variation.name}</span>
                                                 )}
-                                                <p className="text-xs font-black text-emerald-600 mt-1">{formatIDR(itemPrice)}</p>
+                                                <div className="flex items-baseline gap-1.5 mt-1">
+                                                    <p className="text-xs font-black text-emerald-600">{formatIDR(itemPrice)}</p>
+                                                    {getItemOriginalPrice(item) > itemPrice && (
+                                                        <span className="text-[10px] text-gray-400 line-through">
+                                                            {formatIDR(getItemOriginalPrice(item))}
+                                                        </span>
+                                                    )}
+                                                </div>
                                                 
                                                 <div className="flex items-center gap-2 mt-2">
                                                     <div className="flex items-center border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800 p-0.5">

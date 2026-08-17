@@ -5,6 +5,7 @@ import axios from 'axios';
 import Header from '../components/layout/Header';
 import NavigationButton from '../components/layout/Navigation';
 import Pagination from '../components/common/Pagination';
+import BuyerReviewModal from '../components/modals/BuyerReviewModal';
 import '../styles/Body.css';
 
 const formatDate = (dateData) => {
@@ -44,6 +45,11 @@ const EcommerceOrderHistoryPage = () => {
     const [selectedCancelOrder, setSelectedCancelOrder] = useState(null);
     const [cancelReason, setCancelReason] = useState('');
     const [submittingCancel, setSubmittingCancel] = useState(false);
+
+    // Review Modal States
+    const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+    const [reviewProduct, setReviewProduct] = useState(null);
+    const [reviewOrderNumber, setReviewOrderNumber] = useState('');
 
     const fetchOrders = useCallback(async () => {
         try {
@@ -296,6 +302,26 @@ const EcommerceOrderHistoryPage = () => {
                                                                 {item.quantity} Unit • Rp {formatIDR(item.price)}
                                                             </p>
                                                         </div>
+
+                                                        {['selesai', 'completed', 'delivered'].includes(statusLower) && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    setReviewProduct({
+                                                                        id: item.product_id || item.product,
+                                                                        slug: item.product_slug,
+                                                                        title: item.product_name,
+                                                                        thumbnail: item.product_image || item.product_thumbnail,
+                                                                    });
+                                                                    setReviewOrderNumber(order.order_number);
+                                                                    setIsReviewModalOpen(true);
+                                                                }}
+                                                                className="px-3 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 rounded-xl text-[10px] font-bold flex items-center gap-1 transition shrink-0"
+                                                            >
+                                                                <span className="material-icons text-xs">star</span>
+                                                                Ulas
+                                                            </button>
+                                                        )}
                                                     </div>
                                                 ))}
                                             </div>
@@ -359,6 +385,29 @@ const EcommerceOrderHistoryPage = () => {
 
                                             {/* Actions */}
                                             <div className="flex flex-wrap gap-2 pt-2">
+                                                {['selesai', 'completed', 'delivered'].includes(statusLower) && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            const firstItem = (order.items || [])[0];
+                                                            if (firstItem) {
+                                                                setReviewProduct({
+                                                                    id: firstItem.product_id || firstItem.product,
+                                                                    slug: firstItem.product_slug,
+                                                                    title: firstItem.product_name,
+                                                                    thumbnail: firstItem.product_image || firstItem.product_thumbnail,
+                                                                });
+                                                                setReviewOrderNumber(order.order_number);
+                                                                setIsReviewModalOpen(true);
+                                                            }
+                                                        }}
+                                                        className="px-4 py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white rounded-xl text-xs font-bold transition shadow-sm flex items-center gap-1.5"
+                                                    >
+                                                        <span className="material-icons text-sm">rate_review</span>
+                                                        <span>Tulis Ulasan / Testimoni</span>
+                                                    </button>
+                                                )}
+
                                                 {order.status === 'Dikirim' && (
                                                     <>
                                                         <button 
@@ -502,6 +551,16 @@ const EcommerceOrderHistoryPage = () => {
                         </div>
                     </div>
                 </div>
+            )}
+
+            {isReviewModalOpen && reviewProduct && (
+                <BuyerReviewModal
+                    isOpen={isReviewModalOpen}
+                    onClose={() => { setIsReviewModalOpen(false); setReviewProduct(null); }}
+                    product={reviewProduct}
+                    orderNumber={reviewOrderNumber}
+                    onSuccess={fetchOrders}
+                />
             )}
 
             <NavigationButton />

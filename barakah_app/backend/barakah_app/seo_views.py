@@ -23,11 +23,28 @@ def clean_html(text):
 # --- MODULE HANDLERS ---
 
 def seo_product_detail(request, slug):
+    slug_clean = str(slug).strip('/')
     product = None
-    if str(slug).isdigit():
-        product = Product.objects.filter(id=int(slug)).first()
+    
+    # 1. Search by exact slug
+    product = Product.objects.filter(slug__iexact=slug_clean).first()
+    
+    # 2. Search by ID if numeric
+    if not product and slug_clean.isdigit():
+        product = Product.objects.filter(id=int(slug_clean)).first()
+        
+    # 3. Search by title approximation
     if not product:
-        product = Product.objects.filter(slug=slug).first()
+        search_term = slug_clean.replace('-', ' ').strip()
+        product = Product.objects.filter(title__icontains=search_term).first()
+        
+    # 4. Fallback to DigitalProduct if applicable
+    if not product:
+        dp = DigitalProduct.objects.filter(slug__iexact=slug_clean).first()
+        if not dp and slug_clean.isdigit():
+            dp = DigitalProduct.objects.filter(id=int(slug_clean)).first()
+        if dp:
+            return seo_digital_product_detail(request, slug)
 
     if product:
         title = product.title
@@ -57,7 +74,7 @@ def seo_product_detail(request, slug):
             if first_img and hasattr(first_img.image, 'url'):
                 img = first_img.image.url
     else:
-        title = str(slug).replace('-', ' ').title()
+        title = str(slug_clean).replace('-', ' ').title()
         desc = "Lihat produk unggulan di Barakah Economy."
         img = ''
 

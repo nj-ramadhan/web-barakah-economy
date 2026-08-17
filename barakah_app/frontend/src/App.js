@@ -128,6 +128,7 @@ import CalendarWidgetPage from './pages/widget/CalendarWidgetPage';
 
 import ProfileNotice from './components/common/ProfileNotice';
 import UserAgreementModal from './components/common/UserAgreementModal';
+import UnreviewedOrdersModal from './components/modals/UnreviewedOrdersModal';
 import SlideOverCartDrawer from './components/layout/SlideOverCartDrawer';
 
 import { ResponsiveLayout, MobileContainer } from './components/layout/ResponsiveLayout';
@@ -254,6 +255,7 @@ const App = () => {
       <GlobalPopupManager />
       <GlobalStreamingPopup />
       <GlobalBlastQueueWidget />
+      <UnreviewedOrdersModal />
       <div className="min-h-screen bg-gray-100 dark:bg-gray-950 flex justify-center transition-colors duration-300">
         <Routes>
           <Route path="/*" element={<LayoutWrapper isDesktop={isDesktop} />} />
