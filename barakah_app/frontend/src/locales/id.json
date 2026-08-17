@@ -4,7 +4,7 @@
     "home": "Beranda",
     "about": "Tentang Kami",
     "charity": "Charity",
-    "ecommerce": "Store",
+    "ecommerce": "Toko",
     "academy": "Academy",
     "articles": "Artikel",
     "digital_products": "Produk Digital",
@@ -16,13 +16,13 @@
     "hero_subtitle": "Memberdayakan Ekonomi Umat dengan Ekosistem Halal",
     "explore": "Jelajahi Sekarang",
     "about_title": "Apa itu Barakah Economy?",
-    "about_desc": "Kami adalah platform digital yang berfokus pada pemberdayaan ekonomi umat Islam. Melalui program charity, store/e-commerce, dan edukasi, kami membangun ekosistem yang mendukung untuk umat."
+    "about_desc": "Kami adalah platform digital yang berfokus pada pemberdayaan ekonomi umat Islam. Melalui program charity, toko/e-commerce, dan edukasi, kami membangun ekosistem yang mendukung untuk umat."
   },
   "menu": {
     "products_services": "Produk & Layanan",
     "activities_social": "Aktivitas & Sosial",
     "info_discussion": "Informasi & Diskusi",
-    "ecommerce": "Store",
+    "ecommerce": "Toko",
     "ecourse": "E-Course",
     "digital_products": "Produk Digital",
     "activities": "Kegiatan Kami",
@@ -44,6 +44,7 @@
     "activities": "Kegiatan",
     "articles": "Artikel",
     "digital_products": "Produk Digital",
+    "ecommerce": "Toko",
     "about": "Tentang",
     "profile": "Profil",
     "services": "Layanan",

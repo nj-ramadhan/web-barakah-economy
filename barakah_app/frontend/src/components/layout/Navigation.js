@@ -8,7 +8,7 @@ const getLayananItems = (t) => [
   { to: '/chat', icon: 'chat', label: t('nav.consultation', 'Konsultasi'), color: 'text-green-600' },
   { to: '/charity', icon: 'volunteer_activism', label: 'Charity', color: 'text-red-500' },
   { to: '/kegiatan', icon: 'event_note', label: t('nav.activities', 'Kegiatan'), color: 'text-green-700' },
-  { to: '/store', icon: 'storefront', label: 'Store', color: 'text-blue-600' },
+  { to: '/store', icon: 'storefront', label: t('nav.ecommerce', 'Toko'), color: 'text-blue-600' },
   { to: '/academy/ecourse', icon: 'school', label: 'E-Course', color: 'text-purple-600' },
   { to: '/articles', icon: 'article', label: t('nav.articles', 'Artikel'), color: 'text-orange-500' },
   { to: '/digital-products', icon: 'storefront', label: t('nav.digital_products', 'Produk Digital'), color: 'text-emerald-600' },

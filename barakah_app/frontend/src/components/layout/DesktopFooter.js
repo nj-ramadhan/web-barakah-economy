@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import axios from 'axios';
 
 const API = process.env.REACT_APP_API_BASE_URL;
 
 const DesktopFooter = () => {
+    const { t } = useTranslation();
     const [aboutUs, setAboutUs] = useState(null);
 
     useEffect(() => {
@@ -40,12 +42,12 @@ const DesktopFooter = () => {
                 <div>
                     <h4 className="text-lg font-semibold text-white mb-4">Tautan</h4>
                     <ul className="space-y-2 text-sm">
-                        <li><Link to="/about" className="hover:text-white transition">Tentang Kami</Link></li>
+                        <li><Link to="/about" className="hover:text-white transition">{t('header.about', 'Tentang Kami')}</Link></li>
                         <li><Link to="/charity" className="hover:text-white transition">Charity</Link></li>
-                        <li><Link to="/store" className="hover:text-white transition">Store</Link></li>
+                        <li><Link to="/store" className="hover:text-white transition">{t('menu.ecommerce', 'Toko')}</Link></li>
                         <li><Link to="/academy" className="hover:text-white transition">Academy</Link></li>
-                        <li><Link to="/articles" className="hover:text-white transition">Artikel</Link></li>
-                        <li><Link to="/digital-products" className="hover:text-white transition">Produk Digital</Link></li>
+                        <li><Link to="/articles" className="hover:text-white transition">{t('header.articles', 'Artikel')}</Link></li>
+                        <li><Link to="/digital-products" className="hover:text-white transition">{t('header.digital_products', 'Produk Digital')}</Link></li>
                     </ul>
                 </div>
                 <div>

@@ -1,6 +1,6 @@
-// pages/Home.js
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Helmet } from 'react-helmet';
 import axios from 'axios';
 import HeaderHome from '../components/layout/HeaderHome'; // Import the Header component
@@ -80,6 +80,7 @@ const getButtonLabel = (title = '') => {
 };
 
 const Home = () => {
+  const { t, i18n } = useTranslation();
   const [campaigns, setCampaigns] = useState([]);
   const [featuredCampaigns, setFeaturedCampaigns] = useState([]);
   const [products, setProducts] = useState([]);
@@ -1200,15 +1201,19 @@ const Home = () => {
           <div>
             <div className="flex items-center gap-1.5 mb-0.5">
               <span className="material-icons text-emerald-600 text-lg">storefront</span>
-              <h2 className="text-sm font-bold text-gray-900">Store UMKM Barakah</h2>
+              <h2 className="text-sm font-bold text-gray-900">
+                {i18n?.language === 'en' ? 'UMKM Store Barakah' : 'Toko UMKM Barakah'}
+              </h2>
             </div>
-            <p className="text-[11px] text-gray-500">Produk halal & berkualitas pilihan</p>
+            <p className="text-[11px] text-gray-500">
+              {i18n?.language === 'en' ? 'Curated halal & premium quality products' : 'Produk halal & berkualitas pilihan'}
+            </p>
           </div>
           <Link 
             to="/store" 
             className="text-xs font-bold text-emerald-600 hover:text-emerald-700 flex items-center bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-100 shadow-sm"
           >
-            <span>Semua</span>
+            <span>{i18n?.language === 'en' ? 'All' : 'Semua'}</span>
             <span className="material-icons text-xs">chevron_right</span>
           </Link>
         </div>
