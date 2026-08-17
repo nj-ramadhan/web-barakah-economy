@@ -4,25 +4,25 @@
     "home": "Home",
     "about": "About Us",
     "charity": "Charity",
-    "ecommerce": "E-commerce",
+    "ecommerce": "Store",
     "academy": "Academy",
     "articles": "Articles",
     "digital_products": "Digital Products",
-    "login": "Log In",
+    "login": "Login",
     "profile": "Profile"
   },
   "home": {
     "hero_title": "Barakah Economy",
-    "hero_subtitle": "Empowering Ummah's Economy with Halal Ecosystem",
+    "hero_subtitle": "Empowering Islamic Economic Ecosystem",
     "explore": "Explore Now",
     "about_title": "What is Barakah Economy?",
-    "about_desc": "We are a digital platform focused on empowering the Muslim community's economy. Through programs like charity, e-commerce, and education, we build a supportive ecosystem for Muslims."
+    "about_desc": "We are a digital platform focused on empowering the Islamic economic ecosystem through charity programs, store/e-commerce, and education."
   },
   "menu": {
     "products_services": "Products & Services",
     "activities_social": "Activities & Social",
     "info_discussion": "Info & Discussion",
-    "ecommerce": "E-commerce",
+    "ecommerce": "Store",
     "ecourse": "E-Course",
     "digital_products": "Digital Products",
     "activities": "Our Activities",

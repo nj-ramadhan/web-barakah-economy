@@ -289,10 +289,10 @@ const EcommerceCheckoutSinergy = () => {
 
     return (
         <div className="body bg-gray-50 min-h-screen">
-            <Helmet><title>Checkout - Barakah Economy</title></Helmet>
+            <Helmet><title>Checkout Store - Barakah Economy</title></Helmet>
             <Header />
             <div className="max-w-4xl mx-auto px-4 py-8 pb-24">
-                <h1 className="text-2xl font-bold text-gray-800 mb-6">Checkout Produk Fisik</h1>
+                <h1 className="text-2xl font-bold text-gray-800 mb-6">Checkout Store</h1>
 
                 {/* Profile Completeness Warning Banner */}
                 {isProfileIncomplete && (
@@ -610,42 +610,15 @@ const EcommerceCheckoutSinergy = () => {
                                 </div>
                             </div>
 
-                            {/* Line-by-line Breakdown per seller */}
-                            <div className="mt-4 pt-4 border-t border-gray-100 space-y-1.5 text-xs text-gray-600">
-                                <div className="flex justify-between">
-                                    <span>Subtotal Produk:</span>
-                                    <span className="font-semibold text-gray-800">
-                                        Rp {new Intl.NumberFormat('id-ID').format(group.total_original_price)}
-                                    </span>
-                                </div>
-                                {group.total_promo_discount > 0 && (
-                                    <div className="flex justify-between text-rose-600 font-semibold">
-                                        <span className="flex items-center gap-1">
-                                            <span className="material-icons text-xs">local_fire_department</span>
-                                            Potongan Promo / Kampanye:
-                                        </span>
-                                        <span>- Rp {new Intl.NumberFormat('id-ID').format(group.total_promo_discount)}</span>
-                                    </div>
-                                )}
-                                {(config?.voucher_nominal || 0) > 0 && (
-                                    <div className="flex justify-between text-amber-600 font-semibold">
-                                        <span className="flex items-center gap-1">
-                                            <span className="material-icons text-xs">confirmation_number</span>
-                                            Diskon Voucher:
-                                        </span>
-                                        <span>- Rp {new Intl.NumberFormat('id-ID').format(config.voucher_nominal)}</span>
-                                    </div>
-                                )}
-                                <div className="flex justify-between">
-                                    <span>Ongkos Kirim:</span>
-                                    <span className="font-semibold text-gray-800">
-                                        + Rp {new Intl.NumberFormat('id-ID').format(config?.shipping_cost || 0)}
-                                    </span>
-                                </div>
-                                <div className="flex justify-between items-center pt-2 border-t border-gray-100 text-sm">
+                            {/* Simplified Subtotal per seller */}
+                            <div className="mt-4 pt-4 border-t border-gray-100 flex justify-between items-center text-sm">
+                                <div>
                                     <p className="font-bold text-gray-800">Subtotal Toko ini:</p>
-                                    <p className="text-base font-black text-emerald-700">Rp {new Intl.NumberFormat('id-ID').format(grandTotal)}</p>
+                                    <p className="text-[11px] text-gray-400">
+                                        {group.items.length} Barang {config?.shipping_cost ? `+ Ongkir Rp ${new Intl.NumberFormat('id-ID').format(config.shipping_cost)}` : ''}
+                                    </p>
                                 </div>
+                                <p className="text-base font-black text-emerald-700">Rp {new Intl.NumberFormat('id-ID').format(grandTotal)}</p>
                             </div>
                         </div>
                     );

@@ -429,10 +429,10 @@ const EcommerceMainPage = () => {
   return (
     <div className="body bg-gray-50 min-h-screen">
       <Helmet>
-        <title>Sinergy E-Commerce - Barakah Economy</title>
-        <meta name="description" content="Beli Produk yang Halal Toyyib Barakah dari UMKM Terpercaya" />
-        <meta property="og:title" content="BARAKAH E-COMMERCE" />
-        <meta property="og:description" content="Beli Produk yang Halal Toyyib Barakah dari UMKM Terpercaya" />
+        <title>Barakah Store - Belanja Produk Halal & Berkah</title>
+        <meta name="description" content="Beli Produk yang Halal Toyyib Barakah dari UMKM Terpercaya di Barakah Store" />
+        <meta property="og:title" content="BARAKAH STORE" />
+        <meta property="og:description" content="Beli Produk yang Halal Toyyib Barakah dari UMKM Terpercaya di Barakah Store" />
         <meta property="og:image" content="%PUBLIC_URL%/images/web-thumbnail.jpg" />
         <meta property="og:type" content="website" />
         <meta property="og:url" content={window.location.href} />
@@ -504,10 +504,10 @@ const EcommerceMainPage = () => {
           <div>
             <h1 className="text-2xl lg:text-3xl font-black text-gray-900 tracking-tight flex items-center gap-2">
               <span className="w-2 h-7 bg-emerald-600 rounded-full"></span>
-              Sinergy E-Commerce UMKM
+              Barakah Store UMKM
             </h1>
             <p className="text-xs lg:text-sm text-gray-500 mt-1">
-              Produk halal, berkualitas, dan berdaya saing persembahan UMKM Barakah Economy
+              Produk halal, berkualitas, dan berdaya saing persembahan Barakah Store
             </p>
           </div>
 

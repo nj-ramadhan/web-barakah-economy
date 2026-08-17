@@ -44,10 +44,17 @@ from .permissions import IsOwnerOrAdmin
 
 class ProductViewSet(viewsets.ModelViewSet):
     serializer_class = ProductSerializer
-    permission_classes = [IsAuthenticatedOrReadOnly, IsOwnerOrAdmin]
+    
+    def get_permissions(self):
+        if self.action in ['like', 'add_testimoni_buyer']:
+            return [IsAuthenticated()]
+        if self.action in ['list', 'retrieve', 'promotion']:
+            return [IsAuthenticatedOrReadOnly()]
+        if self.action in ['add_testimoni_admin']:
+            return [IsAuthenticated()]
+        return [IsAuthenticatedOrReadOnly(), IsOwnerOrAdmin()]
     
     def get_object(self):
-        queryset = self.filter_queryset(self.get_queryset())
         lookup_url_kwarg = self.lookup_url_kwarg or self.lookup_field
         lookup_value = self.kwargs.get(lookup_url_kwarg) or self.kwargs.get('pk') or self.kwargs.get('slug')
         
@@ -57,13 +64,15 @@ class ProductViewSet(viewsets.ModelViewSet):
 
         # Try ID first if numeric
         if str(lookup_value).isdigit():
-            obj = queryset.filter(pk=lookup_value).first()
+            obj = Product.objects.filter(pk=int(lookup_value)).first()
             if obj:
                 self.check_object_permissions(self.request, obj)
                 return obj
         
         # Try Slug
-        obj = get_object_or_404(queryset, slug=lookup_value)
+        obj = Product.objects.filter(slug__iexact=str(lookup_value)).first()
+        if not obj:
+            obj = get_object_or_404(Product, slug=lookup_value)
         self.check_object_permissions(self.request, obj)
         return obj
 
@@ -79,7 +88,7 @@ class ProductViewSet(viewsets.ModelViewSet):
             )
 
         # Dashboard Management View or Detail Actions
-        is_detail = self.action in ['retrieve', 'update', 'partial_update', 'destroy']
+        is_detail = self.action in ['retrieve', 'update', 'partial_update', 'destroy', 'like', 'add_testimoni_buyer', 'add_testimoni_admin', 'delete_testimoni', 'promotion']
         if self.request.query_params.get('manage') == 'true' or is_detail:
             if not user.is_authenticated:
                 if is_detail: # Public can still retrieve approved products

@@ -348,9 +348,9 @@ const DesktopLandingPage = () => {
                             <SwiperSlide>
                                 <div className="p-8 h-full rounded-2xl bg-white border border-gray-100 hover:border-blue-300 hover:shadow-xl transition group">
                                     <div className="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-blue-600 transition">
-                                        <span className="material-icons text-3xl text-blue-700 group-hover:text-white">shopping_bag</span>
+                                        <span className="material-icons text-3xl text-blue-700 group-hover:text-white">storefront</span>
                                     </div>
-                                    <h3 className="text-xl font-bold text-gray-900 mb-3">E-commerce Halal Mart</h3>
+                                    <h3 className="text-xl font-bold text-gray-900 mb-3">Barakah Store</h3>
                                     <p className="text-gray-600 mb-4 text-sm">Penuhi kebutuhan harian dengan produk halal, bermutu, dan mendukung ekonomi umat.</p>
                                     <Link className="text-blue-700 font-semibold hover:underline text-sm" to="/sinergy">Lihat Produk →</Link>
                                 </div>
@@ -570,7 +570,7 @@ const DesktopLandingPage = () => {
                         <div className="max-w-6xl mx-auto">
                             <div className="flex justify-between items-center mb-8">
                                 <div>
-                                    <h2 className="text-3xl font-bold text-gray-900">Produk E-commerce</h2>
+                                    <h2 className="text-3xl font-bold text-gray-900">Produk Barakah Store</h2>
                                     <p className="text-gray-500 mt-2">Penuhi kebutuhan harianmu dengan produk halal</p>
                                 </div>
                                 <Link to="/sinergy" className="px-6 py-2 border border-blue-600 text-blue-700 font-semibold rounded-lg hover:bg-blue-50 transition">
