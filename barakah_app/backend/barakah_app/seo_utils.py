@@ -50,36 +50,65 @@ def get_seo_response(request, metadata):
         with open(index_path, 'r', encoding='utf-8') as f:
             content = f.read()
 
-        # Meta tags to inject
+        import html
+        clean_title = html.escape(title, quote=True)
+        clean_description = html.escape(description, quote=True)
+        clean_image_url = html.escape(image_url, quote=True)
+        clean_current_url = html.escape(current_url, quote=True)
+
+        # Detect image mime type
+        img_lower = image_url.lower()
+        if img_lower.endswith('.png'):
+            img_type = 'image/png'
+        elif img_lower.endswith('.webp'):
+            img_type = 'image/webp'
+        elif img_lower.endswith('.gif'):
+            img_type = 'image/gif'
+        else:
+            img_type = 'image/jpeg'
+
+        # Meta tags to inject (Optimized for WhatsApp, Facebook, Twitter, Telegram, LinkedIn)
         meta_tags = f'''
-    <title>{title}</title>
-    <meta name="description" content="{description}">
-    <link rel="canonical" href="{current_url}">
+    <title>{clean_title}</title>
+    <meta name="description" content="{clean_description}">
+    <link rel="canonical" href="{clean_current_url}">
+    
+    <!-- Open Graph / Facebook / WhatsApp -->
     <meta property="og:site_name" content="Barakah Economy">
-    <meta property="og:title" content="{title}">
-    <meta property="og:description" content="{description}">
-    <meta property="og:image" content="{image_url}">
-    <meta property="og:image:secure_url" content="{image_url}">
+    <meta property="og:title" content="{clean_title}">
+    <meta property="og:description" content="{clean_description}">
+    <meta property="og:image" content="{clean_image_url}">
+    <meta property="og:image:secure_url" content="{clean_image_url}">
+    <meta property="og:image:type" content="{img_type}">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
-    <meta property="og:url" content="{current_url}">
+    <meta property="og:image:alt" content="{clean_title}">
+    <meta property="og:url" content="{clean_current_url}">
     <meta property="og:type" content="{page_type}">
+    
+    <!-- Schema.org / WhatsApp fallback -->
+    <meta itemprop="name" content="{clean_title}">
+    <meta itemprop="description" content="{clean_description}">
+    <meta itemprop="image" content="{clean_image_url}">
+
+    <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="{title}">
-    <meta name="twitter:description" content="{description}">
-    <meta name="twitter:image" content="{image_url}">'''
+    <meta name="twitter:title" content="{clean_title}">
+    <meta name="twitter:description" content="{clean_description}">
+    <meta name="twitter:image" content="{clean_image_url}">'''
 
         # Remove existing title and meta tags to avoid duplicates
         content = re.sub(r'<title>.*?</title>', '', content, flags=re.IGNORECASE)
         content = re.sub(r'<meta\s+name=["\']description["\'].*?>', '', content, flags=re.IGNORECASE)
         content = re.sub(r'<meta\s+property=["\']og:.*?["\'].*?>', '', content, flags=re.IGNORECASE)
         content = re.sub(r'<meta\s+name=["\']twitter:.*?["\'].*?>', '', content, flags=re.IGNORECASE)
+        content = re.sub(r'<meta\s+itemprop=["\'].*?["\'].*?>', '', content, flags=re.IGNORECASE)
 
         content = content.replace('</head>', f'{meta_tags}\n</head>')
 
         # Inject body content if provided for crawler indexing
         if body_content:
-            seo_body = f'<div id="seo-content" style="display:none;"><article><h1>{title}</h1>{body_content}</article></div>'
+            seo_body = f'<div id="seo-content" style="display:none;"><article><h1>{clean_title}</h1>{body_content}</article></div>'
             content = content.replace('<body>', f'<body>\n{seo_body}')
 
         return HttpResponse(content)

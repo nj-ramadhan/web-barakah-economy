@@ -8,6 +8,7 @@ import NavigationButton from '../components/layout/Navigation'; // Import the Na
 import { formatCurrency } from '../utils/formatters';
 import UserProfileModal from '../components/modals/UserProfileModal';
 import { getMediaUrl } from '../utils/mediaUtils';
+import ShareButton from '../components/campaigns/ShareButton';
 
 function getCsrfToken() {
   const cookies = document.cookie.split(';');
@@ -325,27 +326,47 @@ const EcommerceMainPage = () => {
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-6">
             {products.map(product => {
               return (
-                <div key={product.id} className="bg-white rounded-lg overflow-hidden shadow">
-                  <Link to={`/produk/${product.slug || product.id}`}>
-                    <img
-                      src={getMediaUrl(product.thumbnail) || '/placeholder-image.jpg'}
-                      alt={product.title}
-                      className="w-full h-28 object-cover"
-                      onError={(e) => {
-                        e.target.src = '/placeholder-image.jpg';
-                      }}
-                    />
-                  </Link>
-                    <div className="p-3">
-                      <h3 className="text-sm font-semibold mb-2 line-clamp-2 min-h-[40px]">{product.title}</h3>
-                      <div className="mb-1">
-                        <p className="text-green-700 font-bold text-sm">
+                <div key={product.id} className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all border border-gray-100 flex flex-col justify-between group">
+                  <div className="relative">
+                    <Link to={`/produk/${product.slug || product.id}`}>
+                      <img
+                        src={getMediaUrl(product.thumbnail) || '/placeholder-image.jpg'}
+                        alt={product.title}
+                        className="w-full h-32 md:h-40 object-cover group-hover:scale-105 transition-transform duration-300"
+                        onError={(e) => {
+                          e.target.src = '/placeholder-image.jpg';
+                        }}
+                      />
+                    </Link>
+                    <div className="absolute top-2 right-2 z-10">
+                      <ShareButton
+                        slug={product.slug || product.id}
+                        title={product.title}
+                        type="product"
+                        price={product.price}
+                        description={product.description}
+                        variant="card-icon"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="p-3.5 flex flex-col flex-1 justify-between">
+                    <div>
+                      <h3 className="text-xs md:text-sm font-semibold mb-1.5 line-clamp-2 min-h-[36px] text-gray-800 hover:text-emerald-700 transition-colors">
+                        <Link to={`/produk/${product.slug || product.id}`}>
+                          {product.title}
+                        </Link>
+                      </h3>
+                      <div className="mb-2">
+                        <p className="text-emerald-700 font-bold text-sm">
                           {product.min_price && product.max_price && product.min_price !== product.max_price
                             ? `Rp ${formatCurrency(product.min_price)} ~ ${formatCurrency(product.max_price)}`
                             : formatIDR(product.price)
-                          } <span className="text-[11px] font-normal text-gray-500">/ {product.unit || 'pcs'}</span>
+                          } <span className="text-[10px] font-normal text-gray-400">/ {product.unit || 'pcs'}</span>
                         </p>
-                        <p className="text-gray-500 text-[10px]">stok: {(product.total_stock !== undefined ? product.total_stock : product.stock) > 0 ? `${product.total_stock !== undefined ? product.total_stock : product.stock} ${product.unit || 'pcs'}` : 'habis'}</p>
+                        <p className="text-gray-400 text-[10px]">
+                          stok: {(product.total_stock !== undefined ? product.total_stock : product.stock) > 0 ? `${product.total_stock !== undefined ? product.total_stock : product.stock} ${product.unit || 'pcs'}` : 'habis'}
+                        </p>
                       </div>
                     
                       <div className="flex items-center gap-2 mb-3">
@@ -358,7 +379,7 @@ const EcommerceMainPage = () => {
                           {product.likes_count || 0}
                         </div>
                         <div 
-                          className="flex items-center gap-1.5 ml-auto cursor-pointer hover:bg-gray-50 p-1 rounded-lg transition-all"
+                          className="flex items-center gap-1 ml-auto cursor-pointer hover:bg-emerald-50 px-1.5 py-0.5 rounded-lg transition-all"
                           onClick={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
@@ -374,30 +395,31 @@ const EcommerceMainPage = () => {
                           <span className="text-[10px] font-bold text-emerald-700">@{product.seller_name}</span>
                         </div>
                       </div>
+                    </div>
 
                     {product.stock <= 0 ? (
-                      <div className="flex flex-col gap-2">
+                      <div className="flex flex-col gap-1.5">
                         <button
-                          className="w-full bg-gray-100 text-gray-400 py-3 rounded-xl flex items-center justify-center gap-2 cursor-not-allowed text-xs font-bold"
+                          className="w-full bg-gray-100 text-gray-400 py-2 rounded-xl flex items-center justify-center gap-1.5 cursor-not-allowed text-xs font-bold"
                           disabled
                         >
-                          <span className="material-icons text-lg">remove_shopping_cart</span>
+                          <span className="material-icons text-sm">remove_shopping_cart</span>
                           Stok Habis
                         </button>
                       </div>
                     ) : (
-                      <div className="flex flex-col gap-2">
-                        <div className="flex gap-2">
+                      <div className="flex flex-col gap-1.5">
+                        <div className="flex gap-1.5">
                           <button
                             onClick={() => addToCart(product.id)}
-                            className="flex-1 bg-green-600 hover:bg-green-700 text-white py-2.5 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-green-100 transition-all transform hover:-translate-y-1 text-[10px]"
+                            className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white py-2 rounded-xl font-bold flex items-center justify-center gap-1.5 shadow-sm transition-all transform active:scale-95 text-[11px]"
                           >
                             <span className="material-icons text-sm">shopping_cart</span>
                             Keranjang
                           </button>
                           <button
                             onClick={() => addToWishlist(product.id)}
-                            className="px-3 py-2.5 border-2 border-green-600 text-green-700 font-bold rounded-xl flex items-center justify-center gap-2 hover:bg-green-50 transition-all"
+                            className="px-2.5 py-2 border border-emerald-600 text-emerald-700 font-bold rounded-xl flex items-center justify-center hover:bg-emerald-50 transition-all active:scale-95"
                             title="Tambah ke Incaran"
                           >
                             <span className="material-icons text-sm">favorite_border</span>
@@ -405,7 +427,7 @@ const EcommerceMainPage = () => {
                         </div>
                         <button
                           onClick={() => handleBuyNow(product.id)}
-                          className="w-full bg-emerald-500 hover:bg-emerald-600 text-white py-2.5 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-emerald-100 transition-all transform hover:-translate-y-1 text-[10px]"
+                          className="w-full bg-emerald-500 hover:bg-emerald-600 text-white py-2 rounded-xl font-bold flex items-center justify-center gap-1.5 shadow-sm transition-all transform active:scale-95 text-[11px]"
                         >
                           <span className="material-icons text-sm">shopping_bag</span>
                           Beli Langsung

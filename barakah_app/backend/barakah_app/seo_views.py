@@ -31,11 +31,28 @@ def seo_product_detail(request, slug):
 
     if product:
         title = product.title
-        desc = clean_html(product.description) or f"Beli {product.title} di Barakah Economy."
+        clean_desc = clean_html(product.description)
+        
+        # Format price
+        price_parts = []
+        if product.price:
+            try:
+                price_str = f"Rp {int(product.price):,}".replace(',', '.')
+                price_parts.append(f"Harga: {price_str}")
+            except Exception:
+                pass
+        
+        if clean_desc:
+            price_parts.append(clean_desc)
+        else:
+            price_parts.append(f"Beli {product.title} di Barakah Economy.")
+            
+        desc = " | ".join(price_parts)
+        
         img = ''
-        if product.thumbnail and hasattr(product.thumbnail, 'url'):
+        if product.thumbnail and hasattr(product.thumbnail, 'url') and product.thumbnail.url:
             img = product.thumbnail.url
-        elif product.images.exists():
+        elif hasattr(product, 'images') and product.images.exists():
             first_img = product.images.first()
             if first_img and hasattr(first_img.image, 'url'):
                 img = first_img.image.url

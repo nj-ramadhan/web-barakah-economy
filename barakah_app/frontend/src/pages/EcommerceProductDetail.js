@@ -390,7 +390,13 @@ const EcommerceProductDetail = () => {
             <div>
               <div className="flex justify-between items-start gap-4 mb-4">
                 <h1 className="text-2xl md:text-3xl font-bold text-gray-900">{product.title}</h1>
-                <ShareButton slug={product.slug} title={product.title} type="product" />
+                <ShareButton 
+                  slug={product.slug || product.id} 
+                  title={product.title} 
+                  type="sinergy"
+                  price={selectedVariation ? (selectedVariation.additional_price > 0 ? selectedVariation.additional_price : product.price) : product.price}
+                  description={product.description}
+                />
               </div>
               <div className="flex justify-between items-center mb-6">
                 <div className="flex flex-col gap-1">
