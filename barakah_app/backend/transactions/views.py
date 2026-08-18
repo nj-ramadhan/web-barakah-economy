@@ -32,13 +32,11 @@ class WalletTransactionHistoryView(APIView):
 class AdminIncomingFundsView(APIView):
     """
     Unified Incoming Funds (Manajemen Uang Masuk) tracking endpoint for Admin role.
-    Aggregates incoming revenue and payments across:
-    1. Store / Physical Products (orders.Order)
-    2. Digital Products (digital_products.DigitalOrder)
-    3. E-Courses (courses.CourseEnrollment)
-    4. Events (events.EventRegistration)
-    5. Charity / Crowdfunding (donations.Donation)
-    6. ZIS Submissions (zis.ZISSubmission)
+    Filters strictly to incoming funds:
+    - Paid / Verified / Completed / Shipping orders are included.
+    - Cancelled orders that were never paid/transferred are omitted.
+    - Cancelled orders that were already paid/transferred (and refunded) are included with full refund notes.
+    - Allows Admin deletion of buggy/invalid transaction records.
     """
     permission_classes = [permissions.IsAuthenticated]
 
@@ -73,10 +71,22 @@ class AdminIncomingFundsView(APIView):
                 store_orders = Order.objects.all().select_related('user', 'seller').prefetch_related('items', 'items__product')
                 for o in store_orders:
                     raw_status = (o.status or '').lower()
-                    if raw_status in ['paid', 'lunas', 'proses', 'dikirim', 'shipped', 'selesai', 'delivered']:
+                    has_proof = bool(getattr(o, 'payment_proof', None) and hasattr(o.payment_proof, 'url') and o.payment_proof)
+                    is_paid_status = raw_status in ['paid', 'lunas', 'proses', 'dikirim', 'shipped', 'selesai', 'delivered']
+                    is_batal = raw_status in ['batal', 'cancelled']
+                    
+                    # Check if cancelled order had money transferred / refunded
+                    has_refund_tx = WalletTransaction.objects.filter(order=o, transaction_type='REFUND').exists()
+                    was_paid_before_cancel = is_batal and (has_proof or has_refund_tx or (o.used_balance and o.used_balance > 0))
+
+                    # If cancelled WITHOUT any payment / transfer, skip so data doesn't get cluttered by unpaid expired checkouts
+                    if is_batal and not was_paid_before_cancel:
+                        continue
+
+                    if is_paid_status:
                         norm_status = 'verified'
-                    elif raw_status in ['batal', 'cancelled']:
-                        norm_status = 'rejected'
+                    elif is_batal and was_paid_before_cancel:
+                        norm_status = 'refunded'
                     else:
                         norm_status = 'pending'
 
@@ -85,7 +95,15 @@ class AdminIncomingFundsView(APIView):
                         prod_names.append(it.product_name or (it.product.title if it.product else 'Produk'))
                     title_str = ", ".join(prod_names) if prod_names else "Pesanan Toko / Sinergy"
 
-                    proof_url = o.payment_proof.url if getattr(o, 'payment_proof', None) and hasattr(o.payment_proof, 'url') else ''
+                    proof_url = o.payment_proof.url if has_proof else ''
+
+                    extra_notes = []
+                    if o.seller:
+                        extra_notes.append(f"Seller: @{o.seller.username}")
+                    if is_batal and was_paid_before_cancel:
+                        extra_notes.append(f"⚠️ Uang Sempat Masuk & Telah Direfund ({o.cancel_request_reason or 'Dibatalkan'})")
+                    elif o.status:
+                        extra_notes.append(f"Status Pesanan: {o.status}")
 
                     transactions.append({
                         'id': f"store_{o.id}",
@@ -107,7 +125,7 @@ class AdminIncomingFundsView(APIView):
                         'payment_proof_url': proof_url,
                         'created_at': o.created_at.isoformat() if o.created_at else None,
                         'action_link': '/dashboard/sinergy/seller/orders',
-                        'extra_info': f"Seller: {o.seller.username if o.seller else 'Platform'}"
+                        'extra_info': " • ".join(extra_notes)
                     })
             except Exception as e:
                 pass
@@ -119,16 +137,27 @@ class AdminIncomingFundsView(APIView):
                 dig_orders = DigitalOrder.objects.all().select_related('digital_product', 'buyer')
                 for do in dig_orders:
                     raw_status = (do.payment_status or '').lower()
+                    has_proof = bool(getattr(do, 'payment_proof', None) and hasattr(do.payment_proof, 'url') and do.payment_proof)
+                    
                     if raw_status in ['verified', 'paid', 'lunas']:
                         norm_status = 'verified'
                     elif raw_status in ['rejected', 'batal', 'cancelled']:
-                        norm_status = 'rejected'
+                        # If rejected without proof, skip
+                        if not has_proof:
+                            continue
+                        norm_status = 'refunded'
                     else:
                         norm_status = 'pending'
 
-                    proof_url = do.payment_proof.url if getattr(do, 'payment_proof', None) and hasattr(do.payment_proof, 'url') else ''
+                    proof_url = do.payment_proof.url if has_proof else ''
                     base_amt = float(do.amount or 0)
                     adm_fee = float(do.admin_fee or 0)
+
+                    extra_notes = []
+                    if do.paid_to_seller_directly:
+                        extra_notes.append("Transfer Langsung ke Seller")
+                    if norm_status == 'refunded':
+                        extra_notes.append("⚠️ Transaksi Dibatalkan/Ditolak")
 
                     transactions.append({
                         'id': f"digital_{do.id}",
@@ -150,7 +179,7 @@ class AdminIncomingFundsView(APIView):
                         'payment_proof_url': proof_url,
                         'created_at': do.created_at.isoformat() if do.created_at else None,
                         'action_link': '/dashboard/digital-products',
-                        'extra_info': f"Direct to Seller: {'Ya' if do.paid_to_seller_directly else 'Tidak'}"
+                        'extra_info': " • ".join(extra_notes) if extra_notes else "Produk Digital"
                     })
             except Exception as e:
                 pass
@@ -162,16 +191,26 @@ class AdminIncomingFundsView(APIView):
                 enrollments = CourseEnrollment.objects.all().select_related('course', 'user')
                 for ce in enrollments:
                     raw_status = (ce.payment_status or '').lower()
+                    has_proof = bool(getattr(ce, 'payment_proof', None) and hasattr(ce.payment_proof, 'url') and ce.payment_proof)
+                    
                     if raw_status in ['verified', 'paid', 'lunas']:
                         norm_status = 'verified'
                     elif raw_status in ['rejected', 'batal', 'cancelled']:
-                        norm_status = 'rejected'
+                        if not has_proof:
+                            continue
+                        norm_status = 'refunded'
                     else:
                         norm_status = 'pending'
 
-                    proof_url = ce.payment_proof.url if getattr(ce, 'payment_proof', None) and hasattr(ce.payment_proof, 'url') else ''
+                    proof_url = ce.payment_proof.url if has_proof else ''
                     base_amt = float(ce.amount or 0)
                     adm_fee = float(getattr(ce, 'admin_fee', 0) or 0)
+
+                    extra_notes = []
+                    if ce.course and ce.course.instructor:
+                        extra_notes.append(f"Instruktur: @{ce.course.instructor.username}")
+                    if ce.paid_to_seller_directly:
+                        extra_notes.append("Transfer Langsung ke Instruktur")
 
                     transactions.append({
                         'id': f"course_{ce.id}",
@@ -193,7 +232,7 @@ class AdminIncomingFundsView(APIView):
                         'payment_proof_url': proof_url,
                         'created_at': ce.enrolled_at.isoformat() if ce.enrolled_at else None,
                         'action_link': '/dashboard/ecourses',
-                        'extra_info': f"Instruktur: {ce.course.instructor.username if ce.course and ce.course.instructor else '-'}"
+                        'extra_info': " • ".join(extra_notes) if extra_notes else "E-Course"
                     })
             except Exception as e:
                 pass
@@ -205,19 +244,30 @@ class AdminIncomingFundsView(APIView):
                 event_regs = EventRegistration.objects.all().select_related('event', 'user')
                 for er in event_regs:
                     raw_status = (er.payment_status or '').lower()
+                    tot_amt = float(er.payment_amount or 0)
+                    has_proof = bool(getattr(er, 'payment_proof', None) and hasattr(er.payment_proof, 'url') and er.payment_proof)
+
+                    # Only show paid registrations or registrations with payment amounts/proofs
                     if raw_status in ['verified', 'approved', 'paid', 'lunas']:
                         norm_status = 'verified'
                     elif raw_status in ['rejected', 'batal', 'cancelled']:
-                        norm_status = 'rejected'
+                        if not has_proof and tot_amt == 0:
+                            continue
+                        norm_status = 'refunded'
                     else:
                         norm_status = 'pending'
 
-                    proof_url = er.payment_proof.url if getattr(er, 'payment_proof', None) and hasattr(er.payment_proof, 'url') else ''
-                    tot_amt = float(er.payment_amount or 0)
+                    proof_url = er.payment_proof.url if has_proof else ''
 
                     cust_name = er.guest_name or (getattr(getattr(er.user, 'profile', None), 'name_full', None) or er.user.username if er.user else 'Peserta')
                     cust_email = er.guest_email or (er.user.email if er.user else '')
                     cust_phone = (er.responses.get('phone') or er.responses.get('telepon') or er.responses.get('whatsapp') or getattr(getattr(er.user, 'profile', None), 'phone_number', '')) if er.responses else ''
+
+                    extra_notes = []
+                    if er.bib_number:
+                        extra_notes.append(f"No. BIB: {er.bib_number}")
+                    if er.team:
+                        extra_notes.append(f"Tim: {er.team.name}")
 
                     transactions.append({
                         'id': f"event_{er.id}",
@@ -239,7 +289,7 @@ class AdminIncomingFundsView(APIView):
                         'payment_proof_url': proof_url,
                         'created_at': er.created_at.isoformat() if er.created_at else None,
                         'action_link': f"/dashboard/event/submissions/{er.event.slug}" if er.event and er.event.slug else "/dashboard/event",
-                        'extra_info': f"BIB: {er.bib_number or '-'}"
+                        'extra_info': " • ".join(extra_notes) if extra_notes else "Pendaftaran Event"
                     })
             except Exception as e:
                 pass
@@ -251,15 +301,23 @@ class AdminIncomingFundsView(APIView):
                 donations = Donation.objects.all().select_related('campaign', 'donor')
                 for d in donations:
                     raw_status = (d.payment_status or '').lower()
+                    has_proof = bool(getattr(d, 'proof_file', None) and hasattr(d.proof_file, 'url') and d.proof_file)
+
                     if raw_status in ['verified', 'paid', 'approved']:
                         norm_status = 'verified'
                     elif raw_status in ['rejected', 'batal']:
-                        norm_status = 'rejected'
+                        norm_status = 'refunded'
                     else:
                         norm_status = 'pending'
 
-                    proof_url = d.proof_file.url if getattr(d, 'proof_file', None) and hasattr(d.proof_file, 'url') else ''
+                    proof_url = d.proof_file.url if has_proof else ''
                     amt = float(d.amount or 0)
+
+                    extra_notes = []
+                    if d.is_anonymous:
+                        extra_notes.append("Donatur Anonim (Hamba Allah)")
+                    if d.message:
+                        extra_notes.append(f'Doa: "{d.message[:40]}..."' if len(d.message) > 40 else f'Doa: "{d.message}"')
 
                     transactions.append({
                         'id': f"charity_{d.id}",
@@ -282,7 +340,7 @@ class AdminIncomingFundsView(APIView):
                         'created_at': d.created_at.isoformat() if d.created_at else None,
                         'action_link': f"/dashboard/admin/campaigns",
                         'campaign_id': d.campaign.id if d.campaign else None,
-                        'extra_info': f"Anonim: {'Ya' if d.is_anonymous else 'Tidak'}"
+                        'extra_info': " • ".join(extra_notes) if extra_notes else "Donasi Program"
                     })
             except Exception as e:
                 pass
@@ -294,14 +352,16 @@ class AdminIncomingFundsView(APIView):
                 zis_items = ZISSubmission.objects.all().select_related('user', 'config')
                 for z in zis_items:
                     raw_status = (z.status or '').lower()
+                    has_proof = bool(getattr(z, 'transfer_proof', None) and hasattr(z.transfer_proof, 'url') and z.transfer_proof)
+
                     if raw_status in ['verified', 'approved']:
                         norm_status = 'verified'
                     elif raw_status in ['rejected', 'batal']:
-                        norm_status = 'rejected'
+                        norm_status = 'refunded'
                     else:
                         norm_status = 'pending'
 
-                    proof_url = z.transfer_proof.url if getattr(z, 'transfer_proof', None) and hasattr(z.transfer_proof, 'url') else ''
+                    proof_url = z.transfer_proof.url if has_proof else ''
                     amt = float(z.total_amount or 0)
 
                     transactions.append({
@@ -324,7 +384,7 @@ class AdminIncomingFundsView(APIView):
                         'payment_proof_url': proof_url,
                         'created_at': z.created_at.isoformat() if z.created_at else None,
                         'action_link': '/dashboard/admin/zis-verify',
-                        'extra_info': f"Bulan: {z.month}"
+                        'extra_info': f"Periode: {z.month}"
                     })
             except Exception as e:
                 pass
@@ -332,10 +392,11 @@ class AdminIncomingFundsView(APIView):
         # Sort all by created_at descending
         transactions.sort(key=lambda x: x['created_at'] or '', reverse=True)
 
-        # Compute Global / Overall Summary (KPI) across all fetched records
+        # Compute Global / Overall Summary (KPI) across all verified/pending records
         overall_summary = {
             'total_income_all': 0.0,
             'total_income_pending': 0.0,
+            'total_income_refunded': 0.0,
             'total_count': len(transactions),
             'by_category': {
                 'store': {'count': 0, 'verified_amount': 0.0, 'pending_amount': 0.0},
@@ -371,6 +432,8 @@ class AdminIncomingFundsView(APIView):
                 overall_summary['total_income_all'] += amt
             elif st == 'pending':
                 overall_summary['total_income_pending'] += amt
+            elif st == 'refunded':
+                overall_summary['total_income_refunded'] += amt
 
             # Payment method breakdown
             if 'dynaqris' in pm or 'qris' in pm:
@@ -443,3 +506,66 @@ class AdminIncomingFundsView(APIView):
             },
             'transactions': filtered_transactions
         })
+
+    def delete(self, request):
+        """
+        Delete a specific incoming funds transaction record (Admin only).
+        Useful for removing invalid/buggy/test entries.
+        """
+        user = request.user
+        is_admin = (
+            user.is_superuser or 
+            user.is_staff or 
+            getattr(user, 'role', '') == 'admin' or 
+            getattr(getattr(user, 'profile', None), 'role', '') == 'admin'
+        )
+
+        if not is_admin:
+            return Response(
+                {'error': 'Akses khusus administrator. Anda tidak memiliki izin.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        category = request.data.get('category')
+        raw_id = request.data.get('raw_id')
+
+        if not category or not raw_id:
+            return Response(
+                {'error': 'Parameter category dan raw_id wajib disertakan.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            if category == 'store':
+                from orders.models import Order
+                Order.objects.filter(id=raw_id).delete()
+            elif category == 'digital':
+                from digital_products.models import DigitalOrder
+                DigitalOrder.objects.filter(id=raw_id).delete()
+            elif category == 'course':
+                from courses.models import CourseEnrollment
+                CourseEnrollment.objects.filter(id=raw_id).delete()
+            elif category == 'event':
+                from events.models import EventRegistration
+                EventRegistration.objects.filter(id=raw_id).delete()
+            elif category == 'charity':
+                from donations.models import Donation
+                Donation.objects.filter(id=raw_id).delete()
+            elif category == 'zis':
+                from zis.models import ZISSubmission
+                ZISSubmission.objects.filter(id=raw_id).delete()
+            else:
+                return Response(
+                    {'error': f'Kategori {category} tidak dikenali.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            return Response({
+                'success': True,
+                'message': 'Data transaksi berhasil dihapus dari sistem.'
+            })
+        except Exception as e:
+            return Response(
+                {'error': f'Gagal menghapus transaksi: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )

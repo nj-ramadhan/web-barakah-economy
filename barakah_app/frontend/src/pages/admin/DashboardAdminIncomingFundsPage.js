@@ -40,6 +40,7 @@ const DashboardAdminIncomingFundsPage = () => {
     const [transactions, setTransactions] = useState([]);
     const [summary, setSummary] = useState(null);
     const [filteredStats, setFilteredStats] = useState(null);
+    const [deletingId, setDeletingId] = useState(null);
 
     // Filter States
     const [categoryFilter, setCategoryFilter] = useState('all');
@@ -144,6 +145,34 @@ const DashboardAdminIncomingFundsPage = () => {
         return Math.ceil(transactions.length / perPage) || 1;
     }, [transactions.length, perPage]);
 
+    // Delete single transaction entry (Admin cleanup)
+    const handleDeleteTransaction = async (tx) => {
+        const confirmMsg = `Hapus data transaksi #${tx.order_number} (${tx.category_label} - ${tx.title})?\n\nPerhatian: Data ini akan dihapus dari sistem. Tindakan ini tidak dapat dibatalkan.`;
+        if (!window.confirm(confirmMsg)) return;
+
+        const userData = localStorage.getItem('user');
+        if (!userData) return;
+        const user = JSON.parse(userData);
+
+        try {
+            setDeletingId(tx.id);
+            await axios.delete(
+                `${process.env.REACT_APP_API_BASE_URL}/api/transactions/admin/incoming-funds/`,
+                {
+                    headers: { Authorization: `Bearer ${user.access}` },
+                    data: { category: tx.category, raw_id: tx.raw_id }
+                }
+            );
+            alert(`Data transaksi ${tx.order_number} berhasil dihapus.`);
+            fetchIncomingFunds();
+        } catch (err) {
+            console.error('Failed deleting transaction:', err);
+            alert(err.response?.data?.error || 'Gagal menghapus data transaksi.');
+        } finally {
+            setDeletingId(null);
+        }
+    };
+
     // Export to CSV Function
     const handleExportExcel = (exportAll = false) => {
         const dataToExport = exportAll ? transactions : paginatedTransactions;
@@ -233,6 +262,14 @@ const DashboardAdminIncomingFundsPage = () => {
                 </span>
             );
         }
+        if (status === 'refunded') {
+            return (
+                <span className="px-2.5 py-1 rounded-full text-[10px] font-black bg-purple-50 text-purple-700 border border-purple-200 flex items-center gap-1" title="Uang sempat masuk/ditransfer lalu dibatalkan & direfund">
+                    <span className="material-icons text-[12px]">restart_alt</span>
+                    Batal (Sempat Transfer / Refund)
+                </span>
+            );
+        }
         if (status === 'rejected') {
             return (
                 <span className="px-2.5 py-1 rounded-full text-[10px] font-black bg-red-50 text-red-700 border border-red-200 flex items-center gap-1">
@@ -283,7 +320,7 @@ const DashboardAdminIncomingFundsPage = () => {
                         <div>
                             <h1 className="text-2xl font-black text-gray-800 tracking-tight flex items-center gap-2">
                                 <span className="material-icons text-emerald-600">account_balance</span>
-                                Manajemen Uang Masuk (Incoming Funds)
+                                Manajemen Uang Masuk (Incoming Funds Hub)
                             </h1>
                             <p className="text-xs text-gray-500 mt-0.5">
                                 Rekapitulasi & audit seluruh arus kas masuk dari Event, Charity, E-Course, Produk Digital, dan Toko Sinergy
@@ -380,12 +417,12 @@ const DashboardAdminIncomingFundsPage = () => {
                             {/* Category Breakdown Cards */}
                             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
                                 {[
-                                    { cat: 'store', label: 'Toko / Sinergy', icon: 'storefront', color: 'blue' },
-                                    { cat: 'digital', label: 'Produk Digital', icon: 'cloud_download', color: 'purple' },
-                                    { cat: 'course', label: 'E-Course', icon: 'school', color: 'indigo' },
-                                    { cat: 'event', label: 'Event Tiket', icon: 'confirmation_number', color: 'amber' },
-                                    { cat: 'charity', label: 'Charity Donasi', icon: 'rose' },
-                                    { cat: 'zis', label: 'ZIS Rutin', icon: 'account_balance_wallet', color: 'teal' },
+                                    { cat: 'store', label: 'Toko / Sinergy', icon: 'storefront' },
+                                    { cat: 'digital', label: 'Produk Digital', icon: 'cloud_download' },
+                                    { cat: 'course', label: 'E-Course', icon: 'school' },
+                                    { cat: 'event', label: 'Event Tiket', icon: 'confirmation_number' },
+                                    { cat: 'charity', label: 'Charity Donasi', icon: 'volunteer_activism' },
+                                    { cat: 'zis', label: 'ZIS Rutin', icon: 'account_balance_wallet' },
                                 ].map(c => {
                                     const item = summary?.by_category?.[c.cat] || { count: 0, verified_amount: 0, pending_amount: 0 };
                                     return (
@@ -481,6 +518,7 @@ const DashboardAdminIncomingFundsPage = () => {
                                 <option value="all">Semua Status</option>
                                 <option value="verified">✅ Terverifikasi / Lunas</option>
                                 <option value="pending">⏳ Menunggu Verifikasi</option>
+                                <option value="refunded">⚠️ Batal (Sempat Transfer / Refund)</option>
                                 <option value="rejected">❌ Batal / Ditolak</option>
                             </select>
                         </div>
@@ -631,7 +669,7 @@ const DashboardAdminIncomingFundsPage = () => {
                                                     {tx.title}
                                                 </p>
                                                 {tx.extra_info && (
-                                                    <p className="text-[10px] text-gray-400 font-medium mt-0.5">
+                                                    <p className="text-[10px] text-gray-400 font-medium mt-0.5 leading-snug">
                                                         {tx.extra_info}
                                                     </p>
                                                 )}
@@ -710,6 +748,20 @@ const DashboardAdminIncomingFundsPage = () => {
                                                             <span className="material-icons text-sm">open_in_new</span>
                                                         </button>
                                                     )}
+
+                                                    {/* Delete Entry Button */}
+                                                    <button
+                                                        onClick={() => handleDeleteTransaction(tx)}
+                                                        disabled={deletingId === tx.id}
+                                                        className="p-1.5 rounded-lg bg-red-50 hover:bg-red-600 text-red-600 hover:text-white transition disabled:opacity-50"
+                                                        title="Hapus data transaksi ini dari sistem"
+                                                    >
+                                                        {deletingId === tx.id ? (
+                                                            <div className="animate-spin h-3.5 w-3.5 border-b-2 border-red-600 rounded-full"></div>
+                                                        ) : (
+                                                            <span className="material-icons text-sm">delete</span>
+                                                        )}
+                                                    </button>
                                                 </div>
                                             </td>
                                         </tr>
