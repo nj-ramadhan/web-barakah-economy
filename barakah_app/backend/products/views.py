@@ -462,19 +462,49 @@ class ProductViewSet(viewsets.ModelViewSet):
                 'error': 'Produk ini sudah dimiliki oleh akun tersebut.'
             }, status=status.HTTP_400_BAD_REQUEST)
 
-        previous_owner_name = product.seller.username if product.seller else 'Sistem'
+        previous_owner = product.seller
+        previous_owner_name = previous_owner.username if previous_owner else 'Sistem'
         product.seller = target_user
         product.save(update_fields=['seller'])
 
-        # Transfer all related sales orders so order history, notifications, and pending balance move to the new owner
+        # 1. Transfer all related sales orders so order history, notifications, and pending balance move to the new owner
         from orders.models import Order
-        transferred_orders_count = Order.objects.filter(items__product=product).update(seller=target_user)
+        transferred_orders = Order.objects.filter(items__product=product)
+        transferred_orders_count = transferred_orders.update(seller=target_user)
+
+        # 2. Transfer wallet earnings for completed orders from previous owner to new owner
+        from transactions.models import UserWallet, WalletTransaction
+        if previous_owner and previous_owner != target_user:
+            try:
+                prev_wallet = UserWallet.get_or_create_wallet(previous_owner)
+                target_wallet = UserWallet.get_or_create_wallet(target_user)
+
+                earning_txs = WalletTransaction.objects.filter(
+                    order__in=transferred_orders,
+                    wallet=prev_wallet,
+                    transaction_type='EARNING'
+                )
+                total_earning_to_move = sum([tx.amount for tx in earning_txs])
+
+                if total_earning_to_move > 0:
+                    prev_wallet.debit(
+                        amount=total_earning_to_move,
+                        transaction_type='ADJUSTMENT',
+                        description=f"Pemindahan saldo penjualan produk '{product.title}' ke @{target_user.username}"
+                    )
+                    target_wallet.credit(
+                        amount=total_earning_to_move,
+                        transaction_type='EARNING',
+                        description=f"Penerimaan saldo penjualan produk '{product.title}' dari @{previous_owner.username}"
+                    )
+            except Exception as e:
+                logger.error(f"Error transferring wallet earnings: {e}")
 
         target_name = getattr(target_user.profile, 'name_full', None) or target_user.username
 
         return Response({
             'success': True,
-            'message': f'Kepemilikan produk "{product.title}" beserta {transferred_orders_count} data riwayat pesanan & saldo pending berhasil dialihkan kepada {target_name} (@{target_user.username}).',
+            'message': f'Kepemilikan produk "{product.title}" beserta {transferred_orders_count} data riwayat pesanan & saldo pending/terbayar berhasil dialihkan kepada {target_name} (@{target_user.username}).',
             'transferred_orders_count': transferred_orders_count,
             'new_owner': {
                 'id': target_user.id,

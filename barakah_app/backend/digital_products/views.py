@@ -247,19 +247,19 @@ class DigitalProductViewSet(viewsets.ModelViewSet):
                 'error': f'Pengguna dengan username/email "{target_identifier}" tidak ditemukan di web BAE.'
             }, status=status.HTTP_404_NOT_FOUND)
 
-        if target_user == product.user:
-            return Response({
-                'error': 'Produk ini sudah dimiliki oleh akun tersebut.'
-            }, status=status.HTTP_400_BAD_REQUEST)
-
+        previous_owner = product.user
         product.user = target_user
         product.save(update_fields=['user'])
+
+        # Transfer all related digital sales orders so sales balance moves to the new owner
+        transferred_digital_orders_count = DigitalOrder.objects.filter(digital_product=product).update(product_owner=target_user)
 
         target_name = getattr(target_user.profile, 'name_full', None) or target_user.username
 
         return Response({
             'success': True,
-            'message': f'Kepemilikan produk digital "{product.title}" berhasil dialihkan kepada {target_name} (@{target_user.username}).',
+            'message': f'Kepemilikan produk digital "{product.title}" beserta {transferred_digital_orders_count} data pesanan & saldo berhasil dialihkan kepada {target_name} (@{target_user.username}).',
+            'transferred_orders_count': transferred_digital_orders_count,
             'new_owner': {
                 'id': target_user.id,
                 'username': target_user.username,
