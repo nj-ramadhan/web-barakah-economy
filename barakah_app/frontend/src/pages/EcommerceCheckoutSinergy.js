@@ -65,7 +65,15 @@ const EcommerceCheckoutSinergy = () => {
                     headers: { Authorization: `Bearer ${user.access}` }
                 });
                 
-                const items = cartRes.data || [];
+                const rawItems = cartRes.data || [];
+                const selectedItems = rawItems.filter(it => it.is_selected);
+                const items = selectedItems.length > 0 ? selectedItems : rawItems;
+
+                if (items.length === 0) {
+                    navigate('/store', { replace: true });
+                    return;
+                }
+
                 setCartItems(items);
                 
                 const initialConfigs = {};

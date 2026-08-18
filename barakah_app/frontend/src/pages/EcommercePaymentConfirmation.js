@@ -21,6 +21,22 @@ const EcommercePaymentConfirmation = () => {
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
 
+  const {
+    orderId,
+    orderNumber: orderNumberParam,
+    amount,
+    bank,
+    customerName,
+    customerPhone,
+    shippingCost,
+    courier,
+    voucherCode,
+    voucherDiscount,
+    cartItems = []
+  } = location.state || {};
+
+  const currentOrderNumber = orderNumberParam || orderId || '';
+
   const [selectedFile, setSelectedFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState('');
   const [uploading, setUploading] = useState(false);
@@ -36,10 +52,17 @@ const EcommercePaymentConfirmation = () => {
   const [generatingQris, setGeneratingQris] = useState(false);
   const [timeLeft, setTimeLeft] = useState(300); // 5 minutes
 
+  // Redirect if no data passed
+  useEffect(() => {
+    if (!location.state) {
+      navigate('/');
+    }
+  }, [location.state, navigate]);
+
   useEffect(() => {
     getPublicPaymentConfig().then((cfg) => {
       setPaymentConfig(cfg);
-      if (cfg?.active_mode === 'dynaqris' && location.state?.amount) {
+      if (cfg?.active_mode === 'dynaqris' && amount) {
         handleGenerateDynaQRIS(cfg);
       }
     }).catch(err => console.error("Error fetching config:", err));
@@ -88,28 +111,6 @@ const EcommercePaymentConfirmation = () => {
       return () => clearInterval(poller);
     }
   }, [paymentConfig, qrisData, isSuccess, currentOrderNumber]);
-
-  // Redirect if no data passed
-  if (!location.state) {
-    navigate('/');
-    return null;
-  }
-
-  const {
-    orderId,
-    orderNumber: orderNumberParam,
-    amount,
-    bank,
-    customerName,
-    customerPhone,
-    shippingCost,
-    courier,
-    voucherCode,
-    voucherDiscount,
-    cartItems = []
-  } = location.state;
-
-  const currentOrderNumber = orderNumberParam || orderId || '';
 
   const formatCountdown = (seconds) => {
     const m = Math.floor(seconds / 60);
