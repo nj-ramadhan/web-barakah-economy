@@ -182,7 +182,7 @@ const DynaQRISModal = ({
                                 <span className="font-bold">+Rp {formatCurrency(qrisData.uniqueCode)}</span>
                             </div>
                             <p className="text-[9px] text-emerald-200/80 italic mt-1 leading-tight">
-                                * Akad Ijarah (Ujrah): Biaya pemeliharaan infrastruktur verifikasi otomatis, sah & bebas riba.
+                                * Akad Ijarah (Ujrah): Biaya pemeliharaan infrastruktur.
                             </p>
                         </div>
                     )}
