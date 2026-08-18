@@ -103,6 +103,25 @@ class CreateOrderView(APIView):
         serializer = OrderSerializer(orders, many=True)
         return Response(serializer.data)
 
+    def delete(self, request):
+        """Cleanly cancel and remove an unpaid pending order when user closes payment/QRIS modal."""
+        user = request.user
+        order_id = request.query_params.get('order_id') or request.data.get('order_id') or request.query_params.get('order_number') or request.data.get('order_number')
+        if not order_id:
+            return Response({'error': 'Parameter order_id wajib diisi.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        order = Order.objects.filter(user=user, pk=order_id).first() if str(order_id).isdigit() else Order.objects.filter(user=user, order_number=order_id).first()
+        if not order:
+            return Response({'error': 'Pesanan tidak ditemukan.'}, status=status.HTTP_404_NOT_FOUND)
+
+        # Only allow hard deletion if order is still unpaid/pending
+        if (order.status or '').lower() in ['pending', 'unpaid', 'waiting_payment'] and not order.payment_proof:
+            restore_order_stock(order)
+            order.delete()
+            return Response({'success': True, 'message': 'Pesanan pending belum bayar berhasil dibatalkan dan tidak masuk riwayat belanja.'})
+
+        return Response({'error': 'Pesanan sudah diproses atau sudah dibayar, tidak dapat dihapus instan.'}, status=status.HTTP_400_BAD_REQUEST)
+
     def post(self, request):
         perform_order_maintenance()
         user = request.user

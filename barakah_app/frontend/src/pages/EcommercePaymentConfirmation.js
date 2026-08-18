@@ -94,10 +94,21 @@ const EcommercePaymentConfirmation = () => {
     }
   };
 
-  const handleDynaCancel = () => {
+  const handleDynaCancel = async () => {
     setShowDynaModal(false);
     setQrisData(null);
-    alert('Waktu pembayaran QRIS telah habis. Anda dialihkan kembali.');
+    try {
+      const userData = localStorage.getItem('user');
+      if (userData && currentOrderNumber) {
+        const user = JSON.parse(userData);
+        await axios.delete(`${process.env.REACT_APP_API_BASE_URL}/api/orders/?order_id=${currentOrderNumber}`, {
+          headers: { Authorization: `Bearer ${user.access}` }
+        });
+      }
+    } catch (err) {
+      console.error('Error cleaning unpaid order on cancel:', err);
+    }
+    alert('Pembayaran dibatalkan / waktu habis. Pesanan belum dibayar telah dihapus dan Anda dialihkan kembali.');
     navigate(-1);
   };
 
