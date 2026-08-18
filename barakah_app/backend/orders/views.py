@@ -158,6 +158,12 @@ class CreateOrderView(APIView):
                     seller_carts[seller_id] = []
                 seller_carts[seller_id].append(item)
 
+            def clean_decimal(val):
+                try:
+                    if val is None or str(val).strip() == "": return Decimal('0')
+                    return Decimal(str(val))
+                except: return Decimal('0')
+
             created_orders = []
             payment_proof = request.FILES.get('proof_file')
             global_payment_method = request.data.get('payment_method', 'manual')
@@ -171,12 +177,6 @@ class CreateOrderView(APIView):
 
             for s_id, items in seller_carts.items():
                 config = configs_by_seller.get(str(s_id)) or configs_by_seller.get(s_id) or (checkouts_data[0] if checkouts_data else {})
-
-                def clean_decimal(val):
-                    try:
-                        if val is None or str(val).strip() == "": return Decimal('0')
-                        return Decimal(str(val))
-                    except: return Decimal('0')
 
                 shipping_cost = clean_decimal(config.get('shipping_cost', 0))
                 shipping_courier = config.get('shipping_courier', '')
