@@ -1037,96 +1037,6 @@ const EventSubmissionPage = () => {
                                             </div>
                                         </div>
 
-                                        {/* Teams Section */}
-                                        <div className="space-y-4 md:col-span-2 p-6 bg-purple-50/50 rounded-[2rem] border border-purple-100 mt-2">
-                                            <div className="flex items-center justify-between">
-                                                <div>
-                                                    <p className="text-sm font-black text-purple-900">Manajemen Tim / Kelompok</p>
-                                                    <p className="text-[10px] text-purple-600 font-bold uppercase tracking-wider">Membagi slot peserta ke dalam beberapa tim</p>
-                                                </div>
-                                                <button
-                                                    type="button"
-                                                    onClick={addTeam}
-                                                    className="text-[10px] font-black text-white bg-purple-600 px-4 py-2 rounded-xl hover:bg-purple-700 transition flex items-center gap-1 shadow-lg shadow-purple-100"
-                                                >
-                                                    <span className="material-icons text-sm">add</span>
-                                                    TAMBAH TIM
-                                                </button>
-                                            </div>
-                                            
-                                            <div className="space-y-3">
-                                                {formData.teams && formData.teams.map((tm, idx) => (
-                                                    <div key={idx} className="bg-white p-5 rounded-2xl border border-purple-100 relative animate-fade-in space-y-4 shadow-sm">
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => removeTeam(idx)}
-                                                            className="absolute -top-2 -right-2 w-7 h-7 bg-red-500 text-white rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition"
-                                                        >
-                                                            <span className="material-icons text-xs">close</span>
-                                                        </button>
-                                                        
-                                                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                                                            <div className="space-y-1.5">
-                                                                <label className={`text-[9px] font-black uppercase tracking-widest ml-1 transition-colors ${!tm.name ? 'text-red-500' : 'text-gray-400'}`}>Nama Tim *</label>
-                                                                <input
-                                                                    type="text"
-                                                                    id={`team-name-${idx}`}
-                                                                    value={tm.name}
-                                                                    onChange={(e) => updateTeam(idx, { name: e.target.value })}
-                                                                    placeholder="Misal: Team Alpha"
-                                                                    className="w-full px-4 py-2.5 bg-gray-50 border-none rounded-xl text-xs focus:ring-2 focus:ring-purple-500 transition"
-                                                                />
-                                                            </div>
-                                                            <div className="space-y-1.5">
-                                                                <label className={`text-[9px] font-black uppercase tracking-widest ml-1 transition-colors ${(!tm.capacity || Number(tm.capacity) <= 0) ? 'text-red-500' : 'text-gray-400'}`}>Kapasitas Peserta *</label>
-                                                                <input
-                                                                    type="number"
-                                                                    id={`team-capacity-${idx}`}
-                                                                    min="1"
-                                                                    value={tm.capacity}
-                                                                    onChange={(e) => updateTeam(idx, { capacity: parseInt(e.target.value) || 0 })}
-                                                                    className="w-full px-4 py-2.5 bg-gray-50 border-none rounded-xl text-xs focus:ring-2 focus:ring-purple-500 transition"
-                                                                />
-                                                                {tm.id && (
-                                                                    <p className="text-[9px] text-purple-600 font-bold ml-1 mt-1">Terisi: {tm.registered_count || 0}</p>
-                                                                )}
-                                                            </div>
-                                                            <div className="space-y-1.5">
-                                                                <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Penyesuaian Harga</label>
-                                                                <div className="flex bg-gray-50 rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-purple-500 transition">
-                                                                    <button
-                                                                        type="button"
-                                                                        onClick={() => {
-                                                                            const val = Math.abs(Number(tm.price_modifier || 0));
-                                                                            updateTeam(idx, { price_modifier: Number(tm.price_modifier || 0) < 0 ? val : -val });
-                                                                        }}
-                                                                        className={`px-4 font-black text-sm flex items-center justify-center ${Number(tm.price_modifier || 0) < 0 ? 'bg-red-500 text-white' : 'bg-green-500 text-white'} transition`}
-                                                                    >
-                                                                        {Number(tm.price_modifier || 0) < 0 ? '-' : '+'}
-                                                                    </button>
-                                                                    <CurrencyInput
-                                                                        value={Math.abs(Number(tm.price_modifier || 0))}
-                                                                        onChange={(e) => {
-                                                                            const isNeg = Number(tm.price_modifier || 0) < 0;
-                                                                            const val = Math.abs(Number(e.target.value || 0));
-                                                                            updateTeam(idx, { price_modifier: isNeg ? -val : val });
-                                                                        }}
-                                                                        placeholder="0"
-                                                                        className="w-full px-4 py-2.5 bg-transparent border-none text-xs outline-none"
-                                                                    />
-                                                                </div>
-                                                                <p className="text-[8px] text-gray-400 leading-tight mt-1 ml-1">Klik tombol +/- untuk mengubah antara Diskon (-) atau Biaya Tambahan (+).</p>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                ))}
-                                                {(!formData.teams || formData.teams.length === 0) && (
-                                                    <p className="text-[10px] text-purple-700/50 italic text-center py-2">Tambahkan tim jika peserta perlu mendaftar pada slot regu/kelompok tertentu.</p>
-                                                )}
-                                            </div>
-                                        </div>
-
-                                        
                                         {/* Voucher Management */}
                                         <div className="md:col-span-2 mt-4 space-y-4 p-6 bg-green-50/50 rounded-[2rem] border border-green-100">
                                             <div className="flex items-center justify-between">
@@ -1443,6 +1353,95 @@ const EventSubmissionPage = () => {
                                         </div>
                                     </>
                                 )}
+
+                                {/* Teams Section - Tersedia untuk event Berbayar maupun Gratis */}
+                                <div className="space-y-4 md:col-span-2 p-6 bg-purple-50/50 rounded-[2rem] border border-purple-100 mt-2">
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <p className="text-sm font-black text-purple-900">Manajemen Tim / Kelompok</p>
+                                            <p className="text-[10px] text-purple-600 font-bold uppercase tracking-wider">Membagi slot peserta ke dalam beberapa tim / kelompok</p>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={addTeam}
+                                            className="text-[10px] font-black text-white bg-purple-600 px-4 py-2 rounded-xl hover:bg-purple-700 transition flex items-center gap-1 shadow-lg shadow-purple-100"
+                                        >
+                                            <span className="material-icons text-sm">add</span>
+                                            TAMBAH TIM
+                                        </button>
+                                    </div>
+                                    
+                                    <div className="space-y-3">
+                                        {formData.teams && formData.teams.map((tm, idx) => (
+                                            <div key={idx} className="bg-white p-5 rounded-2xl border border-purple-100 relative animate-fade-in space-y-4 shadow-sm">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => removeTeam(idx)}
+                                                    className="absolute -top-2 -right-2 w-7 h-7 bg-red-500 text-white rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition"
+                                                >
+                                                    <span className="material-icons text-xs">close</span>
+                                                </button>
+                                                
+                                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                                    <div className="space-y-1.5">
+                                                        <label className={`text-[9px] font-black uppercase tracking-widest ml-1 transition-colors ${!tm.name ? 'text-red-500' : 'text-gray-400'}`}>Nama Tim *</label>
+                                                        <input
+                                                            type="text"
+                                                            id={`team-name-${idx}`}
+                                                            value={tm.name}
+                                                            onChange={(e) => updateTeam(idx, { name: e.target.value })}
+                                                            placeholder="Misal: Team Alpha"
+                                                            className="w-full px-4 py-2.5 bg-gray-50 border-none rounded-xl text-xs focus:ring-2 focus:ring-purple-500 transition"
+                                                        />
+                                                    </div>
+                                                    <div className="space-y-1.5">
+                                                        <label className={`text-[9px] font-black uppercase tracking-widest ml-1 transition-colors ${(!tm.capacity || Number(tm.capacity) <= 0) ? 'text-red-500' : 'text-gray-400'}`}>Kapasitas Peserta *</label>
+                                                        <input
+                                                            type="number"
+                                                            id={`team-capacity-${idx}`}
+                                                            min="1"
+                                                            value={tm.capacity}
+                                                            onChange={(e) => updateTeam(idx, { capacity: parseInt(e.target.value) || 0 })}
+                                                            className="w-full px-4 py-2.5 bg-gray-50 border-none rounded-xl text-xs focus:ring-2 focus:ring-purple-500 transition"
+                                                        />
+                                                        {tm.id && (
+                                                            <p className="text-[9px] text-purple-600 font-bold ml-1 mt-1">Terisi: {tm.registered_count || 0}</p>
+                                                        )}
+                                                    </div>
+                                                    <div className="space-y-1.5">
+                                                        <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Penyesuaian Harga</label>
+                                                        <div className="flex bg-gray-50 rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-purple-500 transition">
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    const val = Math.abs(Number(tm.price_modifier || 0));
+                                                                    updateTeam(idx, { price_modifier: Number(tm.price_modifier || 0) < 0 ? val : -val });
+                                                                }}
+                                                                className={`px-4 font-black text-sm flex items-center justify-center ${Number(tm.price_modifier || 0) < 0 ? 'bg-red-500 text-white' : 'bg-green-500 text-white'} transition`}
+                                                            >
+                                                                {Number(tm.price_modifier || 0) < 0 ? '-' : '+'}
+                                                            </button>
+                                                            <CurrencyInput
+                                                                value={Math.abs(Number(tm.price_modifier || 0))}
+                                                                onChange={(e) => {
+                                                                    const isNeg = Number(tm.price_modifier || 0) < 0;
+                                                                    const val = Math.abs(Number(e.target.value || 0));
+                                                                    updateTeam(idx, { price_modifier: isNeg ? -val : val });
+                                                                }}
+                                                                placeholder="0"
+                                                                className="w-full px-4 py-2.5 bg-transparent border-none text-xs outline-none"
+                                                            />
+                                                        </div>
+                                                        <p className="text-[8px] text-gray-400 leading-tight mt-1 ml-1">Klik tombol +/- untuk mengubah antara Diskon (-) atau Biaya Tambahan (+).</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                        {(!formData.teams || formData.teams.length === 0) && (
+                                            <p className="text-[10px] text-purple-700/50 italic text-center py-2">Tambahkan tim jika peserta perlu mendaftar pada slot regu/kelompok tertentu.</p>
+                                        )}
+                                    </div>
+                                </div>
                             </div>
                         </div>
 

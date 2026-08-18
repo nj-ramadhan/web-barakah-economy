@@ -20,8 +20,12 @@ class DynaQRISService:
     def get_random_available_unique_code(cls, base_amount, timeout_seconds=300, min_code=1, max_code=500, transaction_type=None):
         """
         Generates a RANDOM unique nominal code between min_code and max_code.
-        - For event: min_code=1, max_code=100, locked for 2 hours (7200s). Checks DB for recent active registrations within 2 hours.
-        - For ecourse/digital/ecommerce: min_code=1, max_code=500, locked for admin timeout duration.
+        - For event:
+            * Range 1-100.
+            * Verified/Paid registrations block their unique code for 2 hours (2-hour rotation reset).
+            * Pending registrations block their unique code ONLY during active payment timeout (e.g. 5 mins). If expired or cancelled, the code is hangus/released immediately.
+        - For ecourse/digital/ecommerce:
+            * Range 1-500, locked for payment timeout duration.
         """
         lock_duration = max(60, int(timeout_seconds))
         
@@ -29,11 +33,29 @@ class DynaQRISService:
         if transaction_type == 'event':
             try:
                 from events.models import EventRegistration
-                cutoff = timezone.now() - timedelta(hours=2)
-                regs = EventRegistration.objects.filter(
-                    created_at__gte=cutoff
-                ).exclude(status__in=['rejected', 'cancelled', 'batal'])
-                for r in regs:
+                settings_obj = PaymentSetting.get_settings()
+                event_timeout_mins = max(1, int(settings_obj.payment_timeout_minutes or 5))
+                now = timezone.now()
+                two_hours_ago = now - timedelta(hours=2)
+                timeout_cutoff = now - timedelta(minutes=event_timeout_mins)
+                
+                # 1. Verified/approved registrations reserve the code for 2 hours
+                verified_regs = EventRegistration.objects.filter(
+                    created_at__gte=two_hours_ago,
+                    status__in=['approved', 'verified']
+                )
+                for r in verified_regs:
+                    if r.payment_amount and r.payment_amount > 0:
+                        diff = int(round(float(r.payment_amount))) - base_amount
+                        if min_code <= diff <= max_code:
+                            used_codes.add(diff)
+
+                # 2. Pending registrations reserve the code ONLY until the payment timeout (e.g. 5 mins); past that, the code is hangus
+                pending_regs = EventRegistration.objects.filter(
+                    created_at__gte=timeout_cutoff,
+                    status='pending'
+                )
+                for r in pending_regs:
                     if r.payment_amount and r.payment_amount > 0:
                         diff = int(round(float(r.payment_amount))) - base_amount
                         if min_code <= diff <= max_code:
@@ -64,19 +86,17 @@ class DynaQRISService:
         """
         Convert Static QRIS to Dynamic QRIS via DynaQRIS API.
         Includes anti-spam rate limiting per user/IP and random unique nominal code:
-        - For 'event': 1-100 range, 2-hour (120 mins) reset duration, concurrent collision avoidance.
+        - For 'event': 1-100 range, 2-hour rotation reset for verified payments, payment timeout for pending (hangus if cancelled/expired).
         - For other types: 1-500 range, admin configured timeout duration.
         """
         settings_obj = PaymentSetting.get_settings()
+        timeout_minutes = max(1, int(settings_obj.payment_timeout_minutes or 5))
+        timeout_seconds = timeout_minutes * 60
         
         if transaction_type == 'event':
-            timeout_minutes = 120  # 2 hours
-            timeout_seconds = 120 * 60
             min_code = 1
             max_code = 100
         else:
-            timeout_minutes = settings_obj.payment_timeout_minutes or 5
-            timeout_seconds = timeout_minutes * 60
             min_code = 1
             max_code = 500
         

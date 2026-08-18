@@ -672,8 +672,22 @@ class EventViewSet(viewsets.ModelViewSet):
         """Cancel and remove any pending registration for this user & event so they can register again immediately."""
         event = self.get_object()
         user = request.user
-        deleted_count, _ = EventRegistration.objects.filter(event=event, user=user, status='pending').delete()
-        return Response({"message": "Pendaftaran pending berhasil dibatalkan. Anda dapat mendaftar kembali.", "deleted": deleted_count})
+        pending_regs = EventRegistration.objects.filter(event=event, user=user, status='pending')
+        
+        # Clear any active QRIS unique code cache locks
+        try:
+            from django.core.cache import cache
+            for r in pending_regs:
+                if r.payment_amount:
+                    base_amt = int(round(float(r.payment_amount)))
+                    for c in range(1, 101):
+                        cache.delete(f"active_qris_ucode_event_{base_amt}_{c}")
+                        cache.delete(f"active_qris_ucode_event_{base_amt - c}_{c}")
+        except Exception:
+            pass
+
+        deleted_count, _ = pending_regs.delete()
+        return Response({"message": "Pendaftaran pending berhasil dibatalkan. Kode unik telah hangus dan Anda dapat mendaftar kembali.", "deleted": deleted_count})
 
     @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
     def manual_register(self, request, slug=None):
