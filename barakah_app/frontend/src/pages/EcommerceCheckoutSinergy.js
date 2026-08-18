@@ -248,21 +248,22 @@ const EcommerceCheckoutSinergy = () => {
                 navigate('/riwayat-belanja');
             } else {
                 // Non-COD (QRIS / Transfer Bank or Hybrid): Navigate to Halaman Pembayaran
-                const totalAmount = Object.keys(sellerGroups).reduce((sum, s_id) => {
+                const calculatedTotalWithFee = Object.keys(sellerGroups).reduce((sum, s_id) => {
                     const group = sellerGroups[s_id];
                     const config = checkoutConfigs[s_id];
                     return sum + group.total_price + (config?.shipping_cost || 0) - (config?.voucher_nominal || 0);
                 }, 0) + appliedAdminFee;
 
-                const allOrdersGrandTotal = Array.isArray(orders)
+                const dbOrdersGrandTotal = Array.isArray(orders)
                     ? orders.reduce((sum, ord) => sum + Number(ord.grand_total || ord.total_price || 0), 0)
-                    : Number(orders?.grand_total || totalAmount);
+                    : Number(orders?.grand_total || calculatedTotalWithFee);
 
-                const totalOrderGrandTotal = allOrdersGrandTotal > 0 ? allOrdersGrandTotal : totalAmount;
+                // Explicitly guarantee final total includes the applied admin fee
+                const effectiveTotal = Math.max(dbOrdersGrandTotal, calculatedTotalWithFee);
 
                 const remainingToPay = selectedPaymentMethod === 'hybrid' 
-                    ? Math.max(0, totalOrderGrandTotal - (Number(userWallet.balance) || 0))
-                    : totalOrderGrandTotal;
+                    ? Math.max(0, effectiveTotal - (Number(userWallet.balance) || 0))
+                    : effectiveTotal;
 
                 if (remainingToPay <= 0) {
                     alert('Pembayaran berhasil lunas!');

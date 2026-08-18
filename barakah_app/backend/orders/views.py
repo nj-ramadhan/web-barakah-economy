@@ -167,8 +167,10 @@ class CreateOrderView(APIView):
             wallet = UserWallet.get_or_create_wallet(user)
             available_user_balance = wallet.balance if use_saldo_bae else Decimal('0')
 
+            global_admin_fee = clean_decimal(request.data.get('admin_fee') or request.data.get('unique_code') or 0)
+
             for s_id, items in seller_carts.items():
-                config = configs_by_seller.get(s_id, {})
+                config = configs_by_seller.get(str(s_id)) or configs_by_seller.get(s_id) or (checkouts_data[0] if checkouts_data else {})
 
                 def clean_decimal(val):
                     try:
@@ -237,7 +239,7 @@ class CreateOrderView(APIView):
                     except Exception as e:
                         logger.error(f"Voucher verification error: {e}")
 
-                admin_fee = clean_decimal(config.get('admin_fee') or request.data.get('admin_fee') or request.data.get('unique_code') or 0)
+                admin_fee = clean_decimal(config.get('admin_fee') if config.get('admin_fee') is not None else (global_admin_fee if len(created_orders) == 0 else 0))
                 grand_total = total_price + shipping_cost - voucher_nominal + admin_fee
                 if grand_total < 0: grand_total = Decimal('0')
 
