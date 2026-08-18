@@ -388,7 +388,7 @@ const EcommercePaymentConfirmation = () => {
 
         {/* Amount Card */}
         <div className="bg-gradient-to-br from-emerald-600 to-teal-700 rounded-[32px] p-6 mb-8 shadow-xl shadow-emerald-100">
-          <p className="text-emerald-100 text-[10px] font-black uppercase tracking-[0.2em] mb-1">Total Tagihan</p>
+          <p className="text-emerald-100 text-[10px] font-black uppercase tracking-[0.2em] mb-1">Total Tagihan Pembayaran</p>
           <div className="flex justify-between items-end">
             <h2 className="text-3xl font-black text-white tracking-tight">Rp {formattedAmount}</h2>
             <button
@@ -398,6 +398,12 @@ const EcommercePaymentConfirmation = () => {
               <span className="material-icons text-sm">content_copy</span>
             </button>
           </div>
+          {Number(voucherDiscount) > 0 && (
+            <div className="mt-3 pt-3 border-t border-white/20 flex items-center justify-between text-xs text-emerald-100 font-bold">
+              <span>Potongan Voucher {voucherCode ? `(${voucherCode})` : ''}</span>
+              <span>- Rp {new Intl.NumberFormat('id-ID', { maximumFractionDigits: 0 }).format(voucherDiscount)}</span>
+            </div>
+          )}
         </div>
 
         {/* QRIS if selected */}

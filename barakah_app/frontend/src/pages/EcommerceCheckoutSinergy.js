@@ -18,6 +18,9 @@ const EcommerceCheckoutSinergy = () => {
     const [loadingCosts, setLoadingCosts] = useState({});
     const [selectedAddress, setSelectedAddress] = useState(null);
     const [userWallet, setUserWallet] = useState({ balance: 0 });
+    const [voucherInputs, setVoucherInputs] = useState({});
+    const [voucherMessages, setVoucherMessages] = useState({});
+    const [validatingVoucher, setValidatingVoucher] = useState({});
 
     const navigate = useNavigate();
 
@@ -79,6 +82,45 @@ const EcommerceCheckoutSinergy = () => {
                 [field]: value
             }
         }));
+    };
+
+    const handleApplyVoucher = async (sellerId) => {
+        const code = (voucherInputs[sellerId] || '').trim();
+        if (!code) {
+            setVoucherMessages(prev => ({
+                ...prev,
+                [sellerId]: { type: 'error', text: 'Masukkan kode voucher terlebih dahulu.' }
+            }));
+            return;
+        }
+
+        setValidatingVoucher(prev => ({ ...prev, [sellerId]: true }));
+        try {
+            const res = await axios.post(`${process.env.REACT_APP_API_BASE_URL}/api/products/vouchers/validate/`, { code });
+            const nominal = parseFloat(res.data.nominal || 0);
+            handleConfigChange(sellerId, 'voucher_code', code);
+            handleConfigChange(sellerId, 'voucher_nominal', nominal);
+            setVoucherMessages(prev => ({
+                ...prev,
+                [sellerId]: { type: 'success', text: `Voucher "${code}" berhasil digunakan (-Rp ${new Intl.NumberFormat('id-ID').format(nominal)})` }
+            }));
+        } catch (err) {
+            handleConfigChange(sellerId, 'voucher_code', '');
+            handleConfigChange(sellerId, 'voucher_nominal', 0);
+            setVoucherMessages(prev => ({
+                ...prev,
+                [sellerId]: { type: 'error', text: err.response?.data?.error || 'Kode voucher tidak valid atau telah habis.' }
+            }));
+        } finally {
+            setValidatingVoucher(prev => ({ ...prev, [sellerId]: false }));
+        }
+    };
+
+    const handleRemoveVoucher = (sellerId) => {
+        setVoucherInputs(prev => ({ ...prev, [sellerId]: '' }));
+        handleConfigChange(sellerId, 'voucher_code', '');
+        handleConfigChange(sellerId, 'voucher_nominal', 0);
+        setVoucherMessages(prev => ({ ...prev, [sellerId]: null }));
     };
 
     const fetchShippingOptions = async (sellerId, courier) => {
@@ -193,9 +235,15 @@ const EcommerceCheckoutSinergy = () => {
                     return sum + group.total_price + (config?.shipping_cost || 0) - (config?.voucher_nominal || 0);
                 }, 0);
 
+                const allOrdersGrandTotal = Array.isArray(orders)
+                    ? orders.reduce((sum, ord) => sum + Number(ord.grand_total || ord.total_price || 0), 0)
+                    : Number(orders?.grand_total || totalAmount);
+
+                const totalOrderGrandTotal = allOrdersGrandTotal > 0 ? allOrdersGrandTotal : totalAmount;
+
                 const remainingToPay = selectedPaymentMethod === 'hybrid' 
-                    ? Math.max(0, totalAmount - (Number(userWallet.balance) || 0))
-                    : (firstOrder?.grand_total || firstOrder?.total_price || totalAmount);
+                    ? Math.max(0, totalOrderGrandTotal - (Number(userWallet.balance) || 0))
+                    : totalOrderGrandTotal;
 
                 if (remainingToPay <= 0) {
                     alert('Pembayaran berhasil lunas!');
@@ -203,15 +251,23 @@ const EcommerceCheckoutSinergy = () => {
                     return;
                 }
 
+                const totalShippingCost = Object.keys(sellerGroups).reduce((sum, s_id) => sum + (checkoutConfigs[s_id]?.shipping_cost || 0), 0);
+                const totalVoucherDiscount = Object.keys(sellerGroups).reduce((sum, s_id) => sum + (checkoutConfigs[s_id]?.voucher_nominal || 0), 0);
+                const voucherCodesCombined = Object.keys(sellerGroups).map(s_id => checkoutConfigs[s_id]?.voucher_code).filter(Boolean).join(', ');
+
                 navigate('/konfirmasi-pembayaran-belanja', {
                     state: {
                         orderId: firstOrder?.id,
                         orderNumber: firstOrder?.order_number,
                         amount: remainingToPay,
                         bank: 'qris',
-                        customerName: addresses.name_full,
-                        customerPhone: addresses.phone,
-                        cartItems: cartItems
+                        customerName: selectedAddress?.nama_penerima || addresses?.name_full || '',
+                        customerPhone: selectedAddress?.phone || addresses?.phone || '',
+                        cartItems: cartItems,
+                        shippingCost: totalShippingCost,
+                        voucherCode: voucherCodesCombined,
+                        voucherDiscount: totalVoucherDiscount,
+                        shippingAddressData: selectedAddress
                     }
                 });
             }
@@ -401,16 +457,53 @@ const EcommerceCheckoutSinergy = () => {
 
                             {/* Voucher & Notes */}
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-                                <div className="border border-gray-100 rounded-2xl p-4 bg-gray-50/50">
-                                    <label className="block text-xs font-black text-gray-700 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                                        <span className="material-icons text-sm text-emerald-600">confirmation_number</span>
-                                        Voucher Toko
-                                    </label>
-                                    <input 
-                                        type="text" 
-                                        placeholder="Masukkan kode voucher (opsional)" 
-                                        className="w-full text-xs font-bold bg-white border border-gray-200 rounded-xl p-3 focus:ring-2 focus:ring-emerald-500 outline-none uppercase" 
-                                    />
+                                <div className="border border-gray-100 rounded-2xl p-4 bg-gray-50/50 flex flex-col justify-between">
+                                    <div>
+                                        <label className="block text-xs font-black text-gray-700 uppercase tracking-wider mb-2 flex items-center justify-between">
+                                            <span className="flex items-center gap-1.5">
+                                                <span className="material-icons text-sm text-emerald-600">confirmation_number</span>
+                                                Voucher Toko
+                                            </span>
+                                            {config?.voucher_nominal > 0 && (
+                                                <span className="text-[10px] font-black text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-md">
+                                                    Hemat Rp {new Intl.NumberFormat('id-ID').format(config.voucher_nominal)}
+                                                </span>
+                                            )}
+                                        </label>
+                                        <div className="flex gap-2">
+                                            <input 
+                                                type="text" 
+                                                placeholder="KODE VOUCHER" 
+                                                className="flex-1 text-xs font-bold bg-white border border-gray-200 rounded-xl p-2.5 focus:ring-2 focus:ring-emerald-500 outline-none uppercase" 
+                                                value={voucherInputs[s_id] !== undefined ? voucherInputs[s_id] : (config?.voucher_code || '')}
+                                                onChange={(e) => setVoucherInputs(prev => ({ ...prev, [s_id]: e.target.value.toUpperCase() }))}
+                                                disabled={config?.voucher_nominal > 0 || validatingVoucher[s_id]}
+                                            />
+                                            {config?.voucher_nominal > 0 ? (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleRemoveVoucher(s_id)}
+                                                    className="px-3 py-2 bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-bold rounded-xl border border-rose-200 transition shrink-0"
+                                                >
+                                                    Hapus
+                                                </button>
+                                            ) : (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleApplyVoucher(s_id)}
+                                                    disabled={validatingVoucher[s_id]}
+                                                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-300 text-white text-xs font-bold rounded-xl shadow-sm transition shrink-0"
+                                                >
+                                                    {validatingVoucher[s_id] ? 'Cek...' : 'Pakai'}
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+                                    {voucherMessages[s_id] && (
+                                        <p className={`text-[10px] font-bold mt-2 ${voucherMessages[s_id].type === 'success' ? 'text-emerald-700 bg-emerald-50 p-1.5 rounded-lg border border-emerald-200' : 'text-rose-600 bg-rose-50 p-1.5 rounded-lg border border-rose-200'}`}>
+                                            {voucherMessages[s_id].text}
+                                        </p>
+                                    )}
                                 </div>
 
                                 <div className="border border-gray-100 rounded-2xl p-4 bg-gray-50/50">

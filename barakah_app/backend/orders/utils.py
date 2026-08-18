@@ -4,7 +4,74 @@ from accounts.whatsapp_service import send_message
 from profiles.models import Profile
 from barakah_app.utils import send_email
 
+from decimal import Decimal
+from django.utils import timezone
+
 logger = logging.getLogger('accounts')
+
+def calculate_product_item_price(product, variation=None, quantity=1):
+    """
+    Calculate the net unit price of a product item considering:
+    1. Base price (variation additional_price or product price)
+    2. Direct product/variation discount
+    3. Active campaign promotions (ProductPromotion: percentage, nominal, wholesale min_qty)
+    Returns: Decimal(unit_price)
+    """
+    try:
+        # 1. Base Price
+        base_price = Decimal('0')
+        if variation and variation.additional_price is not None and Decimal(str(variation.additional_price)) > Decimal('0'):
+            base_price = Decimal(str(variation.additional_price))
+        elif product and product.price is not None:
+            base_price = Decimal(str(product.price))
+
+        unit_price = base_price
+
+        # 2. Direct discount (if no active campaign)
+        direct_discount = Decimal('0')
+        if variation and getattr(variation, 'discount', None) and Decimal(str(variation.discount)) > Decimal('0'):
+            direct_discount = Decimal(str(variation.discount))
+        elif product and getattr(product, 'discount', None) and Decimal(str(product.discount)) > Decimal('0'):
+            direct_discount = Decimal(str(product.discount))
+
+        if direct_discount > Decimal('0'):
+            unit_price = max(Decimal('0'), unit_price - direct_discount)
+
+        # 3. Active Campaign / Promo (ProductPromotion)
+        if product:
+            now = timezone.now()
+            active_promo = product.promotions.filter(
+                is_active=True,
+                start_date__lte=now,
+                end_date__gte=now
+            ).first()
+
+            if active_promo:
+                promo_val = Decimal(str(active_promo.discount_value or 0))
+                disc_type = active_promo.discount_type
+
+                if disc_type == 'percentage':
+                    disc_amount = base_price * (promo_val / Decimal('100'))
+                    unit_price = max(Decimal('0'), base_price - disc_amount)
+                elif disc_type == 'nominal':
+                    unit_price = max(Decimal('0'), base_price - promo_val)
+                elif disc_type == 'min_qty_discount':
+                    min_q = active_promo.min_quantity or 1
+                    if quantity >= min_q:
+                        if active_promo.is_min_qty_percentage:
+                            disc_amount = base_price * (promo_val / Decimal('100'))
+                            unit_price = max(Decimal('0'), base_price - disc_amount)
+                        else:
+                            unit_price = max(Decimal('0'), base_price - promo_val)
+
+        return max(Decimal('0'), unit_price)
+    except Exception as e:
+        logger.error(f"Error calculating product item price: {e}")
+        try:
+            return Decimal(str(product.price or 0))
+        except Exception:
+            return Decimal('0')
+
 
 def format_idr(amount):
     return 'Rp ' + '{:,.0f}'.format(amount).replace(',', '.')

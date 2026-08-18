@@ -169,30 +169,47 @@ const EcommerceCheckoutPage = () => {
     }
   };
 
-  const totalItemsPrice = cartItems.reduce((total, item) => {
-    let price = 0;
-    if (item.variation) {
-      // If variation exists, use variation price as TOTAL price
-      price = parseFloat(item.variation.additional_price || 0);
-    } else {
-      // If no variation, use product price - discount
-      price = parseFloat(item.product.price) - parseFloat(item.product.discount || 0);
-    }
-    return total + (price * item.quantity);
-  }, 0);
-
   const getOriginalItemPrice = (item) => {
-    // If variation exists, it doesn't have "original vs discount" anymore based on request
-    // But we can show the product's base price if we want. 
-    // However, the request says "jika ada variasi maka harga nya pakai yang di variasi"
-    if (item.variation) return parseFloat(item.variation.additional_price || 0);
-    return parseFloat(item.product.price);
+    if (!item) return 0;
+    const prodP = parseFloat(item.product?.price) || 0;
+    let varP = 0;
+    if (item.variation) {
+      if (item.variation.additional_price !== undefined && item.variation.additional_price !== null) {
+        varP = parseFloat(item.variation.additional_price) || 0;
+      } else if (item.variation.price !== undefined && item.variation.price !== null) {
+        varP = parseFloat(item.variation.price) || 0;
+      }
+    }
+    if (varP >= prodP && prodP > 0) return varP;
+    return prodP + varP;
   };
 
   const getDiscountedItemPrice = (item) => {
-    if (item.variation) return parseFloat(item.variation.additional_price || 0);
-    return parseFloat(item.product.price) - parseFloat(item.product.discount || 0);
+    const base = getOriginalItemPrice(item);
+    const promo = item.product?.active_promotion;
+    if (!promo) {
+      const directDisc = parseFloat(item.variation?.discount || item.product?.discount || 0);
+      return Math.max(0, base - directDisc);
+    }
+
+    if (promo.discount_type === 'percentage') {
+      return Math.max(0, base - (base * (parseFloat(promo.discount_value) / 100)));
+    } else if (promo.discount_type === 'nominal') {
+      return Math.max(0, base - parseFloat(promo.discount_value));
+    } else if (promo.discount_type === 'min_qty_discount' && (item.quantity || 1) >= (parseInt(promo.min_quantity) || 1)) {
+      if (promo.is_min_qty_percentage) {
+        return Math.max(0, base - (base * (parseFloat(promo.discount_value) / 100)));
+      } else {
+        return Math.max(0, base - parseFloat(promo.discount_value));
+      }
+    }
+    return base;
   };
+
+  const totalItemsPrice = cartItems.reduce((total, item) => {
+    const price = getDiscountedItemPrice(item);
+    return total + (price * item.quantity);
+  }, 0);
 
   const grandTotal = Math.max(0, totalItemsPrice + selectedShipping - voucherDiscount);
 

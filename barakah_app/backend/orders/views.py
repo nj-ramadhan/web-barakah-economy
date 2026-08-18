@@ -208,13 +208,34 @@ class CreateOrderView(APIView):
                 product = first_item.product
                 paid_directly = product.own_bank_status == 'approved'
 
-                # Calculate item total
+                # Calculate item total using actual promo / campaign discounts
+                from .utils import calculate_product_item_price
                 total_price = Decimal('0')
+                item_pricing_map = {}
                 for cart_item in items:
-                    base_price = cart_item.product.price
-                    if cart_item.variation and cart_item.variation.additional_price and cart_item.variation.additional_price > 0:
-                        base_price = cart_item.variation.additional_price
-                    total_price += (base_price * cart_item.quantity)
+                    unit_price = calculate_product_item_price(
+                        product=cart_item.product,
+                        variation=cart_item.variation,
+                        quantity=cart_item.quantity
+                    )
+                    item_pricing_map[cart_item.id] = unit_price
+                    total_price += (unit_price * cart_item.quantity)
+
+                # Validate Voucher Toko if provided
+                if voucher_code:
+                    try:
+                        from products.models import ShopVoucher
+                        v_qs = ShopVoucher.objects.filter(code__iexact=voucher_code, is_active=True)
+                        if seller_user:
+                            v_qs = v_qs.filter(seller=seller_user)
+                        voucher_obj = v_qs.first()
+                        if voucher_obj and (voucher_obj.quantity == -1 or voucher_obj.quantity > 0):
+                            voucher_nominal = Decimal(str(voucher_obj.nominal))
+                            if voucher_obj.quantity > 0:
+                                voucher_obj.quantity -= 1
+                                voucher_obj.save(update_fields=['quantity'])
+                    except Exception as e:
+                        logger.error(f"Voucher verification error: {e}")
 
                 grand_total = total_price + shipping_cost - voucher_nominal
                 if grand_total < 0: grand_total = Decimal('0')
@@ -284,10 +305,7 @@ class CreateOrderView(APIView):
 
                 # Create Order Items and decrease stock
                 for cart_item in items:
-                    base_price = cart_item.product.price
-                    if cart_item.variation and cart_item.variation.additional_price and cart_item.variation.additional_price > 0:
-                        base_price = cart_item.variation.additional_price
-                    price_for_item = base_price * cart_item.quantity
+                    unit_price = item_pricing_map.get(cart_item.id, cart_item.product.price)
 
                     if cart_item.variation:
                         if cart_item.variation.stock >= cart_item.quantity:
@@ -310,7 +328,7 @@ class CreateOrderView(APIView):
                         product=cart_item.product,
                         variation=cart_item.variation,
                         quantity=cart_item.quantity,
-                        price=price_for_item
+                        price=unit_price
                     )
 
                 created_orders.append(order)
