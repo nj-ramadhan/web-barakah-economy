@@ -218,6 +218,56 @@ class DigitalProductViewSet(viewsets.ModelViewSet):
             logger.exception(f"Error in my_products action: {e}")
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+    @action(detail=True, methods=['post'], url_path='transfer-ownership', permission_classes=[permissions.IsAuthenticated])
+    def transfer_ownership(self, request, slug=None, pk=None):
+        """Transfer ownership of a digital product to another registered BAE user via username or email."""
+        user = request.user
+        product = self.get_object()
+
+        if not (user.is_superuser or user.is_staff or getattr(user, 'role', '') == 'admin' or product.user == user):
+            return Response({
+                'error': 'Hanya pemilik produk atau administrator yang dapat memindahkan kepemilikan produk digital ini.'
+            }, status=status.HTTP_403_FORBIDDEN)
+
+        target_identifier = request.data.get('target_user', '').strip()
+        if not target_identifier:
+            return Response({
+                'error': 'Username atau email pengguna tujuan wajib diisi.'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+
+        target_user = User.objects.filter(
+            Q(username__iexact=target_identifier) | Q(email__iexact=target_identifier)
+        ).first()
+
+        if not target_user:
+            return Response({
+                'error': f'Pengguna dengan username/email "{target_identifier}" tidak ditemukan di web BAE.'
+            }, status=status.HTTP_404_NOT_FOUND)
+
+        if target_user == product.user:
+            return Response({
+                'error': 'Produk ini sudah dimiliki oleh akun tersebut.'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        product.user = target_user
+        product.save(update_fields=['user'])
+
+        target_name = getattr(target_user.profile, 'name_full', None) or target_user.username
+
+        return Response({
+            'success': True,
+            'message': f'Kepemilikan produk digital "{product.title}" berhasil dialihkan kepada {target_name} (@{target_user.username}).',
+            'new_owner': {
+                'id': target_user.id,
+                'username': target_user.username,
+                'email': target_user.email,
+                'name': target_name
+            }
+        }, status=status.HTTP_200_OK)
+
     @action(detail=False, methods=['get'], url_path='public-profile', permission_classes=[permissions.AllowAny])
     def public_profile(self, request):
         username = request.query_params.get('username')

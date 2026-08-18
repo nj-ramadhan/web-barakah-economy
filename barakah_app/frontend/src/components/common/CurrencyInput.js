@@ -18,6 +18,12 @@ const CurrencyInput = ({
     // Handle both controlled and uncontrolled (defaultValue) modes
     const [uncontrolledValue, setUncontrolledValue] = React.useState(props.defaultValue || '');
     
+    React.useEffect(() => {
+        if (props.defaultValue !== undefined) {
+            setUncontrolledValue(props.defaultValue);
+        }
+    }, [props.defaultValue]);
+
     // If controlledValue is provided (not undefined), use it. Otherwise use internal state.
     const value = controlledValue !== undefined ? controlledValue : uncontrolledValue;
 

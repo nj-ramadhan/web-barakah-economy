@@ -215,9 +215,14 @@ class NotificationService : NotificationListenerService() {
 
         Log.d(TAG, "Notification received from [$packageName]: $fullContent")
 
-        // Filter: Check if notification matches target banks, e-wallets, or money transfer patterns
-        if (isRelevantNotification(packageName, fullContent)) {
-            broadcastLog("📥 Terdeteksi [$packageName]: $fullContent")
+        // Live Sniffer & Inspector
+        val isRelevant = isRelevantNotification(packageName, fullContent)
+        
+        if (isRelevant) {
+            broadcastLog("📥 [NOTIFIKASI TANGKAP] $packageName\n📝 Isi: $fullContent")
+            sendWebhookPayload(packageName, title, text.ifBlank { bigText }, fullContent)
+        } else if (prefs.allowAllApps) {
+            broadcastLog("🔍 [SNIFFER MODE] Dari $packageName: \"$fullContent\" (Diteruskan)")
             sendWebhookPayload(packageName, title, text.ifBlank { bigText }, fullContent)
         }
     }

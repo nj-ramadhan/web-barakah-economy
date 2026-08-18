@@ -18,7 +18,7 @@ export const formatCurrency = (value) => {
 /**
  * Parses a currency string or API decimal number back to a clean plain integer.
  * Correctly handles API decimal strings (e.g. "199000.00"), Indonesian formatted strings ("199.000"),
- * and comma decimals ("199.000,00"), completely eliminating the +2 zeroes digit bug.
+ * and comma decimals ("199.000,00"), completely eliminating the +2 zeroes digit bug and allowing any number magnitude.
  * @param {number|string} value 
  * @returns {number|string}
  */
@@ -29,10 +29,9 @@ export const parseCurrency = (value) => {
     let str = value.toString().trim();
     if (str === '') return '';
 
-    // If it's already a standard float/integer string from API like "199000.00" or "199000"
-    if (/^-?\d+(\.\d+)?$/.test(str)) {
-        const parsed = parseFloat(str);
-        return isNaN(parsed) ? 0 : Math.round(parsed);
+    // Handle standard Django/API decimal strings ending in .00 or .0 (e.g. "199000.00", "5000.0")
+    if (/^\d+\.(?:0|00)$/.test(str)) {
+        str = str.split('.')[0];
     }
 
     // If it has Indonesian comma decimal e.g. "199.000,00" -> take integer part before comma
@@ -40,7 +39,13 @@ export const parseCurrency = (value) => {
         str = str.split(',')[0];
     }
 
-    // Remove all non-digit characters (including dots used as thousand separators, currency symbols "Rp", etc.)
+    // If it's a plain integer string with no formatting e.g. "199000"
+    if (/^\d+$/.test(str)) {
+        return parseInt(str, 10);
+    }
+
+    // In Indonesian currency formatting (id-ID), dots are thousand separators: "3.000", "10.000", "1.500.000"
+    // Strip all non-digit characters (dots, spaces, Rp, etc.)
     const clean = str.replace(/[^\d]/g, '');
     if (clean === '') return 0;
     return parseInt(clean, 10);

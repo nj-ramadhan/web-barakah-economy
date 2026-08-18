@@ -102,13 +102,13 @@ class TestDynaQRISConnectionView(APIView):
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class GenerateDynaQRISView(APIView):
-    """Generates dynamic QRIS code for a given transaction."""
+    """Generates dynamic QRIS code for a given transaction and syncs the exact final amount to the database record."""
     permission_classes = [AllowAny]
 
     def post(self, request):
         amount = request.data.get('amount')
         reference_id = request.data.get('reference_id')
-        transaction_type = request.data.get('type')  # 'event', 'ecommerce', 'digital', 'charity'
+        transaction_type = request.data.get('type')  # 'event', 'ecommerce', 'digital', 'charity', 'ecourse'
 
         if not amount:
             return Response({'error': 'Nominal pembayaran wajib diisi.'}, status=status.HTTP_400_BAD_REQUEST)
@@ -127,6 +127,50 @@ class GenerateDynaQRISView(APIView):
 
             status_code = status.HTTP_429_TOO_MANY_REQUESTS if result.get("code") == "RATE_LIMITED" else status.HTTP_400_BAD_REQUEST
             return Response(result, status=status_code)
+
+        # Synchronize generated final unique amount to the transaction database record so Webhook matches it accurately
+        if "amount" in result and reference_id:
+            final_amount = result["amount"]
+            try:
+                if transaction_type == 'ecommerce':
+                    from orders.models import Order
+                    ord_obj = Order.objects.filter(id=reference_id).first() if str(reference_id).isdigit() else None
+                    if not ord_obj:
+                        ord_obj = Order.objects.filter(order_number=reference_id).first()
+                    if ord_obj:
+                        ord_obj.grand_total = final_amount
+                        ord_obj.payment_method = 'dynaqris'
+                        ord_obj.save(update_fields=['grand_total', 'payment_method'])
+                elif transaction_type == 'event':
+                    from events.models import EventRegistration
+                    reg_obj = EventRegistration.objects.filter(id=reference_id).first() if str(reference_id).isdigit() else None
+                    if reg_obj:
+                        reg_obj.payment_amount = final_amount
+                        reg_obj.save(update_fields=['payment_amount'])
+                elif transaction_type == 'charity':
+                    from donations.models import Donation
+                    don_obj = Donation.objects.filter(id=reference_id).first() if str(reference_id).isdigit() else None
+                    if don_obj:
+                        don_obj.amount = final_amount
+                        don_obj.save(update_fields=['amount'])
+                elif transaction_type == 'digital':
+                    from digital_products.models import DigitalOrder
+                    dig_obj = DigitalOrder.objects.filter(id=reference_id).first() if str(reference_id).isdigit() else None
+                    if not dig_obj:
+                        dig_obj = DigitalOrder.objects.filter(order_number=reference_id).first()
+                    if dig_obj:
+                        dig_obj.amount = final_amount
+                        dig_obj.save(update_fields=['amount'])
+                elif transaction_type in ['ecourse', 'course']:
+                    from courses.models import CourseEnrollment
+                    crs_obj = CourseEnrollment.objects.filter(id=reference_id).first() if str(reference_id).isdigit() else None
+                    if not crs_obj:
+                        crs_obj = CourseEnrollment.objects.filter(order_number=reference_id).first()
+                    if crs_obj:
+                        crs_obj.amount = final_amount
+                        crs_obj.save(update_fields=['amount'])
+            except Exception as sync_err:
+                logger.error(f"Error syncing final DynaQRIS amount {final_amount} for {transaction_type} #{reference_id}: {sync_err}")
 
         return Response(result)
 
@@ -828,18 +872,92 @@ class AndroidNotificationWebhookView(APIView):
         from orders.models import Order
         from digital_products.models import DigitalOrder
         from courses.models import CourseEnrollment
+        from django.db.models import Q
+        from datetime import timedelta
+        from django.utils import timezone
+
+        # Standard Payment Gateway Active Window: Only match transactions created within the last 15-30 minutes
+        timeout_mins = max(15, getattr(setting, 'payment_timeout_minutes', 15) or 15)
+        recent_cutoff = timezone.now() - timedelta(minutes=timeout_mins)
 
         for amt in extracted_amounts:
-            # 1. Search pending Event Registration with matching payment_amount
+            # 1. Search recent active E-Commerce Order with matching grand_total or total_price
+            order = Order.objects.filter(
+                created_at__gte=recent_cutoff,
+                status__in=['pending', 'waiting_payment', 'unpaid']
+            ).filter(Q(grand_total=amt) | Q(total_price=amt)).order_by('-created_at').first()
+            
+            if order:
+                order.status = 'paid'
+                order.save()
+                return Response({
+                    "success": True,
+                    "matched": True,
+                    "type": "ecommerce",
+                    "reference_id": order.id,
+                    "order_number": order.order_number or str(order.id),
+                    "amount": float(amt),
+                    "extracted_amounts": [float(a) for a in extracted_amounts],
+                    "message": f"Pesanan E-commerce #{order.order_number or order.id} berhasil diverifikasi otomatis via Webhook!"
+                })
+
+            # 2. Search recent active Digital Product Order with matching amount
+            d_order = DigitalOrder.objects.filter(
+                created_at__gte=recent_cutoff,
+                amount=amt,
+                payment_status='pending'
+            ).order_by('-created_at').first()
+            if d_order:
+                d_order.payment_status = 'verified'
+                d_order.save()
+                try:
+                    from digital_products.views import DigitalProductViewSet
+                    DigitalProductViewSet()._send_digital_product_email(d_order)
+                except Exception as e:
+                    logger.error(f"Failed to send digital product email for order {d_order.id}: {e}")
+                return Response({
+                    "success": True,
+                    "matched": True,
+                    "type": "digital",
+                    "reference_id": d_order.id,
+                    "order_number": d_order.order_number,
+                    "amount": float(amt),
+                    "extracted_amounts": [float(a) for a in extracted_amounts],
+                    "message": f"Pesanan Produk Digital #{d_order.order_number} berhasil diverifikasi otomatis via Webhook!"
+                })
+
+            # 3. Search recent active Course Enrollment with matching amount
+            c_enrollment = CourseEnrollment.objects.filter(
+                created_at__gte=recent_cutoff,
+                amount=amt,
+                payment_status='pending'
+            ).order_by('-id').first()
+            if c_enrollment:
+                c_enrollment.payment_status = 'paid'
+                c_enrollment.save()
+                return Response({
+                    "success": True,
+                    "matched": True,
+                    "type": "ecourse",
+                    "reference_id": c_enrollment.id,
+                    "order_number": c_enrollment.order_number,
+                    "amount": float(amt),
+                    "extracted_amounts": [float(a) for a in extracted_amounts],
+                    "message": f"Pendaftaran E-Course #{c_enrollment.order_number or c_enrollment.id} berhasil diverifikasi otomatis via Webhook!"
+                })
+
+            # 4. Search recent active Event Registration with matching payment_amount
             reg = EventRegistration.objects.filter(
+                created_at__gte=recent_cutoff,
                 payment_amount=amt
             ).filter(
                 status__in=['pending', 'unpaid']
             ).order_by('-created_at').first()
 
             if not reg:
-                # Also try matching registrations with payment_status='pending' regardless of status
+                # Also try matching registrations with payment_status='pending'
                 reg = EventRegistration.objects.filter(
+                    created_at__gte=recent_cutoff,
                     payment_amount=amt,
                     payment_status__in=['pending', 'unpaid', '']
                 ).order_by('-created_at').first()
@@ -863,8 +981,12 @@ class AndroidNotificationWebhookView(APIView):
                     "message": f"Pendaftaran Event #{reg.id} ({reg.guest_name or 'Peserta'}) berhasil diverifikasi otomatis via Webhook!"
                 })
 
-            # 2. Search pending Donation with matching amount
-            donation = Donation.objects.filter(amount=amt, payment_status='pending').order_by('-created_at').first()
+            # 5. Search recent active Donation with matching amount
+            donation = Donation.objects.filter(
+                created_at__gte=recent_cutoff,
+                amount=amt,
+                payment_status='pending'
+            ).order_by('-created_at').first()
             if donation:
                 donation.payment_status = 'verified'
                 donation.save()
@@ -880,62 +1002,6 @@ class AndroidNotificationWebhookView(APIView):
                     "amount": float(amt),
                     "extracted_amounts": [float(a) for a in extracted_amounts],
                     "message": f"Donasi #{donation.id} ({donation.donor_name or 'Donatur'}) berhasil diverifikasi otomatis via Webhook!"
-                })
-
-            # 3. Search pending E-Commerce Order with matching grand_total or total_price
-            order = (
-                Order.objects.filter(status__in=['pending', 'waiting_payment', 'unpaid']).filter(grand_total=amt).order_by('-created_at').first() or
-                Order.objects.filter(status__in=['pending', 'waiting_payment', 'unpaid']).filter(total_price=amt).order_by('-created_at').first()
-            )
-            if order:
-                order.status = 'paid'
-                order.save()
-                return Response({
-                    "success": True,
-                    "matched": True,
-                    "type": "ecommerce",
-                    "reference_id": order.id,
-                    "order_number": order.order_number or str(order.id),
-                    "amount": float(amt),
-                    "extracted_amounts": [float(a) for a in extracted_amounts],
-                    "message": f"Pesanan E-commerce #{order.order_number or order.id} berhasil diverifikasi otomatis via Webhook!"
-                })
-
-            # 4. Search pending Digital Product Order with matching amount
-            d_order = DigitalOrder.objects.filter(amount=amt, payment_status='pending').order_by('-created_at').first()
-            if d_order:
-                d_order.payment_status = 'verified'
-                d_order.save()
-                try:
-                    from digital_products.views import DigitalProductViewSet
-                    DigitalProductViewSet()._send_digital_product_email(d_order)
-                except Exception as e:
-                    logger.error(f"Failed to send digital product email for order {d_order.id}: {e}")
-                return Response({
-                    "success": True,
-                    "matched": True,
-                    "type": "digital",
-                    "reference_id": d_order.id,
-                    "order_number": d_order.order_number,
-                    "amount": float(amt),
-                    "extracted_amounts": [float(a) for a in extracted_amounts],
-                    "message": f"Pesanan Produk Digital #{d_order.order_number} berhasil diverifikasi otomatis via Webhook!"
-                })
-
-            # 5. Search pending Course Enrollment with matching amount
-            c_enrollment = CourseEnrollment.objects.filter(amount=amt, payment_status='pending').order_by('-id').first()
-            if c_enrollment:
-                c_enrollment.payment_status = 'paid'
-                c_enrollment.save()
-                return Response({
-                    "success": True,
-                    "matched": True,
-                    "type": "ecourse",
-                    "reference_id": c_enrollment.id,
-                    "order_number": c_enrollment.order_number,
-                    "amount": float(amt),
-                    "extracted_amounts": [float(a) for a in extracted_amounts],
-                    "message": f"Pendaftaran E-Course #{c_enrollment.order_number or c_enrollment.id} berhasil diverifikasi otomatis via Webhook!"
                 })
 
         return Response({

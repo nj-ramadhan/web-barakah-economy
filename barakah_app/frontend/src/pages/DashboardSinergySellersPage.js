@@ -24,6 +24,7 @@ const DashboardSinergySellersPage = () => {
     const [isCodAvailable, setIsCodAvailable] = useState(false);
     const [manualStock, setManualStock] = useState(0);
     const [manualPrice, setManualPrice] = useState(0);
+    const [manualPurchasePrice, setManualPurchasePrice] = useState(0);
     const [thumbnailFile, setThumbnailFile] = useState(null);
     const [thumbnailPreview, setThumbnailPreview] = useState(null);
     const [galleryFiles, setGalleryFiles] = useState([]);
@@ -55,6 +56,54 @@ const DashboardSinergySellersPage = () => {
         setOwnQrisImagePreview(null);
         setUseOwnBank(false);
         setOrigDetails({});
+    };
+
+    // Transfer Ownership state
+    const [transferModalProduct, setTransferModalProduct] = useState(null);
+    const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
+    const [transferTargetUser, setTransferTargetUser] = useState('');
+    const [transferLoading, setTransferLoading] = useState(false);
+    const [transferError, setTransferError] = useState('');
+    const [transferSuccess, setTransferSuccess] = useState('');
+
+    const openTransferModal = (product) => {
+        setTransferModalProduct(product);
+        setTransferTargetUser('');
+        setTransferError('');
+        setTransferSuccess('');
+        setIsTransferModalOpen(true);
+    };
+
+    const handleTransferOwnershipSubmit = async (e) => {
+        e.preventDefault();
+        if (!transferTargetUser.trim() || !transferModalProduct) return;
+        const user = JSON.parse(localStorage.getItem('user'));
+        if (!user || !user.access) return;
+
+        try {
+            setTransferLoading(true);
+            setTransferError('');
+            setTransferSuccess('');
+
+            const response = await axios.post(
+                `${process.env.REACT_APP_API_BASE_URL}/api/products/${transferModalProduct.id}/transfer-ownership/`,
+                { target_user: transferTargetUser.trim() },
+                { headers: { Authorization: `Bearer ${user.access}` } }
+            );
+
+            setTransferSuccess(response.data.message || 'Kepemilikan produk berhasil dipindahkan!');
+            setTimeout(() => {
+                setIsTransferModalOpen(false);
+                setTransferModalProduct(null);
+                fetchDashboardData();
+            }, 1800);
+        } catch (err) {
+            console.error("Transfer ownership error", err);
+            const msg = err.response?.data?.error || err.response?.data?.message || 'Gagal memindahkan kepemilikan produk.';
+            setTransferError(msg);
+        } finally {
+            setTransferLoading(false);
+        }
     };
 
 
@@ -112,6 +161,7 @@ const DashboardSinergySellersPage = () => {
         setIsCodAvailable(product.is_cod_available || false);
         setManualStock(product.stock || 0);
         setManualPrice(parseCurrency(product.price) || 0);
+        setManualPurchasePrice(parseCurrency(product.purchase_price) || 0);
 
         const detailsObj = {
             own_bank_status: product.own_bank_status || 'none',
@@ -359,6 +409,9 @@ const DashboardSinergySellersPage = () => {
                         setDescription('');
                         setUnit('pcs');
                         setVariants([{name: '', additional_price: 0, stock: 0}]); 
+                        setManualPrice(0);
+                        setManualPurchasePrice(0);
+                        setManualStock(0);
                         setThumbnailFile(null);
                         setThumbnailPreview(null);
                         setGalleryFiles([]);
@@ -378,30 +431,28 @@ const DashboardSinergySellersPage = () => {
                     <p className="mt-2 text-sm text-gray-500">Anda belum memiliki produk fisik E-commerce.</p>
                 </div>
             ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {products.map(p => (
-                        <div key={p.id} className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex flex-col gap-3 relative overflow-hidden group">
-                            {p.status === 'pending' && <span className="absolute top-2 right-2 bg-orange-100 text-orange-700 text-[10px] font-bold px-2 py-1 rounded-full border border-orange-200">Menunggu Persetujuan</span>}
-                            {p.status === 'approved' && <span className="absolute top-2 right-2 bg-emerald-100 text-emerald-700 text-[10px] font-bold px-2 py-1 rounded-full border border-emerald-200">Disetujui</span>}
-                            {p.status === 'rejected' && <span className="absolute top-2 right-2 bg-red-100 text-red-700 text-[10px] font-bold px-2 py-1 rounded-full border border-red-200">Ditolak</span>}
-                            
-                            <img src={p.thumbnail || p.thumbnail_url} alt={p.title} className="w-full h-32 object-cover rounded-xl bg-gray-50" />
-                            <div className="flex-1">
-                                <h3 className="font-bold text-gray-800 line-clamp-1">{p.title}</h3>
-                                <p className="text-xs text-gray-500">
-                                    Harga: <span className="font-semibold text-emerald-700">
-                                        {p.min_price && p.max_price && p.min_price !== p.max_price 
-                                            ? `Rp ${formatCurrency(p.min_price)} ~ Rp ${formatCurrency(p.max_price)}`
-                                            : `Rp ${formatCurrency(p.price)}`
-                                        } / {p.unit || 'pcs'}
-                                    </span>
+                        <div key={p.id} className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex flex-col justify-between hover:shadow-md transition">
+                            <div>
+                                <div className="h-40 bg-gray-100 rounded-xl overflow-hidden mb-3 relative">
+                                    <img src={getMediaUrl(p.thumbnail || p.thumbnail_url)} alt={p.title} className="w-full h-full object-cover" onError={(e) => { e.target.onerror = null; e.target.src = '/placeholder-image.jpg'; }} />
+                                    {p.category && (
+                                        <span className="absolute top-2 right-2 bg-black/60 backdrop-blur-sm text-white text-[10px] px-2 py-0.5 rounded-full font-bold">
+                                            {p.category}
+                                        </span>
+                                    )}
+                                </div>
+                                <h3 className="font-bold text-gray-800 text-base line-clamp-1">{p.title}</h3>
+                                <p className="text-emerald-700 font-bold text-sm mt-1">
+                                    Rp {formatCurrency(p.price)}
                                 </p>
                                 <p className="text-xs text-gray-400">Total Stok: <span className="font-bold">{p.total_stock || p.stock} {p.unit || 'pcs'}</span></p>
                                 <p className="text-xs text-gray-500 line-clamp-2 mt-1">
                                     {(p.description || '').replace(/<[^>]*>/g, '')}
                                 </p>
                             </div>
-                            <div className="flex gap-2">
+                            <div className="flex gap-2 mt-4">
                                 <button onClick={() => {
                                     setEditingProduct(p);
                                     setDescription(p.description || '');
@@ -415,6 +466,7 @@ const DashboardSinergySellersPage = () => {
                                     setIsCodAvailable(p.is_cod_available || false);
                                     setManualStock(p.stock || 0);
                                     setManualPrice(parseCurrency(p.price) || 0);
+                                    setManualPurchasePrice(parseCurrency(p.purchase_price) || 0);
                                     setThumbnailFile(null);
                                     setThumbnailPreview(p.thumbnail || p.thumbnail_url);
                                     setGalleryFiles([]);
@@ -432,6 +484,14 @@ const DashboardSinergySellersPage = () => {
                                 >
                                     <span className="material-icons text-xs">campaign</span>
                                     <span>Promo</span>
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => openTransferModal(p)}
+                                    className="w-8 py-2 text-xs font-bold text-amber-600 bg-amber-50 rounded-xl hover:bg-amber-100 border border-amber-100 transition flex items-center justify-center"
+                                    title="Pindahkan Kepemilikan Produk ke Akun Lain"
+                                >
+                                    <span className="material-icons text-sm">swap_horiz</span>
                                 </button>
                                 <button 
                                     onClick={() => handleDeleteProduct(p.id)}
@@ -514,7 +574,13 @@ const DashboardSinergySellersPage = () => {
                 <div className="grid grid-cols-2 gap-4">
                     <div>
                         <label className="block text-sm font-semibold text-gray-700 mb-1">Harga Beli Dasar (Rp)</label>
-                        <CurrencyInput name="purchase_price" defaultValue={editingProduct?.purchase_price || ''} placeholder="0" className="!px-4 !py-3 !bg-gray-50 !border-gray-200 !rounded-xl" />
+                        <CurrencyInput 
+                            name="purchase_price" 
+                            value={manualPurchasePrice} 
+                            onChange={(e) => setManualPurchasePrice(e.target.value)}
+                            placeholder="0" 
+                            className="!px-4 !py-3 !bg-gray-50 !border-gray-200 !rounded-xl" 
+                        />
                     </div>
                     <div>
                         <label className="block text-sm font-semibold text-gray-700 mb-1">Harga Jual (Rp) {variants.length > 0 && variants[0].name && <span className="text-[10px] text-emerald-600">(Auto dari Variasi)</span>}</label>
@@ -861,6 +927,109 @@ const DashboardSinergySellersPage = () => {
                     product={selectedPromoProduct}
                     onSuccess={fetchDashboardData}
                 />
+            )}
+
+            {/* Modal Transfer Kepemilikan Produk */}
+            {isTransferModalOpen && transferModalProduct && (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
+                    <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl border border-gray-100 relative animate-slide-up">
+                        <button 
+                            type="button" 
+                            onClick={() => { setIsTransferModalOpen(false); setTransferModalProduct(null); }} 
+                            className="absolute top-4 right-4 w-9 h-9 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-500 flex items-center justify-center transition"
+                        >
+                            <span className="material-icons text-base">close</span>
+                        </button>
+
+                        <div className="flex items-center gap-3 mb-5">
+                            <div className="w-12 h-12 rounded-2xl bg-amber-500 text-white flex items-center justify-center shadow-lg shadow-amber-200">
+                                <span className="material-icons text-2xl">swap_horiz</span>
+                            </div>
+                            <div>
+                                <h3 className="font-bold text-gray-900 text-lg">Pindah Kepemilikan Produk</h3>
+                                <p className="text-xs text-gray-500">Alihkan hak kelola produk ke akun BAE lain</p>
+                            </div>
+                        </div>
+
+                        {/* Product Summary Box */}
+                        <div className="flex items-center gap-3 bg-gray-50 p-3.5 rounded-2xl border border-gray-200/60 mb-5">
+                            <img 
+                                src={getMediaUrl(transferModalProduct.thumbnail || transferModalProduct.thumbnail_url)} 
+                                alt={transferModalProduct.title} 
+                                className="w-14 h-14 rounded-xl object-cover border border-gray-200"
+                                onError={(e) => { e.target.onerror = null; e.target.src = '/placeholder-image.jpg'; }}
+                            />
+                            <div className="flex-1 min-w-0">
+                                <h4 className="font-bold text-gray-800 text-sm truncate">{transferModalProduct.title}</h4>
+                                <p className="text-xs font-semibold text-emerald-700 mt-0.5">Rp {formatCurrency(transferModalProduct.price)}</p>
+                                <p className="text-[11px] text-gray-400">Stok: {transferModalProduct.total_stock || transferModalProduct.stock} {transferModalProduct.unit || 'pcs'}</p>
+                            </div>
+                        </div>
+
+                        <form onSubmit={handleTransferOwnershipSubmit} className="space-y-4">
+                            <div>
+                                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+                                    Username atau Email Akun Tujuan *
+                                </label>
+                                <input 
+                                    type="text" 
+                                    value={transferTargetUser}
+                                    onChange={(e) => { setTransferTargetUser(e.target.value); setTransferError(''); }}
+                                    placeholder="Contoh: ahmad_fulan atau email@domain.com"
+                                    required
+                                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-amber-500 focus:bg-white outline-none transition"
+                                />
+                                <p className="text-[11px] text-gray-500 mt-1">Pastikan akun penerima sudah terdaftar aktif di web Barakah Economy.</p>
+                            </div>
+
+                            {/* Warning Box */}
+                            <div className="bg-amber-50 border border-amber-200/80 rounded-2xl p-3.5 flex items-start gap-2.5">
+                                <span className="material-icons text-amber-600 text-lg flex-shrink-0 mt-0.5">info</span>
+                                <p className="text-xs text-amber-900 leading-relaxed">
+                                    Setelah dipindahkan, produk ini akan berpindah ke toko penerima dan <b>tidak lagi berada di akun Anda</b>.
+                                </p>
+                            </div>
+
+                            {transferError && (
+                                <div className="bg-red-50 text-red-700 text-xs p-3 rounded-xl border border-red-200 flex items-center gap-2">
+                                    <span className="material-icons text-sm">error</span>
+                                    <span>{transferError}</span>
+                                </div>
+                            )}
+
+                            {transferSuccess && (
+                                <div className="bg-emerald-50 text-emerald-700 text-xs p-3 rounded-xl border border-emerald-200 flex items-center gap-2">
+                                    <span className="material-icons text-sm">check_circle</span>
+                                    <span>{transferSuccess}</span>
+                                </div>
+                            )}
+
+                            <div className="flex gap-3 pt-2">
+                                <button 
+                                    type="button" 
+                                    onClick={() => { setIsTransferModalOpen(false); setTransferModalProduct(null); }}
+                                    className="flex-1 py-3 text-sm font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-xl transition"
+                                >
+                                    Batal
+                                </button>
+                                <button 
+                                    type="submit" 
+                                    disabled={transferLoading || !transferTargetUser.trim()}
+                                    className={`flex-[2] py-3 text-sm font-bold text-white rounded-xl transition-all ${transferLoading || !transferTargetUser.trim() ? 'bg-gray-300 cursor-not-allowed' : 'bg-gradient-to-r from-amber-500 to-orange-600 shadow-md shadow-amber-200 hover:shadow-lg hover:scale-[1.01]'}`}
+                                >
+                                    {transferLoading ? (
+                                        <span className="flex items-center justify-center gap-2">
+                                            <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></span>
+                                            <span>Memindahkan...</span>
+                                        </span>
+                                    ) : (
+                                        <span>Pindahkan Sekarang</span>
+                                    )}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
             )}
 
             <NavigationButton />

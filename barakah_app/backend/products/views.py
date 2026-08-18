@@ -426,6 +426,59 @@ class ProductViewSet(viewsets.ModelViewSet):
 
             return Response(ProductPromotionSerializer(promo).data, status=status.HTTP_201_CREATED)
 
+    @action(detail=True, methods=['post'], url_path='transfer-ownership', permission_classes=[IsAuthenticated])
+    def transfer_ownership(self, request, pk=None, slug=None):
+        """Transfer ownership of a physical product to another registered BAE user via username or email."""
+        user = request.user
+        product = self.get_object()
+
+        # Check permission: Only owner, superuser, staff, or admin can transfer
+        if not (user.is_superuser or user.is_staff or getattr(user, 'role', '') == 'admin' or product.seller == user):
+            return Response({
+                'error': 'Hanya pemilik produk atau administrator yang dapat memindahkan kepemilikan produk ini.'
+            }, status=status.HTTP_403_FORBIDDEN)
+
+        target_identifier = request.data.get('target_user', '').strip()
+        if not target_identifier:
+            return Response({
+                'error': 'Username atau email pengguna tujuan wajib diisi.'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+
+        # Find target user by username or email (case-insensitive)
+        target_user = User.objects.filter(
+            Q(username__iexact=target_identifier) | Q(email__iexact=target_identifier)
+        ).first()
+
+        if not target_user:
+            return Response({
+                'error': f'Pengguna dengan username/email "{target_identifier}" tidak ditemukan di web BAE.'
+            }, status=status.HTTP_404_NOT_FOUND)
+
+        if target_user == product.seller:
+            return Response({
+                'error': 'Produk ini sudah dimiliki oleh akun tersebut.'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        previous_owner_name = product.seller.username if product.seller else 'Sistem'
+        product.seller = target_user
+        product.save(update_fields=['seller'])
+
+        target_name = getattr(target_user.profile, 'name_full', None) or target_user.username
+
+        return Response({
+            'success': True,
+            'message': f'Kepemilikan produk "{product.title}" berhasil dialihkan kepada {target_name} (@{target_user.username}).',
+            'new_owner': {
+                'id': target_user.id,
+                'username': target_user.username,
+                'email': target_user.email,
+                'name': target_name
+            }
+        }, status=status.HTTP_200_OK)
+
     def _compress_image(self, uploaded_file):
         """Compress uploaded review image if large to ensure fast database & storage."""
         if not uploaded_file:

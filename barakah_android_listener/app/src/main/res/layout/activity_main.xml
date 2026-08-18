@@ -45,7 +45,7 @@
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 
-        <!-- Live Status Indicator Card -->
+        <!-- Live Status Indicator & Hardware Device Info Card -->
         <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -76,7 +76,7 @@
                         android:id="@+id/tvLiveStatusHeader"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="LISTENER AKTIF 24/7 (LOW POWER)"
+                        android:text="LISTENER AKTIF 24/7 (LOCK 1 HP)"
                         android:textColor="@color/emerald_800"
                         android:textSize="13sp"
                         android:textStyle="bold" />
@@ -90,6 +90,42 @@
                     android:textSize="11sp"
                     android:textColor="@color/emerald_700"
                     android:layout_marginTop="4dp" />
+
+                <!-- Hardware Device Info Section -->
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:background="#D1FAE5"
+                    android:layout_marginTop="10dp"
+                    android:layout_marginBottom="8dp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="📱 IDENTITAS PERANGKAT (HARDWARE)"
+                    android:textColor="@color/emerald_900"
+                    android:textSize="10sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tvHardwareDeviceInfo"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Device: Loading..."
+                    android:textSize="11sp"
+                    android:textColor="@color/gray_800"
+                    android:fontFamily="monospace"
+                    android:layout_marginTop="2dp" />
+
+                <Button
+                    android:id="@+id/btnClaimDeviceLock"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="👑 Klaim HP Ini Sebagai Listener Utama"
+                    android:backgroundTint="@color/emerald_700"
+                    android:textColor="@color/white"
+                    android:textSize="11sp"
+                    android:layout_marginTop="8dp" />
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 

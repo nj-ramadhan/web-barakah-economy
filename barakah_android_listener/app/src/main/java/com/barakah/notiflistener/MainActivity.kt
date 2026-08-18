@@ -45,6 +45,9 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private lateinit var tvHardwareDeviceInfo: TextView
+    private lateinit var btnClaimDeviceLock: Button
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -55,6 +58,8 @@ class MainActivity : AppCompatActivity() {
         tvSelectedAppsSummary = findViewById(R.id.tvSelectedAppsSummary)
         tvLiveStatusHeader = findViewById(R.id.tvLiveStatusHeader)
         tvLiveStatusDetail = findViewById(R.id.tvLiveStatusDetail)
+        tvHardwareDeviceInfo = findViewById(R.id.tvHardwareDeviceInfo)
+        btnClaimDeviceLock = findViewById(R.id.btnClaimDeviceLock)
         cbAllowAllApps = findViewById(R.id.cbAllowAllApps)
         etWebhookUrl = findViewById(R.id.etWebhookUrl)
         etSecretToken = findViewById(R.id.etSecretToken)
@@ -75,7 +80,12 @@ class MainActivity : AppCompatActivity() {
         etSecretToken.setText(prefs.secretToken)
         cbAllowAllApps.isChecked = prefs.allowAllApps
 
+        updateHardwareDeviceInfo()
         updateSelectedAppsSummary()
+
+        btnClaimDeviceLock.setOnClickListener {
+            claimPrimaryDeviceLock()
+        }
 
         cbAllowAllApps.setOnCheckedChangeListener { _, isChecked ->
             prefs.allowAllApps = isChecked
@@ -113,7 +123,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         btnSimulateNotif.setOnClickListener {
-            showSimulationDialog()
+            showCustomNotificationBuilderDialog()
         }
 
         btnSaveSettings.setOnClickListener {
@@ -148,6 +158,17 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun updateHardwareDeviceInfo() {
+        val manufacturer = Build.MANUFACTURER.uppercase()
+        val model = Build.MODEL
+        val release = Build.VERSION.RELEASE
+        val sdk = Build.VERSION.SDK_INT
+        val deviceIdShort = prefs.deviceId.take(8)
+
+        val lockStatus = if (prefs.isPrimaryListener) "🟢 Listener Utama Server" else "⚠️ Bukan Listener Utama"
+        tvHardwareDeviceInfo.text = "Model: $manufacturer $model (Android $release, SDK $sdk)\nDevice ID: $deviceIdShort...\nStatus Server: $lockStatus"
+    }
+
     private fun updateSelectedAppsSummary() {
         if (prefs.allowAllApps) {
             tvSelectedAppsSummary.text = "Mode Uji Coba: Membaca notifikasi dari SEMUA aplikasi"
@@ -172,47 +193,143 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun showSimulationDialog() {
-        val options = arrayOf(
-            "BSI Mobile - Rp 50.000",
-            "BCA Mobile - Rp 100.000",
-            "Mandiri Livin - Rp 25.000",
-            "DANA - Rp 50.000",
-            "GoPay - Rp 20.000",
-            "ShopeePay - Rp 75.000",
-            "Custom Nominal / Teks Notifikasi Sendiri..."
+    private fun showCustomNotificationBuilderDialog() {
+        val bankOptions = arrayOf(
+            "DANA (id.dana)",
+            "BSI Mobile (id.co.bankbsi.mobile)",
+            "BCA Mobile (com.bca)",
+            "Livin by Mandiri (id.bmri.livin)",
+            "BRImo (id.co.bri.brimo)",
+            "GoPay / Gojek (com.gojek.app)",
+            "ShopeePay (com.shopee.id)",
+            "OVO (net.oneoryx.ovo)",
+            "SeaBank (com.seabank.id)",
+            "Custom App Lainnya..."
         )
 
-        AlertDialog.Builder(this)
-            .setTitle("🧪 Pilih Notifikasi Uji Coba")
-            .setItems(options) { _, which ->
-                when (which) {
-                    0 -> sendCustomPayload("id.co.bankbsi.mobile", "BSI Mobile Uang Masuk", "Transfer masuk sebesar Rp 50.000 dari Ahmad Fulan")
-                    1 -> sendCustomPayload("com.bca", "m-Transfer BCA", "Dana Masuk Sebesar Rp 100.000,00 dari REK 1234567890")
-                    2 -> sendCustomPayload("id.bmri.livin", "Livin by Mandiri", "Penerimaan transfer Rp 25.000 berhasil diterima")
-                    3 -> sendCustomPayload("id.dana", "DANA Saldo Masuk", "Kamu menerima saldo DANA sebesar Rp 50.000")
-                    4 -> sendCustomPayload("com.gojek.app", "GoPay Masuk", "Top up / Transfer masuk sebesar Rp 20.000")
-                    5 -> sendCustomPayload("com.shopee.id", "ShopeePay", "Pembayaran QRIS Rp 75.000 berhasil masuk ke saldo Anda")
-                    6 -> showCustomInputPrompt()
-                }
-            }
-            .setNegativeButton("Batal", null)
-            .show()
-    }
-
-    private fun showCustomInputPrompt() {
-        val input = EditText(this).apply {
-            hint = "Contoh: Transfer masuk sebesar Rp 50.000"
-            setText("Transfer masuk sebesar Rp 50.000 dari Uji Coba Android")
+        val dialogView = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(40, 30, 40, 20)
         }
+
+        val tvBankLabel = TextView(this).apply {
+            text = "1. Pilih Sumber Notifikasi Bank / E-Wallet:"
+            textSize = 13f
+            setTypeface(null, android.graphics.Typeface.BOLD)
+            setTextColor(getColor(R.color.gray_800))
+        }
+        dialogView.addView(tvBankLabel)
+
+        val spinnerBank = android.widget.Spinner(this).apply {
+            val adapter = android.widget.ArrayAdapter(this@MainActivity, android.R.layout.simple_spinner_dropdown_item, bankOptions)
+            this.adapter = adapter
+            setSelection(0) // Default DANA
+        }
+        dialogView.addView(spinnerBank)
+
+        val tvNominalLabel = TextView(this).apply {
+            text = "\n2. Masukkan Nominal Transfer (Rupiah):"
+            textSize = 13f
+            setTypeface(null, android.graphics.Typeface.BOLD)
+            setTextColor(getColor(R.color.gray_800))
+        }
+        dialogView.addView(tvNominalLabel)
+
+        val etNominal = EditText(this).apply {
+            hint = "Cth: 4459 / 50000 / 100000"
+            setText("4459")
+            inputType = android.text.InputType.TYPE_CLASS_NUMBER
+            textSize = 15f
+        }
+        dialogView.addView(etNominal)
+
+        val tvSenderLabel = TextView(this).apply {
+            text = "\n3. Nama Pengirim / Keterangan (Opsional):"
+            textSize = 12f
+            setTextColor(getColor(R.color.gray_700))
+        }
+        dialogView.addView(tvSenderLabel)
+
+        val etSender = EditText(this).apply {
+            hint = "Cth: Ahmad Fulan"
+            setText("Pelanggan")
+            textSize = 14f
+        }
+        dialogView.addView(etSender)
+
         AlertDialog.Builder(this)
-            .setTitle("Ketik Notifikasi Simulasi")
-            .setView(input)
-            .setPositiveButton("Kirim ke Webhook") { _, _ ->
-                val txt = input.text.toString().trim()
-                if (txt.isNotEmpty()) {
-                    sendCustomPayload("com.barakah.simulation", "Notifikasi Simulasi", txt)
+            .setTitle("🧪 Custom Simulasi Notifikasi")
+            .setView(dialogView)
+            .setPositiveButton("🚀 Kirim ke Server") { _, _ ->
+                val nominalStr = etNominal.text.toString().trim().replace(".", "").replace(",", "")
+                val nominalInt = nominalStr.toIntOrNull() ?: 0
+                if (nominalInt <= 0) {
+                    Toast.makeText(this, "Nominal transfer tidak boleh kosong / 0", Toast.LENGTH_SHORT).show()
+                    return@setPositiveButton
                 }
+
+                val formattedNominal = String.format("%,d", nominalInt).replace(',', '.')
+                val sender = etSender.text.toString().trim().ifBlank { "Pelanggan" }
+                val bankIndex = spinnerBank.selectedItemPosition
+
+                var pkg = "id.dana"
+                var title = "DANA Saldo Masuk"
+                var text = "Kamu menerima saldo DANA sebesar Rp $formattedNominal dari $sender"
+
+                when (bankIndex) {
+                    0 -> { // DANA
+                        pkg = "id.dana"
+                        title = "DANA Saldo Masuk"
+                        text = "Kamu menerima saldo DANA sebesar Rp $formattedNominal dari $sender"
+                    }
+                    1 -> { // BSI Mobile
+                        pkg = "id.co.bankbsi.mobile"
+                        title = "BSI Mobile Uang Masuk"
+                        text = "Transfer masuk sebesar Rp $formattedNominal dari $sender"
+                    }
+                    2 -> { // BCA
+                        pkg = "com.bca"
+                        title = "m-Transfer BCA"
+                        text = "Dana Masuk Sebesar Rp $formattedNominal,00 dari $sender"
+                    }
+                    3 -> { // Mandiri Livin
+                        pkg = "id.bmri.livin"
+                        title = "Livin by Mandiri"
+                        text = "Penerimaan transfer Rp $formattedNominal berhasil diterima dari $sender"
+                    }
+                    4 -> { // BRImo
+                        pkg = "id.co.bri.brimo"
+                        title = "BRImo Info Mutasi"
+                        text = "Transfer dana masuk sebesar Rp $formattedNominal berhasil dari $sender"
+                    }
+                    5 -> { // GoPay
+                        pkg = "com.gojek.app"
+                        title = "GoPay Masuk"
+                        text = "Top up / Transfer masuk sebesar Rp $formattedNominal dari $sender"
+                    }
+                    6 -> { // ShopeePay
+                        pkg = "com.shopee.id"
+                        title = "ShopeePay"
+                        text = "Pembayaran QRIS Rp $formattedNominal berhasil masuk ke saldo Anda"
+                    }
+                    7 -> { // OVO
+                        pkg = "net.oneoryx.ovo"
+                        title = "OVO Saldo Masuk"
+                        text = "Kamu telah menerima transfer dana sebesar Rp $formattedNominal"
+                    }
+                    8 -> { // SeaBank
+                        pkg = "com.seabank.id"
+                        title = "SeaBank"
+                        text = "Transfer masuk sebesar Rp $formattedNominal dari $sender"
+                    }
+                    else -> {
+                        pkg = "com.bank.custom"
+                        title = "Notifikasi Uang Masuk"
+                        text = "Transfer masuk sebesar Rp $formattedNominal dari $sender"
+                    }
+                }
+
+                sendCustomPayload(pkg, title, text)
             }
             .setNegativeButton("Batal", null)
             .show()
