@@ -114,9 +114,65 @@ const DigitalProductPaymentPage = () => {
         }
     };
 
-    const handleUpload = async () => {
+    const preprocessImageForOCR = (file) => {
+        return new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onload = () => {
+                    try {
+                        const canvas = document.createElement('canvas');
+                        const MAX_WIDTH = 1200;
+                        const MAX_HEIGHT = 1200;
+                        let width = img.width;
+                        let height = img.height;
+
+                        if (width > height) {
+                            if (width > MAX_WIDTH) {
+                                height = Math.round((height * MAX_WIDTH) / width);
+                                width = MAX_WIDTH;
+                            }
+                        } else {
+                            if (height > MAX_HEIGHT) {
+                                width = Math.round((width * MAX_HEIGHT) / height);
+                                height = MAX_HEIGHT;
+                            }
+                        }
+
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+
+                        const imgData = ctx.getImageData(0, 0, width, height);
+                        const d = imgData.data;
+                        for (let i = 0; i < d.length; i += 4) {
+                            const avg = (d[i] * 0.299 + d[i + 1] * 0.587 + d[i + 2] * 0.114);
+                            d[i] = avg;
+                            d[i + 1] = avg;
+                            d[i + 2] = avg;
+                        }
+                        ctx.putImageData(imgData, 0, 0);
+
+                        canvas.toBlob((blob) => {
+                            resolve(blob || file);
+                        }, 'image/jpeg', 0.85);
+                    } catch (err) {
+                        resolve(file);
+                    }
+                };
+                img.onerror = () => resolve(file);
+                img.src = e.target.result;
+            };
+            reader.onerror = () => resolve(file);
+            reader.readAsDataURL(file);
+        });
+    };
+
+    const handleProofSubmit = async (e) => {
+        e.preventDefault();
         if (!proofFile) {
-            alert('Mohon pilih bukti pembayaran');
+            alert('Silakan pilih file bukti pembayaran');
             return;
         }
 
@@ -129,42 +185,49 @@ const DigitalProductPaymentPage = () => {
         setOcrError('');
         setOcrLoading(true);
 
+        let ocrFailedReason = '';
+
         try {
-            // -- OCR VALIDATION BLOCK --
-            console.log("Mulai proses OCR...");
-            const { data: { text } } = await Tesseract.recognize(proofFile, 'ind');
-            const lowerText = text.toLowerCase();
-            console.log("Hasil OCR:", text);
+            // -- OCR VALIDATION BLOCK WITH RESILIENT PREPROCESSING --
+            console.log("Mulai proses OCR mobile-friendly...");
+            const optimizedBlob = await preprocessImageForOCR(proofFile);
 
-            const numericTotal = Math.floor(Number(order.amount));
-            const totalStr = String(numericTotal);
-            const totalFormatted = new Intl.NumberFormat('id-ID').format(numericTotal);
+            try {
+                const { data: { text } } = await Tesseract.recognize(optimizedBlob, 'ind');
+                const lowerText = (text || '').toLowerCase();
+                console.log("Hasil OCR:", text);
 
-            const scrubbedOCR = lowerText.replace(/rp/g, '').replace(/\./g, '').replace(/,/g, '').replace(/\s+/g, '');
+                const numericTotal = Math.floor(Number(order.amount));
+                const totalStr = String(numericTotal);
+                const totalFormatted = new Intl.NumberFormat('id-ID').format(numericTotal);
 
-            const isAmountPresent =
-                text.includes(totalStr) ||
-                text.includes(totalFormatted) ||
-                scrubbedOCR.includes(totalStr);
+                const scrubbedOCR = lowerText.replace(/rp/g, '').replace(/\./g, '').replace(/,/g, '').replace(/\s+/g, '');
 
-            let isRecipientValid = false;
-            let expectedRecipientName = 'BAE Community / Barakah Economy';
-            if (order.paid_to_seller_directly && order.seller_bank_holder) {
-                expectedRecipientName = order.seller_bank_holder;
-                isRecipientValid = lowerText.includes(order.seller_bank_holder.toLowerCase());
-            } else {
-                isRecipientValid = lowerText.includes('bae community') || lowerText.includes('barakah economy');
+                const isAmountPresent =
+                    (text && text.includes(totalStr)) ||
+                    (text && text.includes(totalFormatted)) ||
+                    scrubbedOCR.includes(totalStr);
+
+                let isRecipientValid = false;
+                let expectedRecipientName = 'BAE Community / Barakah Economy';
+                if (order.paid_to_seller_directly && order.seller_bank_holder) {
+                    expectedRecipientName = order.seller_bank_holder;
+                    isRecipientValid = lowerText.includes(order.seller_bank_holder.toLowerCase());
+                } else {
+                    isRecipientValid = lowerText.includes('bae community') || lowerText.includes('barakah economy') || lowerText.includes('gopay') || lowerText.includes('barakah');
+                }
+
+                if (!isRecipientValid) {
+                    ocrFailedReason = `Validasi Gagal: Struk tidak mencantumkan nama "${expectedRecipientName}". Pastikan Anda transfer ke rekening yang benar.`;
+                } else if (!isAmountPresent) {
+                    ocrFailedReason = `Validasi Gagal: Nominal struk tidak sesuai dengan total tagihan (Rp ${totalFormatted}). Pastikan nominal transfer pas.`;
+                }
+            } catch (tesseractErr) {
+                console.warn("Mobile Tesseract WebAssembly constraint, gracefully allowing submission with proof file:", tesseractErr);
             }
 
-            if (!isRecipientValid) {
-                setOcrError(`Validasi Gagal: Struk tidak mencantumkan nama "${expectedRecipientName}". Pastikan Anda transfer ke rekening yang benar.`);
-                setUploading(false);
-                setOcrLoading(false);
-                return;
-            }
-
-            if (!isAmountPresent) {
-                setOcrError(`Validasi Gagal: Nominal struk tidak sesuai dengan total tagihan (Rp ${totalFormatted}). Pastikan nominal transfer pas.`);
+            if (ocrFailedReason) {
+                setOcrError(ocrFailedReason);
                 setUploading(false);
                 setOcrLoading(false);
                 return;

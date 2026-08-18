@@ -352,12 +352,70 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         checkNotificationPermission()
+        claimPrimaryDeviceLock()
     }
 
     override fun onDestroy() {
         super.onDestroy()
         try {
             unregisterReceiver(logReceiver)
+        } catch (e: Exception) {
+            // Ignored
+        }
+    }
+
+    private fun claimPrimaryDeviceLock() {
+        val baseUrl = prefs.webhookUrl.trim()
+        val secret = prefs.secretToken.trim()
+        if (baseUrl.isEmpty()) return
+
+        val heartbeatUrl = if (baseUrl.contains("/webhook/")) {
+            baseUrl.substringBeforeLast("/webhook/") + "/webhook/heartbeat/"
+        } else {
+            "https://api.barakah.cloud/api/payments/webhook/heartbeat/"
+        }
+
+        val client = OkHttpClient()
+        try {
+            val json = JSONObject().apply {
+                put("device_id", prefs.deviceId)
+                put("device_name", prefs.deviceName)
+                put("secret", secret)
+                put("force_claim", true)
+            }
+
+            val body = json.toString().toRequestBody("application/json; charset=utf-8".toMediaType())
+            val request = Request.Builder()
+                .url(heartbeatUrl)
+                .addHeader("X-Android-Secret", secret)
+                .post(body)
+                .build()
+
+            client.newCall(request).enqueue(object : Callback {
+                override fun onFailure(call: Call, e: IOException) {
+                    runOnUiThread {
+                        appendLog("⚠️ Heartbeat server tidak terjangkau: ${e.message}")
+                    }
+                }
+
+                override fun onResponse(call: Call, response: Response) {
+                    val respBody = response.body?.string() ?: ""
+                    runOnUiThread {
+                        if (response.isSuccessful) {
+                            try {
+                                val resJson = JSONObject(respBody)
+                                val msg = resJson.optString("message", "OK")
+                                prefs.isPrimaryListener = true
+                                tvLiveStatusHeader.text = "🟢 LISTENER UTAMA AKTIF 24/7 (LOCK 1 HP)"
+                                tvLiveStatusDetail.text = "HP ini (${prefs.deviceName}) adalah penerima notifikasi tunggal aktif untuk server Barakah."
+                                appendLog("✓ Sesi Listener Utama Terdaftar di Server Barakah.")
+                            } catch (e: Exception) {
+                                // Ignored
+                            }
+                        }
+                    }
+                }
+            })
         } catch (e: Exception) {
             // Ignored
         }
@@ -371,8 +429,8 @@ class MainActivity : AppCompatActivity() {
         if (isGranted) {
             tvPermissionStatus.text = "✓ Izin Akses Notifikasi AKTIF"
             tvPermissionStatus.setTextColor(getColor(R.color.emerald_700))
-            tvLiveStatusHeader.text = "LISTENER AKTIF 24/7 (MODE HEMAT BATERAI)"
-            tvLiveStatusDetail.text = "Aplikasi memantau di latar belakang 24/7. Notifikasi m-Banking akan otomatis diverifikasi!"
+            tvLiveStatusHeader.text = "🟢 LISTENER AKTIF 24/7 (LOCK 1 HP)"
+            tvLiveStatusDetail.text = "Aplikasi memantau di latar belakang 24/7. Notifikasi m-Banking & QRIS akan otomatis diverifikasi!"
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                 try {
                     NotificationListenerService.requestRebind(ComponentName(this, NotificationService::class.java))
@@ -407,6 +465,8 @@ class MainActivity : AppCompatActivity() {
                 put("text", "Transfer masuk sebesar Rp 50.000 dari TES ANDROID APP")
                 put("content", "Transfer masuk sebesar Rp 50.000 dari TES ANDROID APP")
                 put("secret", secret)
+                put("device_id", prefs.deviceId)
+                put("device_name", prefs.deviceName)
             }
             val body = json.toString().toRequestBody("application/json; charset=utf-8".toMediaType())
             val request = Request.Builder()

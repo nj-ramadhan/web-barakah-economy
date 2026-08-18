@@ -23,6 +23,9 @@ class PaymentSetting(models.Model):
     # Android Notification Listener Webhook Settings
     android_webhook_enabled = models.BooleanField(default=True, help_text="Aktifkan listener notifikasi bank via HP Android")
     android_webhook_secret = models.CharField(max_length=255, default='barakah_android_notif_secret_123', help_text="Secret Token untuk verifikasi request webhook HP Android")
+    listener_device_id = models.CharField(max_length=255, null=True, blank=True, help_text="ID Perangkat HP Android yang sedang aktif (Lock 1 HP)")
+    listener_device_name = models.CharField(max_length=255, null=True, blank=True, help_text="Nama / Model Perangkat HP Android aktif")
+    listener_last_heartbeat = models.DateTimeField(null=True, blank=True, help_text="Timestamp terakhir heartbeat listener diterima")
 
     updated_at = models.DateTimeField(auto_now=True)
 

@@ -8,6 +8,8 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 import android.util.Log
@@ -20,8 +22,21 @@ import java.io.IOException
 
 class NotificationService : NotificationListenerService() {
 
-    private val client = OkHttpClient()
+    private val client = OkHttpClient.Builder()
+        .connectTimeout(15, java.util.concurrent.TimeUnit.SECONDS)
+        .readTimeout(15, java.util.concurrent.TimeUnit.SECONDS)
+        .build()
+
     private lateinit var prefs: PreferencesHelper
+    private val heartbeatHandler = Handler(Looper.getMainLooper())
+    private var isHeartbeatRunning = false
+
+    private val heartbeatRunnable = object : Runnable {
+        override fun run() {
+            sendHeartbeat()
+            heartbeatHandler.postDelayed(this, 60000) // Ping every 60 seconds
+        }
+    }
 
     override fun onCreate() {
         super.onCreate()
@@ -29,6 +44,13 @@ class NotificationService : NotificationListenerService() {
         Log.d(TAG, "Barakah NotificationListenerService created")
         createNotificationChannel()
         startForegroundServiceNotification()
+        startHeartbeatLoop()
+    }
+
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        startForegroundServiceNotification()
+        startHeartbeatLoop()
+        return START_STICKY
     }
 
     override fun onListenerConnected() {
@@ -36,6 +58,7 @@ class NotificationService : NotificationListenerService() {
         Log.d(TAG, "NotificationListenerConnected: Service active and listening 24/7")
         broadcastLog("🟢 Listener Aktif 24/7 & Terhubung ke Sistem Android")
         startForegroundServiceNotification()
+        startHeartbeatLoop()
     }
 
     override fun onListenerDisconnected() {
@@ -47,14 +70,31 @@ class NotificationService : NotificationListenerService() {
         }
     }
 
+    override fun onDestroy() {
+        super.onDestroy()
+        stopHeartbeatLoop()
+    }
+
+    private fun startHeartbeatLoop() {
+        if (!isHeartbeatRunning) {
+            isHeartbeatRunning = true
+            heartbeatHandler.post(heartbeatRunnable)
+        }
+    }
+
+    private fun stopHeartbeatLoop() {
+        isHeartbeatRunning = false
+        heartbeatHandler.removeCallbacks(heartbeatRunnable)
+    }
+
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 CHANNEL_ID,
-                "Barakah Notif Listener Status",
+                "Barakah Notif Listener 24/7",
                 NotificationManager.IMPORTANCE_LOW
             ).apply {
-                description = "Notifikasi status pemantauan m-Banking 24/7 (Hemat Baterai)"
+                description = "Notifikasi status pemantauan transaksi m-Banking 24 Jam Nonstop"
                 setShowBadge(false)
             }
             val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
@@ -70,8 +110,8 @@ class NotificationService : NotificationListenerService() {
         )
 
         val notification: Notification = NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("🟢 Barakah Listener Aktif (Realtime)")
-            .setContentText("Memantau notifikasi m-Banking & QRIS (Mode Hemat Baterai)")
+            .setContentTitle("🟢 Barakah Listener Aktif 24 Jam Nonstop")
+            .setContentText("Memantau notifikasi mutasi m-Banking & QRIS secara realtime")
             .setSmallIcon(android.R.drawable.ic_dialog_info)
             .setContentIntent(pendingIntent)
             .setOngoing(true)
@@ -82,6 +122,61 @@ class NotificationService : NotificationListenerService() {
             startForeground(NOTIFICATION_ID, notification)
         } catch (e: Exception) {
             Log.e(TAG, "Error starting foreground notification: ${e.message}")
+        }
+    }
+
+    private fun sendHeartbeat() {
+        val baseUrl = prefs.webhookUrl.trim()
+        val secret = prefs.secretToken.trim()
+
+        if (baseUrl.isEmpty()) return
+
+        // Derive heartbeat URL from webhook URL or standard path
+        val heartbeatUrl = if (baseUrl.contains("/webhook/")) {
+            baseUrl.substringBeforeLast("/webhook/") + "/webhook/heartbeat/"
+        } else {
+            "https://api.barakah.cloud/api/payments/webhook/heartbeat/"
+        }
+
+        try {
+            val json = JSONObject().apply {
+                put("device_id", prefs.deviceId)
+                put("device_name", prefs.deviceName)
+                put("secret", secret)
+                put("force_claim", false)
+            }
+
+            val body = json.toString().toRequestBody("application/json; charset=utf-8".toMediaType())
+            val request = Request.Builder()
+                .url(heartbeatUrl)
+                .addHeader("X-Android-Secret", secret)
+                .addHeader("Content-Type", "application/json")
+                .post(body)
+                .build()
+
+            client.newCall(request).enqueue(object : Callback {
+                override fun onFailure(call: Call, e: IOException) {
+                    Log.w(TAG, "Heartbeat failed: ${e.message}")
+                }
+
+                override fun onResponse(call: Call, response: Response) {
+                    val respBody = response.body?.string() ?: ""
+                    if (response.isSuccessful) {
+                        try {
+                            val resJson = JSONObject(respBody)
+                            val isPrimary = resJson.optBoolean("is_primary", true)
+                            prefs.isPrimaryListener = isPrimary
+                            if (!isPrimary) {
+                                broadcastLog("⚠️ Peringatan: Sesi listener telah diambil alih oleh HP lain.")
+                            }
+                        } catch (e: Exception) {
+                            Log.e(TAG, "Error parsing heartbeat response: ${e.message}")
+                        }
+                    }
+                }
+            })
+        } catch (e: Exception) {
+            Log.e(TAG, "Error building heartbeat request: ${e.message}")
         }
     }
 
@@ -109,10 +204,11 @@ class NotificationService : NotificationListenerService() {
 
         val bigText = extras?.getCharSequence(Notification.EXTRA_BIG_TEXT)?.toString() ?: ""
         val subText = extras?.getCharSequence(Notification.EXTRA_SUB_TEXT)?.toString() ?: ""
+        val infoText = extras?.getCharSequence(Notification.EXTRA_INFO_TEXT)?.toString() ?: ""
         val ticker = sbn.notification.tickerText?.toString() ?: ""
 
         // Combine all extracted text pieces into a rich full string
-        val contentPieces = listOf(title, text, bigText, subText, ticker).filter { it.isNotBlank() }
+        val contentPieces = listOf(title, text, bigText, subText, infoText, ticker).filter { it.isNotBlank() }
         val fullContent = contentPieces.distinct().joinToString(" ").trim()
 
         if (fullContent.isBlank()) return
@@ -127,29 +223,38 @@ class NotificationService : NotificationListenerService() {
     }
 
     private fun isRelevantNotification(pkg: String, text: String): Boolean {
-        // If "allow all apps" (test mode) is enabled or no apps selected, skip package whitelist
-        if (!prefs.allowAllApps) {
-            val selectedPkgs = prefs.selectedPackages
-            val isPackageAllowed = selectedPkgs.isEmpty() ||
-                    selectedPkgs.contains(pkg) ||
-                    selectedPkgs.any { pkg.lowercase().contains(it.lowercase()) }
-
-            if (!isPackageAllowed) {
-                Log.d(TAG, "Skipping notification from $pkg (not in selected apps list)")
-                return false
-            }
+        // If allowAllApps is enabled, accept any notification that has text
+        if (prefs.allowAllApps) {
+            return true
         }
 
-        // Check money, bank, transfer, QRIS, and testing keywords
+        val lowerPkg = pkg.lowercase()
         val lowerText = text.lowercase()
+
+        // Check if package is in target list
+        val selectedPkgs = prefs.selectedPackages
+        val isTargetApp = selectedPkgs.any { lowerPkg.contains(it.lowercase()) } ||
+                lowerPkg.contains("bank") ||
+                lowerPkg.contains("dana") ||
+                lowerPkg.contains("gopay") ||
+                lowerPkg.contains("ovo") ||
+                lowerPkg.contains("shopee") ||
+                lowerPkg.contains("seabank") ||
+                lowerPkg.contains("bca") ||
+                lowerPkg.contains("bsi") ||
+                lowerPkg.contains("mandiri") ||
+                lowerPkg.contains("bri") ||
+                lowerPkg.contains("bni")
+
+        // Keywords indicating financial transaction or test
         val keywords = listOf(
-            "bsi", "bca", "mandiri", "bri", "bni", "dana", "gopay", "ovo", "shopeepay", "shopee",
-            "seabank", "blu", "jenius", "octo", "cimb", "permata", "danamon", "panin", "neobank", "bank",
             "transfer", "uang masuk", "diterima", "masuk", "kredit", "cr", "rp", "rupiah", "idr",
             "top up", "topup", "qris", "pembayaran", "payment", "bayar", "lunas", "berhasil", "sukses",
-            "tes", "test", "uji", "coba"
+            "dana bisnis", "merchant", "saldo", "terima", "tes", "test", "uji", "coba"
         )
-        return keywords.any { lowerText.contains(it) }
+        val hasKeyword = keywords.any { lowerText.contains(it) }
+
+        return isTargetApp || hasKeyword
     }
 
     private fun sendWebhookPayload(pkgName: String, title: String, text: String, fullContent: String) {
@@ -168,6 +273,8 @@ class NotificationService : NotificationListenerService() {
                 put("text", text)
                 put("content", fullContent)
                 put("secret", secret)
+                put("device_id", prefs.deviceId)
+                put("device_name", prefs.deviceName)
             }
 
             val body = json.toString().toRequestBody("application/json; charset=utf-8".toMediaType())

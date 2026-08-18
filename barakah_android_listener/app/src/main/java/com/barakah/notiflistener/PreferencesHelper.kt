@@ -22,6 +22,24 @@ class PreferencesHelper(context: Context) {
         get() = prefs.getBoolean("allow_all_apps", false)
         set(value) = prefs.edit().putBoolean("allow_all_apps", value).apply()
 
+    var deviceId: String
+        get() {
+            var id = prefs.getString("device_id", "") ?: ""
+            if (id.isEmpty()) {
+                id = java.util.UUID.randomUUID().toString()
+                prefs.edit().putString("device_id", id).apply()
+            }
+            return id
+        }
+        set(value) = prefs.edit().putString("device_id", value).apply()
+
+    val deviceName: String
+        get() = "${android.os.Build.MANUFACTURER.uppercase()} ${android.os.Build.MODEL} (Android ${android.os.Build.VERSION.RELEASE})"
+
+    var isPrimaryListener: Boolean
+        get() = prefs.getBoolean("is_primary_listener", true)
+        set(value) = prefs.edit().putBoolean("is_primary_listener", value).apply()
+
     var selectedPackages: Set<String>
         get() = prefs.getStringSet("selected_packages", defaultBankPackages) ?: defaultBankPackages
         set(value) = prefs.edit().putStringSet("selected_packages", value).apply()

@@ -157,6 +157,63 @@ const EcommercePaymentConfirmation = () => {
     }
   };
 
+  const preprocessImageForOCR = (file) => {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          try {
+            const canvas = document.createElement('canvas');
+            const MAX_WIDTH = 1200;
+            const MAX_HEIGHT = 1200;
+            let width = img.width;
+            let height = img.height;
+
+            if (width > height) {
+              if (width > MAX_WIDTH) {
+                height = Math.round((height * MAX_WIDTH) / width);
+                width = MAX_WIDTH;
+              }
+            } else {
+              if (height > MAX_HEIGHT) {
+                width = Math.round((width * MAX_HEIGHT) / height);
+                height = MAX_HEIGHT;
+              }
+            }
+
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+
+            // Lightweight grayscale enhancement for clearer OCR text
+            const imgData = ctx.getImageData(0, 0, width, height);
+            const d = imgData.data;
+            for (let i = 0; i < d.length; i += 4) {
+              const avg = (d[i] * 0.299 + d[i + 1] * 0.587 + d[i + 2] * 0.114);
+              d[i] = avg;
+              d[i + 1] = avg;
+              d[i + 2] = avg;
+            }
+            ctx.putImageData(imgData, 0, 0);
+
+            canvas.toBlob((blob) => {
+              resolve(blob || file);
+            }, 'image/jpeg', 0.85);
+          } catch (err) {
+            console.warn("Canvas preprocessing fallback to original:", err);
+            resolve(file);
+          }
+        };
+        img.onerror = () => resolve(file);
+        img.src = e.target.result;
+      };
+      reader.onerror = () => resolve(file);
+      reader.readAsDataURL(file);
+    });
+  };
+
   const copyToClipboard = (text, type) => {
     navigator.clipboard.writeText(text)
       .then(() => alert(`${type} berhasil disalin!`))
@@ -174,44 +231,53 @@ const EcommercePaymentConfirmation = () => {
     setOcrLoading(true);
     setOcrError('');
 
+    let ocrFailedReason = '';
+
     try {
-      // --- OCR VALIDATION ---
-      console.log("Starting OCR processing...");
-      const { data: { text } } = await Tesseract.recognize(selectedFile, 'ind');
-      const lowerText = text.toLowerCase();
-      console.log("OCR Result:", text);
+      // --- OCR VALIDATION WITH MOBILE DOWNSCALING ---
+      console.log("Pre-processing image for mobile-friendly OCR...");
+      const optimizedBlob = await preprocessImageForOCR(selectedFile);
 
-      const numericTotal = Math.floor(Number(amount || 0));
-      const totalStr = String(numericTotal);
-      const totalFormatted = new Intl.NumberFormat('id-ID', { maximumFractionDigits: 0 }).format(numericTotal);
+      try {
+        const { data: { text } } = await Tesseract.recognize(optimizedBlob, 'ind', {
+          logger: (m) => console.log(m)
+        });
+        const lowerText = (text || '').toLowerCase();
+        console.log("OCR Result Text:", text);
 
-      // Clean OCR text: remove trailing cents like .00 or ,00 then strip non-digits
-      const cleanOcrText = text.replace(/[\.,]00\b/g, '').replace(/rp/gi, '');
-      const scrubbedOCR = cleanOcrText.replace(/[^0-9]/g, '');
+        const numericTotal = Math.floor(Number(amount || 0));
+        const totalStr = String(numericTotal);
+        const totalFormatted = new Intl.NumberFormat('id-ID', { maximumFractionDigits: 0 }).format(numericTotal);
 
-      const isAmountPresent =
-          text.includes(totalStr) ||
-          text.includes(totalFormatted) ||
-          scrubbedOCR.includes(totalStr);
+        const cleanOcrText = (text || '').replace(/[\.,]00\b/g, '').replace(/rp/gi, '');
+        const scrubbedOCR = cleanOcrText.replace(/[^0-9]/g, '');
 
-      let isRecipientValid = false;
-      let expectedRecipientName = 'BAE Community / Barakah Economy';
-      if (isDirect && firstProduct?.own_bank_holder) {
-        expectedRecipientName = firstProduct.own_bank_holder;
-        isRecipientValid = lowerText.includes(firstProduct.own_bank_holder.toLowerCase());
-      } else {
-        isRecipientValid = lowerText.includes('bae community') || lowerText.includes('barakah economy') || lowerText.includes('gopay');
+        const isAmountPresent =
+            (text && text.includes(totalStr)) ||
+            (text && text.includes(totalFormatted)) ||
+            scrubbedOCR.includes(totalStr);
+
+        let isRecipientValid = false;
+        let expectedRecipientName = 'BAE Community / Barakah Economy';
+        if (isDirect && firstProduct?.own_bank_holder) {
+          expectedRecipientName = firstProduct.own_bank_holder;
+          isRecipientValid = lowerText.includes(firstProduct.own_bank_holder.toLowerCase());
+        } else {
+          isRecipientValid = lowerText.includes('bae community') || lowerText.includes('barakah economy') || lowerText.includes('gopay') || lowerText.includes('barakah') || lowerText.includes('qris');
+        }
+
+        if (!isRecipientValid) {
+          ocrFailedReason = `Validasi Gagal: Struk tidak mencantumkan nama "${expectedRecipientName}". Pastikan Anda transfer ke rekening/QRIS yang benar.`;
+        } else if (!isAmountPresent) {
+          ocrFailedReason = `Validasi Gagal: Nominal struk tidak sesuai dengan total tagihan (Rp ${totalFormatted}).`;
+        }
+      } catch (tesseractErr) {
+        console.warn("Mobile Tesseract WebAssembly constraint, gracefully allowing submission with proof file:", tesseractErr);
+        // On mobile environments where WebAssembly fails, pass through to let server/seller verify
       }
 
-      if (!isRecipientValid) {
-        setOcrError(`Validasi Gagal: Struk tidak mencantumkan nama "${expectedRecipientName}". Pastikan Anda transfer ke rekening yang benar.`);
-        setUploading(false);
-        setOcrLoading(false);
-        return;
-      }
-
-      if (!isAmountPresent) {
-        setOcrError(`Validasi Gagal: Nominal struk tidak sesuai dengan total tagihan (Rp ${totalFormatted}).`);
+      if (ocrFailedReason) {
+        setOcrError(ocrFailedReason);
         setUploading(false);
         setOcrLoading(false);
         return;
@@ -259,7 +325,7 @@ const EcommercePaymentConfirmation = () => {
       }
     } catch (error) {
       console.error('Error confirming payment:', error.response?.data || error.message);
-      setOcrError('Terjadi kesalahan saat memproses. Silakan pastikan gambar struk terbaca jelas.');
+      setOcrError(error.response?.data?.message || 'Terjadi kesalahan saat memproses. Silakan periksa kembali foto struk Anda.');
     } finally {
       setUploading(false);
       setOcrLoading(false);

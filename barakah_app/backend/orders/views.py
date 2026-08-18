@@ -394,22 +394,53 @@ class SellerOrderViewSet(viewsets.ModelViewSet):
         perform_order_maintenance()
         user = self.request.user
 
-        if user.is_superuser:
-            return Order.objects.all().order_by('-created_at')
-
-        # For single object operations (retrieve, patch, etc), allow if user is either buyer or seller
+        # For single object operations (retrieve, patch, etc), allow if user is either buyer, seller, or superuser
         if self.action in ['retrieve', 'partial_update', 'update', 'destroy']:
+            if user.is_superuser:
+                return Order.objects.all()
             from django.db.models import Q
             return Order.objects.filter(Q(seller=user) | Q(user=user)).distinct()
 
-        # For list actions: check if explicitly requested seller mode
-        is_seller_view = self.request.query_params.get('mode') == 'seller'
-        if is_seller_view:
-            return Order.objects.filter(seller=user).order_by('-created_at')
+        # Check if admin master view requested
+        is_admin_all = self.request.query_params.get('all') == 'true' and user.is_superuser
+        if is_admin_all:
+            queryset = Order.objects.all().order_by('-created_at')
+        else:
+            # Strictly lock to logged in user's seller orders
+            queryset = Order.objects.filter(seller=user).order_by('-created_at')
 
-        # Default list: user sees orders where they are seller OR buyer
-        from django.db.models import Q
-        return Order.objects.filter(Q(seller=user) | Q(user=user)).distinct().order_by('-created_at')
+        # Status filter
+        status_param = self.request.query_params.get('status')
+        if status_param and status_param.lower() != 'all':
+            if status_param.lower() in ['paid', 'lunas']:
+                queryset = queryset.filter(status__in=['paid', 'Paid', 'Lunas', 'lunas'])
+            elif status_param.lower() in ['pending', 'menunggu']:
+                queryset = queryset.filter(status__in=['pending', 'Pending', 'waiting_payment', 'unpaid'])
+            elif status_param.lower() in ['proses', 'processing']:
+                queryset = queryset.filter(status__in=['proses', 'Proses', 'Processing'])
+            elif status_param.lower() in ['dikirim', 'shipped']:
+                queryset = queryset.filter(status__in=['dikirim', 'Dikirim', 'Shipped'])
+            elif status_param.lower() in ['selesai', 'completed']:
+                queryset = queryset.filter(status__in=['selesai', 'Selesai', 'Completed'])
+            elif status_param.lower() in ['batal', 'cancelled']:
+                queryset = queryset.filter(status__in=['batal', 'Batal', 'Cancelled'])
+            elif status_param.lower() in ['komplain', 'dispute']:
+                queryset = queryset.filter(status__in=['komplain', 'Komplain', 'Dispute'])
+            else:
+                queryset = queryset.filter(status__iexact=status_param)
+
+        # Search filter (order_number, buyer name, product title)
+        search_query = self.request.query_params.get('search')
+        if search_query:
+            from django.db.models import Q
+            queryset = queryset.filter(
+                Q(order_number__icontains=search_query) |
+                Q(recipient_name__icontains=search_query) |
+                Q(user__username__icontains=search_query) |
+                Q(items__product__title__icontains=search_query)
+            ).distinct()
+
+        return queryset
 
     def partial_update(self, request, *args, **kwargs):
         instance = self.get_object()

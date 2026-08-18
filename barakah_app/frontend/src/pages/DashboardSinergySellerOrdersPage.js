@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
 import { Helmet } from 'react-helmet';
 import Header from '../components/layout/Header';
@@ -10,9 +10,11 @@ const DashboardSinergySellerOrdersPage = () => {
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
     const [updatingId, setUpdatingId] = useState(null);
-    const [localResi, setLocalResi] = useState({}); // { orderId: resiValue }
-    const [localEst, setLocalEst] = useState({}); // { orderId: estDays }
-
+    const [localResi, setLocalResi] = useState({});
+    const [localEst, setLocalEst] = useState({});
+    const [activeFilter, setActiveFilter] = useState('ALL');
+    const [searchQuery, setSearchQuery] = useState('');
+    const [selectedProof, setSelectedProof] = useState(null); // { url: string, orderNumber: string, amount: number, date: string }
 
     const statusOptions = ['Pending', 'Proses', 'Dikirim', 'Komplain', 'Selesai', 'Batal'];
 
@@ -26,7 +28,7 @@ const DashboardSinergySellerOrdersPage = () => {
             const res = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/orders/seller-orders/?mode=seller`, {
                 headers: { Authorization: `Bearer ${user.access}` }
             });
-            setOrders(res.data);
+            setOrders(res.data || []);
         } catch (error) {
             console.error("Failed fetching seller orders", error);
         } finally {
@@ -88,7 +90,6 @@ const DashboardSinergySellerOrdersPage = () => {
                 },
                 { headers: { Authorization: `Bearer ${user.access}` } }
             );
-            // Update local state
             setOrders(orders.map(o => o.id === orderId ? { ...o, status: newStatus, resi_number: resiToSave, estimated_delivery_days: estToSave } : o));
             alert('Status pesanan berhasil diperbarui!');
         } catch (error) {
@@ -97,7 +98,6 @@ const DashboardSinergySellerOrdersPage = () => {
             setUpdatingId(null);
         }
     };
-
 
     const [sendingWaId, setSendingWaId] = useState(null);
 
@@ -124,167 +124,345 @@ const DashboardSinergySellerOrdersPage = () => {
     };
 
     const getStatusColor = (status) => {
-        switch (status) {
-            case 'Pending': return 'bg-orange-100 text-orange-700 border-orange-200';
-            case 'Proses': return 'bg-blue-100 text-blue-700 border-blue-200';
-            case 'Dikirim': return 'bg-indigo-100 text-indigo-700 border-indigo-200';
-            case 'Komplain': return 'bg-red-100 text-red-700 border-red-200';
-            case 'Selesai': return 'bg-emerald-100 text-emerald-700 border-emerald-200';
-            case 'Batal': return 'bg-red-100 text-red-700 border-red-200';
+        switch ((status || '').toLowerCase()) {
+            case 'pending': return 'bg-orange-100 text-orange-700 border-orange-200';
+            case 'paid': return 'bg-emerald-100 text-emerald-800 border-emerald-300';
+            case 'proses': return 'bg-blue-100 text-blue-700 border-blue-200';
+            case 'dikirim': return 'bg-indigo-100 text-indigo-700 border-indigo-200';
+            case 'komplain': return 'bg-rose-100 text-rose-700 border-rose-200';
+            case 'selesai': return 'bg-emerald-100 text-emerald-700 border-emerald-200';
+            case 'batal': return 'bg-red-100 text-red-700 border-red-200';
             default: return 'bg-gray-100 text-gray-700 border-gray-200';
         }
     };
 
+    const filterTabs = [
+        { id: 'ALL', label: 'Semua Pesanan' },
+        { id: 'PENDING', label: 'Menunggu Bayar' },
+        { id: 'PAID', label: 'Perlu Diproses' },
+        { id: 'PROSES', label: 'Sedang Diproses' },
+        { id: 'DIKIRIM', label: 'Dikirim' },
+        { id: 'SELESAI', label: 'Selesai' },
+        { id: 'BATAL_KOMPLAIN', label: 'Batal / Komplain' },
+    ];
+
+    const filteredOrders = useMemo(() => {
+        return orders.filter(order => {
+            const status = (order.status || '').toUpperCase();
+            
+            let matchesStatus = true;
+            if (activeFilter === 'PENDING') {
+                matchesStatus = ['PENDING', 'WAITING_PAYMENT', 'UNPAID'].includes(status);
+            } else if (activeFilter === 'PAID') {
+                matchesStatus = ['PAID', 'LUNAS', 'VERIFIED'].includes(status);
+            } else if (activeFilter === 'PROSES') {
+                matchesStatus = ['PROSES', 'PROCESSING'].includes(status);
+            } else if (activeFilter === 'DIKIRIM') {
+                matchesStatus = ['DIKIRIM', 'SHIPPED'].includes(status);
+            } else if (activeFilter === 'SELESAI') {
+                matchesStatus = ['SELESAI', 'COMPLETED'].includes(status);
+            } else if (activeFilter === 'BATAL_KOMPLAIN') {
+                matchesStatus = ['BATAL', 'CANCELLED', 'KOMPLAIN', 'DISPUTE'].includes(status);
+            }
+
+            if (!matchesStatus) return false;
+
+            if (!searchQuery.trim()) return true;
+            const q = searchQuery.toLowerCase();
+            const orderNum = (order.order_number || '').toLowerCase();
+            const buyerName = (order.buyer_details?.name_full || order.buyer_details?.username || order.recipient_name || '').toLowerCase();
+            const itemMatch = (order.items || []).some(it => (it.product_name || '').toLowerCase().includes(q));
+
+            return orderNum.includes(q) || buyerName.includes(q) || itemMatch;
+        });
+    }, [orders, activeFilter, searchQuery]);
+
     return (
         <div className="body bg-gray-50 min-h-screen">
-            <Helmet><title>Kelola Pesanan - Barakah Economy</title></Helmet>
+            <Helmet><title>Kelola Pesanan Toko - Barakah Economy</title></Helmet>
             <Header />
             
             <div className="max-w-5xl mx-auto px-4 py-8 pb-24">
-                <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
+                {/* Header Title */}
+                <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
                     <div className="flex items-center gap-4">
                         <Link to="/dashboard/sinergy/seller" className="w-10 h-10 flex items-center justify-center bg-white rounded-full shadow-sm text-gray-500 hover:text-emerald-600 transition">
                             <span className="material-icons">arrow_back</span>
                         </Link>
                         <div>
-                            <h1 className="text-2xl font-black text-gray-800 tracking-tight">Manajemen Pesanan Masuk</h1>
-                            <p className="text-sm text-gray-500">Proses pemesanan produk fisik E-commerce Anda</p>
+                            <h1 className="text-2xl font-black text-gray-800 tracking-tight">Manajemen Pesanan Toko Anda</h1>
+                            <p className="text-xs text-gray-500 mt-0.5">Khusus pesanan produk fisik yang terdaftar pada toko Anda</p>
                         </div>
                     </div>
-                    <button 
-                        onClick={handleExportCSV}
-                        className="flex items-center gap-2 bg-white border border-gray-200 px-4 py-2.5 rounded-xl text-xs font-bold text-gray-700 hover:bg-gray-50 transition shadow-sm"
-                    >
-                        <span className="material-icons text-sm text-emerald-600">file_download</span>
-                        EKSPOR CSV
-                    </button>
+                    <div className="flex items-center gap-2">
+                        <button 
+                            onClick={fetchOrders}
+                            className="flex items-center gap-1.5 bg-white border border-gray-200 px-3.5 py-2.5 rounded-xl text-xs font-bold text-gray-700 hover:bg-gray-50 transition shadow-sm"
+                        >
+                            <span className="material-icons text-sm">refresh</span>
+                            Segarkan
+                        </button>
+                        <button 
+                            onClick={handleExportCSV}
+                            className="flex items-center gap-1.5 bg-emerald-600 text-white px-4 py-2.5 rounded-xl text-xs font-bold hover:bg-emerald-700 transition shadow-sm"
+                        >
+                            <span className="material-icons text-sm">file_download</span>
+                            Ekspor CSV
+                        </button>
+                    </div>
+                </div>
+
+                {/* Filter Tabs & Search */}
+                <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 mb-6 space-y-3">
+                    <div className="flex flex-wrap gap-2 pb-1 overflow-x-auto">
+                        {filterTabs.map(tab => {
+                            const count = orders.filter(o => {
+                                const st = (o.status || '').toUpperCase();
+                                if (tab.id === 'ALL') return true;
+                                if (tab.id === 'PENDING') return ['PENDING', 'WAITING_PAYMENT', 'UNPAID'].includes(st);
+                                if (tab.id === 'PAID') return ['PAID', 'LUNAS', 'VERIFIED'].includes(st);
+                                if (tab.id === 'PROSES') return ['PROSES', 'PROCESSING'].includes(st);
+                                if (tab.id === 'DIKIRIM') return ['DIKIRIM', 'SHIPPED'].includes(st);
+                                if (tab.id === 'SELESAI') return ['SELESAI', 'COMPLETED'].includes(st);
+                                if (tab.id === 'BATAL_KOMPLAIN') return ['BATAL', 'CANCELLED', 'KOMPLAIN', 'DISPUTE'].includes(st);
+                                return false;
+                            }).length;
+
+                            const isActive = activeFilter === tab.id;
+                            return (
+                                <button
+                                    key={tab.id}
+                                    onClick={() => setActiveFilter(tab.id)}
+                                    className={`px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shrink-0 ${
+                                        isActive 
+                                            ? 'bg-emerald-600 text-white shadow-md shadow-emerald-200' 
+                                            : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
+                                    }`}
+                                >
+                                    <span>{tab.label}</span>
+                                    <span className={`px-1.5 py-0.2 rounded-full text-[10px] ${isActive ? 'bg-emerald-800 text-white' : 'bg-gray-200 text-gray-700'}`}>
+                                        {count}
+                                    </span>
+                                </button>
+                            );
+                        })}
+                    </div>
+
+                    <div className="relative">
+                        <span className="material-icons absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-lg">search</span>
+                        <input 
+                            type="text"
+                            placeholder="Cari berdasarkan No. Pesanan, Nama Pembeli, atau Nama Produk..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs text-gray-800 focus:bg-white focus:ring-2 focus:ring-emerald-500 outline-none transition"
+                        />
+                    </div>
                 </div>
 
                 {loading ? (
                     <div className="flex flex-col items-center justify-center py-20">
                         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600 mb-4"></div>
-                        <p className="text-gray-500 font-medium">Memuat data pesanan...</p>
+                        <p className="text-gray-500 font-medium">Memuat data pesanan toko...</p>
                     </div>
-                ) : orders.length === 0 ? (
+                ) : filteredOrders.length === 0 ? (
                     <div className="bg-white rounded-3xl p-12 text-center border border-dashed border-gray-200 shadow-sm">
                         <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
                             <span className="material-icons text-4xl text-gray-300">shopping_basket</span>
                         </div>
-                        <h3 className="text-lg font-bold text-gray-700">Belum Ada Pesanan</h3>
-                        <p className="text-sm text-gray-500 mt-1 max-w-xs mx-auto">Pesanan pelanggan akan muncul di sini setelah mereka melakukan checkout produk Anda.</p>
+                        <h3 className="text-lg font-bold text-gray-700">Tidak Ada Pesanan Ditemukan</h3>
+                        <p className="text-xs text-gray-500 mt-1 max-w-xs mx-auto">
+                            {searchQuery ? 'Tidak ada pesanan yang sesuai dengan kata kunci pencarian.' : 'Belum ada pesanan pada kategori filter ini.'}
+                        </p>
                     </div>
                 ) : (
                     <div className="space-y-6">
-                        {orders.map(order => (
-                            <div key={order.id} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition">
-                                {/* Order Header */}
-                                <div className="px-6 py-4 border-b border-gray-50 flex flex-wrap justify-between items-center gap-4 bg-gray-50/30">
-                                    <div className="flex items-center gap-3">
-                                        <div className="bg-emerald-600 text-white p-2 rounded-lg">
-                                            <span className="material-icons text-sm">receipt</span>
-                                        </div>
-                                        <div>
-                                            <p className="text-[10px] uppercase tracking-wider font-bold text-gray-400">Nomor Pesanan</p>
-                                            <p className="text-sm font-bold text-gray-800">{order.order_number}</p>
-                                        </div>
-                                    </div>
-                                    <div className="flex items-center gap-3">
-                                        <span className={`px-3 py-1 rounded-full text-[11px] font-bold border ${getStatusColor(order.status)}`}>
-                                            {order.status}
-                                        </span>
-                                        <p className="text-[11px] text-gray-400 font-medium">
-                                            {new Date(order.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
-                                        </p>
-                                        {isAdmin && (
-                                            <button 
-                                                onClick={() => handleDeleteOrder(order.id)}
-                                                className="w-8 h-8 flex items-center justify-center bg-red-50 text-red-600 rounded-full hover:bg-red-600 hover:text-white transition shadow-sm border border-red-100"
-                                                title="Hapus Pesanan (Admin Only)"
-                                            >
-                                                <span className="material-icons text-sm">delete</span>
-                                            </button>
-                                        )}
-                                    </div>
-                                </div>
+                        {filteredOrders.map(order => {
+                            const isDynaQris = order.payment_method === 'dynaqris';
+                            const isManualTf = ['manual', 'qris', 'bank', 'transfer'].includes((order.payment_method || '').toLowerCase());
+                            const hasProof = Boolean(order.payment_proof);
+                            const isCod = (order.payment_method || '').toUpperCase() === 'COD';
+                            const isSaldoBae = (order.payment_method || '').toLowerCase() === 'saldo_bae';
 
-                                <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-8">
-                                    {/* Buyer Info */}
-                                    <div className="space-y-4">
-                                        <h4 className="text-xs font-bold text-gray-800 uppercase tracking-widest flex items-center gap-2">
-                                            <span className="material-icons text-sm">person</span> Informasi Pembeli
-                                        </h4>
-                                        <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
-                                            <p className="text-sm font-bold text-gray-800">{order.buyer_details?.name_full || order.buyer_details?.username}</p>
-                                            <p className="text-xs text-gray-600 mt-1 flex items-center gap-1">
-                                                <span className="material-icons text-[14px]">phone</span> {order.buyer_details?.phone || '-'}
-                                            </p>
-                                            <div className="mt-3 pt-3 border-t border-gray-200">
-                                                <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">Alamat Pengiriman</p>
-                                                <p className="text-xs text-gray-600 leading-relaxed">
-                                                    {order.buyer_details?.address}<br />
-                                                    {order.buyer_details?.address_city_name}, {order.buyer_details?.address_province}<br />
-                                                    {order.buyer_details?.address_postal_code}
-                                                </p>
+                            return (
+                                <div key={order.id} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition">
+                                    {/* Order Header */}
+                                    <div className="px-6 py-4 border-b border-gray-50 flex flex-wrap justify-between items-center gap-4 bg-gray-50/40">
+                                        <div className="flex items-center gap-3">
+                                            <div className="bg-emerald-600 text-white p-2 rounded-lg">
+                                                <span className="material-icons text-sm">receipt</span>
                                             </div>
-                                            {order.buyer_note && (
-                                                <div className="mt-3 p-3 bg-orange-50 rounded-xl border border-orange-100">
-                                                    <p className="text-[10px] font-bold text-orange-800 uppercase mb-1">Catatan dari Pembeli</p>
-                                                    <p className="text-xs text-orange-900 italic">"{order.buyer_note}"</p>
-                                                </div>
+                                            <div>
+                                                <p className="text-[10px] uppercase tracking-wider font-bold text-gray-400">Nomor Pesanan</p>
+                                                <p className="text-sm font-bold text-gray-800">#{order.order_number}</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-2.5">
+                                            <span className={`px-3 py-1 rounded-full text-[11px] font-bold border ${getStatusColor(order.status)}`}>
+                                                {order.status}
+                                            </span>
+                                            <p className="text-[11px] text-gray-400 font-medium">
+                                                {new Date(order.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                            </p>
+                                            {isAdmin && (
+                                                <button 
+                                                    onClick={() => handleDeleteOrder(order.id)}
+                                                    className="w-8 h-8 flex items-center justify-center bg-red-50 text-red-600 rounded-full hover:bg-red-600 hover:text-white transition shadow-sm border border-red-100"
+                                                    title="Hapus Pesanan (Admin Only)"
+                                                >
+                                                    <span className="material-icons text-sm">delete</span>
+                                                </button>
                                             )}
                                         </div>
                                     </div>
 
-                                    {/* Order Items */}
-                                    <div className="md:col-span-1 space-y-4">
-                                        <h4 className="text-xs font-bold text-gray-800 uppercase tracking-widest flex items-center gap-2">
-                                            <span className="material-icons text-sm">inventory_2</span> Produk Dipesan
-                                        </h4>
-                                        <div className="space-y-3">
-                                            {order.items?.map(item => (
-                                                <div key={item.id} className="flex gap-3">
-                                                    <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden border border-gray-100">
-                                                        {item.product_image || item.product_thumbnail || item.thumbnail ? (
-                                                            <img 
-                                                                src={getMediaUrl(item.product_image || item.product_thumbnail || item.thumbnail)} 
-                                                                alt={item.product_name} 
-                                                                className="w-full h-full object-cover" 
-                                                                onError={(e) => { e.target.onerror = null; e.target.src = '/placeholder-image.jpg'; }}
-                                                            />
-                                                        ) : (
-                                                            <span className="material-icons text-gray-400">image</span>
-                                                        )}
+                                    {/* Payment Method Banner / Status */}
+                                    <div className="px-6 py-2.5 bg-gray-50/80 border-b border-gray-100 flex flex-wrap items-center justify-between gap-2 text-xs">
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-[11px] font-bold text-gray-500">Metode Bayar:</span>
+                                            {isDynaQris ? (
+                                                <span className="inline-flex items-center gap-1 font-bold text-emerald-700 bg-emerald-100/80 px-2.5 py-0.5 rounded-full text-[11px]">
+                                                    <span className="material-icons text-sm">verified</span>
+                                                    DynaQRIS (Verifikasi Otomatis)
+                                                </span>
+                                            ) : isCod ? (
+                                                <span className="inline-flex items-center gap-1 font-bold text-amber-800 bg-amber-100 px-2.5 py-0.5 rounded-full text-[11px]">
+                                                    <span className="material-icons text-sm">local_shipping</span>
+                                                    COD (Bayar di Tempat)
+                                                </span>
+                                            ) : isSaldoBae ? (
+                                                <span className="inline-flex items-center gap-1 font-bold text-blue-700 bg-blue-100 px-2.5 py-0.5 rounded-full text-[11px]">
+                                                    <span className="material-icons text-sm">account_balance_wallet</span>
+                                                    100% Saldo BAE (Lunas Instan)
+                                                </span>
+                                            ) : (
+                                                <span className="inline-flex items-center gap-1 font-bold text-gray-700 bg-gray-200 px-2.5 py-0.5 rounded-full text-[11px]">
+                                                    <span className="material-icons text-sm">account_balance</span>
+                                                    Transfer Bank / QRIS Manual
+                                                </span>
+                                            )}
+                                        </div>
+
+                                        {/* Proof Button or Auto indicator */}
+                                        <div>
+                                            {hasProof ? (
+                                                <button
+                                                    onClick={() => setSelectedProof({
+                                                        url: getMediaUrl(order.payment_proof),
+                                                        orderNumber: order.order_number,
+                                                        amount: order.grand_total,
+                                                        date: order.created_at
+                                                    })}
+                                                    className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-sm transition"
+                                                >
+                                                    <span className="material-icons text-sm">image</span>
+                                                    Lihat Bukti Transfer
+                                                </button>
+                                            ) : isDynaQris ? (
+                                                <span className="text-[11px] text-emerald-600 font-semibold flex items-center gap-1">
+                                                    <span className="material-icons text-sm">check_circle</span>
+                                                    Lunas Otomatis (Tanpa Upload Struk)
+                                                </span>
+                                            ) : isCod ? (
+                                                <span className="text-[11px] text-amber-700 font-semibold">
+                                                    Tagih Tunai Saat Pengantaran
+                                                </span>
+                                            ) : (
+                                                <span className="text-[11px] text-gray-400 font-medium italic">
+                                                    Belum mengunggah bukti transfer
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-8">
+                                        {/* Buyer Info */}
+                                        <div className="space-y-4">
+                                            <h4 className="text-xs font-bold text-gray-800 uppercase tracking-widest flex items-center gap-2">
+                                                <span className="material-icons text-sm">person</span> Informasi Pembeli
+                                            </h4>
+                                            <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
+                                                <p className="text-sm font-bold text-gray-800">{order.recipient_name || order.buyer_details?.name_full || order.buyer_details?.username}</p>
+                                                <p className="text-xs text-gray-600 mt-1 flex items-center gap-1">
+                                                    <span className="material-icons text-[14px]">phone</span> {order.recipient_phone || order.buyer_details?.phone || '-'}
+                                                </p>
+                                                <div className="mt-3 pt-3 border-t border-gray-200">
+                                                    <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">Alamat Pengiriman</p>
+                                                    <p className="text-xs text-gray-600 leading-relaxed">
+                                                        {order.shipping_address || order.buyer_details?.address}<br />
+                                                        {order.shipping_village ? `Kel. ${order.shipping_village}, ` : ''}{order.shipping_district ? `Kec. ${order.shipping_district}` : ''}<br />
+                                                        {order.shipping_city || order.buyer_details?.address_city_name}, {order.shipping_province || order.buyer_details?.address_province}<br />
+                                                        {order.shipping_postal_code || order.buyer_details?.address_postal_code}
+                                                    </p>
+                                                </div>
+                                                {order.buyer_note && (
+                                                    <div className="mt-3 p-3 bg-orange-50 rounded-xl border border-orange-100">
+                                                        <p className="text-[10px] font-bold text-orange-800 uppercase mb-1">Catatan Pembeli</p>
+                                                        <p className="text-xs text-orange-900 italic">"{order.buyer_note}"</p>
                                                     </div>
-                                                    <div>
-                                                        <p className="text-xs font-bold text-gray-800 line-clamp-1">{item.product_name}</p>
-                                                        {item.variation_name && <p className="text-[10px] text-emerald-600 font-medium">Varian: {item.variation_name}</p>}
-                                                        <p className="text-[10px] text-gray-500">{item.quantity} x {formatIDR(item.price / item.quantity)}</p>
-                                                        {item.purchase_instructions && (
-                                                            <p className="text-[9px] text-blue-600 bg-blue-50 px-2 py-0.5 rounded mt-1 border border-blue-100">
-                                                                <span className="font-bold">Info Produk:</span> {item.purchase_instructions}
-                                                            </p>
-                                                        )}
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        {/* Order Items */}
+                                        <div className="md:col-span-1 space-y-4">
+                                            <h4 className="text-xs font-bold text-gray-800 uppercase tracking-widest flex items-center gap-2">
+                                                <span className="material-icons text-sm">inventory_2</span> Produk Toko Anda
+                                            </h4>
+                                            <div className="space-y-3">
+                                                {order.items?.map(item => (
+                                                    <div key={item.id} className="flex gap-3">
+                                                        <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden border border-gray-100">
+                                                            {item.product_image || item.product_thumbnail || item.thumbnail ? (
+                                                                <img 
+                                                                    src={getMediaUrl(item.product_image || item.product_thumbnail || item.thumbnail)} 
+                                                                    alt={item.product_name} 
+                                                                    className="w-full h-full object-cover" 
+                                                                    onError={(e) => { e.target.onerror = null; e.target.src = '/placeholder-image.jpg'; }}
+                                                                />
+                                                            ) : (
+                                                                <span className="material-icons text-gray-400">image</span>
+                                                            )}
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-xs font-bold text-gray-800 line-clamp-1">{item.product_name}</p>
+                                                            {item.variation_name && <p className="text-[10px] text-emerald-600 font-medium">Varian: {item.variation_name}</p>}
+                                                            <p className="text-[10px] text-gray-500">{item.quantity} x {formatIDR(item.price)}</p>
+                                                            {item.purchase_instructions && (
+                                                                <p className="text-[9px] text-blue-600 bg-blue-50 px-2 py-0.5 rounded mt-1 border border-blue-100">
+                                                                    <span className="font-bold">Info:</span> {item.purchase_instructions}
+                                                                </p>
+                                                            )}
+                                                        </div>
                                                     </div>
-                                                </div>
-                                            ))}
-                                            <div className="pt-3 border-t border-gray-100">
-                                                <div className="flex justify-between items-center text-xs">
-                                                    <span className="text-gray-500">Subtotal</span>
-                                                    <span className="font-bold">{formatIDR(order.total_price)}</span>
-                                                </div>
-                                                <div className="flex justify-between items-center text-xs mt-1">
-                                                    <span className="text-gray-500">Pengiriman ({order.shipping_courier || 'Bayar Ongkir Di Tempat / Kesepakatan Seller & Buyer'})</span>
-                                                    <span className="font-bold">{formatIDR(order.shipping_cost)}</span>
-                                                </div>
-                                                <div className="flex justify-between items-center text-sm font-black text-emerald-700 mt-2 p-2 bg-emerald-50 rounded-lg">
-                                                    <span>Total</span>
-                                                    <span>{formatIDR(order.grand_total)}</span>
+                                                ))}
+                                                <div className="pt-3 border-t border-gray-100 space-y-1">
+                                                    <div className="flex justify-between items-center text-xs">
+                                                        <span className="text-gray-500">Subtotal Produk</span>
+                                                        <span className="font-bold text-gray-800">{formatIDR(order.total_price)}</span>
+                                                    </div>
+                                                    {Number(order.shipping_cost) > 0 && (
+                                                        <div className="flex justify-between items-center text-xs">
+                                                            <span className="text-gray-500">Ongkir ({order.shipping_courier || 'Kurir'})</span>
+                                                            <span className="font-bold text-gray-800">+{formatIDR(order.shipping_cost)}</span>
+                                                        </div>
+                                                    )}
+                                                    {Number(order.voucher_nominal) > 0 && (
+                                                        <div className="flex justify-between items-center text-xs text-amber-700 font-bold">
+                                                            <span>Voucher {order.voucher_code ? `(${order.voucher_code})` : ''}</span>
+                                                            <span>-{formatIDR(order.voucher_nominal)}</span>
+                                                        </div>
+                                                    )}
+                                                    <div className="flex justify-between items-center text-sm font-black text-emerald-700 mt-2 p-2 bg-emerald-50 rounded-lg">
+                                                        <span>Total Tagihan</span>
+                                                        <span>{formatIDR(order.grand_total)}</span>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
-                                    </div>
-                                    {/* Action Controls */}
-                                    <div className="space-y-4">
+
+                                        {/* Action Controls */}
+                                        <div className="space-y-4">
                                             {order.status === 'Selesai' || order.status === 'Batal' ? (
                                                 <div className="p-4 bg-gray-50 rounded-xl border border-gray-200 text-center">
                                                     <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Pesanan {order.status}</p>
@@ -301,7 +479,6 @@ const DashboardSinergySellerOrdersPage = () => {
                                                             disabled={updatingId === order.id}
                                                             className="w-full pl-4 pr-10 py-3 bg-white border border-gray-200 rounded-xl text-sm font-bold text-gray-700 focus:ring-2 focus:ring-emerald-500 outline-none appearance-none transition disabled:opacity-50"
                                                         >
-                                                            {/* Restrict transitions: Sequential only */}
                                                             {(() => {
                                                                 const allowed = {
                                                                     'Pending': ['Pending', 'Paid', 'Batal'],
@@ -383,10 +560,57 @@ const DashboardSinergySellerOrdersPage = () => {
                                         </div>
                                     </div>
                                 </div>
-                        ))}
+                            );
+                        })}
                     </div>
                 )}
             </div>
+
+            {/* Modal Preview Bukti Transfer */}
+            {selectedProof && (
+                <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[999] flex items-center justify-center p-4">
+                    <div className="bg-white rounded-3xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in duration-200 shadow-2xl flex flex-col max-h-[90vh]">
+                        <div className="p-5 bg-gradient-to-r from-emerald-600 to-teal-700 text-white flex justify-between items-center">
+                            <div>
+                                <h3 className="font-black text-sm">Bukti Transfer Pembayaran</h3>
+                                <p className="text-[11px] text-emerald-100">Pesanan #{selectedProof.orderNumber} • {formatIDR(selectedProof.amount)}</p>
+                            </div>
+                            <button
+                                onClick={() => setSelectedProof(null)}
+                                className="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 text-white flex items-center justify-center transition"
+                            >
+                                <span className="material-icons text-lg">close</span>
+                            </button>
+                        </div>
+                        <div className="p-6 overflow-y-auto flex flex-col items-center bg-gray-50 flex-1">
+                            <div className="bg-white p-2 rounded-2xl shadow-md border border-gray-200 max-w-full">
+                                <img 
+                                    src={selectedProof.url} 
+                                    alt="Bukti Transfer"
+                                    className="max-h-[60vh] object-contain rounded-xl"
+                                />
+                            </div>
+                        </div>
+                        <div className="p-4 bg-white border-t border-gray-100 flex gap-3">
+                            <a
+                                href={selectedProof.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex-1 py-3 bg-gray-100 hover:bg-gray-200 text-gray-800 text-xs font-bold rounded-xl text-center transition flex items-center justify-center gap-1.5"
+                            >
+                                <span className="material-icons text-sm">open_in_new</span>
+                                Buka Ukuran Penuh
+                            </a>
+                            <button
+                                onClick={() => setSelectedProof(null)}
+                                className="flex-1 py-3 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl text-center transition"
+                            >
+                                Tutup
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             <NavigationButton />
         </div>
@@ -394,3 +618,4 @@ const DashboardSinergySellerOrdersPage = () => {
 };
 
 export default DashboardSinergySellerOrdersPage;
+

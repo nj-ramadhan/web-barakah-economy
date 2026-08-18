@@ -157,13 +157,30 @@ const DynaQRISModal = ({
                     </p>
                 </div>
 
-                {/* Amount Display */}
-                <div className="bg-gradient-to-r from-emerald-600 to-green-700 text-white rounded-2xl p-4 text-center mb-5 shadow-lg">
+                {/* Amount Display with Transparent Halal System Fee Breakdown */}
+                <div className="bg-gradient-to-r from-emerald-600 to-green-700 text-white rounded-2xl p-4 text-center mb-4 shadow-lg">
                     <p className="text-[10px] uppercase font-bold tracking-widest text-emerald-100">Total Nominal Pembayaran</p>
                     <h2 className="text-3xl font-black mt-1">
                         Rp {formatCurrency(qrisData.amount || amount || 0)}
                     </h2>
-                    <p className="text-[11px] text-emerald-100/90 mt-1 font-medium">Nominal otomatis terdeteksi saat di-scan</p>
+                    <p className="text-[11px] text-emerald-100/90 mt-1 font-medium">Nominal pas otomatis terdeteksi saat di-scan</p>
+
+                    {/* Breakdown Biaya Layanan (Akad Ijarah) jika ada kode unik */}
+                    {Number(qrisData?.uniqueCode) > 0 && (
+                        <div className="mt-3 pt-3 border-t border-emerald-500/40 text-[11px] space-y-1 text-left bg-emerald-800/30 p-2.5 rounded-xl">
+                            <div className="flex justify-between text-emerald-100">
+                                <span>Tagihan Pokok:</span>
+                                <span className="font-bold">Rp {formatCurrency(qrisData.baseAmount || (amount - qrisData.uniqueCode))}</span>
+                            </div>
+                            <div className="flex justify-between text-emerald-200">
+                                <span>Biaya Layanan & Admin Sistem:</span>
+                                <span className="font-bold">+Rp {formatCurrency(qrisData.uniqueCode)}</span>
+                            </div>
+                            <p className="text-[9px] text-emerald-200/80 italic mt-1 leading-tight">
+                                * Akad Ijarah (Ujrah): Biaya pemeliharaan infrastruktur verifikasi otomatis, sah & bebas riba.
+                            </p>
+                        </div>
+                    )}
                 </div>
 
                 {/* QR Code Container */}

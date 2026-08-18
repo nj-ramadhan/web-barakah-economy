@@ -13,6 +13,7 @@ from .views import (
     GenerateDynaQRISView,
     CheckDynaQRISStatusView,
     AndroidNotificationWebhookView,
+    AndroidListenerHeartbeatView,
 )
 
 urlpatterns = [
@@ -23,6 +24,7 @@ urlpatterns = [
     path('dynaqris/generate/', GenerateDynaQRISView.as_view(), name='generate-dynaqris'),
     path('dynaqris/check-status/', CheckDynaQRISStatusView.as_view(), name='check-dynaqris-status'),
     path('webhook/android-notification/', AndroidNotificationWebhookView.as_view(), name='android-notification-webhook'),
+    path('webhook/heartbeat/', AndroidListenerHeartbeatView.as_view(), name='android-listener-heartbeat'),
 
     # Midtrans URLs
     path('generate-donation-midtrans-token/', GenerateDonationMidtransTokenView.as_view(), name='generate-donation-midtrans-token'),

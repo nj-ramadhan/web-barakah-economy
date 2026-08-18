@@ -613,6 +613,62 @@ class CheckOrderPaymentStatusView(APIView):
             logger.error(f"Error checking payment status: {str(e)}")
             return JsonResponse({'error': str(e)}, status=500)
 
+class AndroidListenerHeartbeatView(APIView):
+    """
+    Heartbeat and Single Device Lock endpoint for BAE Android Notification Listener.
+    Ensures only 1 primary Android phone is actively processing notifications.
+    """
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        setting = PaymentSetting.get_settings()
+        secret = (
+            request.META.get('HTTP_X_ANDROID_SECRET') or
+            request.data.get('secret') or
+            request.data.get('secret_token')
+        )
+
+        if setting.android_webhook_secret and secret != setting.android_webhook_secret:
+            return Response({
+                "success": False,
+                "status": "unauthorized",
+                "error": "Secret token tidak valid."
+            }, status=status.HTTP_401_UNAUTHORIZED)
+
+        device_id = request.data.get('device_id') or 'default_device'
+        device_name = request.data.get('device_name') or 'Android Device'
+        force_claim = request.data.get('force_claim', True)
+
+        now = timezone.now()
+
+        # If current device matches or no device registered or claiming primary lock:
+        if not setting.listener_device_id or setting.listener_device_id == device_id or force_claim:
+            setting.listener_device_id = device_id
+            setting.listener_device_name = device_name
+            setting.listener_last_heartbeat = now
+            setting.save(update_fields=['listener_device_id', 'listener_device_name', 'listener_last_heartbeat'])
+
+            return Response({
+                "success": True,
+                "status": "active",
+                "is_primary": True,
+                "active_device_id": device_id,
+                "active_device_name": device_name,
+                "last_heartbeat": now.isoformat(),
+                "message": "🟢 Terhubung 24/7 ke Server Barakah (Perangkat Utama Aktif)"
+            }, status=status.HTTP_200_OK)
+        else:
+            # Device mismatch and not claiming
+            return Response({
+                "success": False,
+                "status": "disconnected",
+                "is_primary": False,
+                "active_device_id": setting.listener_device_id,
+                "active_device_name": setting.listener_device_name,
+                "message": f"🔴 Sesi dialihkan ke HP lain ({setting.listener_device_name or 'Perangkat Lain'})."
+            }, status=status.HTTP_200_OK)
+
+
 class AndroidNotificationWebhookView(APIView):
     """
     Webhook listener for Android Notification Forwarder apps (MacroDroid, Tasker, Notification Forwarder, etc.)
@@ -630,6 +686,8 @@ class AndroidNotificationWebhookView(APIView):
             "status": "active" if setting.android_webhook_enabled else "disabled",
             "webhook_enabled": setting.android_webhook_enabled,
             "service": "Barakah Android Notification Listener Webhook",
+            "active_device": setting.listener_device_name or "Belum Terhubung",
+            "last_heartbeat": setting.listener_last_heartbeat.isoformat() if setting.listener_last_heartbeat else None,
             "message": "Endpoint aktif dan siap menerima push notifikasi m-Banking & E-Wallet.",
             "supported_apps": [
                 "BSI Mobile", "BCA Mobile", "Mandiri Livin", "BRImo", "BNI Mobile",
@@ -667,11 +725,18 @@ class AndroidNotificationWebhookView(APIView):
                 "error": "Secret token tidak valid. Periksa pengaturan secret token Anda."
             }, status=status.HTTP_401_UNAUTHORIZED)
 
+        # Update last heartbeat on webhook reception
+        device_id = request.data.get('device_id') if isinstance(getattr(request, 'data', None), dict) else None
+        if device_id:
+            setting.listener_device_id = device_id
+        setting.listener_last_heartbeat = timezone.now()
+        setting.save(update_fields=['listener_device_id', 'listener_last_heartbeat'])
+
         # Extract text / message from payload (exclude secret fields from text content)
         if isinstance(request.data, dict):
             text_parts = [
                 str(v) for k, v in request.data.items()
-                if v and isinstance(v, (str, int, float)) and k not in ['secret', 'secret_token', 'package']
+                if v and isinstance(v, (str, int, float)) and k not in ['secret', 'secret_token', 'package', 'device_id', 'device_name']
             ]
             payload_text = " ".join(text_parts)
         else:
