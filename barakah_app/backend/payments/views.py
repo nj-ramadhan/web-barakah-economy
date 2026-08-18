@@ -10,6 +10,7 @@ from datetime import timedelta
 from django.db.models import Q
 import re
 import decimal
+from decimal import Decimal
 from midtransclient import Snap
 from donations.models import Donation
 from campaigns.models import Campaign

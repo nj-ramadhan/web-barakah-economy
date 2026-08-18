@@ -422,197 +422,271 @@ const EcommercePaymentConfirmation = () => {
           </p>
         </div>
 
-        {/* DynaQRIS Section if active mode is dynaqris */}
-        {paymentConfig?.active_mode === 'dynaqris' && (
-          <div className="bg-gradient-to-r from-emerald-600 to-teal-700 text-white rounded-[32px] p-6 mb-6 shadow-xl text-center relative overflow-hidden">
-            <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-md text-white px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-3">
-              <span className="material-icons text-sm">qr_code_2</span>
-              <span>Metode Otomatis DynaQRIS Aktif</span>
-            </div>
-            <h3 className="text-xl font-black mb-1">Scan QRIS Dinamis Otomatis</h3>
-            <p className="text-xs text-emerald-100 mb-4">
-              Pembayaran langsung terdeteksi otomatis tanpa perlu upload foto bukti bayar.
-            </p>
-            <button
-              onClick={handleGenerateDynaQRIS}
-              disabled={generatingQris}
-              className="w-full bg-white text-emerald-800 font-bold py-3.5 px-6 rounded-2xl shadow-lg hover:bg-emerald-50 transition flex items-center justify-center gap-2"
-            >
-              <span className="material-icons text-lg">qr_code_scanner</span>
-              <span>{generatingQris ? 'Membuat QRIS...' : 'Tampilkan QRIS Pembayaran'}</span>
-            </button>
-          </div>
-        )}
+        {/* IF DYNAQRIS MODE: RENDER DIRECT FULL-PAGE QRIS UI */}
+        {paymentConfig?.active_mode === 'dynaqris' ? (
+          <div className="space-y-6">
+            <div className="bg-white rounded-[32px] shadow-xl shadow-gray-200/50 p-6 border border-gray-100 text-center space-y-5">
+              {/* Header instructions */}
+              <div className="space-y-1">
+                <div className="inline-flex items-center gap-1.5 bg-emerald-50 text-emerald-700 px-3 py-1 rounded-full text-[11px] font-black uppercase tracking-wider mb-1 border border-emerald-100">
+                  <span className="material-icons text-sm">qr_code_2</span>
+                  <span>Pembayaran QRIS Dinamis</span>
+                </div>
+                <h3 className="text-xl font-black text-gray-900">Scan untuk Membayar</h3>
+                <p className="text-xs text-gray-400 font-medium max-w-xs mx-auto">
+                  Buka BCA Mobile, GoPay, OVO, Dana, ShopeePay, atau m-Banking Anda
+                </p>
+              </div>
 
-        <DynaQRISModal
-          isOpen={showDynaModal}
-          onClose={() => setShowDynaModal(false)}
-          qrisData={qrisData}
-          transactionType="ecommerce"
-          referenceId={currentOrderNumber}
-          amount={amount}
-          onPaymentSuccess={handleDynaSuccess}
-          onCancel={handleDynaCancel}
-        />
+              {/* Total Amount Green Box */}
+              <div className="bg-gradient-to-br from-emerald-600 to-teal-700 text-white rounded-2xl p-5 shadow-lg shadow-emerald-100 space-y-1">
+                <p className="text-[10px] uppercase font-black tracking-[0.2em] text-emerald-100">Total Nominal Pembayaran</p>
+                <div className="flex items-center justify-center gap-2">
+                  <h2 className="text-3xl font-black tracking-tight font-mono">Rp {formattedAmount}</h2>
+                  <button
+                    type="button"
+                    onClick={() => copyToClipboard(finalDisplayAmount, 'Nominal Pembayaran')}
+                    className="p-1.5 bg-white/20 hover:bg-white/30 rounded-lg transition text-white"
+                    title="Salin Nominal"
+                  >
+                    <span className="material-icons text-sm">content_copy</span>
+                  </button>
+                </div>
+                <p className="text-[11px] text-emerald-100 font-bold">*Nominal pas otomatis terdeteksi saat di-scan</p>
 
-        {/* Bank Card */}
-        <div className="bg-white rounded-[32px] shadow-xl shadow-gray-200/50 p-6 mb-6 border border-gray-50">
-          <div className="flex items-center gap-4 mb-6">
-            <div className="w-16 h-16 bg-gray-50 rounded-2xl flex items-center justify-center p-2 border border-gray-100">
-              {isDirect && bank !== 'qris' ? (
-                <span className="material-icons text-3xl text-emerald-600">account_balance</span>
-              ) : (
-                <img src={`/images/${bank}-logo.png`} alt={bank} className="max-w-full" onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'block'; }} />
+                {dynaAdminFee > 0 && (
+                  <div className="mt-3 pt-2.5 border-t border-white/20 flex justify-between items-center text-xs text-emerald-100">
+                    <span>Tagihan Pokok: Rp {formattedBaseAmount}</span>
+                    <span className="text-amber-200 font-bold">Biaya Admin: +Rp {new Intl.NumberFormat('id-ID').format(dynaAdminFee)}</span>
+                  </div>
+                )}
+              </div>
+
+              {/* QR Image Box */}
+              <div className="bg-emerald-50/50 p-6 rounded-3xl border-2 border-dashed border-emerald-200 flex flex-col items-center justify-center min-h-[260px]">
+                {generatingQris ? (
+                  <div className="flex flex-col items-center justify-center py-10 space-y-3">
+                    <div className="w-10 h-10 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+                    <p className="text-xs font-bold text-gray-600">Menghasilkan QRIS Dinamis...</p>
+                  </div>
+                ) : qrisData?.qrisImage || qrisData?.qrisCode ? (
+                  <div className="space-y-3 flex flex-col items-center">
+                    <div className="bg-white p-3 rounded-2xl shadow-md border border-gray-100 inline-block">
+                      <img 
+                        src={qrisData.qrisImage || `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(qrisData.qrisCode)}`} 
+                        alt="QRIS Dinamis" 
+                        className="w-56 h-56 object-contain rounded-xl"
+                      />
+                    </div>
+                    {qrisData?.qrisCode && (
+                      <button
+                        type="button"
+                        onClick={() => copyToClipboard(qrisData.qrisCode, 'Text Kode QRIS')}
+                        className="text-[11px] text-emerald-700 font-bold bg-white px-3 py-1.5 rounded-xl border border-emerald-200 hover:bg-emerald-50 transition flex items-center gap-1 shadow-sm"
+                      >
+                        <span className="material-icons text-xs">content_copy</span>
+                        Salin Text Kode QRIS
+                      </button>
+                    )}
+                  </div>
+                ) : (
+                  <div className="space-y-3 text-center py-6">
+                    <span className="material-icons text-4xl text-gray-400">qr_code</span>
+                    <p className="text-xs text-gray-500 font-medium">QRIS belum termuat.</p>
+                    <button
+                      type="button"
+                      onClick={() => handleGenerateDynaQRIS()}
+                      className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition shadow"
+                    >
+                      Muat Ulang QRIS
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Countdown Timer */}
+              {qrisData && (
+                <div className="flex items-center justify-between p-3.5 bg-amber-50 rounded-2xl border border-amber-100 text-amber-900 text-xs font-bold">
+                  <div className="flex items-center gap-2">
+                    <span className="material-icons text-amber-600 text-base animate-pulse">timer</span>
+                    <span>Sisa Waktu Pembayaran:</span>
+                  </div>
+                  <span className="font-mono text-sm font-black text-amber-700">05:00</span>
+                </div>
               )}
-              <span className="material-icons text-3xl text-emerald-600 hidden">account_balance</span>
-            </div>
-            <div>
-              <p className="text-[10px] text-emerald-600 font-black uppercase tracking-[0.2em]">{selectedBankInfo.fullName}</p>
-              <h3 className="text-xl font-black text-gray-900">{selectedBankInfo.number}</h3>
-              <p className="text-xs text-gray-400 font-bold">a.n. {selectedBankInfo.owner}</p>
-            </div>
-          </div>
 
-          {!selectedBankInfo?.isQRIS && bank !== 'qris' && (
-            <button
-              onClick={() => copyToClipboard(selectedBankInfo.number, 'Nomor rekening')}
-              className="w-full py-3 bg-emerald-50 text-emerald-700 rounded-xl font-bold text-xs hover:bg-emerald-100 transition-colors flex items-center justify-center gap-2"
-            >
-              <span className="material-icons text-sm">content_copy</span> SALIN NOMOR REKENING
-            </button>
-          )}
-        </div>
+              {/* Action Buttons */}
+              <div className="space-y-2 pt-2">
+                <button
+                  type="button"
+                  onClick={async () => {
+                    try {
+                      const res = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/orders/`, {
+                        headers: { Authorization: `Bearer ${JSON.parse(localStorage.getItem('user'))?.access}` }
+                      });
+                      const matched = (res.data || []).find(o => String(o.order_number) === String(currentOrderNumber) || String(o.id) === String(currentOrderNumber));
+                      if (matched && ['paid', 'proses', 'dikirim', 'selesai'].includes((matched.status || '').toLowerCase())) {
+                        alert('Pembayaran terverifikasi! Terima kasih.');
+                        navigate('/riwayat-belanja');
+                      } else {
+                        alert('Pembayaran belum terdeteksi. Harap pastikan transfer sudah berhasil dilakukan.');
+                      }
+                    } catch (e) {
+                      alert('Sedang mengecek status pesanan...');
+                    }
+                  }}
+                  className="w-full py-4 bg-gradient-to-r from-emerald-600 to-teal-700 text-white rounded-2xl font-black text-sm uppercase tracking-wider shadow-lg shadow-emerald-200 hover:scale-[1.01] transition flex items-center justify-center gap-2"
+                >
+                  <span className="material-icons text-base">check_circle</span>
+                  <span>Saya Sudah Bayar / Cek Status</span>
+                </button>
 
-        {/* Amount Card */}
-        <div className="bg-gradient-to-br from-emerald-600 to-teal-700 rounded-[32px] p-6 mb-8 shadow-xl shadow-emerald-100">
-          <p className="text-emerald-100 text-[10px] font-black uppercase tracking-[0.2em] mb-1">Total Tagihan Pembayaran</p>
-          <div className="flex justify-between items-end">
-            <h2 className="text-3xl font-black text-white tracking-tight">Rp {formattedAmount}</h2>
-            <button
-              onClick={() => copyToClipboard(finalDisplayAmount, 'Nominal Total Tagihan')}
-              className="p-2 bg-white/20 backdrop-blur-sm rounded-lg text-white hover:bg-white/30 transition-colors"
-              title="Salin Nominal Pembayaran"
-            >
-              <span className="material-icons text-sm">content_copy</span>
-            </button>
-          </div>
-
-          {/* Breakdown for DynaQRIS unique fee */}
-          {isDynaActive && dynaAdminFee > 0 && (
-            <div className="mt-3 pt-3 border-t border-white/20 space-y-1.5 text-xs text-emerald-100">
-              <div className="flex justify-between items-center">
-                <span>Tagihan Pokok</span>
-                <span>Rp {formattedBaseAmount}</span>
-              </div>
-              <div className="flex justify-between items-center text-amber-200 font-semibold">
-                <span>Biaya Layanan &amp; Admin (Akad Ijarah)</span>
-                <span>+ Rp {new Intl.NumberFormat('id-ID').format(dynaAdminFee)}</span>
+                <button
+                  type="button"
+                  onClick={handleDynaCancel}
+                  className="w-full py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-2xl text-xs font-bold transition flex items-center justify-center gap-1.5"
+                >
+                  <span className="material-icons text-sm text-red-500">cancel</span>
+                  <span>Batalkan Pembayaran</span>
+                </button>
               </div>
             </div>
-          )}
-
-          {Number(voucherDiscount) > 0 && (
-            <div className="mt-3 pt-3 border-t border-white/20 flex items-center justify-between text-xs text-emerald-100 font-bold">
-              <span>Potongan Voucher {voucherCode ? `(${voucherCode})` : ''}</span>
-              <span>- Rp {new Intl.NumberFormat('id-ID', { maximumFractionDigits: 0 }).format(voucherDiscount)}</span>
-            </div>
-          )}
-        </div>
-
-        {/* Flying Notification Bar for Active QRIS */}
-        {paymentConfig?.active_mode === 'dynaqris' && qrisData && !showDynaModal && (
-          <div className="fixed bottom-6 left-4 right-4 max-w-lg mx-auto z-40 bg-gray-900/95 backdrop-blur-md text-white p-4 rounded-2xl shadow-2xl border border-emerald-500/30 flex items-center justify-between gap-3 animate-bounce-short">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center flex-shrink-0">
-                <span className="material-icons text-lg animate-pulse">timer</span>
-              </div>
-              <div>
-                <p className="text-xs font-bold text-gray-100">Menunggu Pembayaran QRIS</p>
-                <p className="text-[11px] text-emerald-400 font-medium">Rp {formattedAmount} (Scan sebelum 5 menit)</p>
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={() => setShowDynaModal(true)}
-              className="bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold px-3.5 py-2 rounded-xl transition-all shadow"
-            >
-              Buka QRIS
-            </button>
           </div>
-        )}
-
-        {/* QRIS if selected */}
-        {selectedBankInfo.isQRIS && (
-          <div className="bg-white rounded-[32px] p-6 mb-8 border-2 border-dashed border-emerald-100 flex flex-col items-center">
-            <img src={selectedBankInfo.logo || "/images/qris-bae2.png"} alt="QRIS" className="w-full max-w-[240px] mb-4" />
-            <a href={selectedBankInfo.logo || "/images/qris-bae2.png"} download className="text-emerald-600 font-black text-xs uppercase tracking-widest hover:underline">Unduh QRIS</a>
-          </div>
-        )}
-
-        {/* Upload Form */}
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div
-            className={`relative border-3 border-dashed rounded-[32px] p-8 text-center transition-all cursor-pointer ${previewUrl ? 'border-emerald-500 bg-emerald-50/30' : 'border-gray-200 hover:border-emerald-300 hover:bg-gray-50'
-              }`}
-            onClick={() => fileInputRef.current.click()}
-          >
-            {previewUrl ? (
-              <div className="relative group">
-                <img src={previewUrl} alt="Preview" className="max-h-64 mx-auto rounded-2xl shadow-lg shadow-emerald-200/50" />
-                <div className="absolute inset-0 bg-emerald-900/40 rounded-2xl opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                  <span className="text-white font-black text-sm">GANTI FOTO</span>
+        ) : (
+          /* MANUAL BANK TRANSFER & RECEIPT UPLOAD MODE */
+          <>
+            {/* Bank Card */}
+            <div className="bg-white rounded-[32px] shadow-xl shadow-gray-200/50 p-6 mb-6 border border-gray-50">
+              <div className="flex items-center gap-4 mb-6">
+                <div className="w-16 h-16 bg-gray-50 rounded-2xl flex items-center justify-center p-2 border border-gray-100">
+                  {isDirect && bank !== 'qris' ? (
+                    <span className="material-icons text-3xl text-emerald-600">account_balance</span>
+                  ) : (
+                    <img src={`/images/${bank}-logo.png`} alt={bank} className="max-w-full" onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'block'; }} />
+                  )}
+                  <span className="material-icons text-3xl text-emerald-600 hidden">account_balance</span>
+                </div>
+                <div>
+                  <p className="text-[10px] text-emerald-600 font-black uppercase tracking-[0.2em]">{selectedBankInfo.fullName}</p>
+                  <h3 className="text-xl font-black text-gray-900">{selectedBankInfo.number}</h3>
+                  <p className="text-xs text-gray-400 font-bold">a.n. {selectedBankInfo.owner}</p>
                 </div>
               </div>
-            ) : (
-              <div className="py-6">
-                <div className="w-16 h-16 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <span className="material-icons text-emerald-600 text-3xl">cloud_upload</span>
-                </div>
-                <p className="text-gray-900 font-black text-base">Upload Struk Pembayaran</p>
-                <p className="text-gray-400 text-xs mt-1 font-bold">Pastikan gambar terang dan nominal terbaca</p>
-              </div>
-            )}
-            <input
-              type="file"
-              accept="image/*"
-              ref={fileInputRef}
-              onChange={handleFileChange}
-              className="hidden"
-            />
-          </div>
 
-          {ocrError && (
-            <div className="bg-red-50 border border-red-100 p-4 rounded-2xl flex items-start gap-3">
-              <span className="material-icons text-red-600">error_outline</span>
-              <div>
-                <p className="text-red-700 font-black text-xs uppercase tracking-widest mb-1">Validasi Gagal</p>
-                <p className="text-red-600 text-[11px] leading-relaxed font-bold">{ocrError}</p>
-              </div>
+              {!selectedBankInfo?.isQRIS && bank !== 'qris' && (
+                <button
+                  onClick={() => copyToClipboard(selectedBankInfo.number, 'Nomor rekening')}
+                  className="w-full py-3 bg-emerald-50 text-emerald-700 rounded-xl font-bold text-xs hover:bg-emerald-100 transition-colors flex items-center justify-center gap-2"
+                >
+                  <span className="material-icons text-sm">content_copy</span> SALIN NOMOR REKENING
+                </button>
+              )}
             </div>
-          )}
 
-          <button
-            type="submit"
-            disabled={uploading || !selectedFile}
-            className={`w-full py-5 rounded-[24px] font-black text-base tracking-widest shadow-2xl transition-all flex items-center justify-center gap-3 ${uploading
-              ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-              : 'bg-gradient-to-r from-emerald-600 to-teal-700 text-white shadow-emerald-100 hover:shadow-emerald-200 hover:-translate-y-1'
-              }`}
-          >
-            {uploading ? (
-              <>
-                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-emerald-600"></div>
-                <span className="animate-pulse">{ocrLoading ? 'MEMINDAI STRUK...' : 'MEMPROSES...'}</span>
-              </>
-            ) : (
-              <>KONFIRMASI SEKARANG</>
+            {/* Amount Card */}
+            <div className="bg-gradient-to-br from-emerald-600 to-teal-700 rounded-[32px] p-6 mb-8 shadow-xl shadow-emerald-100">
+              <p className="text-emerald-100 text-[10px] font-black uppercase tracking-[0.2em] mb-1">Total Tagihan Pembayaran</p>
+              <div className="flex justify-between items-end">
+                <h2 className="text-3xl font-black text-white tracking-tight">Rp {formattedAmount}</h2>
+                <button
+                  onClick={() => copyToClipboard(finalDisplayAmount, 'Nominal Total Tagihan')}
+                  className="p-2 bg-white/20 backdrop-blur-sm rounded-lg text-white hover:bg-white/30 transition-colors"
+                  title="Salin Nominal Pembayaran"
+                >
+                  <span className="material-icons text-sm">content_copy</span>
+                </button>
+              </div>
+
+              {Number(voucherDiscount) > 0 && (
+                <div className="mt-3 pt-3 border-t border-white/20 flex items-center justify-between text-xs text-emerald-100 font-bold">
+                  <span>Potongan Voucher {voucherCode ? `(${voucherCode})` : ''}</span>
+                  <span>- Rp {new Intl.NumberFormat('id-ID', { maximumFractionDigits: 0 }).format(voucherDiscount)}</span>
+                </div>
+              )}
+            </div>
+
+            {/* QRIS if selected */}
+            {selectedBankInfo.isQRIS && (
+              <div className="bg-white rounded-[32px] p-6 mb-8 border-2 border-dashed border-emerald-100 flex flex-col items-center">
+                <img src={selectedBankInfo.logo || "/images/qris-bae2.png"} alt="QRIS" className="w-full max-w-[240px] mb-4" />
+                <a href={selectedBankInfo.logo || "/images/qris-bae2.png"} download className="text-emerald-600 font-black text-xs uppercase tracking-widest hover:underline">Unduh QRIS</a>
+              </div>
             )}
-          </button>
 
-          <p className="text-center text-[10px] text-gray-400 font-bold italic">
-            *Sistem AI akan memvalidasi pembayaran Anda dalam hitungan detik.
-          </p>
-        </form>
+            {/* Upload Form */}
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div
+                className={`relative border-3 border-dashed rounded-[32px] p-8 text-center transition-all cursor-pointer ${previewUrl ? 'border-emerald-500 bg-emerald-50/30' : 'border-gray-200 hover:border-emerald-300 hover:bg-gray-50'
+                  }`}
+                onClick={() => fileInputRef.current.click()}
+              >
+                {previewUrl ? (
+                  <div className="relative group">
+                    <img
+                      src={previewUrl}
+                      alt="Preview Struk"
+                      className="max-h-64 mx-auto rounded-2xl shadow-md object-contain"
+                    />
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl flex items-center justify-center text-white text-xs font-bold">
+                      Klik untuk ganti gambar
+                    </div>
+                  </div>
+                ) : (
+                  <div className="py-6">
+                    <div className="w-16 h-16 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <span className="material-icons text-emerald-600 text-3xl">cloud_upload</span>
+                    </div>
+                    <p className="text-gray-900 font-black text-base">Upload Struk Pembayaran</p>
+                    <p className="text-gray-400 text-xs mt-1 font-bold">Pastikan gambar terang dan nominal terbaca</p>
+                  </div>
+                )}
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleFileChange}
+                  accept="image/*"
+                  className="hidden"
+                />
+              </div>
+
+              {ocrError && (
+                <div className="p-4 bg-red-50 border border-red-200 rounded-2xl text-xs text-red-700 flex items-start gap-3">
+                  <span className="material-icons text-red-500 text-sm mt-0.5">error</span>
+                  <div>
+                    <p className="font-bold">Gagal Verifikasi Otomatis</p>
+                    <p className="mt-0.5">{ocrError}</p>
+                  </div>
+                </div>
+              )}
+
+              <button
+                type="submit"
+                disabled={!selectedFile || uploading || ocrLoading}
+                className={`w-full py-5 rounded-[24px] font-black text-base tracking-widest shadow-2xl transition-all flex items-center justify-center gap-3 ${!selectedFile || uploading || ocrLoading
+                  ? 'bg-gray-200 text-gray-400 cursor-not-allowed shadow-none'
+                  : 'bg-gradient-to-r from-emerald-600 to-teal-700 text-white shadow-emerald-100 hover:shadow-emerald-200 hover:-translate-y-1'
+                  }`}
+              >
+                {ocrLoading ? (
+                  <>
+                    <span className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></span>
+                    <span>MEMVALIDASI STRUK...</span>
+                  </>
+                ) : uploading ? (
+                  <>
+                    <span className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></span>
+                    <span>MENGIRIM...</span>
+                  </>
+                ) : (
+                  <span>KONFIRMASI SEKARANG</span>
+                )}
+              </button>
+              <p className="text-center text-[10px] text-gray-400 font-bold italic">
+                *Sistem AI akan memvalidasi pembayaran Anda dalam hitungan detik.
+              </p>
+            </form>
+          </>
+        )}
       </div>
       <NavigationButton />
     </div>
