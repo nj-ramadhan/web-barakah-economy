@@ -143,46 +143,56 @@ class GenerateDynaQRISView(APIView):
 
         # Synchronize generated final unique amount to the transaction database record so Webhook matches it accurately
         if "amount" in result and reference_id:
-            final_amount = result["amount"]
+            final_amount = Decimal(str(result["amount"]))
+            clean_ref = str(reference_id).strip().lstrip('#')
             try:
                 if transaction_type == 'ecommerce':
                     from orders.models import Order
-                    ord_obj = Order.objects.filter(id=reference_id).first() if str(reference_id).isdigit() else None
-                    if not ord_obj:
-                        ord_obj = Order.objects.filter(order_number=reference_id).first()
+                    ord_obj = Order.objects.filter(
+                        Q(order_number=clean_ref) | Q(order_number=reference_id) | Q(order_number__iexact=clean_ref)
+                    ).first()
+                    if not ord_obj and clean_ref.isdigit():
+                        ord_obj = Order.objects.filter(id=int(clean_ref)).first()
+
                     if ord_obj:
                         ord_obj.grand_total = final_amount
                         ord_obj.payment_method = 'dynaqris'
                         ord_obj.save(update_fields=['grand_total', 'payment_method'])
+                        logger.info(f"Successfully synced Order #{ord_obj.order_number} grand_total to {final_amount}")
                 elif transaction_type == 'event':
                     from events.models import EventRegistration
-                    reg_obj = EventRegistration.objects.filter(id=reference_id).first() if str(reference_id).isdigit() else None
+                    reg_obj = EventRegistration.objects.filter(id=clean_ref).first() if clean_ref.isdigit() else None
                     if reg_obj:
                         reg_obj.payment_amount = final_amount
                         reg_obj.save(update_fields=['payment_amount'])
                 elif transaction_type == 'charity':
                     from donations.models import Donation
-                    don_obj = Donation.objects.filter(id=reference_id).first() if str(reference_id).isdigit() else None
+                    don_obj = Donation.objects.filter(id=clean_ref).first() if clean_ref.isdigit() else None
                     if don_obj:
                         don_obj.amount = final_amount
                         don_obj.save(update_fields=['amount'])
                 elif transaction_type == 'digital':
                     from digital_products.models import DigitalOrder
-                    dig_obj = DigitalOrder.objects.filter(id=reference_id).first() if str(reference_id).isdigit() else None
-                    if not dig_obj:
-                        dig_obj = DigitalOrder.objects.filter(order_number=reference_id).first()
+                    dig_obj = DigitalOrder.objects.filter(
+                        Q(order_number=clean_ref) | Q(order_number=reference_id)
+                    ).first()
+                    if not dig_obj and clean_ref.isdigit():
+                        dig_obj = DigitalOrder.objects.filter(id=int(clean_ref)).first()
                     if dig_obj:
                         dig_obj.amount = final_amount
                         dig_obj.save(update_fields=['amount'])
                 elif transaction_type in ['ecourse', 'course']:
                     from courses.models import CourseEnrollment
-                    crs_obj = CourseEnrollment.objects.filter(id=reference_id).first() if str(reference_id).isdigit() else None
-                    if not crs_obj:
-                        crs_obj = CourseEnrollment.objects.filter(order_number=reference_id).first()
+                    crs_obj = CourseEnrollment.objects.filter(
+                        Q(order_number=clean_ref) | Q(order_number=reference_id)
+                    ).first()
+                    if not crs_obj and clean_ref.isdigit():
+                        crs_obj = CourseEnrollment.objects.filter(id=int(clean_ref)).first()
                     if crs_obj:
                         crs_obj.amount = final_amount
                         crs_obj.save(update_fields=['amount'])
             except Exception as sync_err:
+                logger.error(f"Failed to synchronize {transaction_type} record with generated amount {final_amount}: {sync_err}")
                 logger.error(f"Error syncing final DynaQRIS amount {final_amount} for {transaction_type} #{reference_id}: {sync_err}")
 
         return Response(result)
