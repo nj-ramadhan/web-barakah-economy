@@ -444,7 +444,7 @@ const DigitalProductPaymentPage = () => {
                 </div>
 
                 <button
-                    onClick={handleUpload}
+                    onClick={handleProofSubmit}
                     disabled={uploading || ocrLoading || !proofFile}
                     className="w-full bg-green-700 text-white py-3 rounded-xl font-bold text-sm shadow-lg hover:bg-green-800 transition disabled:opacity-50 flex items-center justify-center gap-2"
                 >
