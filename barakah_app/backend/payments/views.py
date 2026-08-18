@@ -118,7 +118,16 @@ class GenerateDynaQRISView(APIView):
             return Response({'error': 'Nominal pembayaran wajib diisi.'}, status=status.HTTP_400_BAD_REQUEST)
 
         user_id = request.user.id if request.user and request.user.is_authenticated else None
-        result = DynaQRISService.generate_dynamic_qris(amount, user_id=user_id, reference_id=reference_id)
+        add_unique_code = request.data.get('add_unique_code', True)
+        if isinstance(add_unique_code, str):
+            add_unique_code = add_unique_code.lower() in ['true', '1']
+
+        result = DynaQRISService.generate_dynamic_qris(
+            amount, 
+            user_id=user_id, 
+            reference_id=reference_id, 
+            add_unique_code=bool(add_unique_code)
+        )
 
         if "error" in result:
             # Clean up pending event registration immediately if DynaQRIS generation failed

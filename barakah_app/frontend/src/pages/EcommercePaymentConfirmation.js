@@ -77,7 +77,8 @@ const EcommercePaymentConfirmation = () => {
       const res = await generateDynaQRIS({ 
         amount: location.state?.amount, 
         reference_id: currentOrderNumber, 
-        type: 'ecommerce' 
+        type: 'ecommerce',
+        add_unique_code: location.state?.addUniqueCode !== false
       });
       if (res.error) {
         alert(res.error);
@@ -121,11 +122,12 @@ const EcommercePaymentConfirmation = () => {
   };
 
   // Final amount syncs with DynaQRIS total (including unique fee / admin fee)
-  const isDynaActive = paymentConfig?.active_mode === 'dynaqris' && qrisData?.amount;
-  const finalDisplayAmount = isDynaActive ? qrisData.amount : amount;
-  const dynaAdminFee = isDynaActive ? (qrisData.amount - (amount || 0)) : 0;
+  const isDynaActive = paymentConfig?.active_mode === 'dynaqris';
+  const finalDisplayAmount = qrisData?.amount || amount || 0;
+  const dynaAdminFee = Number(location.state?.uniqueFee) || (qrisData?.amount && qrisData.amount > amount ? (qrisData.amount - amount) : 0);
+  const baseTagihanAmount = Number(location.state?.baseAmount) || (amount - dynaAdminFee);
   const formattedAmount = new Intl.NumberFormat('id-ID', { maximumFractionDigits: 0 }).format(finalDisplayAmount || 0);
-  const formattedBaseAmount = new Intl.NumberFormat('id-ID', { maximumFractionDigits: 0 }).format(amount || 0);
+  const formattedBaseAmount = new Intl.NumberFormat('id-ID', { maximumFractionDigits: 0 }).format(baseTagihanAmount || 0);
 
 
   const getMediaUrl = (url) => {

@@ -6,6 +6,7 @@ import NavigationButton from '../components/layout/Navigation';
 import ShippingAddressSelector from '../components/common/ShippingAddressSelector';
 import { useNavigate } from 'react-router-dom';
 import { getMediaUrl } from '../utils/mediaUtils';
+import { getPublicPaymentConfig } from '../services/paymentApi';
 
 const EcommerceCheckoutSinergy = () => {
     const [cartItems, setCartItems] = useState([]);
@@ -21,6 +22,8 @@ const EcommerceCheckoutSinergy = () => {
     const [voucherInputs, setVoucherInputs] = useState({});
     const [voucherMessages, setVoucherMessages] = useState({});
     const [validatingVoucher, setValidatingVoucher] = useState({});
+    const [paymentConfig, setPaymentConfig] = useState(null);
+    const [uniqueAdminFee] = useState(() => Math.floor(Math.random() * 400) + 100); // 100 - 499
 
     const navigate = useNavigate();
 
@@ -47,6 +50,14 @@ const EcommerceCheckoutSinergy = () => {
                     setUserWallet(walletRes.data || { balance: 0 });
                 } catch (e) {
                     console.error('Wallet fetch error:', e);
+                }
+
+                // Fetch payment settings
+                try {
+                    const cfg = await getPublicPaymentConfig();
+                    setPaymentConfig(cfg);
+                } catch (e) {
+                    console.error('Payment config fetch error:', e);
                 }
 
                 // Fetch Carts
@@ -198,12 +209,20 @@ const EcommerceCheckoutSinergy = () => {
         }));
 
         const selectedPaymentMethod = checkoutsList[0]?.payment_method || 'manual';
+        const isDynaQRISActive = paymentConfig?.active_mode === 'dynaqris' && ['manual', 'hybrid'].includes(selectedPaymentMethod);
+        const appliedAdminFee = isDynaQRISActive ? uniqueAdminFee : 0;
+
+        // Attach admin fee to the first checkout order config so it is saved in DB
+        if (checkoutsList.length > 0 && appliedAdminFee > 0) {
+            checkoutsList[0].admin_fee = appliedAdminFee;
+        }
 
         try {
             setSubmittingOrder(true);
             const res = await axios.post(`${process.env.REACT_APP_API_BASE_URL}/api/orders/`, {
                 checkouts: checkoutsList,
                 payment_method: selectedPaymentMethod,
+                admin_fee: appliedAdminFee,
                 shipping_address: selectedAddress?.alamat || '',
                 shipping_village: selectedAddress?.kelurahan || '',
                 shipping_district: selectedAddress?.kecamatan || '',
@@ -233,7 +252,7 @@ const EcommerceCheckoutSinergy = () => {
                     const group = sellerGroups[s_id];
                     const config = checkoutConfigs[s_id];
                     return sum + group.total_price + (config?.shipping_cost || 0) - (config?.voucher_nominal || 0);
-                }, 0);
+                }, 0) + appliedAdminFee;
 
                 const allOrdersGrandTotal = Array.isArray(orders)
                     ? orders.reduce((sum, ord) => sum + Number(ord.grand_total || ord.total_price || 0), 0)
@@ -260,6 +279,9 @@ const EcommerceCheckoutSinergy = () => {
                         orderId: firstOrder?.id,
                         orderNumber: firstOrder?.order_number,
                         amount: remainingToPay,
+                        uniqueFee: appliedAdminFee,
+                        baseAmount: remainingToPay - appliedAdminFee,
+                        addUniqueCode: false, // already factored in upfront
                         bank: 'qris',
                         customerName: selectedAddress?.nama_penerima || addresses?.name_full || '',
                         customerPhone: selectedAddress?.phone || addresses?.phone || '',
@@ -719,11 +741,16 @@ const EcommerceCheckoutSinergy = () => {
 
                 {/* Overall Checkout Summary Box */}
                 {(() => {
+                    const firstSellerConfig = checkoutConfigs[Object.keys(sellerGroups)[0]];
+                    const currentPaymentMethod = firstSellerConfig?.payment_method || 'manual';
+                    const isDynaQRIS = paymentConfig?.active_mode === 'dynaqris' && ['manual', 'hybrid'].includes(currentPaymentMethod);
+                    const appliedAdminFee = isDynaQRIS ? uniqueAdminFee : 0;
+
                     const totalOrig = Object.keys(sellerGroups).reduce((acc, sid) => acc + sellerGroups[sid].total_original_price, 0);
                     const totalPromo = Object.keys(sellerGroups).reduce((acc, sid) => acc + sellerGroups[sid].total_promo_discount, 0);
                     const totalVoucher = Object.keys(sellerGroups).reduce((acc, sid) => acc + (checkoutConfigs[sid]?.voucher_nominal || 0), 0);
                     const totalShipping = Object.keys(sellerGroups).reduce((acc, sid) => acc + (checkoutConfigs[sid]?.shipping_cost || 0), 0);
-                    const totalGrand = Math.max(0, totalOrig - totalPromo - totalVoucher + totalShipping);
+                    const totalGrand = Math.max(0, totalOrig - totalPromo - totalVoucher + totalShipping + appliedAdminFee);
 
                     return (
                         <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 mb-6 space-y-2">
@@ -751,6 +778,18 @@ const EcommerceCheckoutSinergy = () => {
                                 <span>Total Ongkir:</span>
                                 <span className="font-semibold text-gray-800">+ Rp {new Intl.NumberFormat('id-ID').format(totalShipping)}</span>
                             </div>
+
+                            {/* Upfront Admin Fee / Unique Code Breakdown */}
+                            {appliedAdminFee > 0 && (
+                                <div className="flex justify-between text-xs text-emerald-800 font-semibold bg-emerald-50/70 p-2.5 rounded-xl border border-emerald-100">
+                                    <div className="flex flex-col">
+                                        <span>Biaya Layanan &amp; Admin (Akad Ijarah)</span>
+                                        <span className="text-[10px] text-emerald-600 font-normal">*Kode unik otomatis untuk verifikasi instan</span>
+                                    </div>
+                                    <span>+ Rp {new Intl.NumberFormat('id-ID').format(appliedAdminFee)}</span>
+                                </div>
+                            )}
+
                             <div className="flex justify-between items-center pt-2 border-t border-gray-100">
                                 <span className="text-sm font-black text-gray-900 uppercase">Total Akhir</span>
                                 <span className="text-xl font-black text-emerald-600">Rp {new Intl.NumberFormat('id-ID').format(totalGrand)}</span>
@@ -763,7 +802,7 @@ const EcommerceCheckoutSinergy = () => {
                     <div className="flex flex-col text-center sm:text-left mb-4 sm:mb-0 w-full sm:w-auto">
                         <span className="text-xs text-gray-500 uppercase font-bold tracking-wider">Total Pembayaran Keseluruhan</span>
                         <span className="text-2xl font-black text-emerald-700">
-                            Rp {new Intl.NumberFormat('id-ID').format(Math.max(0, Object.keys(sellerGroups).reduce((acc, sid) => acc + sellerGroups[sid].total_price + (checkoutConfigs[sid]?.shipping_cost || 0)  - (checkoutConfigs[sid]?.voucher_nominal || 0), 0)))}
+                            Rp {new Intl.NumberFormat('id-ID').format(Math.max(0, Object.keys(sellerGroups).reduce((acc, sid) => acc + sellerGroups[sid].total_price + (checkoutConfigs[sid]?.shipping_cost || 0)  - (checkoutConfigs[sid]?.voucher_nominal || 0), 0) + (paymentConfig?.active_mode === 'dynaqris' && ['manual', 'hybrid'].includes(checkoutConfigs[Object.keys(sellerGroups)[0]]?.payment_method || 'manual') ? uniqueAdminFee : 0)))}
                         </span>
                     </div>
                     <button 

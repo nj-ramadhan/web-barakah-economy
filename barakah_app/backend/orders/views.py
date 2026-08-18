@@ -237,7 +237,8 @@ class CreateOrderView(APIView):
                     except Exception as e:
                         logger.error(f"Voucher verification error: {e}")
 
-                grand_total = total_price + shipping_cost - voucher_nominal
+                admin_fee = clean_decimal(config.get('admin_fee') or request.data.get('admin_fee') or request.data.get('unique_code') or 0)
+                grand_total = total_price + shipping_cost - voucher_nominal + admin_fee
                 if grand_total < 0: grand_total = Decimal('0')
 
                 # Saldo BAE / Hybrid deduction logic
