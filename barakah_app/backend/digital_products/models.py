@@ -102,6 +102,7 @@ class DigitalOrder(models.Model):
     buyer_email = models.EmailField()
     buyer_phone = models.CharField(max_length=20)
     amount = models.DecimalField(max_digits=12, decimal_places=2)
+    admin_fee = models.DecimalField(max_digits=12, decimal_places=2, default=0, help_text="Biaya Layanan & Admin / Kode Unik")
     payment_proof = models.FileField(upload_to=digital_order_proof_path, blank=True, null=True)
     paid_to_seller_directly = models.BooleanField(default=False)
     seller_bank_name = models.CharField(max_length=100, blank=True, null=True)

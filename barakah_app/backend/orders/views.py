@@ -362,15 +362,18 @@ class CreateOrderView(APIView):
             # Clear selected cart items
             cart_items.delete()
 
-            # Send Notifications for each created order
+            # Send Notifications for each created order only if paid or COD (avoid piling up unverified notifications)
             from .utils import send_order_invoice_to_buyer, send_order_notification_to_seller, send_order_email_notifications
             customer_phone = request.data.get('customer_phone') or request.data.get('phone')
 
             for order in created_orders:
                 try:
-                    send_order_invoice_to_buyer(order, alternate_phone=customer_phone)
-                    send_order_notification_to_seller(order)
-                    send_order_email_notifications(order)
+                    is_paid = (order.status or '').lower() in ['paid', 'lunas', 'proses']
+                    is_cod = (order.payment_method or '').lower() == 'cod'
+                    if is_paid or is_cod:
+                        send_order_invoice_to_buyer(order, alternate_phone=customer_phone)
+                        send_order_notification_to_seller(order)
+                        send_order_email_notifications(order)
                 except Exception as e:
                     logger.error(f"Notification Error ({order.order_number}): {str(e)}")
 

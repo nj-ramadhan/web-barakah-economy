@@ -127,7 +127,8 @@ class GenerateDynaQRISView(APIView):
             amount, 
             user_id=user_id, 
             reference_id=reference_id, 
-            add_unique_code=bool(add_unique_code)
+            add_unique_code=bool(add_unique_code),
+            transaction_type=transaction_type
         )
 
         if "error" in result:
@@ -183,8 +184,11 @@ class GenerateDynaQRISView(APIView):
                     if not dig_obj and clean_ref.isdigit():
                         dig_obj = DigitalOrder.objects.filter(id=int(clean_ref)).first()
                     if dig_obj:
+                        base_val = dig_obj.digital_product.price if dig_obj.digital_product else dig_obj.amount
+                        diff = final_amount - Decimal(str(base_val or 0))
+                        dig_obj.admin_fee = max(Decimal('0'), diff)
                         dig_obj.amount = final_amount
-                        dig_obj.save(update_fields=['amount'])
+                        dig_obj.save(update_fields=['admin_fee', 'amount'])
                 elif transaction_type in ['ecourse', 'course']:
                     from courses.models import CourseEnrollment
                     crs_obj = CourseEnrollment.objects.filter(
@@ -193,8 +197,11 @@ class GenerateDynaQRISView(APIView):
                     if not crs_obj and clean_ref.isdigit():
                         crs_obj = CourseEnrollment.objects.filter(id=int(clean_ref)).first()
                     if crs_obj:
+                        base_val = crs_obj.course.price if crs_obj.course else crs_obj.amount
+                        diff = final_amount - Decimal(str(base_val or 0))
+                        crs_obj.admin_fee = max(Decimal('0'), diff)
                         crs_obj.amount = final_amount
-                        crs_obj.save(update_fields=['amount'])
+                        crs_obj.save(update_fields=['admin_fee', 'amount'])
             except Exception as sync_err:
                 logger.error(f"Failed to synchronize {transaction_type} record with generated amount {final_amount}: {sync_err}")
                 logger.error(f"Error syncing final DynaQRIS amount {final_amount} for {transaction_type} #{reference_id}: {sync_err}")
@@ -900,9 +907,10 @@ class AndroidNotificationWebhookView(APIView):
         from digital_products.models import DigitalOrder
         from courses.models import CourseEnrollment
 
-        # Standard Payment Gateway Active Window: Only match transactions created within the last 15-30 minutes
+        # Standard Payment Gateway Active Window: Only match transactions created within timeout
         timeout_mins = max(15, getattr(setting, 'payment_timeout_minutes', 15) or 15)
         recent_cutoff = timezone.now() - timedelta(minutes=timeout_mins)
+        recent_event_cutoff = timezone.now() - timedelta(hours=2)
 
         for amt in extracted_amounts:
             # 1. Strictly match active E-Commerce Order by grand_total (including admin/service fee & unique code)
@@ -978,9 +986,9 @@ class AndroidNotificationWebhookView(APIView):
                     "message": f"Pendaftaran E-Course #{c_enrollment.order_number or c_enrollment.id} berhasil diverifikasi otomatis via Webhook!"
                 })
 
-            # 4. Search recent active Event Registration with matching payment_amount
+            # 4. Search recent active Event Registration with matching payment_amount (within 2-hour window)
             reg = EventRegistration.objects.filter(
-                created_at__gte=recent_cutoff,
+                created_at__gte=recent_event_cutoff,
                 payment_amount=amt
             ).filter(
                 status__in=['pending', 'unpaid']
@@ -989,7 +997,7 @@ class AndroidNotificationWebhookView(APIView):
             if not reg:
                 # Also try matching registrations with payment_status='pending'
                 reg = EventRegistration.objects.filter(
-                    created_at__gte=recent_cutoff,
+                    created_at__gte=recent_event_cutoff,
                     payment_amount=amt,
                     payment_status__in=['pending', 'unpaid', '']
                 ).order_by('-created_at').first()
