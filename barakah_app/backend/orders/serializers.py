@@ -32,19 +32,28 @@ class OrderSerializer(serializers.ModelSerializer):
     seller_name = serializers.CharField(source='seller.username', read_only=True)
     seller_phone = serializers.CharField(source='seller.phone', read_only=True)
     buyer_details = serializers.SerializerMethodField(read_only=True)
+    admin_fee = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Order
         fields = ['id', 'order_number', 'user', 'buyer_details', 'seller', 'seller_name', 'seller_phone', 'created_at', 'updated_at', 
                   'total_price', 'shipping_cost', 'shipping_courier', 'shipping_service', 
-                  'voucher_code', 'voucher_nominal', 'grand_total', 'used_balance', 'status', 'resi_number', 'payment_proof', 'items', 'qris_payload', 'buyer_note', 'payment_method',
+                  'voucher_code', 'voucher_nominal', 'grand_total', 'admin_fee', 'used_balance', 'status', 'resi_number', 'payment_proof', 'items', 'qris_payload', 'buyer_note', 'payment_method',
                   'paid_to_seller_directly', 'seller_bank_name', 'seller_bank_account', 'seller_bank_holder', 'seller_qris_image',
                   'recipient_name', 'recipient_phone', 'shipping_address', 'shipping_village', 'shipping_district', 'shipping_city',
                   'shipping_province', 'shipping_postal_code', 'shipping_address_detail', 'shipping_coordinates',
                   'auto_complete_at', 'shipped_at', 'completed_at', 'complaint_reason', 'complaint_at',
                   'cancel_request_status', 'cancel_request_reason', 'cancel_requested_at', 'cancelled_at', 'cancelled_by']
 
-
+    def get_admin_fee(self, obj):
+        try:
+            from decimal import Decimal
+            base_calc = (obj.total_price or Decimal('0')) + (obj.shipping_cost or Decimal('0')) - (obj.voucher_nominal or Decimal('0'))
+            if obj.grand_total and obj.grand_total > base_calc:
+                return float(obj.grand_total - base_calc)
+        except Exception:
+            pass
+        return 0.0
 
     def get_buyer_details(self, obj):
         try:

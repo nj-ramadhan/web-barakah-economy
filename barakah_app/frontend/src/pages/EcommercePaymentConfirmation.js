@@ -34,6 +34,7 @@ const EcommercePaymentConfirmation = () => {
   const [showDynaModal, setShowDynaModal] = useState(false);
   const [qrisData, setQrisData] = useState(null);
   const [generatingQris, setGeneratingQris] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(300); // 5 minutes
 
   useEffect(() => {
     getPublicPaymentConfig().then((cfg) => {
@@ -43,6 +44,50 @@ const EcommercePaymentConfirmation = () => {
       }
     }).catch(err => console.error("Error fetching config:", err));
   }, []);
+
+  // Countdown timer for DynaQRIS
+  useEffect(() => {
+    if (paymentConfig?.active_mode === 'dynaqris' && qrisData && !isSuccess) {
+      const timer = setInterval(() => {
+        setTimeLeft((prev) => {
+          if (prev <= 1) {
+            clearInterval(timer);
+            handleDynaCancel();
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+      return () => clearInterval(timer);
+    }
+  }, [paymentConfig, qrisData, isSuccess]);
+
+  // Auto-polling payment status for instant seamless verification (runs continuously during the 5 mins)
+  useEffect(() => {
+    if (paymentConfig?.active_mode === 'dynaqris' && qrisData && !isSuccess) {
+      const poller = setInterval(async () => {
+        try {
+          const userData = localStorage.getItem('user');
+          if (!userData) return;
+          const user = JSON.parse(userData);
+          const res = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/orders/`, {
+            headers: { Authorization: `Bearer ${user.access}` }
+          });
+          const matched = (res.data || []).find(o => 
+            String(o.order_number) === String(currentOrderNumber) || 
+            String(o.id) === String(currentOrderNumber)
+          );
+          if (matched && ['paid', 'proses', 'dikirim', 'selesai'].includes((matched.status || '').toLowerCase())) {
+            clearInterval(poller);
+            handleDynaSuccess(matched);
+          }
+        } catch (e) {
+          // ignore transient poll error
+        }
+      }, 3000);
+      return () => clearInterval(poller);
+    }
+  }, [paymentConfig, qrisData, isSuccess, currentOrderNumber]);
 
   // Redirect if no data passed
   if (!location.state) {
@@ -65,6 +110,42 @@ const EcommercePaymentConfirmation = () => {
   } = location.state;
 
   const currentOrderNumber = orderNumberParam || orderId || '';
+
+  const formatCountdown = (seconds) => {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+  };
+
+  const handleDownloadQRIS = () => {
+    if (!qrisData?.qrisImage && !qrisData?.qrisCode) return;
+    const imgUrl = qrisData.qrisImage || `https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(qrisData.qrisCode)}`;
+    
+    if (imgUrl.startsWith('data:')) {
+      const a = document.createElement('a');
+      a.href = imgUrl;
+      a.download = `QRIS-Barakah-${currentOrderNumber || 'bayar'}.svg`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    } else {
+      fetch(imgUrl)
+        .then(res => res.blob())
+        .then(blob => {
+          const blobUrl = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = blobUrl;
+          a.download = `QRIS-Barakah-${currentOrderNumber || 'bayar'}.png`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(blobUrl);
+        })
+        .catch(() => {
+          window.open(imgUrl, '_blank');
+        });
+    }
+  };
 
   const handleGenerateDynaQRIS = async () => {
     // If QRIS data is already generated and active, just open the modal without re-generating
@@ -478,16 +559,26 @@ const EcommercePaymentConfirmation = () => {
                         className="w-56 h-56 object-contain rounded-xl"
                       />
                     </div>
-                    {qrisData?.qrisCode && (
+                    <div className="flex flex-wrap items-center justify-center gap-2">
                       <button
                         type="button"
-                        onClick={() => copyToClipboard(qrisData.qrisCode, 'Text Kode QRIS')}
-                        className="text-[11px] text-emerald-700 font-bold bg-white px-3 py-1.5 rounded-xl border border-emerald-200 hover:bg-emerald-50 transition flex items-center gap-1 shadow-sm"
+                        onClick={handleDownloadQRIS}
+                        className="text-xs text-emerald-800 font-bold bg-emerald-100/80 hover:bg-emerald-200 px-4 py-2 rounded-xl transition flex items-center gap-1.5 shadow-sm"
                       >
-                        <span className="material-icons text-xs">content_copy</span>
-                        Salin Text Kode QRIS
+                        <span className="material-icons text-sm">file_download</span>
+                        <span>Unduh Gambar QRIS</span>
                       </button>
-                    )}
+                      {qrisData?.qrisCode && (
+                        <button
+                          type="button"
+                          onClick={() => copyToClipboard(qrisData.qrisCode, 'Text Kode QRIS')}
+                          className="text-xs text-gray-700 font-bold bg-white px-3.5 py-2 rounded-xl border border-gray-200 hover:bg-gray-50 transition flex items-center gap-1 shadow-sm"
+                        >
+                          <span className="material-icons text-sm">content_copy</span>
+                          <span>Salin Text QR</span>
+                        </button>
+                      )}
+                    </div>
                   </div>
                 ) : (
                   <div className="space-y-3 text-center py-6">
@@ -504,14 +595,24 @@ const EcommercePaymentConfirmation = () => {
                 )}
               </div>
 
-              {/* Countdown Timer */}
+              {/* Countdown Timer & Real-time Auto-Detection status */}
               {qrisData && (
-                <div className="flex items-center justify-between p-3.5 bg-amber-50 rounded-2xl border border-amber-100 text-amber-900 text-xs font-bold">
-                  <div className="flex items-center gap-2">
-                    <span className="material-icons text-amber-600 text-base animate-pulse">timer</span>
-                    <span>Sisa Waktu Pembayaran:</span>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between p-3.5 bg-amber-50 rounded-2xl border border-amber-100 text-amber-900 text-xs font-bold">
+                    <div className="flex items-center gap-2">
+                      <span className="material-icons text-amber-600 text-base animate-pulse">timer</span>
+                      <span>Sisa Waktu Pembayaran:</span>
+                    </div>
+                    <span className="font-mono text-base font-black text-amber-700 tracking-wider">{formatCountdown(timeLeft)}</span>
                   </div>
-                  <span className="font-mono text-sm font-black text-amber-700">05:00</span>
+
+                  <div className="flex items-center justify-center gap-2 py-1.5 px-3 bg-emerald-50/70 border border-emerald-100/80 rounded-xl text-[11px] text-emerald-800 font-bold">
+                    <span className="relative flex h-2 w-2">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-600"></span>
+                    </span>
+                    <span>Sistem mengecek status pembayaran otomatis setiap 3 detik...</span>
+                  </div>
                 </div>
               )}
 

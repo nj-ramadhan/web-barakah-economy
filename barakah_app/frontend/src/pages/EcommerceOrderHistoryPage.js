@@ -515,7 +515,21 @@ const EcommerceOrderHistoryPage = () => {
                         <div className="p-4 bg-emerald-50/50 rounded-2xl border border-emerald-100/60 space-y-2">
                             <h4 className="text-xs font-black text-emerald-900 flex items-center gap-1.5 pb-1 border-b border-emerald-100"><span className="material-icons text-emerald-600 text-sm">receipt_long</span> Rincian Pembayaran</h4>
                             <div className="flex justify-between text-xs text-gray-600"><span>Total Harga Barang:</span><span className="font-semibold text-gray-800">Rp {formatIDR(selectedDetailOrder.total_price)}</span></div>
-                            <div className="flex justify-between text-xs text-gray-600"><span>Ongkos Kirim:</span><span className="font-semibold text-gray-800">+ Rp {formatIDR(selectedDetailOrder.shipping_cost)}</span></div>
+                            {Number(selectedDetailOrder.shipping_cost) > 0 && (
+                                <div className="flex justify-between text-xs text-gray-600"><span>Ongkos Kirim:</span><span className="font-semibold text-gray-800">+ Rp {formatIDR(selectedDetailOrder.shipping_cost)}</span></div>
+                            )}
+                            {Number(selectedDetailOrder.voucher_nominal) > 0 && (
+                                <div className="flex justify-between text-xs text-emerald-700 font-bold"><span>Diskon Voucher ({selectedDetailOrder.voucher_code || ''}):</span><span>- Rp {formatIDR(selectedDetailOrder.voucher_nominal)}</span></div>
+                            )}
+                            {(Number(selectedDetailOrder.admin_fee) > 0 || (Number(selectedDetailOrder.grand_total) > (Number(selectedDetailOrder.total_price || 0) + Number(selectedDetailOrder.shipping_cost || 0) - Number(selectedDetailOrder.voucher_nominal || 0)))) && (
+                                <div className="flex justify-between text-xs text-amber-700 font-bold">
+                                    <span>Biaya Layanan &amp; Admin (Akad Ijarah):</span>
+                                    <span>+ Rp {formatIDR(selectedDetailOrder.admin_fee || (Number(selectedDetailOrder.grand_total) - (Number(selectedDetailOrder.total_price || 0) + Number(selectedDetailOrder.shipping_cost || 0) - Number(selectedDetailOrder.voucher_nominal || 0))))}</span>
+                                </div>
+                            )}
+                            {Number(selectedDetailOrder.used_balance) > 0 && (
+                                <div className="flex justify-between text-xs text-emerald-700 font-bold"><span>Potongan Saldo BAE:</span><span>- Rp {formatIDR(selectedDetailOrder.used_balance)}</span></div>
+                            )}
                             <div className="flex justify-between items-center pt-2 border-t border-emerald-200">
                                 <span className="text-xs font-black text-emerald-950 uppercase">Grand Total</span>
                                 <span className="text-lg font-black text-emerald-600">Rp {formatIDR(Number(selectedDetailOrder.grand_total) > 0 ? selectedDetailOrder.grand_total : selectedDetailOrder.total_price)}</span>
