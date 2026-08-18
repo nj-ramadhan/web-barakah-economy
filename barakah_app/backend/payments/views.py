@@ -929,7 +929,7 @@ class AndroidNotificationWebhookView(APIView):
 
             # 3. Search recent active Course Enrollment with matching amount
             c_enrollment = CourseEnrollment.objects.filter(
-                created_at__gte=recent_cutoff,
+                enrolled_at__gte=recent_cutoff,
                 amount=amt,
                 payment_status='pending'
             ).order_by('-id').first()
