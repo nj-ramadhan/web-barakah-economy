@@ -17,6 +17,7 @@ const MENU_OPTIONS = [
     { key: 'sinergy_products', label: 'E-commerce: Tambah/Kelola Produk Fisik' },
     { key: 'admin_sinergy', label: 'E-commerce: Manajemen Produk (Admin)' },
     { key: 'withdrawals', label: 'Keuangan: Manajemen Penarikan' },
+    { key: 'incoming_funds', label: 'Keuangan: Manajemen Uang Masuk' },
     { key: 'transactions', label: 'Keuangan: Riwayat Transaksi' },
     { key: 'charity', label: 'Charity: Manajemen Charity & Donasi' },
     { key: 'campaign_approval', label: 'Charity: Persetujuan Charity' },

@@ -691,6 +691,15 @@ const DashboardPage = () => {
                                     badge: managementStats.withdrawals
                                 },
                                 {
+                                    id: 'incoming_funds',
+                                    access: isAdmin || hasAccess('transactions') || hasAccess('incoming_funds'),
+                                    to: '/dashboard/admin/incoming-funds',
+                                    icon: 'account_balance',
+                                    color: 'emerald',
+                                    title: 'Manajemen Uang Masuk',
+                                    desc: 'Tracking & Rekapitulasi seluruh uang masuk (Event, Charity, Kelas, Digital, Toko)'
+                                },
+                                {
                                     id: 'transactions',
                                     access: hasAccess('transactions'),
                                     to: '/dashboard/admin/transactions',

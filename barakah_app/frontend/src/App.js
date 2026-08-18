@@ -4,6 +4,7 @@ import { BrowserRouter as Router, Routes, Route, useLocation, useNavigate } from
 import GlobalPopupManager from './components/common/GlobalPopupManager';
 import GlobalStreamingPopup from './components/common/GlobalStreamingPopup';
 import GlobalBlastQueueWidget from './components/common/GlobalBlastQueueWidget';
+import GlobalActiveShippingWidget from './components/common/GlobalActiveShippingWidget';
 import PrivateRoute from './utils/PrivateRoute';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
@@ -85,6 +86,7 @@ import AdminAllProductsPage from './pages/admin/AdminAllProductsPage';
 import AdminAllCoursesPage from './pages/admin/AdminAllCoursesPage';
 import AdminConsultantSettingsPage from './pages/admin/AdminConsultantSettingsPage';
 import AdminTransactionHistoryPage from './pages/admin/AdminTransactionHistoryPage';
+import DashboardAdminIncomingFundsPage from './pages/admin/DashboardAdminIncomingFundsPage';
 import DashboardAdminForumPage from './pages/admin/DashboardAdminForumPage';
 import DashboardRoleManagementPage from './pages/admin/DashboardRoleManagementPage';
 import DashboardKaderisasiPage from './pages/admin/DashboardKaderisasiPage';
@@ -255,6 +257,7 @@ const App = () => {
       <GlobalPopupManager />
       <GlobalStreamingPopup />
       <GlobalBlastQueueWidget />
+      <GlobalActiveShippingWidget />
       <UnreviewedOrdersModal />
       <div className="min-h-screen bg-gray-100 dark:bg-gray-950 flex justify-center transition-colors duration-300">
         <Routes>
@@ -435,6 +438,7 @@ const LayoutWrapper = ({ isDesktop }) => {
         <Route path="/dashboard/admin/all-courses" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><AdminAllCoursesPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/admin/consultants" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><AdminConsultantSettingsPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/admin/transactions" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><AdminTransactionHistoryPage /></ResponsiveLayout></PrivateRoute>} />
+        <Route path="/dashboard/admin/incoming-funds" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardAdminIncomingFundsPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/admin/forum" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardAdminForumPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/admin/roles" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardRoleManagementPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/admin/live-streaming" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardLiveStreamingPage /></ResponsiveLayout></PrivateRoute>} />
