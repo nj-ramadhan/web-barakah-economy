@@ -67,6 +67,11 @@ const EcommercePaymentConfirmation = () => {
   const currentOrderNumber = orderNumberParam || orderId || '';
 
   const handleGenerateDynaQRIS = async () => {
+    // If QRIS data is already generated and active, just open the modal without re-generating
+    if (qrisData) {
+      setShowDynaModal(true);
+      return;
+    }
     setGeneratingQris(true);
     try {
       const res = await generateDynaQRIS({ 
@@ -86,6 +91,13 @@ const EcommercePaymentConfirmation = () => {
     } finally {
       setGeneratingQris(false);
     }
+  };
+
+  const handleDynaCancel = () => {
+    setShowDynaModal(false);
+    setQrisData(null);
+    alert('Waktu pembayaran QRIS telah habis. Anda dialihkan kembali.');
+    navigate(-1);
   };
 
   const handleDynaSuccess = async (res) => {
@@ -108,7 +120,12 @@ const EcommercePaymentConfirmation = () => {
     }
   };
 
-  const formattedAmount = new Intl.NumberFormat('id-ID', { maximumFractionDigits: 0 }).format(amount || 0);
+  // Final amount syncs with DynaQRIS total (including unique fee / admin fee)
+  const isDynaActive = paymentConfig?.active_mode === 'dynaqris' && qrisData?.amount;
+  const finalDisplayAmount = isDynaActive ? qrisData.amount : amount;
+  const dynaAdminFee = isDynaActive ? (qrisData.amount - (amount || 0)) : 0;
+  const formattedAmount = new Intl.NumberFormat('id-ID', { maximumFractionDigits: 0 }).format(finalDisplayAmount || 0);
+  const formattedBaseAmount = new Intl.NumberFormat('id-ID', { maximumFractionDigits: 0 }).format(amount || 0);
 
 
   const getMediaUrl = (url) => {
@@ -422,6 +439,7 @@ const EcommercePaymentConfirmation = () => {
           referenceId={currentOrderNumber}
           amount={amount}
           onPaymentSuccess={handleDynaSuccess}
+          onCancel={handleDynaCancel}
         />
 
         {/* Bank Card */}
@@ -458,12 +476,28 @@ const EcommercePaymentConfirmation = () => {
           <div className="flex justify-between items-end">
             <h2 className="text-3xl font-black text-white tracking-tight">Rp {formattedAmount}</h2>
             <button
-              onClick={() => copyToClipboard(amount, 'Nominal')}
+              onClick={() => copyToClipboard(finalDisplayAmount, 'Nominal Total Tagihan')}
               className="p-2 bg-white/20 backdrop-blur-sm rounded-lg text-white hover:bg-white/30 transition-colors"
+              title="Salin Nominal Pembayaran"
             >
               <span className="material-icons text-sm">content_copy</span>
             </button>
           </div>
+
+          {/* Breakdown for DynaQRIS unique fee */}
+          {isDynaActive && dynaAdminFee > 0 && (
+            <div className="mt-3 pt-3 border-t border-white/20 space-y-1.5 text-xs text-emerald-100">
+              <div className="flex justify-between items-center">
+                <span>Tagihan Pokok</span>
+                <span>Rp {formattedBaseAmount}</span>
+              </div>
+              <div className="flex justify-between items-center text-amber-200 font-semibold">
+                <span>Biaya Layanan &amp; Admin (Akad Ijarah)</span>
+                <span>+ Rp {new Intl.NumberFormat('id-ID').format(dynaAdminFee)}</span>
+              </div>
+            </div>
+          )}
+
           {Number(voucherDiscount) > 0 && (
             <div className="mt-3 pt-3 border-t border-white/20 flex items-center justify-between text-xs text-emerald-100 font-bold">
               <span>Potongan Voucher {voucherCode ? `(${voucherCode})` : ''}</span>
@@ -471,6 +505,28 @@ const EcommercePaymentConfirmation = () => {
             </div>
           )}
         </div>
+
+        {/* Flying Notification Bar for Active QRIS */}
+        {paymentConfig?.active_mode === 'dynaqris' && qrisData && !showDynaModal && (
+          <div className="fixed bottom-6 left-4 right-4 max-w-lg mx-auto z-40 bg-gray-900/95 backdrop-blur-md text-white p-4 rounded-2xl shadow-2xl border border-emerald-500/30 flex items-center justify-between gap-3 animate-bounce-short">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center flex-shrink-0">
+                <span className="material-icons text-lg animate-pulse">timer</span>
+              </div>
+              <div>
+                <p className="text-xs font-bold text-gray-100">Menunggu Pembayaran QRIS</p>
+                <p className="text-[11px] text-emerald-400 font-medium">Rp {formattedAmount} (Scan sebelum 5 menit)</p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowDynaModal(true)}
+              className="bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold px-3.5 py-2 rounded-xl transition-all shadow"
+            >
+              Buka QRIS
+            </button>
+          </div>
+        )}
 
         {/* QRIS if selected */}
         {selectedBankInfo.isQRIS && (

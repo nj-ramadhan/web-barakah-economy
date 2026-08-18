@@ -56,8 +56,13 @@ const DynaQRISModal = ({
                 if (prev <= 1) {
                     clearInterval(timerRef.current);
                     setIsExpired(true);
-                    setStatusText('Waktu Pembayaran Telah Habis. Pendaftaran otomatis dibatalkan.');
+                    setStatusText('Waktu Pembayaran Telah Habis (5 Menit). Mengembalikan ke halaman pemesanan...');
                     handleCancelPending();
+                    if (onCancel) {
+                        setTimeout(() => {
+                            onCancel(referenceId, transactionType);
+                        }, 2000);
+                    }
                     return 0;
                 }
                 return prev - 1;
