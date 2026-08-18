@@ -14,6 +14,9 @@ import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import android.service.notification.NotificationListenerService
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
 import android.widget.*
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -70,6 +73,7 @@ class MainActivity : AppCompatActivity() {
         val btnOpenAppInfo: Button = findViewById(R.id.btnOpenAppInfo)
         val btnDisableBatteryOpt: Button = findViewById(R.id.btnDisableBatteryOpt)
         val btnPickInstalledApps: Button = findViewById(R.id.btnPickInstalledApps)
+        val btnInspectActiveNotifs: Button = findViewById(R.id.btnInspectActiveNotifs)
         val btnSimulateNotif: Button = findViewById(R.id.btnSimulateNotif)
         val btnSaveSettings: Button = findViewById(R.id.btnSaveSettings)
         val btnTestWebhook: Button = findViewById(R.id.btnTestWebhook)
@@ -120,6 +124,10 @@ class MainActivity : AppCompatActivity() {
 
         btnPickInstalledApps.setOnClickListener {
             showInstalledAppPickerDialog()
+        }
+
+        btnInspectActiveNotifs.setOnClickListener {
+            showActiveNotificationsDialog()
         }
 
         btnSimulateNotif.setOnClickListener {
@@ -400,70 +408,266 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private data class InstalledAppItem(
+        val label: String,
+        val packageName: String,
+        val isUserApp: Boolean,
+        val appInfo: ApplicationInfo
+    ) {
+        fun isBankOrWallet(): Boolean {
+            val lower = "$label $packageName".lowercase()
+            return listOf("bsi", "bca", "mandiri", "bri", "bni", "dana", "gopay", "ovo", "shopee", "seabank", "blu", "jenius", "permata", "danamon", "cimb", "neo").any { lower.contains(it) }
+        }
+    }
+
+    private class AppListAdapter(
+        private val context: Context,
+        private var items: List<InstalledAppItem>,
+        private val selectedPackages: MutableSet<String>,
+        private val onSelectionChanged: () -> Unit
+    ) : BaseAdapter() {
+
+        fun updateData(newItems: List<InstalledAppItem>) {
+            items = newItems
+            notifyDataSetChanged()
+        }
+
+        override fun getCount(): Int = items.size
+        override fun getItem(position: Int): InstalledAppItem = items[position]
+        override fun getItemId(position: Int): Long = position.toLong()
+
+        override fun getView(position: Int, convertView: View?, parent: ViewGroup?): View {
+            val view = convertView ?: LayoutInflater.from(context).inflate(R.layout.item_app_picker, parent, false)
+            val item = items[position]
+
+            val ivIcon = view.findViewById<ImageView>(R.id.ivAppIcon)
+            val tvLabel = view.findViewById<TextView>(R.id.tvAppLabel)
+            val tvPackage = view.findViewById<TextView>(R.id.tvAppPackage)
+            val cbSelected = view.findViewById<CheckBox>(R.id.cbAppSelected)
+
+            tvLabel.text = item.label
+            tvPackage.text = item.packageName
+
+            try {
+                ivIcon.setImageDrawable(context.packageManager.getApplicationIcon(item.appInfo))
+            } catch (e: Exception) {
+                ivIcon.setImageResource(android.R.drawable.sym_def_app_icon)
+            }
+
+            val isChecked = selectedPackages.contains(item.packageName)
+            cbSelected.isChecked = isChecked
+
+            view.setOnClickListener {
+                if (selectedPackages.contains(item.packageName)) {
+                    selectedPackages.remove(item.packageName)
+                } else {
+                    selectedPackages.add(item.packageName)
+                }
+                cbSelected.isChecked = selectedPackages.contains(item.packageName)
+                onSelectionChanged()
+            }
+
+            return view
+        }
+    }
+
     private fun showInstalledAppPickerDialog() {
         val pm = packageManager
         val installedApps = pm.getInstalledApplications(PackageManager.GET_META_DATA)
         val currentSelected = prefs.selectedPackages.toMutableSet()
 
-        val appList = installedApps.map { appInfo ->
+        val allAppsList = installedApps.map { appInfo ->
             val label = pm.getApplicationLabel(appInfo).toString()
             val pkg = appInfo.packageName
-            val isUserApp = (appInfo.flags and ApplicationInfo.FLAG_SYSTEM) == 0
-            AppItem(label, pkg, isUserApp)
-        }.sortedWith(
-            compareByDescending<AppItem> { currentSelected.contains(it.packageName) }
-                .thenByDescending { it.isBankOrWallet() }
-                .thenByDescending { it.isUserApp }
-                .thenBy { it.label.lowercase() }
-        )
+            val isUserApp = (appInfo.flags and ApplicationInfo.FLAG_SYSTEM) == 0 || pm.getLaunchIntentForPackage(pkg) != null
+            InstalledAppItem(label, pkg, isUserApp, appInfo)
+        }
 
-        val appLabels = appList.map { item ->
-            val statusTag = if (currentSelected.contains(item.packageName)) "✓ " else ""
-            "$statusTag${item.label} (${item.packageName})"
-        }.toTypedArray()
+        val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_app_picker, null)
+        val etSearch = dialogView.findViewById<EditText>(R.id.etSearchApp)
+        val cbIncludeSystem = dialogView.findViewById<CheckBox>(R.id.cbIncludeSystemApps)
+        val tvCount = dialogView.findViewById<TextView>(R.id.tvAppFilterCount)
+        val lvApps = dialogView.findViewById<ListView>(R.id.lvApps)
 
-        val checkedItems = BooleanArray(appList.size) { i -> currentSelected.contains(appList[i].packageName) }
+        fun filterApps(): List<InstalledAppItem> {
+            val query = etSearch.text.toString().trim().lowercase()
+            val includeSystem = cbIncludeSystem.isChecked
 
-        val builder = AlertDialog.Builder(this)
-        builder.setTitle("Pilih Aplikasi Terinstall di HP")
-        builder.setMultiChoiceItems(appLabels, checkedItems) { _, which, isChecked ->
-            val pkg = appList[which].packageName
-            if (isChecked) {
-                currentSelected.add(pkg)
+            return allAppsList.filter { item ->
+                (includeSystem || item.isUserApp || currentSelected.contains(item.packageName) || item.isBankOrWallet()) &&
+                (query.isEmpty() || item.label.lowercase().contains(query) || item.packageName.lowercase().contains(query))
+            }.sortedWith(
+                compareByDescending<InstalledAppItem> { currentSelected.contains(it.packageName) }
+                    .thenByDescending { it.isBankOrWallet() }
+                    .thenByDescending { it.isUserApp }
+                    .thenBy { it.label.lowercase() }
+            )
+        }
+
+        var filteredList = filterApps()
+        var adapter: AppListAdapter? = null
+        var alertDialog: AlertDialog? = null
+
+        fun updatePositiveButtonText() {
+            alertDialog?.getButton(AlertDialog.BUTTON_POSITIVE)?.text = "Simpan (${currentSelected.size})"
+        }
+
+        adapter = AppListAdapter(this, filteredList, currentSelected) {
+            tvCount.text = "${filteredList.size} app (${currentSelected.size} dipilih)"
+            updatePositiveButtonText()
+        }
+        lvApps.adapter = adapter
+
+        fun refreshList() {
+            filteredList = filterApps()
+            adapter.updateData(filteredList)
+            tvCount.text = "${filteredList.size} app (${currentSelected.size} dipilih)"
+            updatePositiveButtonText()
+        }
+
+        tvCount.text = "${filteredList.size} app (${currentSelected.size} dipilih)"
+
+        etSearch.addTextChangedListener(object : android.text.TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                refreshList()
+            }
+            override fun afterTextChanged(s: android.text.Editable?) {}
+        })
+
+        cbIncludeSystem.setOnCheckedChangeListener { _, _ ->
+            refreshList()
+        }
+
+        alertDialog = AlertDialog.Builder(this)
+            .setView(dialogView)
+            .setPositiveButton("Simpan (${currentSelected.size})") { _, _ ->
+                prefs.selectedPackages = currentSelected
+                updateSelectedAppsSummary()
+                Toast.makeText(this, "Target aplikasi diperbarui (${currentSelected.size} aplikasi aktif)", Toast.LENGTH_SHORT).show()
+                appendLog("✓ Pilihan aplikasi target diperbarui (${currentSelected.size} app aktif).")
+            }
+            .setNeutralButton("Kosongkan") { _, _ ->
+                currentSelected.clear()
+                prefs.selectedPackages = currentSelected
+                updateSelectedAppsSummary()
+                Toast.makeText(this, "Semua pilihan aplikasi dibersihkan", Toast.LENGTH_SHORT).show()
+                appendLog("✓ Pilihan aplikasi target dibersihkan (membaca semua).")
+            }
+            .setNegativeButton("Batal", null)
+            .create()
+
+        alertDialog.show()
+    }
+
+    private fun showActiveNotificationsDialog() {
+        val service = NotificationService.instance
+        if (service == null) {
+            AlertDialog.Builder(this)
+                .setTitle("⚠️ Izin Akses Belum Aktif")
+                .setMessage("Layanan Barakah Notification Listener belum terhubung atau izin akses notifikasi belum diberikan di pengaturan HP.\n\nHarap klik tombol '1. Buka Izin Notifikasi Akses' terlebih dahulu.")
+                .setPositiveButton("Buka Izin Sekarang") { _, _ ->
+                    startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
+                }
+                .setNegativeButton("Tutup", null)
+                .show()
+            return
+        }
+
+        val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_active_notifications, null)
+        val tvSubtitle = dialogView.findViewById<TextView>(R.id.tvActiveNotifsSubtitle)
+        val cbFilterSelected = dialogView.findViewById<CheckBox>(R.id.cbFilterSelectedAppsOnly)
+        val btnRefresh = dialogView.findViewById<Button>(R.id.btnRefreshActiveNotifs)
+        val tvNoNotifs = dialogView.findViewById<TextView>(R.id.tvNoActiveNotifs)
+        val lvActiveNotifs = dialogView.findViewById<ListView>(R.id.lvActiveNotifs)
+        val btnClose = dialogView.findViewById<Button>(R.id.btnCloseActiveNotifs)
+
+        val pm = packageManager
+        val timeFormat = SimpleDateFormat("HH:mm:ss", Locale.getDefault())
+
+        fun loadActiveNotifs() {
+            val onlySelected = cbFilterSelected?.isChecked ?: true
+            val notifs = service.getActiveNotificationsList(onlySelectedApps = onlySelected)
+            if (notifs.isEmpty()) {
+                tvNoNotifs.visibility = View.VISIBLE
+                lvActiveNotifs.visibility = View.GONE
+                if (onlySelected && prefs.selectedPackages.isNotEmpty()) {
+                    tvSubtitle.text = "Tidak ada notifikasi dari aplikasi target yang aktif"
+                    tvNoNotifs.text = "Tidak ada notifikasi aktif dari aplikasi target yang dipilih.\n\nTips: Hapus centang 'Hanya Tampilkan Notifikasi Aplikasi Terpilih' di atas untuk melihat notifikasi semua aplikasi."
+                } else {
+                    tvSubtitle.text = "Tidak ada notifikasi aktif di status bar"
+                    tvNoNotifs.text = "Tidak ada notifikasi aktif di status bar saat ini."
+                }
             } else {
-                currentSelected.remove(pkg)
+                tvNoNotifs.visibility = View.GONE
+                lvActiveNotifs.visibility = View.VISIBLE
+                val appLabelScope = if (onlySelected) "aplikasi target" else "semua aplikasi"
+                tvSubtitle.text = "Ditemukan ${notifs.size} notifikasi aktif ($appLabelScope)"
+
+                val notifAdapter = object : BaseAdapter() {
+                    override fun getCount(): Int = notifs.size
+                    override fun getItem(position: Int): ActiveNotifData = notifs[position]
+                    override fun getItemId(position: Int): Long = position.toLong()
+
+                    override fun getView(position: Int, convertView: View?, parent: ViewGroup?): View {
+                        val view = convertView ?: LayoutInflater.from(this@MainActivity)
+                            .inflate(R.layout.item_active_notification, parent, false)
+                        val item = notifs[position]
+
+                        val ivIcon = view.findViewById<ImageView>(R.id.ivNotifAppIcon)
+                        val tvAppName = view.findViewById<TextView>(R.id.tvNotifAppName)
+                        val tvPackage = view.findViewById<TextView>(R.id.tvNotifPackage)
+                        val tvTime = view.findViewById<TextView>(R.id.tvNotifTime)
+                        val tvTitle = view.findViewById<TextView>(R.id.tvNotifTitle)
+                        val tvText = view.findViewById<TextView>(R.id.tvNotifText)
+                        val btnSend = view.findViewById<Button>(R.id.btnSendNotifToWebhook)
+
+                        var appLabel = item.packageName
+                        try {
+                            val appInfo = pm.getApplicationInfo(item.packageName, 0)
+                            appLabel = pm.getApplicationLabel(appInfo).toString()
+                            ivIcon.setImageDrawable(pm.getApplicationIcon(appInfo))
+                        } catch (e: Exception) {
+                            ivIcon.setImageResource(android.R.drawable.sym_def_app_icon)
+                        }
+
+                        tvAppName.text = appLabel
+                        tvPackage.text = item.packageName
+                        tvTime.text = timeFormat.format(Date(item.postTime))
+                        tvTitle.text = item.title
+                        tvText.text = item.fullContent
+
+                        btnSend.setOnClickListener {
+                            sendCustomPayload(item.packageName, item.title, item.fullContent)
+                        }
+
+                        return view
+                    }
+                }
+                lvActiveNotifs.adapter = notifAdapter
             }
         }
 
-        builder.setPositiveButton("Simpan Pilihan") { dialog, _ ->
-            prefs.selectedPackages = currentSelected
-            updateSelectedAppsSummary()
-            Toast.makeText(this, "Target aplikasi diperbarui (${currentSelected.size} aplikasi aktif)", Toast.LENGTH_SHORT).show()
-            appendLog("✓ Pilihan aplikasi target diperbarui (${currentSelected.size} app aktif).")
+        cbFilterSelected?.setOnCheckedChangeListener { _, _ ->
+            loadActiveNotifs()
+        }
+
+        loadActiveNotifs()
+
+        btnRefresh.setOnClickListener {
+            loadActiveNotifs()
+            Toast.makeText(this, "Status bar di-refresh", Toast.LENGTH_SHORT).show()
+        }
+
+        val dialog = AlertDialog.Builder(this)
+            .setView(dialogView)
+            .create()
+
+        btnClose.setOnClickListener {
             dialog.dismiss()
         }
 
-        builder.setNeutralButton("Kosongkan Semua") { dialog, _ ->
-            currentSelected.clear()
-            prefs.selectedPackages = currentSelected
-            updateSelectedAppsSummary()
-            Toast.makeText(this, "Semua pilihan aplikasi dibersihkan", Toast.LENGTH_SHORT).show()
-            appendLog("✓ Pilihan aplikasi target dibersihkan (membaca semua).")
-            dialog.dismiss()
-        }
-
-        builder.setNegativeButton("Batal") { dialog, _ ->
-            dialog.dismiss()
-        }
-
-        builder.show()
-    }
-
-    private data class AppItem(val label: String, val packageName: String, val isUserApp: Boolean) {
-        fun isBankOrWallet(): Boolean {
-            val lower = "$label $packageName".lowercase()
-            return listOf("bsi", "bca", "mandiri", "bri", "bni", "dana", "gopay", "ovo", "shopee", "seabank", "blu", "jenius", "permata", "danamon", "cimb", "neo").any { lower.contains(it) }
-        }
+        dialog.show()
     }
 
     override fun onResume() {

@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="🔍 Pilih Aplikasi Target Notifikasi"
+        android:textColor="@color/gray_800"
+        android:textSize="17sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Pilih m-Banking / E-Wallet yang terinstall di HP ini"
+        android:textColor="@color/gray_500"
+        android:textSize="11sp"
+        android:layout_marginTop="2dp"
+        android:layout_marginBottom="10dp" />
+
+    <!-- Search Box -->
+    <EditText
+        android:id="@+id/etSearchApp"
+        android:layout_width="match_parent"
+        android:layout_height="44dp"
+        android:hint="Cari nama aplikasi atau package..."
+        android:textSize="13sp"
+        android:paddingStart="12dp"
+        android:paddingEnd="12dp"
+        android:background="@android:drawable/editbox_background_normal"
+        android:inputType="text"
+        android:maxLines="1"
+        android:drawableStart="@android:drawable/ic_menu_search"
+        android:drawablePadding="8dp" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginTop="6dp"
+        android:layout_marginBottom="4dp">
+
+        <CheckBox
+            android:id="@+id/cbIncludeSystemApps"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Sertakan Aplikasi Sistem"
+            android:textSize="11sp"
+            android:textColor="@color/gray_700" />
+
+        <TextView
+            android:id="@+id/tvAppFilterCount"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="end"
+            android:text="0 aplikasi"
+            android:textSize="11sp"
+            android:textColor="@color/emerald_700"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/gray_200"
+        android:layout_marginBottom="6dp" />
+
+    <!-- List of Apps -->
+    <ListView
+        android:id="@+id/lvApps"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:divider="@color/gray_100"
+        android:dividerHeight="1dp" />
+
+</LinearLayout>

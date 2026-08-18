@@ -576,13 +576,6 @@ const EcommerceProductDetail = () => {
                       <span className="material-icons text-xl">{isLiked ? 'favorite' : 'favorite_border'}</span>
                       <span className="text-xs font-bold">{likesCount}</span>
                     </button>
-                    <button 
-                      className="px-6 py-3 border-2 border-green-600 text-green-700 font-bold rounded-xl flex items-center justify-center gap-2 hover:bg-green-50 transition-all whitespace-nowrap"
-                      onClick={() => addToWishlist(product.id)}
-                      title="Simpan ke Incaran"
-                    >
-                      <span className="material-icons text-xl">bookmark_border</span>
-                    </button>
 
                     <button 
                       className={`flex-[2] py-3 px-6 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg transition-all transform mt-4 md:mt-0 ${isOutOfStock || isBuyingNow ? 'bg-gray-200 text-gray-500 cursor-not-allowed shadow-none' : 'bg-emerald-500 hover:bg-emerald-600 text-white shadow-emerald-200 hover:-translate-y-1'}`}

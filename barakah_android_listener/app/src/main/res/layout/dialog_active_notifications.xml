@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="📥 Notifikasi Aktif di HP (Saat Ini)"
+                android:textColor="@color/gray_800"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvActiveNotifsSubtitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Membaca notifikasi yang ada di status bar"
+                android:textColor="@color/gray_500"
+                android:textSize="11sp"
+                android:layout_marginTop="2dp" />
+        </LinearLayout>
+
+        <Button
+            android:id="@+id/btnRefreshActiveNotifs"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:text="🔄 Refresh"
+            android:textSize="10sp"
+            android:backgroundTint="@color/emerald_600"
+            android:textColor="@color/white" />
+    </LinearLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/gray_200"
+        android:layout_marginTop="10dp"
+        android:layout_marginBottom="8dp" />
+
+    <CheckBox
+        android:id="@+id/cbFilterSelectedAppsOnly"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Hanya Tampilkan Notifikasi Aplikasi Terpilih"
+        android:checked="true"
+        android:textSize="12sp"
+        android:textColor="@color/emerald_800"
+        android:textStyle="bold"
+        android:layout_marginBottom="6dp" />
+
+    <TextView
+        android:id="@+id/tvNoActiveNotifs"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Tidak ada notifikasi aktif di status bar saat ini.\nCoba kirimkan transfer ke m-Banking Anda, atau gunakan fitur 'Simulasi Notifikasi' di menu utama."
+        android:textColor="@color/gray_500"
+        android:textSize="12sp"
+        android:gravity="center"
+        android:padding="24dp"
+        android:visibility="gone" />
+
+    <ListView
+        android:id="@+id/lvActiveNotifs"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:divider="@android:color/transparent"
+        android:dividerHeight="6dp" />
+
+    <Button
+        android:id="@+id/btnCloseActiveNotifs"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Tutup"
+        android:backgroundTint="@color/gray_700"
+        android:textColor="@color/white"
+        android:layout_marginTop="10dp" />
+
+</LinearLayout>

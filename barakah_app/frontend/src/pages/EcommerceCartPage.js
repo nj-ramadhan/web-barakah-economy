@@ -150,13 +150,6 @@ const EcommerceCartPage = () => {
                         <h1 className="text-2xl font-black text-gray-900 tracking-tight">Keranjang Belanja</h1>
                         <p className="text-xs text-gray-500 font-medium">Kelola produk impian Anda sebelum checkout</p>
                     </div>
-                    <Link
-                        to="/incaran"
-                        className="px-4 py-2 bg-emerald-50 text-emerald-700 rounded-2xl text-xs font-bold hover:bg-emerald-100 transition flex items-center gap-2 border border-emerald-100"
-                    >
-                        <span className="material-icons text-sm">favorite</span>
-                        Incaran Saya
-                    </Link>
                 </div>
 
                 {loading ? (

@@ -466,11 +466,16 @@ class ProductViewSet(viewsets.ModelViewSet):
         product.seller = target_user
         product.save(update_fields=['seller'])
 
+        # Transfer all related sales orders so order history, notifications, and pending balance move to the new owner
+        from orders.models import Order
+        transferred_orders_count = Order.objects.filter(items__product=product).update(seller=target_user)
+
         target_name = getattr(target_user.profile, 'name_full', None) or target_user.username
 
         return Response({
             'success': True,
-            'message': f'Kepemilikan produk "{product.title}" berhasil dialihkan kepada {target_name} (@{target_user.username}).',
+            'message': f'Kepemilikan produk "{product.title}" beserta {transferred_orders_count} data riwayat pesanan & saldo pending berhasil dialihkan kepada {target_name} (@{target_user.username}).',
+            'transferred_orders_count': transferred_orders_count,
             'new_owner': {
                 'id': target_user.id,
                 'username': target_user.username,

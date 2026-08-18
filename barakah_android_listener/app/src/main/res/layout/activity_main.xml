@@ -244,9 +244,18 @@
                     android:id="@+id/btnPickInstalledApps"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="🔍 Pilih Aplikasi Terinstall di HP Ini"
+                    android:text="🔍 Pilih Target Aplikasi (Search &amp; Logo)"
                     android:backgroundTint="@color/emerald_600"
                     android:textColor="@color/white" />
+
+                <Button
+                    android:id="@+id/btnInspectActiveNotifs"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="📥 Baca Notifikasi Saat Ini (Live Inspector)"
+                    android:backgroundTint="@color/emerald_800"
+                    android:textColor="@color/white"
+                    android:layout_marginTop="6dp" />
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 

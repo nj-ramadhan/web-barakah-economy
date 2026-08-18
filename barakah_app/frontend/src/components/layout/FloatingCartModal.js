@@ -368,23 +368,9 @@ const FloatingCartModal = () => {
                         {/* Header & Tabs */}
                         <div className="p-4 border-b border-gray-100 flex flex-col gap-3">
                             <div className="flex justify-between items-center">
-                                <h3 className="font-bold text-gray-800 text-lg">Sinergy Cart</h3>
+                                <h3 className="font-bold text-gray-800 text-lg">Keranjang Belanja ({cartItems.length})</h3>
                                 <button onClick={toggleCart} className="w-8 h-8 flex items-center justify-center bg-gray-50 rounded-full hover:bg-gray-100">
                                     <span className="material-icons text-gray-500">close</span>
-                                </button>
-                            </div>
-                            <div className="flex bg-gray-100 p-1 rounded-xl">
-                                <button
-                                    onClick={() => setActiveTab('keranjang')}
-                                    className={`flex-1 py-2 text-sm font-bold rounded-lg transition-colors ${activeTab === 'keranjang' ? 'bg-white text-green-700 shadow-sm' : 'text-gray-500'}`}
-                                >
-                                    Keranjang ({cartItems.length})
-                                </button>
-                                <button
-                                    onClick={() => setActiveTab('incaran')}
-                                    className={`flex-1 py-2 text-sm font-bold rounded-lg transition-colors ${activeTab === 'incaran' ? 'bg-white text-green-700 shadow-sm' : 'text-gray-500'}`}
-                                >
-                                    Incaran ({wishlistItems.length})
                                 </button>
                             </div>
                         </div>

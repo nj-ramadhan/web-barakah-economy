@@ -55,6 +55,7 @@ class NotificationService : NotificationListenerService() {
 
     override fun onListenerConnected() {
         super.onListenerConnected()
+        instance = this
         Log.d(TAG, "NotificationListenerConnected: Service active and listening 24/7")
         broadcastLog("🟢 Listener Aktif 24/7 & Terhubung ke Sistem Android")
         startForegroundServiceNotification()
@@ -63,6 +64,7 @@ class NotificationService : NotificationListenerService() {
 
     override fun onListenerDisconnected() {
         super.onListenerDisconnected()
+        if (instance == this) instance = null
         Log.w(TAG, "NotificationListenerDisconnected")
         broadcastLog("🔴 Listener Terputus dari Sistem Android")
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
@@ -72,7 +74,58 @@ class NotificationService : NotificationListenerService() {
 
     override fun onDestroy() {
         super.onDestroy()
+        if (instance == this) instance = null
         stopHeartbeatLoop()
+    }
+
+    fun getActiveNotificationsList(onlySelectedApps: Boolean = true): List<ActiveNotifData> {
+        val result = mutableListOf<ActiveNotifData>()
+        try {
+            val sbns = activeNotifications ?: return emptyList()
+            val selectedPkgs = prefs.selectedPackages
+            val filterBySelected = onlySelectedApps && !prefs.allowAllApps && selectedPkgs.isNotEmpty()
+
+            for (sbn in sbns) {
+                val pkg = sbn.packageName ?: continue
+                if (pkg == packageName) continue
+
+                // Filter out non-selected applications if filterBySelected is active
+                if (filterBySelected && !selectedPkgs.any { it.equals(pkg, ignoreCase = true) }) {
+                    continue
+                }
+
+                val extras = sbn.notification.extras
+                val title = extras?.getCharSequence(Notification.EXTRA_TITLE)?.toString()
+                    ?: extras?.getString(Notification.EXTRA_TITLE)
+                    ?: ""
+                val text = extras?.getCharSequence(Notification.EXTRA_TEXT)?.toString()
+                    ?: extras?.getString(Notification.EXTRA_TEXT)
+                    ?: ""
+                val bigText = extras?.getCharSequence(Notification.EXTRA_BIG_TEXT)?.toString() ?: ""
+                val subText = extras?.getCharSequence(Notification.EXTRA_SUB_TEXT)?.toString() ?: ""
+                val infoText = extras?.getCharSequence(Notification.EXTRA_INFO_TEXT)?.toString() ?: ""
+                val ticker = sbn.notification.tickerText?.toString() ?: ""
+
+                val contentPieces = listOf(title, text, bigText, subText, infoText, ticker).filter { it.isNotBlank() }
+                val fullContent = contentPieces.distinct().joinToString(" ").trim()
+
+                if (fullContent.isNotBlank()) {
+                    result.add(
+                        ActiveNotifData(
+                            packageName = pkg,
+                            title = title.ifBlank { "Notifikasi" },
+                            text = text.ifBlank { bigText.ifBlank { fullContent } },
+                            fullContent = fullContent,
+                            postTime = sbn.postTime,
+                            id = sbn.id
+                        )
+                    )
+                }
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error getting active notifications: ${e.message}")
+        }
+        return result.sortedByDescending { it.postTime }
     }
 
     private fun startHeartbeatLoop() {
@@ -215,7 +268,7 @@ class NotificationService : NotificationListenerService() {
 
         Log.d(TAG, "Notification received from [$packageName]: $fullContent")
 
-        // Live Sniffer & Inspector
+        // Strictly check if notification belongs to selected target apps
         val isRelevant = isRelevantNotification(packageName, fullContent)
         
         if (isRelevant) {
@@ -228,38 +281,50 @@ class NotificationService : NotificationListenerService() {
     }
 
     private fun isRelevantNotification(pkg: String, text: String): Boolean {
-        // If allowAllApps is enabled, accept any notification that has text
+        // If allowAllApps is enabled (Test Mode), accept any notification that has text
         if (prefs.allowAllApps) {
-            return true
+            return text.isNotBlank()
         }
 
-        val lowerPkg = pkg.lowercase()
-        val lowerText = text.lowercase()
-
-        // Check if package is in target list
         val selectedPkgs = prefs.selectedPackages
-        val isTargetApp = selectedPkgs.any { lowerPkg.contains(it.lowercase()) } ||
-                lowerPkg.contains("bank") ||
-                lowerPkg.contains("dana") ||
-                lowerPkg.contains("gopay") ||
-                lowerPkg.contains("ovo") ||
-                lowerPkg.contains("shopee") ||
-                lowerPkg.contains("seabank") ||
-                lowerPkg.contains("bca") ||
-                lowerPkg.contains("bsi") ||
-                lowerPkg.contains("mandiri") ||
-                lowerPkg.contains("bri") ||
-                lowerPkg.contains("bni")
 
-        // Keywords indicating financial transaction or test
+        // STRICT FILTER: If user has selected target apps, ONLY accept notifications from those exact packages!
+        if (selectedPkgs.isNotEmpty()) {
+            val isTargetApp = selectedPkgs.any { it.equals(pkg, ignoreCase = true) }
+            if (!isTargetApp) {
+                // Reject all notifications from non-selected apps (e.g. WhatsApp, YouTube, SMS, etc.)
+                return false
+            }
+        } else {
+            // If no apps are selected in settings, fallback to standard banking app packages
+            val lowerPkg = pkg.lowercase()
+            val isKnownBankApp = PreferencesHelper.defaultBankPackages.any { it.equals(pkg, ignoreCase = true) } ||
+                    lowerPkg.contains("bank") ||
+                    lowerPkg.contains("dana") ||
+                    lowerPkg.contains("gopay") ||
+                    lowerPkg.contains("ovo") ||
+                    lowerPkg.contains("shopee") ||
+                    lowerPkg.contains("seabank") ||
+                    lowerPkg.contains("bca") ||
+                    lowerPkg.contains("bsi") ||
+                    lowerPkg.contains("mandiri") ||
+                    lowerPkg.contains("bri") ||
+                    lowerPkg.contains("bni")
+            if (!isKnownBankApp) {
+                return false
+            }
+        }
+
+        // Keywords indicating financial transaction or amount
+        val lowerText = text.lowercase()
         val keywords = listOf(
             "transfer", "uang masuk", "diterima", "masuk", "kredit", "cr", "rp", "rupiah", "idr",
             "top up", "topup", "qris", "pembayaran", "payment", "bayar", "lunas", "berhasil", "sukses",
             "dana bisnis", "merchant", "saldo", "terima", "tes", "test", "uji", "coba"
         )
-        val hasKeyword = keywords.any { lowerText.contains(it) }
+        val hasKeyword = keywords.any { lowerText.contains(it) } || lowerText.contains(Regex("\\d+"))
 
-        return isTargetApp || hasKeyword
+        return hasKeyword
     }
 
     private fun sendWebhookPayload(pkgName: String, title: String, text: String, fullContent: String) {
@@ -331,10 +396,20 @@ class NotificationService : NotificationListenerService() {
     }
 
     companion object {
+        var instance: NotificationService? = null
         const val TAG = "BarakahNotifService"
         const val ACTION_NOTIFICATION_LOG = "com.barakah.notiflistener.LOG"
         const val CHANNEL_ID = "barakah_listener_channel"
         const val NOTIFICATION_ID = 1001
     }
 }
+
+data class ActiveNotifData(
+    val packageName: String,
+    val title: String,
+    val text: String,
+    val fullContent: String,
+    val postTime: Long,
+    val id: Int
+)
 

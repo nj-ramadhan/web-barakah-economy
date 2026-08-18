@@ -715,8 +715,8 @@ const BusinessesTab = () => {
 const ShoppingTab = () => {
     return (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
-            <h2 className="font-bold text-gray-800 px-1">Belanja & Incaran</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <h2 className="font-bold text-gray-800 px-1">Belanja</h2>
+            <div className="grid grid-cols-1 gap-4">
                 <Link to="/keranjang" className="bg-gradient-to-br from-emerald-500 to-teal-600 p-5 rounded-3xl text-white shadow-xl shadow-emerald-100 flex flex-col gap-4 transition-all hover:-translate-y-1 active:scale-[0.98]">
                     <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm">
                         <span className="material-icons text-2xl">shopping_cart</span>
@@ -724,19 +724,6 @@ const ShoppingTab = () => {
                     <div>
                         <h3 className="font-black text-sm uppercase tracking-wider">Keranjang Belanja</h3>
                         <p className="text-[10px] opacity-80 font-medium mt-1 leading-relaxed">Selesaikan belanjaan yang masih tersimpan</p>
-                    </div>
-                    <div className="mt-2 flex justify-end">
-                        <span className="material-icons text-sm">arrow_forward</span>
-                    </div>
-                </Link>
-
-                <Link to="/incaran" className="bg-gradient-to-br from-rose-500 to-pink-600 p-5 rounded-3xl text-white shadow-xl shadow-rose-100 flex flex-col gap-4 transition-all hover:-translate-y-1 active:scale-[0.98]">
-                    <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm">
-                        <span className="material-icons text-2xl">favorite</span>
-                    </div>
-                    <div>
-                        <h3 className="font-black text-sm uppercase tracking-wider">Produk Incaran</h3>
-                        <p className="text-[10px] opacity-80 font-medium mt-1 leading-relaxed">Cek kembali produk yang Anda minati</p>
                     </div>
                     <div className="mt-2 flex justify-end">
                         <span className="material-icons text-sm">arrow_forward</span>

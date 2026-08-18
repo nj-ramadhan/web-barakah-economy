@@ -1125,17 +1125,11 @@ const Home = () => {
                       {product.stock <= 0 ? (
                         <div className="flex space-x-2">
                           <button
-                            onClick={() => addToWishlist(product.id)}
-                            className="w-full block text-center bg-red-600 text-white py-2 rounded-md text-sm hover:bg-red-600 flex items-center justify-center"
-                          >
-                            <span className="material-icons text-sm">favorite</span>+ INCARAN
-                          </button>
-                          <button
                             onClick={() => addToCart(product.id)}
-                            className="w-full block text-center bg-gray-400 text-white py-2 rounded-md text-sm hover:bg-gray-500 flex items-center justify-center"
+                            className="w-full block text-center bg-gray-400 text-white py-2 rounded-md text-sm hover:bg-gray-500 flex items-center justify-center cursor-not-allowed"
                             disabled
                           >
-                            <span className="material-icons text-sm">add_shopping_cart</span>+ KERANJANG
+                            <span className="material-icons text-sm">block</span>Stok Habis
                           </button>
                         </div>
 
@@ -1144,17 +1138,10 @@ const Home = () => {
                           <div className="flex gap-2">
                             <button
                               onClick={() => addToCart(product.id)}
-                              className="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-green-100 transition-all transform hover:-translate-y-1 text-xs"
+                              className="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-green-100 transition-all transform hover:-translate-y-1 text-xs"
                             >
                               <span className="material-icons text-sm">shopping_cart</span>
-                              Keranjang
-                            </button>
-                            <button
-                              onClick={() => addToWishlist(product.id)}
-                              className="px-3 py-2 border-2 border-green-600 text-green-700 font-bold rounded-xl flex items-center justify-center gap-2 hover:bg-green-50 transition-all shadow-sm"
-                              title="Tambah ke Incaran"
-                            >
-                              <span className="material-icons text-sm">favorite_border</span>
+                              + Keranjang
                             </button>
                           </div>
                           <button
@@ -1314,17 +1301,10 @@ const Home = () => {
                           <div className="flex gap-1">
                             <button
                               onClick={() => addToCart(product.id)}
-                              className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white py-1.5 rounded-xl font-bold flex items-center justify-center gap-1 shadow-sm transition text-[9px]"
+                              className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-1.5 rounded-xl font-bold flex items-center justify-center gap-1 shadow-sm transition text-[9px]"
                             >
                               <span className="material-icons text-xs">shopping_cart</span>
-                              Keranjang
-                            </button>
-                            <button
-                              onClick={() => addToWishlist(product.id)}
-                              className="p-1.5 border border-gray-200 text-gray-400 hover:text-red-500 hover:border-red-200 rounded-xl flex items-center justify-center transition"
-                              title="Tambah ke Incaran"
-                            >
-                              <span className="material-icons text-xs">favorite_border</span>
+                              + Keranjang
                             </button>
                           </div>
                           <button

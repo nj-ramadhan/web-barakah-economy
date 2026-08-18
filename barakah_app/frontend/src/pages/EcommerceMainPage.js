@@ -399,17 +399,10 @@ const EcommerceMainPage = () => {
               <div className="flex gap-1.5">
                 <button
                   onClick={() => addToCart(product.id)}
-                  className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white py-2 rounded-xl font-bold flex items-center justify-center gap-1.5 shadow-sm transition-all transform active:scale-95 text-[11px]"
+                  className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-2 rounded-xl font-bold flex items-center justify-center gap-1.5 shadow-sm transition-all transform active:scale-95 text-[11px]"
                 >
                   <span className="material-icons text-sm">shopping_cart</span>
-                  Keranjang
-                </button>
-                <button
-                  onClick={() => addToWishlist(product.id)}
-                  className="px-2.5 py-2 border border-emerald-600 text-emerald-700 font-bold rounded-xl flex items-center justify-center hover:bg-emerald-50 transition-all active:scale-95"
-                  title="Tambah ke Incaran"
-                >
-                  <span className="material-icons text-sm">favorite_border</span>
+                  + Keranjang
                 </button>
               </div>
               <button

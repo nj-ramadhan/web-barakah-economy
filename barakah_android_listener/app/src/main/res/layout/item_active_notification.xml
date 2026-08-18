@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    app:cardCornerRadius="12dp"
+    app:cardElevation="2dp"
+    app:cardBackgroundColor="@color/white"
+    android:layout_marginBottom="8dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="12dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <ImageView
+                android:id="@+id/ivNotifAppIcon"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:layout_marginEnd="10dp"
+                android:contentDescription="App Icon" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/tvNotifAppName"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Nama Aplikasi"
+                    android:textColor="@color/gray_800"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tvNotifPackage"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="com.example.app"
+                    android:textColor="@color/gray_500"
+                    android:textSize="10sp"
+                    android:fontFamily="monospace" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/tvNotifTime"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="12:00"
+                android:textColor="@color/gray_400"
+                android:textSize="10sp" />
+        </LinearLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@color/gray_100"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="8dp" />
+
+        <TextView
+            android:id="@+id/tvNotifTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Judul Notifikasi"
+            android:textColor="@color/gray_800"
+            android:textSize="13sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tvNotifText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Isi konten notifikasi..."
+            android:textColor="@color/gray_700"
+            android:textSize="12sp"
+            android:layout_marginTop="2dp" />
+
+        <Button
+            android:id="@+id/btnSendNotifToWebhook"
+            android:layout_width="match_parent"
+            android:layout_height="38dp"
+            android:text="🚀 Kirim Notifikasi Ini ke Webhook"
+            android:backgroundTint="@color/emerald_700"
+            android:textColor="@color/white"
+            android:textSize="11sp"
+            android:layout_marginTop="10dp" />
+
+    </LinearLayout>
+</androidx.cardview.widget.CardView>
