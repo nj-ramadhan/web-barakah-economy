@@ -891,11 +891,20 @@ class AndroidNotificationWebhookView(APIView):
         recent_cutoff = timezone.now() - timedelta(minutes=timeout_mins)
 
         for amt in extracted_amounts:
-            # 1. Search recent active E-Commerce Order with matching grand_total or total_price
+            # 1. Search recent active E-Commerce Order with matching grand_total (including admin/service fee)
             order = Order.objects.filter(
                 created_at__gte=recent_cutoff,
-                status__in=['pending', 'waiting_payment', 'unpaid']
-            ).filter(Q(grand_total=amt) | Q(total_price=amt)).order_by('-created_at').first()
+                status__in=['pending', 'Pending', 'waiting_payment', 'unpaid'],
+                grand_total=amt
+            ).order_by('-created_at').first()
+            
+            if not order:
+                # Fallback: if not matched by grand_total, check total_price
+                order = Order.objects.filter(
+                    created_at__gte=recent_cutoff,
+                    status__in=['pending', 'Pending', 'waiting_payment', 'unpaid'],
+                    total_price=amt
+                ).order_by('-created_at').first()
             
             if order:
                 order.status = 'paid'
@@ -906,9 +915,9 @@ class AndroidNotificationWebhookView(APIView):
                     "type": "ecommerce",
                     "reference_id": order.id,
                     "order_number": order.order_number or str(order.id),
-                    "amount": float(amt),
+                    "amount": float(order.grand_total if order.grand_total else amt),
                     "extracted_amounts": [float(a) for a in extracted_amounts],
-                    "message": f"Pesanan E-commerce #{order.order_number or order.id} berhasil diverifikasi otomatis via Webhook!"
+                    "message": f"Pesanan E-commerce #{order.order_number or order.id} (Rp {float(order.grand_total):,.0f}) berhasil diverifikasi otomatis via Webhook!"
                 })
 
             # 2. Search recent active Digital Product Order with matching amount
