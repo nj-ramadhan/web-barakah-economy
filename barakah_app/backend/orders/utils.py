@@ -167,14 +167,18 @@ def send_order_invoice_to_buyer(order, alternate_phone=None):
     if shipping_info['maps_link']:
         message += f"Titik GPS: {shipping_info['maps_link']}\n"
 
+    admin_fee_val = Decimal(str(getattr(order, 'admin_fee', 0) or 0))
+    admin_fee_str = f"Biaya Layanan & Admin: +{format_idr(admin_fee_val)}\n" if admin_fee_val > 0 else ""
+
     message += (
         f"\n*Detail Produk:*\n"
         f"{items_str}\n"
         f"Subtotal: {format_idr(order.total_price)}\n"
         f"Ongkir: {format_idr(order.shipping_cost)} ({order.shipping_courier or 'Standar'})\n"
         f"Voucher: -{format_idr(order.voucher_nominal)}\n"
+        f"{admin_fee_str}"
         f"*Total Bayar: {format_idr(order.grand_total)}*\n\n"
-        f"Metode: *COD (Bayar di Tempat)*\n" if order.payment_method == 'COD' else f"Metode: *{order.payment_method}*\n"
+        f"Metode: *COD (Bayar di Tempat)*\n" if (order.payment_method or '').upper() == 'COD' else f"Metode: *{order.payment_method}*\n"
     )
 
     if order.buyer_note:
@@ -206,6 +210,9 @@ def send_order_notification_to_seller(order):
 
     pay_status = "BAYAR DI TEMPAT (COD)" if (order.payment_method or '').lower() == 'cod' else ("SUDAH DIBAYAR (LUNAS via QRIS/Transfer)" if (order.status or '').lower() in ['paid', 'lunas', 'proses'] else "MENUNGGU PEMBAYARAN")
 
+    admin_fee_val = Decimal(str(getattr(order, 'admin_fee', 0) or 0))
+    admin_fee_str = f"Biaya Layanan & Admin: +{format_idr(admin_fee_val)}\n" if admin_fee_val > 0 else ""
+
     message = (
         f"*PESANAN BARU MASUK! (BARAKAH ECONOMY)*\n"
         f"No. Pesanan: {order.order_number}\n"
@@ -227,6 +234,10 @@ def send_order_notification_to_seller(order):
     message += (
         f"\n*Daftar Produk:*\n"
         f"{items_str}\n"
+        f"Subtotal: {format_idr(order.total_price)}\n"
+        f"Ongkos Kirim: {format_idr(order.shipping_cost)}\n"
+        f"Diskon Voucher: -{format_idr(order.voucher_nominal)}\n"
+        f"{admin_fee_str}"
         f"Total Transaksi: {format_idr(order.grand_total)}\n"
         f"Metode Bayar: *{order.payment_method}* ({pay_status})\n"
         f"Ekspedisi / Kurir: *{order.shipping_courier or '-'}*\n\n"
@@ -250,6 +261,9 @@ def send_order_email_notifications(order):
             f"- {item.product.title}{f' ({item.variation.name})' if item.variation else ''} x{item.quantity} = {format_idr(item.price)}"
             for item in order.items.all()
         ])
+
+        admin_fee_val = Decimal(str(getattr(order, 'admin_fee', 0) or 0))
+        admin_fee_email_str = f"Biaya Layanan & Admin: +{format_idr(admin_fee_val)}\n" if admin_fee_val > 0 else ""
 
         subject = f"[Barakah Economy] Pesanan Baru #{order.order_number}"
         
@@ -278,7 +292,7 @@ Alamat Lengkap: {shipping_info['formatted_address']}
 Subtotal Produk: {format_idr(order.total_price)}
 Ongkos Kirim: {format_idr(order.shipping_cost)} ({order.shipping_courier or '-'})
 Voucher Diskon: -{format_idr(order.voucher_nominal)}
-TOTAL PEMBAYARAN: {format_idr(order.grand_total)}
+{admin_fee_email_str}TOTAL PEMBAYARAN: {format_idr(order.grand_total)}
 
 Catatan Pembeli: {order.buyer_note or '-'}
 

@@ -14,7 +14,8 @@ class Order(models.Model):
     shipping_service = models.CharField(max_length=50, blank=True, null=True)
     voucher_code = models.CharField(max_length=50, blank=True, null=True)
     voucher_nominal = models.DecimalField(max_digits=12, decimal_places=2, default=0)
-    grand_total = models.DecimalField(max_digits=12, decimal_places=2, default=0) # total_price + shipping - voucher
+    admin_fee = models.DecimalField(max_digits=12, decimal_places=2, default=0, help_text="Biaya Layanan & Admin / Kode Unik")
+    grand_total = models.DecimalField(max_digits=12, decimal_places=2, default=0) # total_price + shipping - voucher + admin_fee
     payment_method = models.CharField(max_length=50, default='manual')
     payment_proof = models.ImageField(upload_to='payment_proofs/orders/', null=True, blank=True)
     used_balance = models.DecimalField(max_digits=12, decimal_places=2, default=0, help_text="Jumlah Saldo BAE yang digunakan")
@@ -76,8 +77,9 @@ class Order(models.Model):
         tp = Decimal(str(self.total_price or 0))
         sc = Decimal(str(self.shipping_cost or 0))
         vn = Decimal(str(self.voucher_nominal or 0))
+        af = Decimal(str(self.admin_fee or 0))
         
-        self.grand_total = tp + sc - vn
+        self.grand_total = tp + sc - vn + af
         if self.grand_total < 0:
             self.grand_total = Decimal('0')
 

@@ -453,6 +453,12 @@ const DashboardSinergySellerOrdersPage = () => {
                                                             <span>-{formatIDR(order.voucher_nominal)}</span>
                                                         </div>
                                                     )}
+                                                    {Number(order.admin_fee) > 0 && (
+                                                        <div className="flex justify-between items-center text-xs text-blue-700 font-bold">
+                                                            <span>Biaya Layanan &amp; Admin</span>
+                                                            <span>+{formatIDR(order.admin_fee)}</span>
+                                                        </div>
+                                                    )}
                                                     <div className="flex justify-between items-center text-sm font-black text-emerald-700 mt-2 p-2 bg-emerald-50 rounded-lg">
                                                         <span>Total Tagihan</span>
                                                         <span>{formatIDR(order.grand_total)}</span>

@@ -25,6 +25,7 @@ const EcommercePaymentConfirmation = () => {
     orderId,
     orderNumber: orderNumberParam,
     amount,
+    uniqueFee,
     bank,
     customerName,
     customerPhone,
@@ -410,6 +411,7 @@ const EcommercePaymentConfirmation = () => {
       paymentData.append('shipping_courier', courier || '');
       paymentData.append('voucher_code', voucherCode || '');
       paymentData.append('voucher_nominal', voucherDiscount || 0);
+      paymentData.append('admin_fee', uniqueFee || dynaAdminFee || 0);
 
       const userData = localStorage.getItem('user');
       let authToken = null;

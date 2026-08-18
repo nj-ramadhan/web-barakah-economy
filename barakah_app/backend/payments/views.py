@@ -156,10 +156,13 @@ class GenerateDynaQRISView(APIView):
                         ord_obj = Order.objects.filter(id=int(clean_ref)).first()
 
                     if ord_obj:
+                        base_cost = (ord_obj.total_price or Decimal('0')) + (ord_obj.shipping_cost or Decimal('0')) - (ord_obj.voucher_nominal or Decimal('0'))
+                        diff = final_amount - base_cost
+                        ord_obj.admin_fee = max(Decimal('0'), diff)
                         ord_obj.grand_total = final_amount
                         ord_obj.payment_method = 'dynaqris'
-                        ord_obj.save(update_fields=['grand_total', 'payment_method'])
-                        logger.info(f"Successfully synced Order #{ord_obj.order_number} grand_total to {final_amount}")
+                        ord_obj.save(update_fields=['admin_fee', 'grand_total', 'payment_method'])
+                        logger.info(f"Successfully synced Order #{ord_obj.order_number} grand_total to {final_amount} (admin_fee: {ord_obj.admin_fee})")
                 elif transaction_type == 'event':
                     from events.models import EventRegistration
                     reg_obj = EventRegistration.objects.filter(id=clean_ref).first() if clean_ref.isdigit() else None
@@ -912,6 +915,13 @@ class AndroidNotificationWebhookView(APIView):
             if order:
                 order.status = 'paid'
                 order.save()
+                try:
+                    from orders.utils import send_order_invoice_to_buyer, send_order_notification_to_seller, send_order_email_notifications
+                    send_order_invoice_to_buyer(order)
+                    send_order_notification_to_seller(order)
+                    send_order_email_notifications(order)
+                except Exception as e:
+                    logger.error(f"Failed to send order notifications on webhook match for {order.order_number}: {e}")
                 return Response({
                     "success": True,
                     "matched": True,

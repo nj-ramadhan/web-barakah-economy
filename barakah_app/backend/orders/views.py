@@ -136,6 +136,7 @@ class CreateOrderView(APIView):
 
                 if existing_orders.exists():
                     payment_proof = request.FILES.get('proof_file') or request.FILES.get('payment_proof')
+                    admin_fee_param = request.data.get('admin_fee') or request.data.get('unique_code')
                     updated_orders = []
                     for ord_obj in existing_orders:
                         if payment_proof:
@@ -143,6 +144,8 @@ class CreateOrderView(APIView):
                             ord_obj.status = 'paid'
                         if request.data.get('payment_method'):
                             ord_obj.payment_method = request.data.get('payment_method')
+                        if admin_fee_param is not None and str(admin_fee_param).strip() != "":
+                            ord_obj.admin_fee = Decimal(str(admin_fee_param))
                         ord_obj.save()
                         updated_orders.append(ord_obj)
 
@@ -293,6 +296,7 @@ class CreateOrderView(APIView):
                     shipping_service=shipping_service,
                     voucher_code=voucher_code,
                     voucher_nominal=voucher_nominal,
+                    admin_fee=admin_fee,
                     grand_total=grand_total,
                     used_balance=used_balance_for_this_order,
                     status=order_initial_status,

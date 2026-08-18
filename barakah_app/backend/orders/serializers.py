@@ -48,6 +48,8 @@ class OrderSerializer(serializers.ModelSerializer):
     def get_admin_fee(self, obj):
         try:
             from decimal import Decimal
+            if getattr(obj, 'admin_fee', None) is not None and Decimal(str(obj.admin_fee)) > Decimal('0'):
+                return float(obj.admin_fee)
             base_calc = (obj.total_price or Decimal('0')) + (obj.shipping_cost or Decimal('0')) - (obj.voucher_nominal or Decimal('0'))
             if obj.grand_total and obj.grand_total > base_calc:
                 return float(obj.grand_total - base_calc)
