@@ -490,11 +490,11 @@ const DashboardSinergySellerOrdersPage = () => {
                                                                     'Pending': ['Pending', 'Paid', 'Batal'],
                                                                     'Paid': ['Paid', 'Proses', 'Batal'],
                                                                     'Proses': ['Proses', 'Dikirim', 'Batal'],
-                                                                    'Dikirim': ['Dikirim', 'Selesai', 'Batal'],
+                                                                    'Dikirim': ['Dikirim', 'Batal'],
                                                                     'Selesai': ['Selesai'],
                                                                     'Batal': ['Batal']
                                                                 };
-                                                                const options = allowed[order.status] || statusOptions;
+                                                                const options = allowed[order.status] || [order.status];
                                                                 return options.map(opt => (
                                                                     <option key={opt} value={opt}>{opt}</option>
                                                                 ));
@@ -509,6 +509,18 @@ const DashboardSinergySellerOrdersPage = () => {
                                                         </div>
                                                     </div>
                                                 </div>
+
+                                                {order.status === 'Dikirim' && (
+                                                    <div className="p-3 bg-purple-50 rounded-xl border border-purple-100 flex items-start gap-2 text-[11px] text-purple-800">
+                                                        <span className="material-icons text-base text-purple-600 shrink-0 mt-0.5">hourglass_empty</span>
+                                                        <div>
+                                                            <p className="font-bold">Menunggu Konfirmasi Pembeli</p>
+                                                            <p className="text-[10px] text-purple-600 mt-0.5 leading-relaxed">
+                                                                Pesanan hanya dapat diselesaikan oleh pembeli atau otomatis oleh sistem dalam 5 hari pengiriman (beserta ulasan bintang 5 otomatis). Saldo penjualan berstatus pending dan akan cair setelah pesanan selesai.
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                )}
 
                                                 <div className="space-y-1">
                                                     <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Nomor Resi & Estimasi</label>

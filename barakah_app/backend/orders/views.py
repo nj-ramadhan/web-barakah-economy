@@ -22,16 +22,50 @@ logger = logging.getLogger('accounts')
 
 def perform_order_maintenance():
     """
-    1. Auto-complete orders older than 7 days shipped.
+    1. Auto-complete orders older than 5 days shipped (auto_complete_at <= now or shipped_at <= now - 5 days),
+       and automatically insert 5-star review/testimoni without notes if buyer hasn't given one.
     2. Auto-cancel pending orders older than 48 hours (2x24 jam), restore stock, and refund if paid.
     """
     now = timezone.now()
     try:
-        # 1. Auto-complete shipped orders
-        Order.objects.filter(status='Dikirim', auto_complete_at__lte=now).update(
-            status='Selesai',
-            completed_at=now
+        from products.models import Testimoni
+        from reviews.models import Review
+        from django.db.models import Q
+
+        # 1. Auto-complete shipped orders older than 5 days
+        cutoff_5days = now - timedelta(days=5)
+        shipped_orders = Order.objects.filter(status='Dikirim').filter(
+            Q(auto_complete_at__lte=now) | (Q(auto_complete_at__isnull=True) & Q(shipped_at__lte=cutoff_5days))
         )
+
+        for ord_obj in shipped_orders:
+            ord_obj.status = 'Selesai'
+            ord_obj.completed_at = now
+            ord_obj.save(update_fields=['status', 'completed_at'])
+
+            # Automatically create 5-star review without note for each product in order if not reviewed yet
+            buyer = ord_obj.user
+            customer_name = getattr(buyer.profile, 'name_full', None) or buyer.username if hasattr(buyer, 'profile') else buyer.username
+
+            for item in ord_obj.items.all():
+                prod = item.product
+                if prod and buyer:
+                    if not Testimoni.objects.filter(product=prod, user=buyer).exists():
+                        Testimoni.objects.create(
+                            product=prod,
+                            user=buyer,
+                            customer=customer_name,
+                            stars=5,
+                            description='',
+                            is_admin_entry=False
+                        )
+                    if not Review.objects.filter(product=prod, user=buyer).exists():
+                        Review.objects.create(
+                            product=prod,
+                            user=buyer,
+                            rating=5,
+                            comment=''
+                        )
 
         # 2. Auto-cancel pending orders older than 48 hours
         deadline_48h = now - timedelta(hours=48)
@@ -559,6 +593,13 @@ class SellerOrderViewSet(viewsets.ModelViewSet):
                     status=status.HTTP_403_FORBIDDEN
                 )
 
+        # Seller cannot manually set status to 'Selesai' (only buyer or 5-day auto-complete system)
+        if is_seller and not is_buyer and not user.is_superuser and new_status == 'Selesai':
+            return Response(
+                {'error': 'Penjual tidak dapat mengubah status menjadi Selesai. Pesanan hanya dapat diselesaikan oleh pembeli atau otomatis oleh sistem setelah 5 hari pengiriman.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
         # Sequential status updates for sellers/admins
         if new_status:
             allowed_transitions = {
@@ -579,7 +620,7 @@ class SellerOrderViewSet(viewsets.ModelViewSet):
 
             if new_status == 'Dikirim':
                 instance.shipped_at = timezone.now()
-                instance.auto_complete_at = instance.shipped_at + timedelta(days=7)
+                instance.auto_complete_at = instance.shipped_at + timedelta(days=5)
             elif new_status == 'Komplain':
                 instance.complaint_at = timezone.now()
                 if complaint_reason:
