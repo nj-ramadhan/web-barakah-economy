@@ -345,9 +345,10 @@ class EventRegistration(models.Model):
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='approved')
     
     # Payment info
-    payment_method = models.CharField(max_length=20, choices=[('transfer', 'Transfer'), ('ots', 'On The Spot')], default='transfer')
+    payment_method = models.CharField(max_length=20, choices=[('transfer', 'Transfer'), ('ots', 'On The Spot'), ('dynaqris', 'DynaQRIS Otomatis')], default='transfer')
     payment_proof = models.ImageField(upload_to='events/payments/', blank=True, null=True)
     payment_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    admin_fee = models.DecimalField(max_digits=12, decimal_places=2, default=0, help_text="Biaya Layanan & Admin / Kode Unik")
     payment_status = models.CharField(max_length=20, choices=[('pending', 'Pending'), ('verified', 'Verified'), ('rejected', 'Rejected')], default='pending')
     ocr_data = models.JSONField(blank=True, null=True, help_text="Data hasil ekstraksi OCR AI")
     ocr_verified = models.BooleanField(default=False)

@@ -158,3 +158,26 @@ class CalendarNote(models.Model):
 
     def __str__(self):
         return f"Catatan {self.date}"
+
+
+class MaintenanceSetting(models.Model):
+    is_active = models.BooleanField(default=False, help_text="Aktifkan mode maintenance (perawatan sistem)")
+    title = models.CharField(max_length=255, default="Situs Sedang Dalam Pemeliharaan (Maintenance)")
+    message = models.TextField(default="Mohon maaf atas ketidaknyamanannya. Kami sedang melakukan pemeliharaan sistem untuk meningkatkan performa layanan. Silakan kembali beberapa saat lagi.")
+    estimated_end = models.DateTimeField(null=True, blank=True, help_text="Perkiraan waktu selesai pemeliharaan (opsional)")
+    updated_at = models.DateTimeField(auto_now=True)
+    updated_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='maintenance_updates')
+
+    class Meta:
+        verbose_name = "Pengaturan Maintenance"
+        verbose_name_plural = "Pengaturan Maintenance"
+
+    def __str__(self):
+        status_str = "AKTIF" if self.is_active else "NONAKTIF"
+        return f"Mode Maintenance ({status_str})"
+
+    @classmethod
+    def get_settings(cls):
+        settings, _ = cls.objects.get_or_create(id=1)
+        return settings
+

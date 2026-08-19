@@ -156,6 +156,12 @@ class CreateDonationView(APIView):
 
             # Extract data from the request
             amount = request.data.get('amount')
+            admin_fee = request.data.get('admin_fee', 0)
+            try:
+                import decimal
+                admin_fee = decimal.Decimal(str(admin_fee or 0))
+            except:
+                admin_fee = decimal.Decimal('0')
             donor_name = request.data.get('donor_name')
             donor_phone = request.data.get('donor_phone')
             donor_email = request.data.get('donor_email')
@@ -174,6 +180,7 @@ class CreateDonationView(APIView):
             donation = Donation.objects.create(
                 campaign=campaign,
                 amount=amount,
+                admin_fee=admin_fee,
                 donor_name=donor_name,
                 donor_phone=donor_phone,
                 donor_email=donor_email,

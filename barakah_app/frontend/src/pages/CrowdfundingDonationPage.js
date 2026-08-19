@@ -40,6 +40,7 @@ const CrowdfundingDonationPage = () => {
   const [campaign, setCampaign] = useState(null);
   const [loading, setLoading] = useState(true);
   const [paymentConfig, setPaymentConfig] = useState(null);
+  const [uniqueAdminFee] = useState(() => Math.floor(Math.random() * 400) + 100); // 100 - 499
 
   useEffect(() => {
     getPublicPaymentConfig().then(cfg => setPaymentConfig(cfg)).catch(e => console.error(e));
@@ -310,9 +311,10 @@ const CrowdfundingDonationPage = () => {
     // Generate additional amount based on category if manual transfer mode (for finance tracking)
     const category = campaign?.category || 'default';
     const { value } = categoryAdditionalAmounts[category] || { value: 0 };
-    const uniqueDigits = (paymentConfig?.active_mode === 'dynaqris') ? 0 : value;
-    const amount = selectedAmount === 'custom' ? parseInt(customAmount) : selectedAmount;
-    const finalAmount = amount + uniqueDigits;
+    const amount = selectedAmount === 'custom' ? parseInt(customAmount || 0) : parseInt(selectedAmount || 0);
+    const isDynaQRISActive = (paymentConfig?.active_mode === 'dynaqris') || (effectiveBank === 'qris');
+    const appliedFee = isDynaQRISActive ? uniqueAdminFee : value;
+    const finalAmount = amount + appliedFee;
 
     // Set the display name based on hideIdentity checkbox
     const donorName = formData.hideIdentity ? 'Hamba Allah' : formData.fullName;
@@ -323,6 +325,7 @@ const CrowdfundingDonationPage = () => {
     try {
       const formDataObj = new FormData();
       formDataObj.append('amount', finalAmount);
+      formDataObj.append('admin_fee', appliedFee);
       formDataObj.append('donor_name', donorName);
       formDataObj.append('donor_phone', donorPhone);
       formDataObj.append('donor_email', formData.email || '');
@@ -380,6 +383,9 @@ const CrowdfundingDonationPage = () => {
         state: {
           donationId: createdDonationId,
           amount: finalAmount,
+          baseAmount: amount,
+          uniqueFee: appliedFee,
+          addUniqueCode: false,
           bank: effectiveBank,
           campaignSlug: slug,
           campaignTitle: campaign?.title || 'Program Donasi',
@@ -563,6 +569,42 @@ const CrowdfundingDonationPage = () => {
               onChange={handleInputChange}
             />
           </div>
+
+          {/* Rincian Donasi & Akad Ijarah */}
+          {(() => {
+            const numAmount = selectedAmount === 'custom' ? parseInt(customAmount || 0) : parseInt(selectedAmount || 0);
+            const isDynaQRIS = (paymentConfig?.active_mode === 'dynaqris') || (selectedBank === 'qris');
+            const fee = isDynaQRIS ? uniqueAdminFee : 0;
+            const grandTotal = numAmount + fee;
+
+            if (numAmount <= 0) return null;
+
+            return (
+              <div className="bg-emerald-50/80 p-4 rounded-xl border border-emerald-100 space-y-2.5">
+                <div className="flex justify-between items-center text-xs text-gray-700">
+                  <span>Nominal Donasi</span>
+                  <span className="font-bold">Rp {new Intl.NumberFormat('id-ID').format(numAmount)}</span>
+                </div>
+
+                {isDynaQRIS && (
+                  <div className="flex justify-between items-center text-xs text-emerald-800 font-semibold bg-white/90 p-2.5 rounded-lg border border-emerald-100">
+                    <div className="flex flex-col">
+                      <span>Biaya Layanan & Admin (Akad Ijarah)</span>
+                      <span className="text-[10px] text-emerald-600 font-normal">*Kode unik otomatis untuk verifikasi instan</span>
+                    </div>
+                    <span>+ Rp {new Intl.NumberFormat('id-ID').format(uniqueAdminFee)}</span>
+                  </div>
+                )}
+
+                <div className="pt-2 border-t border-emerald-200/70 flex justify-between items-center">
+                  <span className="text-xs font-bold uppercase text-emerald-900">Total Donasi</span>
+                  <span className="text-lg font-black text-emerald-700">
+                    Rp {new Intl.NumberFormat('id-ID').format(grandTotal)}
+                  </span>
+                </div>
+              </div>
+            );
+          })()}
 
           <button
             type="submit"

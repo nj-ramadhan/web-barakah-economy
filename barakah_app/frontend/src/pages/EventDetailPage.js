@@ -120,7 +120,8 @@ const EventDetailPage = () => {
             const res = await generateDynaQRIS({
                 amount: targetAmount,
                 type: 'event',
-                reference_id: regId
+                reference_id: regId,
+                add_unique_code: false
             });
             if (res.error) {
                 alert(res.error);
@@ -137,6 +138,7 @@ const EventDetailPage = () => {
             setGeneratingQrisForReg(false);
         }
     };
+    const [eventAdminFee] = useState(() => Math.floor(Math.random() * 80) + 11); // 11 - 90
     const [guestInfo, setGuestInfo] = useState({ name: '', email: '' });
     const [files, setFiles] = useState({});
     const [participants, setParticipants] = useState([]);
@@ -465,7 +467,7 @@ const EventDetailPage = () => {
     };
 
     // Centralized total price calculation helper
-    const getCalculatedTotal = () => {
+    const getBaseTotal = () => {
         if (event?.price_type === 'free' || isUserFreeByLabel() || noInfaq) return 0;
         const fixedPrice = selectedPriceVariation ? Number(selectedPriceVariation.price) : Number(event?.price_fixed || 0);
         let extraFields = 0;
@@ -509,6 +511,13 @@ const EventDetailPage = () => {
             if (totalCalc < 0) totalCalc = 0;
         }
         return totalCalc;
+    };
+
+    const getCalculatedTotal = () => {
+        const base = getBaseTotal();
+        if (base <= 0) return 0;
+        const isDynaQRISActive = paymentConfig?.active_mode === 'dynaqris' && paymentMethod !== 'ots';
+        return base + (isDynaQRISActive ? eventAdminFee : 0);
     };
 
     const handleApplyVoucher = async () => {
@@ -569,24 +578,32 @@ const EventDetailPage = () => {
             data.append('voucher_code', appliedVoucher.code);
         }
 
+        const isDynaQRISActive = paymentConfig?.active_mode === 'dynaqris' && paymentMethod !== 'ots';
+        const calculatedTotal = getCalculatedTotal();
+        const appliedAdminFee = (isDynaQRISActive && calculatedTotal > 0) ? eventAdminFee : 0;
+
         if (isUserFreeByLabel() || noInfaq) {
             data.append('payment_amount', 0);
+            data.append('admin_fee', 0);
             data.append('payment_method', 'transfer');
         } else {
-            const calculatedTotal = getCalculatedTotal();
             if (calculatedTotal <= 0) {
                 // Total is 0 (e.g. team modifier made it free) — skip payment entirely
                 data.append('payment_amount', 0);
+                data.append('admin_fee', 0);
                 data.append('payment_method', 'transfer');
             } else if (paymentMethod === 'ots') {
                 data.append('payment_amount', calculatedTotal);
+                data.append('admin_fee', 0);
                 data.append('payment_method', 'ots');
-            } else if (paymentConfig?.active_mode === 'dynaqris') {
+            } else if (isDynaQRISActive) {
                 data.append('payment_amount', calculatedTotal);
+                data.append('admin_fee', appliedAdminFee);
                 data.append('payment_method', 'dynaqris');
             } else if (paymentMethod === 'transfer' && paymentProof) {
                 data.append('payment_proof', paymentProof);
                 data.append('payment_amount', calculatedTotal);
+                data.append('admin_fee', 0);
             }
         }
 
@@ -597,11 +614,16 @@ const EventDetailPage = () => {
                 setRegisteredCode(res.data.unique_code);
             }
 
-            const calculatedTotal = getCalculatedTotal();
-            if (paymentConfig?.active_mode === 'dynaqris' && calculatedTotal > 0 && paymentMethod !== 'ots') {
+            const calculatedFinalTotal = getCalculatedTotal();
+            if (paymentConfig?.active_mode === 'dynaqris' && calculatedFinalTotal > 0 && paymentMethod !== 'ots') {
                 const regId = res.data?.id || res.data?.registration_id;
                 setPendingRegId(regId);
-                const qrisRes = await generateDynaQRIS({ amount: calculatedTotal, reference_id: regId, type: 'event' });
+                const qrisRes = await generateDynaQRIS({
+                    amount: calculatedFinalTotal,
+                    reference_id: regId,
+                    type: 'event',
+                    add_unique_code: false
+                });
                 if (qrisRes.error) {
                     setError(qrisRes.error);
                 } else {
@@ -2507,6 +2529,18 @@ const EventDetailPage = () => {
                                                                         }
                                                                         return formatCurrency(Number(appliedVoucher.discount_value));
                                                                     })()}
+                                                                </span>
+                                                            </div>
+                                                        )}
+
+                                                        {paymentConfig?.active_mode === 'dynaqris' && paymentMethod !== 'ots' && getBaseTotal() > 0 && (
+                                                            <div className="flex items-center justify-between border-b border-green-200/80 pb-2 mb-1">
+                                                                <div className="flex flex-col">
+                                                                    <span className="text-xs font-bold text-emerald-800 uppercase">Biaya Layanan & Admin (Akad Ijarah)</span>
+                                                                    <span className="text-[10px] text-emerald-600 font-medium">*Kode unik otomatis untuk verifikasi instan</span>
+                                                                </div>
+                                                                <span className="text-sm font-black text-emerald-700">
+                                                                    + Rp {formatCurrency(eventAdminFee)}
                                                                 </span>
                                                             </div>
                                                         )}

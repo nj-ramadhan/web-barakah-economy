@@ -4,6 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
 import Header from '../components/layout/Header';
 import { getDigitalProductBySlug, createDigitalOrder } from '../services/digitalProductApi';
+import { getPublicPaymentConfig } from '../services/paymentApi';
 import { getMediaUrl } from '../utils/mediaUtils';
 import '../styles/Body.css';
 
@@ -19,6 +20,8 @@ const DigitalProductCheckoutPage = () => {
     const [product, setProduct] = useState(null);
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
+    const [paymentConfig, setPaymentConfig] = useState(null);
+    const [uniqueAdminFee] = useState(() => Math.floor(Math.random() * 400) + 100); // 100 - 499
 
     // Form fields
     const [buyerName, setBuyerName] = useState('');
@@ -26,17 +29,21 @@ const DigitalProductCheckoutPage = () => {
     const [buyerPhone, setBuyerPhone] = useState('');
 
     useEffect(() => {
-        const fetchProduct = async () => {
+        const fetchProductAndConfig = async () => {
             try {
-                const res = await getDigitalProductBySlug(slug);
-                setProduct(res.data);
+                const [prodRes, configRes] = await Promise.all([
+                    getDigitalProductBySlug(slug),
+                    getPublicPaymentConfig().catch(() => null)
+                ]);
+                setProduct(prodRes.data);
+                setPaymentConfig(configRes);
             } catch (err) {
                 console.error(err);
             } finally {
                 setLoading(false);
             }
         };
-        fetchProduct();
+        fetchProductAndConfig();
 
         // Auto-fill if logged in
         const user = JSON.parse(localStorage.getItem('user'));
@@ -53,6 +60,11 @@ const DigitalProductCheckoutPage = () => {
             alert('Mohon lengkapi semua data');
             return;
         }
+        const isFree = Number(product.price) === 0;
+        const isDynaQRISActive = paymentConfig?.active_mode === 'dynaqris' && !isFree;
+        const appliedFee = isDynaQRISActive ? uniqueAdminFee : 0;
+        const totalAmount = Number(product.price) + appliedFee;
+
         setSubmitting(true);
         try {
             const res = await createDigitalOrder({
@@ -60,10 +72,11 @@ const DigitalProductCheckoutPage = () => {
                 buyer_name: buyerName,
                 buyer_email: buyerEmail,
                 buyer_phone: buyerPhone,
-                amount: product.price,
+                amount: totalAmount,
+                admin_fee: appliedFee,
             });
 
-            if (product.price == 0) {
+            if (isFree) {
                 alert('Pesanan berhasil! Silakan cek email Anda untuk link produk digital.');
                 navigate('/digital-products');
             } else {
@@ -164,10 +177,27 @@ const DigitalProductCheckoutPage = () => {
                     </div>
 
                     {/* Total */}
-                    <div className="bg-green-50 rounded-xl p-4 border border-green-100">
-                        <div className="flex justify-between items-center">
-                            <span className="font-medium text-gray-700">Total Pembayaran</span>
-                            <span className="text-xl font-bold text-green-700">{formatIDR(product.price)}</span>
+                    <div className="bg-green-50 rounded-xl p-4 border border-green-100 space-y-2">
+                        <div className="flex justify-between items-center text-xs text-gray-600">
+                            <span>Harga Produk</span>
+                            <span className="font-bold text-gray-800">{formatIDR(product.price)}</span>
+                        </div>
+
+                        {!isFree && paymentConfig?.active_mode === 'dynaqris' && (
+                            <div className="flex justify-between items-center text-xs text-emerald-800 font-semibold bg-emerald-50/80 p-2 rounded-lg border border-emerald-100">
+                                <div className="flex flex-col">
+                                    <span>Biaya Layanan & Admin (Akad Ijarah)</span>
+                                    <span className="text-[10px] text-emerald-600 font-normal">*Kode unik otomatis untuk verifikasi instan</span>
+                                </div>
+                                <span>+ {formatIDR(uniqueAdminFee)}</span>
+                            </div>
+                        )}
+
+                        <div className="pt-2 border-t border-green-200/60 flex justify-between items-center">
+                            <span className="font-bold text-gray-800 text-xs uppercase">Total Pembayaran</span>
+                            <span className="text-xl font-black text-green-700">
+                                {formatIDR(isFree ? 0 : (paymentConfig?.active_mode === 'dynaqris' ? (Number(product.price) + uniqueAdminFee) : product.price))}
+                            </span>
                         </div>
                     </div>
 

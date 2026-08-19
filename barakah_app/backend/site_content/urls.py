@@ -6,6 +6,7 @@ from .views import (
     AnnouncementViewSet,
     ActivityCalendarView, HeroBannerViewSet,
     CalendarNoteView,
+    PublicMaintenanceSettingView, AdminMaintenanceSettingView,
 )
 
 router = SimpleRouter()
@@ -22,5 +23,8 @@ urlpatterns = [
     path('management-stats/', ManagementStatsView.as_view(), name='management-stats'),
     path('activity-calendar/', ActivityCalendarView.as_view(), name='activity-calendar'),
     path('calendar-notes/', CalendarNoteView.as_view(), name='calendar-notes'),
+    path('maintenance/', PublicMaintenanceSettingView.as_view(), name='public-maintenance'),
+    path('maintenance/admin/', AdminMaintenanceSettingView.as_view(), name='admin-maintenance'),
     path('', include(router.urls)),
 ]
+

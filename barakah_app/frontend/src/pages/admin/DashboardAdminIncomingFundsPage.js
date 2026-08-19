@@ -147,7 +147,7 @@ const DashboardAdminIncomingFundsPage = () => {
 
     // Delete single transaction entry (Admin cleanup)
     const handleDeleteTransaction = async (tx) => {
-        const confirmMsg = `Hapus data transaksi #${tx.order_number} (${tx.category_label} - ${tx.title})?\n\nPerhatian: Data ini akan dihapus dari sistem. Tindakan ini tidak dapat dibatalkan.`;
+        const confirmMsg = `Hapus data transaksi #${tx.order_number} (${tx.category_label} - ${tx.title})?\n\nPerhatian: Data ini akan dihapus dari sistem, dan saldo dompet user/penjual terkait akan otomatis ditarik / disesuaikan kembali (pembersihan data bersih).\n\nLanjutkan penghapusan?`;
         if (!window.confirm(confirmMsg)) return;
 
         const userData = localStorage.getItem('user');
@@ -156,14 +156,14 @@ const DashboardAdminIncomingFundsPage = () => {
 
         try {
             setDeletingId(tx.id);
-            await axios.delete(
+            const res = await axios.delete(
                 `${process.env.REACT_APP_API_BASE_URL}/api/transactions/admin/incoming-funds/`,
                 {
                     headers: { Authorization: `Bearer ${user.access}` },
                     data: { category: tx.category, raw_id: tx.raw_id }
                 }
             );
-            alert(`Data transaksi ${tx.order_number} berhasil dihapus.`);
+            alert(res.data?.message || `Data transaksi ${tx.order_number} berhasil dihapus.`);
             fetchIncomingFunds();
         } catch (err) {
             console.error('Failed deleting transaction:', err);
@@ -185,6 +185,7 @@ const DashboardAdminIncomingFundsPage = () => {
             'No. Invoice / Pesanan',
             'Kategori',
             'Judul Transaksi / Produk',
+            'Penjual / Vendor',
             'Nama Pembayar / Donatur',
             'Email',
             'No. Telepon / WA',
@@ -203,6 +204,7 @@ const DashboardAdminIncomingFundsPage = () => {
             `"${item.order_number || ''}"`,
             `"${item.category_label || ''}"`,
             `"${(item.title || '').replace(/"/g, '""')}"`,
+            `"${(item.seller_name ? `${item.seller_name} (@${item.seller_username})` : '').replace(/"/g, '""')}"`,
             `"${(item.customer_name || '').replace(/"/g, '""')}"`,
             `"${item.customer_email || ''}"`,
             `"${item.customer_phone || ''}"`,
@@ -664,7 +666,15 @@ const DashboardAdminIncomingFundsPage = () => {
 
                                             {/* Category & Title */}
                                             <td className="py-3.5 px-4 max-w-xs">
-                                                <div className="mb-1">{getCategoryBadge(tx.category)}</div>
+                                                <div className="flex items-center gap-1.5 flex-wrap mb-1">
+                                                    {getCategoryBadge(tx.category)}
+                                                    {tx.seller_name && (
+                                                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                                                            <span className="material-icons text-[11px]">store</span>
+                                                            {tx.seller_name} (@{tx.seller_username})
+                                                        </span>
+                                                    )}
+                                                </div>
                                                 <p className="font-bold text-gray-800 line-clamp-2 leading-tight">
                                                     {tx.title}
                                                 </p>

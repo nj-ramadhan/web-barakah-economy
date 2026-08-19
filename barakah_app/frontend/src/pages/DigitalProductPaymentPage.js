@@ -59,7 +59,8 @@ const DigitalProductPaymentPage = () => {
             const res = await generateDynaQRIS({
                 amount: targetAmt,
                 reference_id: orderNumber,
-                type: 'digital'
+                type: 'digital',
+                add_unique_code: false
             });
             if (res.error) {
                 alert(res.error);

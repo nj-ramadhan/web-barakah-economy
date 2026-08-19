@@ -168,14 +168,18 @@ class GenerateDynaQRISView(APIView):
                     from events.models import EventRegistration
                     reg_obj = EventRegistration.objects.filter(id=clean_ref).first() if clean_ref.isdigit() else None
                     if reg_obj:
+                        if reg_obj.admin_fee == 0 and final_amount > reg_obj.payment_amount:
+                            reg_obj.admin_fee = max(Decimal('0'), final_amount - reg_obj.payment_amount)
                         reg_obj.payment_amount = final_amount
-                        reg_obj.save(update_fields=['payment_amount'])
+                        reg_obj.save(update_fields=['payment_amount', 'admin_fee'])
                 elif transaction_type == 'charity':
                     from donations.models import Donation
                     don_obj = Donation.objects.filter(id=clean_ref).first() if clean_ref.isdigit() else None
                     if don_obj:
+                        if don_obj.admin_fee == 0 and final_amount > don_obj.amount:
+                            don_obj.admin_fee = max(Decimal('0'), final_amount - don_obj.amount)
                         don_obj.amount = final_amount
-                        don_obj.save(update_fields=['amount'])
+                        don_obj.save(update_fields=['amount', 'admin_fee'])
                 elif transaction_type == 'digital':
                     from digital_products.models import DigitalOrder
                     dig_obj = DigitalOrder.objects.filter(

@@ -94,7 +94,12 @@ const CrowdfundingPaymentConfirmation = () => {
 
     setGeneratingQris(true);
     try {
-      const res = await generateDynaQRIS({ amount: location.state?.amount, type: 'charity', reference_id: referenceId });
+      const res = await generateDynaQRIS({
+        amount: location.state?.amount,
+        type: 'charity',
+        reference_id: referenceId,
+        add_unique_code: false
+      });
       if (res.error) {
         alert(res.error);
       } else {

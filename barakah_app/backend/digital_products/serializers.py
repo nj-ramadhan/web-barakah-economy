@@ -79,7 +79,7 @@ class DigitalOrderCreateSerializer(serializers.ModelSerializer):
         model = DigitalOrder
         fields = [
             'digital_product', 'buyer_name', 'buyer_email',
-            'buyer_phone', 'amount',
+            'buyer_phone', 'amount', 'admin_fee',
         ]
 
 

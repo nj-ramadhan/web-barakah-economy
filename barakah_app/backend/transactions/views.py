@@ -64,11 +64,14 @@ class AdminIncomingFundsView(APIView):
 
         transactions = []
 
-        # 1. STORE / E-COMMERCE ORDERS
+        # 1. STORE / E-COMMERCE ORDERS (ALL SELLERS TRACKING)
         if category_filter in ['all', 'store', 'sinergy']:
             try:
                 from orders.models import Order
-                store_orders = Order.objects.all().select_related('user', 'seller').prefetch_related('items', 'items__product')
+                store_orders = Order.objects.all().select_related(
+                    'user', 'seller', 'user__profile', 'seller__profile'
+                ).prefetch_related('items', 'items__product', 'items__product__seller', 'items__product__seller__profile')
+
                 for o in store_orders:
                     raw_status = (o.status or '').lower()
                     has_proof = bool(getattr(o, 'payment_proof', None) and hasattr(o.payment_proof, 'url') and o.payment_proof)
@@ -91,15 +94,33 @@ class AdminIncomingFundsView(APIView):
                         norm_status = 'pending'
 
                     prod_names = []
+                    seller_candidates = []
+                    if o.seller:
+                        seller_candidates.append(o.seller)
+
                     for it in o.items.all():
                         prod_names.append(it.product_name or (it.product.title if it.product else 'Produk'))
-                    title_str = ", ".join(prod_names) if prod_names else "Pesanan Toko / Sinergy"
+                        if it.product and it.product.seller:
+                            seller_candidates.append(it.product.seller)
 
+                    title_str = ", ".join(prod_names) if prod_names else "Pesanan Toko / Sinergy"
                     proof_url = o.payment_proof.url if has_proof else ''
 
+                    resolved_seller = seller_candidates[0] if seller_candidates else None
+                    seller_name = ''
+                    seller_username = ''
+                    seller_id = None
+                    if resolved_seller:
+                        seller_name = getattr(getattr(resolved_seller, 'profile', None), 'name_full', None) or resolved_seller.username
+                        seller_username = resolved_seller.username
+                        seller_id = resolved_seller.id
+                    else:
+                        seller_name = 'BAE Store / Vendor Utama'
+                        seller_username = 'admin'
+
                     extra_notes = []
-                    if o.seller:
-                        extra_notes.append(f"Seller: @{o.seller.username}")
+                    if resolved_seller:
+                        extra_notes.append(f"Penjual: {seller_name} (@{seller_username})")
                     if is_batal and was_paid_before_cancel:
                         extra_notes.append(f"⚠️ Uang Sempat Masuk & Telah Direfund ({o.cancel_request_reason or 'Dibatalkan'})")
                     elif o.status:
@@ -112,9 +133,12 @@ class AdminIncomingFundsView(APIView):
                         'category_label': 'Toko / Sinergy',
                         'order_number': o.order_number or f"ORD-{o.id:06d}",
                         'title': title_str,
-                        'customer_name': o.recipient_name or (o.user.username if o.user else 'Tamu'),
+                        'customer_name': o.recipient_name or (getattr(getattr(o.user, 'profile', None), 'name_full', None) or (o.user.username if o.user else 'Tamu')),
                         'customer_email': o.user.email if o.user else '',
-                        'customer_phone': o.customer_phone or getattr(o, 'phone', '') or '',
+                        'customer_phone': o.customer_phone or getattr(o, 'phone', '') or o.recipient_phone or '',
+                        'seller_name': seller_name,
+                        'seller_username': seller_username,
+                        'seller_id': seller_id,
                         'base_amount': float(o.total_price or 0),
                         'admin_fee': float(o.admin_fee or 0),
                         'shipping_cost': float(o.shipping_cost or 0),
@@ -489,7 +513,9 @@ class AdminIncomingFundsView(APIView):
                     search_query in t['title'].lower() or
                     search_query in t['customer_name'].lower() or
                     search_query in t['customer_email'].lower() or
-                    search_query in t['customer_phone'].lower()
+                    search_query in t['customer_phone'].lower() or
+                    search_query in (t.get('seller_name') or '').lower() or
+                    search_query in (t.get('seller_username') or '').lower()
                 )
             ]
 
@@ -510,7 +536,7 @@ class AdminIncomingFundsView(APIView):
     def delete(self, request):
         """
         Delete a specific incoming funds transaction record (Admin only).
-        Useful for removing invalid/buggy/test entries.
+        Reverts / debits any refunded or credited wallet balances for full cleanup.
         """
         user = request.user
         is_admin = (
@@ -536,33 +562,85 @@ class AdminIncomingFundsView(APIView):
             )
 
         try:
+            reverted_notes = []
+
             if category == 'store':
                 from orders.models import Order
-                Order.objects.filter(id=raw_id).delete()
+                order = Order.objects.filter(id=raw_id).first()
+                if order:
+                    # 1. Check associated wallet transactions and revert balances
+                    wallet_txs = WalletTransaction.objects.filter(order=order)
+                    for tx in wallet_txs:
+                        if tx.transaction_type == 'REFUND' and tx.amount > 0:
+                            # Revert the refunded balance from user wallet
+                            try:
+                                tx.wallet.debit(
+                                    amount=tx.amount,
+                                    transaction_type='ADJUSTMENT',
+                                    description=f"Penarikan saldo refund pembatalan data pesanan #{order.order_number} (Pembersihan Data Admin)"
+                                )
+                                reverted_notes.append(f"Saldo refund Rp {tx.amount:,.0f} ditarik kembali dari @{tx.wallet.user.username}")
+                            except Exception as ex:
+                                # If wallet has less balance, deduct remaining or adjust to 0
+                                if tx.wallet.balance > 0:
+                                    actual_deduct = tx.wallet.balance
+                                    tx.wallet.debit(
+                                        amount=actual_deduct,
+                                        transaction_type='ADJUSTMENT',
+                                        description=f"Penarikan saldo refund pesanan #{order.order_number} (Pembersihan Data Admin)"
+                                    )
+                                    reverted_notes.append(f"Saldo refund disesuaikan Rp {actual_deduct:,.0f} dari @{tx.wallet.user.username}")
+                        elif tx.transaction_type == 'EARNING' and tx.amount > 0:
+                            try:
+                                tx.wallet.debit(
+                                    amount=tx.amount,
+                                    transaction_type='ADJUSTMENT',
+                                    description=f"Penarikan saldo penghasilan pesanan #{order.order_number} (Pembersihan Data Admin)"
+                                )
+                                reverted_notes.append(f"Saldo penghasilan Rp {tx.amount:,.0f} ditarik kembali dari @{tx.wallet.user.username}")
+                            except Exception:
+                                pass
+
+                    wallet_txs.delete()
+                    order.delete()
+
             elif category == 'digital':
                 from digital_products.models import DigitalOrder
-                DigitalOrder.objects.filter(id=raw_id).delete()
+                do = DigitalOrder.objects.filter(id=raw_id).first()
+                if do:
+                    do.delete()
+
             elif category == 'course':
                 from courses.models import CourseEnrollment
-                CourseEnrollment.objects.filter(id=raw_id).delete()
+                ce = CourseEnrollment.objects.filter(id=raw_id).first()
+                if ce:
+                    ce.delete()
+
             elif category == 'event':
                 from events.models import EventRegistration
                 EventRegistration.objects.filter(id=raw_id).delete()
+
             elif category == 'charity':
                 from donations.models import Donation
                 Donation.objects.filter(id=raw_id).delete()
+
             elif category == 'zis':
                 from zis.models import ZISSubmission
                 ZISSubmission.objects.filter(id=raw_id).delete()
+
             else:
                 return Response(
                     {'error': f'Kategori {category} tidak dikenali.'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
 
+            msg = 'Data transaksi berhasil dihapus dari sistem.'
+            if reverted_notes:
+                msg += f" ({', '.join(reverted_notes)})"
+
             return Response({
                 'success': True,
-                'message': 'Data transaksi berhasil dihapus dari sistem.'
+                'message': msg
             })
         except Exception as e:
             return Response(

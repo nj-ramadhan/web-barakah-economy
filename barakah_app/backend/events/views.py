@@ -417,6 +417,10 @@ class EventViewSet(viewsets.ModelViewSet):
             payment_amount = decimal.Decimal(str(request.data.get('payment_amount', 0) or 0))
         except:
             payment_amount = decimal.Decimal('0')
+        try:
+            admin_fee = decimal.Decimal(str(request.data.get('admin_fee', 0) or 0))
+        except:
+            admin_fee = decimal.Decimal('0')
         price_variation_id = request.data.get('price_variation')
         
         # Validate Price Variation if provided
@@ -633,6 +637,7 @@ class EventViewSet(viewsets.ModelViewSet):
             payment_method=payment_method if not is_free_by_label else 'free_label',
             payment_proof=payment_proof,
             payment_amount=payment_amount,
+            admin_fee=admin_fee,
             ocr_data=ocr_data,
             ocr_verified=ocr_verified,
             status=initial_status,

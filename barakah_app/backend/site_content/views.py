@@ -369,3 +369,73 @@ class CalendarNoteView(APIView):
         if deleted:
             return Response({'message': 'Catatan berhasil dihapus.'}, status=status.HTTP_200_OK)
         return Response({'error': 'Catatan tidak ditemukan.'}, status=status.HTTP_404_NOT_FOUND)
+
+
+class PublicMaintenanceSettingView(APIView):
+    """
+    Public endpoint: Returns whether site maintenance is active, title, message, estimated_end.
+    Does NOT require authentication.
+    """
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request):
+        from .models import MaintenanceSetting
+        from .serializers import MaintenanceSettingSerializer
+        setting = MaintenanceSetting.get_settings()
+        serializer = MaintenanceSettingSerializer(setting)
+        return Response(serializer.data)
+
+
+class AdminMaintenanceSettingView(APIView):
+    """
+    Admin endpoint: Allows Admin role to toggle maintenance mode, change message, and set estimated completion time.
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def _check_admin(self, user):
+        return (
+            user.is_superuser or 
+            user.is_staff or 
+            getattr(user, 'role', '') == 'admin' or 
+            getattr(getattr(user, 'profile', None), 'role', '') == 'admin' or
+            user.username == 'admin'
+        )
+
+    def get(self, request):
+        if not self._check_admin(request.user):
+            return Response({'error': 'Akses khusus administrator.'}, status=status.HTTP_403_FORBIDDEN)
+        from .models import MaintenanceSetting
+        from .serializers import MaintenanceSettingSerializer
+        setting = MaintenanceSetting.get_settings()
+        serializer = MaintenanceSettingSerializer(setting)
+        return Response(serializer.data)
+
+    def post(self, request):
+        if not self._check_admin(request.user):
+            return Response({'error': 'Akses khusus administrator.'}, status=status.HTTP_403_FORBIDDEN)
+        from .models import MaintenanceSetting
+        from .serializers import MaintenanceSettingSerializer
+        setting = MaintenanceSetting.get_settings()
+
+        is_active = request.data.get('is_active')
+        if is_active is not None:
+            setting.is_active = bool(is_active)
+
+        if 'title' in request.data:
+            setting.title = request.data.get('title') or "Situs Sedang Dalam Pemeliharaan (Maintenance)"
+        if 'message' in request.data:
+            setting.message = request.data.get('message') or "Mohon maaf atas ketidaknyamanannya. Kami sedang melakukan pemeliharaan sistem..."
+        if 'estimated_end' in request.data:
+            est = request.data.get('estimated_end')
+            setting.estimated_end = est if est else None
+
+        setting.updated_by = request.user
+        setting.save()
+
+        serializer = MaintenanceSettingSerializer(setting)
+        return Response({
+            'success': True,
+            'message': f"Mode Maintenance berhasil {'diaktifkan' if setting.is_active else 'dinonaktifkan'}.",
+            'setting': serializer.data
+        }, status=status.HTTP_200_OK)
+

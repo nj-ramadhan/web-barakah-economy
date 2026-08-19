@@ -16,7 +16,7 @@ class DonationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Donation
         fields = [
-            'id', 'campaign', 'campaign_id', 'campaign_title', 'campaign_slug', 'amount', 
+            'id', 'campaign', 'campaign_id', 'campaign_title', 'campaign_slug', 'amount', 'admin_fee',
             'donor_name', 'donor_phone', 'donor_email', 'is_anonymous', 
             'message', 'payment_method', 'payment_status', 'source_bank',
             'source_account', 'account_name', 'transfer_date', 'proof_file_url',

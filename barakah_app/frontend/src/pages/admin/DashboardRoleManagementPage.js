@@ -44,6 +44,7 @@ const MENU_OPTIONS = [
     { key: 'write_article', label: 'Personal: Tulis Artikel' },
     { key: 'my_events', label: 'Personal: Event Barakah' },
     { key: 'internal_meetings', label: 'Admin: Rapat & Manajemen Agenda Internal' },
+    { key: 'maintenance', label: 'Sistem: Mode Maintenance (Perawatan Web)' },
     { key: 'zis_routine', label: 'Personal: ZIS Rutin' },
 ];
 

@@ -101,3 +101,22 @@ class CalendarNoteSerializer(serializers.ModelSerializer):
             except Exception:
                 return obj.updated_by.username
         return None
+
+
+class MaintenanceSettingSerializer(serializers.ModelSerializer):
+    updated_by_name = serializers.SerializerMethodField()
+
+    class Meta:
+        from .models import MaintenanceSetting
+        model = MaintenanceSetting
+        fields = ['id', 'is_active', 'title', 'message', 'estimated_end', 'updated_at', 'updated_by', 'updated_by_name']
+        read_only_fields = ['id', 'updated_at', 'updated_by', 'updated_by_name']
+
+    def get_updated_by_name(self, obj):
+        if obj.updated_by:
+            try:
+                return obj.updated_by.profile.name_full or obj.updated_by.username
+            except Exception:
+                return obj.updated_by.username
+        return None
+

@@ -99,7 +99,7 @@ const EcoursePaymentConfirmation = () => {
     if (!targetAmt) return;
     setGeneratingQris(true);
     try {
-      const res = await generateDynaQRIS({ amount: targetAmt, type: 'ecourse' });
+      const res = await generateDynaQRIS({ amount: targetAmt, type: 'ecourse', add_unique_code: false });
       if (res.error) {
         alert(res.error);
       } else {

@@ -35,6 +35,8 @@ const EcourseJoinCoursePage = () => {
   const [currentEnrollmentId, setCurrentEnrollmentId] = useState(null);
   const [generatingQris, setGeneratingQris] = useState(false);
 
+  const [uniqueAdminFee] = useState(() => Math.floor(Math.random() * 400) + 100); // 100 - 499
+
   const formatIDR = (amount) => {
     return 'Rp. ' + new Intl.NumberFormat('id-ID', { minimumFractionDigits: 0 }).format(amount);
   };
@@ -113,6 +115,11 @@ const EcourseJoinCoursePage = () => {
       return;
     }
 
+    const isPaid = Number(course.price) > 0;
+    const isDyna = isPaid && selectedPaymentMethod === 'dynaqris';
+    const appliedFee = isDyna ? uniqueAdminFee : 0;
+    const totalToPay = Number(course.price) + appliedFee;
+
     setSubmitting(true);
     try {
       // 1. Create or update enrollment
@@ -122,7 +129,9 @@ const EcourseJoinCoursePage = () => {
           course: course.id,
           buyer_name: buyerName,
           buyer_email: buyerEmail,
-          buyer_phone: buyerPhone
+          buyer_phone: buyerPhone,
+          amount: totalToPay,
+          admin_fee: appliedFee
         }
       );
       
@@ -139,9 +148,10 @@ const EcourseJoinCoursePage = () => {
       if (selectedPaymentMethod === 'dynaqris') {
         setGeneratingQris(true);
         const qrisRes = await generateDynaQRIS({
-          amount: course.price,
+          amount: totalToPay,
           reference_id: enrollment.id,
-          type: 'ecourse'
+          type: 'ecourse',
+          add_unique_code: false
         });
         setGeneratingQris(false);
 
@@ -333,11 +343,26 @@ const EcourseJoinCoursePage = () => {
             )}
 
             {/* Total Summary */}
-            <div className="bg-gradient-to-r from-emerald-600 to-green-700 rounded-2xl p-4 text-white shadow-lg">
-              <div className="flex justify-between items-center">
-                <span className="text-xs font-medium text-emerald-100">Total Pembayaran</span>
-                <span className="text-xl font-black">
-                  {isFree ? 'Rp 0' : formatIDR(course.price)}
+            <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm space-y-2.5">
+              <div className="flex justify-between items-center text-xs text-gray-600">
+                <span>Harga Kelas</span>
+                <span className="font-bold text-gray-800">{isFree ? 'Gratis' : formatIDR(course.price)}</span>
+              </div>
+              
+              {!isFree && selectedPaymentMethod === 'dynaqris' && (
+                <div className="flex justify-between items-center text-xs text-emerald-800 font-semibold bg-emerald-50/70 p-2.5 rounded-xl border border-emerald-100">
+                  <div className="flex flex-col">
+                    <span>Biaya Layanan & Admin (Akad Ijarah)</span>
+                    <span className="text-[10px] text-emerald-600 font-normal">*Kode unik otomatis untuk verifikasi instan</span>
+                  </div>
+                  <span>+ {formatIDR(uniqueAdminFee)}</span>
+                </div>
+              )}
+
+              <div className="pt-2 border-t border-gray-100 flex justify-between items-center">
+                <span className="text-xs font-bold uppercase text-gray-700">Total Pembayaran</span>
+                <span className="text-xl font-black text-emerald-700">
+                  {isFree ? 'Rp 0' : formatIDR(selectedPaymentMethod === 'dynaqris' ? (Number(course.price) + uniqueAdminFee) : course.price)}
                 </span>
               </div>
             </div>

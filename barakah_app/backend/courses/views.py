@@ -723,12 +723,26 @@ class CourseEnrollmentViewSet(viewsets.ModelViewSet):
         ).first()
 
         paid_directly = course.own_bank_status == 'approved'
+        raw_admin_fee = request.data.get('admin_fee', 0)
+        try:
+            from decimal import Decimal
+            admin_fee = Decimal(str(raw_admin_fee or 0))
+        except:
+            admin_fee = Decimal('0')
+
+        raw_amount = request.data.get('amount')
+        try:
+            from decimal import Decimal
+            enroll_amount = Decimal(str(raw_amount)) if raw_amount is not None else course.price + admin_fee
+        except:
+            enroll_amount = course.price + admin_fee
 
         if existing_pending:
             existing_pending.buyer_name = request.data.get('buyer_name', request.user.username)
             existing_pending.buyer_email = request.data.get('buyer_email', request.user.email)
             existing_pending.buyer_phone = request.data.get('buyer_phone', getattr(request.user, 'phone', ''))
-            existing_pending.amount = course.price
+            existing_pending.amount = enroll_amount
+            existing_pending.admin_fee = admin_fee
             existing_pending.paid_to_seller_directly = paid_directly
             existing_pending.seller_bank_name = course.own_bank_name if paid_directly else None
             existing_pending.seller_bank_account = course.own_bank_account if paid_directly else None
@@ -745,7 +759,8 @@ class CourseEnrollmentViewSet(viewsets.ModelViewSet):
             buyer_name=request.data.get('buyer_name', request.user.username),
             buyer_email=request.data.get('buyer_email', request.user.email),
             buyer_phone=request.data.get('buyer_phone', getattr(request.user, 'phone', '')),
-            amount=course.price,
+            amount=enroll_amount,
+            admin_fee=admin_fee,
             payment_status='paid' if course.price == 0 else 'pending',
             paid_to_seller_directly=paid_directly,
             seller_bank_name=course.own_bank_name if paid_directly else None,

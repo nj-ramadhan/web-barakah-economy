@@ -126,11 +126,13 @@ import MeetingSubmissionPage from './pages/MeetingSubmissionPage';
 import MeetingManagementPage from './pages/MeetingManagementPage';
 import DashboardHeroBannersPage from './pages/admin/DashboardHeroBannersPage';
 import DashboardUserAgreementPage from './pages/admin/DashboardUserAgreementPage';
+import DashboardAdminMaintenancePage from './pages/admin/DashboardAdminMaintenancePage';
 import CalendarWidgetPage from './pages/widget/CalendarWidgetPage';
 
 import ProfileNotice from './components/common/ProfileNotice';
 import UserAgreementModal from './components/common/UserAgreementModal';
 import UnreviewedOrdersModal from './components/modals/UnreviewedOrdersModal';
+import MaintenanceScreen from './components/common/MaintenanceScreen';
 import SlideOverCartDrawer from './components/layout/SlideOverCartDrawer';
 
 import { ResponsiveLayout, MobileContainer } from './components/layout/ResponsiveLayout';
@@ -274,6 +276,22 @@ const LayoutWrapper = ({ isDesktop }) => {
   const user = JSON.parse(localStorage.getItem('user'));
   
   const [agreementUser, setAgreementUser] = React.useState(null);
+  const [maintenance, setMaintenance] = React.useState(null);
+
+  const fetchMaintenance = React.useCallback(async () => {
+    try {
+      const res = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/site-content/maintenance/`);
+      if (res.data) {
+        setMaintenance(res.data);
+      }
+    } catch (e) {
+      // ignore
+    }
+  }, []);
+
+  React.useEffect(() => {
+    fetchMaintenance();
+  }, [fetchMaintenance, location.pathname]);
 
   React.useEffect(() => {
     const parsedUser = JSON.parse(localStorage.getItem('user'));
@@ -303,6 +321,24 @@ const LayoutWrapper = ({ isDesktop }) => {
     }
   }, [location.pathname, location.search]);
 
+  // Check Maintenance Restrictions
+  const isAdmin = user && (user.username === 'admin' || user.role === 'admin' || (user.accessible_menus && user.accessible_menus.includes('*')));
+  const isAuthRoute = ['/login', '/lupa-password', '/reset-password'].includes(location.pathname);
+
+  // If maintenance is active and user is not admin
+  if (maintenance?.is_active && !isAdmin) {
+    // If not logged in and not on login page, redirect to login
+    if (!user && !isAuthRoute) {
+      navigate('/login', { replace: true });
+      return null;
+    }
+
+    // If logged in as non-admin, block access and display full-screen Maintenance View
+    if (user && !isAuthRoute) {
+      return <MaintenanceScreen setting={maintenance} onRefresh={fetchMaintenance} />;
+    }
+  }
+
   const publicPaths = ['/login', '/register', '/lupa-password', '/reset-password'];
   const showAgreementModal = agreementUser && 
                              !agreementUser.user_agreement_accepted && 
@@ -311,6 +347,20 @@ const LayoutWrapper = ({ isDesktop }) => {
 
   return (
     <div className="w-full">
+      {/* Sticky Admin Notification when Maintenance Mode is ON */}
+      {maintenance?.is_active && isAdmin && (
+        <div className="bg-gradient-to-r from-amber-600 to-amber-700 text-white text-xs font-bold py-2 px-4 text-center sticky top-0 z-[9999] shadow-md flex items-center justify-center gap-2">
+          <span className="material-icons text-sm animate-pulse">engineering</span>
+          <span>Mode Maintenance Sedang AKTIF — Website terbuka khusus untuk Administrator.</span>
+          <button 
+            onClick={() => navigate('/dashboard/admin/maintenance')} 
+            className="underline bg-black/20 hover:bg-black/30 px-2 py-0.5 rounded text-[11px] ml-2 transition"
+          >
+            Pengaturan Maintenance
+          </button>
+        </div>
+      )}
+
       <ProfileNotice />
       {showAgreementModal && <UserAgreementModal onAccept={handleAgreementAccepted} />}
       <Routes>
@@ -479,6 +529,7 @@ const LayoutWrapper = ({ isDesktop }) => {
         <Route path="/dashboard/admin/hero-banners" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardHeroBannersPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/admin/business-partners" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardAdminBusinessPage /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/dashboard/admin/user-agreement" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardUserAgreementPage /></ResponsiveLayout></PrivateRoute>} />
+        <Route path="/dashboard/admin/maintenance" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><DashboardAdminMaintenancePage /></ResponsiveLayout></PrivateRoute>} />
 
         <Route path="/live-meet-test" element={<ResponsiveLayout isDesktop={isDesktop}><AdminJitsiMeetPage /></ResponsiveLayout>} />
 

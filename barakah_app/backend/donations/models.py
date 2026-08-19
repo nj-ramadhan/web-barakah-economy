@@ -31,6 +31,7 @@ class Donation(models.Model):
     campaign = models.ForeignKey(Campaign, on_delete=models.CASCADE, related_name='donations')
     donor = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='donations')
     amount = models.DecimalField(max_digits=12, decimal_places=2)
+    admin_fee = models.DecimalField(max_digits=12, decimal_places=2, default=0, help_text="Biaya Layanan & Admin / Kode Unik")
     donor_name = models.CharField(max_length=100)
     donor_phone = models.CharField(max_length=15)
     donor_email = models.EmailField(blank=True, null=True)

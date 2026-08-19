@@ -1012,6 +1012,15 @@ const DashboardPage = () => {
                                     color: 'slate',
                                     title: 'Syarat & Ketentuan',
                                     desc: 'Atur naskah Lembar Kesepakatan & Ketentuan Data (Admin)'
+                                },
+                                {
+                                    id: 'maintenance_mode',
+                                    access: isAdmin || hasAccess('maintenance'),
+                                    to: '/dashboard/admin/maintenance',
+                                    icon: 'engineering',
+                                    color: 'amber',
+                                    title: 'Mode Maintenance (Perawatan)',
+                                    desc: 'Aktifkan / nonaktifkan mode pemeliharaan web untuk publik & user'
                                 }
                             ]
                         }
