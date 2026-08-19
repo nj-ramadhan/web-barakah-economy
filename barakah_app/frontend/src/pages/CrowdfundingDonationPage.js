@@ -320,36 +320,39 @@ const CrowdfundingDonationPage = () => {
     const donorName = formData.hideIdentity ? 'Hamba Allah' : formData.fullName;
     const donorPhone = formData.phone;
 
-    // Create a fresh pending donation record on backend so polling tracks THIS specific transaction
+    // Only create a pending donation record if QRIS is active (needed for QRIS auto-tracking)
+    // For manual transfer, donation will be created only when user uploads proof & confirms payment
     let createdDonationId = null;
-    try {
-      const formDataObj = new FormData();
-      formDataObj.append('amount', finalAmount);
-      formDataObj.append('admin_fee', appliedFee);
-      formDataObj.append('donor_name', donorName);
-      formDataObj.append('donor_phone', donorPhone);
-      formDataObj.append('donor_email', formData.email || '');
-      formDataObj.append('payment_method', effectiveBank);
-      if (formData.message) formDataObj.append('message', formData.message);
+    if (isDynaQRISActive) {
+      try {
+        const formDataObj = new FormData();
+        formDataObj.append('amount', finalAmount);
+        formDataObj.append('admin_fee', appliedFee);
+        formDataObj.append('donor_name', donorName);
+        formDataObj.append('donor_phone', donorPhone);
+        formDataObj.append('donor_email', formData.email || '');
+        formDataObj.append('payment_method', effectiveBank);
+        if (formData.message) formDataObj.append('message', formData.message);
 
-      const userStr = localStorage.getItem('user');
-      const token = localStorage.getItem('token') || (userStr ? JSON.parse(userStr)?.access : null);
+        const userStr = localStorage.getItem('user');
+        const token = localStorage.getItem('token') || (userStr ? JSON.parse(userStr)?.access : null);
 
-      const res = await axios.post(
-        `${process.env.REACT_APP_API_BASE_URL}/api/donations/${slug}/create-donation/`,
-        formDataObj,
-        {
-          headers: {
-            'X-CSRFToken': csrfToken,
-            ...(token ? { Authorization: `Bearer ${token}` } : {})
+        const res = await axios.post(
+          `${process.env.REACT_APP_API_BASE_URL}/api/donations/${slug}/create-donation/`,
+          formDataObj,
+          {
+            headers: {
+              'X-CSRFToken': csrfToken,
+              ...(token ? { Authorization: `Bearer ${token}` } : {})
+            }
           }
+        );
+        if (res.data && res.data.donation_id) {
+          createdDonationId = res.data.donation_id;
         }
-      );
-      if (res.data && res.data.donation_id) {
-        createdDonationId = res.data.donation_id;
+      } catch (err) {
+        console.error("Error creating initial pending donation record:", err);
       }
-    } catch (err) {
-      console.error("Error creating initial pending donation record:", err);
     }
 
     const paymentData = {

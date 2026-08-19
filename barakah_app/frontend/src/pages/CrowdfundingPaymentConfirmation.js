@@ -51,6 +51,43 @@ const CrowdfundingPaymentConfirmation = () => {
   const timerRef = useRef(null);
   const pollRef = useRef(null);
 
+  // Cancellation and page leave cleanup
+  const handleCancelDonation = async () => {
+    const donationId = location.state?.donationId;
+    if (donationId) {
+      try {
+        await axios.post(`${process.env.REACT_APP_API_BASE_URL}/api/donations/${donationId}/cancel-unpaid/`);
+      } catch (e) {
+        console.error("Error cancelling donation:", e);
+      }
+    }
+    const slug = location.state?.campaignSlug || '';
+    navigate(slug ? `/campaign/${slug}` : '/program-kebaikan');
+  };
+
+  // Auto-cancel if QRIS expires without payment
+  useEffect(() => {
+    if (isExpired && location.state?.donationId && !isSuccess) {
+      axios.post(`${process.env.REACT_APP_API_BASE_URL}/api/donations/${location.state.donationId}/cancel-unpaid/`)
+        .catch(e => console.error("Error auto-cancelling expired donation:", e));
+    }
+  }, [isExpired, location.state?.donationId, isSuccess]);
+
+  // Cleanup on unmount if user leaves without completing payment
+  useEffect(() => {
+    const donationId = location.state?.donationId;
+    return () => {
+      if (donationId && !isSuccess) {
+        const url = `${process.env.REACT_APP_API_BASE_URL}/api/donations/${donationId}/cancel-unpaid/`;
+        if (navigator.sendBeacon) {
+          navigator.sendBeacon(url);
+        } else {
+          axios.post(url).catch(() => {});
+        }
+      }
+    };
+  }, [location.state?.donationId, isSuccess]);
+
   useEffect(() => {
     getPublicPaymentConfig().then((cfg) => {
       setPaymentConfig(cfg);
@@ -426,6 +463,18 @@ Semoga dapat menjadi amal ibadah bagi saya dan bermanfaat untuk program serta pe
     <div className="body">
       <Header />
       <div className="container">
+        {/* Back / Cancel Button */}
+        <div className="flex items-center justify-between mb-4">
+          <button
+            type="button"
+            onClick={handleCancelDonation}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold transition shadow-sm"
+          >
+            <span className="material-icons text-sm">arrow_back</span>
+            <span>Kembali / Batalkan Donasi</span>
+          </button>
+        </div>
+
         {/* Thank you message */}
         <div className="text-center mb-6">
           <h1 className="text-xl font-medium text-gray-700">
@@ -525,6 +574,15 @@ Semoga dapat menjadi amal ibadah bagi saya dan bermanfaat untuk program serta pe
                   <span>Salin Text Kode QRIS</span>
                 </button>
               )}
+
+              <button
+                type="button"
+                onClick={handleCancelDonation}
+                className="w-full bg-red-50 hover:bg-red-100 text-red-600 font-bold py-2.5 px-4 rounded-xl text-xs transition flex items-center justify-center gap-1.5 border border-red-200"
+              >
+                <span className="material-icons text-sm">cancel</span>
+                <span>Batalkan Donasi &amp; Pilih Ulang</span>
+              </button>
 
               <p className="text-xs text-gray-500 font-medium pt-1">
                 {statusText}

@@ -212,6 +212,24 @@ class CreateDonationView(APIView):
                 'error': str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+class CancelDonationView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request, donation_id):
+        try:
+            donation = Donation.objects.filter(id=donation_id).first()
+            if donation:
+                if donation.payment_status == 'pending' and not donation.proof_file:
+                    donation.delete()
+                    return Response({'status': 'deleted', 'message': 'Unpaid pending donation removed.'}, status=status.HTTP_200_OK)
+                return Response({'status': 'kept', 'message': 'Donation is already processed or has proof.'}, status=status.HTTP_200_OK)
+            return Response({'status': 'not_found'}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    def delete(self, request, donation_id):
+        return self.post(request, donation_id)
+
 class IsAdmin(BasePermission):
     def has_permission(self, request, view):
         return request.user.is_authenticated and (request.user.role == 'admin' or request.user.username == 'admin')
@@ -228,13 +246,24 @@ class AdminDonationViewSet(viewsets.ModelViewSet):
         
         queryset = Donation.objects.all().order_by('-created_at')
         
+        status_filter = self.request.query_params.get('status')
+        if status_filter:
+            if status_filter == 'pending':
+                # Only show pending donations that have uploaded proof_file waiting for admin verification
+                queryset = queryset.filter(payment_status='pending').exclude(proof_file='').exclude(proof_file__isnull=True)
+            else:
+                queryset = queryset.filter(payment_status=status_filter)
+        else:
+            # Default "Semua Status": only show paid/verified, rejected, or pending WITH proof_file.
+            # Exclude abandoned unpaid pending attempts without proof!
+            queryset = queryset.filter(
+                Q(payment_status__in=['verified', 'rejected']) |
+                (Q(payment_status='pending') & ~Q(proof_file='') & Q(proof_file__isnull=False))
+            )
+            
         campaign_slug = self.request.query_params.get('campaign_slug')
         if campaign_slug:
             queryset = queryset.filter(campaign__slug=campaign_slug)
-            
-        status_filter = self.request.query_params.get('status')
-        if status_filter:
-            queryset = queryset.filter(payment_status=status_filter)
             
         search = self.request.query_params.get('search')
         if search:

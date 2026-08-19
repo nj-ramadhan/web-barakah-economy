@@ -783,13 +783,16 @@ const DashboardAdminIncomingFundsPage = () => {
 
                     {/* Pagination Footer */}
                     {!loading && transactions.length > 0 && perPage !== 'all' && (
-                        <div className="p-4 border-t border-gray-100 flex items-center justify-between bg-gray-50/40">
+                        <div className="p-4 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-3 bg-gray-50/40">
                             <p className="text-xs text-gray-500 font-medium">
                                 Menampilkan {(currentPage - 1) * perPage + 1} - {Math.min(currentPage * perPage, transactions.length)} dari {transactions.length} transaksi
                             </p>
                             <Pagination
                                 currentPage={currentPage}
                                 totalPages={totalPages}
+                                totalItems={transactions.length}
+                                itemsPerPage={perPage}
+                                showSummary={false}
                                 onPageChange={setCurrentPage}
                             />
                         </div>

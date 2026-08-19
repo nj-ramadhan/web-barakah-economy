@@ -1,6 +1,13 @@
 from django.urls import path, include
 from rest_framework.routers import SimpleRouter
-from .views import DonationView, CampaignDonationsView, CreateDonationView, UpdateDonationView, AdminDonationViewSet
+from .views import (
+    DonationView, 
+    CampaignDonationsView, 
+    CreateDonationView, 
+    UpdateDonationView, 
+    AdminDonationViewSet,
+    CancelDonationView
+)
 
 router = SimpleRouter()
 router.register('admin-management', AdminDonationViewSet, basename='admin-donation')
@@ -10,5 +17,6 @@ urlpatterns = [
     path('campaign/<slug:slug>/donations/', CampaignDonationsView.as_view(), name='campaign-donations'),
     path('<str:campaign_slug>/create-donation/', CreateDonationView.as_view(), name='create-donation'),
     path('<int:donation_id>/update-donation/', UpdateDonationView.as_view(), name='update-donation'),
+    path('<int:donation_id>/cancel-unpaid/', CancelDonationView.as_view(), name='cancel-unpaid-donation'),
     path('', include(router.urls)),
 ]

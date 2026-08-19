@@ -320,10 +320,10 @@ const DashboardDonationManagementPage = () => {
                                 onChange={(e) => setStatusFilter(e.target.value)}
                                 className="w-full px-4 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-sm outline-none focus:ring-2 focus:ring-green-500 transition"
                             >
-                                <option value="">Semua Status</option>
-                                <option value="pending">Pending</option>
-                                <option value="verified">Verified</option>
-                                <option value="rejected">Rejected</option>
+                                <option value="">Semua Donatur (Lunas / Ada Bukti)</option>
+                                <option value="verified">Verified (Sudah Bayar)</option>
+                                <option value="pending">Pending (Menunggu Verifikasi Bukti)</option>
+                                <option value="rejected">Rejected (Ditolak)</option>
                             </select>
                         </div>
                         <div className="w-full md:w-64">
