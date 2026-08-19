@@ -87,7 +87,7 @@ const CrowdfundingDonationPage = () => {
           const profilePhone = res.data.phone_number || res.data.phone || res.data.whatsapp || res.data.no_hp || res.data.no_whatsapp || '';
           const profileName = res.data.full_name || res.data.username || '';
           const profileEmail = res.data.email || '';
-          
+
           setFormData(prev => ({
             ...prev,
             fullName: prev.fullName || profileName,
@@ -105,7 +105,7 @@ const CrowdfundingDonationPage = () => {
               setFormData(prev => ({ ...prev, phone: prev.phone || pPhone }));
             }
           }
-        }).catch(() => {});
+        }).catch(() => { });
       });
     }
   }, []);
@@ -590,7 +590,7 @@ const CrowdfundingDonationPage = () => {
                   <div className="flex justify-between items-center text-xs text-emerald-800 font-semibold bg-white/90 p-2.5 rounded-lg border border-emerald-100">
                     <div className="flex flex-col">
                       <span>Biaya Layanan & Admin (Akad Ijarah)</span>
-                      <span className="text-[10px] text-emerald-600 font-normal">*Kode unik otomatis untuk verifikasi instan</span>
+                      <span className="text-[10px] text-emerald-600 font-normal">*Pembayaran Instant</span>
                     </div>
                     <span>+ Rp {new Intl.NumberFormat('id-ID').format(uniqueAdminFee)}</span>
                   </div>

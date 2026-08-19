@@ -293,14 +293,14 @@ const DigitalProductPaymentPage = () => {
                 <h1 className="text-lg font-bold mb-2">Pembayaran Produk Digital</h1>
                 <p className="text-sm text-gray-500 mb-6">Order: <strong>{orderNumber}</strong></p>
 
-                {/* DynaQRIS Banner if mode is dynaqris */}
+                {/* QRIS Banner if mode is dynaqris */}
                 {paymentConfig?.active_mode === 'dynaqris' && (
                     <div className="bg-gradient-to-r from-emerald-600 to-green-700 text-white rounded-2xl p-5 mb-6 shadow-lg text-center">
                         <div className="inline-flex items-center gap-2 bg-white/20 text-white px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-2">
                             <span className="material-icons text-sm">qr_code_2</span>
-                            <span>Metode Otomatis DynaQRIS Aktif</span>
+                            <span>Metode Pembayaran QRIS Otomatis</span>
                         </div>
-                        <h3 className="text-lg font-bold">Scan QRIS Dinamis Otomatis</h3>
+                        <h3 className="text-lg font-bold">Scan QRIS Pembayaran</h3>
                         <p className="text-xs text-emerald-100 mt-1 mb-4">
                             Pembayaran otomatis terverifikasi dan langsung memberikan akses produk digital.
                         </p>
@@ -325,139 +325,149 @@ const DigitalProductPaymentPage = () => {
                     onPaymentSuccess={handleDynaSuccess}
                 />
 
-                <div className="bg-gray-50 rounded-xl p-4 mb-4">
-                    <h2 className="font-semibold text-sm mb-3">Pilihan Pembayaran</h2>
-
-                    {order && (
-                        <div className="bg-green-50 border border-green-100 rounded-lg p-3 mb-4 flex justify-between items-center">
-                            <div>
-                                <p className="text-[10px] text-green-600 uppercase font-bold tracking-wider">Total Tagihan</p>
-                                <p className="text-lg font-bold text-green-900">
-                                    Rp {formatCurrency(order.amount)}
-                                </p>
-                            </div>
-                            <div className="text-right">
-                                <p className="text-[10px] text-gray-400 uppercase font-bold tracking-wider">Status</p>
-                                <p className="text-xs font-bold text-orange-500 uppercase">{order.payment_status}</p>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* QRIS */}
-                    {order && (
-                        <div className="bg-white rounded-lg p-4 text-center border border-gray-200 mb-4">
-                            <p className="text-xs font-bold text-gray-400 mb-2 uppercase tracking-wider">
-                                {order.paid_to_seller_directly ? `QRIS ${order.seller_bank_holder}` : "QRIS BAE COMMUNITY"}
+                {order && (
+                    <div className="bg-green-50 border border-green-100 rounded-2xl p-4 mb-4 flex justify-between items-center shadow-xs">
+                        <div>
+                            <p className="text-[10px] text-green-600 uppercase font-bold tracking-wider">Total Tagihan</p>
+                            <p className="text-xl font-black text-green-900">
+                                Rp {formatCurrency(order.amount)}
                             </p>
-                            <img
-                                id="qris-image"
-                                src={order.paid_to_seller_directly && order.seller_qris_image ? getMediaUrl(order.seller_qris_image) : "/images/qris-bae2.png"}
-                                alt="QRIS Code"
-                                className="w-48 h-48 mx-auto object-contain"
-                                onError={(e) => {
-                                    e.target.style.display = 'none';
-                                    e.target.nextSibling.style.display = 'flex';
-                                }}
-                            />
-                            <div className="hidden w-48 h-48 mx-auto bg-gray-100 rounded-lg items-center justify-center text-gray-400 text-sm">
-                                QRIS Code
-                            </div>
-
-                            <button
-                                onClick={() => {
-                                    const link = document.createElement('a');
-                                    link.href = order.paid_to_seller_directly && order.seller_qris_image ? getMediaUrl(order.seller_qris_image) : '/images/qris-bae2.png';
-                                    link.download = `QRIS-${orderNumber}.png`;
-                                    document.body.appendChild(link);
-                                    link.click();
-                                    document.body.removeChild(link);
-                                }}
-                                className="mt-4 flex items-center justify-center gap-2 mx-auto px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-xs font-bold hover:bg-gray-200 transition border border-gray-200"
-                            >
-                                <span className="material-icons text-sm">download</span>
-                                UNDUH QR
-                            </button>
                         </div>
-                    )}
-
-                    <div className="border-t border-gray-200 my-4"></div>
-
-                    {/* BSI */}
-                    {order && (
-                        <div className="bg-white rounded-lg p-4 border border-gray-200 mb-4">
-                            <div className="flex items-center gap-2 mb-2">
-                                {!order.paid_to_seller_directly && <img src="/images/bsi-logo.png" alt="BSI" className="h-4" onError={(e) => e.target.style.display = 'none'} />}
-                                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">
-                                    TRANSFER BANK {order.paid_to_seller_directly ? order.seller_bank_name : "BSI"}
-                                </p>
-                            </div>
-                            <div className="flex justify-between items-center bg-emerald-50 p-3 rounded-lg border border-emerald-100">
-                                <div>
-                                    <p className="text-xs text-emerald-600">No. Rekening {order.paid_to_seller_directly ? order.seller_bank_name : "BSI"}</p>
-                                    <p className="font-bold text-emerald-900">{order.paid_to_seller_directly ? order.seller_bank_account : "2220606662"}</p>
-                                    <p className="text-xs text-emerald-700">an. {order.paid_to_seller_directly ? order.seller_bank_holder : "Barakah Economy Community"}</p>
-                                </div>
-                                <button
-                                    onClick={() => {
-                                        navigator.clipboard.writeText(order.paid_to_seller_directly ? order.seller_bank_account : '2220606662');
-                                        alert('No. Rekening berhasil disalin!');
-                                    }}
-                                    className="bg-emerald-600 text-white text-[10px] px-3 py-1 rounded-full font-bold shadow-sm"
-                                >
-                                    SALIN
-                                </button>
-                            </div>
+                        <div className="text-right">
+                            <p className="text-[10px] text-gray-400 uppercase font-bold tracking-wider">Status</p>
+                            <span className="px-2.5 py-1 rounded-full text-[10px] font-black uppercase bg-orange-100 text-orange-700">
+                                {order.payment_status}
+                            </span>
                         </div>
-                    )}
-                </div>
-
-                {ocrError && (
-                    <div className="bg-red-50 text-red-600 text-xs p-3 rounded-xl mb-4 border border-red-100">
-                        <p className="font-bold">Error Validasi:</p>
-                        <p>{ocrError}</p>
                     </div>
                 )}
 
-                {/* Upload */}
-                <div className="mb-6">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Upload Bukti Transfer</label>
-                    <div
-                        onClick={() => document.getElementById('proof-input').click()}
-                        className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center cursor-pointer hover:border-green-400 transition"
-                    >
-                        {preview ? (
-                            <img src={preview} alt="Preview" className="max-h-48 mx-auto rounded-lg" />
-                        ) : (
-                            <>
-                                <span className="material-icons text-gray-400 text-4xl mb-2">cloud_upload</span>
-                                <p className="text-sm text-gray-500">Klik untuk memilih gambar</p>
-                                <p className="text-xs text-gray-400 mt-1">JPG, PNG maksimal 5MB</p>
-                            </>
-                        )}
-                    </div>
-                    <input
-                        id="proof-input"
-                        type="file"
-                        accept="image/*"
-                        onChange={handleFileChange}
-                        className="hidden"
-                    />
-                </div>
+                {/* Manual Transfer & Proof Upload only shown if mode is NOT dynaqris */}
+                {paymentConfig?.active_mode !== 'dynaqris' && (
+                    <>
+                        <div className="bg-gray-50 rounded-xl p-4 mb-4">
+                            <h2 className="font-semibold text-sm mb-3">Pilihan Pembayaran Manual</h2>
 
-                <button
-                    onClick={handleProofSubmit}
-                    disabled={uploading || ocrLoading || !proofFile}
-                    className="w-full bg-green-700 text-white py-3 rounded-xl font-bold text-sm shadow-lg hover:bg-green-800 transition disabled:opacity-50 flex items-center justify-center gap-2"
-                >
-                    {(uploading || ocrLoading) ? (
-                        <>
-                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                            {ocrLoading ? 'Validasi OCR...' : 'Memproses...'}
-                        </>
-                    ) : (
-                        'Kirim Bukti Pembayaran'
-                    )}
-                </button>
+                            {/* QRIS Manual */}
+                            {order && (
+                                <div className="bg-white rounded-lg p-4 text-center border border-gray-200 mb-4">
+                                    <p className="text-xs font-bold text-gray-400 mb-2 uppercase tracking-wider">
+                                        {order.paid_to_seller_directly ? `QRIS ${order.seller_bank_holder}` : "QRIS BAE COMMUNITY"}
+                                    </p>
+                                    <img
+                                        id="qris-image"
+                                        src={order.paid_to_seller_directly && order.seller_qris_image ? getMediaUrl(order.seller_qris_image) : "/images/qris-bae2.png"}
+                                        alt="QRIS Code"
+                                        className="w-48 h-48 mx-auto object-contain"
+                                        onError={(e) => {
+                                            e.target.style.display = 'none';
+                                            e.target.nextSibling.style.display = 'flex';
+                                        }}
+                                    />
+                                    <div className="hidden w-48 h-48 mx-auto bg-gray-100 rounded-lg items-center justify-center text-gray-400 text-sm">
+                                        QRIS Code
+                                    </div>
+
+                                    <button
+                                        onClick={() => {
+                                            const link = document.createElement('a');
+                                            link.href = order.paid_to_seller_directly && order.seller_qris_image ? getMediaUrl(order.seller_qris_image) : '/images/qris-bae2.png';
+                                            link.download = `QRIS-${orderNumber}.png`;
+                                            document.body.appendChild(link);
+                                            link.click();
+                                            document.body.removeChild(link);
+                                        }}
+                                        className="mt-4 flex items-center justify-center gap-2 mx-auto px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-xs font-bold hover:bg-gray-200 transition border border-gray-200"
+                                    >
+                                        <span className="material-icons text-sm">download</span>
+                                        UNDUH QR
+                                    </button>
+                                </div>
+                            )}
+
+                            <div className="border-t border-gray-200 my-4"></div>
+
+                            {/* BSI */}
+                            {order && (
+                                <div className="bg-white rounded-lg p-4 border border-gray-200 mb-4">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        {!order.paid_to_seller_directly && <img src="/images/bsi-logo.png" alt="BSI" className="h-4" onError={(e) => e.target.style.display = 'none'} />}
+                                        <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+                                            TRANSFER BANK {order.paid_to_seller_directly ? order.seller_bank_name : "BSI"}
+                                        </p>
+                                    </div>
+                                    <div className="flex justify-between items-center bg-emerald-50 p-3 rounded-lg border border-emerald-100">
+                                        <div>
+                                            <p className="text-xs text-emerald-600">No. Rekening {order.paid_to_seller_directly ? order.seller_bank_name : "BSI"}</p>
+                                            <p className="font-bold text-emerald-900">{order.paid_to_seller_directly ? order.seller_bank_account : "2220606662"}</p>
+                                            <p className="text-xs text-emerald-700">an. {order.paid_to_seller_directly ? order.seller_bank_holder : "Barakah Economy Community"}</p>
+                                        </div>
+                                        <button
+                                            onClick={() => {
+                                                navigator.clipboard.writeText(order.paid_to_seller_directly ? order.seller_bank_account : '2220606662');
+                                                alert('No. Rekening berhasil disalin!');
+                                            }}
+                                            className="bg-emerald-600 text-white text-[10px] px-3 py-1 rounded-full font-bold shadow-sm"
+                                        >
+                                            SALIN
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        {ocrError && (
+                            <div className="bg-red-50 text-red-600 text-xs p-3 rounded-xl mb-4 border border-red-100">
+                                <p className="font-bold">Error Validasi:</p>
+                                <p>{ocrError}</p>
+                            </div>
+                        )}
+
+                        {/* Upload */}
+                        <div className="mb-6">
+                            <label className="block text-sm font-medium text-gray-700 mb-2">Upload Bukti Transfer</label>
+                            <div
+                                onClick={() => document.getElementById('proof-input').click()}
+                                className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center cursor-pointer hover:border-green-400 transition"
+                            >
+                                {preview ? (
+                                    <img src={preview} alt="Preview" className="max-h-48 mx-auto rounded-lg" />
+                                ) : (
+                                    <>
+                                        <span className="material-icons text-gray-400 text-4xl mb-2">cloud_upload</span>
+                                        <p className="text-sm text-gray-500">Klik untuk memilih gambar</p>
+                                        <p className="text-xs text-gray-400 mt-1">JPG, PNG maksimal 5MB</p>
+                                    </>
+                                )}
+                            </div>
+                            <input
+                                id="proof-input"
+                                type="file"
+                                accept="image/*"
+                                onChange={handleFileChange}
+                                className="hidden"
+                            />
+                        </div>
+
+                        <button
+                            onClick={handleProofSubmit}
+                            disabled={uploading || ocrLoading || !proofFile}
+                            className="w-full bg-green-700 text-white py-3.5 rounded-xl font-bold text-sm shadow-lg hover:bg-green-800 transition disabled:opacity-50 flex items-center justify-center gap-2"
+                        >
+                            {(uploading || ocrLoading) ? (
+                                <>
+                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                    <span>{ocrLoading ? 'Validasi OCR...' : 'Memproses...'}</span>
+                                </>
+                            ) : (
+                                <>
+                                    <span className="material-icons text-base">upload</span>
+                                    <span>Kirim Bukti Pembayaran</span>
+                                </>
+                            )}
+                        </button>
+                    </>
+                )}
             </div>
         </div>
     );

@@ -501,7 +501,7 @@ const EcommercePaymentConfirmation = () => {
           <h1 className="text-2xl font-black text-gray-800 tracking-tight">Konfirmasi Pembayaran</h1>
           <p className="text-gray-500 text-sm">
             {paymentConfig?.active_mode === 'dynaqris'
-              ? 'Pembayaran Otomatis Menggunakan DynaQRIS'
+              ? 'Pembayaran Otomatis Menggunakan QRIS'
               : 'Upload struk untuk verifikasi otomatis via OCR AI'}
           </p>
         </div>

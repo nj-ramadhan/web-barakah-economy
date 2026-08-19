@@ -187,7 +187,7 @@ const DigitalProductCheckoutPage = () => {
                             <div className="flex justify-between items-center text-xs text-emerald-800 font-semibold bg-emerald-50/80 p-2 rounded-lg border border-emerald-100">
                                 <div className="flex flex-col">
                                     <span>Biaya Layanan & Admin (Akad Ijarah)</span>
-                                    <span className="text-[10px] text-emerald-600 font-normal">*Kode unik otomatis untuk verifikasi instan</span>
+                                    <span className="text-[10px] text-emerald-600 font-normal">*Pembayaran Instant</span>
                                 </div>
                                 <span>+ {formatIDR(uniqueAdminFee)}</span>
                             </div>

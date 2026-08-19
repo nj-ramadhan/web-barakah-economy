@@ -64,7 +64,7 @@ const EcommerceCheckoutSinergy = () => {
                 const cartRes = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/carts/cart/`, {
                     headers: { Authorization: `Bearer ${user.access}` }
                 });
-                
+
                 const rawItems = cartRes.data || [];
                 const selectedItems = rawItems.filter(it => it.is_selected);
                 const items = selectedItems.length > 0 ? selectedItems : rawItems;
@@ -75,7 +75,7 @@ const EcommerceCheckoutSinergy = () => {
                 }
 
                 setCartItems(items);
-                
+
                 const initialConfigs = {};
                 items.forEach(item => {
                     const s_id = item.product?.seller_id || "0";
@@ -149,11 +149,11 @@ const EcommerceCheckoutSinergy = () => {
             const user = JSON.parse(localStorage.getItem('user'));
             const itemsFromThisSeller = cartItems.filter(item => (item.product?.seller_id || "0") === sellerId);
             const firstItem = itemsFromThisSeller[0];
-            
+
             // Logic: Use Seller's City ID from Serializer (which we fixed in backend to be 10-digit village ID)
-            const origin_code = String(firstItem?.product?.seller_city_id || "3216061005"); 
+            const origin_code = String(firstItem?.product?.seller_city_id || "3216061005");
             const destination_code = String(selectedAddress?.address_village_id || addresses?.address_village_id || "");
-            
+
             // Validation for 10-digit codes required by API.co.id
             if (origin_code.length !== 10) {
                 alert('Alamat Toko Penjual (Origin) tidak valid untuk kurir ini. Hubungi admin Barakah.');
@@ -209,7 +209,7 @@ const EcommerceCheckoutSinergy = () => {
         }
 
         const user = JSON.parse(localStorage.getItem('user'));
-        
+
         // Transform checkoutConfigs to list format expected by API
         const checkoutsList = Object.keys(checkoutConfigs).map(s_id => ({
             seller_id: s_id,
@@ -247,7 +247,7 @@ const EcommerceCheckoutSinergy = () => {
 
             const orders = res.data;
             const firstOrder = Array.isArray(orders) ? orders[0] : orders;
-            
+
             if (selectedPaymentMethod === 'cod') {
                 alert('Pesanan COD berhasil dibuat!');
                 navigate('/riwayat-belanja');
@@ -269,7 +269,7 @@ const EcommerceCheckoutSinergy = () => {
                 // Explicitly guarantee final total includes the applied admin fee
                 const effectiveTotal = Math.max(dbOrdersGrandTotal, calculatedTotalWithFee);
 
-                const remainingToPay = selectedPaymentMethod === 'hybrid' 
+                const remainingToPay = selectedPaymentMethod === 'hybrid'
                     ? Math.max(0, effectiveTotal - (Number(userWallet.balance) || 0))
                     : effectiveTotal;
 
@@ -356,15 +356,15 @@ const EcommerceCheckoutSinergy = () => {
     cartItems.forEach(item => {
         const s_id = item.product?.seller_id || "0";
         if (!sellerGroups[s_id]) {
-            sellerGroups[s_id] = { 
-                items: [], 
-                total_original_price: 0, 
-                total_promo_discount: 0, 
-                total_price: 0 
+            sellerGroups[s_id] = {
+                items: [],
+                total_original_price: 0,
+                total_promo_discount: 0,
+                total_price: 0
             };
         }
         sellerGroups[s_id].items.push(item);
-        
+
         const origPrice = getItemOriginalPrice(item);
         const finalPrice = getItemPrice(item);
         const promoDiscount = Math.max(0, (origPrice - finalPrice) * item.quantity);
@@ -406,10 +406,10 @@ const EcommerceCheckoutSinergy = () => {
 
                 {/* Address Card & Selector */}
                 {addresses && (
-                    <ShippingAddressSelector 
-                        profile={addresses} 
-                        selectedAddress={selectedAddress} 
-                        onAddressSelect={setSelectedAddress} 
+                    <ShippingAddressSelector
+                        profile={addresses}
+                        selectedAddress={selectedAddress}
+                        onAddressSelect={setSelectedAddress}
                     />
                 )}
 
@@ -431,8 +431,8 @@ const EcommerceCheckoutSinergy = () => {
                                     return (
                                         <div key={item.id} className="flex gap-4">
                                             <div className="w-16 h-16 bg-gray-100 rounded-xl overflow-hidden shrink-0 border border-gray-100 relative">
-                                                <img 
-                                                    src={getMediaUrl(item.product?.thumbnail || item.product?.thumbnail_url) || '/placeholder-image.jpg'} 
+                                                <img
+                                                    src={getMediaUrl(item.product?.thumbnail || item.product?.thumbnail_url) || '/placeholder-image.jpg'}
                                                     alt={item.product?.title}
                                                     className="w-full h-full object-cover"
                                                     onError={(e) => {
@@ -502,10 +502,10 @@ const EcommerceCheckoutSinergy = () => {
                                             )}
                                         </label>
                                         <div className="flex gap-2">
-                                            <input 
-                                                type="text" 
-                                                placeholder="KODE VOUCHER" 
-                                                className="flex-1 text-xs font-bold bg-white border border-gray-200 rounded-xl p-2.5 focus:ring-2 focus:ring-emerald-500 outline-none uppercase" 
+                                            <input
+                                                type="text"
+                                                placeholder="KODE VOUCHER"
+                                                className="flex-1 text-xs font-bold bg-white border border-gray-200 rounded-xl p-2.5 focus:ring-2 focus:ring-emerald-500 outline-none uppercase"
                                                 value={voucherInputs[s_id] !== undefined ? voucherInputs[s_id] : (config?.voucher_code || '')}
                                                 onChange={(e) => setVoucherInputs(prev => ({ ...prev, [s_id]: e.target.value.toUpperCase() }))}
                                                 disabled={config?.voucher_nominal > 0 || validatingVoucher[s_id]}
@@ -542,9 +542,9 @@ const EcommerceCheckoutSinergy = () => {
                                         <span className="material-icons text-sm text-emerald-600">note_alt</span>
                                         Catatan untuk Penjual (Opsional)
                                     </label>
-                                    <input 
-                                        type="text" 
-                                        placeholder="Pesan khusus atau instruksi pengiriman..." 
+                                    <input
+                                        type="text"
+                                        placeholder="Pesan khusus atau instruksi pengiriman..."
                                         className="w-full text-xs bg-white border border-gray-200 rounded-xl p-3 focus:ring-2 focus:ring-emerald-500 outline-none"
                                         value={config?.buyer_note || ''}
                                         onChange={(e) => handleConfigChange(s_id, 'buyer_note', e.target.value)}
@@ -569,17 +569,15 @@ const EcommerceCheckoutSinergy = () => {
 
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                     {/* 1. QRIS / Transfer Bank */}
-                                    <div 
+                                    <div
                                         onClick={() => handleConfigChange(s_id, 'payment_method', 'manual')}
-                                        className={`p-3.5 rounded-2xl border-2 cursor-pointer transition-all flex items-start gap-3 relative ${
-                                            (config?.payment_method || 'manual') === 'manual'
+                                        className={`p-3.5 rounded-2xl border-2 cursor-pointer transition-all flex items-start gap-3 relative ${(config?.payment_method || 'manual') === 'manual'
                                                 ? 'bg-emerald-50/80 border-emerald-500 shadow-sm'
                                                 : 'bg-white border-gray-200 hover:border-emerald-300'
-                                        }`}
+                                            }`}
                                     >
-                                        <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
-                                            (config?.payment_method || 'manual') === 'manual' ? 'bg-emerald-600 text-white' : 'bg-gray-100 text-gray-600'
-                                        }`}>
+                                        <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${(config?.payment_method || 'manual') === 'manual' ? 'bg-emerald-600 text-white' : 'bg-gray-100 text-gray-600'
+                                            }`}>
                                             <span className="material-icons text-lg">qr_code_2</span>
                                         </div>
                                         <div className="flex-1 min-w-0 pr-5">
@@ -588,9 +586,8 @@ const EcommerceCheckoutSinergy = () => {
                                                 Bayar lunas 100% via QRIS atau Transfer Bank manual.
                                             </p>
                                         </div>
-                                        <div className={`w-4 h-4 rounded-full border-2 absolute top-3.5 right-3.5 flex items-center justify-center ${
-                                            (config?.payment_method || 'manual') === 'manual' ? 'border-emerald-600 bg-emerald-600' : 'border-gray-300'
-                                        }`}>
+                                        <div className={`w-4 h-4 rounded-full border-2 absolute top-3.5 right-3.5 flex items-center justify-center ${(config?.payment_method || 'manual') === 'manual' ? 'border-emerald-600 bg-emerald-600' : 'border-gray-300'
+                                            }`}>
                                             {(config?.payment_method || 'manual') === 'manual' && <div className="w-1.5 h-1.5 rounded-full bg-white"></div>}
                                         </div>
                                     </div>
@@ -599,23 +596,21 @@ const EcommerceCheckoutSinergy = () => {
                                     {(() => {
                                         const isCodAvailable = group.items.every(item => item.product?.is_cod_available);
                                         return (
-                                            <div 
+                                            <div
                                                 onClick={() => {
                                                     if (isCodAvailable) {
                                                         handleConfigChange(s_id, 'payment_method', 'cod');
                                                     }
                                                 }}
-                                                className={`p-3.5 rounded-2xl border-2 transition-all flex items-start gap-3 relative ${
-                                                    !isCodAvailable 
+                                                className={`p-3.5 rounded-2xl border-2 transition-all flex items-start gap-3 relative ${!isCodAvailable
                                                         ? 'bg-gray-100/70 border-gray-200 opacity-60 cursor-not-allowed'
                                                         : config?.payment_method === 'cod'
                                                             ? 'bg-emerald-50/80 border-emerald-500 shadow-sm cursor-pointer'
                                                             : 'bg-white border-gray-200 hover:border-emerald-300 cursor-pointer'
-                                                }`}
+                                                    }`}
                                             >
-                                                <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
-                                                    config?.payment_method === 'cod' ? 'bg-emerald-600 text-white' : 'bg-gray-100 text-gray-600'
-                                                }`}>
+                                                <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${config?.payment_method === 'cod' ? 'bg-emerald-600 text-white' : 'bg-gray-100 text-gray-600'
+                                                    }`}>
                                                     <span className="material-icons text-lg">local_shipping</span>
                                                 </div>
                                                 <div className="flex-1 min-w-0 pr-5">
@@ -626,14 +621,13 @@ const EcommerceCheckoutSinergy = () => {
                                                         )}
                                                     </div>
                                                     <p className="text-[10px] text-gray-500 mt-0.5 leading-snug">
-                                                        {isCodAvailable 
+                                                        {isCodAvailable
                                                             ? 'Bayar tunai saat barang pesanan tiba di tujuan.'
                                                             : 'Produk tidak mendukung fitur pembayaran COD.'}
                                                     </p>
                                                 </div>
-                                                <div className={`w-4 h-4 rounded-full border-2 absolute top-3.5 right-3.5 flex items-center justify-center ${
-                                                    config?.payment_method === 'cod' ? 'border-emerald-600 bg-emerald-600' : 'border-gray-300'
-                                                }`}>
+                                                <div className={`w-4 h-4 rounded-full border-2 absolute top-3.5 right-3.5 flex items-center justify-center ${config?.payment_method === 'cod' ? 'border-emerald-600 bg-emerald-600' : 'border-gray-300'
+                                                    }`}>
                                                     {config?.payment_method === 'cod' && <div className="w-1.5 h-1.5 rounded-full bg-white"></div>}
                                                 </div>
                                             </div>
@@ -644,23 +638,21 @@ const EcommerceCheckoutSinergy = () => {
                                     {(() => {
                                         const isSaldoEnough = Number(userWallet.balance) >= grandTotal && grandTotal > 0;
                                         return (
-                                            <div 
+                                            <div
                                                 onClick={() => {
                                                     if (isSaldoEnough) {
                                                         handleConfigChange(s_id, 'payment_method', 'saldo_bae');
                                                     }
                                                 }}
-                                                className={`p-3.5 rounded-2xl border-2 transition-all flex items-start gap-3 relative ${
-                                                    !isSaldoEnough 
+                                                className={`p-3.5 rounded-2xl border-2 transition-all flex items-start gap-3 relative ${!isSaldoEnough
                                                         ? 'bg-gray-100/70 border-gray-200 opacity-60 cursor-not-allowed'
                                                         : config?.payment_method === 'saldo_bae'
                                                             ? 'bg-emerald-50/80 border-emerald-500 shadow-sm cursor-pointer'
                                                             : 'bg-white border-gray-200 hover:border-emerald-300 cursor-pointer'
-                                                }`}
+                                                    }`}
                                             >
-                                                <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
-                                                    config?.payment_method === 'saldo_bae' ? 'bg-emerald-600 text-white' : 'bg-gray-100 text-gray-600'
-                                                }`}>
+                                                <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${config?.payment_method === 'saldo_bae' ? 'bg-emerald-600 text-white' : 'bg-gray-100 text-gray-600'
+                                                    }`}>
                                                     <span className="material-icons text-lg">account_balance_wallet</span>
                                                 </div>
                                                 <div className="flex-1 min-w-0 pr-5">
@@ -676,9 +668,8 @@ const EcommerceCheckoutSinergy = () => {
                                                             : `Saldo BAE (Rp ${new Intl.NumberFormat('id-ID').format(userWallet.balance || 0)}) kurang dari tagihan.`}
                                                     </p>
                                                 </div>
-                                                <div className={`w-4 h-4 rounded-full border-2 absolute top-3.5 right-3.5 flex items-center justify-center ${
-                                                    config?.payment_method === 'saldo_bae' ? 'border-emerald-600 bg-emerald-600' : 'border-gray-300'
-                                                }`}>
+                                                <div className={`w-4 h-4 rounded-full border-2 absolute top-3.5 right-3.5 flex items-center justify-center ${config?.payment_method === 'saldo_bae' ? 'border-emerald-600 bg-emerald-600' : 'border-gray-300'
+                                                    }`}>
                                                     {config?.payment_method === 'saldo_bae' && <div className="w-1.5 h-1.5 rounded-full bg-white"></div>}
                                                 </div>
                                             </div>
@@ -689,23 +680,21 @@ const EcommerceCheckoutSinergy = () => {
                                     {(() => {
                                         const isHybridPossible = Number(userWallet.balance) > 0 && Number(userWallet.balance) < grandTotal;
                                         return (
-                                            <div 
+                                            <div
                                                 onClick={() => {
                                                     if (isHybridPossible) {
                                                         handleConfigChange(s_id, 'payment_method', 'hybrid');
                                                     }
                                                 }}
-                                                className={`p-3.5 rounded-2xl border-2 transition-all flex items-start gap-3 relative ${
-                                                    !isHybridPossible 
+                                                className={`p-3.5 rounded-2xl border-2 transition-all flex items-start gap-3 relative ${!isHybridPossible
                                                         ? 'bg-gray-100/70 border-gray-200 opacity-60 cursor-not-allowed'
                                                         : config?.payment_method === 'hybrid'
                                                             ? 'bg-emerald-50/80 border-emerald-500 shadow-sm cursor-pointer'
                                                             : 'bg-white border-gray-200 hover:border-emerald-300 cursor-pointer'
-                                                }`}
+                                                    }`}
                                             >
-                                                <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
-                                                    config?.payment_method === 'hybrid' ? 'bg-emerald-600 text-white' : 'bg-gray-100 text-gray-600'
-                                                }`}>
+                                                <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${config?.payment_method === 'hybrid' ? 'bg-emerald-600 text-white' : 'bg-gray-100 text-gray-600'
+                                                    }`}>
                                                     <span className="material-icons text-lg">call_split</span>
                                                 </div>
                                                 <div className="flex-1 min-w-0 pr-5">
@@ -723,9 +712,8 @@ const EcommerceCheckoutSinergy = () => {
                                                                 : 'Saldo BAE Anda mencukupi 100%, gunakan opsi 100% Saldo BAE.'}
                                                     </p>
                                                 </div>
-                                                <div className={`w-4 h-4 rounded-full border-2 absolute top-3.5 right-3.5 flex items-center justify-center ${
-                                                    config?.payment_method === 'hybrid' ? 'border-emerald-600 bg-emerald-600' : 'border-gray-300'
-                                                }`}>
+                                                <div className={`w-4 h-4 rounded-full border-2 absolute top-3.5 right-3.5 flex items-center justify-center ${config?.payment_method === 'hybrid' ? 'border-emerald-600 bg-emerald-600' : 'border-gray-300'
+                                                    }`}>
                                                     {config?.payment_method === 'hybrid' && <div className="w-1.5 h-1.5 rounded-full bg-white"></div>}
                                                 </div>
                                             </div>
@@ -793,7 +781,7 @@ const EcommerceCheckoutSinergy = () => {
                                 <div className="flex justify-between text-xs text-emerald-800 font-semibold bg-emerald-50/70 p-2.5 rounded-xl border border-emerald-100">
                                     <div className="flex flex-col">
                                         <span>Biaya Layanan &amp; Admin (Akad Ijarah)</span>
-                                        <span className="text-[10px] text-emerald-600 font-normal">*Kode unik otomatis untuk verifikasi instan</span>
+                                        <span className="text-[10px] text-emerald-600 font-normal">*Pembayaran Instant</span>
                                     </div>
                                     <span>+ Rp {new Intl.NumberFormat('id-ID').format(appliedAdminFee)}</span>
                                 </div>
@@ -811,11 +799,11 @@ const EcommerceCheckoutSinergy = () => {
                     <div className="flex flex-col text-center sm:text-left mb-4 sm:mb-0 w-full sm:w-auto">
                         <span className="text-xs text-gray-500 uppercase font-bold tracking-wider">Total Pembayaran Keseluruhan</span>
                         <span className="text-2xl font-black text-emerald-700">
-                            Rp {new Intl.NumberFormat('id-ID').format(Math.max(0, Object.keys(sellerGroups).reduce((acc, sid) => acc + sellerGroups[sid].total_price + (checkoutConfigs[sid]?.shipping_cost || 0)  - (checkoutConfigs[sid]?.voucher_nominal || 0), 0) + (paymentConfig?.active_mode === 'dynaqris' && ['manual', 'hybrid'].includes(checkoutConfigs[Object.keys(sellerGroups)[0]]?.payment_method || 'manual') ? uniqueAdminFee : 0)))}
+                            Rp {new Intl.NumberFormat('id-ID').format(Math.max(0, Object.keys(sellerGroups).reduce((acc, sid) => acc + sellerGroups[sid].total_price + (checkoutConfigs[sid]?.shipping_cost || 0) - (checkoutConfigs[sid]?.voucher_nominal || 0), 0) + (paymentConfig?.active_mode === 'dynaqris' && ['manual', 'hybrid'].includes(checkoutConfigs[Object.keys(sellerGroups)[0]]?.payment_method || 'manual') ? uniqueAdminFee : 0)))}
                         </span>
                     </div>
-                    <button 
-                        onClick={handleProcessSplitCheckout} 
+                    <button
+                        onClick={handleProcessSplitCheckout}
                         disabled={submittingOrder || isProfileIncomplete}
                         className={`w-full sm:w-auto px-8 py-4 font-bold rounded-2xl shadow-lg transition-all ${submittingOrder || isProfileIncomplete ? 'bg-gray-300 text-gray-500 cursor-not-allowed shadow-none' : 'bg-gradient-to-r from-emerald-600 to-emerald-700 text-white shadow-emerald-200 hover:scale-[1.02]'}`}
                     >
@@ -842,9 +830,9 @@ const EcommerceCheckoutSinergy = () => {
                                 <div className="bg-white p-4 border-2 border-gray-100 rounded-2xl mb-6 shadow-Inner">
                                     {/* Placeholder for Static QRIS Image */}
                                     <div className="w-48 h-48 bg-gray-100 flex items-center justify-center rounded-xl overflow-hidden">
-                                        <img 
-                                            src="/media/payment_methods/qris_static.png" 
-                                            alt="QRIS Statis" 
+                                        <img
+                                            src="/media/payment_methods/qris_static.png"
+                                            alt="QRIS Statis"
                                             className="w-full h-full object-contain"
                                             onError={(e) => {
                                                 e.target.onerror = null;
@@ -858,7 +846,7 @@ const EcommerceCheckoutSinergy = () => {
                                     <p className="text-3xl font-black text-emerald-700">Rp {Number(qrisData.amount).toLocaleString('id-ID')}</p>
                                     <p className="text-xs text-gray-400 mt-2">No. Pesanan: {qrisData.orderNumber}</p>
                                 </div>
-                                <button 
+                                <button
                                     onClick={() => navigate('/riwayat-belanja')}
                                     className="w-full py-4 bg-gray-900 text-white font-bold rounded-2xl hover:bg-black transition-colors"
                                 >

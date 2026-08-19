@@ -287,14 +287,14 @@ const EcoursePaymentConfirmation = () => {
           <h2 className="text-2xl font-bold mt-2 mb-6">{course.title}</h2>
         </div>
 
-        {/* DynaQRIS Section if active mode is dynaqris */}
+        {/* QRIS Section if active mode is dynaqris */}
         {paymentConfig?.active_mode === 'dynaqris' && (
           <div className="bg-gradient-to-r from-emerald-600 to-green-700 text-white rounded-2xl p-6 mb-6 shadow-xl text-center">
             <div className="inline-flex items-center gap-2 bg-white/20 text-white px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-2">
               <span className="material-icons text-sm">qr_code_2</span>
-              <span>Metode Otomatis DynaQRIS Aktif</span>
+              <span>Metode Pembayaran QRIS Otomatis</span>
             </div>
-            <h3 className="text-xl font-bold mb-1">Scan QRIS Dinamis Otomatis</h3>
+            <h3 className="text-xl font-bold mb-1">Scan QRIS Pembayaran</h3>
             <p className="text-xs text-emerald-100 mb-4">
               Pembayaran e-course terverifikasi otomatis dan memberikan akses materi secara langsung.
             </p>
@@ -318,192 +318,201 @@ const EcoursePaymentConfirmation = () => {
           onPaymentSuccess={handleDynaSuccess}
         />
 
-        {/* Bank selection */}
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Pilih Bank Tujuan
-          </label>
-          <select
-            value={selectedBank}
-            onChange={handleBankChange}
-            className="w-full p-3 rounded-lg border border-gray-300 focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none"
-          >
-            {course && course.own_bank_status === 'approved' ? (
-              <>
-                <option value="bsi">Transfer Bank ({course.own_bank_name})</option>
-                <option value="qris">QRIS Penjual</option>
-              </>
-            ) : (
-              <>
-                <option value="bsi">Bank Syariah Indonesia (BSI)</option>
-                <option value="qris">QRIS</option>
-              </>
-            )}
-          </select>
-        </div>
+        {/* Manual Transfer only if mode is NOT dynaqris */}
+        {paymentConfig?.active_mode !== 'dynaqris' && (
+          <>
+            {/* Bank selection */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Pilih Bank Tujuan
+              </label>
+              <select
+                value={selectedBank}
+                onChange={handleBankChange}
+                className="w-full p-3 rounded-lg border border-gray-300 focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none"
+              >
+                {course && course.own_bank_status === 'approved' ? (
+                  <>
+                    <option value="bsi">Transfer Bank ({course.own_bank_name})</option>
+                    <option value="qris">QRIS Penjual</option>
+                  </>
+                ) : (
+                  <>
+                    <option value="bsi">Bank Syariah Indonesia (BSI)</option>
+                    <option value="qris">QRIS</option>
+                  </>
+                )}
+              </select>
+            </div>
 
-        {/* Bank information card */}
-        <div className="bg-white rounded-lg shadow overflow-hidden mb-6">
-          <div className="p-4 flex flex-col items-center">
-            <div className="flex items-center w-full mb-4">
-              <img
-                src={selectedBankInfo.logo}
-                alt={selectedBankInfo.name}
-                className="w-12 mr-2"
-              />
-              <div className="flex-1">
-                <div className="flex justify-between items-center">
-                  <h3 className="text-xl font-bold">{selectedBankInfo.number}</h3>
-                  {!selectedBankInfo.isQRIS && (
+            {/* Bank information card */}
+            <div className="bg-white rounded-lg shadow overflow-hidden mb-6">
+              <div className="p-4 flex flex-col items-center">
+                <div className="flex items-center w-full mb-4">
+                  <img
+                    src={selectedBankInfo.logo}
+                    alt={selectedBankInfo.name}
+                    className="w-12 mr-2"
+                  />
+                  <div className="flex-1">
+                    <div className="flex justify-between items-center">
+                      <h3 className="text-xl font-bold">{selectedBankInfo.number}</h3>
+                      {!selectedBankInfo.isQRIS && (
+                        <button
+                          onClick={() => copyToClipboard(selectedBankInfo.number, 'Nomor rekening')}
+                          className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-2 py-1 rounded flex items-center text-sm"
+                        >
+                          Salin No Rek.
+                        </button>
+                      )}
+                    </div>
+                    <p className="text-gray-600">
+                      {selectedBankInfo.isQRIS ? 'Scan QRIS untuk pembayaran' : `a.n. ${selectedBankInfo.owner}`}
+                    </p>
+                  </div>
+                </div>
+
+                {selectedBankInfo.isQRIS && (
+                  <div className="w-full flex justify-center p-4 bg-gray-50 rounded-lg">
+                    <img
+                      src={selectedBankInfo.logo}
+                      alt="QRIS"
+                      className="max-w-xs w-full shadow-sm rounded-lg"
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Amount card */}
+            <div className="bg-white rounded-lg shadow overflow-hidden mb-4">
+              <div className="p-4">
+                <div className="flex items-center mb-2">
+                  <div className="flex-1 flex justify-between items-center">
+                    <h3 className="text-2xl font-bold">
+                      <span className="text-green-500">{formatIDR(course.price)}</span>
+                    </h3>
                     <button
-                      onClick={() => copyToClipboard(selectedBankInfo.number, 'Nomor rekening')}
+                      onClick={() => copyToClipboard(course.price, 'Nominal')}
                       className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-2 py-1 rounded flex items-center text-sm"
                     >
-                      Salin No Rek.
+                      Salin Nominal
                     </button>
-                  )}
+                  </div>
                 </div>
-                <p className="text-gray-600">
-                  {selectedBankInfo.isQRIS ? 'Scan QRIS untuk pembayaran' : `a.n. ${selectedBankInfo.owner}`}
-                </p>
+                <div className="bg-yellow-100 text-yellow-800 py-2 px-3 rounded-lg text-sm font-medium">
+                  PENTING! Mohon transfer sesuai sampai dengan 3 digit terakhir
+                </div>
               </div>
             </div>
 
-            {selectedBankInfo.isQRIS && (
-              <div className="w-full flex justify-center p-4 bg-gray-50 rounded-lg">
-                <img
-                  src={selectedBankInfo.logo}
-                  alt="QRIS"
-                  className="max-w-xs w-full shadow-sm rounded-lg"
-                />
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Amount card */}
-        <div className="bg-white rounded-lg shadow overflow-hidden mb-4">
-          <div className="p-4">
-            <div className="flex items-center mb-2">
-              <div className="flex-1 flex justify-between items-center">
-                <h3 className="text-2xl font-bold">
-                  <span className="text-green-500">{formatIDR(course.price)}</span>
-                </h3>
-                <button
-                  onClick={() => copyToClipboard(course.price, 'Nominal')}
-                  className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-2 py-1 rounded flex items-center text-sm"
-                >
-                  Salin Nominal
-                </button>
-              </div>
-            </div>
-            <div className="bg-yellow-100 text-yellow-800 py-2 px-3 rounded-lg text-sm font-medium">
-              PENTING! Mohon transfer sesuai sampai dengan 3 digit terakhir
-            </div>
-          </div>
-        </div>
-
-        {/* Payment confirmation form */}
-        <div className="bg-white rounded-lg shadow overflow-hidden mt-6">
-          <div className="p-4">
-            <h3 className="text-xl font-bold mb-4">Konfirmasi Pembayaran</h3>
-            <form onSubmit={handleSubmit} className="space-y-4 mb-10">
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Transfer dari <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  name="sourceBank"
-                  placeholder="Nama Bank Pengirim"
-                  className="w-full p-3 rounded-lg border border-gray-300 focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none mb-2"
-                  value={formData.sourceBank}
-                  onChange={handleInputChange}
-                  required
-                />
-                {!selectedBankInfo.isQRIS && (
-                  <input
-                    type="text"
-                    name="sourceAccount"
-                    placeholder="Nomor Rekening Pengirim"
-                    className="w-full p-3 rounded-lg border border-gray-300 focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none mb-2"
-                    value={formData.sourceAccount}
-                    onChange={handleInputChange}
-                    required
-                  />
-                )}
-                <input
-                  type="text"
-                  name="accountName"
-                  placeholder="Atas Nama (opsional)"
-                  className="w-full p-3 rounded-lg border border-gray-300 focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none mb-2"
-                  value={formData.accountName || ''}
-                  onChange={handleInputChange}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Tanggal Transfer <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="date"
-                  name="transferDate"
-                  className="w-full p-3 rounded-lg border border-gray-300 focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none"
-                  value={formData.transferDate}
-                  onChange={handleInputChange}
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Bukti Transfer <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  ref={fileInputRef}
-                  onChange={handleFileChange}
-                  style={{ opacity: 0, position: 'absolute', zIndex: -1 }}
-                  required
-                />
-                <div
-                  className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:bg-gray-50 transition-colors cursor-pointer"
-                  onClick={() => fileInputRef.current.click()}
-                >
-                  {previewUrl ? (
-                    <div className="relative">
-                      <img
-                        src={previewUrl}
-                        alt="Bukti Transfer"
-                        className="max-h-48 mx-auto rounded-lg"
+            {/* Payment confirmation form */}
+            <div className="bg-white rounded-lg shadow overflow-hidden mt-6">
+              <div className="p-4">
+                <h3 className="text-xl font-bold mb-4">Konfirmasi Pembayaran</h3>
+                <form onSubmit={handleSubmit} className="space-y-4 mb-10">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Transfer dari <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      name="sourceBank"
+                      placeholder="Nama Bank Pengirim"
+                      className="w-full p-3 rounded-lg border border-gray-300 focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none mb-2"
+                      value={formData.sourceBank}
+                      onChange={handleInputChange}
+                      required
+                    />
+                    {!selectedBankInfo.isQRIS && (
+                      <input
+                        type="text"
+                        name="sourceAccount"
+                        placeholder="Nomor Rekening Pengirim"
+                        className="w-full p-3 rounded-lg border border-gray-300 focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none mb-2"
+                        value={formData.sourceAccount}
+                        onChange={handleInputChange}
+                        required
                       />
-                      <div className="mt-2 text-sm text-green-600">Klik untuk mengganti</div>
+                    )}
+                    <input
+                      type="text"
+                      name="accountName"
+                      placeholder="Atas Nama (opsional)"
+                      className="w-full p-3 rounded-lg border border-gray-300 focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none mb-2"
+                      value={formData.accountName || ''}
+                      onChange={handleInputChange}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Tanggal Transfer <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="date"
+                      name="transferDate"
+                      className="w-full p-3 rounded-lg border border-gray-300 focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none"
+                      value={formData.transferDate}
+                      onChange={handleInputChange}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Bukti Transfer <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      ref={fileInputRef}
+                      onChange={handleFileChange}
+                      style={{ opacity: 0, position: 'absolute', zIndex: -1 }}
+                      required
+                    />
+                    <div
+                      className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:bg-gray-50 transition-colors cursor-pointer"
+                      onClick={() => fileInputRef.current.click()}
+                    >
+                      {previewUrl ? (
+                        <div className="relative">
+                          <img
+                            src={previewUrl}
+                            alt="Bukti Transfer"
+                            className="max-h-48 mx-auto rounded-lg"
+                          />
+                          <div className="mt-2 text-sm text-green-600">Klik untuk mengganti</div>
+                        </div>
+                      ) : (
+                        <div>
+                          <svg
+                            className="mx-auto h-12 w-12 text-gray-400"
+                            stroke="currentColor"
+                            fill="none"
+                            viewBox="0 0 48 48"
+                          >
+                            <path
+                              d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+                          </svg>
+                          <div className="mt-2 text-sm text-gray-600">Klik untuk upload bukti transfer</div>
+                        </div>
+                      )}
                     </div>
-                  ) : (
-                    <div className="py-4">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 mx-auto text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                      </svg>
-                      <p className="mt-2 text-sm text-gray-500">Pilih File</p>
-                      <p className="text-xs text-gray-400">JPG, PNG, JPEG</p>
-                    </div>
-                  )}
-                </div>
+                  </div>
+                  <button
+                    type="submit"
+                    className="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-lg transition duration-200"
+                  >
+                    Kirim Konfirmasi
+                  </button>
+                </form>
               </div>
-              <div className="mb-3 mt-4 bg-yellow-50 p-3 rounded-lg text-sm border border-yellow-200">
-                <p className="text-yellow-800">
-                  <strong>Catatan:</strong> Setelah klik KIRIM, Anda akan diarahkan ke WhatsApp untuk mengirim konfirmasi kepada admin. Mohon lampirkan juga bukti transfer di chat WhatsApp.
-                </p>
-              </div>
-              <button
-                type="submit"
-                className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-medium flex items-center justify-center"
-              >
-                KIRIM VIA WHATSAPP
-              </button>
-            </form>
-          </div>
-        </div>
+            </div>
+          </>
+        )}
       </div>
       <NavigationButton />
     </div>

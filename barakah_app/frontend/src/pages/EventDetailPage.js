@@ -312,9 +312,9 @@ const EventDetailPage = () => {
             }
             // Direct to testimonies tab if event is completed or has started, user is approved, and hasn't filled out a testimony
             const hasStarted = res.data.start_date && new Date(res.data.start_date) <= new Date(Date.now() + localOffset);
-            if ((res.data.status === 'completed' || hasStarted) && 
-                res.data.user_registration && 
-                res.data.user_registration.status === 'approved' && 
+            if ((res.data.status === 'completed' || hasStarted) &&
+                res.data.user_registration &&
+                res.data.user_registration.status === 'approved' &&
                 !res.data.user_has_testimony) {
                 setActiveTab('testimonies');
             }
@@ -1021,7 +1021,7 @@ const EventDetailPage = () => {
                     </div>
 
                     <h1 className="text-xl sm:text-3xl font-extrabold text-gray-900 leading-tight mb-2">{event.title}</h1>
-                    
+
                     {/* Event Rating Summary */}
                     <div className="flex items-center gap-2 mb-6">
                         <div className="flex items-center text-amber-500 bg-amber-50 px-3 py-1.5 rounded-xl border border-amber-100 shadow-sm gap-1">
@@ -1758,7 +1758,7 @@ const EventDetailPage = () => {
                                                 <h3 className="font-black text-gray-800 text-sm sm:text-base uppercase tracking-wider">Berikan Testimoni Anda</h3>
                                             </div>
                                             <p className="text-xs text-gray-500">Silakan berikan penilaian bintang dan komentar/saran Anda untuk event ini. Ulasan Anda hanya dapat dikirimkan 1 kali saja.</p>
-                                            
+
                                             <div className="space-y-2">
                                                 <label className="block text-[10px] font-black text-gray-400 uppercase tracking-wider">Penilaian Anda (Bintang)</label>
                                                 <StarRatingSelector rating={userRating} onChange={setUserRating} />
@@ -1903,7 +1903,7 @@ const EventDetailPage = () => {
                             <div className="absolute top-0 right-0 w-32 h-32 bg-green-500/10 rounded-full -mr-16 -mt-16 blur-2xl group-hover:bg-green-500/20 transition-all duration-700"></div>
                             <h3 className="text-lg font-bold mb-4 relative z-10">Ingin Mengikuti?</h3>
                             <p className="text-gray-400 text-xs leading-relaxed mb-6 relative z-10">Segera daftarkan diri Anda sebelum kuota penuh atau waktu pendaftaran berakhir.</p>
-                            
+
                             <div className="space-y-3 relative z-10">
                                 {event.active_stream && event.active_stream.is_live && event.active_stream.has_access && (
                                     <button
@@ -2244,7 +2244,7 @@ const EventDetailPage = () => {
                                                     </div>
                                                     {!selectedTeam && (
                                                         <p className="text-[10px] text-red-500 font-bold uppercase tracking-wider flex items-center gap-1 ml-1">
-                                                    <span className="material-icons text-xs">warning</span>
+                                                            <span className="material-icons text-xs">warning</span>
                                                             Wajib memilih salah satu tim untuk mendaftar
                                                         </p>
                                                     )}
@@ -2323,265 +2323,265 @@ const EventDetailPage = () => {
                                                                 </div>
                                                             )}
 
-                                                    {/* Price Variations Selection */}
-                                                    {event.price_variations && event.price_variations.length > 0 && (
-                                                        <div className="space-y-3">
-                                                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Pilih Paket / Variasi HTM</label>
-                                                            <div className="grid grid-cols-1 gap-3">
-                                                                {event.price_variations.map((v, idx) => (
-                                                                    <button
-                                                                        key={idx}
-                                                                        type="button"
-                                                                        onClick={() => setSelectedPriceVariation(v)}
-                                                                        className={`p-4 rounded-2xl border-2 text-left transition-all relative overflow-hidden group ${selectedPriceVariation?.id === v.id ? 'border-green-600 bg-green-50 shadow-md' : 'border-gray-100 bg-white hover:border-green-200'}`}
-                                                                    >
-                                                                        <div className="flex justify-between items-start mb-2 relative z-10">
-                                                                            <h4 className={`text-xs font-black uppercase tracking-wider ${selectedPriceVariation?.id === v.id ? 'text-green-700' : 'text-gray-900'}`}>{v.title}</h4>
-                                                                            <span className={`text-sm font-black ${selectedPriceVariation?.id === v.id ? 'text-green-600' : 'text-gray-400'}`}>Rp {formatCurrency(v.price)}</span>
-                                                                        </div>
-                                                                        {v.benefits && (
-                                                                            <div className="space-y-1 relative z-10">
-                                                                                {v.benefits.split('\n').map((b, i) => (
-                                                                                    <div key={i} className="flex items-center gap-2 text-[10px] text-gray-500 font-medium">
-                                                                                        <span className="material-icons text-[10px] text-green-500">check_circle</span>
-                                                                                        {b}
+                                                            {/* Price Variations Selection */}
+                                                            {event.price_variations && event.price_variations.length > 0 && (
+                                                                <div className="space-y-3">
+                                                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Pilih Paket / Variasi HTM</label>
+                                                                    <div className="grid grid-cols-1 gap-3">
+                                                                        {event.price_variations.map((v, idx) => (
+                                                                            <button
+                                                                                key={idx}
+                                                                                type="button"
+                                                                                onClick={() => setSelectedPriceVariation(v)}
+                                                                                className={`p-4 rounded-2xl border-2 text-left transition-all relative overflow-hidden group ${selectedPriceVariation?.id === v.id ? 'border-green-600 bg-green-50 shadow-md' : 'border-gray-100 bg-white hover:border-green-200'}`}
+                                                                            >
+                                                                                <div className="flex justify-between items-start mb-2 relative z-10">
+                                                                                    <h4 className={`text-xs font-black uppercase tracking-wider ${selectedPriceVariation?.id === v.id ? 'text-green-700' : 'text-gray-900'}`}>{v.title}</h4>
+                                                                                    <span className={`text-sm font-black ${selectedPriceVariation?.id === v.id ? 'text-green-600' : 'text-gray-400'}`}>Rp {formatCurrency(v.price)}</span>
+                                                                                </div>
+                                                                                {v.benefits && (
+                                                                                    <div className="space-y-1 relative z-10">
+                                                                                        {v.benefits.split('\n').map((b, i) => (
+                                                                                            <div key={i} className="flex items-center gap-2 text-[10px] text-gray-500 font-medium">
+                                                                                                <span className="material-icons text-[10px] text-green-500">check_circle</span>
+                                                                                                {b}
+                                                                                            </div>
+                                                                                        ))}
                                                                                     </div>
-                                                                                ))}
-                                                                            </div>
-                                                                        )}
-                                                                        {selectedPriceVariation?.id === v.id && (
-                                                                            <div className="absolute top-0 right-0 w-12 h-12 bg-green-600/10 rounded-bl-[2rem] flex items-center justify-center">
-                                                                                <span className="material-icons text-green-600 text-sm">check</span>
-                                                                            </div>
-                                                                        )}
-                                                                    </button>
-                                                                ))}
-                                                            </div>
-                                                        </div>
-                                                    )}
-
-                                                    {event.allow_ots_payment && (
-                                                        <div className="grid grid-cols-2 gap-3">
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => setPaymentMethod('transfer')}
-                                                                className={`flex flex-col items-center justify-center p-4 rounded-2xl border-2 transition-all ${paymentMethod === 'transfer' ? 'border-green-600 bg-green-50 shadow-md' : 'border-gray-100 bg-white text-gray-400'}`}
-                                                            >
-                                                                <span className="material-icons text-xl mb-1">account_balance_wallet</span>
-                                                                <span className="text-[10px] font-bold uppercase tracking-widest">Transfer / QRIS</span>
-                                                            </button>
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => setPaymentMethod('ots')}
-                                                                className={`flex flex-col items-center justify-center p-4 rounded-2xl border-2 transition-all ${paymentMethod === 'ots' ? 'border-green-600 bg-green-50 shadow-md' : 'border-gray-100 bg-white text-gray-400'}`}
-                                                            >
-                                                                <span className="material-icons text-xl mb-1">payments</span>
-                                                                <span className="text-[10px] font-bold uppercase tracking-widest">Bayar di Tempat</span>
-                                                            </button>
-                                                        </div>
-                                                    )}
-
-                                                    {paymentMethod === 'transfer' ? (
-                                                         paymentConfig?.active_mode === 'dynaqris' ? (
-                                                             <div className="flex items-center gap-4 bg-emerald-50/90 p-4 rounded-2xl border border-emerald-200 animate-fade-in">
-                                                                 <div className="w-12 h-12 bg-emerald-100 text-emerald-700 rounded-xl flex items-center justify-center shrink-0">
-                                                                     <span className="material-icons text-2xl">qr_code_2</span>
-                                                                 </div>
-                                                                 <div>
-                                                                     <p className="text-[10px] font-bold text-emerald-800 uppercase tracking-widest">Pembayaran Otomatis QRIS</p>
-                                                                     <p className="text-xs text-emerald-700 mt-0.5 leading-relaxed font-medium">
-                                                                         Lengkapi pendaftaran dan tekan <strong className="font-bold">Kirim Pendaftaran</strong> di bawah. Kode QRIS dengan nominal pas akan otomatis ditampilkan untuk di-scan. Pembayaran terverifikasi otomatis tanpa perlu unggah bukti bayar.
-                                                                     </p>
-                                                                 </div>
-                                                             </div>
-                                                         ) : (
-                                                             <div className="flex flex-col sm:flex-row items-center gap-6 bg-white p-4 rounded-2xl border border-gray-100 animate-fade-in">
-                                                                 <div className="w-32 h-32 bg-gray-100 rounded-xl overflow-hidden shrink-0 border border-gray-200">
-                                                                     <img src="/images/qris-bae2.png" alt="QRIS BAE" className="w-full h-full object-contain" />
-                                                                 </div>
-                                                                 <div className="text-center sm:text-left">
-                                                                     <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Pindai QRIS BAE</p>
-                                                                     <p className="text-lg font-black text-gray-900 mt-1">Bae Community</p>
-                                                                     <p className="text-xs text-gray-500 mt-2 leading-relaxed">Silakan bayar melalui QRIS di atas dan unggah bukti transfernya di bawah ini.</p>
-                                                                     <a
-                                                                         href="/images/qris-bae2.png"
-                                                                         download="QRIS-BAE.png"
-                                                                         className="mt-3 inline-flex items-center gap-2 text-[10px] font-bold text-green-700 hover:text-green-800 transition bg-green-50 px-3 py-1.5 rounded-lg border border-green-100"
-                                                                     >
-                                                                         <span className="material-icons text-sm">download</span>
-                                                                         UNDUH QRIS
-                                                                     </a>
-                                                                 </div>
-                                                             </div>
-                                                         )
-                                                     ) : (
-                                                         <div className="p-6 bg-blue-50 border border-blue-100 rounded-3xl flex items-start gap-4 animate-fade-in">
-                                                             <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center shrink-0">
-                                                                 <span className="material-icons">info</span>
-                                                             </div>
-                                                             <div>
-                                                                 <p className="text-[10px] font-bold text-blue-800 uppercase tracking-widest mb-1">Pembayaran OTS (On The Spot)</p>
-                                                                 <p className="text-xs text-blue-700 leading-relaxed font-medium">Anda dapat melakukan pendaftaran sekarang dan melakukan pembayaran secara tunai di lokasi acara (Meja Registrasi). Sampai jumpa di lokasi!</p>
-                                                             </div>
-                                                         </div>
-                                                     )}
-
-                                                    {/* Price Inputs based on price_type */}
-                                                    <div className="space-y-4">
-                                                        {(event.price_type === 'fixed' || event.price_type === 'hybrid_1') && (
-                                                            <div className="flex items-center justify-between bg-white px-5 py-4 rounded-2xl border border-gray-100">
-                                                                <span className="text-xs font-bold text-gray-500 uppercase">HTM {event.price_type === 'hybrid_1' ? 'Minimal' : ''}</span>
-                                                                <span className="text-lg font-black text-green-700">Rp {formatCurrency(selectedPriceVariation ? selectedPriceVariation.price : event.price_fixed)}</span>
-                                                            </div>
-                                                        )}
-
-                                                        {(event.price_type === 'voluntary' || event.price_type === 'hybrid_1' || event.price_type === 'hybrid_2') && (
-                                                            <div className="space-y-2">
-                                                                <label className="text-[10px] font-bold text-gray-600 uppercase ml-1">
-                                                                    {event.price_type === 'hybrid_1' ? 'Tambah Infaq (Opsional)' :
-                                                                        event.price_type === 'hybrid_2' ? 'Tambahan Infaq (Min. Rp 0)' :
-                                                                            'Tambahan Infaq / Sukarela *'}
-                                                                </label>
-                                                                <CurrencyInput
-                                                                    value={paymentAmount}
-                                                                    onChange={(e) => setPaymentAmount(e.target.value)}
-                                                                    required={event.price_type === 'voluntary'}
-                                                                />
-                                                            </div>
-                                                        )}
-                                                    </div>
-
-
-                                                    {/* Voucher Input */}
-                                                    <div className="space-y-2">
-                                                        <label className="text-[10px] font-bold text-gray-600 uppercase ml-1">Kode Voucher (Opsional)</label>
-                                                        <div className="flex gap-2">
-                                                            <input
-                                                                type="text"
-                                                                value={voucherCode}
-                                                                onChange={(e) => setVoucherCode(e.target.value.toUpperCase())}
-                                                                placeholder="Masukkan kode promo"
-                                                                className="flex-1 min-w-0 bg-white border-2 border-gray-100 rounded-xl px-4 py-3 text-sm font-bold text-gray-900 focus:border-green-500 focus:ring-0 transition-colors uppercase"
-                                                                disabled={appliedVoucher || voucherLoading}
-                                                            />
-                                                            {appliedVoucher ? (
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => { setAppliedVoucher(null); setVoucherCode(''); }}
-                                                                    className="shrink-0 px-4 py-3 bg-red-50 text-red-600 rounded-xl text-sm font-bold hover:bg-red-100 transition"
-                                                                >
-                                                                    Batal
-                                                                </button>
-                                                            ) : (
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={handleApplyVoucher}
-                                                                    disabled={!voucherCode.trim() || voucherLoading}
-                                                                    className="shrink-0 px-4 py-3 bg-green-600 text-white rounded-xl text-sm font-bold hover:bg-green-700 disabled:opacity-50 transition"
-                                                                >
-                                                                    {voucherLoading ? 'Cek...' : 'Gunakan'}
-                                                                </button>
+                                                                                )}
+                                                                                {selectedPriceVariation?.id === v.id && (
+                                                                                    <div className="absolute top-0 right-0 w-12 h-12 bg-green-600/10 rounded-bl-[2rem] flex items-center justify-center">
+                                                                                        <span className="material-icons text-green-600 text-sm">check</span>
+                                                                                    </div>
+                                                                                )}
+                                                                            </button>
+                                                                        ))}
+                                                                    </div>
+                                                                </div>
                                                             )}
-                                                        </div>
-                                                        {voucherError && <p className="text-xs text-red-500 font-bold ml-1">{voucherError}</p>}
-                                                        {voucherSuccess && <p className="text-xs text-green-600 font-bold ml-1">{voucherSuccess}</p>}
-                                                    </div>
 
-                                                    <div className="flex flex-col gap-2 bg-green-50 px-5 py-4 rounded-2xl border border-green-100">
-                                                        {appliedVoucher && (
-                                                            <div className="flex items-center justify-between border-b border-green-200 pb-2 mb-1">
-                                                                <span className="text-xs font-bold text-green-700 uppercase">Diskon Voucher ({appliedVoucher.code})</span>
-                                                                <span className="text-sm font-black text-red-500">
-                                                                    - Rp {(() => {
-                                                                        let fixed = Number(event?.price_fixed) || 0;
-                                                                        if (selectedPriceVariation) fixed = Number(selectedPriceVariation.price);
+                                                            {event.allow_ots_payment && (
+                                                                <div className="grid grid-cols-2 gap-3">
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => setPaymentMethod('transfer')}
+                                                                        className={`flex flex-col items-center justify-center p-4 rounded-2xl border-2 transition-all ${paymentMethod === 'transfer' ? 'border-green-600 bg-green-50 shadow-md' : 'border-gray-100 bg-white text-gray-400'}`}
+                                                                    >
+                                                                        <span className="material-icons text-xl mb-1">account_balance_wallet</span>
+                                                                        <span className="text-[10px] font-bold uppercase tracking-widest">Transfer / QRIS</span>
+                                                                    </button>
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => setPaymentMethod('ots')}
+                                                                        className={`flex flex-col items-center justify-center p-4 rounded-2xl border-2 transition-all ${paymentMethod === 'ots' ? 'border-green-600 bg-green-50 shadow-md' : 'border-gray-100 bg-white text-gray-400'}`}
+                                                                    >
+                                                                        <span className="material-icons text-xl mb-1">payments</span>
+                                                                        <span className="text-[10px] font-bold uppercase tracking-widest">Bayar di Tempat</span>
+                                                                    </button>
+                                                                </div>
+                                                            )}
 
-                                                                        let extraFormPrice = 0;
-                                                                        if (event?.form_fields) {
-                                                                            event.form_fields.forEach(f => {
-                                                                                if (['select', 'radio', 'checkbox'].includes(f.field_type) && f.options && responses[f.id]) {
-                                                                                    let opts = [];
-                                                                                    if (Array.isArray(f.options)) opts = f.options;
-                                                                                    else if (typeof f.options === 'string') { try { opts = JSON.parse(f.options); } catch (e) { opts = []; } }
+                                                            {paymentMethod === 'transfer' ? (
+                                                                paymentConfig?.active_mode === 'dynaqris' ? (
+                                                                    <div className="flex items-center gap-4 bg-emerald-50/90 p-4 rounded-2xl border border-emerald-200 animate-fade-in">
+                                                                        <div className="w-12 h-12 bg-emerald-100 text-emerald-700 rounded-xl flex items-center justify-center shrink-0">
+                                                                            <span className="material-icons text-2xl">qr_code_2</span>
+                                                                        </div>
+                                                                        <div>
+                                                                            <p className="text-[10px] font-bold text-emerald-800 uppercase tracking-widest">Pembayaran Otomatis QRIS</p>
+                                                                            <p className="text-xs text-emerald-700 mt-0.5 leading-relaxed font-medium">
+                                                                                Lengkapi pendaftaran dan tekan <strong className="font-bold">Kirim Pendaftaran</strong> di bawah. Kode QRIS dengan nominal pas akan otomatis ditampilkan untuk di-scan. Pembayaran terverifikasi otomatis tanpa perlu unggah bukti bayar.
+                                                                            </p>
+                                                                        </div>
+                                                                    </div>
+                                                                ) : (
+                                                                    <div className="flex flex-col sm:flex-row items-center gap-6 bg-white p-4 rounded-2xl border border-gray-100 animate-fade-in">
+                                                                        <div className="w-32 h-32 bg-gray-100 rounded-xl overflow-hidden shrink-0 border border-gray-200">
+                                                                            <img src="/images/qris-bae2.png" alt="QRIS BAE" className="w-full h-full object-contain" />
+                                                                        </div>
+                                                                        <div className="text-center sm:text-left">
+                                                                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Pindai QRIS BAE</p>
+                                                                            <p className="text-lg font-black text-gray-900 mt-1">Bae Community</p>
+                                                                            <p className="text-xs text-gray-500 mt-2 leading-relaxed">Silakan bayar melalui QRIS di atas dan unggah bukti transfernya di bawah ini.</p>
+                                                                            <a
+                                                                                href="/images/qris-bae2.png"
+                                                                                download="QRIS-BAE.png"
+                                                                                className="mt-3 inline-flex items-center gap-2 text-[10px] font-bold text-green-700 hover:text-green-800 transition bg-green-50 px-3 py-1.5 rounded-lg border border-green-100"
+                                                                            >
+                                                                                <span className="material-icons text-sm">download</span>
+                                                                                UNDUH QRIS
+                                                                            </a>
+                                                                        </div>
+                                                                    </div>
+                                                                )
+                                                            ) : (
+                                                                <div className="p-6 bg-blue-50 border border-blue-100 rounded-3xl flex items-start gap-4 animate-fade-in">
+                                                                    <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center shrink-0">
+                                                                        <span className="material-icons">info</span>
+                                                                    </div>
+                                                                    <div>
+                                                                        <p className="text-[10px] font-bold text-blue-800 uppercase tracking-widest mb-1">Pembayaran OTS (On The Spot)</p>
+                                                                        <p className="text-xs text-blue-700 leading-relaxed font-medium">Anda dapat melakukan pendaftaran sekarang dan melakukan pembayaran secara tunai di lokasi acara (Meja Registrasi). Sampai jumpa di lokasi!</p>
+                                                                    </div>
+                                                                </div>
+                                                            )}
 
-                                                                                    if (f.field_type === 'checkbox') {
-                                                                                        const selected = responses[f.id] || [];
-                                                                                        selected.forEach(s => {
-                                                                                            const match = opts.find(o => (typeof o === 'object' ? o.label : o) === s);
-                                                                                            if (match && typeof match === 'object' && match.price) extraFormPrice += Number(match.price);
-                                                                                        });
-                                                                                    } else {
-                                                                                        const match = opts.find(o => (typeof o === 'object' ? o.label : o) === responses[f.id]);
-                                                                                        if (match && typeof match === 'object' && match.price) extraFormPrice += Number(match.price);
+                                                            {/* Price Inputs based on price_type */}
+                                                            <div className="space-y-4">
+                                                                {(event.price_type === 'fixed' || event.price_type === 'hybrid_1') && (
+                                                                    <div className="flex items-center justify-between bg-white px-5 py-4 rounded-2xl border border-gray-100">
+                                                                        <span className="text-xs font-bold text-gray-500 uppercase">HTM {event.price_type === 'hybrid_1' ? 'Minimal' : ''}</span>
+                                                                        <span className="text-lg font-black text-green-700">Rp {formatCurrency(selectedPriceVariation ? selectedPriceVariation.price : event.price_fixed)}</span>
+                                                                    </div>
+                                                                )}
+
+                                                                {(event.price_type === 'voluntary' || event.price_type === 'hybrid_1' || event.price_type === 'hybrid_2') && (
+                                                                    <div className="space-y-2">
+                                                                        <label className="text-[10px] font-bold text-gray-600 uppercase ml-1">
+                                                                            {event.price_type === 'hybrid_1' ? 'Tambah Infaq (Opsional)' :
+                                                                                event.price_type === 'hybrid_2' ? 'Tambahan Infaq (Min. Rp 0)' :
+                                                                                    'Tambahan Infaq / Sukarela *'}
+                                                                        </label>
+                                                                        <CurrencyInput
+                                                                            value={paymentAmount}
+                                                                            onChange={(e) => setPaymentAmount(e.target.value)}
+                                                                            required={event.price_type === 'voluntary'}
+                                                                        />
+                                                                    </div>
+                                                                )}
+                                                            </div>
+
+
+                                                            {/* Voucher Input */}
+                                                            <div className="space-y-2">
+                                                                <label className="text-[10px] font-bold text-gray-600 uppercase ml-1">Kode Voucher (Opsional)</label>
+                                                                <div className="flex gap-2">
+                                                                    <input
+                                                                        type="text"
+                                                                        value={voucherCode}
+                                                                        onChange={(e) => setVoucherCode(e.target.value.toUpperCase())}
+                                                                        placeholder="Masukkan kode promo"
+                                                                        className="flex-1 min-w-0 bg-white border-2 border-gray-100 rounded-xl px-4 py-3 text-sm font-bold text-gray-900 focus:border-green-500 focus:ring-0 transition-colors uppercase"
+                                                                        disabled={appliedVoucher || voucherLoading}
+                                                                    />
+                                                                    {appliedVoucher ? (
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => { setAppliedVoucher(null); setVoucherCode(''); }}
+                                                                            className="shrink-0 px-4 py-3 bg-red-50 text-red-600 rounded-xl text-sm font-bold hover:bg-red-100 transition"
+                                                                        >
+                                                                            Batal
+                                                                        </button>
+                                                                    ) : (
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={handleApplyVoucher}
+                                                                            disabled={!voucherCode.trim() || voucherLoading}
+                                                                            className="shrink-0 px-4 py-3 bg-green-600 text-white rounded-xl text-sm font-bold hover:bg-green-700 disabled:opacity-50 transition"
+                                                                        >
+                                                                            {voucherLoading ? 'Cek...' : 'Gunakan'}
+                                                                        </button>
+                                                                    )}
+                                                                </div>
+                                                                {voucherError && <p className="text-xs text-red-500 font-bold ml-1">{voucherError}</p>}
+                                                                {voucherSuccess && <p className="text-xs text-green-600 font-bold ml-1">{voucherSuccess}</p>}
+                                                            </div>
+
+                                                            <div className="flex flex-col gap-2 bg-green-50 px-5 py-4 rounded-2xl border border-green-100">
+                                                                {appliedVoucher && (
+                                                                    <div className="flex items-center justify-between border-b border-green-200 pb-2 mb-1">
+                                                                        <span className="text-xs font-bold text-green-700 uppercase">Diskon Voucher ({appliedVoucher.code})</span>
+                                                                        <span className="text-sm font-black text-red-500">
+                                                                            - Rp {(() => {
+                                                                                let fixed = Number(event?.price_fixed) || 0;
+                                                                                if (selectedPriceVariation) fixed = Number(selectedPriceVariation.price);
+
+                                                                                let extraFormPrice = 0;
+                                                                                if (event?.form_fields) {
+                                                                                    event.form_fields.forEach(f => {
+                                                                                        if (['select', 'radio', 'checkbox'].includes(f.field_type) && f.options && responses[f.id]) {
+                                                                                            let opts = [];
+                                                                                            if (Array.isArray(f.options)) opts = f.options;
+                                                                                            else if (typeof f.options === 'string') { try { opts = JSON.parse(f.options); } catch (e) { opts = []; } }
+
+                                                                                            if (f.field_type === 'checkbox') {
+                                                                                                const selected = responses[f.id] || [];
+                                                                                                selected.forEach(s => {
+                                                                                                    const match = opts.find(o => (typeof o === 'object' ? o.label : o) === s);
+                                                                                                    if (match && typeof match === 'object' && match.price) extraFormPrice += Number(match.price);
+                                                                                                });
+                                                                                            } else {
+                                                                                                const match = opts.find(o => (typeof o === 'object' ? o.label : o) === responses[f.id]);
+                                                                                                if (match && typeof match === 'object' && match.price) extraFormPrice += Number(match.price);
+                                                                                            }
+                                                                                        }
+                                                                                    });
+                                                                                }
+
+                                                                                const extra = Number(paymentAmount) || 0;
+                                                                                let baseTotal = 0;
+                                                                                if (event?.price_type === 'fixed') baseTotal = fixed + extraFormPrice;
+                                                                                else if (event?.price_type === 'hybrid_1') baseTotal = fixed + extraFormPrice + extra;
+                                                                                else baseTotal = extra + extraFormPrice;
+
+                                                                                if (appliedVoucher.discount_type === 'percentage') {
+                                                                                    return formatCurrency(baseTotal * (Number(appliedVoucher.discount_value) / 100));
+                                                                                }
+                                                                                return formatCurrency(Number(appliedVoucher.discount_value));
+                                                                            })()}
+                                                                        </span>
+                                                                    </div>
+                                                                )}
+
+                                                                {paymentConfig?.active_mode === 'dynaqris' && paymentMethod !== 'ots' && getBaseTotal() > 0 && (
+                                                                    <div className="flex items-center justify-between border-b border-green-200/80 pb-2 mb-1">
+                                                                        <div className="flex flex-col">
+                                                                            <span className="text-xs font-bold text-emerald-800 uppercase">Biaya Layanan & Admin (Akad Ijarah)</span>
+                                                                            <span className="text-[10px] text-emerald-600 font-medium">*Pembayaran Instant</span>
+                                                                        </div>
+                                                                        <span className="text-sm font-black text-emerald-700">
+                                                                            + Rp {formatCurrency(eventAdminFee)}
+                                                                        </span>
+                                                                    </div>
+                                                                )}
+                                                                <div className="flex items-center justify-between">
+                                                                    <span className="text-xs font-bold text-green-800 uppercase">Total Dibayar</span>
+                                                                    <span className="text-xl font-black text-green-700">
+                                                                        Rp {formatCurrency(getCalculatedTotal())}
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+
+                                                            {paymentMethod === 'transfer' && paymentConfig?.active_mode === 'manual' && (
+                                                                <div className="space-y-2">
+                                                                    <label className="text-[10px] font-bold text-gray-600 uppercase ml-1">Upload Bukti Transfer *</label>
+                                                                    <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-200 border-dashed rounded-3xl cursor-pointer bg-white hover:bg-gray-50 hover:border-green-300 transition-all">
+                                                                        <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                                                                            <span className={`material-icons mb-2 ${paymentProof ? 'text-green-500' : 'text-gray-400'}`}>
+                                                                                {paymentProof ? 'check_circle' : 'receipt_long'}
+                                                                            </span>
+                                                                            <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">
+                                                                                {paymentProof ? 'Bukti Terpilih' : 'Klik untuk upload bukti'}
+                                                                            </p>
+                                                                            {paymentProof && <p className="mt-1 text-xs text-green-600 font-bold">{paymentProof.name}</p>}
+                                                                        </div>
+                                                                        <input
+                                                                            type="file"
+                                                                            required={paymentMethod === 'transfer' && paymentConfig?.active_mode === 'manual' && getCalculatedTotal() > 0}
+                                                                            accept="image/*"
+                                                                            onChange={(e) => {
+                                                                                if (e.target.files && e.target.files.length > 0) {
+                                                                                    const file = e.target.files[0];
+                                                                                    if (file && validateFileSize(file)) {
+                                                                                        setPaymentProof(file);
                                                                                     }
                                                                                 }
-                                                                            });
-                                                                        }
-
-                                                                        const extra = Number(paymentAmount) || 0;
-                                                                        let baseTotal = 0;
-                                                                        if (event?.price_type === 'fixed') baseTotal = fixed + extraFormPrice;
-                                                                        else if (event?.price_type === 'hybrid_1') baseTotal = fixed + extraFormPrice + extra;
-                                                                        else baseTotal = extra + extraFormPrice;
-
-                                                                        if (appliedVoucher.discount_type === 'percentage') {
-                                                                            return formatCurrency(baseTotal * (Number(appliedVoucher.discount_value) / 100));
-                                                                        }
-                                                                        return formatCurrency(Number(appliedVoucher.discount_value));
-                                                                    })()}
-                                                                </span>
-                                                            </div>
-                                                        )}
-
-                                                        {paymentConfig?.active_mode === 'dynaqris' && paymentMethod !== 'ots' && getBaseTotal() > 0 && (
-                                                            <div className="flex items-center justify-between border-b border-green-200/80 pb-2 mb-1">
-                                                                <div className="flex flex-col">
-                                                                    <span className="text-xs font-bold text-emerald-800 uppercase">Biaya Layanan & Admin (Akad Ijarah)</span>
-                                                                    <span className="text-[10px] text-emerald-600 font-medium">*Kode unik otomatis untuk verifikasi instan</span>
+                                                                            }}
+                                                                            className="absolute inset-0 w-0 h-0 opacity-0 pointer-events-none"
+                                                                        />
+                                                                    </label>
                                                                 </div>
-                                                                <span className="text-sm font-black text-emerald-700">
-                                                                    + Rp {formatCurrency(eventAdminFee)}
-                                                                </span>
-                                                            </div>
-                                                        )}
-                                                        <div className="flex items-center justify-between">
-                                                            <span className="text-xs font-bold text-green-800 uppercase">Total Dibayar</span>
-                                                            <span className="text-xl font-black text-green-700">
-                                                                Rp {formatCurrency(getCalculatedTotal())}
-                                                            </span>
-                                                        </div>
-                                                    </div>
-
-                                                    {paymentMethod === 'transfer' && paymentConfig?.active_mode === 'manual' && (
-                                                        <div className="space-y-2">
-                                                            <label className="text-[10px] font-bold text-gray-600 uppercase ml-1">Upload Bukti Transfer *</label>
-                                                            <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-200 border-dashed rounded-3xl cursor-pointer bg-white hover:bg-gray-50 hover:border-green-300 transition-all">
-                                                                <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                                                                    <span className={`material-icons mb-2 ${paymentProof ? 'text-green-500' : 'text-gray-400'}`}>
-                                                                        {paymentProof ? 'check_circle' : 'receipt_long'}
-                                                                    </span>
-                                                                    <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">
-                                                                        {paymentProof ? 'Bukti Terpilih' : 'Klik untuk upload bukti'}
-                                                                    </p>
-                                                                    {paymentProof && <p className="mt-1 text-xs text-green-600 font-bold">{paymentProof.name}</p>}
-                                                                </div>
-                                                                <input
-                                                                    type="file"
-                                                                    required={paymentMethod === 'transfer' && paymentConfig?.active_mode === 'manual' && getCalculatedTotal() > 0}
-                                                                    accept="image/*"
-                                                                    onChange={(e) => {
-                                                                        if (e.target.files && e.target.files.length > 0) {
-                                                                            const file = e.target.files[0];
-                                                                            if (file && validateFileSize(file)) {
-                                                                                setPaymentProof(file);
-                                                                            }
-                                                                        }
-                                                                    }}
-                                                                    className="absolute inset-0 w-0 h-0 opacity-0 pointer-events-none"
-                                                                />
-                                                            </label>
-                                                        </div>
-                                                    )}
+                                                            )}
                                                         </>
                                                     )}
                                                 </>
@@ -2790,9 +2790,9 @@ const EventStreamingPlayerModal = ({ stream, onClose }) => {
             try {
                 const key = sessionStorage.getItem('bae_streaming_session_key');
                 if (!key) return;
-                const res = await axios.post(`${API_BASE}/api/streaming/viewers/`, { 
-                    session_key: key, 
-                    stream_key: stream.stream_key 
+                const res = await axios.post(`${API_BASE}/api/streaming/viewers/`, {
+                    session_key: key,
+                    stream_key: stream.stream_key
                 });
                 setViewerCount(res.data.total_viewers || 1);
             } catch (err) {
@@ -2859,7 +2859,7 @@ const EventStreamingPlayerModal = ({ stream, onClose }) => {
             hls.attachMedia(video);
 
             hls.on(window.Hls.Events.MANIFEST_PARSED, () => {
-                video.play().catch(() => {});
+                video.play().catch(() => { });
             });
 
             hls.on(window.Hls.Events.ERROR, (event, data) => {
@@ -2881,7 +2881,7 @@ const EventStreamingPlayerModal = ({ stream, onClose }) => {
         } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
             video.src = hlsUrl;
             video.onloadedmetadata = () => {
-                video.play().catch(() => {});
+                video.play().catch(() => { });
             };
         } else {
             setIsPlayerError(true);
@@ -2899,10 +2899,10 @@ const EventStreamingPlayerModal = ({ stream, onClose }) => {
     const toggleFullscreen = () => {
         if (!wrapperRef.current) return;
         if (!document.fullscreenElement) {
-            wrapperRef.current.requestFullscreen().catch(() => {});
+            wrapperRef.current.requestFullscreen().catch(() => { });
             setIsFullscreen(true);
         } else {
-            document.exitFullscreen().catch(() => {});
+            document.exitFullscreen().catch(() => { });
             setIsFullscreen(false);
         }
     };
@@ -2953,7 +2953,7 @@ const EventStreamingPlayerModal = ({ stream, onClose }) => {
 
     return (
         <div className="fixed inset-0 z-[200] bg-black/90 backdrop-blur-md flex items-center justify-center p-0 sm:p-4 animate-fade-in overflow-hidden">
-            <div 
+            <div
                 ref={wrapperRef}
                 className="w-full h-full sm:h-[85vh] max-w-6xl bg-zinc-950 sm:rounded-3xl border border-zinc-800 shadow-2xl flex flex-col md:flex-row relative overflow-hidden"
             >
@@ -3004,7 +3004,7 @@ const EventStreamingPlayerModal = ({ stream, onClose }) => {
                     </button>
 
                     {/* Close Button */}
-                    <button 
+                    <button
                         onClick={onClose}
                         className="w-9 h-9 bg-black/60 hover:bg-red-600 hover:text-white backdrop-blur text-white/90 rounded-full flex items-center justify-center transition border border-white/10 shadow-md animate-fade-in"
                         title="Tutup"
@@ -3041,7 +3041,7 @@ const EventStreamingPlayerModal = ({ stream, onClose }) => {
                     </div>
 
                     {/* Chat Area */}
-                    <div 
+                    <div
                         ref={chatContainerRef}
                         className="flex-1 overflow-y-auto p-4 space-y-3.5 custom-scrollbar"
                     >

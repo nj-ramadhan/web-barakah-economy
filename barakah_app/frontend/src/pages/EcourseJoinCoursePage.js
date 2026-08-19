@@ -134,7 +134,7 @@ const EcourseJoinCoursePage = () => {
           admin_fee: appliedFee
         }
       );
-      
+
       const enrollment = res.data;
       setCurrentEnrollmentId(enrollment.id);
 
@@ -285,60 +285,44 @@ const EcourseJoinCoursePage = () => {
               <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm space-y-3">
                 <h3 className="text-xs font-bold uppercase text-gray-400 tracking-wider mb-2">Metode Pembayaran</h3>
 
-                {paymentConfig?.active_mode === 'dynaqris' && (
+                {paymentConfig?.active_mode === 'dynaqris' ? (
                   <label
                     onClick={() => setSelectedPaymentMethod('dynaqris')}
-                    className={`flex items-center justify-between p-3.5 rounded-xl border-2 cursor-pointer transition ${
-                      selectedPaymentMethod === 'dynaqris'
-                        ? 'border-emerald-600 bg-emerald-50/50'
-                        : 'border-gray-100 hover:border-gray-200'
-                    }`}
+                    className="flex items-center justify-between p-3.5 rounded-xl border-2 border-emerald-600 bg-emerald-50/50 cursor-pointer transition"
                   >
                     <div className="flex items-center gap-3">
-                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                        selectedPaymentMethod === 'dynaqris' ? 'border-emerald-600 bg-emerald-600' : 'border-gray-300'
-                      }`}>
-                        {selectedPaymentMethod === 'dynaqris' && (
-                          <span className="w-2 h-2 rounded-full bg-white"></span>
-                        )}
+                      <div className="w-5 h-5 rounded-full border-2 border-emerald-600 bg-emerald-600 flex items-center justify-center">
+                        <span className="w-2 h-2 rounded-full bg-white"></span>
                       </div>
                       <div>
                         <p className="text-xs font-bold text-gray-800 flex items-center gap-1.5">
                           <span className="material-icons text-emerald-600 text-sm">qr_code_2</span>
-                          DynaQRIS (QRIS Otomatis)
+                          QRIS
                         </p>
                         <p className="text-[10px] text-emerald-700 font-medium mt-0.5">Verifikasi Instan Otomatis</p>
                       </div>
                     </div>
                     <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">Rekomendasi</span>
                   </label>
-                )}
-
-                <label
-                  onClick={() => setSelectedPaymentMethod('transfer')}
-                  className={`flex items-center justify-between p-3.5 rounded-xl border-2 cursor-pointer transition ${
-                    selectedPaymentMethod === 'transfer'
-                      ? 'border-emerald-600 bg-emerald-50/50'
-                      : 'border-gray-100 hover:border-gray-200'
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                      selectedPaymentMethod === 'transfer' ? 'border-emerald-600 bg-emerald-600' : 'border-gray-300'
-                    }`}>
-                      {selectedPaymentMethod === 'transfer' && (
+                ) : (
+                  <label
+                    onClick={() => setSelectedPaymentMethod('transfer')}
+                    className="flex items-center justify-between p-3.5 rounded-xl border-2 border-emerald-600 bg-emerald-50/50 cursor-pointer transition"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-5 h-5 rounded-full border-2 border-emerald-600 bg-emerald-600 flex items-center justify-center">
                         <span className="w-2 h-2 rounded-full bg-white"></span>
-                      )}
+                      </div>
+                      <div>
+                        <p className="text-xs font-bold text-gray-800 flex items-center gap-1.5">
+                          <span className="material-icons text-blue-600 text-sm">account_balance</span>
+                          Transfer Bank BSI / QRIS Manual
+                        </p>
+                        <p className="text-[10px] text-gray-500 font-medium mt-0.5">Upload Bukti Konfirmasi Transfer</p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-xs font-bold text-gray-800 flex items-center gap-1.5">
-                        <span className="material-icons text-blue-600 text-sm">account_balance</span>
-                        Transfer Bank BSI / QRIS Manual
-                      </p>
-                      <p className="text-[10px] text-gray-500 font-medium mt-0.5">Upload Bukti Konfirmasi Transfer</p>
-                    </div>
-                  </div>
-                </label>
+                  </label>
+                )}
               </div>
             )}
 
@@ -348,12 +332,12 @@ const EcourseJoinCoursePage = () => {
                 <span>Harga Kelas</span>
                 <span className="font-bold text-gray-800">{isFree ? 'Gratis' : formatIDR(course.price)}</span>
               </div>
-              
+
               {!isFree && selectedPaymentMethod === 'dynaqris' && (
                 <div className="flex justify-between items-center text-xs text-emerald-800 font-semibold bg-emerald-50/70 p-2.5 rounded-xl border border-emerald-100">
                   <div className="flex flex-col">
                     <span>Biaya Layanan & Admin (Akad Ijarah)</span>
-                    <span className="text-[10px] text-emerald-600 font-normal">*Kode unik otomatis untuk verifikasi instan</span>
+                    <span className="text-[10px] text-emerald-600 font-normal">*Pembayaran Instant</span>
                   </div>
                   <span>+ {formatIDR(uniqueAdminFee)}</span>
                 </div>
