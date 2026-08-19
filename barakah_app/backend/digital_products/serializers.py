@@ -56,14 +56,17 @@ class DigitalProductPublicSerializer(serializers.ModelSerializer):
 
 
 class DigitalOrderSerializer(serializers.ModelSerializer):
-    product_title = serializers.CharField(source='digital_product.title', read_only=True)
+    product_title = serializers.CharField(source='digital_product.title', read_only=True, default='')
+    product_slug = serializers.CharField(source='digital_product.slug', read_only=True, default='')
+    product_price = serializers.DecimalField(source='digital_product.price', max_digits=12, decimal_places=2, read_only=True, default=0)
+    product_thumbnail = serializers.ImageField(source='digital_product.thumbnail', read_only=True, default=None)
 
     class Meta:
         model = DigitalOrder
         fields = [
-            'id', 'order_number', 'digital_product', 'product_title',
+            'id', 'order_number', 'digital_product', 'product_title', 'product_slug', 'product_price', 'product_thumbnail',
             'product_owner', 'buyer', 'buyer_name', 'buyer_email', 'buyer_phone',
-            'amount', 'payment_proof', 'payment_status',
+            'amount', 'admin_fee', 'payment_proof', 'payment_status',
             'ocr_verified', 'email_sent', 'created_at',
             'paid_to_seller_directly', 'seller_bank_name', 'seller_bank_account', 'seller_bank_holder', 'seller_qris_image'
         ]

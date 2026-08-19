@@ -296,8 +296,10 @@ const CoursesTab = () => {
 const PurchasesTab = () => {
     const [purchases, setPurchases] = useState([]);
     const [physicalOrders, setPhysicalOrders] = useState([]);
+    const [unreviewedCount, setUnreviewedCount] = useState(0);
     const [loading, setLoading] = useState(true);
-    const [historyType, setHistoryType] = useState('digital'); // 'digital' or 'sinergy'
+    const [historyType, setHistoryType] = useState('sinergy'); // 'sinergy' (Toko) or 'digital'
+    const [statusFilter, setStatusFilter] = useState('all');
     const [digitalPage, setDigitalPage] = useState(1);
     const [sinergyPage, setSinergyPage] = useState(1);
     const ITEMS_PER_PAGE = 10;
@@ -311,16 +313,22 @@ const PurchasesTab = () => {
                 // Fetch Digital & sort newest first
                 const resDigital = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/digital-products/orders/my-purchases/`, {
                     headers: { Authorization: `Bearer ${user.access}` }
-                });
+                }).catch(() => ({ data: [] }));
                 const sortedDigital = (resDigital.data || []).sort((a, b) => new Date(b.created_at || b.id || 0) - new Date(a.created_at || a.id || 0));
                 setPurchases(sortedDigital);
 
-                // Fetch Sinergy (Physical) & sort newest first
+                // Fetch Store / Physical Orders & sort newest first
                 const resSinergy = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/orders/`, {
                     headers: { Authorization: `Bearer ${user.access}` }
-                });
+                }).catch(() => ({ data: [] }));
                 const sortedSinergy = (resSinergy.data || []).sort((a, b) => new Date(b.created_at || b.id || 0) - new Date(a.created_at || a.id || 0));
                 setPhysicalOrders(sortedSinergy);
+
+                // Fetch unreviewed count
+                const resUnreviewed = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/orders/unreviewed-items/`, {
+                    headers: { Authorization: `Bearer ${user.access}` }
+                }).catch(() => ({ data: [] }));
+                setUnreviewedCount((resUnreviewed.data || []).length);
             } catch (err) {
                 console.error('Error fetching purchase history:', err);
             } finally {
@@ -329,6 +337,26 @@ const PurchasesTab = () => {
         };
         fetchAllHistory();
     }, []);
+
+    // Filter counts for Store
+    const pendingCount = physicalOrders.filter(o => ['pending', 'menunggu', 'unpaid'].includes((o.status || '').toLowerCase())).length;
+    const processCount = physicalOrders.filter(o => ['paid', 'proses', 'diproses', 'dibayar'].includes((o.status || '').toLowerCase())).length;
+    const shippingCount = physicalOrders.filter(o => ['shipped', 'dikirim', 'dalam pengiriman'].includes((o.status || '').toLowerCase())).length;
+    const completedCount = physicalOrders.filter(o => ['selesai', 'completed', 'delivered'].includes((o.status || '').toLowerCase())).length;
+    const cancelledCount = physicalOrders.filter(o => ['batal', 'cancelled', 'failed', 'gagal'].includes((o.status || '').toLowerCase())).length;
+    const activeStoreActionCount = pendingCount + shippingCount + (unreviewedCount > 0 ? 1 : 0);
+
+    // Filter physical orders based on selected filter
+    const filteredPhysicalOrders = physicalOrders.filter(order => {
+        if (statusFilter === 'all') return true;
+        const status = (order.status || '').toLowerCase();
+        if (statusFilter === 'pending') return ['pending', 'menunggu', 'unpaid'].includes(status);
+        if (statusFilter === 'processing') return ['paid', 'proses', 'diproses', 'dibayar'].includes(status);
+        if (statusFilter === 'shipping') return ['shipped', 'dikirim', 'dalam pengiriman'].includes(status);
+        if (statusFilter === 'completed') return ['selesai', 'completed', 'delivered'].includes(status);
+        if (statusFilter === 'cancelled') return ['batal', 'cancelled', 'failed', 'gagal'].includes(status);
+        return true;
+    });
 
     const PurchaseSkeleton = () => (
         <div className="space-y-4 animate-pulse">
@@ -359,52 +387,79 @@ const PurchasesTab = () => {
     if (loading) return <PurchaseSkeleton />;
 
     const paginatedDigital = purchases.slice((digitalPage - 1) * ITEMS_PER_PAGE, digitalPage * ITEMS_PER_PAGE);
-    const paginatedPhysical = physicalOrders.slice((sinergyPage - 1) * ITEMS_PER_PAGE, sinergyPage * ITEMS_PER_PAGE);
+    const paginatedPhysical = filteredPhysicalOrders.slice((sinergyPage - 1) * ITEMS_PER_PAGE, sinergyPage * ITEMS_PER_PAGE);
 
     return (
         <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
+            {/* Tab Type Switcher */}
             <div className="flex items-center justify-between">
                 <h2 className="font-bold text-gray-800">Riwayat Transaksi</h2>
-                <div className="flex bg-gray-100 p-1 rounded-lg gap-1">
-                    <button
-                        onClick={() => { setHistoryType('digital'); setDigitalPage(1); }}
-                        className={`px-3 py-1 rounded text-[10px] font-black uppercase transition-all ${historyType === 'digital' ? 'bg-white text-green-700 shadow-sm' : 'text-gray-400'}`}
-                    >
-                        Digital ({purchases.length})
-                    </button>
+                <div className="flex bg-gray-100 p-1 rounded-xl gap-1">
                     <button
                         onClick={() => { setHistoryType('sinergy'); setSinergyPage(1); }}
-                        className={`px-3 py-1 rounded text-[10px] font-black uppercase transition-all ${historyType === 'sinergy' ? 'bg-white text-green-700 shadow-sm' : 'text-gray-400'}`}
+                        className={`relative px-3.5 py-1.5 rounded-lg text-[11px] font-black uppercase transition-all flex items-center gap-1.5 ${
+                            historyType === 'sinergy' ? 'bg-white text-green-700 shadow-sm' : 'text-gray-400 hover:text-gray-600'
+                        }`}
                     >
-                        E-commerce ({physicalOrders.length})
+                        <span>Toko ({physicalOrders.length})</span>
+                        {activeStoreActionCount > 0 && (
+                            <span className="flex h-2 w-2 relative">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                            </span>
+                        )}
+                    </button>
+                    <button
+                        onClick={() => { setHistoryType('digital'); setDigitalPage(1); }}
+                        className={`px-3.5 py-1.5 rounded-lg text-[11px] font-black uppercase transition-all ${
+                            historyType === 'digital' ? 'bg-white text-green-700 shadow-sm' : 'text-gray-400 hover:text-gray-600'
+                        }`}
+                    >
+                        Digital ({purchases.length})
                     </button>
                 </div>
             </div>
 
             {historyType === 'digital' ? (
                 purchases.length === 0 ? (
-                    <div className="text-center py-8 text-gray-400 bg-gray-50 rounded-xl border border-dashed text-xs">
-                        Belum ada riwayat pembelian produk digital
+                    <div className="text-center py-12 text-gray-400 bg-gray-50 rounded-2xl border border-dashed text-xs">
+                        <span className="material-icons text-3xl mb-1 text-gray-300">inventory_2</span>
+                        <p>Belum ada riwayat pembelian produk digital</p>
                     </div>
                 ) : (
                     <>
                         <div className="space-y-3">
-                            {paginatedDigital.map(order => (
-                                <div key={order.id} className="bg-white p-3 rounded-xl border shadow-sm">
-                                    <div className="flex justify-between items-start mb-2">
-                                        <h3 className="text-sm font-bold text-gray-800">{order.product_title}</h3>
-                                        <span className="text-[10px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full font-bold">Terverifikasi</span>
+                            {paginatedDigital.map(order => {
+                                const rawPrice = Number(order.amount) || Number(order.product_price) || Number(order.price) || 0;
+                                const title = order.product_title || 'Produk Digital';
+                                const slug = order.product_slug || order.digital_product_slug || (typeof order.digital_product === 'string' ? order.digital_product : order.digital_product?.slug) || '';
+                                const detailUrl = slug ? `/digital-products/${slug}` : '/digital-products';
+
+                                return (
+                                    <div key={order.id} className="bg-white p-3.5 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition">
+                                        <div className="flex justify-between items-start mb-2">
+                                            <h3 className="text-sm font-bold text-gray-800">{title}</h3>
+                                            <span className="text-[10px] bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full font-bold border border-emerald-100">
+                                                {order.payment_status === 'verified' ? 'Terverifikasi' : 'Menunggu'}
+                                            </span>
+                                        </div>
+                                        <div className="flex justify-between items-center text-[10px] text-gray-400">
+                                            <span>#{order.order_number || `DIG-${order.id}`}</span>
+                                            <span>{formatDate(order.created_at)}</span>
+                                        </div>
+                                        <div className="mt-3 pt-2.5 border-t border-gray-50 flex justify-between items-center">
+                                            <div>
+                                                <p className="text-[9px] font-bold text-gray-400 uppercase">Harga Produk</p>
+                                                <span className="text-xs font-black text-gray-900">Rp {formatIDR(rawPrice)}</span>
+                                            </div>
+                                            <Link to={detailUrl} className="text-[11px] bg-green-50 text-green-700 hover:bg-green-100 px-3 py-1.5 rounded-xl font-bold transition flex items-center gap-1">
+                                                <span>Detail Produk</span>
+                                                <span className="material-icons text-xs">arrow_forward</span>
+                                            </Link>
+                                        </div>
                                     </div>
-                                    <div className="flex justify-between items-center text-[10px] text-gray-400">
-                                        <span>#{order.order_number}</span>
-                                        <span>{formatDate(order.created_at)}</span>
-                                    </div>
-                                    <div className="mt-3 pt-2 border-t flex justify-between items-center">
-                                        <span className="text-xs font-black text-gray-900">Rp {formatIDR(order.price)}</span>
-                                        <Link to={`/digital-products/${order.product_slug}`} className="text-[10px] text-green-600 font-bold hover:underline">Detail Produk</Link>
-                                    </div>
-                                </div>
-                            ))}
+                                );
+                            })}
                         </div>
                         <Pagination 
                             currentPage={digitalPage}
@@ -415,66 +470,194 @@ const PurchasesTab = () => {
                     </>
                 )
             ) : (
-                physicalOrders.length === 0 ? (
-                    <div className="text-center py-8 text-gray-400 bg-gray-50 rounded-xl border border-dashed text-xs">
-                        Belum ada riwayat belanja produk E-commerce
-                    </div>
-                ) : (
-                    <>
-                        <div className="space-y-3">
-                            {paginatedPhysical.map(order => {
-                                const status = (order.status || '').toLowerCase();
-                                let badgeStyle = 'bg-gray-50 text-gray-500';
-                                if (['paid', 'berhasil', 'success'].includes(status)) badgeStyle = 'bg-emerald-50 text-emerald-600';
-                                else if (['shipped', 'dikirim'].includes(status)) badgeStyle = 'bg-blue-50 text-blue-600';
-                                else if (['pending', 'menunggu'].includes(status)) badgeStyle = 'bg-amber-50 text-amber-600';
-                                else if (['failed', 'gagal', 'batal'].includes(status)) badgeStyle = 'bg-red-50 text-red-600';
+                <>
+                    {/* Status Filter Horizontal Pills for Store */}
+                    <div className="flex items-center gap-1.5 overflow-x-auto pb-2 pt-1 scrollbar-none">
+                        <button
+                            onClick={() => { setStatusFilter('all'); setSinergyPage(1); }}
+                            className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 ${
+                                statusFilter === 'all'
+                                    ? 'bg-gray-900 text-white shadow-sm'
+                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                            }`}
+                        >
+                            <span>Semua</span>
+                            <span className="text-[10px] opacity-75 font-normal">({physicalOrders.length})</span>
+                        </button>
 
-                                return (
-                                    <div key={order.id} className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-all">
-                                        <div className="flex justify-between items-start mb-2">
-                                            <h3 className="text-sm font-black text-gray-900 tracking-tight">Order #{order.order_number}</h3>
-                                            <span className={`text-[10px] px-2.5 py-1 rounded-full font-black uppercase tracking-widest ${badgeStyle}`}>
-                                                {order.status || 'Pending'}
-                                            </span>
-                                        </div>
-                                        <div className="space-y-1.5 my-3">
-                                            {order.items?.map((item, idx) => (
-                                                <div key={idx} className="text-[11px] text-gray-600 flex justify-between items-center bg-gray-50/50 p-2 rounded-lg">
-                                                    <span className="font-bold">{item.product_name} <span className="text-gray-400 font-medium">x{item.quantity}</span></span>
-                                                    <span className="font-black text-gray-400">{formatIDR(item.price)}</span>
-                                                </div>
-                                            ))}
-                                        </div>
-                                        <div className="flex justify-between items-center pt-3 border-t border-gray-50 mt-3">
-                                            <div className="flex items-center gap-1.5 text-gray-400">
-                                                <span className="material-icons text-xs">calendar_today</span>
-                                                <span className="text-[10px] font-bold">{formatDate(order.created_at)}</span>
-                                            </div>
-                                            <div className="text-right">
-                                                <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">Grand Total</p>
-                                                <p className="text-sm font-black text-emerald-600">
-                                                    Rp {formatIDR(Number(order.grand_total) > 0 ? order.grand_total : order.total_price)}
-                                                </p>
-                                            </div>
-                                        </div>
-                                        <div className="mt-4 flex justify-end">
-                                            <Link to="/riwayat-belanja" className="text-[10px] bg-gray-900 text-white px-4 py-2 rounded-xl font-black uppercase tracking-widest hover:bg-emerald-600 transition-colors flex items-center gap-2">
-                                                Detail Lacak <span className="material-icons text-xs">arrow_forward</span>
-                                            </Link>
-                                        </div>
-                                    </div>
-                                );
-                            })}
+                        <button
+                            onClick={() => { setStatusFilter('pending'); setSinergyPage(1); }}
+                            className={`relative px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 ${
+                                statusFilter === 'pending'
+                                    ? 'bg-amber-600 text-white shadow-sm'
+                                    : 'bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200/60'
+                            }`}
+                        >
+                            <span>Menunggu Bayar</span>
+                            {pendingCount > 0 && (
+                                <span className={`px-1.5 py-0.2 rounded-full text-[9px] font-black ${statusFilter === 'pending' ? 'bg-white text-amber-700' : 'bg-red-500 text-white'}`}>
+                                    {pendingCount}
+                                </span>
+                            )}
+                        </button>
+
+                        <button
+                            onClick={() => { setStatusFilter('processing'); setSinergyPage(1); }}
+                            className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 ${
+                                statusFilter === 'processing'
+                                    ? 'bg-blue-600 text-white shadow-sm'
+                                    : 'bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200/60'
+                            }`}
+                        >
+                            <span>Diproses</span>
+                            {processCount > 0 && (
+                                <span className={`px-1.5 py-0.2 rounded-full text-[9px] font-black ${statusFilter === 'processing' ? 'bg-white text-blue-700' : 'bg-blue-200 text-blue-800'}`}>
+                                    {processCount}
+                                </span>
+                            )}
+                        </button>
+
+                        <button
+                            onClick={() => { setStatusFilter('shipping'); setSinergyPage(1); }}
+                            className={`relative px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 ${
+                                statusFilter === 'shipping'
+                                    ? 'bg-purple-600 text-white shadow-sm'
+                                    : 'bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200/60'
+                            }`}
+                        >
+                            <span>Dikirim</span>
+                            {shippingCount > 0 && (
+                                <span className={`px-1.5 py-0.2 rounded-full text-[9px] font-black ${statusFilter === 'shipping' ? 'bg-white text-purple-700' : 'bg-red-500 text-white'}`}>
+                                    {shippingCount}
+                                </span>
+                            )}
+                        </button>
+
+                        <button
+                            onClick={() => { setStatusFilter('completed'); setSinergyPage(1); }}
+                            className={`relative px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 ${
+                                statusFilter === 'completed'
+                                    ? 'bg-emerald-600 text-white shadow-sm'
+                                    : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200/60'
+                            }`}
+                        >
+                            <span>Selesai</span>
+                            {unreviewedCount > 0 && (
+                                <span className={`px-1.5 py-0.2 rounded-full text-[9px] font-black ${statusFilter === 'completed' ? 'bg-white text-emerald-700' : 'bg-amber-500 text-white'}`} title="Butuh Testimoni">
+                                    {unreviewedCount} Ulasan
+                                </span>
+                            )}
+                        </button>
+
+                        <button
+                            onClick={() => { setStatusFilter('cancelled'); setSinergyPage(1); }}
+                            className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 ${
+                                statusFilter === 'cancelled'
+                                    ? 'bg-red-600 text-white shadow-sm'
+                                    : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                            }`}
+                        >
+                            <span>Batal</span>
+                            {cancelledCount > 0 && (
+                                <span className="text-[10px] opacity-75 font-normal">({cancelledCount})</span>
+                            )}
+                        </button>
+                    </div>
+
+                    {filteredPhysicalOrders.length === 0 ? (
+                        <div className="text-center py-12 text-gray-400 bg-gray-50 rounded-2xl border border-dashed text-xs space-y-1">
+                            <span className="material-icons text-3xl text-gray-300">storefront</span>
+                            <p className="font-semibold text-gray-600">Belum ada pesanan pada kategori ini</p>
+                            <p className="text-[11px] text-gray-400">Silakan pilih status lain atau mulai berbelanja di Toko</p>
                         </div>
-                        <Pagination 
-                            currentPage={sinergyPage}
-                            totalItems={physicalOrders.length}
-                            itemsPerPage={ITEMS_PER_PAGE}
-                            onPageChange={setSinergyPage}
-                        />
-                    </>
-                )
+                    ) : (
+                        <>
+                            <div className="space-y-3">
+                                {paginatedPhysical.map(order => {
+                                    const status = (order.status || '').toLowerCase();
+                                    let badgeStyle = 'bg-gray-50 text-gray-500 border border-gray-200';
+                                    let statusLabel = order.status || 'Pending';
+                                    let showPayAction = false;
+                                    let showReviewPrompt = false;
+
+                                    if (['paid', 'berhasil', 'success'].includes(status)) {
+                                        badgeStyle = 'bg-emerald-50 text-emerald-700 border border-emerald-200';
+                                        statusLabel = 'Diproses';
+                                    } else if (['shipped', 'dikirim', 'dalam pengiriman'].includes(status)) {
+                                        badgeStyle = 'bg-purple-50 text-purple-700 border border-purple-200 animate-pulse';
+                                        statusLabel = 'Dalam Pengiriman';
+                                    } else if (['pending', 'menunggu', 'unpaid'].includes(status)) {
+                                        badgeStyle = 'bg-amber-50 text-amber-700 border border-amber-200';
+                                        statusLabel = 'Menunggu Bayar';
+                                        showPayAction = true;
+                                    } else if (['selesai', 'completed', 'delivered'].includes(status)) {
+                                        badgeStyle = 'bg-teal-50 text-teal-700 border border-teal-200';
+                                        statusLabel = 'Selesai';
+                                        showReviewPrompt = true;
+                                    } else if (['failed', 'gagal', 'batal', 'cancelled'].includes(status)) {
+                                        badgeStyle = 'bg-red-50 text-red-600 border border-red-200';
+                                        statusLabel = 'Batal';
+                                    }
+
+                                    const orderTotal = Number(order.grand_total) > 0 ? Number(order.grand_total) : (Number(order.total_price) || 0);
+
+                                    return (
+                                        <div key={order.id} className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all">
+                                            <div className="flex justify-between items-start mb-2">
+                                                <div>
+                                                    <h3 className="text-sm font-black text-gray-900 tracking-tight">Order #{order.order_number}</h3>
+                                                    {order.shipping_courier && (
+                                                        <p className="text-[10px] text-gray-400 font-semibold uppercase mt-0.5">Kurir: {order.shipping_courier}</p>
+                                                    )}
+                                                </div>
+                                                <span className={`text-[10px] px-2.5 py-1 rounded-full font-black uppercase tracking-widest ${badgeStyle}`}>
+                                                    {statusLabel}
+                                                </span>
+                                            </div>
+                                            <div className="space-y-1.5 my-3">
+                                                {order.items?.map((item, idx) => (
+                                                    <div key={idx} className="text-[11px] text-gray-600 flex justify-between items-center bg-gray-50/70 p-2.5 rounded-xl">
+                                                        <span className="font-bold">{item.product_name} <span className="text-gray-400 font-medium">x{item.quantity}</span></span>
+                                                        <span className="font-black text-gray-500">Rp {formatIDR(Number(item.price) || 0)}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                            <div className="flex justify-between items-center pt-3 border-t border-gray-50 mt-3">
+                                                <div className="flex items-center gap-1.5 text-gray-400">
+                                                    <span className="material-icons text-xs">calendar_today</span>
+                                                    <span className="text-[10px] font-bold">{formatDate(order.created_at)}</span>
+                                                </div>
+                                                <div className="text-right">
+                                                    <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">Grand Total</p>
+                                                    <p className="text-sm font-black text-emerald-600">
+                                                        Rp {formatIDR(orderTotal)}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <div className="mt-4 flex items-center justify-end gap-2">
+                                                {showPayAction && (
+                                                    <Link to={`/pembayaran/${order.order_number}`} className="text-[10px] bg-amber-500 hover:bg-amber-600 text-white px-3.5 py-2 rounded-xl font-black uppercase tracking-wider transition flex items-center gap-1 shadow-sm">
+                                                        <span className="material-icons text-xs">payment</span>
+                                                        Bayar Sekarang
+                                                    </Link>
+                                                )}
+                                                <Link to="/riwayat-belanja" className="text-[10px] bg-gray-900 text-white px-4 py-2 rounded-xl font-black uppercase tracking-widest hover:bg-emerald-600 transition-colors flex items-center gap-2">
+                                                    Detail Lacak <span className="material-icons text-xs">arrow_forward</span>
+                                                </Link>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                            <Pagination 
+                                currentPage={sinergyPage}
+                                totalItems={filteredPhysicalOrders.length}
+                                itemsPerPage={ITEMS_PER_PAGE}
+                                onPageChange={setSinergyPage}
+                            />
+                        </>
+                    )}
+                </>
             )}
         </div>
     );

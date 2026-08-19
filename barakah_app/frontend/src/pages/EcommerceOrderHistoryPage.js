@@ -536,9 +536,8 @@ const EcommerceOrderHistoryPage = () => {
                             </div>
                         </div>
                         
-                        <div className="flex gap-3 pt-2">
-                            <button onClick={() => window.print()} className="px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5"><span className="material-icons text-sm">print</span> Cetak</button>
-                            <button onClick={() => setShowDetailModal(false)} className="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black uppercase tracking-wider transition">Tutup</button>
+                        <div className="pt-2">
+                            <button onClick={() => setShowDetailModal(false)} className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black uppercase tracking-wider transition">Tutup</button>
                         </div>
                     </div>
                 </div>
