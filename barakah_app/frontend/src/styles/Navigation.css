@@ -4,6 +4,7 @@ nav {
   /* Ensure the navigation is above other content */
   padding-bottom: env(safe-area-inset-bottom, 0px);
   /* Agar nav pas di bawah pada HP tanpa tombol fisik */
+  box-sizing: border-box;
 }
 
 nav .flex {

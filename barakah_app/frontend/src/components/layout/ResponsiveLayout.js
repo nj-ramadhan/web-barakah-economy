@@ -11,8 +11,8 @@ const MobileContainer = ({ children, hideFooter = false }) => {
     const shouldShow = isLandingPage && !isSpecialPage;
 
     return (
-        <div className="w-full max-w-md bg-white dark:bg-gray-950 min-h-screen relative shadow-lg mx-auto transition-colors duration-300 flex flex-col">
-            <div className="flex-1">
+        <div className="w-full max-w-md bg-white dark:bg-gray-950 min-h-screen relative shadow-lg mx-auto transition-colors duration-300 flex flex-col overflow-x-hidden">
+            <div className="flex-1 w-full overflow-x-hidden">
                 {children}
             </div>
             {shouldShow && <GeneralFeedbackBubble />}

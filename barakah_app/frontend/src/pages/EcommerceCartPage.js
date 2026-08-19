@@ -255,7 +255,7 @@ const EcommerceCartPage = () => {
                         </div>
 
                         {/* Summary Sticky Bar */}
-                        <div className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-md border-t border-gray-100 p-4 z-40">
+                        <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-4xl bg-white/90 backdrop-blur-md border-t border-gray-100 p-4 z-40">
                             <div className="max-w-4xl mx-auto flex items-center justify-between gap-4">
                                 <div>
                                     <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">Total Harga ({cartItems.length} Produk)</span>

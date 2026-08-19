@@ -186,7 +186,7 @@ const DigitalProductDetailPage = () => {
                                     Deskripsi
                                 </h2>
                                 <div 
-                                    className="text-sm text-gray-600 leading-relaxed"
+                                    className="text-sm text-gray-600 leading-relaxed rich-text-content whitespace-pre-wrap break-words"
                                     dangerouslySetInnerHTML={{ __html: product.description }}
                                 />
                             </div>
@@ -210,7 +210,7 @@ const DigitalProductDetailPage = () => {
                 </div>
 
                 {/* Fixed buy button for mobile - hidden on md+ */}
-                <div className="md:hidden fixed bottom-24 left-0 right-0 max-w-md mx-auto px-4 pb-2 z-40 flex gap-2">
+                <div className="md:hidden fixed bottom-24 left-1/2 -translate-x-1/2 w-full max-w-md px-4 pb-2 z-40 flex gap-2">
                     <button
                         onClick={handleShare}
                         className="bg-white border border-gray-200 text-gray-600 p-3 rounded-xl shadow-lg flex items-center justify-center relative"

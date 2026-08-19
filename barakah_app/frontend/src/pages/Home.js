@@ -1183,7 +1183,7 @@ const Home = () => {
       </div>
 
       {/* Store Products Carousel Section */}
-      <div className="px-4 py-4 bg-gray-50/70 mt-2 border-y border-gray-100">
+      <div className="px-4 py-4 bg-gray-50/70 mt-2 border-y border-gray-100 overflow-hidden">
         <div className="flex justify-between items-center mb-3">
           <div>
             <div className="flex items-center gap-1.5 mb-0.5">
@@ -1213,7 +1213,7 @@ const Home = () => {
           <Swiper
             spaceBetween={10}
             slidesPerView={2.2}
-            className="!overflow-visible"
+            className="w-full overflow-hidden"
           >
             {sortedProducts.map((product) => {
               const basePrice = Number(product.price || 0);

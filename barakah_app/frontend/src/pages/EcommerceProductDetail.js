@@ -604,7 +604,7 @@ const EcommerceProductDetail = () => {
 
       {/* Tab Navigation */}
       <div className="mt-4 px-4 max-w-6xl mx-auto pb-20">
-        <div className="flex justify-start gap-8 bg-white border-b px-6">
+        <div className="flex justify-start gap-4 sm:gap-8 bg-white border-b px-4 sm:px-6 overflow-x-auto">
           <button
             className={`py-2 px-4 text-sm font-medium ${activeTab === 'description' ? 'text-green-600 border-b-2 border-green-600' : 'text-gray-500'}`}
             onClick={() => setActiveTab('description')}

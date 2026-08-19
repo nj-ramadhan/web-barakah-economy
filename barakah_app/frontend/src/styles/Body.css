@@ -6,6 +6,9 @@
   /* Removed padding-top here to avoid empty space at top. Header will handle it. */
   padding-bottom: calc(5rem + env(safe-area-inset-bottom, 0px));
   /* Adjust based on footer height + safe area */
+  overflow-x: hidden;
+  width: 100%;
+  max-width: 100%;
 }
 
 .body .container {

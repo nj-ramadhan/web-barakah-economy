@@ -70,7 +70,7 @@ const CampaignDetail = () => {
       </div>
 
       {/* Donation Button */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t max-w-md mx-auto">
+      <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-white border-t z-40">
         <div className="p-4">
           <Link
             to={`/donasi/${campaign.slug || campaign.id}`}

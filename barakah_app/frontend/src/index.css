@@ -9,6 +9,9 @@
 html {
   -webkit-text-size-adjust: 100%;
   -webkit-tap-highlight-color: transparent;
+  overflow-x: hidden;
+  max-width: 100vw;
+  width: 100%;
 }
 
 body {
@@ -17,6 +20,15 @@ body {
   -webkit-overflow-scrolling: touch;
   min-height: 100vh;
   min-height: 100dvh;
+  overflow-x: hidden;
+  max-width: 100vw;
+  width: 100%;
+}
+
+#root {
+  overflow-x: hidden;
+  width: 100%;
+  max-width: 100%;
 }
 
 /* Safe area inset support for iOS Safari bottom navigation & notch */
@@ -347,6 +359,11 @@ html.dark .hero-section {
   font-size: 0.95rem;
   line-height: 1.75;
   color: #374151;
+  white-space: pre-wrap;
+  tab-size: 4;
+  -moz-tab-size: 4;
+  word-break: break-word;
+  overflow-wrap: anywhere;
 }
 
 .rich-text-content p {
@@ -410,10 +427,31 @@ html.dark .hero-section {
   border-radius: 0.5rem;
 }
 
+.rich-text-content pre {
+  white-space: pre-wrap;
+  word-break: break-word;
+  background-color: #f3f4f6;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  tab-size: 4;
+  margin: 1rem 0;
+}
+
+.rich-text-content img {
+  max-width: 100% !important;
+  height: auto !important;
+  border-radius: 0.75rem;
+  margin: 1rem 0;
+  display: block;
+}
+
 .rich-text-content table {
   width: 100%;
+  max-width: 100%;
   border-collapse: collapse;
   margin: 1rem 0;
+  display: block;
+  overflow-x: auto;
 }
 
 .rich-text-content table th, 
@@ -436,5 +474,36 @@ html.dark .hero-section {
 
 .rich-text-content a:hover {
   color: #047857;
+}
+
+/* Dark mode support for rich text */
+html.dark .rich-text-content {
+  color: #d1d5db !important;
+}
+
+html.dark .rich-text-content p {
+  color: #d1d5db !important;
+}
+
+html.dark .rich-text-content strong,
+html.dark .rich-text-content b {
+  color: #f9fafb !important;
+}
+
+html.dark .rich-text-content h1,
+html.dark .rich-text-content h2,
+html.dark .rich-text-content h3,
+html.dark .rich-text-content h4 {
+  color: #f9fafb !important;
+}
+
+html.dark .rich-text-content pre {
+  background-color: #1f2937 !important;
+  color: #f9fafb !important;
+}
+
+html.dark .rich-text-content blockquote {
+  background-color: rgba(6, 95, 70, 0.2) !important;
+  color: #d1d5db !important;
 }
 
