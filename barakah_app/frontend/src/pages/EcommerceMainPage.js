@@ -642,22 +642,23 @@ const EcommerceMainPage = () => {
             </span>
             <div className="flex items-center gap-1.5 flex-wrap">
               {[
-                { key: 'populer', label: '🔥 Paling Populer (Stok & Klik)', title: 'Urutan default: Stok ada & paling banyak diklik' },
-                { key: 'price_asc', label: '💰 Harga Terendah', title: 'Harga termurah ke termahal' },
-                { key: 'price_desc', label: '💎 Harga Tertinggi', title: 'Harga termahal ke termurah' },
-                { key: 'newest', label: '✨ Terbaru', title: 'Produk yang baru ditambahkan' },
-                { key: 'stock', label: '📦 Stok Terbanyak', title: 'Jumlah stok paling banyak' },
+                { key: 'populer', label: 'Paling Populer', icon: 'trending_up', title: 'Urutan default: Stok ada & paling banyak diklik' },
+                { key: 'price_asc', label: 'Harga Terendah', icon: 'north_east', title: 'Harga termurah ke termahal' },
+                { key: 'price_desc', label: 'Harga Tertinggi', icon: 'south_east', title: 'Harga termahal ke termurah' },
+                { key: 'newest', label: 'Terbaru', icon: 'schedule', title: 'Produk yang baru ditambahkan' },
+                { key: 'stock', label: 'Stok Terbanyak', icon: 'inventory_2', title: 'Jumlah stok paling banyak' },
               ].map(opt => (
                 <button
                   key={opt.key}
                   onClick={() => setSortBy(opt.key)}
                   title={opt.title}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all border flex items-center gap-1 ${
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all border flex items-center gap-1.5 ${
                     sortBy === opt.key
                       ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm shadow-emerald-100 scale-105'
                       : 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100'
                   }`}
                 >
+                  <span className={`material-icons text-sm ${sortBy === opt.key ? 'text-white' : 'text-emerald-600'}`}>{opt.icon}</span>
                   <span>{opt.label}</span>
                 </button>
               ))}
