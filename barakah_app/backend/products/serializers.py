@@ -34,7 +34,7 @@ class ProductSerializer(serializers.ModelSerializer):
     seller_name = serializers.CharField(source='seller.username', read_only=True)
     category_display = serializers.CharField(source='get_category_display', read_only=True)
     seller_city_id = serializers.SerializerMethodField()
-    seller_city_name = serializers.CharField(source='seller.profile.address_city_name', read_only=True)
+    seller_city_name = serializers.SerializerMethodField()
     seller_village_id = serializers.CharField(source='seller.profile.address_village_id', read_only=True)
     seller_avatar = serializers.SerializerMethodField()
     likes_count = serializers.SerializerMethodField()
@@ -99,6 +99,21 @@ class ProductSerializer(serializers.ModelSerializer):
             return '3216062003' 
         except Exception:
             return '3216062003'
+
+    def get_seller_city_name(self, obj):
+        try:
+            if obj.seller and hasattr(obj.seller, 'profile'):
+                profile = obj.seller.profile
+                if profile:
+                    if profile.address_city_name:
+                        return profile.address_city_name
+                    if profile.address_subdistrict_name:
+                        return f"Kec. {profile.address_subdistrict_name}"
+                    if profile.address_province:
+                        return profile.address_province
+        except Exception:
+            pass
+        return None
 
     def get_seller_avatar(self, obj):
         if obj.seller and hasattr(obj.seller, 'profile'):

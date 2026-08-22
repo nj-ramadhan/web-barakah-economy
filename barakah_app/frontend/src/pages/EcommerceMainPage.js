@@ -58,6 +58,8 @@ const EcommerceMainPage = () => {
   const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('Semua');
+  const [sortBy, setSortBy] = useState('populer');
+  const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'blocks'
   const [isCategoryExpanded, setIsCategoryExpanded] = useState(false);
   const [activeSlide, setActiveSlide] = useState(0);
   const sliderInterval = useRef(null);
@@ -66,6 +68,64 @@ const EcommerceMainPage = () => {
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
   const CATEGORY_LIMIT = 8; // Number of category chips shown initially
+
+  // Helpers for price & stock
+  const getEffectivePrice = (product) => {
+    if (product.active_promotion && product.discounted_price) {
+      return Number(product.discounted_price);
+    }
+    if (product.min_price && Number(product.min_price) > 0) {
+      return Number(product.min_price);
+    }
+    return Number(product.price || 0);
+  };
+
+  const getEffectiveStock = (product) => {
+    if (product.total_stock !== undefined && product.total_stock !== null) {
+      return Number(product.total_stock);
+    }
+    return Number(product.stock || 0);
+  };
+
+  // Sort helper: Always prioritize in-stock items, then apply selected sort criteria
+  const sortProductList = (items, sortMode) => {
+    return [...items].sort((a, b) => {
+      const stockA = getEffectiveStock(a);
+      const stockB = getEffectiveStock(b);
+      const inStockA = stockA > 0 ? 1 : 0;
+      const inStockB = stockB > 0 ? 1 : 0;
+
+      // In-stock products always take precedence over out-of-stock products
+      if (inStockA !== inStockB) {
+        return inStockB - inStockA;
+      }
+
+      if (sortMode === 'price_asc') {
+        return getEffectivePrice(a) - getEffectivePrice(b);
+      }
+      if (sortMode === 'price_desc') {
+        return getEffectivePrice(b) - getEffectivePrice(a);
+      }
+      if (sortMode === 'newest') {
+        return new Date(b.created_at || 0) - new Date(a.created_at || 0);
+      }
+      if (sortMode === 'stock') {
+        return stockB - stockA;
+      }
+      // Default: 'populer' (Clicks/views highest first, then likes, then newest)
+      const viewsA = Number(a.views_count || 0);
+      const viewsB = Number(b.views_count || 0);
+      if (viewsB !== viewsA) {
+        return viewsB - viewsA;
+      }
+      const likesA = Number(a.likes_count || 0);
+      const likesB = Number(b.likes_count || 0);
+      if (likesB !== likesA) {
+        return likesB - likesA;
+      }
+      return new Date(b.created_at || 0) - new Date(a.created_at || 0);
+    });
+  };
 
   // Fetch featured products
   useEffect(() => {
@@ -166,6 +226,7 @@ const EcommerceMainPage = () => {
         (p.title && p.title.toLowerCase().includes(q)) ||
         (p.description && p.description.toLowerCase().includes(q)) ||
         (p.seller_name && p.seller_name.toLowerCase().includes(q)) ||
+        (p.seller_city_name && p.seller_city_name.toLowerCase().includes(q)) ||
         (p.category && p.category.toLowerCase().includes(q)) ||
         (p.category_display && p.category_display.toLowerCase().includes(q))
       );
@@ -178,11 +239,16 @@ const EcommerceMainPage = () => {
     return result;
   }, [products, searchQuery, selectedCategory]);
 
+  // Sorted and filtered product list
+  const sortedFilteredProducts = useMemo(() => {
+    return sortProductList(filteredProducts, sortBy);
+  }, [filteredProducts, sortBy]);
+
   // Group filtered products by Category for block view
   const categoryBlocks = useMemo(() => {
     const groups = {};
 
-    filteredProducts.forEach(p => {
+    sortedFilteredProducts.forEach(p => {
       const catKey = p.category || 'lainnya';
       const catLabel = p.category_display || p.category_name || (p.category ? p.category.replace(/-/g, ' ').toUpperCase() : 'Lainnya');
       
@@ -197,7 +263,7 @@ const EcommerceMainPage = () => {
     });
 
     return Object.values(groups);
-  }, [filteredProducts]);
+  }, [sortedFilteredProducts]);
 
   const addToCart = async (productId) => {
     const csrfToken = getCsrfToken();
@@ -266,39 +332,23 @@ const EcommerceMainPage = () => {
     }
   };
 
-  const addToWishlist = async (productId) => {
-    const csrfToken = getCsrfToken();
-    try {
-      const user = JSON.parse(localStorage.getItem('user'));
-      if (!user || !user.access) {
-        navigate('/login');
-        return;
-      }
-
-      await axios.post(`${process.env.REACT_APP_API_BASE_URL}/api/wishlists/wishlist/`, {
-        product_id: productId
-      }, {
-        headers: {
-          Authorization: `Bearer ${user.access}`,
-          'X-CSRFToken': csrfToken,
-        }
-      });
-
-      alert('Berhasil menambahkan ke Incaran!');
-    } catch (error) {
-      console.error('Error adding product to wishlist:', error);
-      alert('Gagal menambahkan ke Incaran: ' + (error.response?.data?.message || 'Terjadi kesalahan'));
-    }
-  };
-
   const renderProductCard = (product) => {
+    const effectiveStock = getEffectiveStock(product);
+    const inStock = effectiveStock > 0;
+    const sellerCity = product.seller_city_name || 'Indonesia';
+
     return (
-      <div key={product.id} className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all border border-gray-100 flex flex-col justify-between group">
+      <div key={product.id} className={`bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all border border-gray-100 flex flex-col justify-between group ${!inStock ? 'opacity-75' : ''}`}>
         <div className="relative">
           {product.active_promotion && (
             <div className="absolute top-2 left-2 z-10 bg-gradient-to-r from-red-600 to-rose-600 text-white text-[10px] font-black px-2.5 py-1 rounded-xl shadow-md flex items-center gap-1">
               <span className="material-icons text-[12px]">local_fire_department</span>
               {product.promo_discount_percentage ? `-${product.promo_discount_percentage}%` : 'PROMO'}
+            </div>
+          )}
+          {!inStock && (
+            <div className="absolute top-2 right-12 z-10 bg-gray-900/80 text-white text-[9px] font-black px-2 py-0.5 rounded-lg shadow uppercase tracking-wider">
+              Habis
             </div>
           )}
           <Link to={`/produk/${product.slug || product.id}`}>
@@ -325,11 +375,20 @@ const EcommerceMainPage = () => {
 
         <div className="p-3.5 flex flex-col flex-1 justify-between">
           <div>
+            {/* Store / Seller City Location Badge */}
+            <div className="flex items-center gap-1 text-gray-500 text-[10px] font-medium mb-1">
+              <span className="material-icons text-[12px] text-emerald-600 shrink-0">location_on</span>
+              <span className="truncate max-w-[130px] md:max-w-[160px]" title={`Lokasi Toko: ${sellerCity}`}>
+                {sellerCity}
+              </span>
+            </div>
+
             <h3 className="text-xs md:text-sm font-semibold mb-1.5 line-clamp-2 min-h-[36px] text-gray-800 hover:text-emerald-700 transition-colors">
               <Link to={`/produk/${product.slug || product.id}`}>
                 {product.title}
               </Link>
             </h3>
+
             <div className="mb-2">
               {product.active_promotion && product.discounted_price ? (
                 <div>
@@ -352,39 +411,40 @@ const EcommerceMainPage = () => {
                 </p>
               )}
               <p className="text-gray-400 text-[10px]">
-                stok: {(product.total_stock !== undefined ? product.total_stock : product.stock) > 0 ? `${product.total_stock !== undefined ? product.total_stock : product.stock} ${product.unit || 'pcs'}` : 'habis'}
+                stok: {inStock ? `${effectiveStock} ${product.unit || 'pcs'}` : 'habis'}
               </p>
             </div>
           
             <div className="flex items-center gap-2 mb-3">
-              <div className="flex items-center text-gray-400 text-[10px] gap-1">
-                <span className="material-icons text-[12px]">visibility</span>
-                {product.views_count || 0}
+              <div className="flex items-center text-gray-500 text-[10px] gap-1" title="Total Diklik / Dilihat">
+                <span className="material-icons text-[12px] text-emerald-600">visibility</span>
+                <span className="font-semibold text-gray-700">{product.views_count || 0}</span>
               </div>
-              <div className="flex items-center text-gray-400 text-[10px] gap-1">
-                <span className="material-icons text-[12px]">favorite</span>
-                {product.likes_count || 0}
+              <div className="flex items-center text-gray-400 text-[10px] gap-1" title="Favorit">
+                <span className="material-icons text-[12px] text-rose-500">favorite</span>
+                <span>{product.likes_count || 0}</span>
               </div>
               <div 
-                className="flex items-center gap-1 ml-auto cursor-pointer hover:bg-emerald-50 px-1.5 py-0.5 rounded-lg transition-all"
+                className="flex items-center gap-1 ml-auto cursor-pointer hover:bg-emerald-50 px-1.5 py-0.5 rounded-lg transition-all max-w-[90px] md:max-w-[110px]"
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
                   setSelectedUserId(product.seller);
                   setIsProfileModalOpen(true);
                 }}
+                title={`Toko @${product.seller_name}`}
               >
                 <img 
                   src={getMediaUrl(product.seller_avatar) || `https://ui-avatars.com/api/?name=${product.seller_name}&background=random`} 
                   alt={product.seller_name} 
-                  className="w-4 h-4 rounded-full object-cover border border-emerald-100" 
+                  className="w-4 h-4 rounded-full object-cover border border-emerald-100 shrink-0" 
                 />
-                <span className="text-[10px] font-bold text-emerald-700">@{product.seller_name}</span>
+                <span className="text-[10px] font-bold text-emerald-700 truncate">@{product.seller_name}</span>
               </div>
             </div>
           </div>
 
-          {product.stock <= 0 ? (
+          {!inStock ? (
             <div className="flex flex-col gap-1.5">
               <button
                 className="w-full bg-gray-100 text-gray-400 py-2 rounded-xl flex items-center justify-center gap-1.5 cursor-not-allowed text-xs font-bold"
@@ -513,7 +573,7 @@ const EcommerceMainPage = () => {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Cari produk, kategori, toko..."
+              placeholder="Cari produk, toko, atau kota..."
               className="w-full pl-10 pr-10 py-2.5 bg-white rounded-2xl border border-gray-200 text-xs text-gray-800 placeholder-gray-400 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 shadow-sm transition"
             />
             {searchQuery && (
@@ -529,7 +589,7 @@ const EcommerceMainPage = () => {
 
         {/* Category Filter Chips */}
         {categoriesList.length > 1 && (
-          <div className="mb-8">
+          <div className="mb-6">
             <div className="flex flex-wrap gap-2 transition-all duration-500 mb-3">
               {(isCategoryExpanded ? categoriesList : categoriesList.slice(0, CATEGORY_LIMIT)).map((cat) => (
                 <button
@@ -573,13 +633,77 @@ const EcommerceMainPage = () => {
           </div>
         )}
 
+        {/* Sort & Filter Controls Toolbar */}
+        <div className="bg-white rounded-2xl p-3 md:p-4 border border-gray-200/80 shadow-sm mb-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
+          <div className="flex items-center gap-2 flex-wrap w-full md:w-auto">
+            <span className="text-xs font-black text-gray-700 uppercase tracking-wider flex items-center gap-1 shrink-0">
+              <span className="material-icons text-sm text-emerald-600">tune</span>
+              Urutkan:
+            </span>
+            <div className="flex items-center gap-1.5 flex-wrap">
+              {[
+                { key: 'populer', label: '🔥 Paling Populer (Stok & Klik)', title: 'Urutan default: Stok ada & paling banyak diklik' },
+                { key: 'price_asc', label: '💰 Harga Terendah', title: 'Harga termurah ke termahal' },
+                { key: 'price_desc', label: '💎 Harga Tertinggi', title: 'Harga termahal ke termurah' },
+                { key: 'newest', label: '✨ Terbaru', title: 'Produk yang baru ditambahkan' },
+                { key: 'stock', label: '📦 Stok Terbanyak', title: 'Jumlah stok paling banyak' },
+              ].map(opt => (
+                <button
+                  key={opt.key}
+                  onClick={() => setSortBy(opt.key)}
+                  title={opt.title}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all border flex items-center gap-1 ${
+                    sortBy === opt.key
+                      ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm shadow-emerald-100 scale-105'
+                      : 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100'
+                  }`}
+                >
+                  <span>{opt.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between w-full md:w-auto gap-2.5 text-xs text-gray-500 font-medium">
+            <span className="bg-emerald-50 text-emerald-800 text-[11px] font-bold px-3 py-1 rounded-xl border border-emerald-100">
+              {sortedFilteredProducts.length} Produk
+            </span>
+
+            {/* View Mode Toggle when category is 'Semua' */}
+            {selectedCategory === 'Semua' && (
+              <div className="flex items-center bg-gray-100 p-1 rounded-xl border border-gray-200">
+                <button
+                  onClick={() => setViewMode('grid')}
+                  className={`px-2.5 py-1 rounded-lg text-xs font-bold flex items-center gap-1 transition ${
+                    viewMode === 'grid' ? 'bg-white text-emerald-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                  }`}
+                  title="Tampilkan semua produk dalam grid langsung"
+                >
+                  <span className="material-icons text-xs">grid_view</span>
+                  Semua
+                </button>
+                <button
+                  onClick={() => setViewMode('blocks')}
+                  className={`px-2.5 py-1 rounded-lg text-xs font-bold flex items-center gap-1 transition ${
+                    viewMode === 'blocks' ? 'bg-white text-emerald-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                  }`}
+                  title="Tampilkan per blok kategori"
+                >
+                  <span className="material-icons text-xs">view_agenda</span>
+                  Per Kategori
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+
         {/* Loading State */}
         {loading ? (
           <div className="flex flex-col items-center justify-center py-20">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600 mb-3"></div>
             <p className="text-xs text-gray-400 font-bold uppercase tracking-widest">Memuat produk sinergy...</p>
           </div>
-        ) : filteredProducts.length === 0 ? (
+        ) : sortedFilteredProducts.length === 0 ? (
           /* Empty State */
           <div className="text-center py-20 bg-white rounded-3xl border border-dashed border-gray-200 text-gray-400 p-8 shadow-sm">
             <span className="material-icons text-6xl mb-3 text-gray-300">inventory_2</span>
@@ -599,8 +723,8 @@ const EcommerceMainPage = () => {
               </button>
             )}
           </div>
-        ) : (
-          /* Category-Grouped Blocks (seperti halaman Event) */
+        ) : selectedCategory === 'Semua' && viewMode === 'blocks' ? (
+          /* Category-Grouped Blocks View */
           <div className="space-y-12">
             {categoryBlocks.map((block) => (
               <div key={block.key} className="space-y-4">
@@ -618,15 +742,13 @@ const EcommerceMainPage = () => {
                     </span>
                   </div>
 
-                  {selectedCategory === 'Semua' && (
-                    <button
-                      onClick={() => setSelectedCategory(block.key)}
-                      className="text-[11px] font-bold text-emerald-700 hover:text-emerald-800 hover:underline flex items-center gap-1"
-                    >
-                      <span>Filter Kategori Ini</span>
-                      <span className="material-icons text-xs">chevron_right</span>
-                    </button>
-                  )}
+                  <button
+                    onClick={() => setSelectedCategory(block.key)}
+                    className="text-[11px] font-bold text-emerald-700 hover:text-emerald-800 hover:underline flex items-center gap-1"
+                  >
+                    <span>Filter Kategori Ini</span>
+                    <span className="material-icons text-xs">chevron_right</span>
+                  </button>
                 </div>
 
                 {/* Grid of Product Cards in this Category */}
@@ -635,6 +757,31 @@ const EcommerceMainPage = () => {
                 </div>
               </div>
             ))}
+          </div>
+        ) : (
+          /* Direct Full Grid View (Sorted from Top-Left to Bottom-Right) */
+          <div>
+            {selectedCategory !== 'Semua' && (
+              <div className="flex items-center justify-between border-b border-gray-200 pb-3 mb-6">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center shadow-sm">
+                    <span className="material-icons text-lg">{getCategoryIcon(selectedCategory)}</span>
+                  </div>
+                  <h2 className="text-base md:text-lg font-black text-gray-900 tracking-tight uppercase">
+                    Kategori: {categoriesList.find(c => c.key === selectedCategory)?.label || selectedCategory}
+                  </h2>
+                </div>
+                <button
+                  onClick={() => setSelectedCategory('Semua')}
+                  className="text-xs font-bold text-emerald-700 hover:underline"
+                >
+                  Tampilkan Semua Kategori
+                </button>
+              </div>
+            )}
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-6">
+              {sortedFilteredProducts.map(renderProductCard)}
+            </div>
           </div>
         )}
 
