@@ -10,7 +10,8 @@ const DynaQRISModal = ({
     referenceId,
     amount,
     onPaymentSuccess,
-    onCancel
+    onCancel,
+    onRefreshQRIS
 }) => {
     const [timeLeft, setTimeLeft] = useState(qrisData?.timeoutSeconds || 300);
     const [isExpired, setIsExpired] = useState(false);
@@ -22,14 +23,7 @@ const DynaQRISModal = ({
     const pollRef = useRef(null);
     const isVerifiedRef = useRef(false);
 
-    const handleCancelPending = () => {
-        if (!isVerifiedRef.current && onCancel) {
-            onCancel(referenceId, transactionType);
-        }
-    };
-
     const handleCloseModal = () => {
-        handleCancelPending();
         onClose();
     };
 
@@ -42,27 +36,13 @@ const DynaQRISModal = ({
         setIsExpired(false);
         setStatusText('Menunggu Pembayaran...');
 
-        // Handle page refresh / close tab unload
-        const handleBeforeUnload = (e) => {
-            if (!isVerifiedRef.current) {
-                handleCancelPending();
-            }
-        };
-        window.addEventListener('beforeunload', handleBeforeUnload);
-
         // Start Countdown Timer
         timerRef.current = setInterval(() => {
             setTimeLeft((prev) => {
                 if (prev <= 1) {
                     clearInterval(timerRef.current);
                     setIsExpired(true);
-                    setStatusText('Waktu Pembayaran Telah Habis (5 Menit). Mengembalikan ke halaman pemesanan...');
-                    handleCancelPending();
-                    if (onCancel) {
-                        setTimeout(() => {
-                            onCancel(referenceId, transactionType);
-                        }, 2000);
-                    }
+                    setStatusText('Waktu pembayaran QRIS telah habis. Klik "Buat Ulang QRIS" untuk timer baru atau cek status jika sudah transfer.');
                     return 0;
                 }
                 return prev - 1;
@@ -94,7 +74,6 @@ const DynaQRISModal = ({
         return () => {
             if (timerRef.current) clearInterval(timerRef.current);
             if (pollRef.current) clearInterval(pollRef.current);
-            window.removeEventListener('beforeunload', handleBeforeUnload);
         };
     }, [isOpen, qrisData, transactionType, referenceId]);
 
@@ -124,7 +103,7 @@ const DynaQRISModal = ({
                     setTimeout(() => onPaymentSuccess(res), 1000);
                 }
             } else {
-                setStatusText('Pembayaran belum terdeteksi oleh sistem. Mohon pastikan Anda sudah mentransfer sesuai nominal QRIS dan tunggu verifikasi Admin.');
+                setStatusText('Pembayaran belum terdeteksi oleh sistem. Mohon pastikan Anda sudah mentransfer sesuai nominal QRIS dan tunggu notifikasi masuk.');
             }
         } catch (err) {
             console.error('Status check error:', err);
@@ -165,12 +144,12 @@ const DynaQRISModal = ({
                 {/* Amount Display with Transparent Halal System Fee Breakdown */}
                 <div className="bg-gradient-to-r from-emerald-600 to-green-700 text-white rounded-2xl p-4 text-center mb-4 shadow-lg">
                     <p className="text-[10px] uppercase font-bold tracking-widest text-emerald-100">Total Nominal Pembayaran</p>
-                    <h2 className="text-3xl font-black mt-1">
+                    <h2 className="text-3xl font-black mt-1 font-mono">
                         Rp {formatCurrency(qrisData.amount || amount || 0)}
                     </h2>
                     <p className="text-[11px] text-emerald-100/90 mt-1 font-medium">Nominal pas otomatis terdeteksi saat di-scan</p>
 
-                    {/* Breakdown Biaya Layanan (Akad Ijarah) jika ada kode unik */}
+                    {/* Breakdown Biaya Layanan jika ada kode unik */}
                     {Number(qrisData?.uniqueCode) > 0 && (
                         <div className="mt-3 pt-3 border-t border-emerald-500/40 text-[11px] space-y-1 text-left bg-emerald-800/30 p-2.5 rounded-xl">
                             <div className="flex justify-between text-emerald-100">
@@ -182,7 +161,7 @@ const DynaQRISModal = ({
                                 <span className="font-bold">+Rp {formatCurrency(qrisData.uniqueCode)}</span>
                             </div>
                             <p className="text-[9px] text-emerald-200/80 italic mt-1 leading-tight">
-                                * Akad Ijarah (Ujrah): Biaya pemeliharaan infrastruktur.
+                                * Akad Ijarah (Ujrah): Biaya pemeliharaan infrastruktur & transaksi.
                             </p>
                         </div>
                     )}
@@ -191,10 +170,23 @@ const DynaQRISModal = ({
                 {/* QR Code Container */}
                 <div className="relative flex flex-col items-center justify-center mb-5">
                     {isExpired ? (
-                        <div className="w-64 h-64 bg-gray-100 rounded-2xl flex flex-col items-center justify-center p-6 text-center border-2 border-dashed border-red-300">
-                            <span className="material-icons text-4xl text-red-500 mb-2">timer_off</span>
-                            <p className="font-bold text-red-600 text-sm">Waktu Pembayaran Habis</p>
-                            <p className="text-xs text-gray-500 mt-1">Silakan lakukan pendaftaran/pemesanan ulang untuk mendapatkan QRIS baru.</p>
+                        <div className="w-64 h-64 bg-red-50/70 rounded-2xl flex flex-col items-center justify-center p-6 text-center border-2 border-dashed border-red-300 space-y-2">
+                            <span className="material-icons text-4xl text-red-500">timer_off</span>
+                            <p className="font-bold text-red-700 text-sm">Sesi QRIS Telah Berakhir</p>
+                            <p className="text-xs text-gray-600">Pesanan tetap tersimpan. Klik tombol di bawah untuk mendapatkan kode QRIS baru.</p>
+                            {onRefreshQRIS && (
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setIsExpired(false);
+                                        onRefreshQRIS();
+                                    }}
+                                    className="mt-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-black text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 shadow-sm transition"
+                                >
+                                    <span className="material-icons text-sm">refresh</span>
+                                    Buat Ulang QRIS
+                                </button>
+                            )}
                         </div>
                     ) : (
                         <div className="p-3 bg-white border-2 border-emerald-500/20 rounded-2xl shadow-md flex items-center justify-center relative">
@@ -228,27 +220,25 @@ const DynaQRISModal = ({
 
                 {/* Action Buttons */}
                 <div className="space-y-2">
-                    {!isExpired && (
-                        <button
-                            onClick={handleManualCheck}
-                            disabled={checkingStatus || verifying}
-                            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 px-4 rounded-xl shadow-lg shadow-emerald-200 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
-                        >
-                            {checkingStatus || verifying ? (
-                                <>
-                                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                                    <span>Memeriksa Pembayaran...</span>
-                                </>
-                            ) : (
-                                <>
-                                    <span className="material-icons text-lg">check_circle</span>
-                                    <span>Saya Sudah Bayar / Cek Status</span>
-                                </>
-                            )}
-                        </button>
-                    )}
+                    <button
+                        onClick={handleManualCheck}
+                        disabled={checkingStatus || verifying}
+                        className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 px-4 rounded-xl shadow-lg shadow-emerald-200 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                    >
+                        {checkingStatus || verifying ? (
+                            <>
+                                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                <span>Memeriksa Pembayaran...</span>
+                            </>
+                        ) : (
+                            <>
+                                <span className="material-icons text-lg">check_circle</span>
+                                <span>Saya Sudah Bayar / Cek Status</span>
+                            </>
+                        )}
+                    </button>
 
-                    {qrisData.qrisCode && (
+                    {qrisData.qrisCode && !isExpired && (
                         <button
                             onClick={handleCopyCode}
                             className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-2.5 px-4 rounded-xl text-xs transition flex items-center justify-center gap-2"
@@ -264,7 +254,7 @@ const DynaQRISModal = ({
                         className="w-full bg-gray-900 hover:bg-gray-800 text-white font-extrabold py-3 px-4 rounded-xl text-xs uppercase tracking-wider transition flex items-center justify-center gap-2 shadow-md mt-2"
                     >
                         <span className="material-icons text-sm">close</span>
-                        <span>TUTUP POPUP</span>
+                        <span>TUTUP</span>
                     </button>
                 </div>
 

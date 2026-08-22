@@ -636,7 +636,25 @@ const PurchasesTab = () => {
                                             </div>
                                             <div className="mt-4 flex items-center justify-end gap-2">
                                                 {showPayAction && (
-                                                    <Link to={`/pembayaran/${order.order_number}`} className="text-[10px] bg-amber-500 hover:bg-amber-600 text-white px-3.5 py-2 rounded-xl font-black uppercase tracking-wider transition flex items-center gap-1 shadow-sm">
+                                                    <Link 
+                                                        to={`/pembayaran/${order.order_number}`} 
+                                                        state={{ 
+                                                            orderId: order.id, 
+                                                            orderNumber: order.order_number, 
+                                                            amount: orderTotal, 
+                                                            bank: 'qris',
+                                                            cartItems: (order.items || []).map(it => ({
+                                                                product: {
+                                                                    title: it.product_name,
+                                                                    price: it.price,
+                                                                    thumbnail: it.product_thumbnail || it.product_image
+                                                                },
+                                                                quantity: it.quantity,
+                                                                price: it.price
+                                                            }))
+                                                        }} 
+                                                        className="text-[10px] bg-amber-500 hover:bg-amber-600 text-white px-3.5 py-2 rounded-xl font-black uppercase tracking-wider transition flex items-center gap-1 shadow-sm"
+                                                    >
                                                         <span className="material-icons text-xs">payment</span>
                                                         Bayar Sekarang
                                                     </Link>

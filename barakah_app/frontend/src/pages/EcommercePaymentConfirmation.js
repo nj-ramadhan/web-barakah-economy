@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 import Tesseract from 'tesseract.js';
 import Header from '../components/layout/Header';
@@ -19,24 +19,14 @@ const getCsrfToken = () => {
 const EcommercePaymentConfirmation = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const params = useParams();
   const fileInputRef = useRef(null);
 
-  const {
-    orderId,
-    orderNumber: orderNumberParam,
-    amount,
-    uniqueFee,
-    bank,
-    customerName,
-    customerPhone,
-    shippingCost,
-    courier,
-    voucherCode,
-    voucherDiscount,
-    cartItems = []
-  } = location.state || {};
+  const [orderData, setOrderData] = useState(location.state || null);
+  const [loadingOrder, setLoadingOrder] = useState(!location.state);
 
-  const currentOrderNumber = orderNumberParam || orderId || '';
+  const urlOrderNumber = params.orderNumber || new URLSearchParams(location.search).get('order_number') || new URLSearchParams(location.search).get('order_id');
+  const currentOrderNumber = orderData?.orderNumber || orderData?.orderId || urlOrderNumber || '';
 
   const [selectedFile, setSelectedFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState('');
@@ -52,31 +42,96 @@ const EcommercePaymentConfirmation = () => {
   const [qrisData, setQrisData] = useState(null);
   const [generatingQris, setGeneratingQris] = useState(false);
   const [timeLeft, setTimeLeft] = useState(300); // 5 minutes
+  const [isExpired, setIsExpired] = useState(false);
 
-  // Redirect if no data passed
+  // Fetch order data if accessed directly via URL or profile without state
   useEffect(() => {
-    if (!location.state) {
-      navigate('/');
-    }
-  }, [location.state, navigate]);
+    const fetchOrderDetails = async () => {
+      if (orderData && orderData.amount) {
+        setLoadingOrder(false);
+        return;
+      }
+
+      const targetId = urlOrderNumber || currentOrderNumber;
+      if (!targetId) {
+        setLoadingOrder(false);
+        navigate('/riwayat-belanja');
+        return;
+      }
+
+      try {
+        const userData = localStorage.getItem('user');
+        if (!userData) {
+          navigate('/login');
+          return;
+        }
+        const user = JSON.parse(userData);
+        const res = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/api/orders/`, {
+          headers: { Authorization: `Bearer ${user.access}` }
+        });
+
+        const matched = (res.data || []).find(o => 
+          String(o.order_number) === String(targetId) || 
+          String(o.id) === String(targetId)
+        );
+
+        if (matched) {
+          const calculatedTotal = Number(matched.grand_total) > 0 ? Number(matched.grand_total) : Number(matched.total_price);
+          setOrderData({
+            orderId: matched.id,
+            orderNumber: matched.order_number,
+            amount: calculatedTotal,
+            baseAmount: Number(matched.total_price) + Number(matched.shipping_cost || 0) - Number(matched.voucher_nominal || 0),
+            uniqueFee: Number(matched.admin_fee || 0),
+            bank: matched.payment_method === 'dynaqris' ? 'qris' : (matched.payment_method || 'qris'),
+            customerName: matched.recipient_name,
+            customerPhone: matched.recipient_phone,
+            shippingCost: matched.shipping_cost,
+            courier: matched.shipping_courier,
+            voucherCode: matched.voucher_code,
+            voucherDiscount: matched.voucher_nominal,
+            cartItems: (matched.items || []).map(it => ({
+              product: {
+                title: it.product_name,
+                price: it.price,
+                thumbnail: it.product_thumbnail || it.product_image
+              },
+              quantity: it.quantity,
+              price: it.price
+            }))
+          });
+        } else {
+          alert('Data pesanan tidak ditemukan.');
+          navigate('/riwayat-belanja');
+        }
+      } catch (err) {
+        console.error("Error fetching order details:", err);
+        navigate('/riwayat-belanja');
+      } finally {
+        setLoadingOrder(false);
+      }
+    };
+
+    fetchOrderDetails();
+  }, [urlOrderNumber]);
 
   useEffect(() => {
     getPublicPaymentConfig().then((cfg) => {
       setPaymentConfig(cfg);
-      if (cfg?.active_mode === 'dynaqris' && amount) {
-        handleGenerateDynaQRIS(cfg);
+      if (cfg?.active_mode === 'dynaqris' && orderData?.amount) {
+        handleGenerateDynaQRIS(false, cfg);
       }
     }).catch(err => console.error("Error fetching config:", err));
-  }, []);
+  }, [orderData?.amount]);
 
   // Countdown timer for DynaQRIS
   useEffect(() => {
-    if (paymentConfig?.active_mode === 'dynaqris' && qrisData && !isSuccess) {
+    if (paymentConfig?.active_mode === 'dynaqris' && qrisData && !isSuccess && !isExpired) {
       const timer = setInterval(() => {
         setTimeLeft((prev) => {
           if (prev <= 1) {
             clearInterval(timer);
-            handleDynaCancel();
+            setIsExpired(true);
             return 0;
           }
           return prev - 1;
@@ -84,9 +139,9 @@ const EcommercePaymentConfirmation = () => {
       }, 1000);
       return () => clearInterval(timer);
     }
-  }, [paymentConfig, qrisData, isSuccess]);
+  }, [paymentConfig, qrisData, isSuccess, isExpired]);
 
-  // Auto-polling payment status for instant seamless verification (runs continuously during the 5 mins)
+  // Auto-polling payment status for instant seamless verification
   useEffect(() => {
     if (paymentConfig?.active_mode === 'dynaqris' && qrisData && !isSuccess) {
       const poller = setInterval(async () => {
@@ -149,24 +204,29 @@ const EcommercePaymentConfirmation = () => {
     }
   };
 
-  const handleGenerateDynaQRIS = async () => {
-    // If QRIS data is already generated and active, just open the modal without re-generating
-    if (qrisData) {
+  const handleGenerateDynaQRIS = async (forceRegenerate = false, cfg = paymentConfig) => {
+    if (qrisData && !forceRegenerate && !isExpired) {
       setShowDynaModal(true);
       return;
     }
+    const targetAmount = orderData?.baseAmount || orderData?.amount;
+    if (!targetAmount) return;
+
     setGeneratingQris(true);
+    setIsExpired(false);
     try {
       const res = await generateDynaQRIS({ 
-        amount: location.state?.amount, 
+        amount: targetAmount, 
         reference_id: currentOrderNumber, 
         type: 'ecommerce',
-        add_unique_code: location.state?.addUniqueCode !== false
+        add_unique_code: orderData?.addUniqueCode !== false
       });
       if (res.error) {
         alert(res.error);
       } else {
         setQrisData(res);
+        setTimeLeft(res.timeoutSeconds || 300);
+        setIsExpired(false);
         setShowDynaModal(true);
       }
     } catch (err) {
@@ -177,22 +237,10 @@ const EcommercePaymentConfirmation = () => {
     }
   };
 
-  const handleDynaCancel = async () => {
+  const handleDynaCancel = () => {
     setShowDynaModal(false);
-    setQrisData(null);
-    try {
-      const userData = localStorage.getItem('user');
-      if (userData && currentOrderNumber) {
-        const user = JSON.parse(userData);
-        await axios.delete(`${process.env.REACT_APP_API_BASE_URL}/api/orders/?order_id=${currentOrderNumber}`, {
-          headers: { Authorization: `Bearer ${user.access}` }
-        });
-      }
-    } catch (err) {
-      console.error('Error cleaning unpaid order on cancel:', err);
-    }
-    alert('Pembayaran dibatalkan / waktu habis. Pesanan belum dibayar telah dihapus dan Anda dialihkan kembali.');
-    navigate(-1);
+    alert('Sesi pembayaran ditutup. Anda dapat membayar kembali kapan saja melalui menu Profil / Riwayat Belanja.');
+    navigate('/riwayat-belanja');
   };
 
   const handleDynaSuccess = async (res) => {
@@ -217,9 +265,19 @@ const EcommercePaymentConfirmation = () => {
 
   // Final amount syncs with DynaQRIS total (including unique fee / admin fee)
   const isDynaActive = paymentConfig?.active_mode === 'dynaqris';
+  const amount = orderData?.amount || 0;
+  const bank = orderData?.bank || 'qris';
+  const customerName = orderData?.customerName || '';
+  const customerPhone = orderData?.customerPhone || '';
+  const shippingCost = orderData?.shippingCost || 0;
+  const courier = orderData?.courier || '';
+  const voucherCode = orderData?.voucherCode || '';
+  const voucherDiscount = orderData?.voucherDiscount || 0;
+  const cartItems = orderData?.cartItems || [];
+
   const finalDisplayAmount = qrisData?.amount || amount || 0;
-  const dynaAdminFee = Number(location.state?.uniqueFee) || (qrisData?.amount && qrisData.amount > amount ? (qrisData.amount - amount) : 0);
-  const baseTagihanAmount = Number(location.state?.baseAmount) || (amount - dynaAdminFee);
+  const dynaAdminFee = Number(orderData?.uniqueFee) || (qrisData?.amount && qrisData.amount > amount ? (qrisData.amount - amount) : (qrisData?.uniqueCode || 0));
+  const baseTagihanAmount = Number(orderData?.baseAmount) || (amount - dynaAdminFee);
   const formattedAmount = new Intl.NumberFormat('id-ID', { maximumFractionDigits: 0 }).format(finalDisplayAmount || 0);
   const formattedBaseAmount = new Intl.NumberFormat('id-ID', { maximumFractionDigits: 0 }).format(baseTagihanAmount || 0);
 
@@ -553,6 +611,27 @@ const EcommercePaymentConfirmation = () => {
                     <div className="w-10 h-10 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
                     <p className="text-xs font-bold text-gray-600">Menghasilkan QRIS Dinamis...</p>
                   </div>
+                ) : isExpired ? (
+                  <div className="p-6 bg-white rounded-2xl border-2 border-dashed border-red-300 text-center space-y-3 w-full max-w-sm">
+                    <div className="w-12 h-12 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto">
+                      <span className="material-icons text-2xl">timer_off</span>
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-black text-red-700">Sesi QRIS Telah Berakhir</h4>
+                      <p className="text-xs text-gray-500 mt-1">
+                        Pesanan Anda tetap tersimpan. Klik tombol di bawah untuk memperbarui kode QRIS dengan nominal yang sama.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleGenerateDynaQRIS(true)}
+                      disabled={generatingQris}
+                      className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-md shadow-emerald-200 transition"
+                    >
+                      <span className="material-icons text-sm">refresh</span>
+                      <span>Buat Ulang QRIS / Bayar Lagi</span>
+                    </button>
+                  </div>
                 ) : qrisData?.qrisImage || qrisData?.qrisCode ? (
                   <div className="space-y-3 flex flex-col items-center">
                     <div className="bg-white p-3 rounded-2xl shadow-md border border-gray-100 inline-block">
@@ -599,7 +678,7 @@ const EcommercePaymentConfirmation = () => {
               </div>
 
               {/* Countdown Timer & Real-time Auto-Detection status */}
-              {qrisData && (
+              {qrisData && !isExpired && (
                 <div className="space-y-2">
                   <div className="flex items-center justify-between p-3.5 bg-amber-50 rounded-2xl border border-amber-100 text-amber-900 text-xs font-bold">
                     <div className="flex items-center gap-2">

@@ -467,114 +467,267 @@ const DashboardSinergySellerOrdersPage = () => {
                                             </div>
                                         </div>
 
-                                        {/* Action Controls */}
+                                        {/* Step-by-Step Action Controls */}
                                         <div className="space-y-4">
-                                            {order.status === 'Selesai' || order.status === 'Batal' ? (
-                                                <div className="p-4 bg-gray-50 rounded-xl border border-gray-200 text-center">
-                                                    <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Pesanan {order.status}</p>
-                                                    <p className="text-[10px] text-gray-500">Status pesanan ini sudah permanen dan tidak dapat diubah lagi.</p>
-                                                </div>
-                                            ) : (
-                                                <>
-                                                <div className="space-y-1">
-                                                    <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Update Status</label>
-                                                    <div className="relative">
-                                                        <select 
-                                                            value={order.status}
-                                                            onChange={(e) => handleUpdateStatus(order.id, e.target.value)}
-                                                            disabled={updatingId === order.id}
-                                                            className="w-full pl-4 pr-10 py-3 bg-white border border-gray-200 rounded-xl text-sm font-bold text-gray-700 focus:ring-2 focus:ring-emerald-500 outline-none appearance-none transition disabled:opacity-50"
-                                                        >
-                                                            {(() => {
-                                                                const allowed = {
-                                                                    'Pending': ['Pending', 'Paid', 'Batal'],
-                                                                    'Paid': ['Paid', 'Proses', 'Batal'],
-                                                                    'Proses': ['Proses', 'Dikirim', 'Batal'],
-                                                                    'Dikirim': ['Dikirim', 'Batal'],
-                                                                    'Selesai': ['Selesai'],
-                                                                    'Batal': ['Batal']
-                                                                };
-                                                                const options = allowed[order.status] || [order.status];
-                                                                return options.map(opt => (
-                                                                    <option key={opt} value={opt}>{opt}</option>
-                                                                ));
-                                                            })()}
-                                                        </select>
-                                                        <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-                                                            {updatingId === order.id ? (
-                                                                <div className="animate-spin h-4 w-4 border-b-2 border-emerald-600 rounded-full"></div>
-                                                            ) : (
-                                                                <span className="material-icons text-gray-400">expand_more</span>
-                                                            )}
-                                                        </div>
+                                            {/* Stepper Progress Visualizer */}
+                                            <div className="p-3 bg-gray-50 rounded-2xl border border-gray-100">
+                                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-wider mb-2">Tahapan Pesanan</p>
+                                                <div className="flex items-center justify-between text-[10px] font-bold">
+                                                    <div className={`flex flex-col items-center gap-1 ${['Pending', 'Paid', 'Proses', 'Dikirim', 'Selesai'].includes(order.status) ? 'text-emerald-700' : 'text-gray-400'}`}>
+                                                        <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${order.status === 'Pending' ? 'bg-amber-500 text-white font-black animate-pulse' : ['Paid', 'Proses', 'Dikirim', 'Selesai'].includes(order.status) ? 'bg-emerald-600 text-white' : 'bg-gray-200 text-gray-500'}`}>1</div>
+                                                        <span className="text-[9px]">Bayar</span>
+                                                    </div>
+                                                    <div className={`h-0.5 flex-1 mx-1 ${['Paid', 'Proses', 'Dikirim', 'Selesai'].includes(order.status) ? 'bg-emerald-500' : 'bg-gray-200'}`}></div>
+                                                    <div className={`flex flex-col items-center gap-1 ${['Paid', 'Proses', 'Dikirim', 'Selesai'].includes(order.status) ? 'text-emerald-700' : 'text-gray-400'}`}>
+                                                        <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${order.status === 'Paid' ? 'bg-emerald-600 text-white font-black ring-2 ring-emerald-300 animate-pulse' : ['Proses', 'Dikirim', 'Selesai'].includes(order.status) ? 'bg-emerald-600 text-white' : 'bg-gray-200 text-gray-500'}`}>2</div>
+                                                        <span className="text-[9px]">Perlu Diproses</span>
+                                                    </div>
+                                                    <div className={`h-0.5 flex-1 mx-1 ${['Proses', 'Dikirim', 'Selesai'].includes(order.status) ? 'bg-emerald-500' : 'bg-gray-200'}`}></div>
+                                                    <div className={`flex flex-col items-center gap-1 ${['Proses', 'Dikirim', 'Selesai'].includes(order.status) ? 'text-blue-700' : 'text-gray-400'}`}>
+                                                        <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${order.status === 'Proses' ? 'bg-blue-600 text-white font-black ring-2 ring-blue-300 animate-pulse' : ['Dikirim', 'Selesai'].includes(order.status) ? 'bg-emerald-600 text-white' : 'bg-gray-200 text-gray-500'}`}>3</div>
+                                                        <span className="text-[9px]">Diproses</span>
+                                                    </div>
+                                                    <div className={`h-0.5 flex-1 mx-1 ${['Dikirim', 'Selesai'].includes(order.status) ? 'bg-emerald-500' : 'bg-gray-200'}`}></div>
+                                                    <div className={`flex flex-col items-center gap-1 ${['Dikirim', 'Selesai'].includes(order.status) ? 'text-indigo-700' : 'text-gray-400'}`}>
+                                                        <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${order.status === 'Dikirim' ? 'bg-indigo-600 text-white font-black ring-2 ring-indigo-300 animate-pulse' : order.status === 'Selesai' ? 'bg-emerald-600 text-white' : 'bg-gray-200 text-gray-500'}`}>4</div>
+                                                        <span className="text-[9px]">Dikirim</span>
+                                                    </div>
+                                                    <div className={`h-0.5 flex-1 mx-1 ${order.status === 'Selesai' ? 'bg-emerald-500' : 'bg-gray-200'}`}></div>
+                                                    <div className={`flex flex-col items-center gap-1 ${order.status === 'Selesai' ? 'text-emerald-700' : 'text-gray-400'}`}>
+                                                        <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${order.status === 'Selesai' ? 'bg-emerald-600 text-white font-black' : 'bg-gray-200 text-gray-500'}`}>5</div>
+                                                        <span className="text-[9px]">Selesai</span>
                                                     </div>
                                                 </div>
-
-                                                {order.status === 'Dikirim' && (
-                                                    <div className="p-3 bg-purple-50 rounded-xl border border-purple-100 flex items-start gap-2 text-[11px] text-purple-800">
-                                                        <span className="material-icons text-base text-purple-600 shrink-0 mt-0.5">hourglass_empty</span>
-                                                        <div>
-                                                            <p className="font-bold">Menunggu Konfirmasi Pembeli</p>
-                                                            <p className="text-[10px] text-purple-600 mt-0.5 leading-relaxed">
-                                                                Pesanan hanya dapat diselesaikan oleh pembeli atau otomatis oleh sistem dalam 5 hari pengiriman (beserta ulasan bintang 5 otomatis). Saldo penjualan berstatus pending dan akan cair setelah pesanan selesai.
-                                                            </p>
-                                                        </div>
-                                                    </div>
-                                                )}
-
-                                                <div className="space-y-1">
-                                                    <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Nomor Resi & Estimasi</label>
-                                                    <div className="flex flex-col gap-2">
-                                                        <div className="flex gap-2">
-                                                            <input 
-                                                                type="text"
-                                                                placeholder="No. Resi Pengiriman..."
-                                                                value={localResi[order.id] !== undefined ? localResi[order.id] : (order.resi_number || '')}
-                                                                onChange={(e) => setLocalResi({ ...localResi, [order.id]: e.target.value })}
-                                                                disabled={updatingId === order.id}
-                                                                className="flex-1 px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-medium text-gray-700 focus:ring-2 focus:ring-emerald-500 outline-none transition disabled:opacity-50"
-                                                            />
-                                                            <input 
-                                                                type="number"
-                                                                placeholder="Est. Hari"
-                                                                title="Estimasi lama pengiriman (hari)"
-                                                                value={localEst[order.id] !== undefined ? localEst[order.id] : (order.estimated_delivery_days || 5)}
-                                                                onChange={(e) => setLocalEst({ ...localEst, [order.id]: e.target.value })}
-                                                                disabled={updatingId === order.id}
-                                                                className="w-20 px-3 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-medium text-gray-700 focus:ring-2 focus:ring-emerald-500 outline-none transition disabled:opacity-50 text-center"
-                                                            />
-                                                        </div>
-                                                        <button 
-                                                            onClick={() => handleUpdateStatus(order.id, order.status)}
-                                                            disabled={updatingId === order.id}
-                                                            className="w-full bg-emerald-600 text-white px-4 py-2 rounded-xl hover:bg-emerald-700 transition shadow-sm disabled:opacity-50 font-bold text-[10px] uppercase tracking-wider flex items-center justify-center gap-2"
-                                                        >
-                                                            <span className="material-icons text-sm">save</span> SIMPAN RESI & ESTIMASI
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                                
-                                                <button 
-                                                    onClick={() => handleSendWa(order.id)}
-                                                    disabled={sendingWaId === order.id}
-                                                    className="w-full bg-emerald-50 text-emerald-700 py-3 rounded-xl text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 border border-emerald-100 hover:bg-emerald-600 hover:text-white transition group disabled:opacity-50"
-                                                >
-                                                    {sendingWaId === order.id ? (
-                                                        <div className="animate-spin h-3 w-3 border-b-2 border-emerald-600 rounded-full"></div>
-                                                    ) : (
-                                                        <span className="material-icons text-sm">whatsapp</span>
-                                                    )}
-                                                    KIRIM NOTIFIKASI WA
-                                                </button>
-                                                </>
-                                            )}
-
-                                            <div className="p-4 bg-blue-50/50 rounded-xl border border-blue-100">
-                                                <p className="text-[10px] text-blue-700 font-medium leading-relaxed">
-                                                    <span className="font-bold">Info:</span> Klik <span className="font-bold italic">Simpan</span> untuk update status & resi. Klik <span className="font-bold italic text-emerald-700">Kirim Notifikasi WA</span> untuk mengirim update manual ke pembeli.
-                                                </p>
                                             </div>
 
+                                            {/* Status Specific Actions */}
+                                            {order.status === 'Selesai' ? (
+                                                <div className="p-4 bg-emerald-50 rounded-xl border border-emerald-200 text-center space-y-1">
+                                                    <div className="flex items-center justify-center gap-1 text-emerald-800 font-black text-xs uppercase tracking-wider">
+                                                        <span className="material-icons text-sm text-emerald-600">check_circle</span>
+                                                        Pesanan Selesai
+                                                    </div>
+                                                    <p className="text-[10px] text-emerald-700">Pesanan telah dikonfirmasi diterima oleh pembeli / otomatis selesai.</p>
+                                                </div>
+                                            ) : order.status === 'Batal' ? (
+                                                <div className="p-4 bg-red-50 rounded-xl border border-red-200 text-center space-y-1">
+                                                    <div className="flex items-center justify-center gap-1 text-red-800 font-black text-xs uppercase tracking-wider">
+                                                        <span className="material-icons text-sm text-red-600">cancel</span>
+                                                        Pesanan Dibatalkan
+                                                    </div>
+                                                    <p className="text-[10px] text-red-600">Pesanan ini telah dibatalkan dan stok produk telah dikembalikan.</p>
+                                                </div>
+                                            ) : (
+                                                <div className="space-y-3">
+                                                    {/* Step 1: Pending Payment */}
+                                                    {order.status === 'Pending' && (
+                                                        <div className="space-y-2">
+                                                            <div className="p-3 bg-amber-50 rounded-xl border border-amber-200 text-[11px] text-amber-900 font-medium">
+                                                                ⏳ Menunggu pembeli menyelesaikan pembayaran.
+                                                            </div>
+                                                            {hasProof && (
+                                                                <button
+                                                                    onClick={() => {
+                                                                        if (window.confirm('Verifikasi bukti transfer dan tandai pesanan ini sebagai Lunas (Paid)?')) {
+                                                                            handleUpdateStatus(order.id, 'Paid');
+                                                                        }
+                                                                    }}
+                                                                    disabled={updatingId === order.id}
+                                                                    className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-black text-xs uppercase tracking-wider transition shadow-sm flex items-center justify-center gap-1.5 disabled:opacity-50"
+                                                                >
+                                                                    <span className="material-icons text-sm">verified</span>
+                                                                    Verifikasi Lunas (Paid)
+                                                                </button>
+                                                            )}
+                                                            <button
+                                                                onClick={() => {
+                                                                    if (window.confirm('Batalkan pesanan yang belum dibayar ini?')) {
+                                                                        handleUpdateStatus(order.id, 'Batal');
+                                                                    }
+                                                                }}
+                                                                disabled={updatingId === order.id}
+                                                                className="w-full py-2 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 rounded-xl font-bold text-xs transition flex items-center justify-center gap-1 disabled:opacity-50"
+                                                            >
+                                                                <span className="material-icons text-sm">cancel</span>
+                                                                Batalkan Pesanan
+                                                            </button>
+                                                        </div>
+                                                    )}
+
+                                                    {/* Step 2: Paid -> Process */}
+                                                    {order.status === 'Paid' && (
+                                                        <div className="space-y-2">
+                                                            <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-200 text-[11px] text-emerald-900 font-medium">
+                                                                ✅ Pembayaran telah terverifikasi. Silakan klik <span className="font-bold">Proses Pesanan</span> untuk mulai menyiapkan paket.
+                                                            </div>
+                                                            <button
+                                                                onClick={() => {
+                                                                    if (window.confirm('Ubah status ke "Proses" untuk mulai mengemas pesanan?')) {
+                                                                        handleUpdateStatus(order.id, 'Proses');
+                                                                    }
+                                                                }}
+                                                                disabled={updatingId === order.id}
+                                                                className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-black text-xs uppercase tracking-wider transition shadow-md shadow-blue-200 flex items-center justify-center gap-2 disabled:opacity-50"
+                                                            >
+                                                                {updatingId === order.id ? (
+                                                                    <div className="animate-spin h-4 w-4 border-b-2 border-white rounded-full"></div>
+                                                                ) : (
+                                                                    <span className="material-icons text-sm">inventory</span>
+                                                                )}
+                                                                ⚙️ PROSES PESANAN
+                                                            </button>
+                                                            <button
+                                                                onClick={() => {
+                                                                    if (window.confirm('Apakah Anda yakin ingin membatalkan pesanan ini?')) {
+                                                                        handleUpdateStatus(order.id, 'Batal');
+                                                                    }
+                                                                }}
+                                                                disabled={updatingId === order.id}
+                                                                className="w-full py-2 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 rounded-xl font-bold text-xs transition flex items-center justify-center gap-1 disabled:opacity-50"
+                                                            >
+                                                                <span className="material-icons text-sm">cancel</span>
+                                                                Batalkan Pesanan
+                                                            </button>
+                                                        </div>
+                                                    )}
+
+                                                    {/* Step 3: Proses -> Kirim */}
+                                                    {order.status === 'Proses' && (
+                                                        <div className="space-y-2">
+                                                            <div className="p-3 bg-blue-50 rounded-xl border border-blue-200 text-[11px] text-blue-900 font-medium">
+                                                                📦 Pesanan sedang dikemas. Masukkan nomor resi dan klik <span className="font-bold">Kirim Pesanan</span>.
+                                                            </div>
+                                                            <div className="space-y-1">
+                                                                <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Nomor Resi & Estimasi</label>
+                                                                <div className="flex gap-2">
+                                                                    <input 
+                                                                        type="text"
+                                                                        placeholder="No. Resi Kurir..."
+                                                                        value={localResi[order.id] !== undefined ? localResi[order.id] : (order.resi_number || '')}
+                                                                        onChange={(e) => setLocalResi({ ...localResi, [order.id]: e.target.value })}
+                                                                        disabled={updatingId === order.id}
+                                                                        className="flex-1 px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-xs font-bold text-gray-800 focus:ring-2 focus:ring-emerald-500 outline-none transition"
+                                                                    />
+                                                                    <input 
+                                                                        type="number"
+                                                                        placeholder="Est. Hari"
+                                                                        title="Estimasi pengiriman (hari)"
+                                                                        value={localEst[order.id] !== undefined ? localEst[order.id] : (order.estimated_delivery_days || 5)}
+                                                                        onChange={(e) => setLocalEst({ ...localEst, [order.id]: e.target.value })}
+                                                                        disabled={updatingId === order.id}
+                                                                        className="w-20 px-2 py-2.5 bg-white border border-gray-200 rounded-xl text-xs font-bold text-gray-800 focus:ring-2 focus:ring-emerald-500 outline-none transition text-center"
+                                                                    />
+                                                                </div>
+                                                            </div>
+                                                            <button
+                                                                onClick={() => {
+                                                                    if (window.confirm('Pastikan pesanan sudah diserahkan ke kurir. Tandai pesanan sebagai "Dikirim"?')) {
+                                                                        handleUpdateStatus(order.id, 'Dikirim');
+                                                                    }
+                                                                }}
+                                                                disabled={updatingId === order.id}
+                                                                className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-black text-xs uppercase tracking-wider transition shadow-md shadow-indigo-200 flex items-center justify-center gap-2 disabled:opacity-50"
+                                                            >
+                                                                {updatingId === order.id ? (
+                                                                    <div className="animate-spin h-4 w-4 border-b-2 border-white rounded-full"></div>
+                                                                ) : (
+                                                                    <span className="material-icons text-sm">local_shipping</span>
+                                                                )}
+                                                                🚚 KIRIM PESANAN
+                                                            </button>
+                                                            <button
+                                                                onClick={() => {
+                                                                    if (window.confirm('Apakah Anda yakin ingin membatalkan pesanan ini?')) {
+                                                                        handleUpdateStatus(order.id, 'Batal');
+                                                                    }
+                                                                }}
+                                                                disabled={updatingId === order.id}
+                                                                className="w-full py-2 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 rounded-xl font-bold text-xs transition flex items-center justify-center gap-1 disabled:opacity-50"
+                                                            >
+                                                                <span className="material-icons text-sm">cancel</span>
+                                                                Batalkan Pesanan
+                                                            </button>
+                                                        </div>
+                                                    )}
+
+                                                    {/* Step 4: Dikirim -> In Transit */}
+                                                    {order.status === 'Dikirim' && (
+                                                        <div className="space-y-2.5">
+                                                            <div className="p-3 bg-indigo-50 rounded-xl border border-indigo-200 text-[11px] text-indigo-900 space-y-1">
+                                                                <div className="flex items-center gap-1 font-bold">
+                                                                    <span className="material-icons text-sm text-indigo-600">local_shipping</span>
+                                                                    Dalam Pengiriman ke Pembeli
+                                                                </div>
+                                                                <p className="text-[10px] text-indigo-700 leading-relaxed">
+                                                                    No. Resi: <span className="font-mono font-bold">{order.resi_number || 'Belum diisi'}</span> • Kurir: <span className="font-bold">{order.shipping_courier || '-'}</span>
+                                                                </p>
+                                                                <p className="text-[9px] text-indigo-600/90 italic pt-1 border-t border-indigo-100">
+                                                                    * Status "Selesai" dikonfirmasi oleh pembeli saat barang tiba, atau otomatis dalam 5 hari pengiriman.
+                                                                </p>
+                                                            </div>
+
+                                                            <div className="space-y-1">
+                                                                <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Ubah No. Resi & Estimasi</label>
+                                                                <div className="flex gap-2">
+                                                                    <input 
+                                                                        type="text"
+                                                                        placeholder="No. Resi Pengiriman..."
+                                                                        value={localResi[order.id] !== undefined ? localResi[order.id] : (order.resi_number || '')}
+                                                                        onChange={(e) => setLocalResi({ ...localResi, [order.id]: e.target.value })}
+                                                                        disabled={updatingId === order.id}
+                                                                        className="flex-1 px-3 py-2 bg-white border border-gray-200 rounded-xl text-xs font-medium text-gray-800 focus:ring-2 focus:ring-emerald-500 outline-none transition"
+                                                                    />
+                                                                    <input 
+                                                                        type="number"
+                                                                        placeholder="Hari"
+                                                                        title="Estimasi pengiriman (hari)"
+                                                                        value={localEst[order.id] !== undefined ? localEst[order.id] : (order.estimated_delivery_days || 5)}
+                                                                        onChange={(e) => setLocalEst({ ...localEst, [order.id]: e.target.value })}
+                                                                        disabled={updatingId === order.id}
+                                                                        className="w-16 px-2 py-2 bg-white border border-gray-200 rounded-xl text-xs font-medium text-gray-800 focus:ring-2 focus:ring-emerald-500 outline-none transition text-center"
+                                                                    />
+                                                                    <button 
+                                                                        onClick={() => handleUpdateStatus(order.id, order.status)}
+                                                                        disabled={updatingId === order.id}
+                                                                        className="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-[10px] uppercase tracking-wider transition shadow-sm flex items-center justify-center gap-1"
+                                                                        title="Simpan perubahan resi"
+                                                                    >
+                                                                        <span className="material-icons text-xs">save</span>
+                                                                        Simpan
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+
+                                                            <button
+                                                                onClick={() => {
+                                                                    if (window.confirm('Batalkan pengiriman pesanan ini?')) {
+                                                                        handleUpdateStatus(order.id, 'Batal');
+                                                                    }
+                                                                }}
+                                                                disabled={updatingId === order.id}
+                                                                className="w-full py-2 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 rounded-xl font-bold text-xs transition flex items-center justify-center gap-1 disabled:opacity-50"
+                                                            >
+                                                                <span className="material-icons text-sm">cancel</span>
+                                                                Batalkan Pesanan
+                                                            </button>
+                                                        </div>
+                                                    )}
+
+                                                    {/* Notification to Buyer */}
+                                                    <button 
+                                                        onClick={() => handleSendWa(order.id)}
+                                                        disabled={sendingWaId === order.id}
+                                                        className="w-full bg-emerald-50 text-emerald-700 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 border border-emerald-200 hover:bg-emerald-600 hover:text-white transition group disabled:opacity-50 shadow-sm"
+                                                    >
+                                                        {sendingWaId === order.id ? (
+                                                            <div className="animate-spin h-3 w-3 border-b-2 border-emerald-600 rounded-full"></div>
+                                                        ) : (
+                                                            <span className="material-icons text-sm">whatsapp</span>
+                                                        )}
+                                                        KIRIM NOTIFIKASI WA KE PEMBELI
+                                                    </button>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 </div>

@@ -800,12 +800,15 @@ class AndroidNotificationWebhookView(APIView):
             (request.data.get('secret_token') if isinstance(getattr(request, 'data', None), dict) else None) or
             request.GET.get('secret')
         )
-        if setting.android_webhook_secret and secret_header != setting.android_webhook_secret:
-            logger.warning(f"Unauthorized Android Notification Webhook attempt with secret: {secret_header}")
-            return Response({
-                "success": False,
-                "error": "Secret token tidak valid. Periksa pengaturan secret token Anda."
-            }, status=status.HTTP_401_UNAUTHORIZED)
+        if setting.android_webhook_secret:
+            expected = str(setting.android_webhook_secret).strip()
+            given = str(secret_header or '').strip()
+            if given != expected:
+                logger.warning(f"Unauthorized Android Notification Webhook attempt with secret: {secret_header}")
+                return Response({
+                    "success": False,
+                    "error": "Secret token tidak valid. Periksa pengaturan secret token Anda."
+                }, status=status.HTTP_401_UNAUTHORIZED)
 
         # Update last heartbeat on webhook reception
         device_id = request.data.get('device_id') if isinstance(getattr(request, 'data', None), dict) else None
@@ -831,9 +834,9 @@ class AndroidNotificationWebhookView(APIView):
 
         def parse_amount_str(s):
             """Parses raw matched number string taking into account Indonesian formatting."""
-            s = s.strip()
             if not s:
                 return None
+            s = str(s).strip()
             try:
                 # Handle Indonesian thousand separators vs decimals
                 if ',' in s and '.' in s:
@@ -871,30 +874,27 @@ class AndroidNotificationWebhookView(APIView):
 
         extracted_amounts = []
 
-        # Priority 1: Numbers preceded by currency symbols or keywords (Rp, IDR, Sebesar, Nominal, Total, Nilai, Jumlah)
-        currency_matches = re.findall(
-            r'(?:rp\.?|idr|sebesar|nominal|total|nilai|jumlah)\s*:?\s*(\d+(?:[\.\,]\d+)*)',
-            payload_text,
-            re.IGNORECASE
-        )
+        # Priority 1: Numbers preceded by currency symbols or payment keywords
+        prefix_pattern = r'(?:(?:rp\.?|idr)\s*|sebesar\s*(?:rp\.?\s*)?|nominal\s*(?:rp\.?\s*)?|total\s*(?:rp\.?\s*)?|nilai\s*(?:rp\.?\s*)?|jumlah\s*(?:rp\.?\s*)?|terima\s*(?:rp\.?\s*)?|masuk\s*(?:rp\.?\s*)?|berhasil\s*(?:rp\.?\s*)?|transfer\s*(?:rp\.?\s*)?|qris\s*(?:rp\.?\s*)?|dana\s*(?:masuk\s*)?(?:rp\.?\s*)?|uang\s*(?:masuk\s*)?(?:rp\.?\s*)?)\s*:?\s*(\d+(?:[\.\,]\d+)*)'
+        currency_matches = re.findall(prefix_pattern, payload_text, re.IGNORECASE)
         for m in currency_matches:
             val = parse_amount_str(m)
             if val and val not in extracted_amounts:
                 extracted_amounts.append(val)
 
-        # Priority 2: Standard formatted numbers with dots (e.g. 50.000, 100.000, 1.500.000)
+        # Priority 2: Standard formatted numbers with thousand dots (e.g. 50.000, 100.000, 1.500.000)
         formatted_matches = re.findall(r'\b(\d{1,3}(?:\.\d{3})+(?:,\d{1,2})?)\b', payload_text)
         for m in formatted_matches:
             val = parse_amount_str(m)
             if val and val not in extracted_amounts:
                 extracted_amounts.append(val)
 
-        # Priority 3: Any standalone numbers >= 1000 and <= 100,000,000 (excluding potential 10+ digit account numbers)
+        # Priority 3: Standalone numbers between 1,000 and 100,000,000 (ignoring short codes or 10+ digit account numbers)
         if not extracted_amounts:
-            general_matches = re.findall(r'\b(\d{3,9}(?:[\.\,]\d+)?)\b', payload_text)
+            general_matches = re.findall(r'\b(\d{4,9}(?:[\.\,]\d+)?)\b', payload_text)
             for m in general_matches:
                 val = parse_amount_str(m)
-                if val and val not in extracted_amounts:
+                if val and val not in extracted_amounts and 1000 <= val <= 100000000:
                     extracted_amounts.append(val)
 
         if not extracted_amounts:
@@ -911,21 +911,18 @@ class AndroidNotificationWebhookView(APIView):
         from digital_products.models import DigitalOrder
         from courses.models import CourseEnrollment
 
-        # Standard Payment Gateway Active Window: Only match transactions created within timeout
-        timeout_mins = max(15, getattr(setting, 'payment_timeout_minutes', 15) or 15)
-        recent_cutoff = timezone.now() - timedelta(minutes=timeout_mins)
-        recent_event_cutoff = timezone.now() - timedelta(hours=2)
-
         for amt in extracted_amounts:
-            # 1. Strictly match active E-Commerce Order by grand_total (including admin/service fee & unique code)
+            # 1. Match active pending E-Commerce Order by grand_total (or total_price fallback)
             order = Order.objects.filter(
-                created_at__gte=recent_cutoff,
-                status__in=['pending', 'Pending', 'waiting_payment', 'unpaid'],
-                grand_total=amt
-            ).order_by('-created_at').first()
+                Q(status__in=['pending', 'Pending', 'waiting_payment', 'unpaid', 'menunggu_pembayaran', 'belum_bayar', 'created']) |
+                Q(status__iexact='pending') |
+                Q(status__iexact='unpaid'),
+                Q(grand_total=amt) | Q(total_price=amt)
+            ).order_by('-updated_at', '-created_at').first()
             
             if order:
                 order.status = 'paid'
+                order.payment_method = 'dynaqris'
                 order.save()
                 try:
                     from orders.utils import send_order_invoice_to_buyer, send_order_notification_to_seller, send_order_email_notifications
@@ -945,14 +942,13 @@ class AndroidNotificationWebhookView(APIView):
                     "message": f"Pesanan E-commerce #{order.order_number or order.id} (Rp {float(order.grand_total):,.0f}) berhasil diverifikasi otomatis via Webhook!"
                 })
 
-            # 2. Search recent active Digital Product Order with matching amount
+            # 2. Match active pending Digital Product Order
             d_order = DigitalOrder.objects.filter(
-                created_at__gte=recent_cutoff,
-                amount=amt,
-                payment_status='pending'
-            ).order_by('-created_at').first()
+                payment_status__in=['pending', 'unpaid', ''],
+                amount=amt
+            ).order_by('-id').first()
             if d_order:
-                d_order.payment_status = 'verified'
+                d_order.payment_status = 'completed'
                 d_order.save()
                 try:
                     from digital_products.views import DigitalProductViewSet
@@ -970,11 +966,10 @@ class AndroidNotificationWebhookView(APIView):
                     "message": f"Pesanan Produk Digital #{d_order.order_number} berhasil diverifikasi otomatis via Webhook!"
                 })
 
-            # 3. Search recent active Course Enrollment with matching amount
+            # 3. Match active pending Course Enrollment
             c_enrollment = CourseEnrollment.objects.filter(
-                enrolled_at__gte=recent_cutoff,
-                amount=amt,
-                payment_status='pending'
+                payment_status__in=['pending', 'unpaid', ''],
+                amount=amt
             ).order_by('-id').first()
             if c_enrollment:
                 c_enrollment.payment_status = 'paid'
@@ -990,21 +985,11 @@ class AndroidNotificationWebhookView(APIView):
                     "message": f"Pendaftaran E-Course #{c_enrollment.order_number or c_enrollment.id} berhasil diverifikasi otomatis via Webhook!"
                 })
 
-            # 4. Search recent active Event Registration with matching payment_amount (within 2-hour window)
+            # 4. Match active pending Event Registration
             reg = EventRegistration.objects.filter(
-                created_at__gte=recent_event_cutoff,
+                Q(status__in=['pending', 'unpaid']) | Q(payment_status__in=['pending', 'unpaid', '']),
                 payment_amount=amt
-            ).filter(
-                status__in=['pending', 'unpaid']
             ).order_by('-created_at').first()
-
-            if not reg:
-                # Also try matching registrations with payment_status='pending'
-                reg = EventRegistration.objects.filter(
-                    created_at__gte=recent_event_cutoff,
-                    payment_amount=amt,
-                    payment_status__in=['pending', 'unpaid', '']
-                ).order_by('-created_at').first()
 
             if reg:
                 reg.payment_status = 'verified'
@@ -1025,11 +1010,10 @@ class AndroidNotificationWebhookView(APIView):
                     "message": f"Pendaftaran Event #{reg.id} ({reg.guest_name or 'Peserta'}) berhasil diverifikasi otomatis via Webhook!"
                 })
 
-            # 5. Search recent active Donation with matching amount
+            # 5. Match active pending Donation
             donation = Donation.objects.filter(
-                created_at__gte=recent_cutoff,
-                amount=amt,
-                payment_status='pending'
+                payment_status__in=['pending', 'unpaid', ''],
+                amount=amt
             ).order_by('-created_at').first()
             if donation:
                 donation.payment_status = 'verified'

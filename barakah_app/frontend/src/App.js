@@ -401,6 +401,8 @@ const LayoutWrapper = ({ isDesktop }) => {
         <Route path="/ecommerce/checkout" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><EcommerceCheckoutSinergy /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/ecommerce/checkout-sinergy" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><EcommerceCheckoutSinergy /></ResponsiveLayout></PrivateRoute>} />
         <Route path="/konfirmasi-pembayaran-belanja" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><EcommercePaymentConfirmation /></ResponsiveLayout></PrivateRoute>} />
+        <Route path="/pembayaran/:orderNumber" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><EcommercePaymentConfirmation /></ResponsiveLayout></PrivateRoute>} />
+        <Route path="/bayar-belanja/:orderNumber" element={<PrivateRoute><ResponsiveLayout isDesktop={isDesktop}><EcommercePaymentConfirmation /></ResponsiveLayout></PrivateRoute>} />
 
         {/* Article Routes */}
         <Route path="/articles" element={<ResponsiveLayout isDesktop={isDesktop}><ArticleListPage /></ResponsiveLayout>} />
