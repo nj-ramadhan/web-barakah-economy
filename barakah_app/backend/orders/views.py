@@ -602,30 +602,44 @@ class SellerOrderViewSet(viewsets.ModelViewSet):
 
         # Sequential status updates for sellers/admins
         if new_status:
+            status_map = {
+                'pending': 'Pending',
+                'paid': 'Paid',
+                'proses': 'Proses',
+                'dikirim': 'Dikirim',
+                'selesai': 'Selesai',
+                'batal': 'Batal',
+                'komplain': 'Komplain'
+            }
+            normalized_new_status = status_map.get(new_status.lower(), new_status)
+            request.data['status'] = normalized_new_status
+
+            current_st_norm = status_map.get((instance.status or '').lower(), instance.status)
+
             allowed_transitions = {
                 'Pending': ['Pending', 'Paid', 'Batal'],
-                'Paid': ['Paid', 'Proses', 'Batal'],
+                'Paid': ['Paid', 'Proses', 'Dikirim', 'Batal'],
                 'Proses': ['Proses', 'Dikirim', 'Batal'],
                 'Dikirim': ['Dikirim', 'Selesai', 'Komplain', 'Batal'],
                 'Komplain': ['Komplain', 'Selesai', 'Proses', 'Batal'],
                 'Selesai': ['Selesai'],
                 'Batal': ['Batal']
             }
-            current_allowed = allowed_transitions.get(instance.status, ['Pending', 'Paid', 'Proses', 'Dikirim', 'Komplain', 'Selesai', 'Batal'])
-            if new_status not in current_allowed:
+            current_allowed = allowed_transitions.get(current_st_norm, ['Pending', 'Paid', 'Proses', 'Dikirim', 'Komplain', 'Selesai', 'Batal'])
+            if normalized_new_status not in current_allowed and new_status not in current_allowed:
                 return Response(
                     {'error': f'Status tidak dapat diubah dari {instance.status} ke {new_status}.'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
 
-            if new_status == 'Dikirim':
+            if normalized_new_status == 'Dikirim':
                 instance.shipped_at = timezone.now()
                 instance.auto_complete_at = instance.shipped_at + timedelta(days=5)
-            elif new_status == 'Komplain':
+            elif normalized_new_status == 'Komplain':
                 instance.complaint_at = timezone.now()
                 if complaint_reason:
                     instance.complaint_reason = complaint_reason
-            elif new_status == 'Selesai':
+            elif normalized_new_status == 'Selesai':
                 instance.completed_at = timezone.now()
 
         return super().partial_update(request, *args, **kwargs)

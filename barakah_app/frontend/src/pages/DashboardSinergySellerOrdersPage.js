@@ -295,6 +295,15 @@ const DashboardSinergySellerOrdersPage = () => {
                 ) : (
                     <div className="space-y-6">
                         {filteredOrders.map(order => {
+                            const statusUpper = (order.status || '').toUpperCase();
+                            const isPending = ['PENDING', 'WAITING_PAYMENT', 'UNPAID'].includes(statusUpper);
+                            const isPaid = ['PAID', 'LUNAS', 'VERIFIED'].includes(statusUpper);
+                            const isProses = ['PROSES', 'PROCESSING'].includes(statusUpper);
+                            const isDikirim = ['DIKIRIM', 'SHIPPED'].includes(statusUpper);
+                            const isSelesai = ['SELESAI', 'COMPLETED'].includes(statusUpper);
+                            const isBatal = ['BATAL', 'CANCELLED'].includes(statusUpper);
+                            const isKomplain = ['KOMPLAIN', 'DISPUTE'].includes(statusUpper);
+
                             const isDynaQris = order.payment_method === 'dynaqris';
                             const isManualTf = ['manual', 'qris', 'bank', 'transfer'].includes((order.payment_method || '').toLowerCase());
                             const hasProof = Boolean(order.payment_proof);
@@ -490,35 +499,35 @@ const DashboardSinergySellerOrdersPage = () => {
                                             <div className="p-3 bg-gray-50 rounded-2xl border border-gray-100">
                                                 <p className="text-[10px] font-black text-gray-400 uppercase tracking-wider mb-2">Tahapan Pesanan</p>
                                                 <div className="flex items-center justify-between text-[10px] font-bold">
-                                                    <div className={`flex flex-col items-center gap-1 ${['Pending', 'Paid', 'Proses', 'Dikirim', 'Selesai'].includes(order.status) ? 'text-emerald-700' : 'text-gray-400'}`}>
-                                                        <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${order.status === 'Pending' ? 'bg-amber-500 text-white font-black animate-pulse' : ['Paid', 'Proses', 'Dikirim', 'Selesai'].includes(order.status) ? 'bg-emerald-600 text-white' : 'bg-gray-200 text-gray-500'}`}>1</div>
+                                                    <div className={`flex flex-col items-center gap-1 ${isPending || isPaid || isProses || isDikirim || isSelesai ? 'text-emerald-700' : 'text-gray-400'}`}>
+                                                        <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${isPending ? 'bg-amber-500 text-white font-black animate-pulse' : (isPaid || isProses || isDikirim || isSelesai ? 'bg-emerald-600 text-white' : 'bg-gray-200 text-gray-500')}`}>1</div>
                                                         <span className="text-[9px]">Bayar</span>
                                                     </div>
-                                                    <div className={`h-0.5 flex-1 mx-1 ${['Paid', 'Proses', 'Dikirim', 'Selesai'].includes(order.status) ? 'bg-emerald-500' : 'bg-gray-200'}`}></div>
-                                                    <div className={`flex flex-col items-center gap-1 ${['Paid', 'Proses', 'Dikirim', 'Selesai'].includes(order.status) ? 'text-emerald-700' : 'text-gray-400'}`}>
-                                                        <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${order.status === 'Paid' ? 'bg-emerald-600 text-white font-black ring-2 ring-emerald-300 animate-pulse' : ['Proses', 'Dikirim', 'Selesai'].includes(order.status) ? 'bg-emerald-600 text-white' : 'bg-gray-200 text-gray-500'}`}>2</div>
+                                                    <div className={`h-0.5 flex-1 mx-1 ${isPaid || isProses || isDikirim || isSelesai ? 'bg-emerald-500' : 'bg-gray-200'}`}></div>
+                                                    <div className={`flex flex-col items-center gap-1 ${isPaid || isProses || isDikirim || isSelesai ? 'text-emerald-700' : 'text-gray-400'}`}>
+                                                        <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${isPaid ? 'bg-emerald-600 text-white font-black ring-2 ring-emerald-300 animate-pulse' : (isProses || isDikirim || isSelesai ? 'bg-emerald-600 text-white' : 'bg-gray-200 text-gray-500')}`}>2</div>
                                                         <span className="text-[9px]">Perlu Diproses</span>
                                                     </div>
-                                                    <div className={`h-0.5 flex-1 mx-1 ${['Proses', 'Dikirim', 'Selesai'].includes(order.status) ? 'bg-emerald-500' : 'bg-gray-200'}`}></div>
-                                                    <div className={`flex flex-col items-center gap-1 ${['Proses', 'Dikirim', 'Selesai'].includes(order.status) ? 'text-blue-700' : 'text-gray-400'}`}>
-                                                        <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${order.status === 'Proses' ? 'bg-blue-600 text-white font-black ring-2 ring-blue-300 animate-pulse' : ['Dikirim', 'Selesai'].includes(order.status) ? 'bg-emerald-600 text-white' : 'bg-gray-200 text-gray-500'}`}>3</div>
+                                                    <div className={`h-0.5 flex-1 mx-1 ${isProses || isDikirim || isSelesai ? 'bg-emerald-500' : 'bg-gray-200'}`}></div>
+                                                    <div className={`flex flex-col items-center gap-1 ${isProses || isDikirim || isSelesai ? 'text-blue-700' : 'text-gray-400'}`}>
+                                                        <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${isProses ? 'bg-blue-600 text-white font-black ring-2 ring-blue-300 animate-pulse' : (isDikirim || isSelesai ? 'bg-emerald-600 text-white' : 'bg-gray-200 text-gray-500')}`}>3</div>
                                                         <span className="text-[9px]">Diproses</span>
                                                     </div>
-                                                    <div className={`h-0.5 flex-1 mx-1 ${['Dikirim', 'Selesai'].includes(order.status) ? 'bg-emerald-500' : 'bg-gray-200'}`}></div>
-                                                    <div className={`flex flex-col items-center gap-1 ${['Dikirim', 'Selesai'].includes(order.status) ? 'text-indigo-700' : 'text-gray-400'}`}>
-                                                        <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${order.status === 'Dikirim' ? 'bg-indigo-600 text-white font-black ring-2 ring-indigo-300 animate-pulse' : order.status === 'Selesai' ? 'bg-emerald-600 text-white' : 'bg-gray-200 text-gray-500'}`}>4</div>
+                                                    <div className={`h-0.5 flex-1 mx-1 ${isDikirim || isSelesai ? 'bg-emerald-500' : 'bg-gray-200'}`}></div>
+                                                    <div className={`flex flex-col items-center gap-1 ${isDikirim || isSelesai ? 'text-indigo-700' : 'text-gray-400'}`}>
+                                                        <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${isDikirim ? 'bg-indigo-600 text-white font-black ring-2 ring-indigo-300 animate-pulse' : (isSelesai ? 'bg-emerald-600 text-white' : 'bg-gray-200 text-gray-500')}`}>4</div>
                                                         <span className="text-[9px]">Dikirim</span>
                                                     </div>
-                                                    <div className={`h-0.5 flex-1 mx-1 ${order.status === 'Selesai' ? 'bg-emerald-500' : 'bg-gray-200'}`}></div>
-                                                    <div className={`flex flex-col items-center gap-1 ${order.status === 'Selesai' ? 'text-emerald-700' : 'text-gray-400'}`}>
-                                                        <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${order.status === 'Selesai' ? 'bg-emerald-600 text-white font-black' : 'bg-gray-200 text-gray-500'}`}>5</div>
+                                                    <div className={`h-0.5 flex-1 mx-1 ${isSelesai ? 'bg-emerald-500' : 'bg-gray-200'}`}></div>
+                                                    <div className={`flex flex-col items-center gap-1 ${isSelesai ? 'text-emerald-700' : 'text-gray-400'}`}>
+                                                        <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${isSelesai ? 'bg-emerald-600 text-white font-black' : 'bg-gray-200 text-gray-500'}`}>5</div>
                                                         <span className="text-[9px]">Selesai</span>
                                                     </div>
                                                 </div>
                                             </div>
 
                                             {/* Status Specific Actions */}
-                                            {order.status === 'Selesai' ? (
+                                            {isSelesai ? (
                                                 <div className="p-4 bg-emerald-50 rounded-xl border border-emerald-200 text-center space-y-1">
                                                     <div className="flex items-center justify-center gap-1 text-emerald-800 font-black text-xs uppercase tracking-wider">
                                                         <span className="material-icons text-sm text-emerald-600">check_circle</span>
@@ -526,7 +535,7 @@ const DashboardSinergySellerOrdersPage = () => {
                                                     </div>
                                                     <p className="text-[10px] text-emerald-700">Pesanan telah dikonfirmasi diterima oleh pembeli / otomatis selesai.</p>
                                                 </div>
-                                            ) : order.status === 'Batal' ? (
+                                            ) : isBatal ? (
                                                 <div className="p-4 bg-red-50 rounded-xl border border-red-200 text-center space-y-1">
                                                     <div className="flex items-center justify-center gap-1 text-red-800 font-black text-xs uppercase tracking-wider">
                                                         <span className="material-icons text-sm text-red-600">cancel</span>
@@ -534,10 +543,18 @@ const DashboardSinergySellerOrdersPage = () => {
                                                     </div>
                                                     <p className="text-[10px] text-red-600">Pesanan ini telah dibatalkan dan stok produk telah dikembalikan.</p>
                                                 </div>
+                                            ) : isKomplain ? (
+                                                <div className="p-4 bg-amber-50 rounded-xl border border-amber-200 text-center space-y-1">
+                                                    <div className="flex items-center justify-center gap-1 text-amber-800 font-black text-xs uppercase tracking-wider">
+                                                        <span className="material-icons text-sm text-amber-600">report_problem</span>
+                                                        Pesanan Dikomplain / Diskusi
+                                                    </div>
+                                                    <p className="text-[10px] text-amber-700">Pembeli mengajukan komplain atau pembatalan pesanan.</p>
+                                                </div>
                                             ) : (
                                                 <div className="space-y-3">
                                                     {/* Step 1: Pending Payment */}
-                                                    {order.status === 'Pending' && (
+                                                    {isPending && (
                                                         <div className="space-y-2">
                                                             <div className="p-3 bg-amber-50 rounded-xl border border-amber-200 text-[11px] text-amber-900 font-medium">
                                                                 ⏳ Menunggu pembeli menyelesaikan pembayaran.
@@ -571,48 +588,11 @@ const DashboardSinergySellerOrdersPage = () => {
                                                         </div>
                                                     )}
 
-                                                    {/* Step 2: Paid -> Process */}
-                                                    {order.status === 'Paid' && (
-                                                        <div className="space-y-2">
-                                                            <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-200 text-[11px] text-emerald-900 font-medium">
-                                                                ✅ Pembayaran telah terverifikasi. Silakan klik <span className="font-bold">Proses Pesanan</span> untuk mulai menyiapkan paket.
-                                                            </div>
-                                                            <button
-                                                                onClick={() => {
-                                                                    if (window.confirm('Ubah status ke "Proses" untuk mulai mengemas pesanan?')) {
-                                                                        handleUpdateStatus(order.id, 'Proses');
-                                                                    }
-                                                                }}
-                                                                disabled={updatingId === order.id}
-                                                                className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-black text-xs uppercase tracking-wider transition shadow-md shadow-blue-200 flex items-center justify-center gap-2 disabled:opacity-50"
-                                                            >
-                                                                {updatingId === order.id ? (
-                                                                    <div className="animate-spin h-4 w-4 border-b-2 border-white rounded-full"></div>
-                                                                ) : (
-                                                                    <span className="material-icons text-sm">inventory</span>
-                                                                )}
-                                                                ⚙️ PROSES PESANAN
-                                                            </button>
-                                                            <button
-                                                                onClick={() => {
-                                                                    if (window.confirm('Apakah Anda yakin ingin membatalkan pesanan ini?')) {
-                                                                        handleUpdateStatus(order.id, 'Batal');
-                                                                    }
-                                                                }}
-                                                                disabled={updatingId === order.id}
-                                                                className="w-full py-2 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 rounded-xl font-bold text-xs transition flex items-center justify-center gap-1 disabled:opacity-50"
-                                                            >
-                                                                <span className="material-icons text-sm">cancel</span>
-                                                                Batalkan Pesanan
-                                                            </button>
-                                                        </div>
-                                                    )}
-
-                                                    {/* Step 3: Proses -> Kirim */}
-                                                    {order.status === 'Proses' && (
+                                                    {/* Step 2: Paid (Perlu Diproses) */}
+                                                    {isPaid && (
                                                         <div className="space-y-3">
-                                                            <div className="p-3 bg-blue-50 rounded-xl border border-blue-200 text-[11px] text-blue-900 font-medium">
-                                                                📦 Pesanan sedang dikemas. Pilih metode pengiriman di bawah lalu klik <span className="font-bold">Kirim Pesanan</span>.
+                                                            <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-200 text-[11px] text-emerald-900 font-medium">
+                                                                ✅ Pembayaran telah terverifikasi/lunas. Tentukan pengiriman di bawah untuk langsung kirim atau klik <span className="font-bold">Proses Pesanan</span>.
                                                             </div>
 
                                                             {/* Shipping Type Switcher */}
@@ -647,7 +627,7 @@ const DashboardSinergySellerOrdersPage = () => {
                                                             {(localShippingType[order.id] || order.shipping_type || 'ekspedisi') === 'ekspedisi' ? (
                                                                 <div className="space-y-1.5 bg-indigo-50/50 p-3 rounded-xl border border-indigo-100">
                                                                     <div className="flex items-center justify-between">
-                                                                        <label className="text-[10px] font-bold text-indigo-900 uppercase">Nomor Resi & Estimasi</label>
+                                                                        <label className="text-[10px] font-bold text-indigo-900 uppercase">Nomor Resi &amp; Estimasi</label>
                                                                         <span className="text-[10px] text-gray-500 font-medium">Kurir: <strong className="text-gray-800">{order.shipping_courier || 'Ekspedisi'}</strong></span>
                                                                     </div>
                                                                     <div className="flex gap-2">
@@ -699,135 +679,298 @@ const DashboardSinergySellerOrdersPage = () => {
                                                                             />
                                                                             <div className="relative">
                                                                                 <input 
-                                                                                type="number"
-                                                                                placeholder="Est"
-                                                                                title="Estimasi pengiriman (hari)"
-                                                                                value={localEst[order.id] !== undefined ? localEst[order.id] : (order.estimated_delivery_days || 1)}
-                                                                                onChange={(e) => setLocalEst({ ...localEst, [order.id]: e.target.value })}
-                                                                                disabled={updatingId === order.id}
-                                                                                className="w-20 px-2 py-2.5 bg-white border border-gray-200 rounded-xl text-xs font-bold text-gray-800 focus:ring-2 focus:ring-emerald-500 outline-none transition text-center"
-                                                                            />
-                                                                            <span className="absolute -top-1.5 right-2 bg-emerald-100 text-emerald-700 text-[8px] font-bold px-1 rounded">Hari</span>
+                                                                                    type="number"
+                                                                                    placeholder="Est"
+                                                                                    title="Estimasi pengiriman (hari)"
+                                                                                    value={localEst[order.id] !== undefined ? localEst[order.id] : (order.estimated_delivery_days || 1)}
+                                                                                    onChange={(e) => setLocalEst({ ...localEst, [order.id]: e.target.value })}
+                                                                                    disabled={updatingId === order.id}
+                                                                                    className="w-20 px-2 py-2.5 bg-white border border-gray-200 rounded-xl text-xs font-bold text-gray-800 focus:ring-2 focus:ring-emerald-500 outline-none transition text-center"
+                                                                                />
+                                                                                <span className="absolute -top-1.5 right-2 bg-emerald-100 text-emerald-700 text-[8px] font-bold px-1 rounded">Hari</span>
+                                                                            </div>
                                                                         </div>
                                                                     </div>
                                                                 </div>
-                                                            </div>
-                                                        )}
-
-                                                        <button
-                                                            onClick={() => {
-                                                                const currentType = (localShippingType[order.id] || order.shipping_type || 'ekspedisi');
-                                                                if (currentType === 'kurir_toko') {
-                                                                    const dName = localDriverName[order.id] !== undefined ? localDriverName[order.id] : order.driver_name;
-                                                                    const dPhone = localDriverPhone[order.id] !== undefined ? localDriverPhone[order.id] : order.driver_phone;
-                                                                    if (!dName || !dPhone) {
-                                                                        if (!window.confirm('Nama atau No. Telp pengirim belum diisi lengkap. Tetap lanjutkan kirim pesanan?')) return;
-                                                                    }
-                                                                }
-                                                                if (window.confirm('Pastikan pesanan siap/sudah diserahkan untuk dikirim. Tandai pesanan sebagai "Dikirim"?')) {
-                                                                    handleUpdateStatus(order.id, 'Dikirim');
-                                                                }
-                                                            }}
-                                                            disabled={updatingId === order.id}
-                                                            className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-black text-xs uppercase tracking-wider transition shadow-md shadow-indigo-200 flex items-center justify-center gap-2 disabled:opacity-50"
-                                                        >
-                                                            {updatingId === order.id ? (
-                                                                <div className="animate-spin h-4 w-4 border-b-2 border-white rounded-full"></div>
-                                                            ) : (
-                                                                <span className="material-icons text-sm">
-                                                                    {(localShippingType[order.id] || order.shipping_type || 'ekspedisi') === 'kurir_toko' ? 'delivery_dining' : 'local_shipping'}
-                                                                </span>
                                                             )}
-                                                            {(localShippingType[order.id] || order.shipping_type || 'ekspedisi') === 'kurir_toko' ? '🛵 KIRIM SENDIRI' : '🚚 KIRIM PESANAN'}
-                                                        </button>
-                                                        <button
-                                                            onClick={() => {
-                                                                if (window.confirm('Apakah Anda yakin ingin membatalkan pesanan ini?')) {
-                                                                    handleUpdateStatus(order.id, 'Batal');
-                                                                }
-                                                            }}
-                                                            disabled={updatingId === order.id}
-                                                            className="w-full py-2 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 rounded-xl font-bold text-xs transition flex items-center justify-center gap-1 disabled:opacity-50"
-                                                        >
-                                                            <span className="material-icons text-sm">cancel</span>
-                                                            Batalkan Pesanan
-                                                        </button>
-                                                    </div>
-                                                )}
 
-                                                {/* Step 4: Dikirim -> In Transit */}
-                                                {order.status === 'Dikirim' && (
-                                                    <div className="space-y-2.5">
-                                                        {order.shipping_type === 'kurir_toko' || order.driver_name ? (
-                                                            <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-200 text-[11px] text-emerald-900 space-y-1.5">
-                                                                <div className="flex items-center justify-between font-bold">
-                                                                    <span className="flex items-center gap-1 text-emerald-700">
-                                                                        <span className="material-icons text-sm">delivery_dining</span>
-                                                                        Dikirim Sendiri oleh Toko
-                                                                    </span>
-                                                                    <span className="text-[10px] bg-emerald-200 text-emerald-800 px-2 py-0.5 rounded-full font-bold">Kurir Pribadi</span>
-                                                                </div>
-                                                                <div className="text-[11px] text-emerald-900 bg-white/80 p-2.5 rounded-lg border border-emerald-100 space-y-1">
-                                                                    <div>Pengirim: <strong className="text-gray-800">{order.driver_name || 'Driver Toko'}</strong></div>
+                                                            <div className="flex flex-col sm:flex-row gap-2">
+                                                                <button
+                                                                    onClick={() => {
+                                                                        const currentType = (localShippingType[order.id] || order.shipping_type || 'ekspedisi');
+                                                                        if (currentType === 'kurir_toko') {
+                                                                            const dName = localDriverName[order.id] !== undefined ? localDriverName[order.id] : order.driver_name;
+                                                                            const dPhone = localDriverPhone[order.id] !== undefined ? localDriverPhone[order.id] : order.driver_phone;
+                                                                            if (!dName || !dPhone) {
+                                                                                if (!window.confirm('Nama atau No. Telp pengirim belum diisi lengkap. Tetap lanjutkan kirim pesanan?')) return;
+                                                                            }
+                                                                        }
+                                                                        if (window.confirm('Kirim pesanan ini ke pembeli sekarang? Status akan langsung menjadi "Dikirim".')) {
+                                                                            handleUpdateStatus(order.id, 'Dikirim');
+                                                                        }
+                                                                    }}
+                                                                    disabled={updatingId === order.id}
+                                                                    className="flex-1 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-black text-xs uppercase tracking-wider transition shadow-md shadow-indigo-200 flex items-center justify-center gap-2 disabled:opacity-50"
+                                                                >
+                                                                    {updatingId === order.id ? (
+                                                                        <div className="animate-spin h-4 w-4 border-b-2 border-white rounded-full"></div>
+                                                                    ) : (
+                                                                        <span className="material-icons text-sm">
+                                                                            {(localShippingType[order.id] || order.shipping_type || 'ekspedisi') === 'kurir_toko' ? 'delivery_dining' : 'local_shipping'}
+                                                                        </span>
+                                                                    )}
+                                                                    {(localShippingType[order.id] || order.shipping_type || 'ekspedisi') === 'kurir_toko' ? '🛵 KIRIM SENDIRI' : '🚚 KIRIM SEKARANG'}
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => {
+                                                                        if (window.confirm('Ubah status ke "Proses" untuk mulai mengemas pesanan?')) {
+                                                                            handleUpdateStatus(order.id, 'Proses');
+                                                                        }
+                                                                    }}
+                                                                    disabled={updatingId === order.id}
+                                                                    className="px-4 py-3 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-xl font-bold text-xs transition flex items-center justify-center gap-1.5 disabled:opacity-50 shrink-0"
+                                                                    title="Mulai kemas pesanan terlebih dahulu"
+                                                                >
+                                                                    <span className="material-icons text-sm">inventory</span>
+                                                                    Mulai Kemas
+                                                                </button>
+                                                            </div>
+
+                                                            <button
+                                                                onClick={() => {
+                                                                    if (window.confirm('Apakah Anda yakin ingin membatalkan pesanan ini?')) {
+                                                                        handleUpdateStatus(order.id, 'Batal');
+                                                                    }
+                                                                }}
+                                                                disabled={updatingId === order.id}
+                                                                className="w-full py-2 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 rounded-xl font-bold text-xs transition flex items-center justify-center gap-1 disabled:opacity-50"
+                                                            >
+                                                                <span className="material-icons text-sm">cancel</span>
+                                                                Batalkan Pesanan
+                                                            </button>
+                                                        </div>
+                                                    )}
+
+                                                    {/* Step 3: Proses -> Kirim */}
+                                                    {isProses && (
+                                                        <div className="space-y-3">
+                                                            <div className="p-3 bg-blue-50 rounded-xl border border-blue-200 text-[11px] text-blue-900 font-medium">
+                                                                📦 Pesanan sedang dikemas. Pilih metode pengiriman di bawah lalu klik <span className="font-bold">Kirim Pesanan</span>.
+                                                            </div>
+
+                                                            {/* Shipping Type Switcher */}
+                                                            <div className="bg-gray-100 p-1 rounded-xl flex gap-1">
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => setLocalShippingType({ ...localShippingType, [order.id]: 'ekspedisi' })}
+                                                                    className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 ${
+                                                                        (localShippingType[order.id] || order.shipping_type || 'ekspedisi') === 'ekspedisi'
+                                                                            ? 'bg-white text-indigo-700 shadow-sm'
+                                                                            : 'text-gray-500 hover:text-gray-800'
+                                                                    }`}
+                                                                >
+                                                                    <span className="material-icons text-sm">local_shipping</span>
+                                                                    Ekspedisi Kurir
+                                                                </button>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => setLocalShippingType({ ...localShippingType, [order.id]: 'kurir_toko' })}
+                                                                    className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 ${
+                                                                        (localShippingType[order.id] || order.shipping_type) === 'kurir_toko'
+                                                                            ? 'bg-white text-emerald-700 shadow-sm'
+                                                                            : 'text-gray-500 hover:text-gray-800'
+                                                                    }`}
+                                                                >
+                                                                    <span className="material-icons text-sm">delivery_dining</span>
+                                                                    Kirim Sendiri
+                                                                </button>
+                                                            </div>
+
+                                                            {/* Dynamic Form based on shipping type */}
+                                                            {(localShippingType[order.id] || order.shipping_type || 'ekspedisi') === 'ekspedisi' ? (
+                                                                <div className="space-y-1.5 bg-indigo-50/50 p-3 rounded-xl border border-indigo-100">
                                                                     <div className="flex items-center justify-between">
-                                                                        <span>No. Telp/WA: <strong className="font-mono text-gray-800">{order.driver_phone || '-'}</strong></span>
-                                                                        {order.driver_phone && (
-                                                                            <a
-                                                                                href={`https://wa.me/${order.driver_phone.replace(/[^0-9]/g, '')}`}
-                                                                                target="_blank"
-                                                                                rel="noreferrer"
-                                                                                className="text-[10px] bg-emerald-600 text-white font-bold px-2 py-0.5 rounded-md hover:bg-emerald-700 transition flex items-center gap-1"
-                                                                            >
-                                                                                <span className="material-icons text-[11px]">chat</span> Hubungi WA
-                                                                            </a>
-                                                                        )}
+                                                                        <label className="text-[10px] font-bold text-indigo-900 uppercase">Nomor Resi &amp; Estimasi</label>
+                                                                        <span className="text-[10px] text-gray-500 font-medium">Kurir: <strong className="text-gray-800">{order.shipping_courier || 'Ekspedisi'}</strong></span>
+                                                                    </div>
+                                                                    <div className="flex gap-2">
+                                                                        <input 
+                                                                            type="text"
+                                                                            placeholder="No. Resi Kurir (cth: JP123456789)..."
+                                                                            value={localResi[order.id] !== undefined ? localResi[order.id] : (order.resi_number || '')}
+                                                                            onChange={(e) => setLocalResi({ ...localResi, [order.id]: e.target.value })}
+                                                                            disabled={updatingId === order.id}
+                                                                            className="flex-1 px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-xs font-bold text-gray-800 focus:ring-2 focus:ring-indigo-500 outline-none transition"
+                                                                        />
+                                                                        <div className="relative">
+                                                                            <input 
+                                                                                type="number"
+                                                                                placeholder="Est"
+                                                                                title="Estimasi pengiriman (hari)"
+                                                                                value={localEst[order.id] !== undefined ? localEst[order.id] : (order.estimated_delivery_days || 5)}
+                                                                                onChange={(e) => setLocalEst({ ...localEst, [order.id]: e.target.value })}
+                                                                                disabled={updatingId === order.id}
+                                                                                className="w-20 px-2 py-2.5 bg-white border border-gray-200 rounded-xl text-xs font-bold text-gray-800 focus:ring-2 focus:ring-indigo-500 outline-none transition text-center"
+                                                                            />
+                                                                            <span className="absolute -top-1.5 right-2 bg-indigo-100 text-indigo-700 text-[8px] font-bold px-1 rounded">Hari</span>
+                                                                        </div>
                                                                     </div>
                                                                 </div>
-                                                                <p className="text-[9px] text-emerald-700/90 italic pt-0.5">
-                                                                    * Status "Selesai" dikonfirmasi pembeli saat barang tiba, atau otomatis dalam {order.estimated_delivery_days || 5} hari pengiriman.
-                                                                </p>
-                                                            </div>
-                                                        ) : (
-                                                            <div className="p-3 bg-indigo-50 rounded-xl border border-indigo-200 text-[11px] text-indigo-900 space-y-1">
-                                                                <div className="flex items-center gap-1 font-bold">
-                                                                    <span className="material-icons text-sm text-indigo-600">local_shipping</span>
-                                                                    Dalam Pengiriman Ekspedisi
+                                                            ) : (
+                                                                <div className="space-y-2 bg-emerald-50/50 p-3 rounded-xl border border-emerald-100">
+                                                                    <div className="flex items-center justify-between">
+                                                                        <label className="text-[10px] font-bold text-emerald-900 uppercase">Data Pengirim / Driver Toko</label>
+                                                                        <span className="text-[10px] text-emerald-700 font-medium">🛵 Diantar Pribadi</span>
+                                                                    </div>
+                                                                    <div className="space-y-2">
+                                                                        <input 
+                                                                            type="text"
+                                                                            placeholder="Nama Pengirim / Driver (cth: Budi Toko)..."
+                                                                            value={localDriverName[order.id] !== undefined ? localDriverName[order.id] : (order.driver_name || '')}
+                                                                            onChange={(e) => setLocalDriverName({ ...localDriverName, [order.id]: e.target.value })}
+                                                                            disabled={updatingId === order.id}
+                                                                            className="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-xs font-bold text-gray-800 focus:ring-2 focus:ring-emerald-500 outline-none transition"
+                                                                        />
+                                                                        <div className="flex gap-2">
+                                                                            <input 
+                                                                                type="text"
+                                                                                placeholder="No. Telp / WA Pengirim (cth: 08123456789)..."
+                                                                                value={localDriverPhone[order.id] !== undefined ? localDriverPhone[order.id] : (order.driver_phone || '')}
+                                                                                onChange={(e) => setLocalDriverPhone({ ...localDriverPhone, [order.id]: e.target.value })}
+                                                                                disabled={updatingId === order.id}
+                                                                                className="flex-1 px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-xs font-bold text-gray-800 focus:ring-2 focus:ring-emerald-500 outline-none transition"
+                                                                            />
+                                                                            <div className="relative">
+                                                                                <input 
+                                                                                    type="number"
+                                                                                    placeholder="Est"
+                                                                                    title="Estimasi pengiriman (hari)"
+                                                                                    value={localEst[order.id] !== undefined ? localEst[order.id] : (order.estimated_delivery_days || 1)}
+                                                                                    onChange={(e) => setLocalEst({ ...localEst, [order.id]: e.target.value })}
+                                                                                    disabled={updatingId === order.id}
+                                                                                    className="w-20 px-2 py-2.5 bg-white border border-gray-200 rounded-xl text-xs font-bold text-gray-800 focus:ring-2 focus:ring-emerald-500 outline-none transition text-center"
+                                                                                />
+                                                                                <span className="absolute -top-1.5 right-2 bg-emerald-100 text-emerald-700 text-[8px] font-bold px-1 rounded">Hari</span>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
                                                                 </div>
-                                                                <p className="text-[10px] text-indigo-700 leading-relaxed">
-                                                                    No. Resi: <span className="font-mono font-bold">{order.resi_number || 'Belum diisi'}</span> • Kurir: <span className="font-bold">{order.shipping_courier || '-'}</span>
-                                                                </p>
-                                                                <p className="text-[9px] text-indigo-600/90 italic pt-1 border-t border-indigo-100">
-                                                                    * Status "Selesai" dikonfirmasi pembeli saat barang tiba, atau otomatis dalam {order.estimated_delivery_days || 5} hari pengiriman.
-                                                                </p>
-                                                            </div>
-                                                        )}
+                                                            )}
 
-                                                        {/* Edit Delivery Info Form */}
-                                                        <details className="bg-gray-50 border border-gray-200 rounded-xl p-2.5 text-xs">
-                                                            <summary className="font-bold text-gray-600 cursor-pointer select-none text-[11px] flex items-center justify-between">
-                                                                <span>✏️ Ubah Data Pengiriman / Resi</span>
-                                                                <span className="material-icons text-sm text-gray-400">expand_more</span>
-                                                            </summary>
-                                                            <div className="pt-2.5 space-y-2">
-                                                                <div className="bg-gray-200/70 p-1 rounded-lg flex gap-1">
-                                                                    <button
-                                                                        type="button"
-                                                                        onClick={() => setLocalShippingType({ ...localShippingType, [order.id]: 'ekspedisi' })}
-                                                                        className={`flex-1 py-1 px-2 rounded-md text-[11px] font-bold transition flex items-center justify-center gap-1 ${
-                                                                            (localShippingType[order.id] || order.shipping_type || 'ekspedisi') === 'ekspedisi'
-                                                                                ? 'bg-white text-indigo-700 shadow-xs'
-                                                                                : 'text-gray-600'
-                                                                        }`}
-                                                                    >
-                                                                        Ekspedisi
-                                                                    </button>
-                                                                    <button
-                                                                        type="button"
-                                                                        onClick={() => setLocalShippingType({ ...localShippingType, [order.id]: 'kurir_toko' })}
-                                                                        className={`flex-1 py-1 px-2 rounded-md text-[11px] font-bold transition flex items-center justify-center gap-1 ${
-                                                                            (localShippingType[order.id] || order.shipping_type) === 'kurir_toko'
-                                                                                ? 'bg-white text-emerald-700 shadow-xs'
-                                                                                : 'text-gray-600'
+                                                            <button
+                                                                onClick={() => {
+                                                                    const currentType = (localShippingType[order.id] || order.shipping_type || 'ekspedisi');
+                                                                    if (currentType === 'kurir_toko') {
+                                                                        const dName = localDriverName[order.id] !== undefined ? localDriverName[order.id] : order.driver_name;
+                                                                        const dPhone = localDriverPhone[order.id] !== undefined ? localDriverPhone[order.id] : order.driver_phone;
+                                                                        if (!dName || !dPhone) {
+                                                                            if (!window.confirm('Nama atau No. Telp pengirim belum diisi lengkap. Tetap lanjutkan kirim pesanan?')) return;
+                                                                        }
+                                                                    }
+                                                                    if (window.confirm('Pastikan pesanan siap/sudah diserahkan untuk dikirim. Tandai pesanan sebagai "Dikirim"?')) {
+                                                                        handleUpdateStatus(order.id, 'Dikirim');
+                                                                    }
+                                                                }}
+                                                                disabled={updatingId === order.id}
+                                                                className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-black text-xs uppercase tracking-wider transition shadow-md shadow-indigo-200 flex items-center justify-center gap-2 disabled:opacity-50"
+                                                            >
+                                                                {updatingId === order.id ? (
+                                                                    <div className="animate-spin h-4 w-4 border-b-2 border-white rounded-full"></div>
+                                                                ) : (
+                                                                    <span className="material-icons text-sm">
+                                                                        {(localShippingType[order.id] || order.shipping_type || 'ekspedisi') === 'kurir_toko' ? 'delivery_dining' : 'local_shipping'}
+                                                                    </span>
+                                                                )}
+                                                                {(localShippingType[order.id] || order.shipping_type || 'ekspedisi') === 'kurir_toko' ? '🛵 KIRIM SENDIRI' : '🚚 KIRIM PESANAN'}
+                                                            </button>
+                                                            <button
+                                                                onClick={() => {
+                                                                    if (window.confirm('Apakah Anda yakin ingin membatalkan pesanan ini?')) {
+                                                                        handleUpdateStatus(order.id, 'Batal');
+                                                                    }
+                                                                }}
+                                                                disabled={updatingId === order.id}
+                                                                className="w-full py-2 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 rounded-xl font-bold text-xs transition flex items-center justify-center gap-1 disabled:opacity-50"
+                                                            >
+                                                                <span className="material-icons text-sm">cancel</span>
+                                                                Batalkan Pesanan
+                                                            </button>
+                                                        </div>
+                                                    )}
+
+                                                    {/* Step 4: Dikirim -> In Transit */}
+                                                    {isDikirim && (
+                                                        <div className="space-y-2.5">
+                                                            {order.shipping_type === 'kurir_toko' || order.driver_name ? (
+                                                                <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-200 text-[11px] text-emerald-900 space-y-1.5">
+                                                                    <div className="flex items-center justify-between font-bold">
+                                                                        <span className="flex items-center gap-1 text-emerald-700">
+                                                                            <span className="material-icons text-sm">delivery_dining</span>
+                                                                            Dikirim Sendiri oleh Toko
+                                                                        </span>
+                                                                        <span className="text-[10px] bg-emerald-200 text-emerald-800 px-2 py-0.5 rounded-full font-bold">Kurir Pribadi</span>
+                                                                    </div>
+                                                                    <div className="text-[11px] text-emerald-900 bg-white/80 p-2.5 rounded-lg border border-emerald-100 space-y-1">
+                                                                        <div>Pengirim: <strong className="text-gray-800">{order.driver_name || 'Driver Toko'}</strong></div>
+                                                                        <div className="flex items-center justify-between">
+                                                                            <span>No. Telp/WA: <strong className="font-mono text-gray-800">{order.driver_phone || '-'}</strong></span>
+                                                                            {order.driver_phone && (
+                                                                                <a
+                                                                                    href={`https://wa.me/${order.driver_phone.replace(/[^0-9]/g, '')}`}
+                                                                                    target="_blank"
+                                                                                    rel="noreferrer"
+                                                                                    className="text-[10px] bg-emerald-600 text-white font-bold px-2 py-0.5 rounded-md hover:bg-emerald-700 transition flex items-center gap-1"
+                                                                                >
+                                                                                    <span className="material-icons text-[11px]">chat</span> Hubungi WA
+                                                                                </a>
+                                                                            )}
+                                                                        </div>
+                                                                    </div>
+                                                                    <p className="text-[9px] text-emerald-700/90 italic pt-0.5">
+                                                                        * Status "Selesai" dikonfirmasi pembeli saat barang tiba, atau otomatis dalam {order.estimated_delivery_days || 5} hari pengiriman.
+                                                                    </p>
+                                                                </div>
+                                                            ) : (
+                                                                <div className="p-3 bg-indigo-50 rounded-xl border border-indigo-200 text-[11px] text-indigo-900 space-y-1">
+                                                                    <div className="flex items-center gap-1 font-bold">
+                                                                        <span className="material-icons text-sm text-indigo-600">local_shipping</span>
+                                                                        Dalam Pengiriman Ekspedisi
+                                                                    </div>
+                                                                    <p className="text-[10px] text-indigo-700 leading-relaxed">
+                                                                        No. Resi: <span className="font-mono font-bold">{order.resi_number || 'Belum diisi'}</span> • Kurir: <span className="font-bold">{order.shipping_courier || '-'}</span>
+                                                                    </p>
+                                                                    <p className="text-[9px] text-indigo-600/90 italic pt-1 border-t border-indigo-100">
+                                                                        * Status "Selesai" dikonfirmasi pembeli saat barang tiba, atau otomatis dalam {order.estimated_delivery_days || 5} hari pengiriman.
+                                                                    </p>
+                                                                </div>
+                                                            )}
+
+                                                            {/* Edit Delivery Info Form */}
+                                                            <details className="bg-gray-50 border border-gray-200 rounded-xl p-2.5 text-xs">
+                                                                <summary className="font-bold text-gray-600 cursor-pointer select-none text-[11px] flex items-center justify-between">
+                                                                    <span>✏️ Ubah Data Pengiriman / Resi</span>
+                                                                    <span className="material-icons text-sm text-gray-400">expand_more</span>
+                                                                </summary>
+                                                                <div className="pt-2.5 space-y-2">
+                                                                    <div className="bg-gray-200/70 p-1 rounded-lg flex gap-1">
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => setLocalShippingType({ ...localShippingType, [order.id]: 'ekspedisi' })}
+                                                                            className={`flex-1 py-1 px-2 rounded-md text-[11px] font-bold transition flex items-center justify-center gap-1 ${
+                                                                                (localShippingType[order.id] || order.shipping_type || 'ekspedisi') === 'ekspedisi'
+                                                                                    ? 'bg-white text-indigo-700 shadow-xs'
+                                                                                    : 'text-gray-600'
+                                                                            }`}
+                                                                        >
+                                                                            Ekspedisi
+                                                                        </button>
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => setLocalShippingType({ ...localShippingType, [order.id]: 'kurir_toko' })}
+                                                                            className={`flex-1 py-1 px-2 rounded-md text-[11px] font-bold transition flex items-center justify-center gap-1 ${
+                                                                                (localShippingType[order.id] || order.shipping_type) === 'kurir_toko'
+                                                                                    ? 'bg-white text-emerald-700 shadow-xs'
+                                                                                    : 'text-gray-600'
                                                                         }`}
                                                                     >
                                                                         Kirim Sendiri
